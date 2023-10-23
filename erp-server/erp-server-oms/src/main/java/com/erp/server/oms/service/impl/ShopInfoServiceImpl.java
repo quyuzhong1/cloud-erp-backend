@@ -28,6 +28,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -37,6 +38,9 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.shopee.dto.base.ShopeeAuth;
+import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.erp.server.oms.service.authorize.ShopfiyAuthorize;
 import com.erp.server.oms.service.authorize.WalmartAuthorize;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
@@ -99,6 +103,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopAuthorizeContext shopAuthorizeContext;
+
+    @Resource
+    private ShopeeAuthService shopeeAuthService;
 
     /**
      * 添加店铺
@@ -650,7 +657,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return Collections.EMPTY_LIST;
         }
         ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-        List<String> shopIdList ;
+        List<String> shopIdList;
         if (StringUtils.isNotBlank(platformDTO.getDictPlatform())) {
             shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(platformDTO.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
         } else {
@@ -658,6 +665,172 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         return this.listByIds(shopIdList);
+    }
+
+    @Override
+    public Boolean getShopeeReturn(ShopAuthDTO.ReturnDTO dto) {
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.isNull(cfgAppClient)) {
+                throw new ServiceException("虾皮基础配置未找到");
+            }
+        } catch (Exception e) {
+            throw new ServiceException("erp-dmp服务调用异常");
+        }
+        //根据店铺授权还是主账号授权进行分开记录授权
+        if (Objects.nonNull(dto.getShop_id())) {
+            ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getShop_id());
+            if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
+                throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
+            }
+            updateShopeeToken(dto, shopeeAuth, cfgAppClient, AuthTypeEnum.SHOP.getCode());
+        } else if (Objects.nonNull(dto.getMain_account_id())) {
+            //获取主账户token 需要刷新子商铺的refresh_token
+            {
+                ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getMain_account_id());
+                if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
+                    throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
+                }
+//                ShopeeAuth shopeeAuth = new ShopeeAuth();
+//                shopeeAuth.setAccessToken("70784a76455154774f7a746b7368694e");
+//                shopeeAuth.setRefreshToken("71694c57746269426e4270646a526578");
+//                shopeeAuth.setMerchantIdList(Collections.singletonList(1315427L));
+//                List<Long> shopIds = new ArrayList<>();
+//                shopIds.add(497440222L);
+//                shopIds.add(497437542L);
+//                shopIds.add(497438607L);
+//                shopIds.add(497435491L);
+//                shopIds.add(954277234L);
+//                shopIds.add(954280155L);
+//                shopIds.add(954283475L);
+//                shopeeAuth.setShopIdList(shopIds);
+//                shopeeAuth.setExpireIn(14367);
+//                JSONObject jsonObject = JSONObject.from(shopAccountToken.getResponse());
+                updateShopeeToken(dto, shopeeAuth, cfgAppClient, AuthTypeEnum.MAIN.getCode());
+                //需要更新店铺和店主token
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    private void updateShopeeToken(ShopAuthDTO.ReturnDTO dto, ShopeeAuth shopeeAuth, CfgAppClientEntity cfgAppClient, String type) {
+        ShopInfoEntity shopInfo = this.getById(dto.getId());
+        if (Objects.isNull(shopInfo)) {
+            return;
+        }
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(dto.getId());
+        if (Objects.isNull(shopAuth)) {
+            shopAuth = new ShopAuthEntity();
+            shopAuth.setShopId(dto.getId());
+        }
+        long partner_id = Long.parseLong(cfgAppClient.getClientId());
+        shopAuth.setShopId(dto.getId());
+        String refreshToken = shopeeAuth.getRefreshToken();
+        String accessToken = shopeeAuth.getAccessToken();
+        Long expireIn = shopeeAuth.getExpireIn();
+        shopAuth.setType(type);
+        if (AuthTypeEnum.MAIN.getCode().equals(type)) {
+            //主账号授权
+            if (Objects.nonNull(dto.getMain_account_id())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getMain_account_id()));
+            }
+        } else if (AuthTypeEnum.SHOP.getCode().equals(type)) {
+            //店铺授权
+//            String shopId = jsonObject.getString("shop_id");
+            if (Objects.nonNull(dto.getShop_id())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getShop_id()));
+            }
+        } else {
+            throw new ServiceException("授权异常");
+        }
+        shopAuth.setAccessToken(accessToken);
+        shopAuth.setRefreshToken(refreshToken);
+        shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        shopAuth.setShopId(dto.getId());
+        shopAuth.setAppClientId(cfgAppClient.getId());
+        shopAuthService.saveOrUpdate(shopAuth);
+        shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        shopInfo.setAuthTime(LocalDateTime.now());
+        this.saveOrUpdate(shopInfo);
+        //如果是主店铺
+        if (AuthTypeEnum.MAIN.getCode().equals(type)) {
+            List<Long> merchantIds = shopeeAuth.getMerchantIdList();
+//            JSONArray merchantIds = jsonObject.getJSONArray("merchant_id_list");
+            if (CollectionUtils.isNotEmpty(merchantIds)) {
+                for (Long merchantId : merchantIds) {
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), merchantId);
+                    saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo, cfgAppClient.getId());
+                }
+            }
+//            JSONArray shopIds = jsonObject.getJSONArray("shop_id_list");
+            List<Long> shopIds = shopeeAuth.getShopIdList();
+            if (CollectionUtils.isNotEmpty(shopIds)) {
+                for (Long shopId : shopIds) {
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), shopId);
+                    saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo, cfgAppClient.getId());
+                }
+            }
+        }
+    }
+
+    /**
+     * 新增 店铺和店主
+     *
+     * @param shopeeResponse
+     * @param type
+     * @param shopeeId
+     */
+    @Override
+    public void saveOrUpdateShopee(ShopeeTokenAuth shopeeResponse, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId) {
+        if (StringUtils.isNotEmpty(shopeeResponse.getError())){
+            log.error("授权异常：{}", shopeeResponse);
+            return;
+        }
+        String refreshToken = shopeeResponse.getRefresh_token();
+        String accessToken = shopeeResponse.getAccess_token();
+        Long expireIn = shopeeResponse.getExpire_in();
+        ShopAuthEntity shopAuth = shopAuthService.getShopeeShopById(shopeeId);
+        String shopId = null;
+        if (Objects.isNull(shopAuth)) {
+            shopAuth = new ShopAuthEntity();
+        } else {
+            shopId = shopAuth.getShopId();
+        }
+        if (Objects.nonNull(shopId)) {
+            ShopInfoEntity shopInfoEntity = this.getById(shopId);
+            if (Objects.isNull(shopInfoEntity)) {
+                shopInfoEntity = shopInfo;
+                shopInfoEntity.setId(null);
+                shopInfoEntity.setName(shopeeId);
+            } else {
+                String name = shopInfoEntity.getName() + shopeeId;
+                shopInfoEntity.setName(name);
+            }
+            //店铺
+            this.saveOrUpdate(shopInfoEntity);
+            shopId = shopInfoEntity.getId();
+        } else {
+//            shopInfo.setName(shopeeId);
+            shopInfo.setId(null);
+            this.saveOrUpdate(shopInfo);
+            shopId = shopInfo.getId();
+        }
+        shopAuth.setType(type);
+        shopAuth.setRefreshToken(refreshToken);
+        shopAuth.setAccessToken(accessToken);
+        shopAuth.setShopeeId(shopeeId);
+        if (Objects.nonNull(expireIn)) {
+            shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        }
+        shopAuth.setAppClientId(cfClientId);
+        shopAuth.setShopId(shopId);
+        shopAuthService.saveOrUpdate(shopAuth);
     }
 
     /**

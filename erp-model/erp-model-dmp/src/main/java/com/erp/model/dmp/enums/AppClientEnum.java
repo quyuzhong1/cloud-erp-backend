@@ -19,6 +19,7 @@ public enum AppClientEnum  {
     SHOP_AUTHORIZE_INSTALL("shopAuthorizeInstall","sales","Shopify"),
     WALMART_AUTHORIZE("walmartAuthorize","sales","walmart"),
     WALMART_ACCESS_TOKEN("walmartAccessToken","sales","walmart"),
+    SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
 
 
     ;

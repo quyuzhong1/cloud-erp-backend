@@ -2,24 +2,38 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.server.oms.mapper.ShopAuthMapper;
-import com.erp.server.oms.service.ShopAuthService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.PlatformProductDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.dto.ShopAuthDTO;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.enums.AuthTypeEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.oms.mapper.ShopAuthMapper;
+import com.erp.server.oms.service.CommonService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.ShopAuthService;
+import com.sdk.oms.shopee.service.ShopeeAuthService;
+import com.sdk.oms.shopee.service.ShopeeOrderService;
+import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.ShopAuthDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -36,6 +50,14 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private ShopeeAuthService shopeeAuthService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private ShopeeProductService shopeeProductService;
+    @Resource
+    private ShopeeOrderService shopeeOrderService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +135,83 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public void removeByShopId(String id) {
         lambdaUpdate().eq(ShopAuthEntity::getShopId, id).remove();
+
+    }
+
+    @Override
+    public String getShopeeCodeUrl(String id) {
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        try {
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.nonNull(cfgAppClient)) {
+                String redirect = cfgAppClient.getRedirectUrl() + "?id=" + id;
+                return shopeeAuthService.getCodeUrl(cfgAppClient.getUrl(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), redirect);
+            } else {
+                throw new ServiceException("虾皮基础配置未找到");
+            }
+        } catch (Exception e) {
+            throw new ServiceException("erp-dmp服务调用异常");
+        }
+
+    }
+
+    @Override
+    public List<ShopAuthEntity> getShopeeShopList(String type) {
+
+        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
+    }
+
+    @Override
+    public ShopAuthEntity getShopeeShopById(String shopeeId) {
+        return this.lambdaQuery().eq(ShopAuthEntity::getShopeeId, shopeeId).
+                last("LIMIT 1").one();
+    }
+
+    @Override
+    public void updateShopeeToken(ShopAuthEntity shopAuthEntity) {
+        baseMapper.updateById(shopAuthEntity);
+    }
+
+    @Override
+    public void getProductAll() {
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        try {
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.nonNull(cfgAppClient)) {
+                //获取授权shop
+                List<ShopAuthEntity> shopAuthEntities = this.getAuthShop();
+                if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
+                    List<PlatformProductDTO> allProduct = new ArrayList<>();
+                    shopAuthEntities.stream().forEach(shopAuthEntity -> {
+                        List<PlatformProductDTO> allProduct1 = shopeeProductService.getAllProduct(cfgAppClient.getUrl(), shopAuthEntity.getAccessToken(), Long.parseLong(shopAuthEntity.getShopeeId()), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret());
+                        allProduct.addAll(allProduct1);
+                    });
+                    System.out.println("allProduct:" + allProduct.size());
+                }
+            } else {
+                throw new ServiceException("虾皮基础配置未找到");
+            }
+        } catch (Exception e) {
+            throw new ServiceException("erp-dmp服务调用异常");
+        }
+    }
+
+    private List<ShopAuthEntity> getAuthShop() {
+        LambdaQueryWrapper<ShopAuthEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ShopAuthEntity::getType, AuthTypeEnum.SHOP.getCode());
+        return baseMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public void getOrderAll() {
 
     }
 
