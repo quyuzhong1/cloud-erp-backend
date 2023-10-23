@@ -881,7 +881,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //当采购订单明细id 不为空的时候
