@@ -832,10 +832,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //销售通知订单
         List<String> sourceDetailIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSourceDetailId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listByIds(sourceDetailIdList);
         //销售明细
-        List<String> soDeliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDeliveryNoticeDetailIdList);
+        List<String> soDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
 
 
         for (SoOutstockDTO.PagingViewDTO item : list) {
