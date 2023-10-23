@@ -2,8 +2,10 @@ package com.erp.server.oms.service.authorize;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
+import com.common.business.annotation.SaveData;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.AuthorizeDTO;
+import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
@@ -16,18 +18,14 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.mapper.ShopInfoMapper;
-import com.erp.server.oms.service.ShopAuthService;
-import com.erp.server.oms.service.ShopAuthorizeService;
-import com.erp.server.oms.service.ShopInfoService;
+import com.erp.server.oms.service.*;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -35,7 +33,8 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-public class ShopfiyAuthorize implements ShopAuthorizeService {
+@AuthSaveData(method = PlatformDictEnum.SHOPIFY)
+public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -52,6 +51,11 @@ public class ShopfiyAuthorize implements ShopAuthorizeService {
     @Resource
     private RedisUtil redisUtil;
 
+    /**
+     * 授权
+     * @param dto
+     * @return
+     */
     @Override
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         String bodyStr = "";
@@ -136,5 +140,14 @@ public class ShopfiyAuthorize implements ShopAuthorizeService {
         }
 
         return Boolean.FALSE;
+    }
+
+    /**
+     * 取消授权
+     * @param dto
+     */
+    @Override
+    public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
+
     }
 }

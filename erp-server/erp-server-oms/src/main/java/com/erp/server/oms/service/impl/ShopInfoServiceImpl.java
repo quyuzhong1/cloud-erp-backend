@@ -11,6 +11,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.ModelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
@@ -102,10 +103,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private ShopSysUserAuthService shopSysUserAuthService;
 
     @Resource
-    private ShopAuthorizeContext shopAuthorizeContext;
+    private ShopeeAuthService shopeeAuthService;
 
     @Resource
-    private ShopeeAuthService shopeeAuthService;
+    private AuthModelService authModelService;
 
     /**
      * 添加店铺
@@ -480,23 +481,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        ShopAuthorizeService authorizeService = null;
-        PlatformDictEnum byCode = PlatformDictEnum.getByCode(dto.getCode());
-        switch (byCode) {
-            case SHOPIFY:
-                authorizeService = shopAuthorizeContext.getBean(ShopfiyAuthorize.class);
-                if (Objects.nonNull(authorizeService)) {
-                    return authorizeService.shopAuthorize(dto);
-                }
-                break;
-            case WALMART:
-                authorizeService = shopAuthorizeContext.getBean(WalmartAuthorize.class);
-                if (Objects.nonNull(authorizeService)) {
-                    return authorizeService.shopAuthorize(dto);
-                }
-                break;
-            default:
-                throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE);
+        try {
+            authModelService.shopAuthorize(dto);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return Boolean.FALSE;
     }

@@ -49,4 +49,8 @@ public class ShopAuthorizeDTO implements Serializable {
      * 平台账户秘钥
      */
     private String clientSecret;
+    /**
+     * 店铺id
+     */
+    private String shopId;
 }

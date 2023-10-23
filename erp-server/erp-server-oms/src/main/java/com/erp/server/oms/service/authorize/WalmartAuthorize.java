@@ -1,7 +1,10 @@
 package com.erp.server.oms.service.authorize;
 
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.server.oms.service.ShopAuthorizeService;
+import com.erp.server.oms.service.AuthSaveData;
+import com.erp.server.oms.service.IShopAuthorizeService;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,10 +13,16 @@ import org.springframework.stereotype.Component;
  * @Date 2023/10/23 18:01
  **/
 @Component
-public class WalmartAuthorize implements ShopAuthorizeService {
+@AuthSaveData(method = PlatformDictEnum.WALMART)
+public class WalmartAuthorize implements IShopAuthorizeService<T> {
 
     @Override
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         return null;
+    }
+
+    @Override
+    public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
+
     }
 }
