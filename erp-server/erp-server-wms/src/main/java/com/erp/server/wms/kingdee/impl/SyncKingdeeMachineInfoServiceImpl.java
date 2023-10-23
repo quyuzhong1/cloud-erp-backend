@@ -10,7 +10,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
@@ -84,11 +83,6 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(entity.getWarehouseId());
 
-        //根据明细skuIds查询bom
-        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
-
-
         //所有仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
 
@@ -161,12 +155,10 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
-            if (CollectionUtils.isNotEmpty(bomInfoList)) {
-                String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
-                //参照版本
-                jsonObject.set("referenceVersion", referenceVersion);
-            }
+
+            String referenceVersion = detail.getSkuNo() + "_" + detail.getVersion();
+            //参照版本
+            jsonObject.set("referenceVersion", referenceVersion);
             //库存组织编码
             jsonObject.set("inventoryOrgCode", inventoryOrgCode);
             //领料组织编码

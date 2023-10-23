@@ -23,10 +23,15 @@ public class BomChildrenSkuDTO  implements Serializable {
      * bomId
      */
     private String bomId;
+
+    /**
+     * bom历史id
+     */
+    private String bomHistoryId;
     /**
      * bom版本
      */
-    private Integer bomVersion;
+    private String bomVersion;
 
     /**
      * 父级skuId
