@@ -21,10 +21,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -104,6 +101,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         Map<String, Object> resultMap = new HashMap<>();
 
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
+
 
         //更新同步状态为待同步
         warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
@@ -242,10 +240,15 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = detailList.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+
+        List<String> subcontractDetailIds = purchaseOrderDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailEntities = scmTaskFeign.listSubcontractDetailByIds(subcontractDetailIds);
+
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
         List<JSONObject> list = new ArrayList<>();
@@ -267,6 +270,10 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
             //退货备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+
+            SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntities.stream().filter(req -> req.getId().equals(purchaseOrderDetailEntity.getSourceDetailId())).findFirst().orElse(new SubcontractOrderDetailEntity());
+            //仓位
+            jsonObject.set("warehouseLocation", subcontractOrderDetailEntity.getWarehouseLocation());
 
             //采购单号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
