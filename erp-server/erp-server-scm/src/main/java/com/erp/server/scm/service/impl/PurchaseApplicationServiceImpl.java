@@ -995,7 +995,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewDTO.setCurrency(priceViewDTO.getCurrency());
                 viewDTO.setCurrencySymbol(priceViewDTO.getCurrencySymbol());
             }
-            if (ObjectUtils.isNotEmpty(viewDTO)) {
+            if (ObjectUtils.isNotEmpty(viewChildDTO)) {
                 viewChildDTO.setTaxPrice(priceViewDTO.getTaxPrice());
                 viewChildDTO.setTaxRate(priceViewDTO.getTaxRate());
                 viewChildDTO.setCurrency(priceViewDTO.getCurrency());
