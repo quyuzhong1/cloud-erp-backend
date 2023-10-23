@@ -180,6 +180,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public void cleanOrder(Integer pageSize) {
+        System.setProperty("sun.net.client.defaultConnectTimeout", String
+                .valueOf(20000));// （单位：毫秒）
+        System.setProperty("sun.net.client.defaultReadTimeout", String
+                .valueOf(20000)); // （单位：毫秒）
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .and(wrapper ->
