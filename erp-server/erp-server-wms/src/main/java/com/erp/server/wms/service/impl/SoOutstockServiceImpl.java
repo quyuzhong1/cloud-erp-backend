@@ -838,6 +838,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> flagList = new ArrayList<>();
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+
+        //销售通知订单
+        List<String> sourceDetailIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
+        //销售明细
+        List<String> soDeliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDeliveryNoticeDetailIdList);
+
+
         for (SoOutstockDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -862,6 +871,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
+
+            //销售通知单明细
+            String sourceDetailId = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getId().equals(item.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
+
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(soDetailEntity)) {
+                BigDecimal price = soDetailEntity.getPrice();
+                item.setPrice(price);
+                item.setCnyPrice(MathUtil.multiply(price,soDetailEntity.getExchangeRate()));
+                item.setTaxPrice(MathUtil.multiply(price,MathUtil.add(BigDecimal.ONE,soDetailEntity.getTaxRate())));
+                item.setCnyTaxPrice(MathUtil.multiply(item.getTaxPrice(),soDetailEntity.getExchangeRate()));
+            }
 
             //国家id
             if (CollectionUtils.isNotEmpty(customerList)) {
@@ -935,6 +957,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(customerIdList);
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+
+        //销售通知订单
+        List<String> sourceDetailIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
+        //销售明细
+        List<String> soDeliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDeliveryNoticeDetailIdList);
+
         for (SoOutstockDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -954,6 +984,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
+
+            //销售通知单明细
+            String sourceDetailId = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getId().equals(item.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
+
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(soDetailEntity)) {
+                BigDecimal price = soDetailEntity.getPrice();
+                item.setPrice(price);
+                item.setCnyPrice(MathUtil.multiply(price,soDetailEntity.getExchangeRate()));
+                item.setTaxPrice(MathUtil.multiply(price,MathUtil.add(BigDecimal.ONE,soDetailEntity.getTaxRate())));
+                item.setCnyTaxPrice(MathUtil.multiply(item.getTaxPrice(),soDetailEntity.getExchangeRate()));
+            }
+
+
             //国家id
             if (CollectionUtils.isNotEmpty(customerList)) {
                 String countryId = customerList.stream().filter(obj -> obj.getId().equals(item.getCustomerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCountryId())).orElse("");
