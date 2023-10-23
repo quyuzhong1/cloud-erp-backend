@@ -611,6 +611,25 @@ public class OrdersV0Api {
      * Returns detailed order item information for the order that you specify. If NextToken is provided, it&#x27;s used to retrieve the next page of order items.  __Note__: When an order is in the Pending state (the order has been placed but payment has not been authorized), the getOrderItems operation does not return information about pricing, taxes, shipping charges, gift status or promotions for the order items in the order. After an order leaves the Pending state (this occurs when payment has been authorized) and enters the Unshipped, Partially Shipped, or Shipped state, the getOrderItems operation returns information about pricing, taxes, shipping charges, gift status and promotions for the order items in the order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 0.5 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
      *
      * @param orderId   An Amazon-defined order identifier, in 3-7-7 format. (required)
+     * @return GetOrderItemsResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     */
+    public OrderItemList getAllOrderItems(String orderId, String nextToken) throws ApiException {
+        GetOrderItemsResponse orderItems = getOrderItems(orderId, nextToken);
+        String currentNextToken = orderItems.getPayload().getNextToken();
+        OrderItemList resultOrderItemsList = orderItems.getPayload().getOrderItems();
+        while (StringUtils.isNotBlank(currentNextToken)) {
+            GetOrderItemsResponse currentOrderItems = getOrderItems(orderId, currentNextToken);
+            resultOrderItemsList.addAll(currentOrderItems.getPayload().getOrderItems());
+            currentNextToken = currentOrderItems.getPayload().getNextToken();
+        }
+        return resultOrderItemsList;
+    }
+
+    /**
+     * Returns detailed order item information for the order that you specify. If NextToken is provided, it&#x27;s used to retrieve the next page of order items.  __Note__: When an order is in the Pending state (the order has been placed but payment has not been authorized), the getOrderItems operation does not return information about pricing, taxes, shipping charges, gift status or promotions for the order items in the order. After an order leaves the Pending state (this occurs when payment has been authorized) and enters the Unshipped, Partially Shipped, or Shipped state, the getOrderItems operation returns information about pricing, taxes, shipping charges, gift status and promotions for the order items in the order.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 0.5 | 30 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+     *
+     * @param orderId   An Amazon-defined order identifier, in 3-7-7 format. (required)
      * @param nextToken A string token returned in the response of your previous request. (optional)
      * @return ApiResponse&lt;GetOrderItemsResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
@@ -1274,6 +1293,7 @@ public class OrdersV0Api {
         while (StringUtils.isNotBlank(currentNextToken)) {
             GetOrdersResponse currentResp = getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
             resultOrderList.addAll(currentResp.getPayload().getOrders());
+            currentNextToken = currentResp.getPayload().getNextToken();
         }
         return resultOrderList;
     }

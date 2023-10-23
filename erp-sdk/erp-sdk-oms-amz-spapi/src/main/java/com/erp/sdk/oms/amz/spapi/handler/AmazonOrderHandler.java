@@ -1,12 +1,14 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -20,7 +22,9 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -84,7 +88,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 组装
-                .map(PlatformAmazonOrderDTO::convertDTO)
+                .map(e-> PlatformAmazonOrderDTO.convertDTO(e, this.getIsSendMq()))
                 .collect(Collectors.toList());
     }
 
@@ -92,4 +96,41 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     public String getTargetPlatform() {
         return PlatformDictEnum.AMAZON.getCode();
     }
+
+    /**
+     * 是否发送MQ
+     * true=发送
+     * false=不发送（有其他详情需要额外拉取）
+     */
+    @Override
+    public Boolean getIsSendMq() {
+        return Boolean.FALSE;
+    }
+
+    @Override
+    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto, JSONObject extendObj) {
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
+        if (null == shopInfoEntity){
+            throw new ServiceException("未找到店铺详情:"+ dto.getShopId());
+        }
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
+        // 查询订单详情
+        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum);
+        OrderItemList allOrderItems = null;
+        try {
+            allOrderItems = ordersVoApi.getAllOrderItems(dto.getUniqueId(), null);
+        } catch (ApiException e) {
+            throw new ServiceException("查询亚马逊订单详情失败："+JSONUtil.toJsonStr(e));
+        }
+        if (CollectionUtils.isEmpty(allOrderItems)){
+            return dto;
+        }
+        // 详情转换
+        List<PlatformOrderDetailDTO> detailDtoList = allOrderItems.stream()
+                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
+                .collect(Collectors.toList());
+        dto.setDetails(detailDtoList);
+        return dto;
+    }
+
 }

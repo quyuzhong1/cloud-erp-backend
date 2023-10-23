@@ -107,6 +107,29 @@ public class WalmartSdkClientService {
     }
 
     /**
+     * 发送Post请求到沃尔玛
+     * @param baseUrl 接口地址
+     * @param clientId 账户id
+     * @param clientSecret 账户秘钥
+     * @param accessToken 短令牌
+     * @param paramMap 查询参数
+     * @return java.lang.String
+     */
+    public String sendWalmartPost(String baseUrl, String clientId,String clientSecret, String accessToken, HashMap<String, Object> paramMap) {
+        Map<String, String> headers = new HashMap<String, String>();
+        String consumerId = UUID.randomUUID().toString();
+        headers.put("Content-Type", WalmartStaticKey.accept_json);
+        headers.put("WM_SVC.NAME", WalmartStaticKey.WM_SVC_NAME);
+        headers.put("WM_QOS.CORRELATION_ID", consumerId);
+        headers.put("Accept", WalmartStaticKey.accept_json);
+        headers.put("Authorization", "Basic "+Base64.encodeBase64String(getclient(clientId, clientSecret).getBytes()));
+        headers.put("WM_SEC.ACCESS_TOKEN", accessToken);
+        String bodyStr = OkHttpUtils.doPost(baseUrl, paramMap, headers);
+        return bodyStr;
+    }
+
+
+    /**
      * 获取Token
      */
     public static WalmartShopInfoDTO getTokenByShopId(String shopId) {

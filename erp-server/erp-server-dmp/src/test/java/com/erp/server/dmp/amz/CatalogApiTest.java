@@ -41,28 +41,6 @@ import java.util.List;
 @Profile("dev")
 public class CatalogApiTest {
 
-    private final CatalogApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
-
-    public CatalogApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        CatalogApi catalogApi = new CatalogApi.Builder()
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
-                //北美，https://sellingpartnerapi-na.amazon.com
-                //欧洲，https://sellingpartnerapi-eu.amazon.com
-                //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
-                .build();
-        if (null == catalogApi) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        return catalogApi;
-    }
-    
     /**
      * 
      *
@@ -75,10 +53,13 @@ public class CatalogApiTest {
     public void getCatalogItemTest() throws ApiException {
         String asin = "B08F7T3N5G";
         List<String> marketplaceIds = Arrays.asList("A1AM78C64UM0Y8");
+//        String asin = "B07N4M94X4";
+//        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
         List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");
 //        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships","vendorDetails");
 //        List<String> includedData = null;
         String locale = null;
+        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US);
         Item response = api.getCatalogItem(asin, marketplaceIds, includedData, locale);
         System.out.println("Catalog信息");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -107,6 +88,7 @@ public class CatalogApiTest {
         Integer pageSize = null;
         String pageToken = null;
         String keywordsLocale = null;
+        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US);
         ItemSearchResults response = api.searchCatalogItems(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
         System.out.println("CatalogItems信息");
         System.out.println(JSONUtil.toJsonStr(response));

@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.WALMART)
-@BusinessType(BusinessTypeEnum.PRODUCT)
+@BusinessType(BusinessTypeEnum.ORDER)
 public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrderDTO, PlatformOrderDTO> {
 
     @Resource

@@ -4,10 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.UniqueDto;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.*;
 import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
 import com.common.core.utils.MapUtil;
@@ -18,7 +16,6 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpPullTaskService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -27,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +62,7 @@ public class BusinessServiceImpl {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
+
             String targetPlatform = handler.getTargetPlatform();
             Boolean isSendMq = handler.getIsSendMq();
             // 保存mongo 并发送mq
@@ -72,6 +71,7 @@ public class BusinessServiceImpl {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
         }
+
     }
 
     private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(Boolean isSendMq, String category, String platform, String business,String targetPlatform, PlatformDataDTO<T, R> platformData, String topic) {
@@ -133,5 +133,34 @@ public class BusinessServiceImpl {
         }).collect(Collectors.toList());
 
         return pushToMqList;
+    }
+
+    /**
+     * 详情处理业务处理
+     * @param category 业务类型
+     * @param platform 平台类型
+     * @param business 业务类型
+     * @param <T>      业务类型
+     * @param <R>      业务返回类型
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public <T extends CleanBaseDTO, R extends UniqueDto> void pullDetailProcess(R dto, String category, String platform, String business) {
+        IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
+        String targetPlatform = handler.getTargetPlatform();
+        String topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC;
+        String tag = StrUtil.format("{}_{}", category, business) + "_tag";
+
+        // 修改数据
+        OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(dto.getUniqueId());
+        MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformOrderDTO.class);
+
+        // 异步推送到MQ
+        String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, dto));
+        dto.setDmpSyncTaskId(modelTaskId);
+        SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, dto, dto.getUniqueId());
+        if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
+        }
     }
 }

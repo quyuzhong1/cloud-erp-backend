@@ -1,23 +1,42 @@
 package com.erp.server.dmp.pull.thread;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
+import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.AmazonReportMongoDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
+import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
+import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 拉取平台数据线程
@@ -34,6 +53,8 @@ public class PlatformDataThread {
     private RedisTemplate<String, String> template;
     @Resource
     private BusinessServiceImpl businessService;
+    @Resource
+    private MongoService mongoService;
 
 
     @Async("pullErpOpenApi")
@@ -84,4 +105,85 @@ public class PlatformDataThread {
         }
     }
 
+    /**
+     * 查询报告文档的URL并推送到redis
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void findUrlAndSend(String tableName, AmazonReportMongoDTO report) throws Exception{
+        if (StringUtils.isBlank(report.getReportDocumentUrl()) || 1 == report.getReportDocumentUrlStatus()) {
+            return;
+        }
+        String currentMarketplaceId = report.getMarketplaceIds().stream().findFirst().orElse(null);
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(currentMarketplaceId);
+        if (null == marketplaceEnum) {
+            XxlJobHelper.log("[亚马逊获取报表文档链接] 参数异常：找不到对应MarketplaceIds， reportId+{}",
+                    report.getMarketplaceIds(),
+                    report.getReportId());
+            return;
+        }
+        //查询当前报表ID的文档链接
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
+        ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
+        report.setReportDocumentUrl(reportDocument.getUrl());
+        report.setReportDocumentUrlStatus(1);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(report), MapUtil.class);
+        AmazonReportMongoDTO updateDto = new AmazonReportMongoDTO(report.getReportId());
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, AmazonReportMongoDTO.class);
+        // 添加到缓存
+        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, marketplaceEnum.getMarketplaceId());
+        template.opsForList().leftPush(key, report.getReportDocumentUrl());
+    }
+
+    /**
+     * 更新或保存报表
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndSaveMongo(ReportList reportList, String marketplaceId) {
+        if (CollectionUtil.isEmpty(reportList)) {
+            XxlJobHelper.log("[拉取亚马逊报表任务] 无报告信息：marketplaceId={}", marketplaceId);
+            return;
+        }
+        // 转换
+        List<AmazonReportMongoDTO> sourceList = reportList.stream()
+                .map(this::initAmazonReportMongoDTO)
+                // 只保存已完成的报表
+                .filter(e -> Report.ProcessingStatusEnum.DONE.getValue().equalsIgnoreCase(e.getProcessingStatus()))
+                .collect(Collectors.toList());
+        // 新增报表
+        List<AmazonReportMongoDTO> insertList = new ArrayList<>();
+
+        String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT;
+        for (AmazonReportMongoDTO sourceReport : sourceList) {
+            AmazonReportMongoDTO reportMongoDTO = AmazonReportMongoDTO.getReportId(sourceReport.getReportId());
+            List<AmazonReportMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, tableName, AmazonReportMongoDTO.class);
+            if (CollectionUtil.isEmpty(mongoData)) {
+                insertList.add(sourceReport);
+            }
+        }
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            mongoService.saveMongoDataMult(insertList, tableName);
+        }
+    }
+
+    /**
+     * 转换mongo的DTO
+     */
+    private AmazonReportMongoDTO initAmazonReportMongoDTO(Report report) {
+        return new AmazonReportMongoDTO()
+                .setMarketplaceIds(report.getMarketplaceIds())
+                .setReportId(report.getReportId())
+                .setReportType(report.getReportType())
+                .setDataStartTime(report.getDataStartTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .setDataEndTime(report.getDataEndTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .setReportScheduleId(StringUtils.isNotBlank(report.getReportScheduleId()) ? report.getReportScheduleId() : "")
+                .setCreatedTime(report.getCreatedTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .setProcessingStatus(report.getProcessingStatus().getValue())
+                .setProcessingStartTime(report.getProcessingStartTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .setProcessingEndTime(report.getProcessingEndTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .setReportDocumentId(report.getReportDocumentId())
+                .setReportDocumentUrl("")
+                .setReportDocumentUrlStatus(0)
+                .setReportCancelStatus(0)
+                ;
+    }
 }

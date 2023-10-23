@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter;
 @NoArgsConstructor
 public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
-    ListingCsvReportEntity reportEntity;
+    private ListingCsvReportEntity reportEntity;
 
     private String shopId;
 
@@ -38,10 +38,6 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     public static PlatformProductDTO convertDTO(PlatformAmazonListingDTO dto) {
         // 原商品信息
         ListingCsvReportEntity sourceEntity = dto.getReportEntity();
-        // 产品规格信息
-        String productSpec = "";
-        // 包装信息
-        String packing = "";
 
         // 图片默认
         String imageUrl = sourceEntity.getImageUrl();
@@ -59,10 +55,6 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 .setPlatformType("platform")
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
-                // 产品规格信息
-                .setProductSpec(productSpec)
-                // 产品包装信息
-                .setProductPacking(packing)
                 // 平台最后修改时间
                 .setPlatformUpdateTime(DateUtil.utcSamePlus8(openDate))
                 ;

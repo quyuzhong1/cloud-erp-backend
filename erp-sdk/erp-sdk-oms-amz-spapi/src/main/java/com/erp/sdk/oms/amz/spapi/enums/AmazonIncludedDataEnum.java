@@ -5,6 +5,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * 亚马逊SP-API商品其他信息自动
  * <a href="https://developer-docs.amazon.com/sp-api/docs/catalog-items-api-v2022-04-01-reference#includeddata">来源链接</a>
@@ -41,4 +46,13 @@ public enum AmazonIncludedDataEnum {
     private final String name;
 
 
+    /**
+     * 获取除供应商以外的信息
+     */
+    public static List<String> getAllWithoutVendor(){
+        return Stream.of(AmazonIncludedDataEnum.values())
+                .filter(e-> !VENDOR_DETAILS.equals(e))
+                .map(AmazonIncludedDataEnum::getCode)
+                .collect(Collectors.toList());
+    }
 }

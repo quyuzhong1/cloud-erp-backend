@@ -1,9 +1,7 @@
 package com.common.business.handler;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.UniqueDto;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.*;
 
 /**
  * 业务处理器
@@ -27,4 +25,10 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
      * 是否发送MQ
      */
     Boolean getIsSendMq();
+
+    /**
+     * 下载详情数据
+     */
+    R downloadDetail(R dto, JSONObject extendObj);
+
 }
