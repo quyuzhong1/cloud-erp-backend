@@ -263,7 +263,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
             //交货数量
             jsonObject.set("receiveQty", detail.getReceiveQty());
             //计划交货时间
-            jsonObject.set("planDeliveryDate", detail.getPlanDeliveryDate());
+            jsonObject.set("planDeliveryDate", LocalDateTimeUtil.format(detail.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
             //仓库编码
             jsonObject.set("warehouseCode", warehouseEntity.getKingdeeWarehouseCode());
