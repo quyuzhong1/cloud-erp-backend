@@ -3,18 +3,22 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.ProductBomHistoryEntity;
+import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
-import com.erp.server.plm.service.BomSkuService;
+import com.erp.server.plm.service.ProductBomHistoryService;
+import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -35,9 +40,11 @@ import java.util.Map;
  */
 @Service
 public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService {
+    @Resource
+    private ProductBomHistoryService productBomHistoryService;
 
     @Resource
-    private BomSkuService bomSkuService;
+    private ProductBomSkuHistoryService productBomSkuHistoryService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -50,63 +57,82 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(BomInfoEntity entity,String operate) {
 
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
+        //bom历史数据
+        List<ProductBomHistoryEntity> bomHistoryList = productBomHistoryService.listByBomId(entity.getId());
+        if (CollectionUtils.isEmpty(bomHistoryList)) {
             return;
         }
-        List<BomSkuDTO> bomList = bomSkuService.getByBomId(entity.getId());
-        if (CollectionUtils.isEmpty(bomList)) {
+        //bom历史明细数据
+        List<String> bomHistoryIdList = bomHistoryList.stream().map(ProductBomHistoryEntity::getId).collect(Collectors.toList());
+        List<ProductBomSkuHistoryEntity> skuHistoryList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIdList);
+        if (CollectionUtils.isEmpty(bomHistoryIdList)) {
             return;
         }
-        //父级物料
-        BomSkuDTO parent = bomList.get(0);
-        //父级sku编码
-        resultMap.put("id",entity.getId());
-        //父级sku编码
-        resultMap.put("parentSkuNo",parent.getSkuNo());
-        //版本
-        resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
 
-        //子级物料
-        List<BomChildrenSkuDTO> childrenList = parent.getChildren();
-        if (CollectionUtils.isEmpty(childrenList)) {
+        List<Map<String, Object>> listMap = new ArrayList<>();
+
+        for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
+            Map<String, Object> resultMap = new HashMap<>();
+            DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+            if (SyncStatusEnum.SUCCESS_SYNC.getCode().equals(productBomHistoryTask.getStatus())) {
+                continue;
+            }
+            //金蝶id
+            resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+            //操作（枚举SyncKingdeeOperateEnum）
+            resultMap.put("operate", operate);
+
+            List<ProductBomSkuHistoryEntity> childrenList = skuHistoryList.stream().filter(obj -> obj.getBomHistoryId().equals(productBomHistoryEntity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childrenList)) {
+                continue;
+            }
+            //父级物料
+            ProductBomSkuHistoryEntity parent = childrenList.get(0);
+            //父级sku编码
+            resultMap.put("id",entity.getId());
+            //父级sku编码
+            resultMap.put("parentSkuNo",parent.getSkuNo());
+            //版本
+            resultMap.put("version",parent.getSkuNo().concat("_").concat(productBomHistoryEntity.getVersion().toString()));
+
+            //删除操作
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+                sendMqAndSaveTask(operate,resultMap);
+                return;
+            }
+
+            List<Map<String, Object>> mapList = new ArrayList<>();
+            for (ProductBomSkuHistoryEntity child: childrenList) {
+                Map<String, Object> detailMap = new HashMap<>(MathUtil.THREE);
+                detailMap.put("skuNo",child.getSkuNo());
+                detailMap.put("date", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                detailMap.put("quantity",child.getQuantity().toString());
+                mapList.add(detailMap);
+            }
+            resultMap.put("list",mapList);
+            listMap.add(resultMap);
+        }
+        if (CollectionUtils.isEmpty(listMap)) {
             return;
         }
-        List<Map<String, Object>> mapList = new ArrayList<>();
-
-        for (BomChildrenSkuDTO bomChildrenSkuDTO: childrenList) {
-            Map<String, Object> detailMap = new HashMap<>(MathUtil.THREE);
-            detailMap.put("skuNo",bomChildrenSkuDTO.getSkuNo());
-            detailMap.put("date", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            detailMap.put("quantity",bomChildrenSkuDTO.getQuantity().toString());
-            mapList.add(detailMap);
-        }
-        resultMap.put("list",mapList);
-        //生成任务
-        sendMqAndSaveTask(entity,operate,resultMap);
+        listMap.forEach(obj -> {
+            //生成任务
+            sendMqAndSaveTask(operate, obj);
+        });
     }
 
     /**
      * @description: 生成任务
      * @author Will
      * @date: 2023/10/16 9:17
-     * @param entity
      * @param operate
      * @param resultMap
      */
-    private void sendMqAndSaveTask (BomInfoEntity entity,String operate,Map<String, Object> resultMap) {
+    private void sendMqAndSaveTask (String operate,Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getSerialNumber());
+        taskFeignDTO.setSourceId((String)resultMap.get("id"));
+        taskFeignDTO.setSourceCode((String)resultMap.get("version"));
         taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName());

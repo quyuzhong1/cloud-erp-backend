@@ -42,7 +42,7 @@ public class BomInfoEntity extends BaseEntity implements Serializable {
     /**
      * BOM 的版本
      */
-    private Integer bomVersion;
+    private String bomVersion;
 
     /**
      * 同步金蝶id

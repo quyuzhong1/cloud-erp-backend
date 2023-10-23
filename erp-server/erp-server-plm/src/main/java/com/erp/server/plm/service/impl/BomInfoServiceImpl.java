@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
@@ -20,7 +21,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -59,6 +59,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1156,8 +1158,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         String bomId = bom.getId();
         BomInfoEntity bomEntity = this.getById(bomId);
         if (bomEntity != null) {
-            Integer bomVersion = bomEntity.getBomVersion();
-            bomEntity.setBomVersion(bomVersion + 1);
+            String bomVersion = bomEntity.getBomVersion();
+            bomEntity.setBomVersion(MathUtil.add(MathUtil.valueOf(bomVersion),BigDecimal.ONE).toString());
             bomEntity.setType(bom.getType());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
@@ -1426,7 +1428,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 AddBomDTO addBomDTO = new AddBomDTO();
                 BomInfoExcelDTO excelDTO = value.get(0);
                 addBomDTO.setType(BomTypeEnum.getType(excelDTO.getTypeName()));
-                addBomDTO.setVersion(MathUtil.ONE);
+                addBomDTO.setVersion(StringPool.ONE);
                 addBomDTO.setSubmitType(BomTypeEnum.CREATE.getType());
                 //获取sku信息
                 List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO,value,skuList);
@@ -1472,7 +1474,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             childDTO.setSkuNo(childSkuVO.getSkuNo());
             childDTO.setSkuName(childSkuVO.getSkuName());
             childDTO.setParentSkuId(parentSkuVO.getSkuId());
-            childDTO.setBomVersion(MathUtil.ONE);
+            childDTO.setBomVersion(StringPool.ONE);
             childDTO.setQuantity(Integer.valueOf(bomInfoExcelDTO.getQuantityStr()));
             childDTO.setProductId(childSkuVO.getProductId());
             childSkuList.add(childDTO);

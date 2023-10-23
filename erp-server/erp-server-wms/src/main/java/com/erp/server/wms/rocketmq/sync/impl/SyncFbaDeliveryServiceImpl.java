@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -9,7 +10,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
@@ -231,7 +231,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setSkuId(parentSkuId);
 
             //版本
-            Integer version = skuList.stream().filter(obj -> obj.getParentSkuId().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(MathUtil.ZERO);
+            String version = skuList.stream().filter(obj -> obj.getParentSkuId().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(StringPool.ZERO);
             member.setReferenceVersion(version);
 
             // 子件明细
@@ -314,7 +314,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setSkuId(parentSkuId);
 
             //版本
-            Integer version = skuList.stream().filter(obj -> obj.getParentSkuId().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(MathUtil.ZERO);
+            String version = skuList.stream().filter(obj -> obj.getParentSkuId().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(StringPool.ZERO);
             member.setReferenceVersion(version);
 
             // 子件明细

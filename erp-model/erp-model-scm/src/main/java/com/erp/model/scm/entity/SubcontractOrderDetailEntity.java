@@ -148,7 +148,7 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     * bom版本
     */
     @TableField("bom_version")
-    private Integer bomVersion;
+    private String bomVersion;
 
     /**
     * 是否自动生成采购订单
@@ -197,6 +197,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
      */
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
+
+    /**
+     * bom历史版本id
+     */
+    @TableField("bom_history_id")
+    private String bomHistoryId;
 
 
     @TableField(exist = false)

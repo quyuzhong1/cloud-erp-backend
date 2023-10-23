@@ -49,7 +49,7 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 参照版本 http://172.16.100.11:3002/project/47/interface/api/21859
          */
-        private Integer referenceVersion;
+        private String referenceVersion;
 
         /**
          * 备注
