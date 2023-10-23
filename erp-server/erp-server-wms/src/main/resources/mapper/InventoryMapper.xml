@@ -33,6 +33,9 @@
                 left join product_sale ps on ps.sku_id = pd.id
             <where>
                 it.is_deleted = false
+                <if test="params.productName != null and params.productName != ''">
+                    and pd.name  ILIKE concat('%', #{params.productName} ,'%')
+                </if>
                 <if test="params.skuNoList != null and params.skuNoList.size != ''">
                     and it.sku_no in
                     <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">

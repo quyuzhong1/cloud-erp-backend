@@ -88,6 +88,11 @@ public class StocktakingProfitLossDTO implements Serializable {
         private List<String> stocktakingUserIdList;
 
         /**
+         * 备注
+         */
+        private String remark;
+
+        /**
          * 详情
          */
         @Valid
@@ -106,7 +111,6 @@ public class StocktakingProfitLossDTO implements Serializable {
         private String id;
 
 
-
         /**
          * 单据类型
          */
@@ -114,12 +118,16 @@ public class StocktakingProfitLossDTO implements Serializable {
         private BillTypeEnum billType;
 
 
-
         /**
          * 库存组织
          */
         @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
 
         /**
@@ -460,6 +468,23 @@ public class StocktakingProfitLossDTO implements Serializable {
          * 单据状态名
          */
         private String approveStatusName;
+
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgId;
+
+
+        /**
+         * 库存组织名
+         */
+        private String inventoryOrgName;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
 
 
         /**

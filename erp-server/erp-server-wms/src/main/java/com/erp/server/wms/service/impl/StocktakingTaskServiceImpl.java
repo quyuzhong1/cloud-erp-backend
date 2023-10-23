@@ -486,6 +486,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //任务id
         String taskId = taskEntity.getId();
         List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(taskId));
+        List<String> warehouseIdList = stocktakingTaskDetailList.stream().map(StocktakingTaskDetailEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
         //以仓库分组
         Map<String, List<StocktakingTaskDetailEntity>> warehouseMap = stocktakingTaskDetailList.stream().collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getWarehouseId));
         //盘盈盘亏单 添加实体
@@ -501,9 +503,14 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             List<StocktakingTaskDetailEntity> taskDetailList = item.getValue();
             //盘盈的任务明细
             List<StocktakingTaskDetailEntity> profitDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() > 0).collect(Collectors.toList());
+
+            //库存组织
+            String orgId = warehouseList.stream().filter(w -> w.getId().equals(item.getKey())).
+                    map(WarehouseEntity::getOrgId).findFirst().orElse("");
             if (CollectionUtils.isNotEmpty(profitDetailList)) {
                 //处理盘盈数据
                 StocktakingProfitLossDTO.AddDTO profitAddDTO = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
+                profitAddDTO.setInventoryOrgId(orgId);
                 addList.add(profitAddDTO);
             }
             //盘亏的任务明细
@@ -511,6 +518,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             if (CollectionUtils.isNotEmpty(lossDetailList)) {
                 //处理盘亏数据
                 StocktakingProfitLossDTO.AddDTO lossAddDTO = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
+                lossAddDTO.setInventoryOrgId(orgId);
                 addList.add(lossAddDTO);
             }
         }
@@ -596,10 +604,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             sb.append(userName).append("确认了,").append("盘点任务单:");
             List<StocktakingTaskDTO.CheckResultDTO> list = item.getValue();
             String code = list.get(0).getCode();
-            sb.append(code+" ");
+            sb.append(code + " ");
             for (StocktakingTaskDTO.CheckResultDTO detail : list) {
                 sb.append("SKU为: ");
-                sb.append(detail.getSkuNo()+" ");
+                sb.append(detail.getSkuNo() + " ");
                 sb.append("盘点库存为 0");
             }
             addModuleOperateLog.setContent(sb.toString());
@@ -833,7 +841,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             if (CollUtil.isNotEmpty(keys)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
                 String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
-                log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName,item.getWarehouseLocation(),item.getSkuNo(),item.getDictInventoryStatus());
+                log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
                 throw new ServiceException(ApiError.STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
             }
             String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());

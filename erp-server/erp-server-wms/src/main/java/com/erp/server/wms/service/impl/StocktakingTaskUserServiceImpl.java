@@ -13,6 +13,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         if (CollectionUtils.isEmpty(sourceIdList)) {
             return Collections.emptyList();
         }
+        sourceIdList=sourceIdList.stream().filter(s-> StringUtils.isNotBlank(s)).collect(Collectors.toList());
         return this.lambdaQuery().in(StocktakingTaskUserEntity::getSourceId, sourceIdList).list();
     }
 
