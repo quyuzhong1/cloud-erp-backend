@@ -130,6 +130,7 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
                 item.setDisabled(Boolean.TRUE);
             }
         }
+        resultList = resultList.stream().distinct().collect(Collectors.toList());
         return resultList;
 
     }
