@@ -81,6 +81,12 @@ public class KingdeePushJob {
     @Resource
     private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
 
+    @Resource
+    private SyncKingdeePoReceiveService syncKingdeePoReceiveService;
+
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
     /**
      * 推送加工单
      */
@@ -284,6 +290,29 @@ public class KingdeePushJob {
         list.forEach(obj->{
             try {
                 syncKingdeeSoReturnService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("销售退货单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("销售退货单【{}】推送金蝶失败",obj.getCode(),e);
+            }
+        });
+    }
+
+    /**
+     * 推送采购收货单
+     */
+    @XxlJob("kingdeePoReceive")
+    public void kingdeePoReceive() {
+        List<WarehouseReceiveEntity> list = warehouseReceiveService.lambdaQuery()
+                .in(WarehouseReceiveEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(WarehouseReceiveEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(WarehouseReceiveEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .list();
+        if (ObjectUtils.isEmpty(list)) {
+            log.info("无需要同步的销售退货单");
+            return;
+        }
+        list.forEach(obj->{
+            try {
+                syncKingdeePoReceiveService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
                 XxlJobHelper.log("销售退货单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
                 log.error("销售退货单【{}】推送金蝶失败",obj.getCode(),e);
