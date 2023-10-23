@@ -248,6 +248,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             return;
         }
         for (DmpPullTaskDTO.ListDTO listDTO : list) {
+            listDTO.setSyncTypeName("拉取");
             //来源类型名称
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             //同步状态名称

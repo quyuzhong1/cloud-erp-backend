@@ -70,7 +70,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             return;
         }
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
     /**
@@ -98,12 +98,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         this.updateById(entity);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
         if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
             List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_UPDATE.getCode()));
+                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             }
         }
         return Boolean.TRUE;

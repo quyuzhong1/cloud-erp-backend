@@ -75,7 +75,7 @@ public class MabangPullServiceTest {
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         SaveParam param = new SaveParam(json);
 //        kingdeeCommonService.queryGroupInfo(apiUtils, map.get("Ids").toString());
-        kingdeeCommonService.customerGroupDelete(apiUtils, (String)map.get("syncKingdeeId"));
+        kingdeeCommonService.customerGroupDelete(apiUtils, (String)map.get("syncKingdeeId"),(String)map.get("groupName"));
 
 
 //        Boolean aBoolean = kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);

@@ -1,5 +1,6 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,9 +119,9 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         }
 
         //变更日期
-        resultMap.put("changeDate",entity.getChangeDate());
+        resultMap.put("changeDate", LocalDateTimeUtil.format(entity.getChangeDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         //采购日期
-        resultMap.put("purchaseDate",purchaseOrderEntity.getPurchaseDate());
+        resultMap.put("purchaseDate",LocalDateTimeUtil.format(purchaseOrderEntity.getPurchaseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //供应商
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {

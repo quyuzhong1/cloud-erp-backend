@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class DmpPushTaskDTO {
         /**
          * 来源类型
          */
-        private String sourceType;
+        private List<String> sourceTypeList;
 
         /**
          * 来源编号
@@ -66,7 +67,17 @@ public class DmpPushTaskDTO {
         /**
          * 同步状态
          */
-        private String status;
+        private List<String> statusList;
+
+        /**
+         * 推送失败原因
+         */
+        private String returnMsg;
+
+        /**
+         * 同步时间
+         */
+        private List<LocalDate> lastSyncTime;
     }
 
     @Data
@@ -93,6 +104,11 @@ public class DmpPushTaskDTO {
          * 来源单号
          */
         private String sourceCode;
+
+        /**
+         * 同步类型
+         */
+        private String syncTypeName;
 
         /**
          * 目标平台名称
