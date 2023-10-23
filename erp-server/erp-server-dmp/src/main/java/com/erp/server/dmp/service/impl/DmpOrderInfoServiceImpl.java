@@ -180,10 +180,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public void cleanOrder(Integer pageSize) {
-        System.setProperty("sun.net.client.defaultConnectTimeout", String
-                .valueOf(20000));// （单位：毫秒）
-        System.setProperty("sun.net.client.defaultReadTimeout", String
-                .valueOf(20000)); // （单位：毫秒）
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .and(wrapper ->
@@ -222,7 +218,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo());
             if (null != shopByShopNo) {
-                if (!Objects.equals(dmpOrderInfoEntity.getSite(), shopByShopNo.getSite())) {
+                if (StringUtils.isNotBlank(shopByShopNo.getSite())) {
                     updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                 }
                 DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
