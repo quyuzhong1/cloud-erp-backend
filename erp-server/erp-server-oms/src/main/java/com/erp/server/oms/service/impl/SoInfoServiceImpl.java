@@ -322,14 +322,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(isNullReceiveDateCode + " 销售订单 收款日期不能为空");
         }
         BigDecimal zeroFlag = BigDecimal.ZERO;
+        //售后订单
+        String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
+        //检查的销售订单
+        List<SoInfoEntity> checkSoList = list.stream().filter(s -> !afterSaleOrder.equals(s.getOrderType())).collect(Collectors.toList());
         //收款金额为空的
-        List<String> isNullReceiveAmountList = list.stream().filter(s -> Objects.isNull(s.getReceiveAmount()) || zeroFlag.compareTo(s.getReceiveAmount()) == 0).map(SoInfoEntity::getCode).
+        List<String> isNullReceiveAmountList = checkSoList.stream().filter(s -> Objects.isNull(s.getReceiveAmount()) || zeroFlag.compareTo(s.getReceiveAmount()) == 0).map(SoInfoEntity::getCode).
                 collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullReceiveAmountList)) {
             String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
             throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空或者为零");
         }
-        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(ids);
+        List<String> checkSoIdList=checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(checkSoIdList);
         //这个是 单价为空的集合
         List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullPriceList)) {
