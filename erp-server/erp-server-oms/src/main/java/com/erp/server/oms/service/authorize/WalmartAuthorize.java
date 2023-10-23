@@ -16,11 +16,20 @@ import org.springframework.stereotype.Component;
 @AuthSaveData(method = PlatformDictEnum.WALMART)
 public class WalmartAuthorize implements IShopAuthorizeService<T> {
 
+    /**
+     * 授权
+     * @param dto
+     * @return
+     */
     @Override
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         return null;
     }
 
+    /**
+     * 取消授权
+     * @param dto
+     */
     @Override
     public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
 
