@@ -159,7 +159,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
@@ -185,7 +185,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         //更新plm任务列表任务负责人名称
         if (!StrUtil.equals(sysUserInfoDTO.getUserName(),userName)) {

@@ -189,11 +189,12 @@ public interface KingdeeCommonService {
      *
      * @param apiUtils
      * @param syncKingdeeId
+     * @param groupFieldKey
      * @return void
      * @Author Luo_WG
      * @Date 2023/5/26 15:32
      **/
-    void customerGroupDelete(KingdeeApiUtils apiUtils, String syncKingdeeId);
+    void customerGroupDelete(KingdeeApiUtils apiUtils, String syncKingdeeId,String groupFieldKey);
 
     /**
      * 客户分组新增或修改

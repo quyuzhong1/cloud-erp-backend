@@ -227,6 +227,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             return;
         }
         for (DmpPushTaskDTO.ListDTO listDTO : list) {
+            listDTO.setSyncTypeName("推送");
             //来源类型名称
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             //同步状态名称

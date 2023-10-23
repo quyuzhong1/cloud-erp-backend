@@ -47,11 +47,17 @@
             <include refid="Base_Column_List"></include>
         from dmp_push_task
         where is_deleted = false
-        <if test="params.sourceType != null and params.sourceType != '' ">
-            and source_type = #{params.sourceType}
+        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
+            and source_type in
+            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
         <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code = #{params.sourceCode}
+            and source_code ilike concat('%',#{params.sourceCode},'%')
+        </if>
+        <if test="params.returnMsg != null and params.returnMsg != '' ">
+            and return_msg ilike concat('%',#{params.returnMsg},'%')
         </if>
         <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
             and target_platform_name = #{params.targetPlatformName}
@@ -59,8 +65,14 @@
         <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
             and source_platform_name = #{params.sourcePlatformName}
         </if>
-        <if test="params.status != null and params.status != '' ">
-            and status = #{params.status}
+        <if test="params.statusList != null and params.statusList != '' ">
+            and status in
+            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
+            and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -95,11 +107,17 @@
             </foreach>
         </if>
         <if test="params.ids == null or params.ids.size == 0">
-            <if test="params.sourceType != null and params.sourceType != '' ">
-                and source_type = #{params.sourceType}
+            <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
+                and source_type in
+                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
             </if>
             <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code = #{params.sourceCode}
+                and source_code ilike concat('%',#{params.sourceCode},'%')
+            </if>
+            <if test="params.returnMsg != null and params.returnMsg != '' ">
+                and return_msg ilike concat('%',#{params.returnMsg},'%')
             </if>
             <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
                 and target_platform_name = #{params.targetPlatformName}
@@ -107,8 +125,14 @@
             <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
                 and source_platform_name = #{params.sourcePlatformName}
             </if>
-            <if test="params.status != null and params.status != '' ">
-                and status = #{params.status}
+            <if test="params.statusList != null and params.statusList != '' ">
+                and status in
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
+                and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
             </if>
         </if>
         <!--权限-->
