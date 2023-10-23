@@ -233,7 +233,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             //同步状态名称
             listDTO.setStatusName(SyncStatusEnum.getNameByCode(listDTO.getStatus()));
             //同步操作名称
-            listDTO.setSyncOperateName(SyncOperateEnum.getNameByCode(listDTO.getSyncOperate()));
+            listDTO.setSyncOperateName(SyncOperateEnum.getDescByCode(listDTO.getSyncOperate()));
         }
     }
 
