@@ -44,6 +44,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
+import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,6 +63,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -150,6 +152,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private TaskDocHistoryService taskDocHistoryService;
 
+    @Autowired
+    private TemplateTaskMapper templateTaskMapper;
+
+    @Autowired
+    private TemplateTaskService templateTaskService;
     /**
      * 添加系统的产品任务
      * 只添加立项模板的任务
@@ -4138,9 +4145,37 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isBlank(sysUserInfoDTO.getUid()) || StringUtils.isBlank(sysUserInfoDTO.getUserName())) {
             return;
         }
-        lambdaUpdate().eq(ProjectTaskEntity::getChargeId,sysUserInfoDTO.getUid())
-                .set(ProjectTaskEntity::getChargeName,sysUserInfoDTO.getUserName())
-                .update();
+        List<String> chargeIdList = new ArrayList<>();
+
+        //更新模板任务的任务人名称
+        List<TemplateTaskEntity> templateTaskList = templateTaskMapper.listByChargeId(sysUserInfoDTO.getUid());
+        if (CollectionUtils.isNotEmpty(templateTaskList)) {
+            List<String> templateChargeIdList = templateTaskList.stream().flatMap(obj -> Stream.of(Arrays.stream(obj.getChargeId().split(",")).toArray(String[]::new))).distinct().collect(Collectors.toList());
+            chargeIdList.addAll(templateChargeIdList);
+        }
+
+        List<ProjectTaskEntity> projectTaskList = this.baseMapper.listByChargeId(sysUserInfoDTO.getUid());
+       if (CollectionUtils.isNotEmpty(projectTaskList)) {
+           List<String> projectChargeIdList = projectTaskList.stream().flatMap(obj -> Stream.of(Arrays.stream(obj.getChargeId().split(",")).toArray(String[]::new))).distinct().collect(Collectors.toList());
+           chargeIdList.addAll(projectChargeIdList);
+       }
+       if (CollectionUtils.isEmpty(chargeIdList)) {
+           return;
+       }
+        chargeIdList = chargeIdList.stream().distinct().collect(Collectors.toList());
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(chargeIdList);
+        //更新模板任务负责人
+        for (TemplateTaskEntity templateTaskEntity : templateTaskList) {
+            String chargeName = Arrays.stream(templateTaskEntity.getChargeId().split(",")).map(obj -> obj.equals(sysUserInfoDTO.getUid()) ? sysUserInfoDTO.getUserName() : userList.stream().filter(e -> obj.equals(e.getUserId())).findFirst().flatMap(e -> Optional.ofNullable(e.getUserName())).orElse("")).collect(Collectors.joining(","));
+            templateTaskEntity.setChargeName(chargeName);
+        }
+        templateTaskService.updateBatchById(templateTaskList);
+        //更新任务列表负责人
+        for (ProjectTaskEntity projectTaskEntity : projectTaskList) {
+            String chargeName = Arrays.stream(projectTaskEntity.getChargeId().split(",")).map(obj -> obj.equals(sysUserInfoDTO.getUid()) ? sysUserInfoDTO.getUserName() : userList.stream().filter(e -> obj.equals(e.getUserId())).findFirst().flatMap(e -> Optional.ofNullable(e.getUserName())).orElse("")).collect(Collectors.joining(","));
+            projectTaskEntity.setChargeName(chargeName);
+        }
+        this.updateBatchById(projectTaskList);
     }
 
 
