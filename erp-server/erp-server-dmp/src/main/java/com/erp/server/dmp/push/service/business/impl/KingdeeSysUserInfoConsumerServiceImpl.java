@@ -247,7 +247,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         //操作项
         String operate = (String) map.get("operate");
         //删除
-        kingdeeCommonService.delete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SYS_USER_INFO.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SYS_USER_INFO.getCode(),operate);
         return;
     }
 
