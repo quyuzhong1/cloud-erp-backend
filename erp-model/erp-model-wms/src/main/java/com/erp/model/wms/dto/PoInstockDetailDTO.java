@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author Will
@@ -142,5 +143,42 @@ public class PoInstockDetailDTO implements Serializable {
          * 库存状态
          */
         private String inventoryStatusName;
+
+        /**
+         * 单价=含税单价/（1+税率）
+         */
+        private BigDecimal price;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 金额=未税价格*实收数量
+         */
+        private BigDecimal amount;
+
+        /**
+         * 价税合计=含税单价*实收数量
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
     }
 }

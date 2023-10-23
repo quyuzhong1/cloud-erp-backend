@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -60,9 +61,6 @@ public class MathUtil {
      * 正则校验日期
      */
     public static Pattern P_DATE = Pattern.compile("^((\\d{2}(([02468][048])|([13579][26]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])))))|(\\d{2}(([02468][1235679])|([13579][01345789]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|(1[0-9])|(2[0-8]))))))");
-
-
-
 
 
     /**
@@ -330,7 +328,7 @@ public class MathUtil {
      * @return
      */
     public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale) {
-        if (d2 == null||d2.compareTo(BigDecimal.ZERO)==0) {
+        if (d2 == null || d2.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
         BigDecimal newd1 = d1;
@@ -397,12 +395,13 @@ public class MathUtil {
 
     /**
      * 是否超出误差范围
+     *
      * @param param1
      * @param param2
      * @param objParam 误差范围
      * @return true 超出误差范围
      */
-    public Boolean diffGreaterThan(BigDecimal param1, BigDecimal param2, BigDecimal objParam){
+    public Boolean diffGreaterThan(BigDecimal param1, BigDecimal param2, BigDecimal objParam) {
         return compareTo(subtract(param1, param2).abs(), objParam) > 0;
     }
 
@@ -432,6 +431,27 @@ public class MathUtil {
         return db.setScale(scale, BigDecimal.ROUND_DOWN);
     }
 
+    /**
+     * 获取到未含税的值
+     *
+     * @param taxPrice 含税的价格
+     * @param taxRate  税率 除以过100 的
+     * @return java.math.BigDecimal
+     * @author yl
+     * @date 2023-10-23 11:03
+     */
+    public static BigDecimal getUntaxed(BigDecimal taxPrice, BigDecimal taxRate) {
+        if (Objects.isNull(taxPrice)) {
+            return BigDecimal.ZERO;
+        }
+        if (Objects.isNull(taxRate)) {
+            taxRate = BigDecimal.ZERO;
+        }
+        BigDecimal divValue = taxRate.add(BigDecimal_1);
+        return MathUtil.divide(taxPrice, divValue, 2);
+
+    }
+
     private static final Set<Collector.Characteristics> CHARACTERISTICS = Collections.emptySet();
 
 
@@ -439,6 +459,7 @@ public class MathUtil {
     private static <I, R> Function<I, R> check() {
         return i -> (R) i;
     }
+
 
     @SuppressWarnings("hiding")
     static class CollectorImpl<T, A, R> implements Collector<T, A, R> {
@@ -489,6 +510,7 @@ public class MathUtil {
 
     /**
      * 求和方法
+     *
      * @param mapper
      * @param <T>
      * @return
@@ -509,6 +531,7 @@ public class MathUtil {
 
     /**
      * 求最大值，这里的最小MIN值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MIN_VALUE 或者 Double.MIN_VALUE
+     *
      * @param mapper
      * @param <T>
      * @return
@@ -529,6 +552,7 @@ public class MathUtil {
 
     /**
      * 求最小值，这里的最大MAX值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MAX_VALUE 或者 Double.MAX_VALUE
+     *
      * @param mapper
      * @param <T>
      * @return
@@ -549,6 +573,7 @@ public class MathUtil {
 
     /**
      * 求平均，并且保留小数，返回一个平均值
+     *
      * @param mapper
      * @param newScale
      * @param roundingMode
