@@ -314,8 +314,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
+        //售后订单
+        String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
+        //检查的销售订单
+        List<SoInfoEntity> checkSoList = list.stream().filter(s -> !afterSaleOrder.equals(s.getOrderType())).collect(Collectors.toList());
         //收款日期为空的
-        List<String> isNullReceiveDateList = list.stream().filter(s -> Objects.isNull(s.getReceiveDate())).map(SoInfoEntity::getCode).
+        List<String> isNullReceiveDateList = checkSoList.stream().filter(s -> Objects.isNull(s.getReceiveDate())).map(SoInfoEntity::getCode).
                 collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullReceiveDateList)) {
             String isNullReceiveDateCode = isNullReceiveDateList.stream().collect(Collectors.joining(","));
