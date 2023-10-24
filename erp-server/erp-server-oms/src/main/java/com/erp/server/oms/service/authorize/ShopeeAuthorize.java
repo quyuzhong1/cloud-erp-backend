@@ -68,6 +68,9 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
             returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
         }
         returnDTO.setMainAccountId(dto.getMainAccountId());
+        if (Objects.isNull(dto.getShopId()) && Objects.isNull(dto.getMainAccountId())){
+            throw new ServiceException("虾皮授权时,店铺和主账号不能同时为空");
+        }
         return shopInfoService.getShopeeReturn(returnDTO);
     }
 

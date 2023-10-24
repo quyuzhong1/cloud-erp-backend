@@ -479,8 +479,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        authModelService.shopAuthorize(dto);
-        return Boolean.FALSE;
+        return authModelService.shopAuthorize(dto);
     }
 
     /**
@@ -653,23 +652,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                     throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
                 }
-//                ShopeeAuth shopeeAuth = new ShopeeAuth();
-//                shopeeAuth.setAccessToken("70784a76455154774f7a746b7368694e");
-//                shopeeAuth.setRefreshToken("71694c57746269426e4270646a526578");
-//                shopeeAuth.setMerchantIdList(Collections.singletonList(1315427L));
-//                List<Long> shopIds = new ArrayList<>();
-//                shopIds.add(497440222L);
-//                shopIds.add(497437542L);
-//                shopIds.add(497438607L);
-//                shopIds.add(497435491L);
-//                shopIds.add(954277234L);
-//                shopIds.add(954280155L);
-//                shopIds.add(954283475L);
-//                shopeeAuth.setShopIdList(shopIds);
-//                shopeeAuth.setExpireIn(14367);
-//                JSONObject jsonObject = JSONObject.from(shopAccountToken.getResponse());
                 updateShopeeToken(dto, shopeeAuth, cfgAppClient, AuthTypeEnum.MAIN.getCode());
-                //需要更新店铺和店主token
             }
         }
         return Boolean.TRUE;
@@ -680,7 +663,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             return;
         }
-        ShopAuthEntity shopAuth = shopAuthService.getByShopId(dto.getId());
+        String shopeeId = null;
+        if (Objects.nonNull(dto.getShopId())){
+            shopeeId = String.valueOf(dto.getShopId());
+        }else{
+            shopeeId = String.valueOf(dto.getMainAccountId());
+        }
+        ShopAuthEntity shopAuth = shopAuthService.getShopeeShopById(String.valueOf(shopeeId));
         if (Objects.isNull(shopAuth)) {
             shopAuth = new ShopAuthEntity();
             shopAuth.setShopId(dto.getId());
