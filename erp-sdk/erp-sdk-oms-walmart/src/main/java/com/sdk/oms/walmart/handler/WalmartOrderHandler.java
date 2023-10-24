@@ -25,6 +25,7 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -101,6 +102,9 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
             orderBeanList.addAll(walmartOrderDTO.getList().getElements().getOrder());
 
             nextCursor = walmartOrderDTO.getList().getMeta().getNextCursor();//下一页
+            if (StringUtil.isBlank(nextCursor)) {
+                break;
+            }
         }
 
         if (CollectionUtils.isEmpty(orderBeanList)) {
