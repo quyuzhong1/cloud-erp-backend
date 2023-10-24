@@ -244,7 +244,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/getShopAuthorizeUrl")
+    @PostMapping("/getShopAuthorizeUrl")
     public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeDTO dto) {
         String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
         return success(resultUrl);
