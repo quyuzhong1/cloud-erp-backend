@@ -21,7 +21,7 @@ public class PullWalmartJob {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     /**
-     * 拉取Shopify任务
+     * 拉取沃尔玛任务
      */
     @XxlJob("walmartExecute")
     public void execute() {
