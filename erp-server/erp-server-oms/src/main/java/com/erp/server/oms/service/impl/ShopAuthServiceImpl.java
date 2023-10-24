@@ -11,6 +11,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -141,8 +142,8 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     }
 
     @Override
-    public String getShopeeCodeUrl(String id) {
-        if (Objects.isNull(id)) {
+    public String getShopeeCodeUrl(ShopAuthorizeDTO dto) {
+        if (Objects.isNull(dto)) {
             throw new ServiceException("店铺记录id不能为空");
         }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -153,7 +154,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         try {
             CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
             if (Objects.nonNull(cfgAppClient)) {
-                String redirect = cfgAppClient.getRedirectUrl() + "?id=" + id;
+                String redirect = cfgAppClient.getRedirectUrl() + "?id=" + dto.getShopId() + "&platformCode=" + dto.getPlatformCode();
                 AuthRequest authRequest = AuthRequest.builder()
                         .host(cfgAppClient.getUrl())
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))

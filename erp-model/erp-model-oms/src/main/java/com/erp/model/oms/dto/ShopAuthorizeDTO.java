@@ -5,7 +5,6 @@ import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -57,7 +56,7 @@ public class ShopAuthorizeDTO implements Serializable {
     /**
      * 店铺id
      */
-    @NotBlank(message = "店铺id不能为空")
+//    @NotBlank(message = "店铺id不能为空") 回调时，存在主账号和店铺只传递一个的情况
     private String shopId;
 
     private Integer mainAccountId;
