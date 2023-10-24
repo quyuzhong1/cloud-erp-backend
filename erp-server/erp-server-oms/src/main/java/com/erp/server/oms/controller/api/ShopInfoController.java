@@ -256,7 +256,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/shopAuthorize")
+    @PostMapping("/shopAuthorize")
     public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
         Boolean result = shopInfoService.shopAuthorize(dto);
         return result ? success() : failure();
