@@ -97,6 +97,26 @@ public interface DmpTaskFeign {
     CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto);
 
     /**
+     * 新增第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param dto
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("feign/cfgAppClient/add")
+    String addCfgAppClient(@RequestBody CfgAppClientDTO.AddDTO dto);
+
+    /**
+     * 修改第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param dto
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("feign/cfgAppClient/update")
+    Boolean updateCfgAppClient(@RequestBody CfgAppClientDTO.UpdateDTO dto);
+
+    /**
      * 创建平台任务
      * @param dto
      * @return

@@ -9,6 +9,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
+import com.common.business.handler.AbstractRefundHandler;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonRefundDTO;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +24,8 @@ import java.util.List;
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.AMAZON)
-@BusinessType(BusinessTypeEnum.ORDER)
-public class AmazonRefundHandler extends AbstractOrderHandler<PlatformAmazonRefundDTO, PlatformRefundDTO> {
+@BusinessType(BusinessTypeEnum.REFUND)
+public class AmazonRefundHandler extends AbstractRefundHandler<PlatformAmazonRefundDTO, PlatformRefundDTO> {
 
     @Override
     public List<PlatformAmazonRefundDTO> download(JobTaskDTO data) {

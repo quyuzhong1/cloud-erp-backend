@@ -163,9 +163,34 @@ public class DmpFeignController extends BaseController {
      * @date 2023-08-28 16:22
      */
     @PostMapping("/getCfgAppClient")
-    public CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto) {
+    public CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto){
         return cfgAppClientService.getCfgAppClient(dto);
     }
+
+    /**
+     * 新增第三方应用信息
+     * @Author Luo_WG
+     * @Date 2023/10/24 9:59
+     * @param dto
+     * @return java.lang.String
+     **/
+    @PostMapping("/cfgAppClient/add")
+    public String addCfgAppClient(@RequestBody CfgAppClientDTO.AddDTO dto){
+        return cfgAppClientService.add(dto);
+    }
+
+    /**
+     * 修改第三方应用信息
+     * @Author Luo_WG
+     * @Date 2023/10/24 9:59
+     * @param dto
+     * @return java.lang.String
+     **/
+    @PostMapping("/cfgAppClient/update")
+    public Boolean updateCfgAppClient(@RequestBody CfgAppClientDTO.UpdateDTO dto){
+        return cfgAppClientService.update(dto);
+    }
+
 
     /**
      * oms推送订单到中台记录推送记录并生成mq消息

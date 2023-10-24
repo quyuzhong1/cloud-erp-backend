@@ -13,6 +13,8 @@
 
 package com.erp.sdk.oms.amz.spapi.model.reports;
 
+import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -42,6 +44,7 @@ public class Report {
   private String reportType = null;
 
   @SerializedName("dataStartTime")
+  @JsonAdapter(value = JSON.OffsetDateTimeTypeAdapter.class)
   private OffsetDateTime dataStartTime = null;
 
   @SerializedName("dataEndTime")

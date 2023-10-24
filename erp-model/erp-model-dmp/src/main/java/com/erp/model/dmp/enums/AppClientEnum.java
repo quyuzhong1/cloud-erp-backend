@@ -1,5 +1,8 @@
 package com.erp.model.dmp.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * @author Lambda
  * @Classname AppClientEnum
@@ -7,45 +10,33 @@ package com.erp.model.dmp.enums;
  * @Date 2023-08-29 10:35
  * @Created by yl
  */
+@Getter
+@AllArgsConstructor
 public enum AppClientEnum  {
 
     SHOP_AUTHORIZE("shopAuthorize","sales","Shopify"),
     SHOP_ACCESS_TOKEN("shopAccessToken","sales","Shopify"),
     SHOP_AUTHORIZE_INSTALL("shopAuthorizeInstall","sales","Shopify"),
-    WALMART_AUTHORIZE("walmartAuthorize","sales","walmart"),
-    WALMART_ACCESS_TOKEN("walmartAccessToken","sales","walmart"),
+    WALMART_AUTHORIZE("walmartAuthorize","sales","Walmart"),
+    WALMART_ACCESS_TOKEN("walmartAccessToken","sales","Walmart"),
+    SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
+
 
     ;
 
     /**
      *  业务类型
      */
-    private String businessType;
+    private final String businessType;
 
     /**
      * 平台类型
      */
-    private String platformType;
+    private final String platformType;
 
     /**
      * 平台
      */
-    private String platform;
+    private final String platform;
 
-    public String getBusinessType() {
-        return businessType;
-    }
-
-    public String getPlatformType() {
-        return platformType;
-    }
-
-    public String getPlatform() {
-        return platform;
-    }
-    AppClientEnum(String businessType, String platformType,String platform) {
-        this.businessType = businessType;
-        this.platformType = platformType;
-        this.platform = platform;
-    }
 }

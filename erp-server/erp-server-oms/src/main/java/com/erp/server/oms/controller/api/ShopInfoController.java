@@ -10,12 +10,17 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -235,13 +240,13 @@ public class ShopInfoController extends BaseController {
 
 
     /**
-     * 获取到安装的url
+     * 获取店铺授权地址的url
      *
      * @return
      */
-    @GetMapping("/getShopifyInstallUrl")
-    public ApiResult getShopAuthUrl(@RequestParam("id") String id) {
-        String resultUrl = shopInfoService.getShopifyInstallUrl(id);
+    @PostMapping("/getShopAuthorizeUrl")
+    public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
         return success(resultUrl);
     }
 
@@ -252,13 +257,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @GetMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestParam("code") String code,
-                                   @RequestParam("hmac") String hmac,
-                                   @RequestParam("host") String host,
-                                   @RequestParam("shop") String shop,
-                                   @RequestParam("timestamp") String timestamp
-    ) {
-        Boolean result = shopInfoService.shopAuthorize(code, hmac, host, shop, timestamp);
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        Boolean result = shopInfoService.shopAuthorize(dto);
         return result ? success() : failure();
     }
 
@@ -280,8 +280,20 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/cancelAuthorize")
-    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = shopInfoService.cancelAuthorize(dto.getId());
+    public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
+        Boolean result = shopInfoService.cancelAuthorize(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 获取虾皮授权回调
+     *
+     * @param dto
+     * @return
+     */
+    @GetMapping("/getShopeeReturn")
+    public ApiResult getShopeeReturn(@SpringQueryMap ShopAuthDTO.ReturnDTO dto) {
+        Boolean result = shopInfoService.getShopeeReturn(dto);
         return result ? success() : failure();
     }
 }
