@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
@@ -135,12 +136,13 @@ public class ProductSearchDTO extends PermissionsDTO {
         /**
          * sku编号
          */
+        @NotEmpty(message = "SKU不能为空")
         private List<String> skuNoList;
     }
 
     @Data
     @NoArgsConstructor
-    public static class SkuListDTO extends PermissionsDTO{
+    public static class SkuListDTO{
 
         /**
          * 图片URL
