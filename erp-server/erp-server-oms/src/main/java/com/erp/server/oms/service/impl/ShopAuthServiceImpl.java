@@ -19,6 +19,8 @@ import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopAuthService;
+import com.sdk.oms.shopee.dto.base.request.AuthRequest;
+import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopee.service.ShopeeOrderService;
 import com.sdk.oms.shopee.service.ShopeeProductService;
@@ -149,7 +151,13 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
             CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
             if (Objects.nonNull(cfgAppClient)) {
                 String redirect = cfgAppClient.getRedirectUrl() + "?id=" + id;
-                return shopeeAuthService.getCodeUrl(cfgAppClient.getUrl(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), redirect);
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .redirect(redirect)
+                        .build();
+                return shopeeAuthService.getCodeUrl(authRequest);
             } else {
                 throw new ServiceException("虾皮基础配置未找到");
             }
@@ -161,7 +169,6 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public List<ShopAuthEntity> getShopeeShopList(String type) {
-
         return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
     }
 
@@ -173,6 +180,36 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public void updateShopeeToken(ShopAuthEntity shopAuthEntity) {
+        Optional.ofNullable(shopAuthEntity.getShopeeId()).orElseThrow(() -> new ServiceException("店铺id不能为空"));
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        try {
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.isNull(cfgAppClient)) {
+                throw new ServiceException("虾皮基础配置未找到");
+            }
+            ShopAuthEntity shopAuth = this.getByShopId(shopAuthEntity.getShopId());
+            if (Objects.isNull(shopAuth)) {
+                throw new ServiceException("店铺配置为空");
+            }
+
+            if (shopAuth.getType().equals(AuthTypeEnum.SHOP.getCode())) {
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .refreshToken(shopAuthEntity.getRefreshToken())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                        .build();
+                shopeeAuthService.refreshShopToken(authRequest);
+            }
+        } catch (Exception e) {
+            throw new ServiceException("erp-dmp服务调用异常");
+        }
+
         baseMapper.updateById(shopAuthEntity);
     }
 
@@ -191,8 +228,21 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
                 if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
                     List<PlatformProductDTO> allProduct = new ArrayList<>();
                     shopAuthEntities.stream().forEach(shopAuthEntity -> {
-                        List<PlatformProductDTO> allProduct1 = shopeeProductService.getAllProduct(cfgAppClient.getUrl(), shopAuthEntity.getAccessToken(), Long.parseLong(shopAuthEntity.getShopeeId()), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret());
-                        allProduct.addAll(allProduct1);
+                        ProductRequest productRequest = ProductRequest.builder()
+                                .host(cfgAppClient.getUrl())
+                                .offset(0)
+                                .token(shopAuthEntity.getAccessToken())
+                                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                                .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                                .tmpPartnerKey(cfgAppClient.getClientSecret())
+                                .timeFrom(null)
+                                .timeTo(null)
+                                .build();
+                        List<PlatformProductDTO> allProduct1 = new ArrayList<>();
+                        shopeeProductService.getAllProduct(productRequest, allProduct1);
+                        if (CollectionUtils.isNotEmpty(allProduct1)) {
+                            allProduct.addAll(allProduct1);
+                        }
                     });
                     System.out.println("allProduct:" + allProduct.size());
                 }

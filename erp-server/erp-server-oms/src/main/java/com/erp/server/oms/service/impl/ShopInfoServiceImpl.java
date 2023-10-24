@@ -40,6 +40,7 @@ import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
@@ -733,7 +734,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         //根据店铺授权还是主账号授权进行分开记录授权
         if (Objects.nonNull(dto.getShop_id())) {
-            ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getShop_id());
+            AuthRequest authRequest = AuthRequest.builder()
+                    .host(cfgAppClient.getUrl())
+                    .code(dto.getCode())
+                    .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                    .tmpPartnerKey(cfgAppClient.getClientSecret())
+                    .shopId(dto.getShop_id())
+                    .build();
+            ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(authRequest);
             if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                 throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
             }
@@ -741,7 +749,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } else if (Objects.nonNull(dto.getMain_account_id())) {
             //获取主账户token 需要刷新子商铺的refresh_token
             {
-                ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getMain_account_id());
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .code(dto.getCode())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .mainAccountId(dto.getMain_account_id())
+                        .build();
+                ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(authRequest);
                 if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                     throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
                 }
@@ -777,7 +792,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth = new ShopAuthEntity();
             shopAuth.setShopId(dto.getId());
         }
-        long partner_id = Long.parseLong(cfgAppClient.getClientId());
+        long partnerId = Long.parseLong(cfgAppClient.getClientId());
         shopAuth.setShopId(dto.getId());
         String refreshToken = shopeeAuth.getRefreshToken();
         String accessToken = shopeeAuth.getAccessToken();
@@ -809,10 +824,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //如果是主店铺
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
             List<Long> merchantIds = shopeeAuth.getMerchantIdList();
+//            JSONArray jsonArray = shopeeAuth.getMerchantIdList();
 //            JSONArray merchantIds = jsonObject.getJSONArray("merchant_id_list");
             if (CollectionUtils.isNotEmpty(merchantIds)) {
                 for (Long merchantId : merchantIds) {
-                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), merchantId);
+                    AuthRequest authRequest = AuthRequest.builder()
+                            .host(cfgAppClient.getUrl())
+                            .refreshToken(refreshToken)
+                            .partnerId(partnerId)
+                            .tmpPartnerKey(cfgAppClient.getClientSecret())
+                            .merchantId( merchantId)
+                            .build();
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(authRequest);
+                    //TODO 更新token
                     saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo, cfgAppClient.getId());
                 }
             }
@@ -820,7 +844,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             List<Long> shopIds = shopeeAuth.getShopIdList();
             if (CollectionUtils.isNotEmpty(shopIds)) {
                 for (Long shopId : shopIds) {
-                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), shopId);
+                    AuthRequest authRequest = AuthRequest.builder()
+                            .host(cfgAppClient.getUrl())
+                            .refreshToken(refreshToken)
+                            .partnerId(partnerId)
+                            .tmpPartnerKey(cfgAppClient.getClientSecret())
+                            .shopId(shopId)
+                            .build();
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
                     saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo, cfgAppClient.getId());
                 }
             }

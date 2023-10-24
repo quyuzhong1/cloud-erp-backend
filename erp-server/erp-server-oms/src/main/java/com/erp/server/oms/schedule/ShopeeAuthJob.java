@@ -4,11 +4,14 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,7 @@ public class ShopeeAuthJob {
     // @Scheduled(cron = "0 0 */3 * * ?")
     @XxlJob("updateShopeeAuth")
     public void updateShopeeAuth() {
+        //先获取授权店铺 然后根据授权店铺进行
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -60,16 +64,36 @@ public class ShopeeAuthJob {
         List<ShopAuthEntity> shopeeShopList = shopAuthService.getShopeeShopList(AuthTypeEnum.SHOP.getCode());
         if (CollectionUtils.isNotEmpty(shopeeShopList)) {
             shopeeShopList.forEach(shopAuthEntity -> {
-                ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(cfgAppClient.getUrl(), shopAuthEntity.getRefreshToken(),
-                        Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), Long.parseLong(shopAuthEntity.getShopeeId()));
+                //判断店铺是否授权
+                if (Objects.isNull(shopAuthEntity.getShopId())){
+                    return;
+                }
+                ShopInfoEntity shopInfo = shopInfoService.getById(shopAuthEntity.getShopId());
+                if (Objects.isNull(shopInfo) || !AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
+                    return;
+                }
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .refreshToken(shopAuthEntity.getRefreshToken())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                        .build();
+                ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
             });
         }
         List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode());
         if (CollectionUtils.isNotEmpty(shopeeShopList1)){
             shopeeShopList1.forEach(shopAuthEntity -> {
-                ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(cfgAppClient.getUrl(), shopAuthEntity.getRefreshToken(),
-                        Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), Long.parseLong(shopAuthEntity.getShopeeId()));
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .refreshToken(shopAuthEntity.getRefreshToken())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .merchantId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                        .build();
+                ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(authRequest);
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
             });
         }

@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,10 +14,10 @@ import java.io.Serializable;
  */
 @Data
 public class Item implements Serializable {
-    @JsonProperty("item_id")
+    @JSONField(name = "item_id")
     private Long itemId;
-    @JsonProperty("item_status")
+    @JSONField(name = "item_status")
     private String itemStatus;
-    @JsonProperty("update_time")
+    @JSONField(name = "update_time")
     private Long updateTime;
 }

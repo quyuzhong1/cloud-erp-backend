@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.product.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,10 +18,11 @@ import java.util.List;
 @Data
 @Builder
 public class ShopeeProduct implements Serializable {
-    @JsonProperty(value = "total_count")
+    @JSONField(name = "total_count")
     private Integer totalCount;
-    @JsonProperty(value = "has_next_page")
+    @JSONField(name = "has_next_page")
     private Boolean hasNextPage;
     private String next;
+
     private List<Item> items = new LinkedList<>();
 }
