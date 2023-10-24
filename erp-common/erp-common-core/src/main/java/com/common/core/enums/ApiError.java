@@ -781,7 +781,8 @@ public enum ApiError implements Serializable {
     ERROR_PROFIT_DIFF_GREATER_ZERO(99096,"盘盈单差异数量必须大于0"),
     ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
     ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
-    WAREHOUSE_DISABLED(99099, "仓库【{}】已被禁用，无法进行盘点"),
+    WAREHOUSE_DISABLED(99099, "仓库【{}】未审核或已被禁用，无法进行盘点"),
+    WAREHOUSE_AREA_LOCATION_DISABLED(99100, "仓库【{}】 库区【{}】 仓位【{}】 未审核或已被禁用，无法进行盘点"),
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
 
 
@@ -905,6 +906,10 @@ public enum ApiError implements Serializable {
     ERROR_RULE_EXPRESSION_ERROR(92096,"条件表达式【{}】有误"),
     ERROR_SO_B2C_FINANCE_NOT_EXIST(92097,"财务信息不存在"),
     ERROR_SO_B2C_IS_NOT_NEED_MERGE_EXIST(92098,"销售订单【{}】无需合并"),
+    ERROR_SHOP_AUTHORIZE(92099,"授权的平台编码错误"),
+    ERROR_WALMART_SHOP_ID_NOT_NULL(92100,"沃尔玛授权店铺Id不能为空"),
+    ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
+    ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
 
 
 

@@ -285,4 +285,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public WarehouseLocationEntity findArea(String warehouseId, String warehouseAreaCode) {
+        return lambdaQuery().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationEntity::getCode, warehouseAreaCode)
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
+                .last("limit 1")
+                .one();
+    }
 }

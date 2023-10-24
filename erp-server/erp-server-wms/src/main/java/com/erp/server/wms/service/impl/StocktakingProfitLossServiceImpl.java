@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -23,6 +24,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -46,8 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.hibernate.validator.constraints.EAN;
-import org.springframework.asm.Handle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -361,6 +361,13 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        // 盘点仓库，库区，仓位禁用时禁止审核
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        if(CollectionUtil.isEmpty(detailList)){
+            throw new ServiceException("未找到盘盈盘亏单详情");
+        }
+        List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList = detailList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::new).collect(Collectors.toList());
+        warehouseService.assertDisabled(assertList);
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
