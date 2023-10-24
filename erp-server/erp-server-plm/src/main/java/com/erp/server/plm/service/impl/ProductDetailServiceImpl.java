@@ -3908,5 +3908,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return resultList;
     }
 
+    @Override
+    public List<ProductDetailEntity> listByChargeId(String chargeId) {
+        return baseMapper.listByChargeId(chargeId);
+    }
+
 
 }

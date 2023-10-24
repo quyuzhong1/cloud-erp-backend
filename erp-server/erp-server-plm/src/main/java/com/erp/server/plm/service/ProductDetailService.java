@@ -598,4 +598,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<ProductSearchDTO.SkuListDTO>
      */
     List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:22
+     * @param chargeId
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByChargeId(String chargeId);
 }

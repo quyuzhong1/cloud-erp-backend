@@ -126,6 +126,12 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductDTO.CountBaseDTO> listCollectStatusCount(@Param("userId") String userId);
 
     List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount(@Param("userId") String userId);
-
-
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:16
+     * @param chargeId
+     * @return List<ProductInfoEntity>
+     */
+    List<ProductInfoEntity> listByChargeId(@Param("chargeId")String chargeId);
 }
