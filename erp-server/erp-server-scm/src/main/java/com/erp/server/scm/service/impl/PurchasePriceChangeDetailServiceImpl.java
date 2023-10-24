@@ -489,6 +489,15 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 .update(new PurchasePriceChangeDetailEntity());
     }
 
+    @Override
+    public List<PurchasePriceChangeDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId,mainIdList).
+                orderByDesc(PurchasePriceChangeDetailEntity::getCreateTime).list();
+    }
+
 
     /**
      * 获取删除的id集合

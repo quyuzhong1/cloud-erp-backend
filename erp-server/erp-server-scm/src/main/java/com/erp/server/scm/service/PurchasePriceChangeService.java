@@ -152,4 +152,13 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param response
      */
     void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 修复历史数据
+     * @author yl
+     * @date 2023-10-23 19:19
+     * @param
+     * @return void
+     */
+    void tempUpdateHistoryDb();
 }
