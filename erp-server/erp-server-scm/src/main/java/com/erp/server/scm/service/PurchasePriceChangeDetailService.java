@@ -95,4 +95,13 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @param remark
      */
     void updateDetailRemark(List<String> ids, String remark);
+
+    /**
+     * 根据主表id集合获取对应明细
+     * @author yl
+     * @date 2023-10-24 10:09
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceChangeDetailEntity>
+     */
+    List<PurchasePriceChangeDetailEntity> listByMainIdList(List<String> mainIdList);
 }

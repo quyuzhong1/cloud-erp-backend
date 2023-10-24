@@ -207,4 +207,6 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param remark
      */
     void updateDetailRemark(List<String> ids, String remark);
+
+
 }

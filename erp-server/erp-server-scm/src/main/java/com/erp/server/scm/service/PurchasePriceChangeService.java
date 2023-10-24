@@ -143,4 +143,13 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);
+
+    /**
+     * 修复历史数据
+     * @author yl
+     * @date 2023-10-23 19:19
+     * @param
+     * @return void
+     */
+    void tempUpdateHistoryDb();
 }

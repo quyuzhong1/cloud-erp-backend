@@ -26,9 +26,7 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -131,11 +129,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
-        List<String> skuIdList=dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds, skuIdList);
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(),skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(), skuIdList);
 
         //检查区间报价是否重叠
         purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList, historyList);
@@ -341,9 +339,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
-        List<String> skuIdList=dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = dto.getPurchasePriceChangeDetailList().stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds, skuIdList);
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
 
@@ -353,7 +351,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             priceChangeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
         }
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
 
         purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList, historyList);
         //code
@@ -450,7 +448,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //要去掉已审核通过的
         List<PurchasePriceChangeEntity> priceChangeList = this.listByIds(ids);
         priceChangeList = priceChangeList.stream().filter(p -> !ApproveStatusEnum.APPROVE.equals(p.getApproveStatus())).collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(priceChangeList)){
+        if (CollectionUtils.isEmpty(priceChangeList)) {
             return Boolean.TRUE;
         }
 
@@ -739,7 +737,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.TRUE;
         }
-        purchasePriceChangeDetailService.updateDetailRemark(ids,remark);
+        purchasePriceChangeDetailService.updateDetailRemark(ids, remark);
         return Boolean.TRUE;
     }
 
@@ -860,5 +858,38 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             List<PurchasePriceChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+
+    /**
+     * 临时修复线上数据
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void tempUpdateHistoryDb() {
+        List<PurchasePriceChangeEntity> priceChangeList = this.list();
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        priceChangeList = priceChangeList.stream().filter(p -> approveStatus.equals(p.getApproveStatus())).collect(Collectors.toList());
+        for (PurchasePriceChangeEntity item : priceChangeList) {
+            //变更详情
+            List<PurchasePriceChangeDetailEntity> priceChangeDetailList = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(item.getId()));
+            for (PurchasePriceChangeDetailEntity changeDetail : priceChangeDetailList) {
+                //采购价目详情id
+                String purchasePriceDetailId = changeDetail.getPurchasePriceDetailId();
+                //采购价目历史 多个
+                List<PurchasePriceHistoryEntity> priceEntityList = purchasePriceHistoryService.getHistoryByDetailIds(Arrays.asList(purchasePriceDetailId));
+                priceEntityList = priceEntityList.stream().filter(p -> StringUtils.isBlank(p.getChangeDetailId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(priceEntityList)) {
+                    PurchasePriceHistoryEntity historyEntity = priceEntityList.get(0);
+                    historyEntity.setChangeDetailId(changeDetail.getId());
+                    purchasePriceHistoryService.updateById(historyEntity);
+                }
+
+
+            }
+
+
+        }
+
     }
 }

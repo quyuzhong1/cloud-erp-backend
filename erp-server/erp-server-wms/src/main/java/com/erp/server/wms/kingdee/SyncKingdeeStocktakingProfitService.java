@@ -12,3 +12,4 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 public interface SyncKingdeeStocktakingProfitService {
     void syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
 }
+
