@@ -76,15 +76,17 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 订单状态
         // （soB2cBillStatus字典类型）  SoB2cBillStatusEnum
         //UNPAID/READY_TO_SHIP/PROCESSED/SHIPPED/COMPLETED/IN_CANCEL/CANCELLED/INVOICE_PENDING
+//        orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         String orderStatus = orderDetail.getStatus();
         if (OrderStatusEnum.UNPAID.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)) {
-            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus)) {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        } else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus)) {
+        } //已完成之前 全为待发货
+        else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus)) {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         } else if (OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
