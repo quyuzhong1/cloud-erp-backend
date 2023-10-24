@@ -5,14 +5,14 @@
     <select id="paging" resultType="com.erp.model.wms.dto.QcRuleDTO$PagingViewDTO">
          SELECT
             id,code,
-            qc_type,
-            exist_report,
+            qc_type AS qcType,
+            exist_report AS existReport,
             disabled,
-            approve_status,
-            create_user_name,
-            create_time,
-            update_user_name,
-            update_time
+            approve_status AS approveStatus,
+            create_user_name AS createUserName,
+            create_time AS createTime,
+            update_user_name AS updateUserName,
+            update_time AS updateTime
          FROM qc_rule
          where is_deleted=false
          <if test="params.searchKeyword!=null and params.searchKeyword !=''">
@@ -23,7 +23,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-         ORDER BY create_time DESC
+         ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+             create_time DESC
 
     </select>
 </mapper>
