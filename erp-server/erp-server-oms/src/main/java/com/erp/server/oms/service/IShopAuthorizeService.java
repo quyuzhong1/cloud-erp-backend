@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 
 /**
@@ -26,6 +27,6 @@ public interface IShopAuthorizeService<T> {
      * 取消授权
      * @param dto
      */
-    void cleanShopAuthorize(ShopAuthorizeDTO dto);
+    Boolean cancelAuthorize(CancelAuthorizeDTO dto);
 
 }

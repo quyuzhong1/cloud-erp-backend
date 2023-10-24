@@ -10,6 +10,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
@@ -279,8 +280,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/cancelAuthorize")
-    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = shopInfoService.cancelAuthorize(dto.getId());
+    public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
+        Boolean result = shopInfoService.cancelAuthorize(dto);
         return result ? success() : failure();
     }
 

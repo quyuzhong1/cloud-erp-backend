@@ -482,7 +482,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        authModelService.getShopAuthorizeUrl(dto);
+        authModelService.shopAuthorize(dto);
         return Boolean.FALSE;
     }
 
@@ -524,7 +524,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     /**
      * 取消授权
      *
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-29 16:41
@@ -532,33 +532,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean cancelAuthorize(String id) {
-        ShopInfoEntity shopInfo = this.getById(id);
-        if (Objects.isNull(shopInfo)) {
-            throw new ServiceException("店铺不存在");
-        }
-        //授权状态
-        String authStatus = shopInfo.getAuthStatus();
-        if (!AuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
-            throw new ServiceException("该店铺未授权,无需取消授权");
-        }
-        shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
-        Boolean result = this.updateById(shopInfo);
-        if (result) {
-            shopAuthService.removeByShopId(id);
-            // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
-            shopInfo.setIsGenTask(Boolean.FALSE);
-            updateShopInfoById(shopInfo);
-        }
-        // 移除缓存
-        // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
-        Object shopInfoObj = redisUtil.get(tokenKey);
-        if (null != shopInfoObj) {
-            redisUtil.del(tokenKey);
-        }
-        return result;
+    public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
+        return authModelService.cancelAuthorize(dto);
     }
 
     @Override

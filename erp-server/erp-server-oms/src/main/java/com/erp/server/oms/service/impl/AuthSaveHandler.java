@@ -4,6 +4,7 @@ import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.AuthSaveData;
@@ -33,14 +34,14 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveDa
         return service.getShopAuthorizeUrl(dto);
     }
 
-    public static void shopAuthorize(ShopAuthorizeDTO dto){
+    public static Boolean shopAuthorize(ShopAuthorizeDTO dto){
         IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
-        service.shopAuthorize(dto);
+        return service.shopAuthorize(dto);
     }
 
-    public static void cleanShopAuthorize(ShopAuthorizeDTO dto) {
+    public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
         IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
-        service.cleanShopAuthorize(dto);
+        return service.cancelAuthorize(dto);
     }
 
 }

@@ -13,6 +13,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -28,6 +29,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -160,8 +162,34 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      * @param dto
      */
     @Override
-    public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
-
+    public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
+        String shopId = dto.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        //授权状态
+        String authStatus = shopInfo.getAuthStatus();
+        if (!AuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
+            throw new ServiceException("该店铺未授权,无需取消授权");
+        }
+        shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+        Boolean result = shopInfoService.updateById(shopInfo);
+        if (result) {
+            shopAuthService.removeByShopId(shopId);
+            // 删除授权
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            shopInfo.setIsGenTask(Boolean.FALSE);
+            shopInfoService.updateShopInfoById(shopInfo);
+        }
+        // 移除缓存
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
+        Object shopInfoObj = redisUtil.get(tokenKey);
+        if (null != shopInfoObj) {
+            redisUtil.del(tokenKey);
+        }
+        return result;
     }
 
     /**

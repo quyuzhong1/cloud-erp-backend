@@ -4,6 +4,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
@@ -89,12 +90,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     /**
      * 取消授权
      *
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-29 16:41
      */
-    Boolean cancelAuthorize(String id);
+    Boolean cancelAuthorize(CancelAuthorizeDTO dto);
 
     /**
      * 根据域名来查询

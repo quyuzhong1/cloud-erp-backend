@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 
 public interface AuthModelService {
@@ -15,12 +16,12 @@ public interface AuthModelService {
      * @param dto
      * @throws Exception
      */
-    void shopAuthorize(ShopAuthorizeDTO dto);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto);
 
 
     /**
      * 取消授权
-     * @param id
+     * @param dto
      */
-    void cleanShopAuthorize(ShopAuthorizeDTO id);
+    Boolean cancelAuthorize(CancelAuthorizeDTO dto);
 }

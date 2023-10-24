@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.server.oms.service.AuthModelService;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,12 @@ public class AuthModelServiceImpl implements AuthModelService {
     }
 
     @Override
-    public void shopAuthorize(ShopAuthorizeDTO dto) {
-        AuthSaveHandler.shopAuthorize(dto);
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
+        return AuthSaveHandler.shopAuthorize(dto);
     }
 
     @Override
-    public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
-        AuthSaveHandler.cleanShopAuthorize(dto);
+    public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
+        return AuthSaveHandler.cleanShopAuthorize(dto);
     }
 }
