@@ -1,10 +1,13 @@
 package com.sdk.oms.shopify.api.rest;
 
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
 import com.sdk.oms.shopify.api.rest.exceptions.ShopifyClientException;
 import com.sdk.oms.shopify.api.rest.exceptions.ShopifyErrorResponseException;
+import com.sdk.oms.shopify.api.rest.exceptions.ShopifyIncompatibleApiException;
+import com.sdk.oms.shopify.api.rest.exceptions.ShopifyEmptyLineItemsException;
 import com.sdk.oms.shopify.api.rest.mappers.ResponseEntityToStringMapper;
 import com.sdk.oms.shopify.api.rest.mappers.ShopifySdkObjectMapper;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -62,12 +65,14 @@ public class ShopifyRestClient {
     static final String RECURRING_APPLICATION_CHARGES = "recurring_application_charges";
     static final String ORDERS = "orders";
     static final String FULFILLMENTS = "fulfillments";
+    static final String FULFILLMENT_ORDERS = "fulfillment_orders";
     static final String ACTIVATE = "activate";
     static final String IMAGES = "images";
     static final String SHOP = "shop";
     static final String COUNT = "count";
     static final String CLOSE = "close";
     static final String CANCEL = "cancel";
+    static final String MOVE = "move";
     static final String METAFIELDS = "metafields";
     static final String RISKS = "risks";
     static final String LOCATIONS = "locations";
@@ -802,15 +807,11 @@ public class ShopifyRestClient {
 
 
     /**
-     * @param shopifyFulfillmentCreationRequest
+     * @param shopifyFulfillmentRoot
      * @return ShopifyFulfillment
      */
-    public ShopifyFulfillment createFulfillment(final ShopifyFulfillmentCreationRequest shopifyFulfillmentCreationRequest) {
-        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
-        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentCreationRequest.getRequest();
-
-        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
-        final Response response = post(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS), shopifyFulfillmentRoot);
+    public ShopifyFulfillment createFulfillment(final ShopifyFulfillmentPayloadRoot shopifyFulfillmentRoot) {
+        final Response response = post(getWebTarget().path(FULFILLMENTS.concat(JSON)), shopifyFulfillmentRoot);
         final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
         return shopifyFulfillmentRootResponse.getFulfillment();
     }
@@ -821,13 +822,14 @@ public class ShopifyRestClient {
      * @return ShopifyFulfillment
      */
     public ShopifyFulfillment updateFulfillment(final ShopifyFulfillmentUpdateRequest shopifyFulfillmentUpdateRequest) {
-        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
-        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
-        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
-        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
-                shopifyFulfillmentRoot);
-        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
-        return shopifyFulfillmentRootResponse.getFulfillment();
+//        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
+//        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
+//        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
+//        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
+//                shopifyFulfillmentRoot);
+//        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
+//        return shopifyFulfillmentRootResponse.getFulfillment();
+        return null;
     }
 
 
@@ -1491,4 +1493,20 @@ public class ShopifyRestClient {
     private WebTarget buildOrdersEndpoint() {
         return getWebTarget().path(ORDERS);
     }
+
+    /**
+     * 根据订单ID获取订单履行信息
+     */
+    public List<ShopifyFulfillmentOrder> getFulfillmentOrdersFromOrder(final String shopifyOrderId) {
+        final List<ShopifyFulfillmentOrder> fulfillmentOrders = new LinkedList<>();
+        final Response response = get(buildOrdersEndpoint().path(shopifyOrderId).path(FULFILLMENT_ORDERS));
+        final ShopifyFulfillmentOrdersRoot shopifyFulfillmentOrdersRoot = response
+                .readEntity(ShopifyFulfillmentOrdersRoot.class);
+
+        fulfillmentOrders.addAll(shopifyFulfillmentOrdersRoot.getFulfillmentOrders());
+
+        return fulfillmentOrders;
+    }
+
+
 }
