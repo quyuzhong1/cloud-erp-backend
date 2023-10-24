@@ -234,4 +234,13 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      */
     List<InventoryEntity> listInventoryByParam(InventoryDTO.ParamDTO dto);
+
+    /**
+     * 根据参数获取对应数据
+     * @author yl
+     * @date 2023-10-24 16:59
+     * @param dto
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.InventoryQtyDTO
+     */
+    InventoryDTO.InventoryQtyDTO getInventoryQty(InventoryDTO.InventoryBySkuNoDTO dto);
 }

@@ -256,7 +256,7 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
             throw new ServiceException(ApiError.ERROR_95107);
         }
         String platformDict = dto.getPlatformDict();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicEnum.PLATFORM.getType(), platformDict);
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicEnum.SALES_PLATFORM.getType(), platformDict);
         if (Objects.isNull(dictBasic)) {
             throw new ServiceException(ApiError.ERROR_92053);
 

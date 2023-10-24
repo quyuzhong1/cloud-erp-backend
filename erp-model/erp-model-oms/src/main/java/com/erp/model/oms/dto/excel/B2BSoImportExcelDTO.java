@@ -97,7 +97,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(30)
     @ExcelProperty(value = "银行手续费", index = 8)
     @FieldValid(fieldName = "银行手续费",formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal bankServiceFee;
+    private String bankServiceFee;
 
 
     /**
@@ -106,7 +106,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "运费", index = 9)
     @FieldValid(fieldName = "运费",formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal shippingFee;
+    private String shippingFee;
 
     /**
      * 收款账号
@@ -140,7 +140,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "收款金额", index = 13)
     @FieldValid(fieldName = "收款金额",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal receiveAmount;
+    private String receiveAmount;
 
 
     /**
@@ -158,7 +158,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "报关费", index = 15)
     @FieldValid(fieldName = "报关费",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal customsFee;
+    private String customsFee;
 
 
     /**
@@ -176,7 +176,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "折扣总额", index = 17)
     @FieldValid(fieldName = "折扣总额",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal discountAmount;
+    private String discountAmount;
 
 
     /**
@@ -275,7 +275,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "销售数量", index = 29)
     @FieldValid(fieldName = "销售数量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.NUMBER)
-    private Integer qty;
+    private String qty;
 
 
     /**
@@ -284,7 +284,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "销售单价", index = 30)
     @FieldValid(fieldName = "销售单价", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal  price;
+    private String  price;
 
 
     /**
@@ -293,7 +293,7 @@ public class B2BSoImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "税率", index = 31)
     @FieldValid(fieldName = "税率",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private BigDecimal taxRate;
+    private String taxRate;
 
 
     /**

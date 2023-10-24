@@ -222,7 +222,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("customerAddressList", customerAddressList);
         String platformType = entity.getPlatformType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicEnum.PLATFORM.getType(), platformType);
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicEnum.SALES_PLATFORM.getType(), platformType);
         String platformTypeKingdeeCode = "";
         if (dictBasic != null) {
             platformTypeKingdeeCode = dictBasic.getRemark();

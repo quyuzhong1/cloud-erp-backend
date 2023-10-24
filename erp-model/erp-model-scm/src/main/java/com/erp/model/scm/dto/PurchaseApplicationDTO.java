@@ -690,7 +690,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 单价
          */
-        private BigDecimal taxPrice;
+        private BigDecimal price;
 
         /**
          * 税率
@@ -843,7 +843,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 单价
          */
-        private BigDecimal taxPrice;
+        private BigDecimal price;
 
         /**
          * 税率

@@ -142,12 +142,12 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 可用数量
+         * 可用数量 http://172.16.100.11:3002/project/92/interface/api/24586
          */
         private Integer usableQty;
 
         /**
-         * 冻结数量
+         * 冻结数量 http://172.16.100.11:3002/project/92/interface/api/24586
          */
         private Integer frozenQty;
 
