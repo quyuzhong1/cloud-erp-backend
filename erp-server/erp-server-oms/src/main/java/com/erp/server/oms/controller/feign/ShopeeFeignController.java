@@ -6,7 +6,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.server.oms.service.ShopAuthService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -26,15 +25,6 @@ public class ShopeeFeignController extends BaseController {
     @Resource
     private ShopAuthService shopAuthService;
 
-    /**
-     * 获取授权链接
-     *
-     * @return
-     */
-    @GetMapping("/getCodeUrl")
-    public ApiResult<String> getCodeUrl(@SpringQueryMap String id) {
-        return success(shopAuthService.getShopeeCodeUrl(id));
-    }
 
     /**
      * 获取店铺列表

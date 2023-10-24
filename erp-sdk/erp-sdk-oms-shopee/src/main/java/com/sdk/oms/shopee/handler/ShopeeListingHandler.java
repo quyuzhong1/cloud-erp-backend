@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
  **/
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.AMAZON)
-@BusinessType(BusinessTypeEnum.ORDER)
+@PlatformType(PlatformDictEnum.SHOPEE)
+@BusinessType(BusinessTypeEnum.PRODUCT)
 public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeListingDTO, PlatformProductDTO> {
     @Resource
     private ShopeeFeign shopeeFiegn;
