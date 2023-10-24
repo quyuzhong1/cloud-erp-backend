@@ -137,7 +137,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         List<String> qcAttachmentNameList = qcInfo.getQcAttachmentNameList();
         //质检附件url
         List<String> qcAttachmentUrlList = qcInfo.getQcAttachmentUrlList();
-        wmsAttachmentService.batchSave(qcAttachmentNameList, qcAttachmentUrlList, WmsConstant.QC_ATTACHMENT, id);
+        wmsAttachmentService.batchSave(qcAttachmentUrlList,qcAttachmentNameList, WmsConstant.QC_ATTACHMENT, id);
         this.saveOrUpdate(qcResultEntity);
 
     }

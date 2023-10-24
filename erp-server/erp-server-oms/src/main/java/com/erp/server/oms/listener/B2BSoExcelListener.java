@@ -5,6 +5,8 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -40,6 +42,9 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
 
     Map<String, SoInfoDTO.AddDTO> map = new HashMap<>();
+
+    //错误的map
+    Map<String, String> errorMap = new HashMap<>();
 
     /**
      * 仓库
@@ -110,7 +115,6 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
     private final String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
 
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public B2BSoExcelListener(List<WarehouseDTO.UpdateDTO> warehouseList, List<BaseIdDTO.CodeDTO> orgList,
                               List<DictCurrencyEntity> currencyList, List<DictBasicEntity> dictBasicList,
@@ -164,6 +168,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             //存在错误数据则直接返回
             if (errorMsgList.size() > 0) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorMap.put(no, no);
                 errorList.add(excelDTO);
                 return;
             }
@@ -172,12 +177,19 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             addDTO = new SoInfoDTO.AddDTO();
             //要货日期
             String requireDateStr = excelDTO.getRequireDate();
-            LocalDate requireDate = LocalDate.parse(requireDateStr, dateTimeFormatter);
+            LocalDate requireDate = LocalDateUtil.parseStrToLocalDate(requireDateStr);
+            if (Objects.isNull(requireDate)) {
+                errorMsgList.add("要货日期不能为空");
+            }
             addDTO.setRequireDate(requireDate);
             //单据日期
             String billDateStr = excelDTO.getBillDate();
-            LocalDate billDate = LocalDate.parse(billDateStr, dateTimeFormatter);
-            if (requireDate.compareTo(billDate) < 0) {
+            LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
+            if (Objects.isNull(billDate)) {
+                errorMsgList.add("单据日期不能为空");
+            }
+            addDTO.setBillDate(billDate);
+            if (Objects.nonNull(requireDate) && Objects.nonNull(billDate) && requireDate.compareTo(billDate) < 0) {
                 errorMsgList.add("要货日期必须大于单据日期");
             }
             //单据类型
@@ -190,7 +202,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
             //销售组织
             String salesOrgName = excelDTO.getSalesOrgName();
-            BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> o.getName().equals(salesOrgName.trim())).findFirst().
+            BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> o.getName().equals(salesOrgName)).findFirst().
                     orElse(null);
             if (Objects.isNull(salesOrg)) {
                 errorMsgList.add("销售组织不存在");
@@ -203,7 +215,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             addDTO.setSalesOrgId(salesOrgId);
             //销售部门
             String salesDeptName = excelDTO.getSalesDeptName();
-            String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName.trim())).findFirst().
+            String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
                     map(SysDepartmentDTO::getId).orElse("");
             addDTO.setSalesDeptId(salesDeptId);
             if (StringUtils.isBlank(salesDeptId)) {
@@ -212,7 +224,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
             //销售员
             String sellerName = excelDTO.getSellerName();
-            String sellerId = userList.stream().filter(u -> u.getUserName().equals(sellerName.trim())).findFirst().
+            String sellerId = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().
                     map(FindUserDTO::getUserId).orElse("");
             addDTO.setSellerId(sellerId);
             if (StringUtils.isBlank(sellerId)) {
@@ -237,24 +249,19 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             String isCollectShippingFeeStr = excelDTO.getIsCollectShippingFee();
             Boolean isCollectShippingFee = Boolean.FALSE;
             if (StringUtils.isNotBlank(isCollectShippingFeeStr)) {
-                isCollectShippingFee = isCollectShippingFeeStr.trim().equals("是");
+                isCollectShippingFee = isCollectShippingFeeStr.equals("是");
             }
             addDTO.setIsCollectShippingFee(isCollectShippingFee);
 
             String warehouseName = excelDTO.getWarehouseName();
 
-            String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName.trim())).findFirst().
+            String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
                     map(WarehouseDTO.UpdateDTO::getId).orElse("");
             if (StringUtils.isBlank(warehouseId)) {
                 errorMsgList.add("仓库不存在");
             }
-            //银行手续费
-            BigDecimal bankServiceFee = excelDTO.getBankServiceFee();
-            addDTO.setBankServiceFee(bankServiceFee);
+            addDTO.setWarehouseId(warehouseId);
 
-            //运费
-            BigDecimal shippingFee = excelDTO.getShippingFee();
-            addDTO.setShippingFee(shippingFee);
             //收款账号
             String receiveAccountStr = excelDTO.getReceiveAccount();
             String receiveAccount = "";
@@ -267,7 +274,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             addDTO.setReceiveAccount(receiveAccount);
             //收款方式
             String receiveMethodStr = excelDTO.getReceiveMethod();
-            String receiveMethod = dictBasicList.stream().filter(d -> d.getName().equals(receiveMethodStr.trim())).findFirst().
+            String receiveMethod = dictBasicList.stream().filter(d -> d.getName().equals(receiveMethodStr)).findFirst().
                     map(DictBasicEntity::getValue).orElse("");
             if (StringUtils.isBlank(receiveMethod)) {
                 errorMsgList.add("收款方式不存在");
@@ -276,18 +283,15 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             //收款日期
             String receiveDateStr = excelDTO.getReceiveDate();
             if (StringUtils.isNotBlank(receiveDateStr)) {
-                addDTO.setReceiveDate(LocalDate.parse(receiveDateStr, dateTimeFormatter));
+                addDTO.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
             }
 
-            //收款金额
-            BigDecimal receiveAmount = excelDTO.getReceiveAmount();
-            addDTO.setReceiveAmount(receiveAmount);
 
             //贸易条款
             String tradeTermStr = excelDTO.getTradeTerm();
             String tradeTerm = "";
             if (StringUtils.isNotBlank(tradeTermStr)) {
-                tradeTerm = dictBasicList.stream().filter(d -> d.getName().equals(tradeTermStr.trim())).findFirst().
+                tradeTerm = dictBasicList.stream().filter(d -> d.getName().equals(tradeTermStr)).findFirst().
                         map(DictBasicEntity::getValue).orElse("");
                 if (StringUtils.isBlank(tradeTerm)) {
                     errorMsgList.add("贸易条款不存在");
@@ -295,13 +299,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             }
 
             addDTO.setTradeTerm(tradeTerm);
-            //报关费
-            BigDecimal customsFee = excelDTO.getCustomsFee();
-            addDTO.setCustomsFee(customsFee);
 
-            //折扣总额
-            BigDecimal discountAmount = excelDTO.getDiscountAmount();
-            addDTO.setDiscountAmount(discountAmount);
 
             //客户
             String customerName = excelDTO.getCustomerName();
@@ -334,7 +332,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
             //交货方式
             String deliveryModeStr = excelDTO.getDeliveryMode();
-            String deliveryMode = dictBasicList.stream().filter(d -> d.getName().equals(deliveryModeStr.trim())).findFirst().
+            String deliveryMode = dictBasicList.stream().filter(d -> d.getName().equals(deliveryModeStr)).findFirst().
                     map(DictBasicEntity::getValue).orElse("");
             if (StringUtils.isBlank(deliveryMode)) {
                 errorMsgList.add("交货方式不存在");
@@ -352,7 +350,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             //币别
             String currencyStr = excelDTO.getCurrency();
 
-            String currency = currencyList.stream().filter(c -> c.getName().equals(currencyStr.trim())).
+            String currency = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
                     findFirst().map(DictCurrencyEntity::getId).orElse("");
 
             if (StringUtils.isBlank(currency)) {
@@ -361,11 +359,11 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             addDTO.setCurrency(currency);
             //是否含税
             String isTaxStr = excelDTO.getIsTax();
-            Boolean isTax = "是".equals(isTaxStr.trim());
+            Boolean isTax = "是".equals(isTaxStr);
             addDTO.setIsTax(isTax);
 
             String receiveConditionStr = excelDTO.getReceiveCondition();
-            String receiveCondition = dictBasicList.stream().filter(d -> d.getName().equals(receiveConditionStr.trim())).findFirst().
+            String receiveCondition = dictBasicList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
                     map(DictBasicEntity::getValue).orElse("");
             if (StringUtils.isBlank(receiveCondition)) {
                 errorMsgList.add("收款条件不存在");
@@ -376,43 +374,27 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
         }
         List<SoDetailDTO.AddDTO> detailList = Objects.nonNull(addDTO.getDetailList()) ? addDTO.getDetailList() : Lists.newArrayList();
-
         SoDetailDTO.AddDTO addDetail = new SoDetailDTO.AddDTO();
-        //数量
-        Integer qty = excelDTO.getQty();
-        if (Objects.isNull(qty)) {
-            errorMsgList.add("数量不能为空");
-        }
-        addDetail.setQty(qty);
-        //销售单价
-        BigDecimal price = excelDTO.getPrice();
-        if (Objects.isNull(price)) {
-            errorMsgList.add("销售单价不能为空");
-        }
-        addDetail.setPrice(price);
-        //税率
-        BigDecimal taxRate = excelDTO.getTaxRate();
-        addDetail.setTaxRate(Objects.isNull(taxRate) ? BigDecimal.ZERO : taxRate);
         //是否赠品
         String isGiftStr = excelDTO.getIsGift();
         if (StringUtils.isBlank(isGiftStr)) {
             errorMsgList.add("是否赠品不能为空");
         }
-        addDetail.setIsGift("是".equals(isGiftStr.trim()));
+        addDetail.setIsGift("是".equals(isGiftStr));
 
         //是否补发
         String isReissueStr = excelDTO.getIsReissue();
         if (StringUtils.isBlank(isReissueStr)) {
             errorMsgList.add("是否补发不能为空");
         }
-        addDetail.setIsReissue("是".equals(isReissueStr.trim()));
+        addDetail.setIsReissue("是".equals(isReissueStr));
 
         //是否关闭
         String isCloseStr = excelDTO.getIsClose();
         if (StringUtils.isBlank(isCloseStr)) {
             errorMsgList.add("是否关闭不能为空");
         }
-        addDetail.setIsClose("是".equals(isCloseStr.trim()));
+        addDetail.setIsClose("是".equals(isCloseStr));
         addDetail.setRemark(excelDTO.getDetailRemark());
 
         //sku no
@@ -421,23 +403,64 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             errorMsgList.add("sku不能为空");
         }
         String skuId = "";
-        SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo.trim())).findFirst().orElse(null);
+        SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
         if (Objects.isNull(skuVO)) {
             errorMsgList.add("sku不存在");
         } else {
             skuId = skuVO.getSkuId();
         }
         addDetail.setSkuId(skuId);
-        detailList.add(addDetail);
-        addDTO.setDetailList(detailList);
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
+            errorMap.put(no, no);
             //删除存在的销售订单信息
             map.remove(no);
             return;
         }
+
+        //银行手续费
+        String bankServiceFeeStr = excelDTO.getBankServiceFee();
+        BigDecimal bankServiceFee = MathUtil.getBigDecimalByStr(bankServiceFeeStr);
+        addDTO.setBankServiceFee(bankServiceFee);
+
+        //运费
+        String shippingFeeStr = excelDTO.getShippingFee();
+        BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
+        addDTO.setShippingFee(shippingFee);
+
+        //收款金额
+        String receiveAmountStr = excelDTO.getReceiveAmount();
+        BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
+        addDTO.setReceiveAmount(receiveAmount);
+
+        //报关费
+        String customsFeeStr = excelDTO.getCustomsFee();
+        BigDecimal customsFee = MathUtil.getBigDecimalByStr(customsFeeStr);
+        addDTO.setCustomsFee(customsFee);
+
+        //折扣总额
+        String discountAmountStr = excelDTO.getDiscountAmount();
+        BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
+        addDTO.setDiscountAmount(discountAmount);
+        //数量
+        String qtyStr = excelDTO.getQty();
+        Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
+        addDetail.setQty(qty);
+        //销售单价
+        String priceStr = excelDTO.getPrice();
+        BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
+        addDetail.setPrice(price);
+
+        //税率
+        String taxRateStr = excelDTO.getTaxRate();
+        BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
+        addDetail.setTaxRate(taxRate);
+
+        detailList.add(addDetail);
+        addDTO.setDetailList(detailList);
         map.put(no, addDTO);
 
     }
@@ -451,11 +474,15 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!map.isEmpty()) {
             for (Map.Entry<String, SoInfoDTO.AddDTO> item : map.entrySet()) {
-                SoInfoDTO.AddDTO addDTO = item.getValue();
-                soInfoService.add(addDTO);
+                String no = item.getKey();
+                if(!errorMap.containsKey(no)){
+                    SoInfoDTO.AddDTO addDTO = item.getValue();
+                    soInfoService.add(addDTO);
+                }
             }
         }
         map.clear();
+        errorMap.clear();
     }
 
 

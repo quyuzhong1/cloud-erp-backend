@@ -790,6 +790,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setQty(viewDTO.getQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setDeliveryQty(viewDTO.getDeliveryQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setPlanDeliveryDate(viewDTO.getPlanDeliveryDate());
+                viewGenerateDTO.setPrice(null);
+                viewGenerateDTO.setTaxRate(null);
+                viewGenerateDTO.setCurrency(null);
+                viewGenerateDTO.setCurrencySymbol(null);
+                viewGenerateDTO.setAmount(null);
                 //报价信息
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId());
                 getTaxPrice(childPriceDTO,null,viewGenerateDTO);
@@ -990,16 +995,18 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (StringUtils.isBlank(error) && CollectionUtils.isNotEmpty(pair.getValue())) {
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO = pair.getValue().get(0);
             if (ObjectUtils.isNotEmpty(viewDTO)) {
-                viewDTO.setTaxPrice(priceViewDTO.getTaxPrice());
+                viewDTO.setPrice(priceViewDTO.getTaxPrice());
                 viewDTO.setTaxRate(priceViewDTO.getTaxRate());
                 viewDTO.setCurrency(priceViewDTO.getCurrency());
                 viewDTO.setCurrencySymbol(priceViewDTO.getCurrencySymbol());
+                viewDTO.setAmount(MathUtil.multiply(viewDTO.getPrice(),viewDTO.getQty()));
             }
             if (ObjectUtils.isNotEmpty(viewChildDTO)) {
-                viewChildDTO.setTaxPrice(priceViewDTO.getTaxPrice());
+                viewChildDTO.setPrice(priceViewDTO.getTaxPrice());
                 viewChildDTO.setTaxRate(priceViewDTO.getTaxRate());
                 viewChildDTO.setCurrency(priceViewDTO.getCurrency());
                 viewChildDTO.setCurrencySymbol(priceViewDTO.getCurrencySymbol());
+                viewChildDTO.setAmount(MathUtil.multiply(viewChildDTO.getPrice(),viewChildDTO.getQty()));
             }
 
         }
