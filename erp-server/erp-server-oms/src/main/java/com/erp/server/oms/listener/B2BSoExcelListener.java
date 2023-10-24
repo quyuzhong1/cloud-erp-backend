@@ -50,7 +50,9 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
     Map<String, SoInfoDTO.AddDTO> map = new HashMap<>();
 
-    //错误的map
+    /**
+     * 错误的map
+     */
     Map<String, String> errorMap = new HashMap<>();
 
     /**

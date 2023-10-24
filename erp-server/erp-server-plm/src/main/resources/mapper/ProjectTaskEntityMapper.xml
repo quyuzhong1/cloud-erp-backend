@@ -60,9 +60,9 @@
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND pt.charge_id in
-                <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                    #{chargeId}
+                AND
+                <foreach collection="params.taskSearchDTO.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
@@ -272,9 +272,9 @@
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND pt.charge_id in
-                <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                    #{chargeId}
+                AND
+                <foreach collection="params.taskSearchDTO.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
@@ -779,9 +779,9 @@
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND pt.charge_id in
-                <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                    #{chargeId}
+                AND
+                <foreach collection="params.taskSearchDTO.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
