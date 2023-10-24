@@ -34,7 +34,7 @@ public class ShopAuthorizeDTO implements Serializable {
      */
     private String host;
     /**
-     * 店铺
+     * 店铺域名
      */
     private String shop;
     /**

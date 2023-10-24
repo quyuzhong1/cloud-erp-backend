@@ -37,17 +37,17 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
     /**
      * 刷新的token
      */
-    @TableField("access_token ")
+    @TableField("access_token")
     private String accessToken;
     /**
      * 访问令牌过期之前的秒数。
      */
-    @TableField("expires_in ")
+    @TableField("expires_in")
     private Integer expiresIn;
     /**
      * 对应 dmp 表id
      */
-    @TableField("app_client_id ")
+    @TableField("app_client_id")
     private String appClientId;
 
     private String type;
@@ -66,11 +66,11 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
 
     public static final String TOKEN = "token";
 
-    public static final String ACCESS_TOKEN = "access_token ";
+    public static final String ACCESS_TOKEN = "access_token";
 
-    public static final String EXPIRED_TIME = "expired_time ";
+    public static final String EXPIRED_TIME = "expired_time";
 
-    public static final String APP_CLIENT_ID = "app_client_id ";
+    public static final String APP_CLIENT_ID = "app_client_id";
 
     @Override
     public Serializable pkVal() {
