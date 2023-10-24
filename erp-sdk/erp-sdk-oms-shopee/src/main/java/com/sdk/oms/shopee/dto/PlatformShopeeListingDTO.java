@@ -1,16 +1,22 @@
 package com.sdk.oms.shopee.dto;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.sdk.oms.shopee.dto.product.response.Dimension;
+import com.sdk.oms.shopee.dto.product.response.Image;
+import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 平台亚马逊产品DTO
@@ -22,16 +28,16 @@ import java.util.List;
 @NoArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
-    private PlatformProductDTO platformProductDTO;
+    private ItemInfo itemInfo;
 
     /**
      * 初始化
      */
-    public PlatformShopeeListingDTO(PlatformProductDTO platformProductDTO, JobTaskDTO dto) {
-        this.platformProductDTO = platformProductDTO;
+    public PlatformShopeeListingDTO(ItemInfo itemInfo, JobTaskDTO dto) {
+        this.itemInfo = itemInfo;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
-        this.setUniqueId(platformProductDTO.getUniqueId());
+        this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        this.setUniqueId(String.valueOf(itemInfo.getId()));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -39,17 +45,39 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
     /**
      * 转换目标实体:PlatformProductDTO
      */
-    public static List<PlatformProductDTO> convertDTO(PlatformShopeeListingDTO dto) {
+    public static PlatformProductDTO convertDTO(PlatformShopeeListingDTO dto) {
         // 原商品信息
-        PlatformProductDTO platformProductDTO = dto.getPlatformProductDTO();
-        return initPlatformProductDTO(platformProductDTO, dto);
+        ItemInfo itemInfo = dto.getItemInfo();
+        if (Objects.isNull(itemInfo)){
+            return null;
+        }
+        Long updateTime = itemInfo.getUpdateTime();
+        Instant instant = Instant.ofEpochMilli(updateTime);
+        ZoneId zone = ZoneId.systemDefault();
+        Image image = itemInfo.getImage();
+        String imageUrl = null;
+        if (Objects.nonNull(image)) {
+            List<String> urls = image.getUrls();
+            if (CollectionUtils.isNotEmpty(urls)) {
+                imageUrl = urls.get(0).toString();
+            }
+        }
+        PlatformProductDTO productDTO = new PlatformProductDTO()
+                .setPlatformType("platform")
+                .setPlatformProductNo(itemInfo.getItemSku())
+                .setPlatformProductName(itemInfo.getName())
+                .setProductPacking(processDimension(itemInfo.getDimension()))
+                .setProductSpec(String.valueOf(itemInfo.getCategoryId()))
+                .setProductImageUrl(imageUrl)
+                .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
+
+        return productDTO;
     }
 
-    /**
-     * 根据ShopifyVariant变体(SKU) 转换 DTO
-     */
-    private static List<PlatformProductDTO> initPlatformProductDTO(PlatformProductDTO platformProductDTO, PlatformShopeeListingDTO dto) {
-        return Collections.emptyList();
+    public static String processDimension(Dimension dimension) {
+        if (Objects.isNull(dimension)) {
+            return "";
+        }
+        return StrUtil.format("长度:{};宽度:{};高度:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight());
     }
-
 }

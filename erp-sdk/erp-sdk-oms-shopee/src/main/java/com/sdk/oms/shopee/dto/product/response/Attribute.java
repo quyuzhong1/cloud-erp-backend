@@ -19,7 +19,7 @@ import java.util.List;
 public class Attribute implements Serializable {
 
     @JSONField(name = "attribute_id")
-    private int id;
+    private Long id;
 
     @JSONField(name = "original_attribute_name")
     private String attributeName;

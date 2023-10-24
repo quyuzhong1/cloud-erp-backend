@@ -19,7 +19,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = false)
 public class Brand implements Serializable {
     @JSONField(name = "brand_id")
-    private int brandId;
+    private Long brandId;
     @JSONField(name = "original_brand_name")
     private String originalBrandName;
 }

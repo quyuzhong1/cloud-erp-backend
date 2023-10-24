@@ -18,6 +18,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
+import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -69,7 +70,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
-        List<PlatformProductDTO> productDTOS = new ArrayList<>();
+        List<ItemInfo> itemInfos = new ArrayList<>();
         shopeeShop.getData().forEach(shopAuthEntity -> {
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
@@ -84,15 +85,15 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                         .timeFrom((long) lastTime.getSecond())
                         .timeTo((long) nextTime.getSecond())
                         .build();
-                List<PlatformProductDTO> list = new ArrayList<>();
+                List<ItemInfo> list = new ArrayList<>();
                 shopeeProductService.getAllProduct(productRequest, list);
                 if (CollectionUtils.isNotEmpty(list)) {
-                    productDTOS.addAll(list);
+                    itemInfos.addAll(list);
                 }
             }
         });
         // 返回下载源数据
-        return productDTOS.stream()
+        return itemInfos.stream()
                 .map(e -> new PlatformShopeeListingDTO(e, data))
                 .collect(Collectors.toList());
     }
@@ -102,7 +103,8 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
     public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
         return sourceDataList.stream()
                 // 组装
-                .map(PlatformShopeeListingDTO::getPlatformProductDTO)
+                .map(PlatformShopeeListingDTO::convertDTO)
+//                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 

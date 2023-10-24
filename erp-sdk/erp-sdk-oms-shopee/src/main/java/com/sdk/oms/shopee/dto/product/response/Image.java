@@ -1,14 +1,12 @@
 package com.sdk.oms.shopee.dto.product.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
 
 @Data
-@Builder
 public class Image implements Serializable {
 
     public static final long serialVersionUID = 1L;

@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.PlatformProductDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -21,6 +20,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
+import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopee.service.ShopeeOrderService;
 import com.sdk.oms.shopee.service.ShopeeProductService;
@@ -142,6 +142,9 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public String getShopeeCodeUrl(String id) {
+        if (Objects.isNull(id)) {
+            throw new ServiceException("店铺记录id不能为空");
+        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -226,7 +229,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
                 //获取授权shop
                 List<ShopAuthEntity> shopAuthEntities = this.getAuthShop();
                 if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
-                    List<PlatformProductDTO> allProduct = new ArrayList<>();
+                    List<ItemInfo> allProduct = new ArrayList<>();
                     shopAuthEntities.stream().forEach(shopAuthEntity -> {
                         ProductRequest productRequest = ProductRequest.builder()
                                 .host(cfgAppClient.getUrl())
@@ -238,10 +241,10 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
                                 .timeFrom(null)
                                 .timeTo(null)
                                 .build();
-                        List<PlatformProductDTO> allProduct1 = new ArrayList<>();
-                        shopeeProductService.getAllProduct(productRequest, allProduct1);
-                        if (CollectionUtils.isNotEmpty(allProduct1)) {
-                            allProduct.addAll(allProduct1);
+                        List<ItemInfo> list = new ArrayList<>();
+                        shopeeProductService.getAllProduct(productRequest, list);
+                        if (CollectionUtils.isNotEmpty(list)) {
+                            allProduct.addAll(list);
                         }
                     });
                     System.out.println("allProduct:" + allProduct.size());

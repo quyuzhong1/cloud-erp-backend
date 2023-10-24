@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
@@ -58,11 +57,9 @@ public class ShopAuthorizeDTO implements Serializable {
     /**
      * 店铺id
      */
-    @JSONField(name = "shop_id")
     @NotBlank(message = "店铺id不能为空")
     private String shopId;
 
-    @JSONField(name = "main_account_id")
     private Integer mainAccountId;
 
 }

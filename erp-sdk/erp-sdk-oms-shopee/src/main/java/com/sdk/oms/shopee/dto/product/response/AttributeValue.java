@@ -18,7 +18,7 @@ import java.io.Serializable;
 public class AttributeValue implements Serializable {
 
     @JSONField(name = "value_id")
-    private int id;
+    private Long id;
 
     @JSONField(name = "original_value_name")
     private String valueName;

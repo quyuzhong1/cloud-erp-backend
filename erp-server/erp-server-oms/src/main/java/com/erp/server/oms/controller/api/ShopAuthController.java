@@ -1,19 +1,19 @@
 package com.erp.server.oms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.openfeign.SpringQueryMap;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.ShopAuthService;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopAuthDTO;
+import com.erp.server.oms.service.ShopAuthService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 店铺管理
@@ -59,24 +59,24 @@ public class ShopAuthController extends BaseController {
         return success();
     }
 
-    /**
-     * 获取虾皮授权链接
-     *
-     * @return
-     */
-    @GetMapping("/getShopeeAuthUrl")
-    public ApiResult getShopeeAuthUrl(@SpringQueryMap String id) {
-        return success(shopAuthService.getShopeeCodeUrl(id));
-    }
-
-    /**
-     * 获取虾皮授权链接
-     *
-     * @return
-     */
-    @GetMapping("/getProductAll")
-    public ApiResult getProductAll() {
-        shopAuthService.getProductAll();
-        return success();
-    }
+//    /**
+//     * 获取虾皮授权链接
+//     *
+//     * @return
+//     */
+//    @GetMapping("/getShopeeAuthUrl")
+//    public ApiResult getShopeeAuthUrl(@SpringQueryMap String id) {
+//        return success(shopAuthService.getShopeeCodeUrl(id));
+//    }
+//
+//    /**
+//     * 获取虾皮授权链接
+//     *
+//     * @return
+//     */
+//    @GetMapping("/getProductAll")
+//    public ApiResult getProductAll() {
+//        shopAuthService.getProductAll();
+//        return success();
+//    }
 }
