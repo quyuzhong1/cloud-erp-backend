@@ -10,11 +10,14 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.openfeign.SpringQueryMap;
@@ -116,13 +119,12 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> list = shopInfoService.list();
         return success(list);
     }
-
+    
     /**
      * 获取已授权店铺
-     *
-     * @return ApiResult<List < ShopInfoEntity>>
      * @author Will
      * @date: 2023/10/18 10:00
+     * @return ApiResult<List<ShopInfoEntity>>
      */
     @PostMapping("/listAuth")
     public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
@@ -238,13 +240,13 @@ public class ShopInfoController extends BaseController {
 
 
     /**
-     * 获取到安装的url
+     * 获取店铺授权地址的url
      *
      * @return
      */
-    @GetMapping("/getShopifyInstallUrl")
-    public ApiResult getShopAuthUrl(@RequestParam("id") String id) {
-        String resultUrl = shopInfoService.getShopifyInstallUrl(id);
+    @PostMapping("/getShopAuthorizeUrl")
+    public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
         return success(resultUrl);
     }
 
@@ -254,14 +256,9 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestParam("code") String code,
-                                   @RequestParam("hmac") String hmac,
-                                   @RequestParam("host") String host,
-                                   @RequestParam("shop") String shop,
-                                   @RequestParam("timestamp") String timestamp
-    ) {
-        Boolean result = shopInfoService.shopAuthorize(code, hmac, host, shop, timestamp);
+    @PostMapping("/shopAuthorize")
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        Boolean result = shopInfoService.shopAuthorize(dto);
         return result ? success() : failure();
     }
 
@@ -283,8 +280,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/cancelAuthorize")
-    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = shopInfoService.cancelAuthorize(dto.getId());
+    public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
+        Boolean result = shopInfoService.cancelAuthorize(dto);
         return result ? success() : failure();
     }
 

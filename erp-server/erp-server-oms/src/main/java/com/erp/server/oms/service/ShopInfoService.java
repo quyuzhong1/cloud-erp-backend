@@ -4,6 +4,8 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -78,29 +80,32 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
 
-
     /**
      * 店铺授权
-     *
-     * @param code
-     * @param hmac
-     * @param host
-     * @param shop
-     * @param timestamp
+     * @param dto
      * @return
      */
-    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto);
 
     /**
      * 取消授权
      *
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-29 16:41
      */
-    Boolean cancelAuthorize(String id);
+    Boolean cancelAuthorize(CancelAuthorizeDTO dto);
 
+    /**
+     * 根据域名来查询
+     *
+     * @param shopDomain
+     * @return com.erp.model.oms.entity.ShopInfoEntity
+     * @author yl
+     * @date 2023-08-29 18:08
+     */
+    ShopInfoEntity getByDomain(String shopDomain);
 
     /**
      * 店铺账号下拉
@@ -112,30 +117,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     List<String> accountList();
 
-
     /**
-     * 获取到安装的url
-     *
-     * @param
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-09-06 16:34
+     * 获取店铺授权地址
+     * @param dto
+     * @return
      */
-    String getShopifyInstallUrl(String id);
-
-
-    /**
-     * 获取到ShopifyAuthorizeUrl 授权的url
-     *
-     * @param hmac
-     * @param host
-     * @param shop
-     * @param timestamp
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-09-06 16:54
-     */
-    String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp);
+    String getShopAuthorizeUrl(ShopAuthorizeDTO dto);
 
     /**
      * @return List<ListTreeDTO>
