@@ -58,25 +58,4 @@ public class ShopAuthController extends BaseController {
         shopAuthService.update(dto);
         return success();
     }
-
-//    /**
-//     * 获取虾皮授权链接
-//     *
-//     * @return
-//     */
-//    @GetMapping("/getShopeeAuthUrl")
-//    public ApiResult getShopeeAuthUrl(@SpringQueryMap String id) {
-//        return success(shopAuthService.getShopeeCodeUrl(id));
-//    }
-//
-//    /**
-//     * 获取虾皮授权链接
-//     *
-//     * @return
-//     */
-//    @GetMapping("/getProductAll")
-//    public ApiResult getProductAll() {
-//        shopAuthService.getProductAll();
-//        return success();
-//    }
 }
