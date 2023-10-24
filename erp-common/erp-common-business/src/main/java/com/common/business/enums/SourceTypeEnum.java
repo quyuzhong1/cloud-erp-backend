@@ -16,6 +16,7 @@ public enum SourceTypeEnum {
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单","purchase_application"),
     SUBCONTRACT_ORDER("subcontractOrder", "委外订单","subcontract_order"),
+    SUBCONTRACT_CHANGE("subcontractChange", "委外变更","subcontract_change"),
     PURCHASE_PRICE_CHANGE("purchasePriceChange", "采购价变更","purchase_price_change"),
     SALES_DEMAND("salesDemand", "备货申请","sales_demand"),
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
@@ -40,8 +41,11 @@ public enum SourceTypeEnum {
     SO_OUTSTOCK("soOutstock", "销售出库单","so_outstock"),
     STOCKTAKING_TASK("stocktakingTask", "盘点任务单","stocktaking_task"),
     STOCKTAKING_PLAN("stocktakingPlan", "盘点计划单","stocktaking_plan"),
+    OTHER_INSTOCK("otherInstock", "其他入库","other_instock"),
+    OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
+    WAREHOUSE("warehouse", "仓库","warehouse"),
 
-    STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘赢盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
 
 
 
@@ -53,7 +57,9 @@ public enum SourceTypeEnum {
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
     SHOP( "shop", "店铺","shop_info"),
-
+    CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
+    CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
+    LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
@@ -68,6 +74,11 @@ public enum SourceTypeEnum {
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
+    BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
+
+    //SYS
+    SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
+    SYS_USER_INFO("sysUserInfo", "用户","sys_user_info"),
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
