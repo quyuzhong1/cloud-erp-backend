@@ -106,6 +106,9 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformShopeeOrderDTO> sourceDataList) {
+        if (CollectionUtils.isEmpty(sourceDataList)){
+            return Collections.emptyList();
+        }
         //亚马逊订单转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
@@ -117,6 +120,6 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformDictEnum.SHOPEE.getCode();
     }
 }

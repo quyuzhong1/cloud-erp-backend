@@ -103,10 +103,11 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
+        if (CollectionUtils.isEmpty(sourceDataList)){
+            return Collections.emptyList();
+        }
         return sourceDataList.stream()
-                // 组装
                 .map(PlatformShopeeListingDTO::convertDTO)
-//                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
