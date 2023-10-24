@@ -6,6 +6,7 @@ import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -52,5 +53,6 @@ public class ShopAuthorizeDTO implements Serializable {
     /**
      * 店铺id
      */
+    @NotBlank(message = "店铺id不能为空")
     private String shopId;
 }

@@ -14,8 +14,17 @@ import org.springframework.stereotype.Service;
 public class AuthModelServiceImpl implements AuthModelService {
 
     @Override
-    public void shopAuthorize(ShopAuthorizeDTO dto) throws Exception {
-        //模板模式 处理数据 存库
-        AuthSaveHandler.pullDataSave(dto);
+    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+        return AuthSaveHandler.getShopAuthorizeUrl(dto);
+    }
+
+    @Override
+    public void shopAuthorize(ShopAuthorizeDTO dto) {
+        AuthSaveHandler.shopAuthorize(dto);
+    }
+
+    @Override
+    public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
+        AuthSaveHandler.cleanShopAuthorize(dto);
     }
 }

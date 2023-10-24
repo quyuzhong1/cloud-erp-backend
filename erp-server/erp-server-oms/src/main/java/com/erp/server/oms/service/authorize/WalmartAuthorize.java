@@ -59,6 +59,14 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
     private RedisUtil redisUtil;
 
     /**
+     * 获取授权地址
+     */
+    @Override
+    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+        return null;
+    }
+
+    /**
      * 授权
      * @param dto
      * @return

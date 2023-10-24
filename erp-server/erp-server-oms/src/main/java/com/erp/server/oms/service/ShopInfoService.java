@@ -116,30 +116,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     List<String> accountList();
 
-
     /**
-     * 获取到安装的url
-     *
-     * @param
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-09-06 16:34
+     * 获取店铺授权地址
+     * @param dto
+     * @return
      */
-    String getShopifyInstallUrl(String id);
-
-
-    /**
-     * 获取到ShopifyAuthorizeUrl 授权的url
-     *
-     * @param hmac
-     * @param host
-     * @param shop
-     * @param timestamp
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-09-06 16:54
-     */
-    String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp);
+    String getShopAuthorizeUrl(ShopAuthorizeDTO dto);
 
     /**
      * @return List<ListTreeDTO>

@@ -10,6 +10,13 @@ import com.erp.model.oms.dto.ShopAuthorizeDTO;
 public interface IShopAuthorizeService<T> {
 
     /**
+     * 获取平台授权地址
+     * @param dto
+     * @return
+     */
+    String getShopAuthorizeUrl(ShopAuthorizeDTO dto);
+
+    /**
      * 授权
      * @param dto
      */

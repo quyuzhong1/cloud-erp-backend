@@ -11,6 +11,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.handler.SaveHandler;
 import com.common.business.service.ModelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
@@ -481,11 +482,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        try {
-            authModelService.shopAuthorize(dto);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        authModelService.getShopAuthorizeUrl(dto);
         return Boolean.FALSE;
     }
 
@@ -565,23 +562,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp) {
-        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        findDTO.setBusinessType(appClient.getBusinessType());
-        findDTO.setDictPlatform(appClient.getPlatform());
-        findDTO.setPlatformType(appClient.getPlatformType());
-        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        String params = "host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
-//        Boolean checkResult = shopSdkServer.verifyShop(params, hmac, shop, cfgAppClient.getClientSecret());
-//        if (!checkResult) {
-//            throw new ServiceException("店铺授权检验未通过");
-//        }
-//        String grantOptions = "per-user";
-        // 离线模式：token无过期
-        String grantOptions = "offline-access";
-        String path = String.format(cfgAppClient.getUrl(), shop, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
-        return path;
+    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+        return authModelService.getShopAuthorizeUrl(dto);
     }
 
     @Override
@@ -841,37 +823,5 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
     }
-
-
-    /**
-     * 获取到shopfily安装的url
-     *
-     * @param
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-09-06 16:34
-     */
-    @Override
-    public String getShopifyInstallUrl(String id) {
-        ShopInfoEntity shopInfo = this.getById(id);
-        if (Objects.isNull(shopInfo)) {
-            throw new ServiceException("店铺不存在");
-        }
-        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        findDTO.setBusinessType(appClient.getBusinessType());
-        findDTO.setDictPlatform(appClient.getPlatform());
-        findDTO.setPlatformType(appClient.getPlatformType());
-        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        // 全域名：SHOP_NAME.myshopify.com
-        String fullDomain = shopInfo.getDomain().concat(ShopifyConstant.DOMAIN);
-//        String grantOptions = "per-user";
-        // 离线模式：token无过期
-        String grantOptions = "offline-access";
-        String path = String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
-        return path;
-
-    }
-
 
 }

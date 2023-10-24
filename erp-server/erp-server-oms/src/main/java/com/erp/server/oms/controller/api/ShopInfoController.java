@@ -239,13 +239,13 @@ public class ShopInfoController extends BaseController {
 
 
     /**
-     * 获取到安装的url
+     * 获取店铺授权地址的url
      *
      * @return
      */
-    @GetMapping("/getShopifyInstallUrl")
-    public ApiResult getShopAuthUrl(@RequestParam("id") String id) {
-        String resultUrl = shopInfoService.getShopifyInstallUrl(id);
+    @GetMapping("/getShopAuthorizeUrl")
+    public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
         return success(resultUrl);
     }
 

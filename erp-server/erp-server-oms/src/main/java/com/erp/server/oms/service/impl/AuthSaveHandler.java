@@ -18,7 +18,6 @@ import java.util.Map;
 public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveData, IShopAuthorizeService> {
     private static final Map<PlatformDictEnum, IShopAuthorizeService> PAY_MAP = Maps.newHashMap();
 
-    private static final int size = 1000;
     @Override
     public Class<AuthSaveData> getAnnotation() {
         return AuthSaveData.class;
@@ -29,17 +28,18 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveDa
         annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
-    public static void pullDataSave(ShopAuthorizeDTO dto) throws Exception {
-        //通过枚举获取对应service
+    public static String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
         IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
-        //拉取数据 存库
+        return service.getShopAuthorizeUrl(dto);
+    }
+
+    public static void shopAuthorize(ShopAuthorizeDTO dto){
+        IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
         service.shopAuthorize(dto);
     }
 
-    public static void cleanDataSave(ShopAuthorizeDTO dto) {
-        //通过枚举获取对应service
+    public static void cleanShopAuthorize(ShopAuthorizeDTO dto) {
         IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
-        //清除数据
         service.cleanShopAuthorize(dto);
     }
 

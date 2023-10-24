@@ -52,6 +52,32 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
     private RedisUtil redisUtil;
 
     /**
+     * 获取授权地址
+     * @param dto
+     * @return
+     */
+    @Override
+    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        // 全域名：SHOP_NAME.myshopify.com
+        String fullDomain = shopInfo.getDomain().concat(ShopifyConstant.DOMAIN);
+//        String grantOptions = "per-user";
+        // 离线模式：token无过期
+        String grantOptions = "offline-access";
+        String path = String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+        return path;
+    }
+
+    /**
      * 授权
      * @param dto
      * @return
@@ -116,21 +142,8 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
             shopInfo.setIsGenTask(Boolean.TRUE);
             shopInfoService.updateShopInfoById(shopInfo);
             // 添加到缓存redis
-            ShopifyShopInfoDTO shopInfoDTO = new ShopifyShopInfoDTO()
-                    // 店铺ID
-                    .setId(shopInfo.getId())
-                    // 访问token
-                    .setAccessToken(accessToken)
-                    // 店铺名称
-                    .setName(shopInfo.getName())
-                    // 区域id
-                    .setDictAreaCode(shopInfo.getDictAreaCode())
-                    // 国家id
-                    .setDictCountryCode(shopInfo.getDictCountryCode())
-                    // 负责人id
-                    .setChargeId(shopInfo.getChargeId())
-                    // 店铺全域名: SHOP_NAME.myshopify.com
-                    .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));;
+            ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, accessToken);
+
             // platform-token:平台名称:店铺ID
             String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
             redisUtil.set(tokenKey, shopInfoDTO);
@@ -149,5 +162,26 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
     @Override
     public void cleanShopAuthorize(ShopAuthorizeDTO dto) {
 
+    }
+
+    /**
+     * shopInfo Entity 转换DTO
+     */
+    private ShopifyShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, String accessToken) {
+        return new ShopifyShopInfoDTO()
+                // 店铺ID
+                .setId(shopInfo.getId())
+                // 访问token
+                .setAccessToken(accessToken)
+                // 店铺名称
+                .setName(shopInfo.getName())
+                // 区域id
+                .setDictAreaCode(shopInfo.getDictAreaCode())
+                // 国家id
+                .setDictCountryCode(shopInfo.getDictCountryCode())
+                // 负责人id
+                .setChargeId(shopInfo.getChargeId())
+                // 店铺全域名: SHOP_NAME.myshopify.com
+                .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
     }
 }
