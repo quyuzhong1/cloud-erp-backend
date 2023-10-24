@@ -161,7 +161,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
      **/
     PdaProductDetailDTO.View pdaProductView(@Param("skuNo") String skuNo);
-
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:23
+     * @param chargeId
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByChargeId(@Param("chargeId") String chargeId);
 }
 
 
