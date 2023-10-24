@@ -1,13 +1,17 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.*;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -124,7 +128,15 @@ public class BusinessServiceImpl {
         }
         // 异步推送到MQ
         pushToMqList.stream().peek(msg ->{
-            String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, msg));
+            BusinessTypeEnum businessType = BusinessTypeEnum.getByCode(business);
+            if (ObjectUtil.isEmpty(businessType)){
+                throw new ServiceException(StrUtil.format("业务类型business = {} 不存在", business));
+            }
+            SourceTypeEnum sourceType = businessType.getSourceType();
+            if (ObjectUtil.isEmpty(sourceType)){
+                throw new ServiceException(StrUtil.format("来源类型business = {} 不存在", business));
+            }
+            String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, sourceType.getCode(), targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
             SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
