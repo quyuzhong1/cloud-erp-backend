@@ -3927,22 +3927,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        //已存在数据
         skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
-        }
+
         List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
         //供应商名称
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
-        for (ProductSearchDTO.SkuListDTO skuListDTO : list) {
+
+        List<ProductSearchDTO.SkuListDTO> resultList = new ArrayList<>();
+        for (String skuNo : skuParamDTO.getSkuNoList()) {
+            ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuListDTO)) {
+                skuListDTO = new ProductSearchDTO.SkuListDTO();
+            }
             //sku状态名称
             skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
             //供应商名称
-            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(skuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
+            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             skuListDTO.setMainSupplierName(supplierName);
+            resultList.add(skuListDTO);
         }
-        return list;
+        return resultList;
     }
 
 
