@@ -4,19 +4,19 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
-import com.common.business.dto.PlatformProductDTO;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.Item;
+import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.sdk.oms.shopee.constants.ShopeeConstants.*;
@@ -46,7 +46,7 @@ public class ShopeeProductService {
                 .timeTo(null)
                 .timeFrom(null)
                 .build();
-        List<PlatformProductDTO> productList = new ArrayList<>(0);
+        List<ItemInfo> productList = new ArrayList<>(0);
         shopeeProductService.getAllProduct(productRequest, productList);
 //        JSONObject response = productList.getResponse();
 //        JSONArray list = (JSONArray) response.get("item");
@@ -65,7 +65,7 @@ public class ShopeeProductService {
 
     }
 
-    public void getAllProduct(ProductRequest productRequest, List<PlatformProductDTO> productDTOS) {
+    public void getAllProduct(ProductRequest productRequest, List<ItemInfo> itemInfos) {
         ShopeeResponse productList = this.getProductList(productRequest);
         JSONObject response = productList.getResponse();
         String error = response.getString("error");
@@ -83,33 +83,9 @@ public class ShopeeProductService {
             JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
             //循环填充
             JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-            List<PlatformProductDTO> list = new ArrayList<>();
-            listBase.forEach(o -> {
-                JSONObject jsonObject = (JSONObject) o;
-//            jsonObject.getJSONObject("description_info").getJSONObject("extended_description").getJSONArray("field_list").get(0);
-                Long updateTime = jsonObject.getLong("update_time");
-                Instant instant = Instant.ofEpochMilli(updateTime);
-                ZoneId zone = ZoneId.systemDefault();
-                JSONObject image = jsonObject.getJSONObject("image");
-                String imageUrl = null;
-                if (Objects.nonNull(image)) {
-                    JSONArray jsonArray1 = image.getJSONArray("image_url_list");
-                    if (CollectionUtils.isNotEmpty(jsonArray1)) {
-                        imageUrl = jsonArray1.get(0).toString();
-                    }
-                }
-                PlatformProductDTO dto = new PlatformProductDTO()
-                        .setPlatformType("platform")
-                        .setPlatformProductNo(jsonObject.getString("item_sku"))
-                        .setPlatformProductName(jsonObject.getString("item_name"))
-                        .setProductPacking(jsonObject.getJSONObject("dimension").toJSONString())
-                        .setProductSpec(jsonObject.getString("category_id"))
-                        .setProductImageUrl(imageUrl)
-                        .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
-                list.add(dto);
-            });
-            if (CollectionUtils.isNotEmpty(list)) {
-                productDTOS.addAll(list);
+            List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
+            if (CollectionUtils.isNotEmpty(list)){
+                itemInfos.addAll(list);
             }
         }
         //是否还有数据
@@ -117,7 +93,7 @@ public class ShopeeProductService {
         if (hasNextPage) {
             Integer next_offset = response.getInteger("next_offset");
             productRequest.setOffset(next_offset);
-            getAllProduct(productRequest, productDTOS);
+            getAllProduct(productRequest, itemInfos);
         }
 //        System.out.println(responseBaseInfo);
 //        ShopeeResponse productItemExtraInfo = this.getProductItemExtraInfo(host, token, shopId, partner_id, tmp_partner_key, StringUtils.join(itemIds, ","));

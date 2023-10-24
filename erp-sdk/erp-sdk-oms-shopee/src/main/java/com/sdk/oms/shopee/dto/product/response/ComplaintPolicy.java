@@ -23,7 +23,7 @@ public class ComplaintPolicy implements Serializable {
     @JSONField(name = "exclude_entrepreneur_warranty")
     private boolean excludeEntrepreneurWarranty;
     @JSONField(name = "complaint_address_id")
-    private int complaintAddressId;
+    private Long complaintAddressId;
     @JSONField(name = "additional_information")
     private String additionalInformation;
 

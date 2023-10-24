@@ -19,4 +19,7 @@ public class Field implements Serializable {
 
     @JSONField(name = "text")
     private String text;
+
+    @JSONField(name = "image_info")
+    private ImageInfo imageInfo;
 }

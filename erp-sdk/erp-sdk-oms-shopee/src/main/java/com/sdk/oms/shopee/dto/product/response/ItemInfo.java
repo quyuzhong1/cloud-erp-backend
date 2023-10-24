@@ -88,13 +88,13 @@ public class ItemInfo implements Serializable {
      * Does it contain model.
      */
     @JSONField(name = "promotion_id")
-    private int promotionId;
+    private Long promotionId;
 
     /**
      * Does it contain model.
      */
     @JSONField(name = "item_dangerous")
-    private int itemDangerous;
+    private Long itemDangerous;
 
 
     /**
@@ -126,12 +126,14 @@ public class ItemInfo implements Serializable {
     /**
      * the net weight of this item, the unit is KG.
      */
+    @JSONField(name = "image")
     private Image image;
 
     /**
      * Should call shopee.item.GetCategories to get category first.
      * Related to result.categories.category_id
      */
+    @JSONField(name = "dimension")
     private Dimension dimension;
 
     /**
@@ -149,6 +151,7 @@ public class ItemInfo implements Serializable {
     /**
      * Attributes
      */
+    @JSONField(name = "wholesales")
     List<WholeSale> wholesales;
 
     /**
@@ -160,22 +163,31 @@ public class ItemInfo implements Serializable {
     /**
      * The length of package for this single item, the unit is CM
      */
+    @JSONField(name = "brand")
     private Brand brand;
 
     /**
-     * The width of package for this single item, the unit is CM
+     * Time for a warranty claim.Value should be in one of ONE_YEAR TWO_YEARS OVER_TWO_YEARS.
      */
     @JSONField(name = "complaint_policy")
     private ComplaintPolicy complaintPolicy;
 
     /**
-     * The height of package for this single item, the unit is CM
+     * Tax information
      */
     @JSONField(name = "tax_info")
     private TaxInfo taxInfo;
 
     /**
+     * new stock object.
      *
+     * Please check this FAQ for more detail: https://open.shopee.com/faq?top=162&sub=166&page=1&faq=230
+     */
+    @JSONField(name = "stock_info_v2")
+    private StockInfo stockInfo;
+
+    /**
+     *New description field. Only whitelist sellers can use it.
      */
     @JSONField(name = "description_info")
     private DescriptionInfo descriptionInfo;

@@ -20,9 +20,9 @@ import java.io.Serializable;
 public class Dimension implements Serializable {
 
     @JSONField(name = "package_length")
-    private int packageLength;
+    private Long packageLength;
     @JSONField(name = "package_width")
-    private int packageWidth;
+    private Long packageWidth;
     @JSONField(name = "package_height")
-    private int packageHeight;
+    private Long packageHeight;
 }

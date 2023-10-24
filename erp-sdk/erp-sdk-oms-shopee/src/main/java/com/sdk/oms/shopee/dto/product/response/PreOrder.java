@@ -17,5 +17,5 @@ public class PreOrder implements Serializable {
     @JSONField(name = "is_pre_order")
     private boolean isPreOrder;
     @JSONField(name = "days_to_ship")
-    private int daysToShip;
+    private Long daysToShip;
 }

@@ -4,18 +4,18 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author zdy
- * @ClassName ExtendedDescription
+ * @ClassName SellerStock
  * @description: TODO
  * @date 2023年10月24日
  * @version: 1.0
  */
 @Data
-public class ExtendedDescription implements Serializable {
-
-    @JSONField(name = "field_list")
-    private List<Field> fields;
+public class SellerStock implements Serializable {
+    @JSONField(name = "location_id")
+    private String locationId;
+    @JSONField(name = "stock")
+    private Integer stock;
 }

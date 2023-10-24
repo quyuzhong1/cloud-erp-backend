@@ -18,6 +18,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
 import com.sdk.oms.shopee.dto.order.request.OrderRequest;
+import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.service.ShopeeOrderService;
 import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -66,11 +67,11 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
-        List<PlatformOrderDTO> orderDTOS = new ArrayList<>();
+        List<OrderDetail> orderDTOS = new ArrayList<>();
         shopeeShop.getData().forEach(shopAuthEntity -> {
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
-                ShopAuthEntity shop = shopeeShopById.getData();
+//                ShopAuthEntity shop = shopeeShopById.getData();
                 OrderRequest orderRequest = OrderRequest.builder()
                         .offset(0)
                         .timeFrom(null)
@@ -82,10 +83,10 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
                         .host(cfgAppClient.getUrl())
                         .cursor("")
                         .build();
-                List<PlatformOrderDTO> platformOrderDTOS = new ArrayList<>();
-                shopeeOrderService.getAllOrder(orderRequest,platformOrderDTOS);
-                if (CollectionUtils.isNotEmpty(platformOrderDTOS)){
-                    orderDTOS.addAll(platformOrderDTOS);
+                List<OrderDetail> orderDetails = new ArrayList<>();
+                shopeeOrderService.getAllOrder(orderRequest,orderDetails);
+                if (CollectionUtils.isNotEmpty(orderDetails)){
+                    orderDTOS.addAll(orderDetails);
                 }
 
             }
@@ -103,22 +104,13 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 组装
-                .map(PlatformShopeeOrderDTO::getPlatformOrderDTO)
+                .map(PlatformShopeeOrderDTO::convertDTO)
+//                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.AMAZON.getCode();
-    }
-
-    /**
-     * 是否发送MQ
-     * true=发送
-     * false=不发送（有其他详情需要额外拉取）
-     */
-    @Override
-    public Boolean getIsSendMq() {
-        return Boolean.FALSE;
     }
 }

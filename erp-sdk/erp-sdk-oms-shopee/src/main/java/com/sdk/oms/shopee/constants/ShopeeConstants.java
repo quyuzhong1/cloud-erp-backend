@@ -18,8 +18,8 @@ public interface ShopeeConstants {
      String tmp_partner_key = "436568524178574244445975595377664f574e6b536d786b7256744158715974";
      String access_token = "757a4644475556494d4d6c706870594a";
      String refresh_token = "4e776c4e494949424e464d664379436c";
-     String shop_refresh_token = "72525467526350474465787177674c59";
-     String shop_access_token = "757248704b7953566d4a67434a6f4f49";
+     String shop_refresh_token = "747a42777675454279465a46714c794c";
+     String shop_access_token = "656c73716d77414d6b63434968545855";
      String merchant_access_token = "666a465647424a544e694c7043564a6e";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 

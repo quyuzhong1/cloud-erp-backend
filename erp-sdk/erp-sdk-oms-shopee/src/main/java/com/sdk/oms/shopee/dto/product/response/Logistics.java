@@ -38,7 +38,7 @@ public class Logistics implements Serializable {
      * If specify logistic fee_type is SIZE_SELECTION size_id is required.
      */
     @JSONField(name = "size_id")
-    private int sizeId;
+    private Long sizeId;
     /**
      * when seller chooses this option, the shipping fee of this channel on item will be set to 0. Default value is False.
      */
