@@ -396,8 +396,8 @@
         on psi.id = psid.main_id and psid.is_deleted = false
         left join purchase_order_detail pod
         on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
-        where  psi.is_deleted = false
         <where>
+            psi.is_deleted = false
             <if test="params.productName != null  and params.productName != ''">
                 and psid.product_name like concat('%',#{params.productName},'%')
             </if>

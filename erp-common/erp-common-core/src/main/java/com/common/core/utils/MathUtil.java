@@ -452,6 +452,13 @@ public class MathUtil {
 
     }
 
+    public static BigDecimal getBigDecimalByStr(String priceStr) {
+        if (StringUtils.isBlank(priceStr)) {
+            return BigDecimal.ZERO;
+        }
+        return new BigDecimal(priceStr);
+    }
+
     private static final Set<Collector.Characteristics> CHARACTERISTICS = Collections.emptySet();
 
 
