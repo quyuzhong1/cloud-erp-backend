@@ -39,6 +39,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
@@ -3922,6 +3923,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateProductDetailBatch(List<ProductDetailEntity> list) {
         return this.updateBatchById(list);
+    }
+
+    @Override
+    public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        //供应商名称
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        for (ProductSearchDTO.SkuListDTO skuListDTO : list) {
+            //sku状态名称
+            skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
+            //供应商名称
+            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(skuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            skuListDTO.setMainSupplierName(supplierName);
+        }
+        return list;
     }
 
 

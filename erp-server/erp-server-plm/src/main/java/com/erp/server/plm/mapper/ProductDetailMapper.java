@@ -90,6 +90,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     CleanSkuDto getProductIdBySkuClean(@Param("sku") String sku);
 
     List<SkuVO> getSkuBySkuNos(@Param("skuList") List<String> skuNoList,@Param("status") Integer status);
+    /**
+     * @description: 根据sku编号查询（带权限）
+     * @author Will
+     * @date: 2023/10/24 12:09
+     * @param skuParamDTO
+     * @return List<ProductSearchDTO.SkuListDTO>
+     */
+    List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(@Param("params") ProductSearchDTO.SkuParamDTO skuParamDTO);
 
     List<SkuVO> searchSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
 

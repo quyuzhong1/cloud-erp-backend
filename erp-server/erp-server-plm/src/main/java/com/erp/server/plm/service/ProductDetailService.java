@@ -590,4 +590,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateProductDetailBatch(List<ProductDetailEntity> list);
+    /**
+     * @description: 根据编号查询
+     * @author Will
+     * @date: 2023/10/24 12:06
+     * @param skuParamDTO
+     * @return List<ProductSearchDTO.SkuListDTO>
+     */
+    List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
 }
