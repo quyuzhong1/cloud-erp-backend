@@ -30,17 +30,17 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveDa
     }
 
     public static String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
-        IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
+        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.getShopAuthorizeUrl(dto);
     }
 
     public static Boolean shopAuthorize(ShopAuthorizeDTO dto){
-        IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
+        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.shopAuthorize(dto);
     }
 
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
-        IShopAuthorizeService service = PAY_MAP.get(dto.getPlatformCode());
+        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.cancelAuthorize(dto);
     }
 
