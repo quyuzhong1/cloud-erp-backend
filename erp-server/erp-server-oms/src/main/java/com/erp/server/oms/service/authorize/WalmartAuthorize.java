@@ -16,7 +16,6 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.AuthSaveData;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
@@ -33,7 +32,6 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import javax.sql.rowset.serial.SerialException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 

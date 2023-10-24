@@ -17,6 +17,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
+import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -73,9 +74,21 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
                 ShopAuthEntity shop = shopeeShopById.getData();
-                List<PlatformProductDTO> list = shopeeProductService.getAllProduct(cfgAppClient.getUrl(), shop.getAccessToken(),
-                        Long.parseLong(shop.getShopId()), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret());
-                productDTOS.addAll(list);
+                ProductRequest productRequest = ProductRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .offset(0)
+                        .token(shop.getAccessToken())
+                        .shopId(Long.parseLong(shop.getShopId()))
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .timeFrom((long) lastTime.getSecond())
+                        .timeTo((long) nextTime.getSecond())
+                        .build();
+                List<PlatformProductDTO> list = new ArrayList<>();
+                shopeeProductService.getAllProduct(productRequest, list);
+                if (CollectionUtils.isNotEmpty(list)) {
+                    productDTOS.addAll(list);
+                }
             }
         });
         // 返回下载源数据
@@ -87,14 +100,10 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
-        System.out.println("sourceDataList = " + sourceDataList);
-        // 订单转换为发送mq数据
-        List<PlatformProductDTO> productDTOS = new ArrayList<>(sourceDataList.size());
-        sourceDataList.forEach(platformShopeeListingDTO -> {
-            productDTOS.add(platformShopeeListingDTO.getPlatformProductDTO());
-        });
-        // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return productDTOS;
+        return sourceDataList.stream()
+                // 组装
+                .map(PlatformShopeeListingDTO::getPlatformProductDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

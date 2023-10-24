@@ -17,6 +17,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
+import com.sdk.oms.shopee.dto.order.request.OrderRequest;
 import com.sdk.oms.shopee.service.ShopeeOrderService;
 import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -70,9 +71,23 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
                 ShopAuthEntity shop = shopeeShopById.getData();
-                List<PlatformOrderDTO> list = shopeeOrderService.getAllOrder(cfgAppClient.getUrl(), shop.getAccessToken(),
-                        Long.parseLong(shop.getShopId()), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret());
-                orderDTOS.addAll(list);
+                OrderRequest orderRequest = OrderRequest.builder()
+                        .offset(0)
+                        .timeFrom(null)
+                        .timeTo(null)
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .token(shopAuthEntity.getAccessToken())
+                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                        .host(cfgAppClient.getUrl())
+                        .cursor("")
+                        .build();
+                List<PlatformOrderDTO> platformOrderDTOS = new ArrayList<>();
+                shopeeOrderService.getAllOrder(orderRequest,platformOrderDTOS);
+                if (CollectionUtils.isNotEmpty(platformOrderDTOS)){
+                    orderDTOS.addAll(platformOrderDTOS);
+                }
+
             }
         });
         // 返回下载源数据
@@ -88,7 +103,7 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 组装
-                .map(PlatformShopeeOrderDTO::convertDTO)
+                .map(PlatformShopeeOrderDTO::getPlatformOrderDTO)
                 .collect(Collectors.toList());
     }
 

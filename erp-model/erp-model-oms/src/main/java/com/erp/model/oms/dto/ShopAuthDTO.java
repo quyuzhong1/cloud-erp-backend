@@ -140,9 +140,9 @@ public class ShopAuthDTO implements Serializable {
         @NotBlank(message = "授权code不能为空")
         private String code;
 
-        private Integer shop_id;
+        private Integer shopId;
 
-        private Integer main_account_id;
+        private Integer mainAccountId;
     }
 
 }

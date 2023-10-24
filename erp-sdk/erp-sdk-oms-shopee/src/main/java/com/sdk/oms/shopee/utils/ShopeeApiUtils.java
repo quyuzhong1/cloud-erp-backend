@@ -1,6 +1,7 @@
 package com.sdk.oms.shopee.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONArray;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -175,5 +176,18 @@ public class ShopeeApiUtils {
             }
         }
         return urlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        JSONObject jsonObject = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add("123");
+        jsonArray.add("1234");
+        jsonArray.add("1235");
+        jsonArray.add("1236");
+        jsonObject.put("merchant_id_list",jsonArray);
+
+        ShopeeAuth resultMap = JSONObject.parseObject(jsonObject.toJSONString(jsonObject), ShopeeAuth.class);
+        System.out.println(resultMap);
     }
 }

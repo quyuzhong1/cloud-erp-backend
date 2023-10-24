@@ -18,8 +18,8 @@ public interface ShopeeConstants {
      String tmp_partner_key = "436568524178574244445975595377664f574e6b536d786b7256744158715974";
      String access_token = "757a4644475556494d4d6c706870594a";
      String refresh_token = "4e776c4e494949424e464d664379436c";
-     String shop_refresh_token = "734a4451436f426175434d6a49744b59";
-     String shop_access_token = "4b6a6374694e735162726c6e6e6c5a6f";
+     String shop_refresh_token = "72525467526350474465787177674c59";
+     String shop_access_token = "757248704b7953566d4a67434a6f4f49";
      String merchant_access_token = "666a465647424a544e694c7043564a6e";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 
@@ -40,7 +40,7 @@ public interface ShopeeConstants {
 
 
      String redirect_url = "https://5e30-43-154-173-250.ngrok-free.app/return";
-     int page_size = 10;
+     int pageSize = 10;
      String offset = "AAAAFA==";
      String time_range_field = "create_time";
 //    {"access_token":"5858656f6d49665452747a7251624a63","refresh_token":"457353597a614971596a5759424b7868","merchant_id_list":[1315427],"shop_id_list":[497440222,497435491,497437542,497438607,954277234,954280155,954283475],"expire_in":14355,"error":"","message":"","request_id":"70b9fac0337152cc314c6376b29ac121"}    static String tmp_partner_key = "436568524178574244445975595377664f574e6b536d786b7256744158715974";}

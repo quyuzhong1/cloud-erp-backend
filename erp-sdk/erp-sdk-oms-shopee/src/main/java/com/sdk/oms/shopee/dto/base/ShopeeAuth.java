@@ -1,6 +1,6 @@
 package com.sdk.oms.shopee.dto.base;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.*;
 
 import java.io.Serializable;
@@ -11,41 +11,39 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShopeeAuth  implements Serializable {
+public class ShopeeAuth implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Name of the shop.
      */
-    @JsonProperty("access_token")
+    @JSONField(name = "access_token")
     protected String accessToken;
 
     /**
      * Description of the shop.
      */
-    @JsonProperty("refresh_token")
+    @JSONField(name = "refresh_token")
     protected String refreshToken;
 
     /**
      * List of videos URLs of the shop.
      */
-    @JsonProperty("merchant_id_list")
+    @JSONField(name = "merchant_id_list")
     @Singular
     protected List<Long> merchantIdList;
 
     /**
      * List of images URLs of the shop.
      */
-    @JsonProperty("shop_id_list")
-
+    @JSONField(name = "shop_id_list")
     @Singular
     protected List<Long> shopIdList;
-
     /**
      * Allow negotiations or not, 1: don't allow, 0: allow.
      */
-    @JsonProperty("expire_in")
+    @JSONField(name = "expire_in")
     protected long expireIn;
 
     private String message;
@@ -55,6 +53,6 @@ public class ShopeeAuth  implements Serializable {
     /**
      * The identifier for an API request for error tracking which is used by every request
      */
-    @JsonProperty("request_id")
+    @JSONField(name = "request_id")
     private String requestId;
 }

@@ -1,18 +1,16 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.SaveHandler;
-import com.common.business.service.ModelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
@@ -46,6 +44,7 @@ import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.erp.server.oms.service.authorize.ShopfiyAuthorize;
 import com.erp.server.oms.service.authorize.WalmartAuthorize;
@@ -634,16 +633,30 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             throw new ServiceException("erp-dmp服务调用异常");
         }
         //根据店铺授权还是主账号授权进行分开记录授权
-        if (Objects.nonNull(dto.getShop_id())) {
-            ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getShop_id());
+        if (Objects.nonNull(dto.getShopId())) {
+            AuthRequest authRequest = AuthRequest.builder()
+                    .host(cfgAppClient.getUrl())
+                    .code(dto.getCode())
+                    .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                    .tmpPartnerKey(cfgAppClient.getClientSecret())
+                    .shopId(dto.getShopId())
+                    .build();
+            ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(authRequest);
             if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                 throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
             }
             updateShopeeToken(dto, shopeeAuth, cfgAppClient, AuthTypeEnum.SHOP.getCode());
-        } else if (Objects.nonNull(dto.getMain_account_id())) {
+        } else if (Objects.nonNull(dto.getMainAccountId())) {
             //获取主账户token 需要刷新子商铺的refresh_token
             {
-                ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(cfgAppClient.getUrl(), dto.getCode(), Long.parseLong(cfgAppClient.getClientId()), cfgAppClient.getClientSecret(), dto.getMain_account_id());
+                AuthRequest authRequest = AuthRequest.builder()
+                        .host(cfgAppClient.getUrl())
+                        .code(dto.getCode())
+                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                        .mainAccountId(dto.getMainAccountId())
+                        .build();
+                ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(authRequest);
                 if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                     throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
                 }
@@ -679,7 +692,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth = new ShopAuthEntity();
             shopAuth.setShopId(dto.getId());
         }
-        long partner_id = Long.parseLong(cfgAppClient.getClientId());
+        long partnerId = Long.parseLong(cfgAppClient.getClientId());
         shopAuth.setShopId(dto.getId());
         String refreshToken = shopeeAuth.getRefreshToken();
         String accessToken = shopeeAuth.getAccessToken();
@@ -687,14 +700,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setType(type);
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
             //主账号授权
-            if (Objects.nonNull(dto.getMain_account_id())) {
-                shopAuth.setShopeeId(String.valueOf(dto.getMain_account_id()));
+            if (Objects.nonNull(dto.getMainAccountId())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getMainAccountId()));
             }
         } else if (AuthTypeEnum.SHOP.getCode().equals(type)) {
             //店铺授权
 //            String shopId = jsonObject.getString("shop_id");
-            if (Objects.nonNull(dto.getShop_id())) {
-                shopAuth.setShopeeId(String.valueOf(dto.getShop_id()));
+            if (Objects.nonNull(dto.getShopId())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getShopId()));
             }
         } else {
             throw new ServiceException("授权异常");
@@ -711,10 +724,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //如果是主店铺
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
             List<Long> merchantIds = shopeeAuth.getMerchantIdList();
+//            JSONArray jsonArray = shopeeAuth.getMerchantIdList();
 //            JSONArray merchantIds = jsonObject.getJSONArray("merchant_id_list");
             if (CollectionUtils.isNotEmpty(merchantIds)) {
                 for (Long merchantId : merchantIds) {
-                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), merchantId);
+                    AuthRequest authRequest = AuthRequest.builder()
+                            .host(cfgAppClient.getUrl())
+                            .refreshToken(refreshToken)
+                            .partnerId(partnerId)
+                            .tmpPartnerKey(cfgAppClient.getClientSecret())
+                            .merchantId( merchantId)
+                            .build();
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(authRequest);
+                    //TODO 更新token
                     saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo, cfgAppClient.getId());
                 }
             }
@@ -722,7 +744,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             List<Long> shopIds = shopeeAuth.getShopIdList();
             if (CollectionUtils.isNotEmpty(shopIds)) {
                 for (Long shopId : shopIds) {
-                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(cfgAppClient.getUrl(), refreshToken, partner_id, cfgAppClient.getClientSecret(), shopId);
+                    AuthRequest authRequest = AuthRequest.builder()
+                            .host(cfgAppClient.getUrl())
+                            .refreshToken(refreshToken)
+                            .partnerId(partnerId)
+                            .tmpPartnerKey(cfgAppClient.getClientSecret())
+                            .shopId(shopId)
+                            .build();
+                    ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
                     saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo, cfgAppClient.getId());
                 }
             }
@@ -803,4 +832,5 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
     }
+
 }
