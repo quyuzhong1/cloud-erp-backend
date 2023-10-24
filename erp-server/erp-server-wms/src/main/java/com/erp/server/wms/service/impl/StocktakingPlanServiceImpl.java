@@ -552,17 +552,15 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.START_GE_END_ERROR, "动销开始时间", "动销结束时间");
         }
         // 按仓库盘点如果仓库被禁用无法选择
-        if (StocktakingTypeEnum.BY_WAREHOUSE.equals(type)) {
-            List<String> disabledWarehouseList = new ArrayList<>();
-            dto.getDetailList().forEach(detail -> {
-                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(detail.getWarehouseId());
-                if(ObjectUtil.isNotEmpty(updateDTO) && updateDTO.getDisabled()){
-                    disabledWarehouseList.add(updateDTO.getName());
-                }
-            });
-            if (CollectionUtil.isNotEmpty(disabledWarehouseList)){
-                throw new ServiceException(ApiError.WAREHOUSE_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
+        List<String> disabledWarehouseList = new ArrayList<>();
+        dto.getDetailList().forEach(detail -> {
+            WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(detail.getWarehouseId());
+            if(ObjectUtil.isNotEmpty(updateDTO) && updateDTO.getDisabled()){
+                disabledWarehouseList.add(updateDTO.getName());
             }
+        });
+        if (CollectionUtil.isNotEmpty(disabledWarehouseList)){
+            throw new ServiceException(ApiError.WAREHOUSE_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
         }
     }
 
