@@ -415,6 +415,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setVariantProperty(skuVO.getVariantProperty());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            detailEntity.setBomHistoryId(bomChildrenSkuDTO.getBomHistoryId());
             //仓库名称
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
