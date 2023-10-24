@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,6 +12,7 @@ import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.mapper.CustomerContactMapper;
 import com.erp.server.oms.service.CustomerContactService;
 import com.erp.server.oms.service.OperateLogService;
@@ -42,6 +44,9 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
     /**
      * 检查客户默认联系人是否多个
      *
@@ -143,6 +148,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         //这是要删除的
         List<CustomerContactEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            //删除联系人发送金蝶
+            removeList.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
             this.removeByIds(deleteIdList);
         }
         saveOrUpdateList.forEach(s -> s.setMainId(mainId));
