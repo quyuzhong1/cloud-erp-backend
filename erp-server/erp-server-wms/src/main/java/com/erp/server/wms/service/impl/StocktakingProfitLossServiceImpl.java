@@ -525,7 +525,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         handleDb(dto.getDetailList(), entity);
         String id = IdWorker.getIdStr();
         entity.setId(id);
-        if(Objects.isNull(entity.getBillDate())){
+        if (Objects.isNull(entity.getBillDate())) {
             entity.setBillDate(LocalDate.now());
         }
         BillTypeEnum billType = dto.getBillType();
@@ -576,7 +576,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
         BeanMapper.copy(dto, entity);
-        if(Objects.isNull(entity.getBillDate())){
+        if (Objects.isNull(entity.getBillDate())) {
             entity.setBillDate(LocalDate.now());
         }
         List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList = dto.getDetailList();
@@ -639,10 +639,20 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //可用库存
         String usable = InventoryStatusEnum.USABLE.getCode();
         String frozen = InventoryStatusEnum.FROZEN.getCode();
+        Map<String, Integer> map = new HashMap<>();
         for (StocktakingProfitLossDetailDTO.AddDTO item : detailList) {
             String skuId = item.getSkuId();
             String warehouseId = item.getWarehouseId();
             String warehouseLocation = item.getWarehouseLocation();
+            StringBuffer sb = new StringBuffer();
+            sb.append(skuId);
+            sb.append(warehouseId);
+            sb.append(StringUtils.isNotBlank(warehouseLocation) ? warehouseLocation : "");
+            String mapKey = sb.toString();
+            //表示有这个key
+            if (map.containsKey(mapKey)) {
+                throw new ServiceException("同仓库同库位同SKU 存在多条数据");
+            }
             List<InventoryEntity> inventoryList = inventoryInfoList.stream().filter(i -> i.getSkuId().equals(skuId) &&
                     i.getWarehouseId().equals(warehouseId) && i.getWarehouseLocation().equals(warehouseLocation)).collect(Collectors.toList());
 
@@ -673,6 +683,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             item.setFrozenQty(frozenQty);
             item.setUsableQty(usableQty);
             item.setDiffQty(diffQty);
+            map.put(mapKey, diffQty);
         }
 
     }
