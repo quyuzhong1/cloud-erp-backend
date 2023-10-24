@@ -1,18 +1,16 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.handler.SaveHandler;
-import com.common.business.service.ModelService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
@@ -44,8 +42,6 @@ import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
-import com.erp.server.oms.service.authorize.ShopfiyAuthorize;
-import com.erp.server.oms.service.authorize.WalmartAuthorize;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -630,20 +626,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             throw new ServiceException("erp-dmp服务调用异常");
         }
         //根据店铺授权还是主账号授权进行分开记录授权
-        if (Objects.nonNull(dto.getShop_id())) {
+        if (Objects.nonNull(dto.getShopId())) {
             AuthRequest authRequest = AuthRequest.builder()
                     .host(cfgAppClient.getUrl())
                     .code(dto.getCode())
                     .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                     .tmpPartnerKey(cfgAppClient.getClientSecret())
-                    .shopId(dto.getShop_id())
+                    .shopId(dto.getShopId())
                     .build();
             ShopeeAuth shopeeAuth = shopeeAuthService.getShopAccountToken(authRequest);
             if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
                 throw new ServiceException("获取授权失败:" + shopeeAuth.getMessage());
             }
             updateShopeeToken(dto, shopeeAuth, cfgAppClient, AuthTypeEnum.SHOP.getCode());
-        } else if (Objects.nonNull(dto.getMain_account_id())) {
+        } else if (Objects.nonNull(dto.getMainAccountId())) {
             //获取主账户token 需要刷新子商铺的refresh_token
             {
                 AuthRequest authRequest = AuthRequest.builder()
@@ -651,7 +647,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         .code(dto.getCode())
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                         .tmpPartnerKey(cfgAppClient.getClientSecret())
-                        .mainAccountId(dto.getMain_account_id())
+                        .mainAccountId(dto.getMainAccountId())
                         .build();
                 ShopeeAuth shopeeAuth = shopeeAuthService.getMainAccountToken(authRequest);
                 if (StringUtils.isNotEmpty(shopeeAuth.getError())) {
@@ -697,14 +693,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setType(type);
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
             //主账号授权
-            if (Objects.nonNull(dto.getMain_account_id())) {
-                shopAuth.setShopeeId(String.valueOf(dto.getMain_account_id()));
+            if (Objects.nonNull(dto.getMainAccountId())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getMainAccountId()));
             }
         } else if (AuthTypeEnum.SHOP.getCode().equals(type)) {
             //店铺授权
 //            String shopId = jsonObject.getString("shop_id");
-            if (Objects.nonNull(dto.getShop_id())) {
-                shopAuth.setShopeeId(String.valueOf(dto.getShop_id()));
+            if (Objects.nonNull(dto.getShopId())) {
+                shopAuth.setShopeeId(String.valueOf(dto.getShopId()));
             }
         } else {
             throw new ServiceException("授权异常");
