@@ -147,7 +147,7 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     * bom版本
     */
     @TableField("bom_version")
-    private Integer bomVersion;
+    private String bomVersion;
 
     /**
     * 变更备注
