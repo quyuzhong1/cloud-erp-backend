@@ -80,7 +80,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             //价格为零的 sku no
             List<String> priceZeroSkuIdList = purchasePriceChangeDetailList.stream().filter(p -> BigDecimal.ZERO.compareTo(p.getTaxPrice()) == 0).map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuVOList=plmTaskFeign.getSkuInfoByIds(priceZeroSkuIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(priceZeroSkuIdList);
             //不为空的时候
             if (CollectionUtils.isNotEmpty(skuVOList)) {
                 String priceZeroSkuNo = skuVOList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
@@ -229,10 +229,13 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return Collections.emptyList();
         }
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = BeanMapper.copyList(list, PurchasePriceChangeDetailDTO.ViewDTO.class);
+        List<String> changeDetailIdList = list.stream().map(PurchasePriceChangeDetailEntity::getId).collect(Collectors.toList());
         //采购价目详情表id
         List<String> purchasePriceDetailIds = resultList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-        //历史的
-        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.getHistoryByDetailIds(purchasePriceDetailIds);
+        /**
+         * 根据变更表id 获取到对应变更历史
+         */
+        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
         //获取到对应的价目明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
 
@@ -242,7 +245,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceChangeDetailDTO.ViewDTO item : resultList) {
             String priceDetailId = item.getPurchasePriceDetailId();
-            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getPriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
+            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getId())).findFirst().orElse(null);
 
             PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
             if (item.getTaxRate() != null) {
@@ -351,12 +354,12 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 BeanMapper.copy(item, history);
                 history.setPriceDetailId(priceDetailId);
                 history.setId(IdWorker.getIdStr());
+                history.setChangeDetailId(changeDetail.getId());
                 //失效时间
                 history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
                 history.setSupplierId(supplierId);
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
-                item.setExpireDate(changeDetail.getExpireDate());
                 item.setProductName(changeDetail.getProductName());
                 item.setSkuNo(changeDetail.getSkuNo());
                 item.setSkuId(changeDetail.getSkuId());
@@ -478,12 +481,21 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     public void updateDetailRemark(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
-            return ;
+            return;
         }
         this.lambdaUpdate()
-                .in(PurchasePriceChangeDetailEntity::getId,ids)
-                .set(PurchasePriceChangeDetailEntity::getRemark,remark)
+                .in(PurchasePriceChangeDetailEntity::getId, ids)
+                .set(PurchasePriceChangeDetailEntity::getRemark, remark)
                 .update(new PurchasePriceChangeDetailEntity());
+    }
+
+    @Override
+    public List<PurchasePriceChangeDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId,mainIdList).
+                orderByDesc(PurchasePriceChangeDetailEntity::getCreateTime).list();
     }
 
 

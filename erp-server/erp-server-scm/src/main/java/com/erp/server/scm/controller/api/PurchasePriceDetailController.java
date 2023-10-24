@@ -54,7 +54,7 @@ public class PurchasePriceDetailController extends BaseController {
      */
     @PostMapping("/importFile")
     public ApiResult<PurchasePriceDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        PurchasePriceDetailDTO.ImportDTO result = purchasePriceDetailService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getSkuIds(),response);
+        PurchasePriceDetailDTO.ImportDTO result = purchasePriceDetailService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
         return success(result);
     }
 
@@ -79,28 +79,31 @@ public class PurchasePriceDetailController extends BaseController {
 
     /**
      * 查询含税单价
-     * @author Will
-     * @date: 2023/3/27 9:22
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/3/27 9:22
      */
     @PostMapping("/getTaxPrice")
-    public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = purchasePriceDetailService.getTaxPrice(dto);
         return success(list);
     }
 
     /**
      * 批量查询含税单价
+     *
+     * @param list
+     * @return ApiResult<List < PurchaseTaxPriceBatchViewDTO>>
      * @author Will
      * @date: 2023/9/14 14:09
-     * @param list
-     * @return ApiResult<List<PurchaseTaxPriceBatchViewDTO>>
      */
     @PostMapping("/batchGetTaxPrice")
-    public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = purchasePriceDetailService.batchGetTaxPrice(list);
         return success(resultList);
     }
+
 
 }

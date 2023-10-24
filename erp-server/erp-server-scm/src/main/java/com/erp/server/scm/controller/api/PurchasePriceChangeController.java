@@ -251,4 +251,17 @@ public class PurchasePriceChangeController extends BaseController {
         Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
         return result ? success() : failure();
     }
+
+
+
+    /**
+     * 修复历史数据
+     *
+     * @return
+     */
+    @PostMapping("/updateHistoryDb")
+    public ApiResult tempUpdateHistoryDb() {
+        purchasePriceChangeService.tempUpdateHistoryDb();
+        return success();
+    }
 }
