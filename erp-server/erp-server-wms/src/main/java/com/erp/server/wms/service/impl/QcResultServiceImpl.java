@@ -133,6 +133,11 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         List<String> imageNameList = qcInfo.getBadImageNameList();
         List<String> imageUrlList = qcInfo.getBadImageUrlList();
         wmsAttachmentService.batchSave(imageUrlList, imageNameList, WmsConstant.BAD, id);
+        //质检附件
+        List<String> qcAttachmentNameList = qcInfo.getQcAttachmentNameList();
+        //质检附件url
+        List<String> qcAttachmentUrlList = qcInfo.getQcAttachmentUrlList();
+        wmsAttachmentService.batchSave(qcAttachmentNameList, qcAttachmentUrlList, WmsConstant.QC_ATTACHMENT, id);
         this.saveOrUpdate(qcResultEntity);
 
     }
@@ -553,7 +558,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @author Will
      * @date: 2023/9/21 12:15
      * @param skuIdList
-     * @param qcNewProductCode
+     * @param
      * @param userIdList
      * @return List<ProductRolePeopleDTO>
      */

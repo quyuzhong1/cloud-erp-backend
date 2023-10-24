@@ -110,6 +110,16 @@ public class QcResultDTO {
          */
         private List<String> badImageNameList;
 
+        /**
+         * 质检附件地址集合
+         */
+        private List<String> qcAttachmentUrlList;
+
+        /**
+         * 质检附件名称集合
+         */
+        private List<String> qcAttachmentNameList;
+
 
         /**
          * 质检结果
@@ -232,6 +242,17 @@ public class QcResultDTO {
          * 不良图片名称地址集合
          */
         private List<String> badImageNameList;
+
+
+        /**
+         * 质检附件地址集合
+         */
+        private List<String> qcAttachmentUrlList;
+
+        /**
+         * 质检附件名称集合
+         */
+        private List<String> qcAttachmentNameList;
 
 
         /**

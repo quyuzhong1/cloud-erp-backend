@@ -528,32 +528,32 @@
         FROM inventory inv
         WHERE is_deleted=FALSE
         <if test="params.skuIdList != null and params.skuIdList.size > 0">
-            and it.sku_id in
+            and inv.sku_id in
             <foreach collection="params.skuIdList" item="skuId" open="(" close=")" separator=",">
                 #{skuId}
             </foreach>
         </if>
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            and it.sku_no in
+            and inv.sku_no in
             <foreach collection="params.skuNoList" item="skuNo" open="(" close=")" separator=",">
                 #{skuNo}
             </foreach>
         </if>
 
         <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-            and it.warehouse_id in
+            and inv.warehouse_id in
             <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
                 #{warehouseId}
             </foreach>
         </if>
         <if test="params.warehouseLocationList != null and params.warehouseLocationList.size > 0">
-            and it.warehouse_location in
+            and inv.warehouse_location in
             <foreach collection="params.warehouseLocationList" item="warehouseLocation" open="(" close=")" separator=",">
                 #{warehouseLocation}
             </foreach>
         </if>
         <if test="params.orgIdList != null and params.orgIdList.size > 0">
-            and it.org_id in
+            and inv.org_id in
             <foreach collection="params.orgIdList" item="orgId" open="(" close=")" separator=",">
                 #{orgId}
             </foreach>
