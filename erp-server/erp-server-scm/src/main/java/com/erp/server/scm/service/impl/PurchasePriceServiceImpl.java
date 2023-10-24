@@ -30,6 +30,7 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -113,6 +114,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
+
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
+
     /**
      * 添加采购价目表
      *
@@ -131,12 +136,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        List<String> skuIdList=dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>(),skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>(), skuIdList);
 
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId, skuIdList);
 
         //检查sku 区间报价
         priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, historyList);
@@ -271,12 +276,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-        List<String> skuIdList=dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds, skuIdList);
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(),skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(), skuIdList);
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
         priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, historyList);
@@ -470,7 +475,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //调用审核流程
-        approveProcess(list,dto);
+        approveProcess(list, dto);
 
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
@@ -480,16 +485,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     /**
+     * @param dto
+     * @param list
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
-     * @param dto
-     * @param list
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceEntity> list) {
+    public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchasePriceEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
@@ -535,7 +540,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         //撤销现有流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
@@ -927,12 +932,23 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<PurchasePriceChangeEntity> priceChangeList = purchasePriceChangeService.listByPurchasePriceIds(ids);
+        if (CollectionUtils.isNotEmpty(priceChangeList)) {
+            List<String> priceIdList = priceChangeList.stream().map(PurchasePriceChangeEntity::getPurchasePriceId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(priceIdList)) {
+                String code = list.stream().filter(p -> priceIdList.contains(p.getId())).
+                        map(PurchasePriceEntity::getCode).collect(Collectors.joining(","));
+               if(StringUtils.isNotBlank(code)){
+                    throw new ServiceException(ApiError.ERROR_NOT_DISAPPROVE_CHANGE,code);
+               }
+            }
+        }
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.APPROVE)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
-        if(result) {
+        if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
             //发送金蝶
@@ -942,7 +958,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public Boolean updateDetailRemark(List<String> ids,String remark) {
+    public Boolean updateDetailRemark(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.TRUE;
         }

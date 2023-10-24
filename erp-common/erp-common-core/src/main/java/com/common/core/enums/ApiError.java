@@ -785,6 +785,7 @@ public enum ApiError implements Serializable {
     WAREHOUSE_DISABLED(99099, "仓库【{}】已被禁用，无法进行盘点"),
 
 
+    ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
 
 
 
