@@ -336,7 +336,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> checkSoIdList=checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(checkSoIdList);
         //这个是 单价为空的集合
-        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
+        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && !s.getIsReissue() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullPriceList)) {
             List<String> soIdList = isNullPriceList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
             String isNullPriceCode = list.stream().filter(s -> soIdList.contains(s.getId())).

@@ -892,4 +892,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
     }
+
+    @Override
+    public List<PurchasePriceChangeEntity> listByPurchasePriceIds(List<String> purchasePriceIds) {
+        if (CollectionUtils.isEmpty(purchasePriceIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PurchasePriceChangeEntity::getPurchasePriceId,purchasePriceIds).list();
+    }
 }
