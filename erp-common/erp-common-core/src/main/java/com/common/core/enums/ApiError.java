@@ -782,7 +782,8 @@ public enum ApiError implements Serializable {
     ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
     ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
 
-    WAREHOUSE_DISABLED(99099, "仓库【{}】已被禁用，无法进行盘点"),
+    WAREHOUSE_DISABLED(99099, "仓库【{}】未审核或已被禁用，无法进行盘点"),
+    WAREHOUSE_AREA_LOCATION_DISABLED(99100, "仓库【{}】 库区【{}】 仓位【{}】 未审核或已被禁用，无法进行盘点"),
 
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),

@@ -555,7 +555,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         List<String> disabledWarehouseList = new ArrayList<>();
         dto.getDetailList().forEach(detail -> {
             WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(detail.getWarehouseId());
-            if(ObjectUtil.isNotEmpty(updateDTO) && updateDTO.getDisabled()){
+            if(ObjectUtil.isNotEmpty(updateDTO) && (updateDTO.getDisabled() || !ApproveStatusEnum.APPROVE.equals(updateDTO.getApproveStatusEnum()))){
                 disabledWarehouseList.add(updateDTO.getName());
             }
         });

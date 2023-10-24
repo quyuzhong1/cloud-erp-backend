@@ -234,4 +234,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return List<ListTreeDTO>
      */
     List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto);
+
+    /**
+     * 仓库，库区，库位判断是否禁用
+     * @param assertList
+     * @return
+     */
+    void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList);
 }
