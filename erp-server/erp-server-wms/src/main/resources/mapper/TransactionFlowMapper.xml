@@ -51,23 +51,23 @@
             order by t.trade_time desc,t.id desc
     </select>
     <select id="paging" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
-        SELECT t.id,t.trade_time,
-            t.bill_date,
-            t.source_type,
-            t.source_code,
-            t.operation_mode,
-            t.sku_id,
-            t.sku_no,
-            t.warehouse_location,
-            t.warehouse_id,
-            t.warehouse_name,
-            t.org_id,
-            t.dict_inventory_status as inventory_status,
+        SELECT t.id,t.trade_time AS tradeTime,
+            t.bill_date AS billDate,
+            t.source_type AS sourceType,
+            t.source_code AS sourceCode,
+            t.operation_mode AS operationMode,
+            t.sku_id AS skuId,
+            t.sku_no AS skuNo,
+            t.warehouse_location AS warehouseLocation,
+            t.warehouse_id AS warehouseId,
+            t.warehouse_name AS warehouseName,
+            t.org_id AS orgId,
+            t.dict_inventory_status as inventoryStatus,
             t.qty,
-            t.cur_inventory_qty as after_qty,
-            t.instock_batch_date,
-            pi.spu_no,
-            ps.sale_state
+            t.cur_inventory_qty as afterQty,
+            t.instock_batch_date AS instockBatchDate,
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState
         FROM
             transaction_flow t
         left join product_detail pd on pd.id = t.sku_id
@@ -137,23 +137,23 @@
         t.create_time desc
     </select>
     <select id="exportList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
-        SELECT t.id,t.trade_time,
-        t.bill_date,
-        t.source_type,
-        t.source_code,
-        t.operation_mode,
-        t.sku_id,
-        t.sku_no,
-        t.warehouse_location,
-        t.warehouse_id,
-        t.warehouse_name,
-        t.org_id,
-        t.dict_inventory_status as inventory_status,
+        SELECT t.id,t.trade_time AS tradeTime,
+        t.bill_date AS billDate,
+        t.source_type AS sourceType,
+        t.source_code AS sourceCode,
+        t.operation_mode AS operationMode,
+        t.sku_id AS skuId,
+        t.sku_no AS skuNo,
+        t.warehouse_location AS warehouseLocation,
+        t.warehouse_id AS warehouseId,
+        t.warehouse_name AS warehouseName,
+        t.org_id AS orgId,
+        t.dict_inventory_status as inventoryStatus,
         t.qty,
-        t.cur_inventory_qty as after_qty,
-        t.instock_batch_date,
-        pi.spu_no,
-        ps.sale_state
+        t.cur_inventory_qty as afterQty,
+        t.instock_batch_date AS instockBatchDate,
+        pi.spu_no AS spuNo,
+        ps.sale_state AS saleState
         FROM
         transaction_flow t
         left join product_detail pd on pd.id = t.sku_id
@@ -220,12 +220,34 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY t.create_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            t.create_time desc
     </select>
     <select id="pagingList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockSummaryPagingViewDTO">
-        select m.warehouse_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,
-        m.purchase_instock_qty,m.inventory_profit_instock_qty,m.other_instock_qty,m.sale_return_qty,m.transfer_instock_qty,m.machine_instock_qty,m.return_materiel_qty,
-        m.purchase_return_qty,m.transfer_outstock_qty,m.sale_outstock_qty,m.other_outstock_qty,m.inventory_loss_outstock_qty,m.machine_outstock_qty,m.receive_materiel_qty
+        select m.warehouse_id AS warehouseId,
+               m.warehouse_name AS warehouseName,
+               m.sku_id AS skuId,
+               m.sku_no AS skuNo,
+               m.spu_no AS spuNo,
+        m.purchase_instock_qty AS purchaseInstockQty,
+        m.inventory_profit_instock_qty AS inventoryProfitInstockQty,
+        m.other_instock_qty AS otherInstockQty,
+        m.sale_return_qty AS saleReturnQty,
+        m.transfer_instock_qty AS transferInstockQty,
+        m.machine_instock_qty AS machineInstockQty,
+        m.return_materiel_qty AS returnMaterielQty,
+        m.purchase_return_qty AS purchaseReturnQty,
+        m.transfer_outstock_qty AS transferOutstockQty,
+        m.sale_outstock_qty AS saleOutstockQty,
+        m.other_outstock_qty AS otherOutstockQty,
+        m.inventory_loss_outstock_qty AS inventoryLossOutstockQty,
+        m.machine_outstock_qty AS machineOutstockQty,
+        m.receive_materiel_qty AS receiveMaterielQty
         from (
         select tf.warehouse_id,max(tf.warehouse_name) as warehouse_name,tf.sku_id,max(tf.sku_no) as sku_no ,max(pi.spu_no) as spu_no,
         sum(case when tf.dict_biz_type in('02','03') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
@@ -292,13 +314,35 @@
                 </if>
             </where>
             group by tf.warehouse_id, tf.sku_id
-            ) m ORDER BY m.warehouse_name asc,m.sku_no asc
+            ) m ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+                    m.warehouse_name asc,m.sku_no asc
     </select>
 
     <select id="exportSummaryList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockSummaryPagingViewDTO">
-        select m.warehouse_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,
-        m.purchase_instock_qty,m.inventory_profit_instock_qty,m.other_instock_qty,m.sale_return_qty,m.transfer_instock_qty,m.machine_instock_qty,m.return_materiel_qty,
-        m.purchase_return_qty,m.transfer_outstock_qty,m.sale_outstock_qty,m.other_outstock_qty,m.inventory_loss_outstock_qty,m.machine_outstock_qty,m.receive_materiel_qty
+        select m.warehouse_id AS warehouseId,
+               m.warehouse_name AS warehouseName,
+               m.sku_id AS skuId,
+               m.sku_no AS skuNo,
+               m.spu_no AS spuNo,
+        m.purchase_instock_qty AS purchaseInstockQty,
+        m.inventory_profit_instock_qty AS inventoryProfitInstockQty,
+        m.other_instock_qty AS otherInstockQty,
+        m.sale_return_qty AS saleReturnQty,
+        m.transfer_instock_qty AS transferInstockQty,
+        m.machine_instock_qty AS machineInstockQty,
+        m.return_materiel_qty AS returnMaterielQty,
+        m.purchase_return_qty AS purchaseReturnQty,
+        m.transfer_outstock_qty AS transferOutstockQty,
+        m.sale_outstock_qty AS saleOutstockQty,
+        m.other_outstock_qty AS otherOutstockQty,
+        m.inventory_loss_outstock_qty AS inventoryLossOutstockQty,
+        m.machine_outstock_qty AS machineOutstockQty,
+        m.receive_materiel_qty AS receiveMaterielQty
         from (
         select tf.warehouse_id,max(tf.warehouse_name) as warehouse_name,tf.sku_id,max(tf.sku_no) as sku_no ,max(pi.spu_no) as spu_no,
         sum(case when tf.dict_biz_type in('02','03') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
@@ -365,12 +409,29 @@
             </if>
         </where>
         group by tf.warehouse_id, tf.sku_id
-        ) m ORDER BY m.warehouse_name asc,m.sku_no asc
+        ) m ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+                m.warehouse_name asc,m.sku_no asc
     </select>
     <select id="transportPagingList"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
-      select n.warehouse_id,n.org_id,n.warehouse_name,n.sku_id,n.sku_no,n.spu_no,n.sale_state,n.product_name,n.product_img_url,
-        n.purchase_qty,n.transfer_qty,n.transport_qty  from (
+      select n.warehouse_id AS warehouseId,
+             n.org_id AS orgId,
+             n.warehouse_name AS warehouseName,
+             n.sku_id AS skuId,
+             n.sku_no AS skuNo,
+             n.spu_no AS spuNo,
+             n.sale_state AS saleState,
+             n.product_name AS productName,
+             n.product_img_url AS productImgUrl,
+        n.purchase_qty AS purchaseQty,
+        n.transfer_qty AS transferQty,
+        n.transport_qty AS transportQty
+      from (
         select
             m.warehouse_id,m.org_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,m.sale_state,m.product_name,m.product_img_url,
             case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
@@ -432,12 +493,30 @@
                     </where>
                   group by tf.warehouse_id, tf.sku_id
             ) m
-        ) n where n.transport_qty > 0 ORDER BY n.warehouse_name asc,n.transport_qty desc
+        ) n where n.transport_qty > 0
+            ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+                n.warehouse_name asc,n.transport_qty desc
     </select>
     <select id="exportTransport"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
-    select n.warehouse_id,n.org_id,n.warehouse_name,n.sku_id,n.sku_no,n.spu_no,n.sale_state,n.product_name,n.product_img_url,
-        n.purchase_qty,n.transfer_qty,n.transport_qty  from (
+    select n.warehouse_id AS warehouseId,
+           n.org_id AS orgId,
+           n.warehouse_name AS warehouseName,
+           n.sku_id AS skuId,
+           n.sku_no AS skuNo,
+           n.spu_no AS spuNo,
+           n.sale_state AS saleState,
+           n.product_name AS productName,
+           n.product_img_url AS productImgUrl,
+        n.purchase_qty AS purchaseQty,
+        n.transfer_qty AS transferQty,
+        n.transport_qty AS  transportQty
+    from (
         select
         m.warehouse_id,m.org_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,m.sale_state,m.product_name,m.product_img_url,
         case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
@@ -505,7 +584,14 @@
                 </where>
                 group by tf.warehouse_id, tf.sku_id
         ) m
-        ) n where n.transport_qty > 0 ORDER BY n.warehouse_name asc,n.transport_qty desc
+        ) n where n.transport_qty > 0
+            ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+                n.warehouse_name asc,n.transport_qty desc
     </select>
     <select id="transportList"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$ListTransportPagingDTO">

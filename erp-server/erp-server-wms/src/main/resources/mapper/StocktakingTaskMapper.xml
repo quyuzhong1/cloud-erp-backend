@@ -36,16 +36,16 @@
         SELECT
           st.id,
           st.code,
-          st.source_code,
-          st.source_id,
-          st.approve_status,
-          st.create_time,
-          st.create_user_name,
+          st.source_code AS sourceCode,
+          st.source_id AS sourceId,
+          st.approve_status AS approveStatus,
+          st.create_time AS createTime,
+          st.create_user_name AS createUserName,
           sp.mode AS stocktakingMode,
           sp.type AS stocktakingType,
           sp.separate_rule AS separateRule,
           st.status AS stocktakingStatus,
-          st.approve_user_name
+          st.approve_user_name AS approveUserName
           FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp
           ON st.source_id=sp.id AND sp.is_deleted=FALSE
@@ -143,16 +143,16 @@
         SELECT
           st.id,
           st.code,
-          st.source_code,
-          st.source_id,
-          st.approve_status,
-          st.create_time,
-          st.create_user_name,
+          st.source_code AS sourceCode,
+          st.source_id AS sourceId,
+          st.approve_status AS approveStatus,
+          st.create_time AS createTime,
+          st.create_user_name AS createUserName,
           sp.mode AS stocktakingMode,
           sp.type AS stocktakingType,
           st.status AS stocktakingStatus,
           sp.separate_rule AS separateRule,
-          st.approve_user_name
+          st.approve_user_name AS approveUserName
         FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp
           ON st.source_id=sp.id AND sp.is_deleted=FALSE
