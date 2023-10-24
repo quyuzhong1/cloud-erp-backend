@@ -107,11 +107,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
-    @Resource
-    private CommonService commonService;
-
-    @Resource
-    private ShopSysUserAuthService shopSysUserAuthService;
 
     @Resource
     private ShopeeAuthService shopeeAuthService;
