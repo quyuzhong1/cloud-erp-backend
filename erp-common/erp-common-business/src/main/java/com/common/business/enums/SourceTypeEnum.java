@@ -59,7 +59,7 @@ public enum SourceTypeEnum {
     SHOP( "shop", "店铺","shop_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
-
+    LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),

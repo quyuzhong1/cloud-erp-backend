@@ -125,6 +125,8 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setPlatformApiId(task.getId());
         entity.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
         entity.setSyncOperate(task.getSyncOperate());
+        entity.setBillType(task.getBillType());
+        entity.setOperateType(task.getOperateType());
         return entity;
     }
 

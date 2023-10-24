@@ -24,6 +24,7 @@ import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  **/
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.AMAZON)
+@PlatformType(PlatformDictEnum.SHOPEE)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrderDTO, PlatformOrderDTO> {
 
@@ -51,7 +52,10 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public List<PlatformShopeeOrderDTO> download(JobTaskDTO data) {
-
+        LocalDateTime lastTime = data.getLastTime();
+        System.out.println("lastTime:" + lastTime);
+        LocalDateTime nextTime = data.getNextTime();
+        System.out.println("nextTime:" + nextTime);
         //获取主店铺token
         //根据主店铺获取子店铺token
         ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop");
@@ -74,8 +78,8 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 //                ShopAuthEntity shop = shopeeShopById.getData();
                 OrderRequest orderRequest = OrderRequest.builder()
                         .offset(0)
-                        .timeFrom(null)
-                        .timeTo(null)
+                        .timeFrom((long) lastTime.getSecond())
+                        .timeTo((long) nextTime.getSecond())
                         .tmpPartnerKey(cfgAppClient.getClientSecret())
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                         .token(shopAuthEntity.getAccessToken())

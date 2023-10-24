@@ -51,7 +51,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
-        return shopAuthService.getShopeeCodeUrl(dto.getShopId());
+        return shopAuthService.getShopeeCodeUrl(dto);
     }
 
     /**
@@ -64,7 +64,9 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         ShopAuthDTO.ReturnDTO returnDTO = new ShopAuthDTO.ReturnDTO();
         returnDTO.setCode(dto.getCode());
         returnDTO.setId(dto.getId());
-        returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
+        if(Objects.nonNull(dto.getShopId())){
+            returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
+        }
         returnDTO.setMainAccountId(dto.getMainAccountId());
         return shopInfoService.getShopeeReturn(returnDTO);
     }

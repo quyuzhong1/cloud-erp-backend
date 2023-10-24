@@ -16,6 +16,7 @@ import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
@@ -80,6 +81,12 @@ public class ShopeeAuthJob {
                         .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                         .build();
                 ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
+                if (StringUtils.isNotEmpty(shopeeResponse.getError())){
+                    shopInfo.setAuthStatus(AuthStatusEnum.NOT.getCode());
+                    shopInfoService.saveOrUpdate(shopInfo);
+                    log.error("授权异常：{}", shopeeResponse);
+                    return;
+                }
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
             });
         }
