@@ -50,6 +50,9 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
     Map<String, SoInfoDTO.AddDTO> map = new HashMap<>();
 
+    //错误的map
+    Map<String, String> errorMap = new HashMap<>();
+
     /**
      * 仓库
      */
@@ -172,6 +175,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             //存在错误数据则直接返回
             if (errorMsgList.size() > 0) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorMap.put(no, no);
                 errorList.add(excelDTO);
                 return;
             }
@@ -418,6 +422,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
+            errorMap.put(no, no);
             //删除存在的销售订单信息
             map.remove(no);
             return;
@@ -449,7 +454,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         addDTO.setDiscountAmount(discountAmount);
         //数量
         String qtyStr = excelDTO.getQty();
-        Integer qty =StringUtils.isNotBlank(qtyStr)? Integer.valueOf(qtyStr):0;
+        Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
         addDetail.setQty(qty);
         //销售单价
         String priceStr = excelDTO.getPrice();
@@ -476,11 +481,15 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!map.isEmpty()) {
             for (Map.Entry<String, SoInfoDTO.AddDTO> item : map.entrySet()) {
-                SoInfoDTO.AddDTO addDTO = item.getValue();
-                soInfoService.add(addDTO);
+                String no = item.getKey();
+                if(!errorMap.containsKey(no)){
+                    SoInfoDTO.AddDTO addDTO = item.getValue();
+                    soInfoService.add(addDTO);
+                }
             }
         }
         map.clear();
+        errorMap.clear();
     }
 
 
