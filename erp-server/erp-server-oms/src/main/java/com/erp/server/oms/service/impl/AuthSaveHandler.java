@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.server.oms.service.AuthSaveData;
