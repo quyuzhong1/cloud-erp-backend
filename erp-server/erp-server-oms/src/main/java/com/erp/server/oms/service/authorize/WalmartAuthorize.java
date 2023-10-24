@@ -89,6 +89,15 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
             if (Objects.isNull(shopAuth)) {
                 shopAuth = new ShopAuthEntity();
             }
+            //获取地址
+            String url = WalmartStaticKey.baseUrl + "token";
+
+            WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+            WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
+            if (ObjectUtil.isEmpty(walmartTokenDTO)) {
+                return Boolean.FALSE;
+            }
+
             String appClientId = shopAuth.getAppClientId();
             //判断是否有授权过，如果没有就新增保存店铺秘钥信息，如果有就修改秘钥信息重新授权
             if (StringUtils.isBlank(shopAuth.getAppClientId())) {
@@ -99,6 +108,8 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
                 addDTO.setClientId(dto.getClientId());
                 addDTO.setClientSecret(dto.getClientSecret());
                 appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
+                // 授权后添加任务
+                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
             } else {
                 CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
                 updateDTO.setId(appClientId);
@@ -109,15 +120,6 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
                 updateDTO.setClientSecret(dto.getClientSecret());
                 dmpTaskFeign.updateCfgAppClient(updateDTO);
             }
-
-            //获取地址
-            String url = WalmartStaticKey.baseUrl + "token";
-
-            WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
-            WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
-            if (ObjectUtil.isEmpty(walmartTokenDTO)) {
-                return Boolean.FALSE;
-            }
             shopAuth.setShopId(shopId);
             shopAuth.setExpiresIn(Integer.valueOf(walmartTokenDTO.getExpiresIn()));
             shopAuth.setAppClientId(appClientId);
@@ -126,8 +128,6 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
             shopInfo.setAuthTime(LocalDateTime.now());
             shopAuthService.saveOrUpdate(shopAuth);
             boolean result = shopInfoService.updateById(shopInfo);
-            // 授权后添加任务
-            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.TRUE);
             shopInfoService.updateShopInfoById(shopInfo);
             // 添加到缓存redis
