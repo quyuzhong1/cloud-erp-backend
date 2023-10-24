@@ -1004,7 +1004,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException(ApiError.ERROR_92016);
             }
             //SUM（含税单价*销售订单sku数量）
-            BigDecimal totalAmount = soDetailList.stream().filter(obj -> obj.getMainId().equals(item.getSoId())).map(obj -> MathUtil.multiply(MathUtil.multiply(obj.getPrice(), MathUtil.add(BigDecimal.ONE, obj.getTaxRate())), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalAmount = soDetailList.stream().filter(obj -> obj.getMainId().equals(item.getSoId())).map(obj -> MathUtil.multiply(MathUtil.multiply(obj.getPrice(), MathUtil.add(MathUtil.BigDecimal_100, obj.getTaxRate()).divide(MathUtil.BigDecimal_100)), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             //销售通知单明细
             String sourceDetailId = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getId().equals(item.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
