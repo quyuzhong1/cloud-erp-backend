@@ -782,7 +782,7 @@ public enum ApiError implements Serializable {
     ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
     ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
 
-
+    WAREHOUSE_DISABLED(99099, "仓库【{}】已被禁用，无法进行盘点"),
 
 
 
@@ -919,10 +919,7 @@ public enum ApiError implements Serializable {
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
-
-
-
-    ;
+;
 
     public Integer code;
     public String msg;
