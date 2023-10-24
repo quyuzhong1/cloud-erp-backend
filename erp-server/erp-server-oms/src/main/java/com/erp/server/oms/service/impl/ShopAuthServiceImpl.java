@@ -142,6 +142,9 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public String getShopeeCodeUrl(String id) {
+        if (Objects.isNull(id)) {
+            throw new ServiceException("店铺记录id不能为空");
+        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
