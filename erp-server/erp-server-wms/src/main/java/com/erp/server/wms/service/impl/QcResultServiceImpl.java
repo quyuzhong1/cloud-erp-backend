@@ -192,10 +192,17 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         if (qcInfo != null) {
             BeanMapper.copy(qcInfo, qcInfoView);
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(qcInfo.getId()));
-            List<String> imageUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> nameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+            List<String> imageUrlList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> nameList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             qcInfoView.setBadImageNameList(nameList);
             qcInfoView.setBadImageUrlList(imageUrlList);
+
+
+            List<String> qcAttachmentUrlList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> qcAttachmentNameList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+
+            qcInfoView.setQcAttachmentNameList(qcAttachmentNameList);
+            qcInfoView.setQcAttachmentUrlList(qcAttachmentUrlList);
             String qcType = qcInfoView.getQcType();
             //不良率
             BigDecimal badRate = qcInfoView.getQcBadRate();

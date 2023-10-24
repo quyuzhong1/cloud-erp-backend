@@ -211,6 +211,32 @@ public class PoInstockDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 入库数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal totalTaxAmount;
+
+
+
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
