@@ -96,7 +96,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
         * bom版本
         */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 明细子集
@@ -175,7 +175,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * bom用量
