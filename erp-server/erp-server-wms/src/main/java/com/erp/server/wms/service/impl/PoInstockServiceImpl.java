@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -1930,5 +1931,21 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         viewDTO.setDetails(viewDTOS);
         return viewDTO;
+    }
+
+    /**
+     * 统计数量
+     * @author yl
+     * @date 2023-10-24 12:11
+     * @param dto
+     * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
+     */
+    @Override
+    public PoInstockDTO.PagingTotalDTO pagingTotal(PoInstockDTO.SearchParamDTO dto) {
+        if (CollectionUtils.isNotEmpty(dto.getApproveStatusList())) {
+            dto.setInvalidStatus(Boolean.FALSE);
+        }
+        PoInstockDTO.PagingTotalDTO result = this.baseMapper.pagingTotal(dto);
+        return result;
     }
 }

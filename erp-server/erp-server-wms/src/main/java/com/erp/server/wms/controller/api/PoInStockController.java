@@ -7,6 +7,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -49,6 +50,23 @@ public class PoInStockController extends BaseController {
     public ApiResult<PagingVO<PoInstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoInstockDTO.SearchParamDTO> dto) {
         PagingVO<PoInstockDTO.ListDTO> pagingVO = poInstockService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 列表查询总数
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:paging",
+            tableAlias = "psi"
+    )
+    public ApiResult<PoInstockDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PoInstockDTO.SearchParamDTO  dto) {
+        PoInstockDTO.PagingTotalDTO viewDTO = poInstockService.pagingTotal(dto);
+        return success(viewDTO);
     }
 
     /**

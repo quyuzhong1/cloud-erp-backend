@@ -385,4 +385,77 @@
         </if>
         GROUP BY pid.sku_id
     </select>
+
+    <select id="pagingTotal" resultType="com.erp.model.wms.dto.PoInstockDTO$PagingTotalDTO">
+        select
+        COALESCE(sum(psid.stock_in_qty),0) as totalQty,
+        round(COALESCE(sum(psid.stock_in_qty*pod.tax_price),0),2) as totalTaxAmount,
+        round(COALESCE(sum(psid.stock_in_qty*(pod.tax_price/(1+pod.tax_rate))),0),2) as totalAmount
+        from po_instock psi
+        inner join po_instock_detail psid
+        on psi.id = psid.main_id and psid.is_deleted = false
+        left join purchase_order_detail pod
+        on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
+        where  psi.is_deleted = false
+        <where>
+            <if test="params.productName != null  and params.productName != ''">
+                and psid.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and psi.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and psi.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
+                and psi.purchase_order_code like concat('%',#{params.purchaseOrderCode},'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and psid.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and psi.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and psi.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and psi.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+                and psi.purchase_user_id in
+                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and psi.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and psi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.create_time
+            </if>
+            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
+                and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+
+    </select>
 </mapper>
