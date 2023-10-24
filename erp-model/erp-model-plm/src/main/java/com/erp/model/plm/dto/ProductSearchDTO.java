@@ -123,7 +123,119 @@ public class ProductSearchDTO extends PermissionsDTO {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SkuParamDTO extends PermissionsDTO{
 
+        /**
+         * 状态集合
+         */
+        private List<Integer> statusList;
 
+        /**
+         * sku编号
+         */
+        private List<String> skuNoList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuListDTO extends PermissionsDTO{
+
+        /**
+         * 图片URL
+         */
+        private String imagesUrl;
+
+        /**
+         * 产品id
+         */
+        private String productId;
+
+        /**
+         * spuNo
+         */
+        private String spuNo;
+
+        /**
+         * spu名称
+         */
+        private String spuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * sku名称
+         */
+        private String productName;
+
+        /**
+         * 品牌
+         */
+        private String brandName;
+
+        /**
+         * 销售方式
+         */
+        private String saleMethod;
+
+        /**
+         * 状态
+         */
+        private Integer status;
+
+        /**
+         * 状态名称
+         */
+        private String statusName;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+        /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+
+        /**
+         * 箱单数量
+         */
+        private Integer boxQty;
+
+        /**
+         *  MOQ(最小起订量)
+         */
+        private Integer moq;
+
+        /**
+         * 供应商
+         */
+        private String mainSupplier;
+
+        /**
+         * 供应商名称
+         */
+        private String mainSupplierName;
+    }
 
 }
