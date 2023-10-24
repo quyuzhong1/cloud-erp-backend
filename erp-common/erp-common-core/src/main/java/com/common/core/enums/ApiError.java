@@ -761,7 +761,7 @@ public enum ApiError implements Serializable {
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
     ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
     ERROR_MACHINE_WAREHOUSE_ORG_DIFF(99094, "加工单子件【{}】仓库【{}】不属于库存组织【{}】"),
-
+    ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
 
 
 
