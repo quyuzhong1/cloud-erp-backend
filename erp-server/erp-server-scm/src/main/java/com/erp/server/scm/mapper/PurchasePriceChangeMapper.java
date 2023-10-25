@@ -21,8 +21,24 @@ import java.util.List;
  */
 @Mapper
 public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChangeEntity> {
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/10/18 17:21
+     * @param query
+     * @param params
+     * @param statusList
+     * @return IPage<PagingViewDTO>
+     */
     IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
+    /**
+     * @description: 查询导出
+     * @author Will
+     * @date: 2023/10/18 17:21
+     * @param dto
+     * @return List<PagingViewDTO>
+     */
+    List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
 
     /**
      * 临时查询方法

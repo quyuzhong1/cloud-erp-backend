@@ -36,23 +36,30 @@
         id,
         id AS mainId,
         code,
-        source_id,
-        source_code,
-        bill_type,
-        create_time,
-        approve_time,
-        approve_user_name,
-        approve_status
+        source_id AS source_id,
+        source_code AS sourceCode,
+        bill_type AS billType,
+        create_time AS createTime,
+        create_user_name AS createUserName,
+        approve_time AS approveTime,
+        approve_user_name AS approveUserName,
+        approve_status AS approveStatus
         FROM stocktaking_profit_loss spl
         WHERE spl.is_deleted=FALSE
         <if test="billType!=null and billType!=''">
             AND spl.bill_type=#{billType}
         </if>
         <if test="sourceIdList!=null and sourceIdList.size>0">
-            AND spl.source_id IN
-            <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                #{sourceId}
-            </foreach>
+            AND (spl.source_id IN
+                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                    #{sourceId}
+                </foreach>
+                OR
+                spl.id IN
+                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                    #{sourceId}
+                </foreach>
+                )
         </if>
         <!--code-->
         <if test="params.code!=null and params.code!=''">
@@ -144,21 +151,22 @@
         SELECT
         spl.id,
         spl.code,
-        spl.source_id,
-        spl.source_code,
-        spl.bill_type,
-        spl.create_time,
-        spl.approve_time,
-        spl.approve_status,
-        spl.approve_user_name,
-        spld.sku_no,
-        spld.sku_id,
-        spld.warehouse_id,
-        spld.warehouse_location,
+        spl.source_id AS sourceId,
+        spl.source_code AS sourceCode,
+        spl.bill_type AS billType,
+        spl.create_time AS createTime,
+        spl.create_user_name AS createUserName,
+        spl.approve_time AS approveTime,
+        spl.approve_status AS approveStatus,
+        spl.approve_user_name AS approveUserName,
+        spld.sku_no AS skuNo,
+        spld.sku_id AS skuId,
+        spld.warehouse_id AS warehouseId,
+        spld.warehouse_location AS warehouseLocation,
         spld.qty,
-        spld.usable_qty,
-        spld.frozen_qty,
-        spld.diff_qty,
+        spld.usable_qty AS usableQty,
+        spld.frozen_qty AS frozenQty,
+        spld.diff_qty AS diffQty,
         w.name AS warehouseName
         FROM stocktaking_profit_loss spl
         INNER JOIN stocktaking_profit_loss_detail spld
@@ -178,10 +186,16 @@
                     AND spl.bill_type=#{billType}
                 </if>
                 <if test="sourceIdList!=null and sourceIdList.size>0">
-                    AND spl.source_id IN
+                    AND (spl.source_id IN
                     <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
                         #{sourceId}
                     </foreach>
+                    OR
+                    spl.id IN
+                    <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                        #{sourceId}
+                    </foreach>
+                    )
                 </if>
                 <!--code-->
                 <if test="params.code!=null and params.code!=''">

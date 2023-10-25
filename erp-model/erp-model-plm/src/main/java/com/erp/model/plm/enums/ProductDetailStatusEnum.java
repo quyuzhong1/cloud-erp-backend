@@ -31,7 +31,7 @@ public enum ProductDetailStatusEnum {
 
     public static String getName(Integer code) {
         for (ProductDetailStatusEnum state : ProductDetailStatusEnum.values()) {
-            if (code.equals(state.getCode())) {
+            if (state.getCode().equals(code)) {
                 return state.getName();
             }
         }

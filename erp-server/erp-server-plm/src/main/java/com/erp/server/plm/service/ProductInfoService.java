@@ -289,4 +289,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean collectExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:15
+     * @param chargeId
+     * @return List<ProductInfoEntity>
+     */
+    List<ProductInfoEntity> listByChargeId(String chargeId);
 }

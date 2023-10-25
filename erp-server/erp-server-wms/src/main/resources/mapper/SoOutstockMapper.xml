@@ -7,37 +7,37 @@
         SELECT
         so.id,
         so.code,
-        so.so_id,
-        so.so_code,
-        so.source_code,
-        so.source_type,
-        so.source_id,
-        so.order_type,
-        so.approve_status,
-        so.warehouse_org_name,
-        so.carrier_id,
-        so.invalid_status,
-        so.plan_delivery_date,
-        so.actual_delivery_date,
-        so.pack_date,
-        so.warehouse_id,
-        so.warehouse_name,
-        so.approve_user_name,
-        so.create_user_name,
-        so.create_time,
-        so.track_no,
-        so.seller_id,
-        so.seller_name,
-        so.customer_id,
-        so.bill_date,
-        so.sales_dept_id,
-        so.customer_order_no,
-        sod.sku_id,
-        sod.sku_no,
-        sod.plan_qty,
-        sod.actual_qty,
-        sod.source_detail_id,
-        sod.warehouse_location
+        so.so_id AS soId,
+        so.so_code AS soCode,
+        so.source_code AS sourceCode,
+        so.source_type AS sourceType,
+        so.source_id AS sourceId,
+        so.order_type AS orderType,
+        so.approve_status AS approveStatus,
+        so.warehouse_org_name AS warehouseOrgName,
+        so.carrier_id AS carrierId,
+        so.invalid_status AS invalidStatus,
+        so.plan_delivery_date AS planDeliveryDate,
+        so.actual_delivery_date AS actualDeliveryDate,
+        so.pack_date AS packDate,
+        so.warehouse_id AS warehouseId,
+        so.warehouse_name AS warehouseName,
+        so.approve_user_name AS approveUserName,
+        so.create_user_name AS createUserName,
+        so.create_time AS createTime,
+        so.track_no AS trackNo,
+        so.seller_id AS sellerId,
+        so.seller_name AS sellerName,
+        so.customer_id AS customerId,
+        so.bill_date AS billDate,
+        so.sales_dept_id AS salesDeptId,
+        so.customer_order_no AS customerOrderNo,
+        sod.sku_id AS skuId,
+        sod.sku_no AS skuNo,
+        sod.plan_qty AS planQty,
+        sod.actual_qty AS actualQty,
+        sod.source_detail_id AS sourceDetailId,
+        sod.warehouse_location AS warehouseLocation
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND sod.is_deleted=FALSE
@@ -123,44 +123,50 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY so.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            so.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
        SELECT
            so.id,
            so.code,
-           so.so_id,
-           so.so_code,
-           so.source_type,
-           so.order_type,
-           so.source_id,
-           so.source_code,
-           so.approve_status,
-           so.warehouse_org_name,
-           so.carrier_id,
-           so.invalid_status,
-           so.plan_delivery_date,
-           so.actual_delivery_date,
-           so.pack_date,
-           so.warehouse_id,
-           so.warehouse_name,
-           so.approve_user_name,
-           so.create_user_name,
-           so.create_time,
-           so.track_no,
-           so.seller_id,
-           so.seller_name,
-           so.customer_id,
-           so.bill_date,
-           so.sales_dept_id,
-           so.customer_order_no,
-           sod.sku_id,
-           sod.sku_no,
-           sod.plan_qty,
-           sod.actual_qty,
-           sod.source_detail_id,
-           sod.warehouse_location
+           so.so_id AS soId,
+           so.so_code AS soCode,
+           so.source_type AS sourceType,
+           so.order_type AS orderType,
+           so.source_id AS sourceId,
+           so.source_code AS sourceCode,
+           so.approve_status AS approveStatus,
+           so.warehouse_org_name AS warehouseOrgName,
+           so.carrier_id AS carrierId,
+           so.invalid_status AS invalidStatus,
+           so.plan_delivery_date AS planDeliveryDate,
+           so.actual_delivery_date AS actualDeliveryDate,
+           so.pack_date AS packDate,
+           so.warehouse_id AS warehouseId,
+           so.warehouse_name AS warehouseName,
+           so.approve_user_name AS approveUserName,
+           so.create_user_name AS createUserName,
+           so.create_time AS createTime,
+           so.track_no AS trackNo,
+           so.seller_id AS sellerId,
+           so.seller_name AS sellerName,
+           so.customer_id AS customerId,
+           so.bill_date AS billDate,
+           so.sales_dept_id AS salesDeptId,
+           so.customer_order_no AS customerOrderNo,
+           sod.sku_id AS skuId,
+           sod.sku_no AS skuNo,
+           sod.plan_qty AS planQty,
+           sod.actual_qty AS actualQty,
+           sod.source_detail_id AS sourceDetailId,
+           sod.warehouse_location AS warehouseLocation
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND  sod.is_deleted=FALSE
@@ -256,7 +262,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY so.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            so.create_time DESC
 
     </select>
 

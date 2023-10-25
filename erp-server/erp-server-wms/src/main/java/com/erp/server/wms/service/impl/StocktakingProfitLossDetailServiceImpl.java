@@ -1,15 +1,21 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -50,15 +56,58 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         for (StocktakingProfitLossDetailDTO.ViewDTO item : viewList) {
             String skuId = item.getSkuId();
-            ProductDetailEntity sku=skuList.stream().filter(s->s.getId().equals(skuId)).findFirst().orElse(null);
-            if(Objects.nonNull(sku)){
+            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.nonNull(sku)) {
                 item.setProductName(sku.getName());
                 item.setUnit(sku.getUnitName());
-            }else{
+            } else {
                 item.setProductName("");
                 item.setUnit("");
             }
         }
         return viewList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateInfo(String mainId, List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList) {
+        List<StocktakingProfitLossDetailEntity> dbList = this.listBaseByMainId(mainId);
+        List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        List<StocktakingProfitLossDetailEntity> updateList = BeanMapperUtils.copyList(StocktakingProfitLossDetailEntity.class, detailList);
+        updateList.forEach(u -> u.setMainId(mainId));
+        this.saveOrUpdateBatch(updateList);
+    }
+
+    @Override
+    public void removeByMainId(String mainId) {
+        lambdaUpdate().eq(StocktakingProfitLossDetailEntity::getMainId, mainId).remove();
+    }
+
+    /**
+     * 获取删除ids
+     *
+     * @param pairList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-10-20 14:05
+     */
+    private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<StocktakingProfitLossDetailEntity> dbList) {
+        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+                map(obj -> obj.getKey()).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(StocktakingProfitLossDetailEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
+    }
+
+
+    private List<StocktakingProfitLossDetailEntity> listBaseByMainId(String mainId) {
+        if (StringUtils.isNotBlank(mainId)) {
+            return this.lambdaQuery().eq(StocktakingProfitLossDetailEntity::getMainId, mainId).orderByAsc(StocktakingProfitLossDetailEntity::getId).list();
+        }
+        return Collections.emptyList();
     }
 }

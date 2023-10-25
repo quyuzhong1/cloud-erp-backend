@@ -137,6 +137,21 @@ ProductDetailController extends BaseController {
     }
 
     /**
+     * 根据sku编号查询
+     * @author Will
+     * @date: 2023/10/24 12:06
+     * @param skuParamDTO
+     * @return ApiResult<List<ProductDetailShowDTO>>
+     */
+    @PostMapping("/listSkuBySkuNos")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        List<ProductSearchDTO.SkuListDTO> list = productDetailService.listSkuBySkuNos(skuParamDTO);
+        return this.success(list);
+    }
+
+
+    /**
      * 产品信息-无规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id

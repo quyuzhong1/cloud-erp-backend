@@ -12,13 +12,14 @@
         kbo.disabled
         FROM kingdee_business_operator kbo
         INNER JOIN sys_user_info su
-        ON su.uid=kbo.erp_user_id
+        ON su.uid = kbo.erp_user_id
         INNER JOIN kingdee_user_post kup
-        ON kup.user_id=kbo.erp_user_id
-        AND kup.is_deleted=FALSE
-        WHERE kbo.kingdee_type=#{params.type}
-        AND kbo.kingdee_org_code=#{orgCode}
-        AND kup.use_org_code=#{orgCode}
+        ON kup.user_id = kbo.erp_user_id
+        AND kup.is_deleted = FALSE
+        WHERE kbo.kingdee_type = #{params.type}
+        <if test="orgCode != null and orgCode != '' ">
+            AND kbo.kingdee_org_code = #{orgCode} AND kup.use_org_code = #{orgCode}
+        </if>
     </select>
 
 </mapper>

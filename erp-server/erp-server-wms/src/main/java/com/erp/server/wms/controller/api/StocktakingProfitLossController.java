@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.service.InventoryTransCoreService;
+import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.StocktakingProfitLossService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,6 @@ public class StocktakingProfitLossController extends BaseController {
     private StocktakingProfitLossService stocktakingProfitLossService;
 
 
-
     /**
      * 获取 tab列表
      *
@@ -66,8 +66,24 @@ public class StocktakingProfitLossController extends BaseController {
      * 添加
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto){
+    public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto) {
         String id = stocktakingProfitLossService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
+     * 修改
+     */
+    @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:update",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "id"
+    )
+    public ApiResult add(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
+        String id = stocktakingProfitLossService.update(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -126,12 +142,12 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:submit",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:submit",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -139,8 +155,8 @@ public class StocktakingProfitLossController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.submit(id);
-            }catch (Exception e){
-                log.error("盘盈盘亏单 提交审核失败>>>>{}",e);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 提交审核失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -157,26 +173,46 @@ public class StocktakingProfitLossController extends BaseController {
 
 
     /**
-     * 审核
+     * 保存并提交
+     *
      * @param dto
      * @return
      */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
+        stocktakingProfitLossService.addAndSubmit(dto);
+        return success();
+    }
+
+    /**
+     * 修改并提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.UpdateDTO dto) {
+        stocktakingProfitLossService.updateAndSubmit(dto);
+        return success();
+    }
+
+
     @PostMapping("/approve")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:approve",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:approve",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = stocktakingProfitLossService.approve(id,new  ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("盘盈盘亏单 审核失败>>>>{}",e);
+                submit = stocktakingProfitLossService.approve(id, new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 审核失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -190,7 +226,6 @@ public class StocktakingProfitLossController extends BaseController {
 
         return success(resultDTOS);
     }
-
 
 
     /**
@@ -200,12 +235,12 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/cancelProcess")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:cancelProcess",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:cancelProcess",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -213,8 +248,8 @@ public class StocktakingProfitLossController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("盘盈盘亏单 撤销流程失败>>>>{}",e);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 撤销流程失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -224,6 +259,42 @@ public class StocktakingProfitLossController extends BaseController {
                 submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
+        }
+
+        return success(resultDTOS);
+    }
+
+
+    /**
+     * 删除盘盈盘亏单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:delete",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = stocktakingProfitLossService.delete(id);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单删除失败===>{}", e);
+                StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
+                if(Objects.isNull(entity)){
+                    deleteResult = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
         }
 
         return success(resultDTOS);
