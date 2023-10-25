@@ -158,6 +158,10 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
     @Override
     public void invoke(B2BSoImportExcelDTO excelDTO, AnalysisContext analysisContext) {
 
+        Integer rowNumber = analysisContext.readSheetHolder().getApproximateTotalRowNumber();
+        if (rowNumber > 5000) {
+            throw new ServiceException("导入最高要支持5000条");
+        }
 
         //序号
         String no = excelDTO.getNo();
@@ -168,8 +172,9 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
          */
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
+        Boolean isSoNull = Objects.isNull(addDTO);
 
-        if (Objects.isNull(addDTO)) {
+        if (isSoNull) {
             List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
             if (CollectionUtils.isNotEmpty(msgList)) {
                 errorMsgList.addAll(msgList);
@@ -242,6 +247,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             //存在错误数据则直接返回
             if (errorMsgList.size() > 0) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorMap.put(no, no);
                 errorList.add(excelDTO);
                 return;
             }
@@ -295,7 +301,6 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
                 addDTO.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
             }
 
-
             //贸易条款
             String tradeTermStr = excelDTO.getTradeTerm();
             String tradeTerm = "";
@@ -306,10 +311,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
                     errorMsgList.add("贸易条款不存在");
                 }
             }
-
             addDTO.setTradeTerm(tradeTerm);
-
-
             //客户
             String customerName = excelDTO.getCustomerName();
             CustomerInfoEntity customerInfo = customerInfoService.getByName(customerName);
@@ -381,6 +383,34 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             String remark = excelDTO.getRemark();
             addDTO.setRemark(remark);
 
+
+            //银行手续费
+            String bankServiceFeeStr = excelDTO.getBankServiceFee();
+            BigDecimal bankServiceFee = MathUtil.getBigDecimalByStr(bankServiceFeeStr);
+
+            //运费
+            String shippingFeeStr = excelDTO.getShippingFee();
+            BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
+
+
+            //收款金额
+            String receiveAmountStr = excelDTO.getReceiveAmount();
+            BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
+
+            //报关费
+            String customsFeeStr = excelDTO.getCustomsFee();
+            BigDecimal customsFee = MathUtil.getBigDecimalByStr(customsFeeStr);
+
+            //折扣总额
+            String discountAmountStr = excelDTO.getDiscountAmount();
+            BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
+
+            addDTO.setBankServiceFee(bankServiceFee);
+            addDTO.setShippingFee(shippingFee);
+            addDTO.setReceiveAmount(receiveAmount);
+            addDTO.setCustomsFee(customsFee);
+            addDTO.setDiscountAmount(discountAmount);
+
         }
         List<SoDetailDTO.AddDTO> detailList = Objects.nonNull(addDTO.getDetailList()) ? addDTO.getDetailList() : Lists.newArrayList();
         SoDetailDTO.AddDTO addDetail = new SoDetailDTO.AddDTO();
@@ -419,41 +449,6 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             skuId = skuVO.getSkuId();
         }
         addDetail.setSkuId(skuId);
-
-        //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(excelDTO);
-            errorMap.put(no, no);
-            //删除存在的销售订单信息
-            map.remove(no);
-            return;
-        }
-
-        //银行手续费
-        String bankServiceFeeStr = excelDTO.getBankServiceFee();
-        BigDecimal bankServiceFee = MathUtil.getBigDecimalByStr(bankServiceFeeStr);
-        addDTO.setBankServiceFee(bankServiceFee);
-
-        //运费
-        String shippingFeeStr = excelDTO.getShippingFee();
-        BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
-        addDTO.setShippingFee(shippingFee);
-
-        //收款金额
-        String receiveAmountStr = excelDTO.getReceiveAmount();
-        BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
-        addDTO.setReceiveAmount(receiveAmount);
-
-        //报关费
-        String customsFeeStr = excelDTO.getCustomsFee();
-        BigDecimal customsFee = MathUtil.getBigDecimalByStr(customsFeeStr);
-        addDTO.setCustomsFee(customsFee);
-
-        //折扣总额
-        String discountAmountStr = excelDTO.getDiscountAmount();
-        BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
-        addDTO.setDiscountAmount(discountAmount);
         //数量
         String qtyStr = excelDTO.getQty();
         Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
@@ -467,9 +462,19 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         String taxRateStr = excelDTO.getTaxRate();
         BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
         addDetail.setTaxRate(taxRate);
-
         detailList.add(addDetail);
+
         addDTO.setDetailList(detailList);
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
+            errorMap.put(no, no);
+            //删除存在的销售订单信息
+            map.remove(no);
+            return;
+        }
+
         map.put(no, addDTO);
 
     }
@@ -484,7 +489,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         if (!map.isEmpty()) {
             for (Map.Entry<String, SoInfoDTO.AddDTO> item : map.entrySet()) {
                 String no = item.getKey();
-                if(!errorMap.containsKey(no)){
+                if (!errorMap.containsKey(no)) {
                     SoInfoDTO.AddDTO addDTO = item.getValue();
                     soInfoService.add(addDTO);
                 }

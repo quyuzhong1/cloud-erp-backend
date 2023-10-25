@@ -72,6 +72,7 @@ import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
@@ -333,7 +334,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
             throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空或者为零");
         }
-        List<String> checkSoIdList=checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+        List<String> checkSoIdList = checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(checkSoIdList);
         //这个是 单价为空的集合
         List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && !s.getIsReissue() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
@@ -638,7 +639,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setOrderTypeName(BillTypeEnum.getName(type));
             String soId = item.getId();
             //运单号集合
-            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)
+                            && StringUtils.isNotBlank(s.getTrackNo())).
                     map(SoOutstockEntity::getTrackNo).collect(Collectors.toList());
             item.setTrackNoList(trackNoList);
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
@@ -2660,6 +2662,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @author yl
      * @date 2023-10-17 10:34
      */
+    @SneakyThrows
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -2689,13 +2692,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 currencyList, dictBasicList, kingdeeFeign, deptList,
                 bankAccountService, customerInfoService, customerAddressService,
                 skuList, userList, this);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("销售订单导入错误！==={}", e);
-            return Boolean.FALSE;
-
-        }
+        EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "销售订单错误信息";
