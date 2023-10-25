@@ -85,6 +85,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
     GLOBAL_EXCEPTION_UN_KNOW(1048, "未知异常：【{}】"),
+    GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
 
 
@@ -912,6 +913,7 @@ public enum ApiError implements Serializable {
     ERROR_WALMART_SHOP_ID_NOT_NULL(92100,"沃尔玛授权店铺Id不能为空"),
     ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
     ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
+    ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
 
 
 
@@ -921,6 +923,8 @@ public enum ApiError implements Serializable {
 
 
 
+
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
