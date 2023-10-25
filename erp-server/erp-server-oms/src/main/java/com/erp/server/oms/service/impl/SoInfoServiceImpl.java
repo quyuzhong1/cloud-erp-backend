@@ -2591,8 +2591,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewPi.setProductName("");
                 viewPi.setMaterials("");
             }
-
-
+            viewPi.setImageUrl("");
             i++;
             viewPiList.add(viewPi);
 
