@@ -40,7 +40,7 @@
         source_code AS sourceCode,
         bill_type AS billType,
         create_time AS createTime,
-        update_user_name AS updateUserName,
+        create_user_name AS createUserName,
         approve_time AS approveTime,
         approve_user_name AS approveUserName,
         approve_status AS approveStatus
