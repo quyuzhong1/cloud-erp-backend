@@ -300,7 +300,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
     )
-    public ApiResult exportExcel(@RequestBody PoInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = poInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

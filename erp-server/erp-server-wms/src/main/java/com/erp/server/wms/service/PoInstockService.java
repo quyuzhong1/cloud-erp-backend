@@ -160,7 +160,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 12:00
      */
-    Boolean exportExcel(PoInstockDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PoInstockDTO.ExportParamDTO dto, HttpServletResponse response);
 
     /**
      * @param ids

@@ -16,7 +16,6 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/10 11:11
  */
 @Data
@@ -30,7 +29,7 @@ public class PoInstockDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 入库单号
@@ -153,19 +152,17 @@ public class PoInstockDTO implements Serializable {
         private BigDecimal amount;
 
 
-
         /**
          * 价税合计=含税单价*实收数量
          */
         private BigDecimal taxAmount;
 
 
-
         /**
          * 税率
          */
         private BigDecimal taxRate;
-        
+
         /**
          * 税率字符穿
          */
@@ -175,7 +172,6 @@ public class PoInstockDTO implements Serializable {
          * 币别
          */
         private String currency;
-
 
 
         /**
@@ -240,8 +236,6 @@ public class PoInstockDTO implements Serializable {
          * 合计含税金额
          */
         private BigDecimal totalTaxAmount;
-
-
 
 
     }
@@ -315,6 +309,18 @@ public class PoInstockDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
     }
+
+
+    @Data
+    public static class ExportParamDTO extends SearchParamDTO {
+        /**
+         * 是否有字段权限
+         */
+        private Boolean isHaveFieldPower;
+    }
+
+
+
 
     @Data
     @NoArgsConstructor
@@ -580,9 +586,6 @@ public class PoInstockDTO implements Serializable {
     }
 
 
-
-
-
     @Data
     @NoArgsConstructor
     public static class ListGeneratePurchaseReturnOrderDTO {
@@ -658,34 +661,34 @@ public class PoInstockDTO implements Serializable {
         /**
          * 实退数量
          */
-        @Min(value = 1,message = "实退数量最小值为1")
-        @Max(value = 999999999,message = "实退数量最大值为999999999")
+        @Min(value = 1, message = "实退数量最小值为1")
+        @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer realityReturnQty;
 
         /**
          * 补货数量
          */
-        @Min(value = 1,message = "补货数量最小值为1")
-        @Max(value = 99999999,message = "补货数量最大值为99999999")
+        @Min(value = 1, message = "补货数量最小值为1")
+        @Max(value = 99999999, message = "补货数量最大值为99999999")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
-        @Min(value = 1,message = "扣款数量最小值为1")
-        @Max(value = 99999999,message = "扣款数量最大值为99999999")
+        @Min(value = 1, message = "扣款数量最小值为1")
+        @Max(value = 99999999, message = "扣款数量最大值为99999999")
         private Integer deductAmountQty;
 
         /**
          * 含税单价
          */
-        @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
+        @Digits(integer = 16, fraction = 4, message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
 
         /**
          * 备注
          */
-        @Size(max = 255,message = "备注不能大于255字符")
+        @Size(max = 255, message = "备注不能大于255字符")
         private String remark;
 
         /**
@@ -870,7 +873,7 @@ public class PoInstockDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 入库单号
@@ -990,6 +993,7 @@ public class PoInstockDTO implements Serializable {
 
     /**
      * PDA:列表状态
+     *
      * @Author Luo_WG
      * @Date 2023/8/11 9:15
      **/
