@@ -155,6 +155,7 @@
         spl.source_code AS sourceCode,
         spl.bill_type AS billType,
         spl.create_time AS createTime,
+        spl.create_user_name AS createUserName,
         spl.approve_time AS approveTime,
         spl.approve_status AS approveStatus,
         spl.approve_user_name AS approveUserName,
@@ -185,10 +186,16 @@
                     AND spl.bill_type=#{billType}
                 </if>
                 <if test="sourceIdList!=null and sourceIdList.size>0">
-                    AND spl.source_id IN
+                    AND (spl.source_id IN
                     <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
                         #{sourceId}
                     </foreach>
+                    OR
+                    spl.id IN
+                    <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                        #{sourceId}
+                    </foreach>
+                    )
                 </if>
                 <!--code-->
                 <if test="params.code!=null and params.code!=''">

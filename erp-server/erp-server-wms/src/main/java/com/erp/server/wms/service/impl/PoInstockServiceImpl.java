@@ -497,8 +497,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 obj.setAmount(amount);
                 //价税合计=含税单价*实收数量
                 BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
+                taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
                 obj.setTaxPrice(taxPrice);
+                String taxRateStr=taxRate.toString().concat("%");
                 obj.setTaxRate(taxRate);
+                obj.setTaxRateStr(taxRateStr);
                 obj.setTaxAmount(taxAmount);
                 obj.setCurrency(purchaseOrderDetailEntity.getCurrency());
                 obj.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
@@ -1174,13 +1177,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //入库数量 就是实收数量
             Integer stockInQty = obj.getStockInQty();
             //金额=未税价格*实收数量
-            BigDecimal amount = MathUtil.multiply(price, stockInQty);
+            BigDecimal qty = new BigDecimal(stockInQty);
+            BigDecimal amount = MathUtil.multiply(price, qty, 4);
             obj.setAmount(amount);
             //价税合计=含税单价*实收数量
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty, 4);
             obj.setTaxAmount(taxAmount);
-            taxRate=MathUtil.multiply(taxRate,MathUtil.BigDecimal_100);
-            obj.setTaxRate(taxRate);
+            taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
+            String taxRateStr = taxRate.toString().concat("%");
+            obj.setTaxRateStr(taxRateStr);
 
         }
     }
@@ -1939,10 +1944,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     /**
      * 统计数量
-     * @author yl
-     * @date 2023-10-24 12:11
+     *
      * @param dto
      * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
+     * @author yl
+     * @date 2023-10-24 12:11
      */
     @Override
     public PoInstockDTO.PagingTotalDTO pagingTotal(PoInstockDTO.SearchParamDTO dto) {
@@ -1952,4 +1958,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         PoInstockDTO.PagingTotalDTO result = this.baseMapper.pagingTotal(dto);
         return result;
     }
+
+
 }

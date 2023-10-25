@@ -152,15 +152,24 @@ public class PoInstockDTO implements Serializable {
          */
         private BigDecimal amount;
 
+
+
         /**
          * 价税合计=含税单价*实收数量
          */
         private BigDecimal taxAmount;
 
+
+
         /**
          * 税率
          */
         private BigDecimal taxRate;
+        
+        /**
+         * 税率字符穿
+         */
+        private String taxRateStr;
 
         /**
          * 币别
