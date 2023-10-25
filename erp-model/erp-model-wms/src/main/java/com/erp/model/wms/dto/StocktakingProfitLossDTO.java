@@ -354,6 +354,11 @@ public class StocktakingProfitLossDTO implements Serializable {
          * 盘点人
          */
         private String stocktakingUserName;
+
+        /**
+         *创建人
+         */
+        private String createUserName;
         /**
          * 创建时间
          */
