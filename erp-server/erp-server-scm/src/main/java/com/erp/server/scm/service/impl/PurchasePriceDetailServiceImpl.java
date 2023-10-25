@@ -22,6 +22,8 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -77,6 +79,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private PurchasePriceService priceService;
+
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
     private PurchasePriceHistoryService purchasePriceHistoryService;
@@ -541,13 +546,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds,List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds, skuIdList);
         return list;
     }
 
@@ -759,11 +764,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
-                        && obj.getSupplierId().equals(searchDTO.getSupplierId())
-                        && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
+                                && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                                && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {
-                    BeanMapperUtils.copy(viewDTO,purchaseTaxPriceViewDTO);
+                    BeanMapperUtils.copy(viewDTO, purchaseTaxPriceViewDTO);
                     //币种符号
                     if (CollectionUtils.isNotEmpty(currencyViewList)) {
                         CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -782,13 +787,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public void updateDetailRemark(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
-            return ;
+            return;
         }
         this.lambdaUpdate()
-                .in(PurchasePriceDetailEntity::getId,ids)
-                .set(PurchasePriceDetailEntity::getRemark,remark)
+                .in(PurchasePriceDetailEntity::getId, ids)
+                .set(PurchasePriceDetailEntity::getRemark, remark)
                 .update(new PurchasePriceDetailEntity());
     }
+
 
 
     @Override

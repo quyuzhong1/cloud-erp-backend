@@ -128,6 +128,9 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
 
+    @TableField(exist = false)
+    private String approveStatus;
+
     /**
      * 采购单价
      */

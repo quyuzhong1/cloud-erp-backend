@@ -14,6 +14,8 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
+import com.erp.server.oms.utils.SoUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,8 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售管理-销售订单
@@ -533,16 +537,20 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 临时接口：修改未税单价
+     * 临时接口：添加折扣额 修复历史的数据销售额数据
      *
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
-     **/
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-13 9:06
+     */
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
-        Boolean aBoolean = soInfoService.temporaryUpdate();
-        return aBoolean ? success() : failure();
+        List<String> errorList = soInfoService.temporaryUpdate();
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            return ApiResult.error(1,"以下订单出错: "+errorList.stream().collect(Collectors.joining(",")));
+        }
+        return ApiResult.success();
     }
 
     /**

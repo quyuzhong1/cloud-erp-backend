@@ -766,6 +766,14 @@ public enum ApiError implements Serializable {
     ERROR_PROFIT_DIFF_GREATER_ZERO(99096,"盘盈单差异数量必须大于0"),
     ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
     ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
+    ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
+
+
+
+
+
+
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号

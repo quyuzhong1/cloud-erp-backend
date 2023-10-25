@@ -152,4 +152,22 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param response
      */
     void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 修复历史数据
+     * @author yl
+     * @date 2023-10-23 19:19
+     * @param
+     * @return void
+     */
+    void tempUpdateHistoryDb();
+
+    /**
+     * 根据采购价目ids获取变更信息
+     * @author yl
+     * @date 2023-10-24 14:28
+     * @param purchasePriceIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceChangeEntity>
+     */
+    List<PurchasePriceChangeEntity> listByPurchasePriceIds(List<String> purchasePriceIds);
 }

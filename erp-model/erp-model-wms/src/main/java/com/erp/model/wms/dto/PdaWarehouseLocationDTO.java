@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 @Data
@@ -52,6 +53,7 @@ public class PdaWarehouseLocationDTO {
         /**
          * 仓位
          */
+        @NotBlank(message = "仓位不能为空")
         private String warehouseLocation;
     }
 }

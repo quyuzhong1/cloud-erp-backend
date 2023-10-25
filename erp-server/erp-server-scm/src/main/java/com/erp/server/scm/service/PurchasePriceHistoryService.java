@@ -53,4 +53,13 @@ public interface PurchasePriceHistoryService extends SuperService<PurchasePriceH
      * @return java.util.List<com.erp.model.scm.entity.PurchasePriceHistoryEntity>
      */
     List<PurchasePriceHistoryEntity> getHistoryByDetailIds(List<String> purchasePriceDetailIds);
+
+    /**
+     * 根据变更详情id 获取
+     * @author yl
+     * @date 2023-10-23 16:13
+     * @param changeDetailIdList
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceHistoryEntity>
+     */
+    List<PurchasePriceHistoryEntity> listByChangeDetailIdList(List<String> changeDetailIdList);
 }

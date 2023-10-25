@@ -278,4 +278,12 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      */
     void reQcSample(QcInfoDTO.ReQcDTO dto);
+
+    /**
+     * TODO 临时接口，修复质检的来源单号
+     * @Author Luo_WG
+     * @Date 2023/10/23 10:45
+     * @return void
+     **/
+    void repairQcInfoSourceCode();
 }

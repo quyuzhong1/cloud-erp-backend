@@ -544,7 +544,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //审核通过发送金蝶
             warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //根据条件生成质检单
-//            createQcBill(ids);
+            createQcBill(ids);
 
             // 更新库存数据
             updateInventoryTransCore(warehouseReceiveList);

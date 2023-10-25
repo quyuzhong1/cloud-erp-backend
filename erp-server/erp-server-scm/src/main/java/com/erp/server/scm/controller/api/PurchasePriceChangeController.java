@@ -270,4 +270,17 @@ public class PurchasePriceChangeController extends BaseController {
         purchasePriceChangeService.export(dto, response);
         return success();
     }
+
+
+
+    /**
+     * 修复历史数据
+     *
+     * @return
+     */
+    @PostMapping("/updateHistoryDb")
+    public ApiResult tempUpdateHistoryDb() {
+        purchasePriceChangeService.tempUpdateHistoryDb();
+        return success();
+    }
 }
