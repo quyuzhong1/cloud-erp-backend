@@ -17,7 +17,7 @@
         sm.match_result,
         sm.create_user_name,
         sm.create_time
-        FROM sku_mapping sm
+        FROM sku_maping sm
         INNER JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
