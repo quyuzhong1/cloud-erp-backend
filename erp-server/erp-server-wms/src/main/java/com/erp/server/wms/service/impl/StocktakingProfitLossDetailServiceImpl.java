@@ -109,7 +109,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
                 old.setWarehouseName(oldWarehouseName);
                 String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(item.getWarehouseId())).
                         findFirst().map(WarehouseEntity::getName).orElse("");
-                item.setWarehouseName(oldWarehouseName);
+                item.setWarehouseName(warehouseName);
                 operateLogService.addModuleOperateLogByObj(old, item, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), mainId, "", String.format("【%s】", old.getSkuNo()));
             }
         }
