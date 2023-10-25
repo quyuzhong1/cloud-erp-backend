@@ -156,7 +156,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
 
-            String referenceVersion = detail.getSkuNo() + "_" + detail.getVersion();
+            String referenceVersion = detail.getSkuNo() + "_" + detail.getReferenceVersion();
             //参照版本
             jsonObject.set("referenceVersion", referenceVersion);
             //库存组织编码
