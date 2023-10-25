@@ -396,6 +396,8 @@ public class SoDetailDTO implements Serializable {
          */
         private String materials;
 
+        private String imageUrl;
+
 
     }
 
@@ -616,7 +618,6 @@ public class SoDetailDTO implements Serializable {
          * 销售毛利率
          */
         private BigDecimal saleProfitRate;
-
 
 
         /**
