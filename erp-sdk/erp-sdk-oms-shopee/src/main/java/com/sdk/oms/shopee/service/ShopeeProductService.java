@@ -84,11 +84,13 @@ public class ShopeeProductService {
             productRequest.setItemIdList(StringUtils.join(itemIds, ","));
             ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
             JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
-            //循环填充
-            JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-            List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
-            if (CollectionUtils.isNotEmpty(list)){
-                itemInfos.addAll(list);
+            if (Objects.nonNull(responseBaseInfo)){
+                //循环填充
+                JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
+                List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
+                if (CollectionUtils.isNotEmpty(list)){
+                    itemInfos.addAll(list);
+                }
             }
         }
         //是否还有数据
@@ -116,12 +118,12 @@ public class ShopeeProductService {
         paramMap.put("access_token", productRequest.getToken());
         paramMap.put("offset", productRequest.getOffset());
         paramMap.put("page_size", pageSize);
-        if (Objects.nonNull(productRequest.getTimeFrom())) {
-            paramMap.put("update_time_from", productRequest.getTimeFrom());
-        }
-        if (Objects.nonNull(productRequest.getTimeTo())) {
-            paramMap.put("update_time_to", productRequest.getTimeTo());
-        }
+//        if (Objects.nonNull(productRequest.getTimeFrom())) {
+//            paramMap.put("update_time_from", productRequest.getTimeFrom());
+//        }
+//        if (Objects.nonNull(productRequest.getTimeTo())) {
+//            paramMap.put("update_time_to", productRequest.getTimeTo());
+//        }
         paramMap.put("item_status", "NORMAL");
         return ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
     }

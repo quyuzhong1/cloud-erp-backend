@@ -72,15 +72,17 @@ public class ShopeeOrderService {
             orderRequest.setOrderSns(StringUtils.join(orderSns, ","));
             ShopeeResponse orderDetail = this.getOrderDetail(orderRequest);
             JSONObject responseBaseInfo = orderDetail.getResponse();
-            //循环填充
-            JSONArray listBase = responseBaseInfo.getJSONArray("order_list");
-            List<OrderDetail> list = JSONObject.parseArray(listBase.toJSONString(), OrderDetail.class);
+            if (Objects.nonNull(responseBaseInfo)){
+                //循环填充
+                JSONArray listBase = responseBaseInfo.getJSONArray("order_list");
+                List<OrderDetail> list = JSONObject.parseArray(listBase.toJSONString(), OrderDetail.class);
 
-            if (CollectionUtils.isNotEmpty(list)) {
-                orderDetails.addAll(list);
+                if (CollectionUtils.isNotEmpty(list)) {
+                    orderDetails.addAll(list);
+                }
             }
         }
-        Boolean more = response.getBoolean("more");
+        boolean more = response.getBoolean("more");
         if (more) {
             String next_cursor = response.getString("next_cursor");
             orderRequest.setCursor(next_cursor);
