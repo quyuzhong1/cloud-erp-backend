@@ -8,22 +8,14 @@ import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.utils.SoUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,11 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.Map;
 
 /**
  * 销售管理-销售订单
@@ -54,10 +43,6 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-    @Resource
-    private SyncKingdeeSoService syncKingdeeSoService;
-    @Resource
-    private MQProducerService mQProducerService;
 
     /**
      * 获取 tab列表
@@ -588,31 +573,6 @@ public class SoInfoController extends BaseController {
     @PostMapping("/calSkuCostProfit")
     public ApiResult<List<SoDetailDTO.CalDetailResultDTO>> calSkuCostProfit(@RequestBody @Validated SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
-    }
-
-    /**
-     * 订单监听测试方法
-     *
-     * @param id
-     * @return
-     */
-    @PostMapping("/testOrderPush")
-    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
-        SoInfoEntity soInfoEntity = soInfoService.getById(id);
-//        soInfoService.syncOrderToDmp(soInfoEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        String dmpPullTaskId = syncKingdeeSoService.syncOrderToDmp(soInfoEntity, operate);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("id", id);
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        resultMap.put("code", soInfoEntity.getCode());
-        resultMap.put("operate", operate);
-        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName(),
-                resultMap, id);
-        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            return success();
-        } else {
-            return failure();
-        }
     }
 
     /**

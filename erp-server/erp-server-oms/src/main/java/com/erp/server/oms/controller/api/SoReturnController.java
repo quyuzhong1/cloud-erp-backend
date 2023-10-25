@@ -11,7 +11,6 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
@@ -40,8 +39,6 @@ public class SoReturnController extends BaseController {
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
-    @Resource
-    private MQProducerService mqProducerService;
     
     /**
      * 列表查询
