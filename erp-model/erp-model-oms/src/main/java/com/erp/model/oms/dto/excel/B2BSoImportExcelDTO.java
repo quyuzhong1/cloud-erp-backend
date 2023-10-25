@@ -274,7 +274,7 @@ public class B2BSoImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "销售数量", index = 29)
-    @FieldValid(fieldName = "销售数量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.NUMBER)
+    @FieldValid(fieldName = "销售数量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.INTEGER)
     private String qty;
 
 

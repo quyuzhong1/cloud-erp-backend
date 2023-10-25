@@ -922,7 +922,6 @@
         LIMIT 1
     </select>
 
-
     <select id="listByChargeId" resultType="com.erp.model.plm.entity.ProductDetailEntity">
         SELECT
             id,
@@ -931,4 +930,5 @@
         FROM  product_detail
         WHERE is_deleted = false and string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
     </select>
+
 </mapper>
