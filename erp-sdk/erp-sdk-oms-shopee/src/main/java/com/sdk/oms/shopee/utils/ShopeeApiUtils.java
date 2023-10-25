@@ -6,6 +6,7 @@ import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -20,6 +21,7 @@ import java.util.Map;
  * @date 2023年10月20日
  * @version: 1.0
  */
+@Slf4j
 public class ShopeeApiUtils {
 
 
@@ -94,13 +96,19 @@ public class ShopeeApiUtils {
      * @return
      */
     public static ShopeeResponse sendGet(String baseUrl, HashMap<String, Object> paramMap) {
+        ShopeeResponse resultMap = null;
         Map<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/json");
         headers.put("Connection", "keep-alive");
         System.out.println("baseUrl:" + baseUrl);
-        String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
-        System.out.println("bodyStr:" + bodyStr);
-        ShopeeResponse resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+        try {
+            String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
+            System.out.println("bodyStr:" + bodyStr);
+            resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+
         return resultMap;
     }
 
@@ -131,14 +139,20 @@ public class ShopeeApiUtils {
      * @return java.lang.String
      */
     public static ShopeeResponse sendPost(String baseUrl, Map<String, Object> urlParams, Map<String, Object> params) {
+        ShopeeResponse resultMap = null;
         Map<String, String> headers = new HashMap();
         headers.put("Content-Type", "application/json");
         headers.put("Accept", "application/json");
         String url = buildUrl(baseUrl, urlParams);
         System.out.println("url:" + url);
-        String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
-        System.out.println("bodyStr:" + bodyStr);
-        ShopeeResponse resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
+            System.out.println("bodyStr:" + bodyStr);
+            resultMap = JSONObject.parseObject(bodyStr, ShopeeResponse.class);
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
         return resultMap;
     }
 
@@ -150,14 +164,20 @@ public class ShopeeApiUtils {
      * @return java.lang.String
      */
     public static ShopeeTokenAuth sendRefreshPost(String baseUrl, Map<String, Object> urlParams, Map<String, Object> params) {
+        ShopeeTokenAuth resultMap = null;
         Map<String, String> headers = new HashMap();
         headers.put("Content-Type", "application/json");
         headers.put("Accept", "application/json");
         String url = buildUrl(baseUrl, urlParams);
         System.out.println("url:" + url);
-        String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
-        System.out.println("bodyStr:" + bodyStr);
-        ShopeeTokenAuth resultMap = JSONObject.parseObject(bodyStr, ShopeeTokenAuth.class);
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
+            System.out.println("bodyStr:" + bodyStr);
+            resultMap = JSONObject.parseObject(bodyStr, ShopeeTokenAuth.class);
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
+
         return resultMap;
     }
 
@@ -185,7 +205,7 @@ public class ShopeeApiUtils {
         jsonArray.add("1234");
         jsonArray.add("1235");
         jsonArray.add("1236");
-        jsonObject.put("merchant_id_list",jsonArray);
+        jsonObject.put("merchant_id_list", jsonArray);
 
         ShopeeAuth resultMap = JSONObject.parseObject(jsonObject.toJSONString(jsonObject), ShopeeAuth.class);
         System.out.println(resultMap);

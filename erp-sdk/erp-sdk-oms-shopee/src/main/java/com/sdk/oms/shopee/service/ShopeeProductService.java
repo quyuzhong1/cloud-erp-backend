@@ -66,11 +66,13 @@ public class ShopeeProductService {
     }
 
     public void getAllProduct(ProductRequest productRequest, List<ItemInfo> itemInfos) {
+        log.info("获取产品订单：{}", productRequest);
         ShopeeResponse productList = this.getProductList(productRequest);
-        JSONObject response = productList.getResponse();
-        if (Objects.isNull(response)){
+        if (Objects.isNull(productList) || Objects.isNull(productList.getResponse())) {
             return;
         }
+        JSONObject response = productList.getResponse();
+
         String error = response.getString("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
@@ -84,11 +86,13 @@ public class ShopeeProductService {
             productRequest.setItemIdList(StringUtils.join(itemIds, ","));
             ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
             JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
-            //循环填充
-            JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-            List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
-            if (CollectionUtils.isNotEmpty(list)){
-                itemInfos.addAll(list);
+            if (Objects.nonNull(responseBaseInfo)) {
+                //循环填充
+                JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
+                List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
+                if (CollectionUtils.isNotEmpty(list)) {
+                    itemInfos.addAll(list);
+                }
             }
         }
         //是否还有数据

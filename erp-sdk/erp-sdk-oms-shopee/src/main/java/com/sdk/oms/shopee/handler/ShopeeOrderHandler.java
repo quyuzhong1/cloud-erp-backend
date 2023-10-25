@@ -77,7 +77,6 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         shopeeShop.getData().forEach(shopAuthEntity -> {
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
-//                ShopAuthEntity shop = shopeeShopById.getData();
                 OrderRequest orderRequest = OrderRequest.builder()
                         .offset(0)
                         .timeFrom((long) lastTime.getSecond())

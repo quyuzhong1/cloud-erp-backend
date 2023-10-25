@@ -11,6 +11,7 @@ import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.dto.order.response.OrderItemDetail;
 import com.sdk.oms.shopee.dto.product.response.ImageInfo;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
+import io.seata.common.util.CollectionUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -160,6 +162,9 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(OrderDetail orderDetail) {
+        if(Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getItems())){
+            return Collections.emptyList();
+        }
         return orderDetail.getItems().stream()
                 .map(e -> intPlatformOrderDetailDTO(e, orderDetail))
                 .collect(Collectors.toList());
