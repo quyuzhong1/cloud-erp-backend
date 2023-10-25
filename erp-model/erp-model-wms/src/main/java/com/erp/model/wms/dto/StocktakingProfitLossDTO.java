@@ -290,6 +290,10 @@ public class StocktakingProfitLossDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
          * 最新审核人
          */
         private String approveUserName;

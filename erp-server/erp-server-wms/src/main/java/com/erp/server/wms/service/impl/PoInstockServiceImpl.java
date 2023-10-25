@@ -1176,7 +1176,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //价税合计=含税单价*实收数量
             BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
             obj.setTaxAmount(taxAmount);
-
+            taxRate=MathUtil.multiply(taxRate,MathUtil.BigDecimal_100);
+            obj.setTaxRate(taxRate);
 
         }
     }
