@@ -211,7 +211,7 @@
             AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
         </if>
         group by inventory_id) as tf on inv.id = tf.inventory_id
-        where pd.is_deleted = false and wh.diasabled = false and wl.is_deleted = false and wlt.is_deleted = false and wh.approve_status = 'approve'
+        where pd.is_deleted = false and wh.disabled = false and wl.is_deleted = false and wlt.is_deleted = false and wh.approve_status = 'approve'
         and pi.property not in ('服务','费用')
         and pd.status = 2
         AND inv.org_id is not null
