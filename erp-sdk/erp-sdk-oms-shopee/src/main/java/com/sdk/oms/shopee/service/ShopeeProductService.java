@@ -66,11 +66,13 @@ public class ShopeeProductService {
     }
 
     public void getAllProduct(ProductRequest productRequest, List<ItemInfo> itemInfos) {
+        log.info("获取产品订单：{}", productRequest);
         ShopeeResponse productList = this.getProductList(productRequest);
-        JSONObject response = productList.getResponse();
-        if (Objects.isNull(response)){
+        if (Objects.isNull(productList) || Objects.isNull(productList.getResponse())) {
             return;
         }
+        JSONObject response = productList.getResponse();
+
         String error = response.getString("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
@@ -84,11 +86,11 @@ public class ShopeeProductService {
             productRequest.setItemIdList(StringUtils.join(itemIds, ","));
             ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
             JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
-            if (Objects.nonNull(responseBaseInfo)){
+            if (Objects.nonNull(responseBaseInfo)) {
                 //循环填充
                 JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
                 List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
-                if (CollectionUtils.isNotEmpty(list)){
+                if (CollectionUtils.isNotEmpty(list)) {
                     itemInfos.addAll(list);
                 }
             }
@@ -118,12 +120,12 @@ public class ShopeeProductService {
         paramMap.put("access_token", productRequest.getToken());
         paramMap.put("offset", productRequest.getOffset());
         paramMap.put("page_size", pageSize);
-//        if (Objects.nonNull(productRequest.getTimeFrom())) {
-//            paramMap.put("update_time_from", productRequest.getTimeFrom());
-//        }
-//        if (Objects.nonNull(productRequest.getTimeTo())) {
-//            paramMap.put("update_time_to", productRequest.getTimeTo());
-//        }
+        if (Objects.nonNull(productRequest.getTimeFrom())) {
+            paramMap.put("update_time_from", productRequest.getTimeFrom());
+        }
+        if (Objects.nonNull(productRequest.getTimeTo())) {
+            paramMap.put("update_time_to", productRequest.getTimeTo());
+        }
         paramMap.put("item_status", "NORMAL");
         return ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
     }

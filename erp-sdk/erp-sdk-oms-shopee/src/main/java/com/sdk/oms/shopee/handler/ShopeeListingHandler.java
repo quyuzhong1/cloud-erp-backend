@@ -77,15 +77,22 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
             ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
                 ShopAuthEntity shop = shopeeShopById.getData();
+
+//                long timest = System.currentTimeMillis() / 1000L;
+//                Long time_from = timest - (3600 * 24 * 14);
+//                Long time_to = timest;
+
                 ProductRequest productRequest = ProductRequest.builder()
                         .host(cfgAppClient.getUrl())
                         .offset(0)
                         .token(shop.getAccessToken())
-                        .shopId(Long.parseLong(shop.getShopId()))
+                        .shopId(Long.parseLong(shop.getShopeeId()))
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                         .tmpPartnerKey(cfgAppClient.getClientSecret())
+//                        .timeFrom(null)
                         .timeFrom((long) lastTime.getSecond())
                         .timeTo((long) nextTime.getSecond())
+//                        .timeTo(null)
                         .build();
                 List<ItemInfo> list = new ArrayList<>();
                 try {

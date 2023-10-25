@@ -770,7 +770,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shopInfoEntity.setId(null);
                 shopInfoEntity.setName(shopeeId);
             } else {
-                String name = shopInfoEntity.getName() + shopeeId;
+                String name = shopeeId;
                 shopInfoEntity.setName(name);
             }
             //店铺
