@@ -2,6 +2,8 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
@@ -10,6 +12,7 @@ import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.CustomerB2cService;
 import com.erp.server.oms.service.SoB2cReceiverService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -71,6 +74,12 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
      
      */
     private void handleSoB2cReceiver (SoB2cReceiverEntity entity,String mainId) {
+        //验证地址信息
+        if (StringUtils.isNotBlank(entity.getFirstAddress()) && StringUtils.isNotBlank(entity.getSecondAddress())
+                && StringUtils.isNotBlank(entity.getFullAddress())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL);
+        }
+
         CustomerB2cEntity customerB2cEntity = customerB2cService.getById(entity.getCustomerId());
         if (ObjectUtils.isNotEmpty(customerB2cEntity)) {
             entity.setName(customerB2cEntity.getName());
