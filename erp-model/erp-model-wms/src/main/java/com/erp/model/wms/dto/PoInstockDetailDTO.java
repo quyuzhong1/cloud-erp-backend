@@ -170,6 +170,11 @@ public class PoInstockDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 税率
+         */
+        private String taxRateStr;
+
+        /**
          * 币别
          */
         private String currency;

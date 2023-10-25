@@ -116,7 +116,7 @@ public class PurchaseStockExportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "税率", index = 13)
-    private BigDecimal taxRate;
+    private String taxRateStr;
 
     /**
      * 含税单价

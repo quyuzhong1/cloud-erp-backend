@@ -396,8 +396,8 @@
     <select id="pagingTotal" resultType="com.erp.model.wms.dto.PoInstockDTO$PagingTotalDTO">
         select
         COALESCE(sum(psid.stock_in_qty),0) as totalQty,
-        round(COALESCE(sum(psid.stock_in_qty*pod.tax_price),0),2) as totalTaxAmount,
-        round(COALESCE(sum(psid.stock_in_qty*(pod.tax_price/(1+pod.tax_rate))),0),2) as totalAmount
+        round(COALESCE(sum(psid.stock_in_qty*pod.tax_price),0),4) as totalTaxAmount,
+        round(COALESCE(sum(psid.stock_in_qty*(pod.tax_price/(1+pod.tax_rate))),0),4) as totalAmount
         from po_instock psi
         inner join po_instock_detail psid
         on psi.id = psid.main_id and psid.is_deleted = false
