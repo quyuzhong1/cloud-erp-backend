@@ -134,11 +134,6 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         List<String> supplierIds = details.stream().map(SubcontractChangeDetailEntity::getSupplierId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
-        //根据明细skuIds查询bom
-        List<String> skuIds = parentList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
-
-
         //组织机构
         List<String> orgIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -193,12 +188,10 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
                 String supplierCode = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
                 jsonObject.set("supplierCode",supplierCode);
             }
-            if (CollectionUtils.isNotEmpty(bomInfoList)) {
-                String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
-                //参照版本
-                jsonObject.set("referenceVersion", referenceVersion);
-            }
+
+            String referenceVersion = detailEntity.getSkuNo() + "_" + detailEntity.getBomVersion();
+            //参照版本
+            jsonObject.set("referenceVersion", referenceVersion);
             //金蝶委外明细id
             String kingdeeSubEntryId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
             jsonObject.set("kingdeeSubEntryId",kingdeeSubEntryId);
