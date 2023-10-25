@@ -40,6 +40,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PurchaseStockExportExcelDTO;
+import com.erp.model.wms.dto.excel.PurchaseStockNotFieldExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -488,7 +489,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //税率
                 BigDecimal taxRate = purchaseOrderDetailEntity.getTaxRate();
                 //获取到未税的值
-                BigDecimal price = MathUtil.getUntaxed(taxPrice, taxRate);
+                BigDecimal price = MathUtil.getUntaxed(taxPrice, taxRate,4);
                 obj.setPrice(price);
                 //入库数量 就是实收数量
                 Integer stockInQty = obj.getStockInQty();
@@ -499,7 +500,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
                 taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
                 obj.setTaxPrice(taxPrice);
-                String taxRateStr=taxRate.toString().concat("%");
+                String taxRateStr = taxRate.toString().concat("%");
                 obj.setTaxRate(taxRate);
                 obj.setTaxRateStr(taxRateStr);
                 obj.setTaxAmount(taxAmount);
@@ -716,20 +717,27 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     }
 
     @Override
-    public Boolean exportExcel(PoInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(PoInstockDTO.ExportParamDTO dto, HttpServletResponse response) {
         List<PoInstockDTO.ListDTO> list = baseMapper.listExportExcel(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
         doOpHandlePurchaseStockIn(list);
         List<PurchaseStockExportExcelDTO> resultList = BeanMapperUtils.copyList(PurchaseStockExportExcelDTO.class, list);
-
+        Boolean isHaveFieldPower = dto.getIsHaveFieldPower();
         String fileName = "采购入库单数据";
         try {
-            ExcelUtil.export(fileName, "采购入库单数据", resultList, PurchaseStockExportExcelDTO.class, response);
+            if (isHaveFieldPower != null && isHaveFieldPower) {
+                ExcelUtil.export(fileName, "采购入库单数据", resultList, PurchaseStockExportExcelDTO.class, response);
+            } else {
+                ExcelUtil.export(fileName, "采购入库单数据", resultList, PurchaseStockNotFieldExportExcelDTO.class, response);
+
+            }
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+
+
         return Boolean.TRUE;
     }
 
@@ -1172,7 +1180,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //税率
             BigDecimal taxRate = obj.getTaxRate();
             //获取到未税的值
-            BigDecimal price = MathUtil.getUntaxed(taxPrice, taxRate);
+            BigDecimal price = MathUtil.getUntaxed(taxPrice, taxRate,4);
             obj.setPrice(price);
             //入库数量 就是实收数量
             Integer stockInQty = obj.getStockInQty();

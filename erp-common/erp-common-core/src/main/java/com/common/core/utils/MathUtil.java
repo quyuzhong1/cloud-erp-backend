@@ -440,7 +440,7 @@ public class MathUtil {
      * @author yl
      * @date 2023-10-23 11:03
      */
-    public static BigDecimal getUntaxed(BigDecimal taxPrice, BigDecimal taxRate) {
+    public static BigDecimal getUntaxed(BigDecimal taxPrice, BigDecimal taxRate,int scale) {
         if (Objects.isNull(taxPrice)) {
             return BigDecimal.ZERO;
         }
@@ -448,7 +448,7 @@ public class MathUtil {
             taxRate = BigDecimal.ZERO;
         }
         BigDecimal divValue = taxRate.add(BigDecimal_1);
-        return MathUtil.divide(taxPrice, divValue, 2);
+        return MathUtil.divide(taxPrice, divValue, scale);
 
     }
 

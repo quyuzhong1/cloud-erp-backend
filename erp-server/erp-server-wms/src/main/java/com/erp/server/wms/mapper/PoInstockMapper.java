@@ -48,7 +48,7 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @param dto
      * @return List<PurchaseStockInDTO.ListDTO>
      */
-    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.SearchParamDTO dto);
+    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.ExportParamDTO dto);
     /**
      * @description: 查询退货单
      * @author Will
