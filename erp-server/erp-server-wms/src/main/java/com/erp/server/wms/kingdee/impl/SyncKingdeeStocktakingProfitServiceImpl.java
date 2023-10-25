@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -68,7 +69,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             return;
         }
         //更新同步状态为待同步
-        stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -81,13 +82,12 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         //单据日期
         resultMap.put("billDate", entity.getBillDate());
         String warehouseOrgCode = "";
-        String kingdeeWarehouseCode = "";
-        String warehouseId = detailDbList.get(0).getWarehouseId();
+        List<String> warehouseIdList = detailDbList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
         //仓库
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
-        if (Objects.nonNull(warehouse)) {
-            String orgId = warehouse.getOrgId();
-            kingdeeWarehouseCode = warehouse.getKingdeeWarehouseCode();
+        List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
+
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            String orgId=warehouseList.get(0).getOrgId();
             //组织信息
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
@@ -103,6 +103,8 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             String unit = item.getUnit();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("qty", item.getQty());
+            String kingdeeWarehouseCode =warehouseList.stream().filter(w->w.getId().equals(item.getWarehouseId())).
+                    map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse("");
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
