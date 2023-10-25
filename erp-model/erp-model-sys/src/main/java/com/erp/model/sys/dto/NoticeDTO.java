@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -157,7 +158,7 @@ public class NoticeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 业务模块
          */
