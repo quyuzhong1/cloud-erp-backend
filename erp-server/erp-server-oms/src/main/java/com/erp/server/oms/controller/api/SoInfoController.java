@@ -8,12 +8,10 @@ import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -42,10 +40,6 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-    @Resource
-    private SyncKingdeeSoService syncKingdeeSoService;
-    @Resource
-    private MQProducerService mQProducerService;
 
     /**
      * 获取 tab列表

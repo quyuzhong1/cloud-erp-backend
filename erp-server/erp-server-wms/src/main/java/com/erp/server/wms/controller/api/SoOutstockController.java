@@ -8,10 +8,8 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -34,12 +32,6 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoOutstockService soOutstockService;
-
-    @Resource
-    private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
-
-    @Resource
-    private MQProducerService mQProducerService;
 
     /**
      * 获取 tab列表
