@@ -81,7 +81,7 @@ public class ShopeeAuthJob {
                         .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                         .build();
                 ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
-                if (StringUtils.isNotEmpty(shopeeResponse.getError())){
+                if (Objects.isNull(shopeeResponse) || StringUtils.isNotEmpty(shopeeResponse.getError())){
                     shopInfo.setAuthStatus(AuthStatusEnum.NOT.getCode());
                     shopInfoService.saveOrUpdate(shopInfo);
                     log.error("授权异常：{}", shopeeResponse);
