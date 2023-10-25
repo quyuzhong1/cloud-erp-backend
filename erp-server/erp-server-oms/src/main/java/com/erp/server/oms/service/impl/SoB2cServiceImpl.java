@@ -1138,6 +1138,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         SoB2cReceiverDTO.ViewDTO receiverDTO = new SoB2cReceiverDTO.ViewDTO();
         BeanMapperUtils.copy(soB2cReceiverEntity, receiverDTO);
+
         data.setReceiverDTO(receiverDTO);
         //订单分类
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Arrays.asList(id));
