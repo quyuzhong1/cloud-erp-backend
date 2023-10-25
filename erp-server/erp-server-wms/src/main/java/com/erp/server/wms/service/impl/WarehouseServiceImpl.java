@@ -133,7 +133,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.WarehouseDisabledAssertDTO> invalidList = new ArrayList<>();
         assertList.stream().forEach(item -> {
             // 仓库禁用/未审核
-            if(StrUtil.isNotBlank(item.getWarehouseId())){
+            if(StrUtil.isBlank(item.getWarehouseId())){
                 throw new ServiceException("仓库id不能为空");
             }
             WarehouseDTO.UpdateDTO warehouse = detailWithCache(item.getWarehouseId());
