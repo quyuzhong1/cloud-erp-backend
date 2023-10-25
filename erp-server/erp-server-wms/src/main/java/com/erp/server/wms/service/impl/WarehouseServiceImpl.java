@@ -155,7 +155,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             if(ObjectUtil.isNotEmpty(warehouse)){
                 item.setWarehouseName(item.getWarehouseName());
             }
-            if (ObjectUtil.isNotEmpty(warehouse) && (warehouse.getDisabled() || !ApproveStatusEnum.APPROVE.equals(warehouse.getApproveStatusEnum()))){
+            if (ObjectUtil.isNotEmpty(warehouse) && (warehouse.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatusCode()))){
                 invalidList.add(item);
                 return;
             }
