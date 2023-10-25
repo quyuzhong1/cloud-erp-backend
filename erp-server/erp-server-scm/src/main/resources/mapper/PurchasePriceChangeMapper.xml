@@ -213,6 +213,33 @@
             </foreach>
         </if>
         pp.create_time DESC,ppd.id DESC
+
+
+    </select>
+    <select id="listTemp" resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">
+        SELECT
+            pcd.id,
+            pcd.create_time,
+            pcd.update_time,
+            pcd.purchase_price_change_id,
+            pcd.sku_id,
+            pcd.sku_no,
+            pcd.min_qty,
+            pcd.max_qty,
+            pcd.currency,
+            pcd.tax_price,
+            pcd.effective_date,
+            pcd.expire_date,
+            pcd.tax_rate,
+            pcd.purchase_price_detail_id,
+            pcd.delivery_day,
+            pcd.disabled,
+            pcd.remark
+     FROM purchase_price_change_detail pcd
+     INNER JOIN purchase_price_change pc
+     ON pcd.purchase_price_change_id=pc.id and pc.is_deleted=false
+     WHERE pcd.is_deleted=false AND pc.approve_status='approve'
+
     </select>
 
 

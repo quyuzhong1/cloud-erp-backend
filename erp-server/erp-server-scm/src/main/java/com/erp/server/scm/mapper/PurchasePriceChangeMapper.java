@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -38,4 +39,10 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @return List<PagingViewDTO>
      */
     List<PurchasePriceChangeDTO.PagingViewDTO> listExport(@Param("params") PurchasePriceChangeDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
+
+    /**
+     * 临时查询方法
+     * @return
+     */
+    List<PurchasePriceChangeDetailEntity> listTemp();
 }

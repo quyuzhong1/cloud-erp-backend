@@ -939,30 +939,30 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void tempUpdateHistoryDb() {
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-        List<PurchasePriceChangeEntity> priceChangeList = this.lambdaQuery().
-                eq(PurchasePriceChangeEntity::getApproveStatus, approveStatus).list();
 
-        for (PurchasePriceChangeEntity item : priceChangeList) {
-            //变更详情
-            List<PurchasePriceChangeDetailEntity> priceChangeDetailList = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(item.getId()));
-            for (PurchasePriceChangeDetailEntity changeDetail : priceChangeDetailList) {
-                //采购价目详情id
-                String purchasePriceDetailId = changeDetail.getPurchasePriceDetailId();
-                //采购价目历史 多个
-                List<PurchasePriceHistoryEntity> priceEntityList = purchasePriceHistoryService.getHistoryByDetailIds(Arrays.asList(purchasePriceDetailId));
-                priceEntityList = priceEntityList.stream().filter(p -> StringUtils.isBlank(p.getChangeDetailId())).
-                        sorted(Comparator.comparing(PurchasePriceHistoryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(priceEntityList)) {
-                    PurchasePriceHistoryEntity historyEntity = priceEntityList.get(0);
-                    historyEntity.setChangeDetailId(changeDetail.getId());
-                    purchasePriceHistoryService.updateById(historyEntity);
+        List<PurchasePriceChangeDetailEntity> priceChangeDetailList = baseMapper.listTemp();
+
+        Map<String, List<PurchasePriceChangeDetailEntity>> map = priceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId));
+        List<PurchasePriceHistoryEntity> updateList = new ArrayList<>(10);
+        for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> item : map.entrySet()) {
+            //采购价目详情id
+            String purchasePriceDetailId = item.getKey();
+            List<PurchasePriceChangeDetailEntity> list = item.getValue();
+            List<PurchasePriceHistoryEntity> priceEntityList = purchasePriceHistoryService.getHistoryByDetailIds(Arrays.asList(purchasePriceDetailId));
+            list = list.stream().
+                    sorted(Comparator.comparing(PurchasePriceChangeDetailEntity::getUpdateTime).reversed()).collect(Collectors.toList());
+            for (int i = 0; i < priceEntityList.size(); i++) {
+                if (list.size() > i) {
+                    PurchasePriceHistoryEntity historyEntity = priceEntityList.get(i);
+                    historyEntity.setChangeDetailId(list.get(i).getId());
+                    updateList.add(historyEntity);
                 }
-
             }
 
         }
-
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            purchasePriceHistoryService.updateBatchById(updateList);
+        }
     }
 
     @Override
