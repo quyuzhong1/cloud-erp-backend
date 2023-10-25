@@ -731,8 +731,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             if (isHaveFieldPower != null && isHaveFieldPower) {
                 ExcelUtil.export(fileName, "采购入库单数据", resultList, PurchaseStockExportExcelDTO.class, response);
             } else {
-                ExcelUtil.export(fileName, "采购入库单数据", resultList, PurchaseStockNotFieldExportExcelDTO.class, response);
-
+                List<PurchaseStockNotFieldExportExcelDTO> notFieldResultList = BeanMapperUtils.copyList(PurchaseStockNotFieldExportExcelDTO.class, list);
+                ExcelUtil.export(fileName, "采购入库单数据", notFieldResultList, PurchaseStockNotFieldExportExcelDTO.class, response);
             }
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
