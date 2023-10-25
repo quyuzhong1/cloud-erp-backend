@@ -1218,7 +1218,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         //bom信息
-        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1257,11 +1257,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         throw new ServiceException(ApiError.ERROR_95084);
                     }
                     //BOM信息
-                    BomChildrenSkuDTO bomChildrenSkuDTO = bomList.stream().filter(obj -> obj.getParentSkuId().equals(subComponentsDTO.getSkuId()) && obj.getSkuId().equals(subComponentsDTO.getChildSkuId())).findFirst().orElse(null);
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomList.stream().filter(obj -> obj.getParentSkuId().equals(subComponentsDTO.getSkuId())
+                            && obj.getSkuId().equals(subComponentsDTO.getChildSkuId())
+                            && obj.getBomVersion().equals(subComponentsDTO.getBomVersion()))
+                            .findFirst().orElse(null);
+
                     if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                         throw new ServiceException(ApiError.ERROR_95166);
                     }
-
                     addSubComponentsDTO.setSkuId(subComponentsDTO.getChildSkuId());
                     addSubComponentsDTO.setSkuNo(child.getSkuNo());
                     addSubComponentsDTO.setWarehouseId(subComponentsDTO.getWarehouseId());
