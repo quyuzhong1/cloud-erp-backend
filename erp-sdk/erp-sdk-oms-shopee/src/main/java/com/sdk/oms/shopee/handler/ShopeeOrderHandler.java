@@ -21,6 +21,7 @@ import com.sdk.oms.shopee.dto.order.request.OrderRequest;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.service.ShopeeOrderService;
 import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/8/31 15:48
  **/
+@Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.SHOPEE)
@@ -88,11 +90,14 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
                         .cursor("")
                         .build();
                 List<OrderDetail> orderDetails = new ArrayList<>();
-                shopeeOrderService.getAllOrder(orderRequest,orderDetails);
+                try {
+                    shopeeOrderService.getAllOrder(orderRequest,orderDetails);
+                }catch (Exception e){
+                    log.error("获取订单数据异常:{}", e.getMessage());
+                }
                 if (CollectionUtils.isNotEmpty(orderDetails)){
                     orderDTOS.addAll(orderDetails);
                 }
-
             }
         });
         // 返回下载源数据
@@ -104,6 +109,9 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformShopeeOrderDTO> sourceDataList) {
+        if (CollectionUtils.isEmpty(sourceDataList)){
+            return Collections.emptyList();
+        }
         //亚马逊订单转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
@@ -115,6 +123,6 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.AMAZON.getCode();
+        return PlatformDictEnum.SHOPEE.getCode();
     }
 }

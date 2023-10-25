@@ -12,10 +12,9 @@ import com.erp.server.oms.service.CfgOperateLogFieldService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
+import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
-import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
-import com.sdk.oms.shopify.api.rest.model.ShopifyPage;
-import com.sdk.oms.shopify.api.rest.model.ShopifyProduct;
+import com.sdk.oms.shopify.api.rest.model.*;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -27,11 +26,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Shopify单元测试
- *
  */
 @Slf4j
 
@@ -55,7 +62,6 @@ public class ErpServerOmsShopifyApplicationTests {
     private ShopAuthService shopAuthService;
     @Resource
     private ShopSdkServer shopSdkServer;
-
 
 
     @Test
@@ -104,12 +110,12 @@ public class ErpServerOmsShopifyApplicationTests {
     public void addShopRedis() {
         String shopId = "1701425155244298242";
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-        if (null == shopInfo){
+        if (null == shopInfo) {
             log.error("未找到店铺信息:{}", shopId);
             return;
         }
         ShopAuthEntity authEntity = shopAuthService.getByShopId(shopId);
-        if (null == authEntity){
+        if (null == authEntity) {
             log.error("未找到店铺授权信息:{}", shopId);
             return;
         }
@@ -133,5 +139,66 @@ public class ErpServerOmsShopifyApplicationTests {
                 .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
         redisUtil.set(tokenKey, dto);
     }
+
+    @Test
+    public void getFulfillmentOrdersFromOrder() {
+        String accessToken = "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";
+        String shopifyShopDomain = "jim-shop-test.myshopify.com";
+        // 订单单号ID
+//        String orderId = "5484776030507";
+        String orderId = "5493983314219";
+
+        List<ShopifyFulfillmentOrder> fulfillmentOrdersFromOrder = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
+                .getFulfillmentOrdersFromOrder(orderId);
+
+        System.out.println("订单ShopifyFulfillmentOrder结果：\n" + JSONUtil.toJsonStr(fulfillmentOrdersFromOrder));
+        // [{"id":"6424810193195","shopId":"82946982187","orderId":"5484776030507","assignedLocationId":"92033024299","requestStatus":"unsubmitted","status":"closed","supportedActions":[],"destination":{"id":"6053425381675","address1":"151 O'Connor St","city":"Ottawa","company":"Snowdevil","country":"Canada","email":"karine.ruby@example.com","lastName":"","phone":"+16135550114","zip":"K2P2L8"},"lineItems":[{"id":"14363854733611","shopId":"82946982187","fulfillmentOrderId":"6424810193195","quantity":1,"lineItemId":"14266416759083","inventoryItemId":"48904852767019","fulfillableQuantity":0,"variantId":"46854120538411"}],"fulfillAt":1694484000000,"fulfillmentHolds":[],"deliveryMethod":{"id":"550833684779","methodType":"shipping"},"createdAt":1694485868000,"updatedAt":1698121790000,"assignedLocation":{"address1":"123 Main St","city":"Toronto","countryCode":"CA","locationId":"92033024299","name":"My Custom Location","phone":"555-5555","province":"Ontario","zip":"A1A 1A1"},"merchantRequests":[]}]
+    }
+
+
+    @Test
+    public void givenSomeShopifyFulfillmentCreationRequestWhenCreatingShopifyFulfillmentThenCreateAndReturnFulfillmentWithFulfillmentOrderApi() throws Exception {
+        String accessToken = "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";
+        String shopifyShopDomain = "jim-shop-test.myshopify.com";
+
+        ShopifyRestClient shopifySdk = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
+
+        final String lineItemId = "14395089027371";
+        final String fulfillmentOrderId = "6434836119851";
+        final long quantity = 1L;
+
+        final ShopifyLineItem lineItem = new ShopifyLineItem();
+        lineItem.setId(lineItemId);
+        lineItem.setQuantity(1L);
+
+        ShopifyLineItemsByFulfillmentOrder order = new ShopifyLineItemsByFulfillmentOrder();
+        order.setFulfillmentOrderId(fulfillmentOrderId);
+        List<ShopifyFulfillmentOrderPayloadLineItem> items = new LinkedList<>();
+        ShopifyFulfillmentOrderPayloadLineItem item = new ShopifyFulfillmentOrderPayloadLineItem();
+        item.setQuantity(quantity);
+        item.setId(lineItemId);
+        items.add(item);
+        order.setFulfillmentOrderLineItems(items);
+
+        List<ShopifyLineItemsByFulfillmentOrder> orderList = new LinkedList<>();
+        orderList.add(order);
+
+        ShopifyFulfillmentPayload payload = new ShopifyFulfillmentPayload();
+        ShopifyTrackingInfo trackingInfo = new ShopifyTrackingInfo();
+        trackingInfo.setNumber("MS15626789");
+        trackingInfo.setUrl("https://www.my-shipping-company.com?tracking_number=MS1562678");
+
+        payload.setLineItemsByFulfillmentOrder(orderList);
+        payload.setTrackingInfo(trackingInfo);
+
+        ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
+        request.setFulfillment(payload);
+        System.out.println("请求参数：\n" + JSONUtil.toJsonStr(request));
+        final ShopifyFulfillment actualShopifyFulfillment = shopifySdk.createFulfillment(request);
+
+        System.out.println("givenSomeShopifyFulfillmentCreationRequestWhenCreatingShopifyFulfillmentThenCreateAndReturnFulfillmentWithFulfillmentOrderApi");
+        System.out.println(JSONUtil.toJsonStr(actualShopifyFulfillment));
+    }
+
 
 }

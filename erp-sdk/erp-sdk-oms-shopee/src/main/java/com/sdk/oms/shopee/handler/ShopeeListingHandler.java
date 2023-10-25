@@ -21,6 +21,7 @@ import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/8/31 15:48
  **/
+@Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.SHOPEE)
@@ -86,7 +88,11 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                         .timeTo((long) nextTime.getSecond())
                         .build();
                 List<ItemInfo> list = new ArrayList<>();
-                shopeeProductService.getAllProduct(productRequest, list);
+                try {
+                    shopeeProductService.getAllProduct(productRequest, list);
+                }catch (Exception e){
+                    log.error("获取产品数据异常:{}", e.getMessage());
+                }
                 if (CollectionUtils.isNotEmpty(list)) {
                     itemInfos.addAll(list);
                 }
@@ -101,10 +107,11 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
+        if (CollectionUtils.isEmpty(sourceDataList)){
+            return Collections.emptyList();
+        }
         return sourceDataList.stream()
-                // 组装
                 .map(PlatformShopeeListingDTO::convertDTO)
-//                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 

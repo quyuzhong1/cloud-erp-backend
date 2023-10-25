@@ -1,13 +1,11 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
-import com.common.business.enums.PlatformApiEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.AuthSaveData;
+import com.erp.server.oms.service.IShopAuthorizeService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
