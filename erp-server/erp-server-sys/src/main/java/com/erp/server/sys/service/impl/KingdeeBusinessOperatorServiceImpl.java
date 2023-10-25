@@ -17,6 +17,7 @@ import com.erp.server.sys.service.KingdeeBusinessOperatorService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysUserInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -130,7 +131,18 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
                 item.setDisabled(Boolean.TRUE);
             }
         }
-        resultList = resultList.stream().distinct().collect(Collectors.toList());
+        if (StringUtils.isEmpty(dto.getOrgId())) {
+            List<UserInfoDTO.BusinessOperationUserDTO> list = new ArrayList<>();
+            List<String> userIdList = new ArrayList<>();
+            for (UserInfoDTO.BusinessOperationUserDTO userDTO : resultList) {
+                if (userIdList.contains(userDTO.getUserId())) {
+                    continue;
+                }
+                userIdList.add(userDTO.getUserId());
+                list.add(userDTO);
+            }
+            resultList = list;
+        }
         return resultList;
 
     }
