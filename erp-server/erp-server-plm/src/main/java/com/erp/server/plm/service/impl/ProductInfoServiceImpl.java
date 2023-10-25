@@ -2621,5 +2621,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     }
 
+    @Override
+    public List<ProductInfoEntity> listByChargeId(String chargeId) {
+        return baseMapper.listByChargeId(chargeId);
+    }
+
 
 }

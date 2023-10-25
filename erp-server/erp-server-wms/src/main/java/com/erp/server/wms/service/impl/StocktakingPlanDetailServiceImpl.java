@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -57,9 +59,12 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         // 查询仓库与仓库组织信息
         List<StocktakingPlanDetailEntity> insertList = detailList.stream().map(item -> {
             WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+            if(ObjectUtil.isNotEmpty(updateDTO) && updateDTO.getDisabled()){
+                return null;
+            }
             String orgName = orgMap.get(updateDTO.getOrgId());
             return new StocktakingPlanDetailEntity(item, mainId, updateDTO, orgName);
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
         // 批量插入
         this.saveBatch(insertList);
     }

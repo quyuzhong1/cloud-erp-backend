@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -89,6 +90,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceId;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
         /**
          * 审核状态code
@@ -270,6 +275,41 @@ public class SoOutstockDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 销售单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 销售单价（本位币）
+         */
+        private BigDecimal cnyPrice;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 含税单价（本位币）
+         */
+        private BigDecimal cnyTaxPrice;
+
+        /**
+         * 价税合计（本位币）
+         */
+        private BigDecimal cnyTaxAmount;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**·

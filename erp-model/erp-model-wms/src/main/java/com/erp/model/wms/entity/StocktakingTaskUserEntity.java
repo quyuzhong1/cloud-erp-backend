@@ -36,10 +36,16 @@ public class StocktakingTaskUserEntity extends BaseEntity<StocktakingTaskUserEnt
     private String userName;
 
     /**
-     * 盘点任务表id
+     * 来源id
      */
-    @TableField("stocktaking_task_id")
-    private String stocktakingTaskId;
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
 
 
     public static final String USER_ID = "user_id";

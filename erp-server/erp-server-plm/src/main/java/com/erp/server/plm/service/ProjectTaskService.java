@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.apache.commons.math3.util.Pair;
 
@@ -331,4 +332,12 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.dto.TaskProcessNodeDTO>
      */
     List<ApproveNodeRecordVO> listTaskAudit(String taskId);
+
+    /**
+     * @description: 更新负责人名称
+     * @author Will
+     * @date: 2023/10/19 11:08
+     * @param sysUserInfoDTO
+     */
+    void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
 }

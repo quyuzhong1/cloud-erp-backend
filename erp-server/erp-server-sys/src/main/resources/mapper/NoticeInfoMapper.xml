@@ -5,13 +5,17 @@
 
     <select id="paging" resultType="com.erp.model.sys.dto.NoticeDTO$PagingViewDTO">
        SELECT
-          ni.id,ni.module,ni.node_key,ni.disabled,
-          cnm.type,cnm.type_name,
-          ni.create_user_name,
-          ni.create_time,
-          ni.update_user_name,
-          ni.update_time,
-          dn.node_name
+          ni.id,
+          ni.module,
+          ni.node_key AS nodeKey,
+          ni.disabled,
+          cnm.type,
+          cnm.type_name AS typeName,
+          ni.create_user_name AS createUserName,
+          ni.create_time AS createTime,
+          ni.update_user_name AS updateUserName,
+          ni.update_time AS updateTime,
+          dn.node_name AS nodeName
        FROM notice_info ni
        INNER JOIN
        cfg_node_member cnm
@@ -24,7 +28,13 @@
        <if test="params.nodeName !=null and params.nodeName!=''">
            AND dn.node_name ilike concat('%',#{params.nodeName}::text,'%')
        </if>
-       ORDER BY ni.create_time DESC
+       ORDER BY
+       <if test="params.sortList != null and params.sortList.size > 0">
+          <foreach collection="params.sortList" item="item" separator="," close=",">
+             ${item.field} ${item.sort}
+          </foreach>
+       </if>
+           ni.create_time DESC
 
 
     </select>

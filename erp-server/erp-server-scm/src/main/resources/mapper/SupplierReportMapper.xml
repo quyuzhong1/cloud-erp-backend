@@ -7,11 +7,11 @@
             sup.id,
             sup.code,
             sup.name,
-            sup.disabled as supplier_disabled,
-            array_to_string(array_agg(po.id), ',') AS purchase_order_ids,
-            count(distinct po.id) as purchase_count,
-            sum(pod.purchase_qty) as purchase_qty,
-            sum(pod.purchase_amount) as purchase_amount
+            sup.disabled as supplierDisabled,
+            array_to_string(array_agg(po.id), ',') AS purchaseOrderIds,
+            count(distinct po.id) as purchaseCount,
+            sum(pod.purchase_qty) as purchaseQty,
+            sum(pod.purchase_amount) as purchaseAmount
             from
             supplier sup
             inner join purchase_order_supplier pos on pos.supplier_id = sup.id and pos.is_deleted = false
@@ -33,18 +33,24 @@
                 ${params.permissionSql}
               </if>
             </where>
-            group by sup.id order by purchase_amount desc NULLS LAST
+            group by sup.id order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        purchaseAmount desc NULLS LAST
     </select>
     <select id="exportList" resultType="com.erp.model.scm.dto.SupplierReportDTO$PagingViewDTO">
         select
         sup.id,
         sup.code,
         sup.name,
-        sup.disabled as supplier_disabled,
-        array_to_string(array_agg(po.id), ',') AS purchase_order_ids,
-        count(distinct po.id) as purchase_count,
-        sum(pod.purchase_qty) as purchase_qty,
-        sum(pod.purchase_amount) as purchase_amount
+        sup.disabled as supplierDisabled,
+        array_to_string(array_agg(po.id), ',') AS purchaseOrderIds,
+        count(distinct po.id) as purchaseCount,
+        sum(pod.purchase_qty) as purchaseQty,
+        sum(pod.purchase_amount) as purchaseAmount
         from
         supplier sup
         inner join purchase_order_supplier pos on pos.supplier_id = sup.id and pos.is_deleted = false
@@ -72,6 +78,12 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by sup.id order by purchase_amount desc NULLS LAST
+        group by sup.id order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        purchaseAmount desc NULLS LAST
     </select>
 </mapper>

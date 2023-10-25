@@ -39,6 +39,7 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
@@ -3713,21 +3714,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }*/
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name
-        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
+        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode()) || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
             if (ObjectUtils.isEmpty(dto.getValues())) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
             List<ProductDetailEntity> detailEntityList = this.listByIds(dto.getIds());
             List<String> productIds = detailEntityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
-            String chargeName = commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
-            productInfoService.lambdaUpdate()
-                    .set(ProductInfoEntity::getChargeId, dto.getValues())
-                    .set(ProductInfoEntity::getChargeName, chargeName).in(ProductInfoEntity::getId, productIds)
-                    .update();
-            this.lambdaUpdate()
-                    .set(ProductDetailEntity::getChargeId, dto.getValues())
-                    .set(ProductDetailEntity::getChargeName, chargeName).in(ProductDetailEntity::getId, dto.getIds())
-                    .update();
+            if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
+                String chargeName = commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
+                productInfoService.lambdaUpdate()
+                        .set(ProductInfoEntity::getChargeId, dto.getValues())
+                        .set(ProductInfoEntity::getChargeName, chargeName).in(ProductInfoEntity::getId, productIds)
+                        .update();
+                this.lambdaUpdate()
+                        .set(ProductDetailEntity::getChargeId, dto.getValues())
+                        .set(ProductDetailEntity::getChargeName, chargeName).in(ProductDetailEntity::getId, dto.getIds())
+                        .update();
+            }
+            if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
+                productInfoService.lambdaUpdate()
+                        .set(ProductInfoEntity::getSaleMethod, dto.getValues())
+                        .in(ProductInfoEntity::getId, productIds)
+                        .update();
+            }
+
             List<ProductInfoEntity> productInfoEntities = productInfoService.listByIds(productIds);
             //同步到SCM
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoEntities, IdUtil.simpleUUID());
@@ -3747,7 +3757,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())) {
                 dto.setValues(Integer.valueOf(dto.getValues().toString()));
             }
-
+            if (ProductBatchFieldEnum.GROSS_WEIGHT.getCode().equals(dto.getUpdateFiledCode())) {
+                dto.setValues(MathUtil.valueOf(dto.getValues()));
+            }
             ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.ERROR_9046);
@@ -3867,6 +3879,38 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateProductDetailBatch(List<ProductDetailEntity> list) {
         return this.updateBatchById(list);
+    }
+
+    @Override
+    public List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        //已存在数据
+        skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        List<ProductSearchDTO.SkuListDTO> list = this.baseMapper.listSkuBySkuNos(skuParamDTO);
+
+        List<String> supplierIdList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplier())).map(ProductSearchDTO.SkuListDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        //供应商名称
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+
+        List<ProductSearchDTO.SkuListDTO> resultList = new ArrayList<>();
+        for (String skuNo : skuParamDTO.getSkuNoList()) {
+            ProductSearchDTO.SkuListDTO skuListDTO = list.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuListDTO)) {
+                skuListDTO = new ProductSearchDTO.SkuListDTO();
+            }
+            //sku状态名称
+            skuListDTO.setStatusName(ProductDetailStatusEnum.getName(skuListDTO.getStatus()));
+            //供应商名称
+            ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
+            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            skuListDTO.setMainSupplierName(supplierName);
+            resultList.add(skuListDTO);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<ProductDetailEntity> listByChargeId(String chargeId) {
+        return baseMapper.listByChargeId(chargeId);
     }
 
 

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class PurchaseStockExportExcelDTO implements Serializable {
+public class PurchaseStockNotFieldExportExcelDTO implements Serializable {
 
     /**
      * 入库单号
@@ -97,88 +97,54 @@ public class PurchaseStockExportExcelDTO implements Serializable {
     @ExcelProperty(value = "超收数量", index = 10)
     private Integer exceedQty;
 
-    /**
-     * 单价
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "单价", index = 11)
-    private BigDecimal price;
 
-    /**
-     * 金额
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "金额", index = 12)
-    private BigDecimal amount;
-
-    /**
-     * 税率
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "税率", index = 13)
-    private String taxRateStr;
-
-    /**
-     * 含税单价
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "含税单价", index = 14)
-    private BigDecimal taxPrice;
-
-
-    /**
-     * 价税合计
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "价税合计", index = 15)
-    private BigDecimal taxAmount;
 
     /**
      * 交货仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "交货仓库", index = 16)
+    @ExcelProperty(value = "交货仓库", index = 11)
     private String deliveryWarehouseName;
 
     /**
      * 采购员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购员", index = 17)
+    @ExcelProperty(value = "采购员", index = 12)
     private String purchaseUserName;
 
     /**
      * 入库员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库员", index = 18)
+    @ExcelProperty(value = "入库员", index = 13)
     private String stockInUserName;
 
     /**
      * 入库备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库备注", index = 19)
+    @ExcelProperty(value = "入库备注", index = 14)
     private String remark;
 
     /**
      * 审核人（最新）
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核人（最新）", index = 20)
+    @ExcelProperty(value = "审核人（最新）", index = 15)
     private String approveUserName;
 
     /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 21)
+    @ExcelProperty(value = "创建人", index = 16)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 22 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 17 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

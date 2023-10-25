@@ -4,13 +4,13 @@
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
             array_to_string(array_agg(t.pid), ',') AS id,
-            purchase_org_name,
-            supplier_name,
-            images_url,
-            sku_no,
+            purchase_org_name AS purchaseOrgName,
+            supplier_name AS supplierName,
+            images_url AS imagesUrl,
+            sku_no AS skuNo,
             productName,
-            spu_no,
-            avg(tax_price) AS tax_price,
+            spu_no AS spuNo,
+            avg(tax_price) AS taxPrice,
             round(SUM(orderAmount) / sum(t.purchase_qty)::numeric ,4) AS avgPrice,
             COUNT(t.id) AS orderQty,
             SUM(orderAmount) AS orderAmount,
@@ -86,19 +86,25 @@
         sku_no,
         productName,
         spu_no
-        ORDER BY purchase_org_name, supplier_name, createTime DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            purchase_org_name, supplier_name, createTime DESC
     </select>
 
     <select id="exportExcel" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
             id,
-            purchase_org_name,
-            supplier_name,
-            images_url,
-            sku_no,
+            purchase_org_name AS purchaseOrgName,
+            supplier_name AS supplierName,
+            images_url AS imagesUrl,
+            sku_no AS skuNo,
             productName,
-            spu_no,
-            tax_price,
+            spu_no AS spuNo,
+            tax_price AS taxPrice,
             avgPrice,
             orderQty,
             orderAmount,
@@ -197,7 +203,13 @@
                 #{id}
             </foreach>
         </if>
-        ORDER BY purchase_org_name, supplier_name, createTime DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            purchase_org_name, supplier_name, createTime DESC
     </select>
 
     <select id="test" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">

@@ -64,10 +64,10 @@
         wa.code as warehouseArea,
         wa."name" as warehouseAreaName
         FROM  "warehouse_location" wl
-        LEFT JOIN warehouse wt on wl.warehouse_id = wt.id and wt.is_deleted = false
+        LEFT JOIN warehouse wt on wl.warehouse_id = wt.id 
         LEFT JOIN "warehouse_location" wa on wl.parent_id = wa.id
         LEFT JOIN "dict_basic" db on db.id = wt.type_id and db.is_deleted = false and db.type = 'warehouseType'
-        where wl.is_deleted = false  and wl."type" = 'location'
+        where wl.is_deleted = false  and wl."type" = 'location' and wt.disabled = false and wl.disabled = false and wa.disabled = false and wt.approve_status = 'approve'
         <if test="params.typeIds !=null and params.typeIds.size>0">
             AND wt.type_id IN
             <foreach collection="params.typeIds" item="typeId" open="(" separator="," close=")">

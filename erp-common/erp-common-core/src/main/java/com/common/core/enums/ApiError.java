@@ -148,6 +148,19 @@ public enum ApiError implements Serializable {
 
 
     /**
+     * DMP服务错误
+     * 80001开始
+     */
+    ERROR_NOT_EXIST_KINGDEE_FIELD(80001,"金蝶推送未配置同步字段"),
+    ERROR_NOT_EXIST_KINGDEE_DATA(80002,"查询无数据，无需处理"),
+    ERROR_ADD_KINGDEE_DATA(80003,"金蝶系统新增数据失败"),
+    ERROR_NOT_EXIST_KINGDEE_DETAIL_ID(80004,"未查询到子单据id"),
+    ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT(80005,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
+    ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
+    ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
+
+
+    /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号
      */
@@ -512,7 +525,9 @@ public enum ApiError implements Serializable {
     ERROR_EMPTY_LIST(97039, "请求参数不能为空"),
     ERROR_DATE_RANGE_THIRTY_ONE(97040, "日范围不能大于31天"),
     ERROR_DATE_RANGE_WEEK_DAY(97041, "日范围不能大于62天"),
-    ERROR_SALE_RANGE_EXIST(97041, "区间类型不能为空"),
+    ERROR_SALE_RANGE_EXIST(97042, "区间类型不能为空"),
+    //getSettleMethod
+    ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
 
     /**
      * SCM 错误
@@ -637,6 +652,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
+    ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
 
 
 
@@ -761,6 +777,12 @@ public enum ApiError implements Serializable {
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
     ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
     ERROR_MACHINE_WAREHOUSE_ORG_DIFF(99094, "加工单子件【{}】仓库【{}】不属于库存组织【{}】"),
+    ERROR_DIFF_QTY_NOT_ZERO(99094,"盘点差异数量不能为0"),
+    ERROR_PROFIT_DIFF_GREATER_ZERO(99096,"盘盈单差异数量必须大于0"),
+    ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
+    ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
+    WAREHOUSE_DISABLED(99099, "仓库【{}】未审核或已被禁用，无法进行盘点"),
+    WAREHOUSE_AREA_LOCATION_DISABLED(99100, "仓库【{}】 库区【{}】 仓位【{}】 未审核或已被禁用，无法进行盘点"),
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
 
 
@@ -884,6 +906,10 @@ public enum ApiError implements Serializable {
     ERROR_RULE_EXPRESSION_ERROR(92096,"条件表达式【{}】有误"),
     ERROR_SO_B2C_FINANCE_NOT_EXIST(92097,"财务信息不存在"),
     ERROR_SO_B2C_IS_NOT_NEED_MERGE_EXIST(92098,"销售订单【{}】无需合并"),
+    ERROR_SHOP_AUTHORIZE(92099,"授权的平台编码错误"),
+    ERROR_WALMART_SHOP_ID_NOT_NULL(92100,"沃尔玛授权店铺Id不能为空"),
+    ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
+    ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
 
 
 
@@ -896,10 +922,7 @@ public enum ApiError implements Serializable {
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
-
-
-
-    ;
+;
 
     public Integer code;
     public String msg;

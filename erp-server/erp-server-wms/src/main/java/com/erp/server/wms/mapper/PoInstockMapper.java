@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.FirstMassInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
@@ -47,7 +48,7 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @param dto
      * @return List<PurchaseStockInDTO.ListDTO>
      */
-    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.SearchParamDTO dto);
+    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.ExportParamDTO dto);
     /**
      * @description: 查询退货单
      * @author Will
@@ -98,4 +99,13 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return list
      */
     List<FirstMassInstockDTO> listFirstMassInstock(@Param("ids") List<String> ids);
+
+    /**
+     * 统计金额
+     * @author yl
+     * @date 2023-10-24 12:15
+     * @param dto
+     * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
+     */
+    PoInstockDTO.PagingTotalDTO pagingTotal(@Param("params") PoInstockDTO.SearchParamDTO  dto);
 }

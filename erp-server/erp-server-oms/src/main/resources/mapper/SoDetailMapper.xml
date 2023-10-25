@@ -135,6 +135,7 @@
         sd.amount,
         sd.currency,
         sd.currency_symbol,
+        sd.exchange_rate,
         sd.is_gift,
         sd.is_reissue,
         sd.is_close,

@@ -42,6 +42,11 @@ public interface WmsConstant {
      */
     String BAD="bad";
 
+    /**
+     * 质检附件
+     */
+    String QC_ATTACHMENT="qcAttachment";
+
 
     /**
      * 质检结果处理措施

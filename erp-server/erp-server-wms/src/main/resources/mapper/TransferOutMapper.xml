@@ -7,21 +7,21 @@
            select
             tfo.id,
             tfo.code,
-            tfo.transfer_direction,
-            tfo.approve_status,
-            tfo.invalid_status,
-            tod.sku_id,
-            tod.sku_no,
-            tfo.bill_date,
+            tfo.transfer_direction AS transferDirection,
+            tfo.approve_status AS approveStatus,
+            tfo.invalid_status AS invalidStatus,
+            tod.sku_id AS skuId,
+            tod.sku_no AS skuNo,
+            tfo.bill_date AS billDate,
             tod.qty,
             tod.unit,
-            tfo.out_warehouse_id,
-            tfo.out_warehouse_name,
+            tfo.out_warehouse_id AS outWarehouseId,
+            tfo.out_warehouse_name AS outWarehouseName,
             tod.remark,
-            tfo.approve_user_name,
-            tfo.create_user_name,
-            tfo.create_time,
-            tod.out_warehouse_location
+            tfo.approve_user_name AS approveUserName,
+            tfo.create_user_name AS createUserName,
+            tfo.create_time AS createTime,
+            tod.out_warehouse_location AS outWarehouseLocation
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
@@ -84,21 +84,21 @@
         select
         tfo.id,
         tfo.code,
-        tfo.transfer_direction,
-        tfo.approve_status,
-        tfo.invalid_status,
-        tod.sku_id,
-        tod.sku_no,
-        tfo.bill_date,
+        tfo.transfer_direction AS transferDirection,
+        tfo.approve_status AS approveStatus,
+        tfo.invalid_status AS invalidStatus,
+        tod.sku_id AS skuId,
+        tod.sku_no AS skuNo,
+        tfo.bill_date AS billDate,
         tod.qty,
         tod.unit,
-        tfo.out_warehouse_id,
-        tfo.out_warehouse_name,
+        tfo.out_warehouse_id AS outWarehouseId,
+        tfo.out_warehouse_name AS outWarehouseName,
         tod.remark,
-        tfo.approve_user_name,
-        tfo.create_user_name,
-        tfo.create_time,
-        tod.out_warehouse_location
+        tfo.approve_user_name AS approveUserName,
+        tfo.create_user_name AS createUserName,
+        tfo.create_time AS createTime,
+        tod.out_warehouse_location AS outWarehouseLocation
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>

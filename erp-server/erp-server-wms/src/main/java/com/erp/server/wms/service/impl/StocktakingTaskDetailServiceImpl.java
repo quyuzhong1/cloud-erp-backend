@@ -85,7 +85,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         //是否盲盘
         Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(mainId));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(mainId));
         String stocktakingUserName = taskUserList.stream().
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);

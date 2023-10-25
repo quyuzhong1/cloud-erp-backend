@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -250,6 +251,24 @@ public class PurchasePriceChangeController extends BaseController {
     public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
         Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
         return result ? success() : failure();
+    }
+
+    /**
+     * 采购调价表数据导出
+     * @author Will
+     * @date: 2023/10/18 16:30
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:change:paging",
+            tableAlias = "pp")
+    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+        purchasePriceChangeService.export(dto, response);
+        return success();
     }
 
 

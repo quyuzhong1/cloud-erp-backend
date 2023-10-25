@@ -120,6 +120,12 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
 
     public static final String CODE = "code";
 

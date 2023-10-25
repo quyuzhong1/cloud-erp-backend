@@ -495,7 +495,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId,mainIdList).
-                orderByDesc(PurchasePriceChangeDetailEntity::getCreateTime).list();
+                orderByDesc(PurchasePriceChangeDetailEntity::getUpdateTime).list();
     }
 
 

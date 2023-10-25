@@ -224,4 +224,10 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return
      */
     PagingVO<WarehouseDTO.PagingProductViewDTO> pagingProduct(PagingDTO<WarehouseDTO.PagingProductDTO> dto);
+    /**
+     * 仓库，库区，库位判断是否禁用
+     * @param assertList
+     * @return
+     */
+    void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList);
 }
