@@ -18,6 +18,7 @@ import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +69,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
             returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
         }
         returnDTO.setMainAccountId(dto.getMainAccountId());
-        if (Objects.isNull(dto.getShopId()) && Objects.isNull(dto.getMainAccountId())){
+        if (StringUtils.isEmpty(dto.getShopId()) && Objects.isNull(dto.getMainAccountId())){
             throw new ServiceException("虾皮授权时,店铺和主账号不能同时为空");
         }
         return shopInfoService.getShopeeReturn(returnDTO);

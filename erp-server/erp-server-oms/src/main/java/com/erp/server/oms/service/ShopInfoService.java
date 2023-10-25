@@ -164,5 +164,5 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param shopInfo
      * @param cfClientId
      */
-    void saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
+    Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
 }
