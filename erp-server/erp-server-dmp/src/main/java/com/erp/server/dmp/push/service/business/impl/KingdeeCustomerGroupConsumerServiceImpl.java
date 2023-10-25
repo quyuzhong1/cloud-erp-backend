@@ -84,7 +84,7 @@ public class KingdeeCustomerGroupConsumerServiceImpl implements KingdeeCustomerG
         }
         String id = String.valueOf(model.get("FID"));
         //删除
-        kingdeeCommonService.customerGroupDelete(apiUtils,id,String.valueOf(model.get("FPARENTID")));
+        kingdeeCommonService.customerGroupDelete(apiUtils,id,"FGroup");
         return;
     }
 
