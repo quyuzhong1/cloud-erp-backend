@@ -374,7 +374,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         approveProcess(entity, dto);
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作:【{}】 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName(),approveType.getName());
         operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StringUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);

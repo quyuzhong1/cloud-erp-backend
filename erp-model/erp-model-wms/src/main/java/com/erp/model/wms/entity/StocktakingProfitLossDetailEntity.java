@@ -50,6 +50,12 @@ public class StocktakingProfitLossDetailEntity extends BaseEntity<StocktakingPro
     private String warehouseId;
 
     /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseName;
+
+    /**
      * 库位
      */
     @TableField("warehouse_location")

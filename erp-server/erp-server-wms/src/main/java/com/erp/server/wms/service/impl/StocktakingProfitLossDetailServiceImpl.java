@@ -9,11 +9,13 @@ import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +46,9 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 根据主表id 获取到对应详情信息
@@ -89,21 +94,27 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
             this.removeByIds(deleteIdList);
         }
         List<StocktakingProfitLossDetailEntity> updateList = BeanMapperUtils.copyList(StocktakingProfitLossDetailEntity.class, detailList);
-
+        List<WarehouseEntity> warehouseList = warehouseService.list();
         for (StocktakingProfitLossDetailEntity item : updateList) {
             item.setMainId(mainId);
             String id = item.getId();
             if (StringUtils.isNotBlank(id)) {
                 StocktakingProfitLossDetailEntity old = dbList.stream().
                         filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-                if(Objects.isNull(old)){
+                if (Objects.isNull(old)) {
                     throw new ServiceException("未找到盘盈盘亏单明细");
                 }
-                operateLogService.addModuleOperateLogByObj(old,item, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+                String oldWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(old.getWarehouseId())).
+                        findFirst().map(WarehouseEntity::getName).orElse("");
+                old.setWarehouseName(oldWarehouseName);
+                String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(item.getWarehouseId())).
+                        findFirst().map(WarehouseEntity::getName).orElse("");
+                item.setWarehouseName(oldWarehouseName);
+                operateLogService.addModuleOperateLogByObj(old, item, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), mainId, "", String.format("【%s】", old.getSkuNo()));
             }
         }
-        List<StocktakingProfitLossDetailEntity> addList=updateList.stream().filter(u->StringUtils.isBlank(u.getId())).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(addList)){
+        List<StocktakingProfitLossDetailEntity> addList = updateList.stream().filter(u -> StringUtils.isBlank(u.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), addPairList, "编辑操作");
         }
