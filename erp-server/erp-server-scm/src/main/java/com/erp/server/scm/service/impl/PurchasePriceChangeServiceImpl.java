@@ -29,10 +29,6 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -777,10 +773,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
+        //采购价目变更详情id
+        List<String> changeDetailIdList = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
+
         //采购价目详情表id
         List<String> purchasePriceDetailIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         //历史的
-        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.getHistoryByDetailIds(purchasePriceDetailIds);
+        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
         //获取到对应的价目明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
 
@@ -791,7 +790,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             excelDTO.setProductName(skuVO.getSkuName());
             //历史报价
-            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getPriceDetailId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
+            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getChangeDetailId())).findFirst().orElse(null);
             //现有报价
             PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
             if (historyEntity != null) {
