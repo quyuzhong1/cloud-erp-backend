@@ -206,6 +206,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(sourceId, id));
         List<String> userIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
+        view.setStocktakingUserIdList(userIdList);
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
         //盘点人
         List<String> stocktakingUserIdList = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
