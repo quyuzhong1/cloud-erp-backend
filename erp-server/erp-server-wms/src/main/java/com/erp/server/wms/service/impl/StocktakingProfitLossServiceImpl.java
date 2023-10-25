@@ -366,8 +366,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(CollectionUtil.isEmpty(detailList)){
             throw new ServiceException("未找到盘盈盘亏单详情");
         }
-        List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList = detailList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::new).collect(Collectors.toList());
-        warehouseService.assertDisabled(assertList);
+        // TODO 未测试完成，先做注释处理，本周五完成测试后放开
+//        List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList = detailList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::new).collect(Collectors.toList());
+//        warehouseService.assertDisabled(assertList);
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
