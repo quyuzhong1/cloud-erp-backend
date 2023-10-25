@@ -6,7 +6,7 @@
     <select id="listHistoryBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbh.id as bomHistoryId,
-        pbh.version as bomVersion,
+        pbh.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,

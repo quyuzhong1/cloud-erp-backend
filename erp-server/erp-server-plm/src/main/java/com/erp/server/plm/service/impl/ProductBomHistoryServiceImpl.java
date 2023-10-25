@@ -155,7 +155,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
+        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getBomVersion())).collect(Collectors.toList());
         return resultList;
     }
 
