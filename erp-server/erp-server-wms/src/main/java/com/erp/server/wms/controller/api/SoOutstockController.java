@@ -8,26 +8,19 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 销售出库-销售出库单
@@ -350,29 +343,5 @@ public class SoOutstockController extends BaseController {
     public ApiResult tempRepairHistoryDb() {
         soOutstockService.tempRepairHistoryDb();
         return success();
-    }
-
-    /**
-     * 订单监听测试方法
-     *
-     * @param id
-     * @return
-     */
-    @PostMapping("/testOrderPush")
-    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
-        SoOutstockEntity soInfoEntity = soOutstockService.getById(id);
-        String dmpPullTaskId = syncKingdeeSoOutstockService.syncOrderToDmp(soInfoEntity, operate);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("id", id);
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        resultMap.put("code", soInfoEntity.getCode());
-        resultMap.put("operate", operate);
-        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(),
-                resultMap, id);
-        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            return success();
-        } else {
-            return failure();
-        }
     }
 }

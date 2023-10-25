@@ -34,7 +34,7 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "kingdee_so_info_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_INFO, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
@@ -50,7 +50,7 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "kingdee_so_outstock_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOutStockToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
@@ -67,7 +67,7 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC,
             selectorExpression = "approved_return_order_to_dmp_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_RETURN_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedReturnOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {

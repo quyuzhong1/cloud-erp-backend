@@ -120,7 +120,7 @@ public class RocketMqConsumerGroup {
     /**
      * 订单 oms推送到dmp
      */
-    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
+    public static final String SYNC_OMS_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
 
     /**
      * 委外订单
