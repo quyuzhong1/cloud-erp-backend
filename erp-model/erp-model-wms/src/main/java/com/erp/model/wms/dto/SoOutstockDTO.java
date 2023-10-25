@@ -300,6 +300,16 @@ public class SoOutstockDTO implements Serializable {
          * 价税合计（本位币）
          */
         private BigDecimal cnyTaxAmount;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**·
