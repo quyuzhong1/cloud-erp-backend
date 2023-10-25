@@ -90,11 +90,15 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         resultMap.put("billType", entity.getBillType().getCode());
         //单据日期
         resultMap.put("billDate", entity.getBillDate());
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailDbList)) {
+            return;
+        }
 
         String warehouseOrgCode = "";
         List<String> warehouseIdList = detailDbList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
-
-        String warehouseId = detailDbList.get(0).getWarehouseId();        //仓库
+        //仓库
+        String warehouseId = detailDbList.get(0).getWarehouseId();
         List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             String orgId=warehouseList.get(0).getOrgId();
