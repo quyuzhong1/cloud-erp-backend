@@ -78,7 +78,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
                 continue;
             }
             //金蝶id
-            resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+            resultMap.put("syncKingdeeId",productBomHistoryEntity.getSyncKingdeeId());
             //操作（枚举SyncKingdeeOperateEnum）
             resultMap.put("operate", operate);
 
@@ -89,11 +89,11 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             //父级物料
             ProductBomSkuHistoryEntity parent = childrenList.get(0);
             //父级sku编码
-            resultMap.put("id",entity.getId());
+            resultMap.put("id",productBomHistoryEntity.getId());
             //父级sku编码
             resultMap.put("parentSkuNo",parent.getParentSkuNo());
             //版本
-            resultMap.put("version",parent.getParentSkuNo().concat("_").concat(productBomHistoryEntity.getVersion().toString()));
+            resultMap.put("version",parent.getParentSkuNo().concat("_").concat(productBomHistoryEntity.getBomVersion().toString()));
 
             //删除操作
             if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
