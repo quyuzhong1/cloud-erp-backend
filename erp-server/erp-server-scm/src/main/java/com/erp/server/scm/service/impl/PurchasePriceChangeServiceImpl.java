@@ -940,9 +940,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void tempUpdateHistoryDb() {
-        List<PurchasePriceChangeEntity> priceChangeList = this.list();
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-        priceChangeList = priceChangeList.stream().filter(p -> approveStatus.equals(p.getApproveStatus())).collect(Collectors.toList());
+        List<PurchasePriceChangeEntity> priceChangeList = this.lambdaQuery().
+                eq(PurchasePriceChangeEntity::getApproveStatus, approveStatus).list();
+
         for (PurchasePriceChangeEntity item : priceChangeList) {
             //变更详情
             List<PurchasePriceChangeDetailEntity> priceChangeDetailList = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(item.getId()));
@@ -951,16 +952,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 String purchasePriceDetailId = changeDetail.getPurchasePriceDetailId();
                 //采购价目历史 多个
                 List<PurchasePriceHistoryEntity> priceEntityList = purchasePriceHistoryService.getHistoryByDetailIds(Arrays.asList(purchasePriceDetailId));
-                priceEntityList = priceEntityList.stream().filter(p -> StringUtils.isBlank(p.getChangeDetailId())).collect(Collectors.toList());
+                priceEntityList = priceEntityList.stream().filter(p -> StringUtils.isBlank(p.getChangeDetailId())).
+                        sorted(Comparator.comparing(PurchasePriceHistoryEntity::getCreateTime).reversed()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(priceEntityList)) {
                     PurchasePriceHistoryEntity historyEntity = priceEntityList.get(0);
                     historyEntity.setChangeDetailId(changeDetail.getId());
                     purchasePriceHistoryService.updateById(historyEntity);
                 }
 
-
             }
-
 
         }
 
@@ -971,6 +971,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isEmpty(purchasePriceIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(PurchasePriceChangeEntity::getPurchasePriceId,purchasePriceIds).list();
+        return this.lambdaQuery().in(PurchasePriceChangeEntity::getPurchasePriceId, purchasePriceIds).list();
     }
 }
