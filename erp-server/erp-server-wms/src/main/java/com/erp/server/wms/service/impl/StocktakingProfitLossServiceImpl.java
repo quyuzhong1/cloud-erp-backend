@@ -603,6 +603,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (updateResult) {
             stocktakingTaskUserService.addTaskUser(entity.getId(), SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), dto.getStocktakingUserIdList());
             stocktakingProfitLossDetailService.updateInfo(entity.getId(), detailList);
+            operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "", "");
             return dto.getId();
         }
         return "";
@@ -901,6 +902,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         stocktakingProfitLossDetailService.removeByMainId(id);
         // 删除盘点人
         stocktakingTaskUserService.removeBySourceId(id);
+        //删除操作日志
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", commonService.getUserInfo().getUserName(), entity.getCode());
+        List<StocktakingProfitLossEntity> list = Arrays.asList(entity);
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }

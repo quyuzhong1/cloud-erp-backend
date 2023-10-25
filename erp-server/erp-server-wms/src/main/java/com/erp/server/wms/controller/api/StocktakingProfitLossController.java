@@ -82,7 +82,7 @@ public class StocktakingProfitLossController extends BaseController {
             serviceClass = StocktakingProfitLossService.class,
             keyIdName = "id"
     )
-    public ApiResult add(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
         String id = stocktakingProfitLossService.update(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
