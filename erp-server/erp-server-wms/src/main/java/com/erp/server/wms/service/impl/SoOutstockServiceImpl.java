@@ -889,6 +889,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (ObjectUtils.isNotEmpty(soDetailEntity)) {
                 BigDecimal price = soDetailEntity.getPrice();
                 item.setPrice(price);
+                item.setCurrency(soDetailEntity.getCurrency());
+                item.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
                 item.setCnyPrice(MathUtil.multiply(price,soDetailEntity.getExchangeRate()));
                 item.setTaxPrice(MathUtil.multiply(price,MathUtil.add(MathUtil.BigDecimal_100,soDetailEntity.getTaxRate())).divide(MathUtil.BigDecimal_100));
                 item.setCnyTaxPrice(MathUtil.multiply(item.getTaxPrice(),soDetailEntity.getExchangeRate()));
