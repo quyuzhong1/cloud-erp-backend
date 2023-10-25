@@ -150,7 +150,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             throw new ServiceException(ApiError.ERROR_95163);
         }
         List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomChildrenSkuList.get(0).getBomId())
-                .select(ProductBomHistoryEntity::getVersion)
+                .select(ProductBomHistoryEntity::getBomVersion)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
