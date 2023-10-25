@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -87,21 +89,15 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         //单据类型
         resultMap.put("billType", entity.getBillType().getCode());
         //单据日期
-        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        if (CollectionUtils.isEmpty(detailDbList)) {
-            return;
-        }
+        resultMap.put("billDate", entity.getBillDate());
 
         String warehouseOrgCode = "";
-        String kingdeeWarehouseCode = "";
-        String warehouseId = detailDbList.get(0).getWarehouseId();
-        //仓库
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
-        if (Objects.nonNull(warehouse)) {
-            String orgId = warehouse.getOrgId();
-            kingdeeWarehouseCode = warehouse.getKingdeeWarehouseCode();
+        List<String> warehouseIdList = detailDbList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
+
+        String warehouseId = detailDbList.get(0).getWarehouseId();        //仓库
+        List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            String orgId=warehouseList.get(0).getOrgId();
             //组织信息
             List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
@@ -118,6 +114,8 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             String unit = item.getUnit();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("qty", item.getQty());
+            String kingdeeWarehouseCode =warehouseList.stream().filter(w->w.getId().equals(item.getWarehouseId())).
+                    map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse("");
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
