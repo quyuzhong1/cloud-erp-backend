@@ -1,13 +1,17 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +41,9 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * 根据主表id 获取到对应详情信息
@@ -75,10 +82,32 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            List<StocktakingProfitLossDetailEntity> removeList = dbList.stream().filter(d -> deleteIdList.contains(d.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairLogList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairLogList, "编辑操作");
             this.removeByIds(deleteIdList);
         }
         List<StocktakingProfitLossDetailEntity> updateList = BeanMapperUtils.copyList(StocktakingProfitLossDetailEntity.class, detailList);
-        updateList.forEach(u -> u.setMainId(mainId));
+
+        for (StocktakingProfitLossDetailEntity item : updateList) {
+            item.setMainId(mainId);
+            String id = item.getId();
+            if (StringUtils.isNotBlank(id)) {
+                StocktakingProfitLossDetailEntity old = dbList.stream().
+                        filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+                if(Objects.isNull(old)){
+                    throw new ServiceException("未找到盘盈盘亏单明细");
+                }
+                operateLogService.addModuleOperateLogByObj(old,item, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+        List<StocktakingProfitLossDetailEntity> addList=updateList.stream().filter(u->StringUtils.isBlank(u.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(addList)){
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), addPairList, "编辑操作");
+        }
+
         this.saveOrUpdateBatch(updateList);
     }
 
