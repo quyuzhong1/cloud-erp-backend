@@ -90,11 +90,14 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
                         .cursor("")
                         .build();
                 List<OrderDetail> orderDetails = new ArrayList<>();
-                shopeeOrderService.getAllOrder(orderRequest,orderDetails);
+                try {
+                    shopeeOrderService.getAllOrder(orderRequest,orderDetails);
+                }catch (Exception e){
+                    log.error("获取订单数据异常:{}", e.getMessage());
+                }
                 if (CollectionUtils.isNotEmpty(orderDetails)){
                     orderDTOS.addAll(orderDetails);
                 }
-
             }
         });
         // 返回下载源数据

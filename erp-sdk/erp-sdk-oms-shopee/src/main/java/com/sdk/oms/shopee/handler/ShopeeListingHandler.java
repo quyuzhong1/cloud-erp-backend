@@ -88,7 +88,11 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                         .timeTo((long) nextTime.getSecond())
                         .build();
                 List<ItemInfo> list = new ArrayList<>();
-                shopeeProductService.getAllProduct(productRequest, list);
+                try {
+                    shopeeProductService.getAllProduct(productRequest, list);
+                }catch (Exception e){
+                    log.error("获取产品数据异常:{}", e.getMessage());
+                }
                 if (CollectionUtils.isNotEmpty(list)) {
                     itemInfos.addAll(list);
                 }

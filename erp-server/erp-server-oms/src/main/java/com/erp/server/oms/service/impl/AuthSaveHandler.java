@@ -15,7 +15,7 @@ import java.util.Map;
 @Component
 @Slf4j
 public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveData, IShopAuthorizeService> {
-    private static final Map<String, IShopAuthorizeService> PAY_MAP = Maps.newHashMap();
+    private static final Map<PlatformDictEnum, IShopAuthorizeService> PAY_MAP = Maps.newHashMap();
 
     @Override
     public Class<AuthSaveData> getAnnotation() {
@@ -24,7 +24,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<AuthSaveDa
 
     @Override
     public void refresh(Map<AuthSaveData, IShopAuthorizeService> annotationBeanMap) {
-        annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method().getCode(), payment));
+        annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
     public static String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {

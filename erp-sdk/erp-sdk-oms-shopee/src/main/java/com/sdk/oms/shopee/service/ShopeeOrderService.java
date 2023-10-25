@@ -56,6 +56,9 @@ public class ShopeeOrderService {
     public void getAllOrder(OrderRequest orderRequest, List<OrderDetail> orderDetails) {
         ShopeeResponse shopeeResponse = this.getOrderList(orderRequest);
         JSONObject response = shopeeResponse.getResponse();
+        if (Objects.isNull(response)){
+            return;
+        }
         String error = response.getString("error");
         if (StringUtils.isNotEmpty(error)) {
             return;

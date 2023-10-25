@@ -68,6 +68,9 @@ public class ShopeeProductService {
     public void getAllProduct(ProductRequest productRequest, List<ItemInfo> itemInfos) {
         ShopeeResponse productList = this.getProductList(productRequest);
         JSONObject response = productList.getResponse();
+        if (Objects.isNull(response)){
+            return;
+        }
         String error = response.getString("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
