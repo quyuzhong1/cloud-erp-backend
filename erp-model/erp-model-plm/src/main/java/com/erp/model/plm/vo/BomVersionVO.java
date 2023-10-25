@@ -3,10 +3,9 @@ package com.erp.model.plm.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname BomVersionVO
@@ -31,8 +30,8 @@ public class BomVersionVO implements Serializable {
     /**
      * 版本
      */
-    @NotNull(message = "版本不能为空")
-    private Integer version;
+    @NotBlank(message = "版本不能为空")
+    private String version;
 
 
     private String serialNumber;

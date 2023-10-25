@@ -82,9 +82,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             //父级sku编码
             resultMap.put("id",entity.getId());
             //父级sku编码
-            resultMap.put("parentSkuNo",parent.getSkuNo());
+            resultMap.put("parentSkuNo",parent.getParentSkuNo());
             //版本
-            resultMap.put("version",parent.getSkuNo().concat("_").concat(productBomHistoryEntity.getVersion().toString()));
+            resultMap.put("version",parent.getParentSkuNo().concat("_").concat(productBomHistoryEntity.getVersion().toString()));
 
             List<Map<String, Object>> mapList = new ArrayList<>();
             for (ProductBomSkuHistoryEntity child: childrenList) {
