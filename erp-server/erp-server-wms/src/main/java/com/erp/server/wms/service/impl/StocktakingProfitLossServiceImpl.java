@@ -568,6 +568,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             addDetailList.add(detail);
         }
         if (this.save(entity) && stocktakingProfitLossDetailService.saveBatch(addDetailList)) {
+
+            //操作日志
+            operateLogService.addModuleOperateLog(String.format("新增了一个【%s】单【%s】",entity.getBillType().getName() ,code), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "新增操作");
+
             stocktakingTaskUserService.addTaskUser(id, SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), dto.getStocktakingUserIdList());
             return id;
         }
