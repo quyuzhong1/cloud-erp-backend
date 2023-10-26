@@ -85,6 +85,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
     GLOBAL_EXCEPTION_UN_KNOW(1048, "未知异常：【{}】"),
+    ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
 
 
