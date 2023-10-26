@@ -31,6 +31,7 @@
         so.customer_id AS customerId,
         so.bill_date AS billDate,
         so.customer_order_no AS customerOrderNo,
+        sod.id as detailId,
         so.sales_dept_id AS salesDeptId,
         sod.id as detailId,
         sod.sku_id AS skuId,

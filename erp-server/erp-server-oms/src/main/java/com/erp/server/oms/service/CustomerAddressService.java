@@ -62,4 +62,13 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @return ViewDTO
      */
     CustomerAddressDTO.ViewDTO getCustomerAddressById(String customerAddressId);
+
+    /**
+     * 根据主表获取客户地址
+     * @author yl
+     * @date 2023-10-26 15:27
+     * @param
+     * @return java.util.List<com.erp.model.oms.entity.CustomerAddressEntity>
+     */
+    List<CustomerAddressEntity> listByMainIdList(List<String> mainIdList);
 }

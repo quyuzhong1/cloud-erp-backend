@@ -10,12 +10,14 @@ import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.server.sys.service.DeptKingdeeService;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
 import com.erp.server.sys.service.UserKingdeePostService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -41,6 +43,7 @@ public class KingdeeFeignController extends BaseController {
 
     /**
      * 获取部门信息
+     *
      * @param dto
      * @return
      */
@@ -51,7 +54,8 @@ public class KingdeeFeignController extends BaseController {
 
 
     /**
-     *获取员工任刚信息
+     * 获取员工任刚信息
+     *
      * @param dto
      * @return
      */
@@ -63,6 +67,7 @@ public class KingdeeFeignController extends BaseController {
 
     /**
      * 获取到业务员信息
+     *
      * @param dto
      * @return
      */
@@ -74,7 +79,8 @@ public class KingdeeFeignController extends BaseController {
 
 
     /**
-     *获取员工任岗信息
+     * 获取员工任岗信息
+     *
      * @param dto
      * @return
      */
@@ -84,5 +90,19 @@ public class KingdeeFeignController extends BaseController {
         return result;
     }
 
+
+    /**
+     * 根据用户获取到业务员信息
+     *
+     * @param userIdList
+     * @return
+     */
+    @PostMapping("/listBusinessOperatorByUserIdList")
+    public List<KingdeeBusinessOperatorEntity> listBusinessOperatorByUserIdList(@RequestBody List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
+            return kingdeeBusinessOperatorService.list();
+        }
+        return kingdeeBusinessOperatorService.lambdaQuery().in(KingdeeBusinessOperatorEntity::getErpUserId, userIdList).list();
+    }
 
 }
