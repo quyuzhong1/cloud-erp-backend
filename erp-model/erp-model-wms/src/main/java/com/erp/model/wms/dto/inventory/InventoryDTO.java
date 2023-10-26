@@ -235,12 +235,12 @@ public class InventoryDTO implements Serializable {
         /**
          * 金蝶库存
          */
-        private Integer kingdeeQty;
+        private String kingdeeQty;
 
         /**
          * 库存差异
          */
-        private Integer diffQty;
+        private String diffQty;
 
     }
 

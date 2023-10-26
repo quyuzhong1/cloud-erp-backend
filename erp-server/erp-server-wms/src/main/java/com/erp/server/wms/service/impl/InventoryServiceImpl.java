@@ -56,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -654,13 +655,20 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             //组织编码
             String orgCode = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-            Object fQty = mapList.stream().filter(obj -> data.getSkuNo().equals(obj.get("FMaterialId.FNumber")) && warehouseCode.equals(obj.get("FStockId.FNumber")) && orgCode.equals(obj.get("FStockOrgId.FNumber")))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.get("FQty"))).orElse(null);
-            if (ObjectUtil.isNotEmpty(fQty)) {
-                //金蝶库存
-                data.setKingdeeQty(Integer.valueOf(MathUtil.valueOf(fQty).intValue()));
+            Map<String, Object> map = mapList.stream().filter(obj -> data.getSkuNo().equals(obj.get("FMaterialId.FNumber")) && warehouseCode.equals(obj.get("FStockId.FNumber")) && orgCode.equals(obj.get("FStockOrgId.FNumber")))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(map)) {
+                //基本单位库存量
+                Object fBaseQty = map.get("FBASEQTY");
+                //单位换算率
+                Object fStoreurnom = map.get("FMaterialid.FSTOREURNOM");
+                Object fStoreurnum = map.get("FMaterialid.FSTOREURNUM");
+                BigDecimal divide = MathUtil.divide(MathUtil.multiply(MathUtil.valueOf(fBaseQty), MathUtil.valueOf(fStoreurnom)), MathUtil.valueOf(fStoreurnum));
+
+                //金蝶库存(fBaseQty*fStoreurnom/fStoreurnum)
+                data.setKingdeeQty(divide.stripTrailingZeros().toPlainString());
                 //库存差异
-                data.setDiffQty(data.getKingdeeQty() - data.getUsableQty() - data.getRealQty() - data.getFrozenQty() - data.getIntransitQty() - data.getWaitqcQty());
+                data.setDiffQty(MathUtil.subtract(MathUtil.valueOf(data.getUsableQty().toString()),divide).stripTrailingZeros().toPlainString());
             }
         });
     }
@@ -677,7 +685,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     private List<Map<String, Object>> listKingdeeInventory (List<String> skuNoList,List<String> warehouseCodeList,List<String> orgCodeList) {
         DmpSyncKingdeeDTO.ParamDTO paramDTO = new DmpSyncKingdeeDTO.ParamDTO();
         paramDTO.setFormId("STK_Inventory");
-        paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FQty");
+        paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FBASEQTY,FMaterialid.FSTOREURNOM,FMaterialid.FSTOREURNUM");
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
         queryFilters.add(StrUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
