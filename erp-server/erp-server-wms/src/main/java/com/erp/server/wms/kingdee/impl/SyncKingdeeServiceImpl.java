@@ -56,6 +56,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private WarehouseReceiveService warehouseReceiveService;
 
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -122,6 +125,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //采购收货单
         if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                warehouseReceiveDetailService.updateKingdeeDetailId(list);
+                return;
+            }
             warehouseReceiveService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
