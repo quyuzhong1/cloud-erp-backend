@@ -50,7 +50,6 @@ public class DmpPullTaskExportExcelDTO {
     @ExcelProperty(value = "单据编号", index = 4)
     private String sourceCode;
 
-
     /**
      * 创建日期
      */
@@ -59,31 +58,24 @@ public class DmpPullTaskExportExcelDTO {
     private LocalDateTime createTime;
 
     /**
-     * 操作节点
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "操作节点", index = 6)
-    private String syncOperateName;
-
-    /**
      * 同步状态名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "同步状态名称", index = 7)
+    @ExcelProperty(value = "同步状态名称", index = 6)
     private String statusName;
 
     /**
      * 最新推送时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "最新推送时间", index = 8)
+    @ExcelProperty(value = "最新拉取时间", index = 7)
     private LocalDateTime lastSyncTime;
 
     /**
      * 推送失败原因
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "推送失败原因", index = 9)
+    @ExcelProperty(value = "拉取失败原因", index = 8)
     private String returnMsg;
 
 

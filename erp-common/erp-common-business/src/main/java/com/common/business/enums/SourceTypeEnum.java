@@ -63,7 +63,7 @@ public enum SourceTypeEnum {
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
     STK_TRANSFERDIRECT("STK_TransferDirect", "金蝶直接调拨单",""),
-
+    BD_RATE("BD_Rate", "金蝶汇率管理",""),
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
@@ -118,6 +118,7 @@ public enum SourceTypeEnum {
                 return sourceTypeEnum.getName();
             }
         }
+
         return "";
     }
 
