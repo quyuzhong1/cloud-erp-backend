@@ -733,6 +733,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //仓库集合
         List<String> warehouseIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        Map<String, Integer> map = new HashMap<>();
         for (WarehouseEntity item : warehouseList) {
             String orgId = item.getOrgId();
             if (!inventoryOrgId.equals(orgId)) {
@@ -763,6 +764,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             List<InventoryEntity> inventoryList = inventoryInfoList.stream().filter(i -> i.getSkuId().equals(skuId) &&
                     i.getWarehouseId().equals(warehouseId) && i.getWarehouseLocation().equals(warehouseLocation)).collect(Collectors.toList());
 
+            StringBuffer sb = new StringBuffer();
+            sb.append(skuId);
+            sb.append(warehouseId);
+            sb.append(StringUtils.isNotBlank(warehouseLocation) ? warehouseLocation : "");
+            String mapKey = sb.toString();
+            //表示有这个key
+            if (map.containsKey(mapKey)) {
+                throw new ServiceException("同仓库同库位同SKU 存在多条数据");
+            }
             Integer qty = item.getQty();
             //可用数库存
             Integer usableQty = inventoryList.stream().filter(i -> usable.equals(i.getDictInventoryStatus())).
@@ -790,6 +800,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             item.setFrozenQty(frozenQty);
             item.setUsableQty(usableQty);
             item.setDiffQty(diffQty);
+            map.put(mapKey, diffQty);
         }
     }
 
