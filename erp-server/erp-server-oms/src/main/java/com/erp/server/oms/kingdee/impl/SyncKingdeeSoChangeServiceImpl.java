@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -98,19 +97,12 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         String id = entity.getId();
 
         Map<String, Object> resultMap = new HashMap<>();
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
         resultMap.put("id", id);
         //编码
         resultMap.put("code", entity.getCode());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            sendMqAndSaveTask(entity,operate,resultMap);
-            return;
-        }
 
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
@@ -125,6 +117,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         //填充数据
         fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
+
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
 
         List<String> orgIdList = new ArrayList<>(2);
         //库存组织
