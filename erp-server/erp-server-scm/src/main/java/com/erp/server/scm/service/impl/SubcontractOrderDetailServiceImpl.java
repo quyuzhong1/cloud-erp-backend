@@ -201,7 +201,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         checkSourceDetailQty(list,mainId);
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
-
+        //变更不更新bom版本
+        resultList.forEach(obj -> {
+            obj.setBomVersion(null);
+            obj.setBomHistoryId(null);
+        });
         this.saveOrUpdateBatch(resultList);
     }
 
