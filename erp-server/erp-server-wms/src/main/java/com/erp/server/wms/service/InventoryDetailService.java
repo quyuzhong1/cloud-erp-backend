@@ -55,4 +55,12 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      */
     List<InventoryDetailEntity> findListQtyLeZero(String inventoryInfoId);
 
+    /**
+     * 根据先进先出原则查询库存明细列表
+     * @param infoId 库存id
+     * @param curQty 需要扣减数量 必须为负数
+     * @param filterDetailIdList 需要过滤明细id
+     * @return List<InventoryDetailEntity>
+     */
+    List<InventoryDetailEntity> listByFIFO(String infoId, Integer curQty, List<String> filterDetailIdList);
 }

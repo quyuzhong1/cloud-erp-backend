@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -175,12 +176,46 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 InventoryEntity inventory = getAvaliableInventory(txnFlow);
                 InventoryDetailEntity inventoryDetail = getAvaliableInventoryDetail(txnFlow);
 
+//                InventoryHisEntity inventoryHis = getAvaliableInventoryHis(txnFlow, Localdate.now());
+
                 // 4，记录交易明细
                 txnFlow.setIsUnapproved(Boolean.TRUE);
+                // 5，更新库存明细
+                // 优先扣减原明细记录中的数据
+                Integer qty = inventoryDetail.getQty();
+                // 当前需要扣减数量
+                Integer curQty = txnFlow.getQty() + qty;
+                // 补充后缺少数量
+                int missQty = 0;
+                if (txnFlow.getQty() < 0 && curQty < 0) {
+                    // 如果当前明细无法满足反审核扣减数量，需要扣减其他明细
+                    // 按照先进先出原则获取批次库存
+                    List<InventoryDetailEntity> deductionList = inventoryDetailService.listByFIFO(txnFlow.getInventoryId(), curQty, Arrays.asList(inventoryDetail.getId()));
+                    // 如果无其他流水可以分摊，并且允许负库存则返回异常库存不足
+                    int sumQty = CollectionUtil.isNotEmpty(deductionList) ? deductionList.stream().mapToInt(InventoryDetailEntity::getQty).sum() : 0;
+                    missQty = curQty - sumQty;
+                    if(0 != missQty && !inventoryHelper.allowNegativeInventory(txnFlow.getWarehouseId())){
+                        String inventoryStatusName = InventoryStatusEnum.getNameByCode(txnFlow.getDictInventoryStatus());
+                        String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, txnFlow.getSkuNo(), txnFlow.getWarehouseName(), txnFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),txnFlow.getQty());
+                        log.error(errMsg);
+                        // 反审核扣减其他明细不做数量判断
+                        throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
+                    }
+                    if (CollectionUtil.isNotEmpty(deductionList)){
+                        for (InventoryDetailEntity detail : deductionList) {
+                            // 补充数据更新明细库存并记录流水
+                            boolean updateFlag = inventoryDetailService.updateQtyById(detail.getId(), detail.getQty());
+                            if(!updateFlag) {
+                                throw new ServiceException(ApiError.ERROR_1027);
+                            }
+                            InventoryEntity entity = inventoryService.getById(inventory.getId());
+                            transactionFlowService.addUnApproveFlow(detail, txnFlow, entity.getQty());
+                        }
+                    }
 
-
-                // 5，更新库存
-                boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), txnFlow.getQty());
+                }
+                // 当前明细能够满足反审核数量，直接更新库存
+                boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), -qty + missQty);
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
@@ -189,6 +224,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
                 InventoryEntity entity = inventoryService.getById(inventory.getId());
+                txnFlow.setQty(-qty + missQty);
                 transactionFlowService.add(txnFlow, entity.getQty());
                 inventoryHisService.addOrUpdate(inventory.getId(),LocalDate.now(), entity.getQty());
 
