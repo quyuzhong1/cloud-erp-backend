@@ -169,7 +169,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
             }
         }
-        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
 
@@ -183,6 +183,14 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         }
         CustomerAddressDTO.ViewDTO viewDTO = BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
         return viewDTO;
+    }
+
+    @Override
+    public List<CustomerAddressEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(CustomerAddressEntity::getMainId,mainIdList).list();
     }
 
     /**

@@ -324,4 +324,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return com.erp.model.oms.entity.CustomerInfoEntity
      */
     CustomerInfoEntity getByName(String customerName);
+
+    /**
+     * 根据客户名称获取信息
+     * @author yl
+     * @date 2023-10-26 15:18
+     * @param customerNameList
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     */
+    List<CustomerInfoEntity> listByNameList(List<String> customerNameList);
 }

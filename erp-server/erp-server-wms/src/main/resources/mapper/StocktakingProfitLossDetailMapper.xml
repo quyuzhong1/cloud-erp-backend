@@ -47,6 +47,7 @@
             #{mainId}
          </foreach>
         </if>
+        ORDER BY spld.create_time DESC
     </select>
 
 </mapper>

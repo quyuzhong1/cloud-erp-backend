@@ -57,4 +57,13 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      * @return java.lang.Boolean
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 根据账号获取对应数据
+     * @author yl
+     * @date 2023-10-26 15:01
+     * @param receiveAccountList
+     * @return java.util.List<com.erp.model.oms.entity.BankAccountEntity>
+     */
+    List<BankAccountEntity> listByAccountNameList(List<String> receiveAccountList);
 }

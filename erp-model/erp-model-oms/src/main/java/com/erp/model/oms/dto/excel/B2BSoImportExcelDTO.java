@@ -318,7 +318,7 @@ public class B2BSoImportExcelDTO {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "是否关闭", index = 34)
-    @FieldValid(fieldName = "是否关闭",fieldValues = "是,否")
+    @FieldValid(fieldName = "是否关闭",isNotBlank = true,fieldValues = "是,否")
     private String isClose;
 
 
