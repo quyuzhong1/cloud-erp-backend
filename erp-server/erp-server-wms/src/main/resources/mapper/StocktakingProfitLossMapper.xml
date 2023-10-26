@@ -225,6 +225,13 @@
                     INTERVAL '1
                     DAY' ) > spl.create_time
                 </if>
+                <!--审核人 -->
+                <if test="params.approveUserIdList !=null and params.approveUserIdList.size>0">
+                    AND spl.approve_user_id IN
+                    <foreach collection="params.approveUserIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
                 <!--审核时间 -->
                 <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
                     AND spl.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP +
@@ -258,7 +265,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        spl.id DESC
+        spl.id,spld.create_time DESC
     </select>
     <!--  获取到扣减库存所需的参数-->
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">

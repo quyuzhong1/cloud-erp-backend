@@ -2667,12 +2667,34 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-10-17 10:34
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         B2BSoImportExcelListener excelListenerUtil = new B2BSoImportExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+            //错误的
+            List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //数据验证
+            List<B2BSoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+            //处理验证成功数据
+            handleImportSuccessList(successList, errorList);
+            if (errorList.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/b2bsoExportError.xlsx";
+                String name = "B2BSo";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
         } catch (SocketTimeoutException e) {
             log.error("导入超时错误！>>>{}", e);
             throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
@@ -2683,32 +2705,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             log.error("导入错误！>>>{}", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        //错误的
-        List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        //数据验证
-        List<B2BSoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
 
-        //处理验证成功数据
-        handleImportSuccessList(successList, errorList);
-
-        if (errorList.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/b2bsoExportError.xlsx";
-            String name = "B2BSo";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
-            return Boolean.FALSE;
-        }
         return Boolean.TRUE;
 
     }
@@ -2722,7 +2719,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @author yl
      * @date 2023-10-26 11:53
      */
-    public void handleImportSuccessList(List<B2BSoImportExcelDTO> successList, List<B2BSoImportExcelDTO> errorList) {
+    private void handleImportSuccessList(List<B2BSoImportExcelDTO> successList, List<B2BSoImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -2765,12 +2762,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
+        // 供应商id集合
+        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(supplierIds)) {
+            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
+        }
+
+
         //以序号分组
         Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getSkuNo));
-        List<SoInfoDTO.AddDTO> addList = new ArrayList<>(map.size());
+
         for (Map.Entry<String, List<B2BSoImportExcelDTO>> entry : map.entrySet()) {
             List<B2BSoImportExcelDTO> list = entry.getValue();
-            SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
+            SoInfoEntity addSo = new SoInfoEntity();
+            String mainId = IdWorker.getIdStr();
+            addSo.setId(mainId);
             List<String> errorMsgList = new ArrayList<>();
             B2BSoImportExcelDTO mainInfo = list.get(0);
             //要货日期
@@ -2779,14 +2786,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.isNull(requireDate)) {
                 errorMsgList.add("要货日期不能为空");
             }
-            addDTO.setRequireDate(requireDate);
+            addSo.setRequireDate(requireDate);
             //单据日期
             String billDateStr = mainInfo.getBillDate();
             LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
             if (Objects.isNull(billDate)) {
                 errorMsgList.add("单据日期不能为空");
             }
-            addDTO.setBillDate(billDate);
+            addSo.setBillDate(billDate);
             if (Objects.nonNull(requireDate) && Objects.nonNull(billDate) && requireDate.compareTo(billDate) < 0) {
                 errorMsgList.add("要货日期必须大于单据日期");
             }
@@ -2796,7 +2803,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(orderType)) {
                 errorMsgList.add("单据类型不存在");
             }
-            addDTO.setOrderType(orderType);
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+            addSo.setCode(code);
+
+            addSo.setOrderType(orderType);
             //销售组织
             String salesOrgName = mainInfo.getSalesOrgName();
             BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> o.getName().equals(salesOrgName)).findFirst().
@@ -2810,12 +2821,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 salesOrgId = salesOrg.getId();
                 salesOrgCode = salesOrg.getCode();
             }
-            addDTO.setSalesOrgId(salesOrgId);
+            addSo.setSalesOrgId(salesOrgId);
+            addSo.setSalesOrgName(salesOrgName);
             //销售部门
             String salesDeptName = mainInfo.getSalesDeptName();
             String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
                     map(SysDepartmentDTO::getId).orElse("");
-            addDTO.setSalesDeptId(salesDeptId);
+            addSo.setSalesDeptId(salesDeptId);
             if (StringUtils.isBlank(salesDeptId)) {
                 errorMsgList.add("销售部门不存在");
             }
@@ -2823,7 +2835,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String sellerName = mainInfo.getSellerName();
             String sellerId = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().
                     map(FindUserDTO::getUserId).orElse("");
-            addDTO.setSellerId(sellerId);
+            addSo.setSellerId(sellerId);
+            addSo.setSellerName(sellerName);
             if (StringUtils.isBlank(sellerId)) {
                 errorMsgList.add("销售员不存在");
             }
@@ -2841,15 +2854,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isNotBlank(isCollectShippingFeeStr)) {
                 isCollectShippingFee = isCollectShippingFeeStr.equals("是");
             }
-            addDTO.setIsCollectShippingFee(isCollectShippingFee);
+            addSo.setIsCollectShippingFee(isCollectShippingFee);
             //仓库
             String warehouseName = mainInfo.getWarehouseName();
-            String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
-                    map(WarehouseDTO.UpdateDTO::getId).orElse("");
-            if (StringUtils.isBlank(warehouseId)) {
+            WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
+                    orElse(null);
+            String warehouseId = "";
+            String warehouseOrgId = "";
+            if (Objects.isNull(warehouse)) {
                 errorMsgList.add("仓库不存在");
+            } else {
+                warehouseId = warehouse.getId();
+                warehouseOrgId = warehouse.getOrgId();
             }
-            addDTO.setWarehouseId(warehouseId);
+            addSo.setWarehouseId(warehouseId);
+            addSo.setWarehouseOrgId(warehouseOrgId);
+            String finalWarehouseOrgId = warehouseOrgId;
+            String warehouseOrgName = orgList.stream().filter(o -> o.getId().equals(finalWarehouseOrgId)).findFirst().
+                    map(BaseIdDTO.CodeDTO::getName).orElse("");
+            addSo.setWarehouseOrgName(warehouseOrgName);
             //收款账号
             String receiveAccountStr = mainInfo.getReceiveAccount();
             String receiveAccount = "";
@@ -2861,7 +2884,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             } else {
                 receiveAccount = bankAccount.getBankAccountNo();
             }
-            addDTO.setReceiveAccount(receiveAccount);
+            addSo.setReceiveAccount(receiveAccount);
+
             //收款方式
             String receiveMethodStr = mainInfo.getReceiveMethod();
             String receiveMethod = dictBasicList.stream().filter(d -> d.getName().equals(receiveMethodStr)).findFirst().
@@ -2869,11 +2893,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(receiveMethod)) {
                 errorMsgList.add("收款方式不存在");
             }
-            addDTO.setReceiveMethod(receiveMethod);
+            addSo.setReceiveMethod(receiveMethod);
             //收款日期
             String receiveDateStr = mainInfo.getReceiveDate();
             if (StringUtils.isNotBlank(receiveDateStr)) {
-                addDTO.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
+                addSo.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
             }
             //贸易条款
             String tradeTermStr = mainInfo.getTradeTerm();
@@ -2885,7 +2909,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     errorMsgList.add("贸易条款不存在");
                 }
             }
-            addDTO.setTradeTerm(tradeTerm);
+            addSo.setTradeTerm(tradeTerm);
             //客户
             String customerName = mainInfo.getCustomerName();
             String customerId = customerList.stream().filter(c -> c.getName().equals(customerName)).map(CustomerInfoEntity::getId).
@@ -2893,14 +2917,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(customerId)) {
                 errorMsgList.add("客户不存在");
             }
-            addDTO.setCustomerId(customerId);
+            addSo.setCustomerId(customerId);
             //收货人
             String receiverName = mainInfo.getReceiverName();
-            addDTO.setReceiverName(receiverName);
+            addSo.setReceiverName(receiverName);
 
             //联系电话
             String telNumber = mainInfo.getTelNumber();
-            addDTO.setTelNumber(telNumber);
+            addSo.setTelNumber(telNumber);
             //收货地址
             String receiveAddress = mainInfo.getReceiveAddress();
             String customerAddressId = customerAddressList.stream().filter(c -> c.getAddress().equals(receiveAddress)).
@@ -2908,7 +2932,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(customerAddressId)) {
                 errorMsgList.add("联系地址不存在");
             }
-            addDTO.setReceiveAddressId(customerAddressId);
+            addSo.setReceiveAddressId(customerAddressId);
             //交货方式
             String deliveryModeStr = mainInfo.getDeliveryMode();
             String deliveryMode = dictBasicList.stream().filter(d -> d.getName().equals(deliveryModeStr)).findFirst().
@@ -2916,7 +2940,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(deliveryMode)) {
                 errorMsgList.add("交货方式不存在");
             }
-            addDTO.setDeliveryMode(deliveryMode);
+            addSo.setDeliveryMode(deliveryMode);
 
             //地址类型
             String addressTypeStr = mainInfo.getAddressType();
@@ -2924,19 +2948,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(addressType)) {
                 errorMsgList.add("地址类型不存在");
             }
-            addDTO.setAddressType(addressType);
+            addSo.setAddressType(addressType);
             //币别
             String currencyStr = mainInfo.getCurrency();
-            String currency = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
-                    findFirst().map(DictCurrencyEntity::getId).orElse("");
-            if (StringUtils.isBlank(currency)) {
+            DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
+                    findFirst().orElse(null);
+            String symbol = "";
+            String currency = "";
+            if (Objects.isNull(currencyEntity)) {
                 errorMsgList.add("币种不存在");
+            } else {
+                symbol = currencyEntity.getSymbol();
+                currency = currencyEntity.getId();
             }
-            addDTO.setCurrency(currency);
+            addSo.setCurrencySymbol(symbol);
+            addSo.setCurrency(currency);
             //是否含税
             String isTaxStr = mainInfo.getIsTax();
             Boolean isTax = "是".equals(isTaxStr);
-            addDTO.setIsTax(isTax);
+            addSo.setIsTax(isTax);
 
             String receiveConditionStr = mainInfo.getReceiveCondition();
             String receiveCondition = dictBasicList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
@@ -2944,16 +2974,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (StringUtils.isBlank(receiveCondition)) {
                 errorMsgList.add("收款条件不存在");
             }
-            addDTO.setReceiveCondition(receiveCondition);
+            addSo.setReceiveCondition(receiveCondition);
             String remark = mainInfo.getRemark();
-            addDTO.setRemark(remark);
+            addSo.setRemark(remark);
             //银行手续费
             String bankServiceFeeStr = mainInfo.getBankServiceFee();
             BigDecimal bankServiceFee = MathUtil.getBigDecimalByStr(bankServiceFeeStr);
             //运费
             String shippingFeeStr = mainInfo.getShippingFee();
             BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
-
 
             //收款金额
             String receiveAmountStr = mainInfo.getReceiveAmount();
@@ -2966,15 +2995,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //折扣总额
             String discountAmountStr = mainInfo.getDiscountAmount();
             BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
-            addDTO.setBankServiceFee(bankServiceFee);
-            addDTO.setShippingFee(shippingFee);
-            addDTO.setReceiveAmount(receiveAmount);
-            addDTO.setCustomsFee(customsFee);
-            addDTO.setDiscountAmount(discountAmount);
-            List<SoDetailDTO.AddDTO> detailList = new ArrayList<>();
+            addSo.setBankServiceFee(bankServiceFee);
+            addSo.setShippingFee(shippingFee);
+            addSo.setReceiveAmount(receiveAmount);
+            addSo.setCustomsFee(customsFee);
+            addSo.setDiscountAmount(discountAmount);
             Boolean isAdd = Boolean.TRUE;
+            List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
-                SoDetailDTO.AddDTO addDetail = new SoDetailDTO.AddDTO();
+                SoDetailEntity addDetail = new SoDetailEntity();
+                addDetail.setMainId(mainId);
                 //是否赠品
                 String isGiftStr = item.getIsGift();
                 addDetail.setIsGift("是".equals(isGiftStr));
@@ -3000,6 +3030,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     break;
                 }
                 addDetail.setSkuId(skuId);
+                addDetail.setSkuNo(skuNo);
+                //币种
+                addDetail.setCurrency(currency);
                 //数量
                 String qtyStr = item.getQty();
                 Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
@@ -3013,14 +3046,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String taxRateStr = item.getTaxRate();
                 BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
                 addDetail.setTaxRate(taxRate);
-                detailList.add(addDetail);
-
+                soDetailList.add(addDetail);
             }
 
-            addDTO.setDetailList(detailList);
+
+            //表示可以添加
             if (isAdd) {
-                addList.add(addDTO);
-            }else{
+                // 金额折扣处理
+                SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+                for (int i = 0; i < soDetailList.size(); i++) {
+                    SoDetailEntity item = soDetailList.get(i);
+                    // 计算毛利成本
+                    soDetailService.calCost(purchasePriceList, skuList, addSo.getBillDate(), item, Boolean.FALSE);
+                }
+                BigDecimal allAmountLc = soDetailList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+                addSo.setAllAmountLc(allAmountLc);
+                this.save(addSo);
+                soDetailService.saveBatch(soDetailList);
+            } else {
                 continue;
             }
 
