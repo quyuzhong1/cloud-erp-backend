@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -36,6 +37,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -67,6 +69,7 @@ import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoExcelListener;
+import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
@@ -93,6 +96,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -2661,45 +2665,63 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @author yl
      * @date 2023-10-17 10:34
      */
-    @SneakyThrows
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
-        //组织
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Lists.newArrayList());
-        //币别
-        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
-        List<String> keyList = new ArrayList<>(5);
-        //收款方式
-        keyList.add(DictBasicEnum.RECEIVE_METHOD.getType());
-        //收款条件
-        keyList.add(DictBasicEnum.COLLECTION_TERMS.getType());
-        //交货方式
-        keyList.add(DictBasicEnum.DELIVERY_MODE.getType());
-        //贸易条款
-        keyList.add(DictBasicEnum.TRADE_TERM.getType());
-        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
-
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-
-        B2BSoExcelListener excelListenerUtil = new B2BSoExcelListener(warehouseList, orgList,
-                currencyList, dictBasicList, kingdeeFeign, deptList,
-                bankAccountService, customerInfoService, customerAddressService,
-                skuList, userList, this);
-        EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        B2BSoImportExcelListener excelListenerUtil = new B2BSoImportExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (SocketTimeoutException e){
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //错误的
         List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //数据验证
+        List<B2BSoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+
+        //处理验证成功数据
+        handleImportSuccessList(successList, errorList);
+
         if (errorList.size() > 0) {
-            String fileName = "销售订单错误信息";
-            ExcelUtil.export(fileName, "error", errorList, B2BSoImportExcelDTO.class, response);
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/b2bsoExportError.xlsx";
+            String name = "B2BSo";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
 
+    }
+
+    /**
+     * 处理导入数据
+     * @author yl
+     * @date 2023-10-26 11:53
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+
+    public void handleImportSuccessList(List<B2BSoImportExcelDTO> successList, List<B2BSoImportExcelDTO> errorList) {
     }
 
 
