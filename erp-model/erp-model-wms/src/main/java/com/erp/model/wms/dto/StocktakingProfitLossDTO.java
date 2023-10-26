@@ -305,7 +305,42 @@ public class StocktakingProfitLossDTO implements Serializable {
         private LocalDateTime approveTime;
 
 
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList;
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * skuName
+         */
+        private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+
 
     }
 

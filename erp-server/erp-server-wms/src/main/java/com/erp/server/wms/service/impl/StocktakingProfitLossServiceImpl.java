@@ -984,18 +984,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 sourceIdList.add(sourceId);
             }
         }
+
+        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
-
-        List<String> idList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getId).collect(Collectors.toList());
-
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(idList);
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList=taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
+        List<FindUserDTO> userList = CollectionUtils.isNotEmpty(userIdList)?sysUserFeign.getUserListByUserIds(userIdList):Collections.emptyList();
         for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
             String sourceId = item.getSourceId();
             String id = item.getId();
-            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = detailDbList.stream().filter(d -> d.getMainId().equals(id)).collect(Collectors.toList());
-            item.setDetailList(detailList);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             BillTypeEnum billType = item.getBillType();
@@ -1006,6 +1004,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             String stocktakingUserName = userList.stream().filter(u -> stocktakingUserIdList.contains(u.getUserId())).
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
+
+            String skuId = item.getSkuId();
+            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.nonNull(sku)) {
+                item.setProductName(sku.getName());
+                item.setUnit(sku.getUnitName());
+            } else {
+                item.setProductName("");
+                item.setUnit("");
+            }
 
         }
 
