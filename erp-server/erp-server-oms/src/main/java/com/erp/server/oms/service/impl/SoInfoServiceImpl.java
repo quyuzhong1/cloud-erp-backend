@@ -2747,13 +2747,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BankAccountEntity> bankAccountList = bankAccountService.listByAccountNameList(receiveAccountList);
         List<String> keyList = new ArrayList<>(5);
         //收款方式
-        keyList.add(DictBasicEnum.RECEIVE_METHOD.getType());
+        keyList.add(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         //收款条件
-        keyList.add(DictBasicEnum.COLLECTION_TERMS.getType());
+        keyList.add(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         //交货方式
-        keyList.add(DictBasicEnum.DELIVERY_MODE.getType());
+        keyList.add(DictBasicTypeEnum.DELIVERY_MODE.getType());
         //贸易条款
-        keyList.add(DictBasicEnum.TRADE_TERM.getType());
+        keyList.add(DictBasicTypeEnum.TRADE_TERM.getType());
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         List<String> customerNameList = successList.stream().map(B2BSoImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
         //客户列表
