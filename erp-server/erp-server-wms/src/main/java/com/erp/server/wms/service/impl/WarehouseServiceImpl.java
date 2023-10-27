@@ -159,13 +159,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 }
             }
         });
-        List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
-        List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
-        List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
-        warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
-        warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
-        warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
         if (CollectionUtil.isNotEmpty(invalidList)){
+            List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
+            List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
+            List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
+            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
+            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
+            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
             throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList) );
         }
     }
