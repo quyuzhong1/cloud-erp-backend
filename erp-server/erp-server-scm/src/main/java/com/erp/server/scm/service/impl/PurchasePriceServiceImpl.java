@@ -787,6 +787,23 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
+    public List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        List<PurchasePriceDTO.SupplierSkuPrice> list = baseMapper.listAllSupplierSkuPrice(ids);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> currencyList = list.stream().map(PurchasePriceDTO.SupplierSkuPrice::getCurrency).collect(Collectors.toList());
+            List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
+            for (PurchasePriceDTO.SupplierSkuPrice price : list) {
+                String currencySymbol = viewList.stream().filter(obj -> obj.getId().equals(price.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+                price.setCurrencySymbol(currencySymbol);
+            }
+        }
+        return list;
+    }
+
+    @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();

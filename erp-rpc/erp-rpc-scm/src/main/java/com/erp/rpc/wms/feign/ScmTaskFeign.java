@@ -9,7 +9,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -342,6 +341,16 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/purchasePrice/listSupplierSkuPrice")
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
+
+    /**
+     * 根据供应商Ids查询所有sku价格信息
+     * @author Will
+     * @date: 2023/10/27 10:06
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    @PostMapping("feign/purchasePrice/listAllSupplierSkuPrice")
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@RequestBody List<String> ids);
 
     /**
      * @param skuIds

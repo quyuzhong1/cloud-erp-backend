@@ -40,4 +40,13 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.PagingViewDTO>
      */
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@Param("ids") List<String> ids);
+
+    /**
+     * @description: 获取所有的供应商价格
+     * @author Will
+     * @date: 2023/10/27 10:02
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@Param("ids") List<String> ids);
 }

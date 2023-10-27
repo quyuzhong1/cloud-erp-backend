@@ -160,6 +160,15 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
 
     /**
+     * @description: 查询所有供应商价格
+     * @author Will
+     * @date: 2023/10/27 10:05
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(List<String> ids);
+
+    /**
      * 采购价目表导入
      *
      * @param excelFile
