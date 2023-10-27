@@ -2761,7 +2761,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIdList = customerList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressList = customerAddressService.listByMainIdList(customerIdList);
         //sku
-        List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).collect(Collectors.toList());
+        List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
         // 供应商id集合
@@ -3030,6 +3030,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isAdd = Boolean.FALSE;
                     item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(item);
                     break;
                 }
                 addDetail.setSkuId(skuId);
@@ -3057,7 +3058,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 List<String> errorNoList = errorList.stream().map(B2BSoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
 
                 //表示可以添加
-                if (isAdd&&!errorNoList.contains(no)) {
+                if (isAdd && !errorNoList.contains(no)) {
                     // 金额折扣处理
                     SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
                     for (int i = 0; i < soDetailList.size(); i++) {
@@ -3079,16 +3080,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 isAdd = Boolean.FALSE;
                 list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            }
-            //当添加是不
-            if (!isAdd) {
                 errorList.addAll(list);
             }
 
-
         }
-
-
     }
 
 
