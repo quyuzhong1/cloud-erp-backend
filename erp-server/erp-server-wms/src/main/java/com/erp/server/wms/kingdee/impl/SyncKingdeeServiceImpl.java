@@ -122,10 +122,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode().toString().equals(code)) {
             stocktakingProfitLossService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
-        //采购收货单
-        if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
-            warehouseReceiveService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
-        }
+
         //采购收货单
         if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
             if (ObjectUtils.isNotEmpty(details)) {
@@ -133,7 +130,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
                 warehouseReceiveDetailService.updateKingdeeDetailId(list);
                 return;
             }
-            warehouseReceiveService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            warehouseReceiveService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }
