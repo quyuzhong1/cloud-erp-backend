@@ -1,17 +1,22 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.business.KingdeePoReceiveConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
@@ -22,9 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,9 @@ public class KingdeePoReceiveConsumerServiceImpl implements KingdeePoReceiveCons
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private WmsTaskFeign scmTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -72,7 +78,7 @@ public class KingdeePoReceiveConsumerServiceImpl implements KingdeePoReceiveCons
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             return;
         }
         //执行操作
@@ -143,7 +149,77 @@ public class KingdeePoReceiveConsumerServiceImpl implements KingdeePoReceiveCons
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
+    }
+
+
+    /**
+     * 新增
+     */
+    public Boolean saveOrUpdate (PlatformEntity platformEntity,Map<String, Object> map ,KingdeeApiUtils apiUtils, JSONObject json,SaveParam param, Integer type) {
+
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        if (isAdd) {
+            //给明细id赋值
+            JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
+            //更新明细id
+            updateKingdeeDetailId(jsonArray);
+        }
+        return  isAdd;
+    }
+
+    /**
+     * 给明细id赋值
+     * @Author Luo_WG
+     * @Date 2023/7/12 10:18
+     * @param apiUtils
+     * @param map
+     * @return cn.hutool.json.JSONArray
+     **/
+    public JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,Map<String, Object> map) {
+
+        JSONArray list = JSONUtil.parseArray(map.get("list"));
+        String id = (String)map.get("syncKingdeeId");
+
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FDetailEntity_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DETAIL_ID);
+        }
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
+        for (int i = 0; i < list.size(); i++) {
+            Object obj = list.get(i);
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+            if (list.size() >= queryList.size()) {
+                //金蝶明细id赋值
+                newJson.set("kingdeeDetailId",queryList.get(i).get("FDetailEntity_FEntryID"));
+            }
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
+        }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
+        return list;
+    }
+
+
+    /**
+     * 更新明细id
+     */
+    public void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.PO_RECEIVE.getCode().toString());
+        params.put("details",jsonArray);
+        scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 }

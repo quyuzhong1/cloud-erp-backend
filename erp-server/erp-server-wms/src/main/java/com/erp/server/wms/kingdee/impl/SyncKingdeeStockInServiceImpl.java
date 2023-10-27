@@ -11,6 +11,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -29,11 +30,13 @@ import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.PoInstockDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -69,6 +72,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
     private KingdeeFeign kingdeeFeign;
@@ -208,6 +217,14 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("poKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         resultMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
         List<JSONObject> list = new ArrayList<>();
+
+
+
+
+        List<String> ids = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(ids);
+
+
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
@@ -251,8 +268,19 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
             List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> map = new HashMap<>();
-            map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
-            map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(entity.getSourceType())) {
+                WarehouseReceiveDetailEntity receiveDetailEntity = warehouseReceiveDetailService.getById(detail.getSourceDetailId());
+                WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(receiveDetailEntity.getMainId());
+                map.put("poKingdeeDetailId", receiveDetailEntity.getKingdeeDetailId());
+                map.put("poSyncKingdeeId", receiveEntity.getSyncKingdeeId());
+                map.put("FInStockEntry_Link_FSTableName", "T_PUR_ReceiveEntry");
+                map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
+            } else {
+                map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+                map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+                map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
+                map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
+            }
             mapList.add(map);
             //销售单金蝶明细id
             jsonObject.set("FInStockEntry_Link", mapList);
