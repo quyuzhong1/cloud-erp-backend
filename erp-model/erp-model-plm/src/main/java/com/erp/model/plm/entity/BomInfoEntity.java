@@ -43,7 +43,7 @@ public class BomInfoEntity extends BaseEntity implements Serializable {
     /**
      * BOM 的版本
      */
-    private Integer bomVersion;
+    private String bomVersion;
 
     /**
      * 同步金蝶状态（默认0无需发送,1待发送,2发送成功,3发送失败）

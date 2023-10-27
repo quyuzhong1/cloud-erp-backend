@@ -1035,7 +1035,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //BOM信息
         List<String> parentSkuIds = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1082,7 +1082,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
 
                 //bom信息
-                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId()) && obj.getBomVersion().equals(parentEntity.getBomVersion())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                     throw new ServiceException(ApiError.ERROR_95163);
                 }
