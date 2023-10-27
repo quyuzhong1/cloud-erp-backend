@@ -105,7 +105,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
 
         //更新同步状态为待同步
-        warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+//        warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
@@ -255,6 +255,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         List<JSONObject> list = new ArrayList<>();
         for (WarehouseReceiveDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",detail.getId());
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
