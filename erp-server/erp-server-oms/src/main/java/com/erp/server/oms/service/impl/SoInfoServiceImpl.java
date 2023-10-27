@@ -3027,9 +3027,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isAdd = Boolean.FALSE;
+                    errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
                     item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(item);
-                    break;
                 }
                 addDetail.setSkuId(skuId);
                 addDetail.setSkuNo(skuNo);
@@ -3076,6 +3076,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
                 isAdd = Boolean.FALSE;
                 list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.addAll(list);
