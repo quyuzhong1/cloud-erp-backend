@@ -194,7 +194,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                     // 如果无其他流水可以分摊，并且允许负库存则返回异常库存不足
                     int sumQty = CollectionUtil.isNotEmpty(deductionList) ? deductionList.stream().mapToInt(InventoryDetailEntity::getQty).sum() : 0;
                     missQty = curQty - sumQty;
-                    if(0 != missQty && !inventoryHelper.allowNegativeInventory(txnFlow.getWarehouseId())){
+                    if(0 != missQty && !allowNegativeInventory(txnFlow.getWarehouseId())){
                         String inventoryStatusName = InventoryStatusEnum.getNameByCode(txnFlow.getDictInventoryStatus());
                         String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, txnFlow.getSkuNo(), txnFlow.getWarehouseName(), txnFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),txnFlow.getQty());
                         log.error(errMsg);
