@@ -655,14 +655,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95163);
         }
         List<BomSkuDTO> bomList = bomSkuService.getByBomId(bomInfoEntity.getId());
+        //更新金蝶
+        syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
             productBomHistoryService.deleteByBomId(bomId);
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
-            //更新金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         return flag;
     }
