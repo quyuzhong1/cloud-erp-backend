@@ -322,6 +322,16 @@ public interface ScmTaskFeign {
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
 
     /**
+     * 根据供应商Ids查询所有sku价格信息
+     * @author Will
+     * @date: 2023/10/27 10:06
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    @PostMapping("feign/purchasePrice/listAllSupplierSkuPrice")
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@RequestBody List<String> ids);
+
+    /**
      * @description: 根据sku id获取审核通过的最新的采购订单(采购日期倒序)
      * @author zhangchunlin
      * @date: 2023/6/26 10:20
