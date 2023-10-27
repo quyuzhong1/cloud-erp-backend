@@ -573,7 +573,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (this.save(entity) && stocktakingProfitLossDetailService.saveBatch(addDetailList)) {
 
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个【%s】单【%s】",entity.getBillType().getName() ,code), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(String.format("新增了一个【%s】单号【%s】",entity.getBillType().getName() ,code), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), entity.getId(), "新增操作");
 
             stocktakingTaskUserService.addTaskUser(id, SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), dto.getStocktakingUserIdList());
             return id;
@@ -736,6 +736,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         //仓库集合
         List<String> warehouseIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        Map<String, Integer> map = new HashMap<>();
         for (WarehouseEntity item : warehouseList) {
             String orgId = item.getOrgId();
             if (!inventoryOrgId.equals(orgId)) {
@@ -766,6 +767,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             List<InventoryEntity> inventoryList = inventoryInfoList.stream().filter(i -> i.getSkuId().equals(skuId) &&
                     i.getWarehouseId().equals(warehouseId) && i.getWarehouseLocation().equals(warehouseLocation)).collect(Collectors.toList());
 
+            StringBuffer sb = new StringBuffer();
+            sb.append(skuId);
+            sb.append(warehouseId);
+            sb.append(StringUtils.isNotBlank(warehouseLocation) ? warehouseLocation : "");
+            String mapKey = sb.toString();
+            //表示有这个key
+            if (map.containsKey(mapKey)) {
+                throw new ServiceException("同仓库同库位同SKU 存在多条数据");
+            }
             Integer qty = item.getQty();
             //可用数库存
             Integer usableQty = inventoryList.stream().filter(i -> usable.equals(i.getDictInventoryStatus())).
@@ -793,6 +803,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             item.setFrozenQty(frozenQty);
             item.setUsableQty(usableQty);
             item.setDiffQty(diffQty);
+            map.put(mapKey, diffQty);
         }
     }
 
@@ -984,18 +995,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 sourceIdList.add(sourceId);
             }
         }
+
+        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
-
-        List<String> idList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getId).collect(Collectors.toList());
-
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(idList);
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList=taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
+        List<FindUserDTO> userList = CollectionUtils.isNotEmpty(userIdList)?sysUserFeign.getUserListByUserIds(userIdList):Collections.emptyList();
         for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
             String sourceId = item.getSourceId();
             String id = item.getId();
-            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = detailDbList.stream().filter(d -> d.getMainId().equals(id)).collect(Collectors.toList());
-            item.setDetailList(detailList);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             BillTypeEnum billType = item.getBillType();
@@ -1006,6 +1015,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             String stocktakingUserName = userList.stream().filter(u -> stocktakingUserIdList.contains(u.getUserId())).
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
+
+            String skuId = item.getSkuId();
+            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.nonNull(sku)) {
+                item.setProductName(sku.getName());
+                item.setUnit(sku.getUnitName());
+            } else {
+                item.setProductName("");
+                item.setUnit("");
+            }
 
         }
 

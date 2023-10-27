@@ -1,10 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
-import com.erp.server.scm.service.SalesDemandService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,5 +32,17 @@ public class PurchasePriceFeignController {
     @PostMapping("/listSupplierSkuPrice")
     public List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids) {
         return purchasePriceService.listSupplierSkuPrice(ids);
+    }
+
+    /**
+     * 根据供应商Ids查询所有sku价格信息
+     * @author Will
+     * @date: 2023/10/27 10:05
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    @PostMapping("/listAllSupplierSkuPrice")
+    public List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@RequestBody List<String> ids) {
+        return purchasePriceService.listAllSupplierSkuPrice(ids);
     }
 }

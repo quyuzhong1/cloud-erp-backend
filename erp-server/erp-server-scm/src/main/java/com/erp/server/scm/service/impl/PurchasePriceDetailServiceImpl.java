@@ -17,13 +17,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -801,6 +800,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> resultList = new ArrayList<>();
 
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
         //采购价目表
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
         if (CollectionUtils.isNotEmpty(list)) {
@@ -816,7 +820,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //未找到报价信息
         if (CollectionUtils.isEmpty(resultList)) {
             if (StringUtils.isNotBlank(dto.getSupplierId())) {
-                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", dto.getSkuNo(), dto.getPurchaseQty());
+                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", skuList.get(0).getSkuNo(), dto.getPurchaseQty());
                 log.error(error);
                 return new Pair<>(error, resultList);
             }

@@ -1398,8 +1398,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public CustomerInfoEntity getByName(String customerName) {
 
-        return this.lambdaQuery().eq(CustomerInfoEntity::getName,customerName).
-                eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(CustomerInfoEntity::getName, customerName).
+                eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).last("LIMIT 1").one();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByNameList(List<String> customerNameList) {
+        if (CollectionUtils.isEmpty(customerNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).
+                in(CustomerInfoEntity::getName,customerNameList).list();
     }
 
     /**
