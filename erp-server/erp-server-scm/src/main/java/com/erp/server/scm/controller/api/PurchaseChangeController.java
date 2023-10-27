@@ -5,8 +5,12 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.server.scm.service.PurchaseChangeService;
@@ -25,6 +29,7 @@ import java.util.List;
  * @since 2023-03-16
  */
 @RestController
+@LogSystemModule("采购变更单")
 @RequestMapping("/purchaseChange")
 public class PurchaseChangeController extends BaseController {
 
@@ -71,6 +76,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增采购变更单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -89,6 +95,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购变更单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -107,6 +114,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购变更单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -125,6 +133,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购变更单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -143,6 +152,7 @@ public class PurchaseChangeController extends BaseController {
      * @param id
      * @return ApiResult<ScmPurchaseChangeDTO>
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -161,6 +171,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购变更单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -179,6 +190,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "批量作废采购变更单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -198,6 +210,7 @@ public class PurchaseChangeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "批量提交采购变更单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -216,6 +229,7 @@ public class PurchaseChangeController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核采购变更单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "change_user_id",
@@ -235,6 +249,7 @@ public class PurchaseChangeController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购变更单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "change_user_id",

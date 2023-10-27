@@ -3,8 +3,11 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.server.workflow.service.ProcessDefinitionService;
@@ -27,6 +30,7 @@ import javax.validation.Valid;
  */
 @Slf4j
 @RestController
+@LogSystemModule("流程设计")
 @RequestMapping("/process/definition")
 public class ProcessDefinitionController extends BaseController {
 
@@ -39,6 +43,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return ApiResult<Boolean>
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或修改流程定义")
     @PostMapping("/addOrUpdate")
     public ApiResult<Boolean> addOrUpdate(@RequestBody @Valid ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         boolean result = processDefinitionService.addOrUpdate(dto);
@@ -63,6 +68,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return ApiResult<Boolean>
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除流程定义")
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid ProcessDefinitionDTO.DeleteDTO dto) {
         boolean result = processDefinitionService.deleteByIds(dto.getIds());
@@ -74,6 +80,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程定义发布:部署流程id={processDefinitionId}")
     @PostMapping("/deploy")
     public ApiResult<ProcessDTO.DeployResultDTO> deploy(@RequestBody @Validated ProcessDTO.DeployDTO dto) {
         try {
@@ -98,6 +105,7 @@ public class ProcessDefinitionController extends BaseController {
     /**
      * 流程定义导出excel
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "流程定义导出excel")
     @PostMapping("/exportExcel")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response){
         // 导出excel

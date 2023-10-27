@@ -3,12 +3,14 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.WorkOptionService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,7 @@ import java.util.List;
  * @since 2023-04-11
  */
 @RestController
+@LogSystemModule("首页工作台")
 @RequestMapping("/workOption")
 public class WorkOptionController extends BaseController {
     @Resource
@@ -53,6 +56,7 @@ public class WorkOptionController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增工作台选项")
     @PostMapping("/addWaitDo")
     public ApiResult addWaitDo(@RequestBody WorkOptionDTO.AddDTO dto) {
         Boolean flag = workOptionService.addWaitDo(dto);
@@ -66,6 +70,7 @@ public class WorkOptionController extends BaseController {
      * @param dto
      * @return java.lang.Boolean
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增工作台常用模块")
     @PostMapping("/addOften")
     public ApiResult addOften(@RequestBody WorkOptionDTO.AddOftenDTO dto) {
         Boolean flag = workOptionService.addOften(dto);
@@ -79,6 +84,7 @@ public class WorkOptionController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改工作台选项:id={id}")
     @PostMapping("/updateWaitDo")
     public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.UpdateDTO dto) {
         Boolean flag = workOptionService.updateWaitDo(dto);
@@ -128,6 +134,7 @@ public class WorkOptionController extends BaseController {
      * @param id id
      * @return java.lang.Boolean
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除工作台选项")
     @PostMapping("/delete")
     public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> delete(@RequestParam("id") String id) {
         Boolean flag = workOptionService.delete(id);
@@ -165,6 +172,7 @@ public class WorkOptionController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审批中心审核")
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated ApproveParamDTO dto) {
         Boolean approve = workOptionService.approve(dto);

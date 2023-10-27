@@ -3,8 +3,12 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
@@ -25,6 +29,7 @@ import java.util.Map;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("sys/task")
 public class ProjectTaskSysController extends BaseController {
 
@@ -36,6 +41,7 @@ public class ProjectTaskSysController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新建或者修改系统任务")
     @PostMapping("/saveOrUpdate")
     //   @RequestPermissions("plm:sys:task:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated SysTaskDTO dto) {
@@ -49,6 +55,7 @@ public class ProjectTaskSysController extends BaseController {
      * @param taskId
      * @return
      */
+    @LogViewService
     @GetMapping("/taskDetails")
     //  @RequestPermissions("plm:sys:task:taskDetails")
     public ApiResult<SysTaskVO> taskDetails(String taskId) {
@@ -72,6 +79,7 @@ public class ProjectTaskSysController extends BaseController {
     /**
      * 删除任务
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除系统任务")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:sys:task:remove")
     public ApiResult paging(String taskId) {

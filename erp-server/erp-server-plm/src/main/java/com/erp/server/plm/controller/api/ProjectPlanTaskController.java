@@ -3,8 +3,11 @@ package com.erp.server.plm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BatchScheduleTaskDTO;
 import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -30,6 +33,7 @@ import java.util.List;
  * @since 2023-02-03 15:03:44
  */
 @RestController
+@LogSystemModule("产品排期审核")
 @RequestMapping("schedule/task")
 public class ProjectPlanTaskController extends BaseController {
     /**
@@ -63,6 +67,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导出数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出数据")
     @PostMapping("/exportExcel")
     public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
        Boolean result= projectPlanTaskService.exportExcel(dto, response);
@@ -72,6 +77,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导出模板
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
         projectPlanTaskService.exportScheduleTemplate(request, response);
@@ -82,6 +88,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 取消排期
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期")
     @PostMapping("/cancel")
     public ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.cancelSchedule(dto);
@@ -91,6 +98,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 重启排期
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重启排期:产品id={productId},任务id={taskIdList}")
     @PostMapping("/restart")
     public ApiResult restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.restartSchedule(dto);
@@ -100,6 +108,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 变更排期
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "变更排期:产品id={productId}")
     @PostMapping("/change")
     public ApiResult changeSchedule(@RequestBody @Validated ChangeScheduleDTO dto) {
         Boolean result = projectPlanTaskService.changeSchedule(dto);
@@ -109,6 +118,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导入数据
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入数据")
     @PostMapping("/import")
     public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
         Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,productId, response);
@@ -120,6 +130,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 批量更新
      * 字段
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新:产品ID={productId},任务ids={taskIdList}")
     @PostMapping("/batchUpdate")
     public ApiResult batchUpdate(@RequestBody @Validated BatchScheduleTaskDTO dto) {
         Boolean result = projectTaskService.batchUpdate(dto);
@@ -140,6 +151,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导出变更排期数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出变更排期数据")
     @PostMapping("/exportChangeSchedule")
     public ApiResult exportChangeSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
         projectPlanTaskService.exportChangeSchedule(dto, response);
@@ -150,6 +162,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导入变更排期数据
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入变更排期数据")
     @PostMapping("/importChangeSchedule")
     public ApiResult<ChangeScheduleExportResultVO> importChangeSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
         ChangeScheduleExportResultVO vo=  projectPlanTaskService.importChangeSchedule(excelFile, response,productId);

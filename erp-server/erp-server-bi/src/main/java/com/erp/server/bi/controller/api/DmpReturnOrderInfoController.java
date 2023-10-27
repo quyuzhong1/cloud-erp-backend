@@ -1,11 +1,14 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
@@ -36,6 +39,7 @@ import java.io.OutputStream;
  * @date 2022/12/13 15:15
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dmpReturnOrderInfo")
 public class DmpReturnOrderInfoController extends BaseController {
 
@@ -73,6 +77,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退货数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
     public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
@@ -88,6 +93,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param importType
      * @param response
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "退货数据导入")
     @PostMapping("/importReturnOrderFile")
     public ApiResult importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         Boolean flag = dmpReturnOrderInfoService.importOrderFile(excelFile, importType, response);
@@ -102,6 +108,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退货数据下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpReturnOrderInfoTemplate.xlsx";

@@ -1,7 +1,10 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.UserFieldVO;
@@ -20,6 +23,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("系统管理通用")
 @RequestMapping("customize/field")
 public class CustomizeFieldLayoutController extends BaseController {
 
@@ -27,6 +31,7 @@ public class CustomizeFieldLayoutController extends BaseController {
     private CustomizeFieldLayoutService customizeFieldLayoutService;
 
 
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存设置字段")
     @PostMapping("/fieldSet")
     public ApiResult saveHiddenField(@RequestBody CustomizeFieldLayoutDTO dto) {
         Boolean result = customizeFieldLayoutService.add(dto);

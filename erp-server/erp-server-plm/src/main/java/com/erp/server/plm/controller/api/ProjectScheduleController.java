@@ -5,8 +5,12 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskDTO;
@@ -35,6 +39,7 @@ import java.util.Map;
  * @since 2023-02-03 15:14:29
  */
 @RestController
+@LogSystemModule("产品排期审核")
 @RequestMapping("product/schedule")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProjectScheduleController extends BaseController {
@@ -67,6 +72,7 @@ public class ProjectScheduleController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交排期")
     @PostMapping("/submit")
     public ApiResult submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanService.submitSchedule(dto);
@@ -89,6 +95,7 @@ public class ProjectScheduleController extends BaseController {
     /**
      * 取消排期
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期")
     @PostMapping("/cancel")
     public ApiResult cancelSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.cancelSchedule(Arrays.asList(dto.getId()));
@@ -98,6 +105,7 @@ public class ProjectScheduleController extends BaseController {
     /**
      * 重启排期
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重启排期：id={id}")
     @PostMapping("/restart")
     public ApiResult restartSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.restartSchedule(dto.getId());
@@ -107,6 +115,7 @@ public class ProjectScheduleController extends BaseController {
     /**
      * 详情
      */
+    @LogViewService
     @PostMapping("/view")
     public ApiResult<ProjectPlanDetailsVO> details(@RequestBody @Validated BaseIdDTO dto) {
         ProjectPlanDetailsVO resultVO = projectPlanService.details(dto.getId());
@@ -120,6 +129,7 @@ public class ProjectScheduleController extends BaseController {
      * @param
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "排期审核通过")
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
        Boolean flag= projectPlanService.approvalPass(dto);
@@ -133,6 +143,7 @@ public class ProjectScheduleController extends BaseController {
      * @param
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "排期审核不通过")
     @PostMapping("/approvalNoPass")
     public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         Boolean flag= projectPlanService.approvalNoPass(dto);
@@ -143,6 +154,7 @@ public class ProjectScheduleController extends BaseController {
     /**
      * 排期 审核通过后改变  状态
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "排期审核通过后改变状态:流程id={processId},具体业务表id={businessTableId}")
     @PostMapping("/workflow/pass")
     public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
         projectPlanService.processPass(dto);
@@ -165,6 +177,7 @@ public class ProjectScheduleController extends BaseController {
      * 自动排期
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "自动排期:入口类型={type},需要排期列表={list}")
     @PostMapping("/auto")
     public ApiResult<ProjectTaskPlanAutoVO> autoSchedule(@RequestBody @Validated ProjectPlanTaskDTO.AutoDTo dto){
         ProjectTaskPlanAutoVO resultVO = projectPlanService.autoSchedule(dto);
@@ -179,6 +192,7 @@ public class ProjectScheduleController extends BaseController {
      * @param productId
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导入project文件")
     @PostMapping(value = "/importProjectSchedule")
     public ApiResult importProjectSchedule(@RequestParam("excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String  productId) {
         Boolean flag = projectPlanService.importProjectSchedule(excelFile,productId);

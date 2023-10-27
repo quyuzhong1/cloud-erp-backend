@@ -5,8 +5,12 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CfgNodeMemberDTO;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.server.sys.service.CfgNodeMemberService;
@@ -24,6 +28,7 @@ import java.util.List;
  * @since 2023-04-20
  */
 @RestController
+@LogSystemModule("系统通知")
 @RequestMapping("/notice")
 public class NoticeController extends BaseController {
 
@@ -70,6 +75,7 @@ public class NoticeController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增系统通知")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated NoticeDTO.AddDTO dto) {
         Boolean result = noticeInfoService.add(dto);
@@ -82,6 +88,7 @@ public class NoticeController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改系统通知")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated NoticeDTO.UpdateDTO dto) {
         Boolean result = noticeInfoService.edit(dto);
@@ -96,6 +103,7 @@ public class NoticeController extends BaseController {
      * @author yl
      * @date 2023-04-26 16:17
      */
+    @LogViewService
     @PostMapping("/view")
     public ApiResult<NoticeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         NoticeDTO.ViewDTO  view= noticeInfoService.view(dto.getId());
@@ -110,6 +118,7 @@ public class NoticeController extends BaseController {
      * @param dto
      * @return
      */
+     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = " 启用或禁用通知节点:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = noticeInfoService.updateStatus(dto);

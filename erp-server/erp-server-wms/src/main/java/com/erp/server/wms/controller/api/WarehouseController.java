@@ -5,6 +5,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -26,6 +30,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("仓库列表")
 @RequestMapping("/warehouse")
 public class WarehouseController extends BaseController {
 
@@ -56,6 +61,7 @@ public class WarehouseController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓库")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -73,6 +79,7 @@ public class WarehouseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交仓库")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -90,6 +97,7 @@ public class WarehouseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交仓库")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -108,6 +116,7 @@ public class WarehouseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用仓库:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = warehouseService.updateStatus(dto);
@@ -121,6 +130,7 @@ public class WarehouseController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改仓库")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -141,6 +151,7 @@ public class WarehouseController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交仓库")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -159,6 +170,7 @@ public class WarehouseController extends BaseController {
      * @param
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -176,6 +188,7 @@ public class WarehouseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核仓库")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -195,6 +208,7 @@ public class WarehouseController extends BaseController {
      * @author yl
      * @date 2023-03-22 11:56
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核仓库")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -213,6 +227,7 @@ public class WarehouseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除仓库")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -229,6 +244,7 @@ public class WarehouseController extends BaseController {
      * 导出
      * 仓库数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库数据")
     @PostMapping("/exportWarehouse")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -243,6 +259,7 @@ public class WarehouseController extends BaseController {
     /**
      * 导入仓库
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入仓库")
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = warehouseService.importFile(excelFile, response);
@@ -254,6 +271,7 @@ public class WarehouseController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板仓库数据")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         warehouseService.downloadTemplate(response);

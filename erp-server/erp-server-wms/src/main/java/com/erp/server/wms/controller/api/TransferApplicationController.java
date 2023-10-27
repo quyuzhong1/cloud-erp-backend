@@ -9,6 +9,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.MathUtil;
@@ -32,6 +36,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("调拨申请单")
 @RequestMapping("/transferApplication")
 public class TransferApplicationController extends BaseController {
 
@@ -82,6 +87,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增调拨申请单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -100,6 +106,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交调拨申请单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -118,6 +125,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改调拨申请单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -136,6 +144,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交调拨申请单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -154,6 +163,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交调拨申请单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -172,6 +182,7 @@ public class TransferApplicationController extends BaseController {
      * @param id
      * @return ApiResult
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -191,6 +202,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除调拨申请单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -209,6 +221,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废调拨申请单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -227,6 +240,7 @@ public class TransferApplicationController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核调拨申请单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -245,6 +259,7 @@ public class TransferApplicationController extends BaseController {
      * @param singleApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "单审核调拨申请单")
     @PostMapping("/singleApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -263,6 +278,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核调拨申请单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -281,6 +297,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销调拨申请单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -300,6 +317,7 @@ public class TransferApplicationController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出调拨申请单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
@@ -336,6 +354,7 @@ public class TransferApplicationController extends BaseController {
      * @param validList
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推直接调拨单保存")
     @PostMapping("/generateTransferInfo")
     public ApiResult generateTransferInfo(@RequestBody @Valid ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         Boolean flag = transferApplicationService.generateTransferInfo(validList);
@@ -367,6 +386,7 @@ public class TransferApplicationController extends BaseController {
      * @param validList
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推分布式调出保存")
     @PostMapping("/generateTransferOut")
     public ApiResult generateTransferOut(@RequestBody @Valid ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         Boolean flag = transferApplicationService.generateTransferOut(validList);
@@ -406,6 +426,7 @@ public class TransferApplicationController extends BaseController {
      * @param validList
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PickingDetailDTO.ListDTO>>
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推加工单")
     @PostMapping("/saveGenerateMachineInfo")
     public ApiResult<List<PickingDetailDTO.ListDTO>> saveGenerateMachineInfo(@RequestBody ValidList<TransferApplicationDTO.ViewGenerateMachineInfo> validList) {
         Boolean flag = transferApplicationService.saveGenerateMachineInfo(validList.getList());

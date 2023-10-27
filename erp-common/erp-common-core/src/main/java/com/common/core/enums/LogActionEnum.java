@@ -7,7 +7,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 
 /**
@@ -32,21 +31,28 @@ public enum LogActionEnum {
     INVALID("invalid", "作废",true),
     ADD_AND_SUBMIT("addAndSubmit", "新增并提交",false),
     UPDATE_AND_SUBMIT("updateAndSubmit", "更新并提交",false),
-
+    LOGIN("login", "登录",false),
+    LOGOUT("logout", "登出",false),
+    CUSTOM_UPDATE("customUpdate", "自定义更新",false),
+    UPDATE_WITHOUT_PARAMS("updateWithoutParams", "无参更新",false),
+    CUSTOM_BATCH_UPDATE("customBatchUpdate", "自定义批量更新",false),
+    CUSTOM_BATCH_INSERT("customBatchInsert", "自定义批量插入", false),
+    // 新接口禁止使用
+    UNKNOWN_UPDATE("unknownUpdate", "无法识别的参数更新",false),
     ;
 
     @EnumValue
     private final String code;
     private final String name;
     /**
-     * 默认：是否是批量操作: true=是批量操作, false=非批量操作
+     * 是否是批量添加日志: true=是, 默认：false=否
      */
-    private final boolean isBatchOperation;
+    private final boolean isBatchRecord;
 
     /**
-     * 是否属于更新
+     * 是否属于对比更新
      */
-    public boolean isUpdate(){
+    public boolean hasCompare(){
         return Arrays.asList(
                 LogActionEnum.UPDATE,
                 LogActionEnum.UPDATE_AND_SUBMIT
@@ -61,7 +67,7 @@ public enum LogActionEnum {
         if (StringUtils.isNotBlank(annoKeyIdName)){
             return annoKeyIdName;
         }
-        if (this.isBatchOperation){
+        if (this.isBatchRecord){
             // 批量操作默认
             return "ids";
         } else {
@@ -76,7 +82,7 @@ public enum LogActionEnum {
      */
     public boolean checkIsBatchOperation(String batchOperationStr) {
         if (StringUtils.isBlank(batchOperationStr)){
-            return this.isBatchOperation;
+            return this.isBatchRecord;
         }
         return Boolean.TRUE.toString().equalsIgnoreCase(batchOperationStr);
     }

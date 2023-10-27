@@ -281,6 +281,17 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         }
         return entity.getId();
     }
+
+    @Override
+    public DocsDTO view(String id) {
+        TemplateTaskDocsNameEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("模板任务文档名称表记录不存在，id=" + id));
+        DocsDTO dto = new DocsDTO();
+        dto.setName(entity.getName());
+        dto.setId(entity.getId());
+        dto.setState(true);
+        return dto;
+    }
 }
 
 

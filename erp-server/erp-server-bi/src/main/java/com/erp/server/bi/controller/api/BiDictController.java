@@ -1,8 +1,12 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.service.BiDictService;
@@ -20,6 +24,7 @@ import java.util.Map;
  * @since 2022-12-08 14:24:02
  */
 @RestController
+@LogSystemModule("bi系统字典")
 @RequestMapping("dict")
 public class BiDictController extends BaseController {
     /**
@@ -35,6 +40,7 @@ public class BiDictController extends BaseController {
      * @param id 主键
      * @return 单条数据
      */
+    @LogViewService
     @GetMapping("/get")
     public ApiResult<BiDictEntity> queryById(@PathVariable("id") String id) {
         return success(this.biDictService.queryById(id));
@@ -46,6 +52,7 @@ public class BiDictController extends BaseController {
      * @param biDict 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "bi系统字典新增数据")
     @PostMapping("/add")
     public ApiResult add(@RequestBody BiDictEntity biDict) {
         Boolean flag = this.biDictService.insert(biDict);
@@ -58,6 +65,7 @@ public class BiDictController extends BaseController {
      * @param biDict 实体
      * @return 编辑结果
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "bi系统字典编辑数据")
     @PostMapping("/update")
     public ApiResult edit(@RequestBody BiDictEntity biDict) {
         Boolean flag = this.biDictService.update(biDict);
@@ -68,8 +76,10 @@ public class BiDictController extends BaseController {
      * 删除数据
      *
      * @param
+     *
      * @return 删除是否成功
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "bi系统字典删除数据")
     @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = this.biDictService.deleteById(dto.getId());
@@ -121,6 +131,7 @@ public class BiDictController extends BaseController {
      * @param dictEntities 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "bi系统字典批量新增:字典名称={name}")
     @PostMapping("/batchAdd")
     public ApiResult batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
         Boolean flag = this.biDictService.batchAdd(dictEntities);

@@ -4,6 +4,7 @@ package com.erp.server.bi.controller.api;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
@@ -33,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("/biTargetCategorySetting")
 public class BiTargetCategorySettingController extends BaseController {
 
@@ -130,6 +132,7 @@ public class BiTargetCategorySettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         biTargetCategorySettingService.downloadTemplate(response);

@@ -2,8 +2,11 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
@@ -22,6 +25,7 @@ import java.util.List;
  * @date 2022/12/29 16:23
  */
 @RestController
+@LogSystemModule("模块管理")
 @RequestMapping("salesMonitoring")
 public class BiSalesMonitoringController extends BaseController {
 
@@ -35,6 +39,7 @@ public class BiSalesMonitoringController extends BaseController {
      * @param list
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量新增销售监控:监控维度={type}")
     @PostMapping("/batchAdd")
     public ApiResult batchAdd (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
         Boolean flag = biSalesMonitoringService.batchAdd(list);
@@ -48,6 +53,7 @@ public class BiSalesMonitoringController extends BaseController {
      * @param list
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改销售监控：监控维度={type}")
     @PostMapping("/batchUpdate")
     public ApiResult batchUpdate (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
         biSalesMonitoringService.batchUpdate(list);

@@ -1,6 +1,9 @@
 package com.erp.server.bi.controller.api;
 
 import com.alibaba.excel.EasyExcel;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.business.annotation.DataPermission;
@@ -42,6 +45,7 @@ import java.util.List;
  * @date 2022/12/21 17:32
  */
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("targetManagement")
 public class BiTargetManagementController extends BaseController {
 
@@ -79,6 +83,7 @@ public class BiTargetManagementController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除目标管理")
     public ApiResult delete(@RequestParam("id") String id) {
         biTargetManagementService.removeById(id);
         return success();
@@ -92,6 +97,7 @@ public class BiTargetManagementController extends BaseController {
      * @param excelFile
      * @param response
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入目标管理")
     @PostMapping("/importOrderFile")
     public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign, sysUserFeign);
@@ -122,6 +128,7 @@ public class BiTargetManagementController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "目标管理下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biTargetManagementTemplate.xlsx";

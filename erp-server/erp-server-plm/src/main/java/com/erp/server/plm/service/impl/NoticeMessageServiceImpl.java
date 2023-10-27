@@ -1300,6 +1300,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         return baseMapper.getByNodeFlag(flagEnum.getFlag());
     }
 
+    @Override
+    public NoticeMessageEntity view(String id) {
+        NoticeMessageEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
+        return entity;
+    }
+
 
     /**
      * 获取到 提交排期审核任务消息卡片主体

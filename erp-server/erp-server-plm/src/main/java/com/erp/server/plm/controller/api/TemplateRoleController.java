@@ -1,9 +1,12 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.service.TemplateMembersService;
@@ -23,6 +26,7 @@ import java.util.List;
  * @date 2022/11/15 10:59
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("templateRole")
 public class TemplateRoleController extends BaseController {
 
@@ -68,6 +72,7 @@ public class TemplateRoleController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板详情-角色成员-新增角色")
     @PostMapping("/saveTemplateRole")
     public ApiResult saveTemplateRole(@RequestBody @Validated TemplateRoleDTO dto) {
         Boolean flag = templateRoleService.saveTemplateRole(dto);
@@ -82,6 +87,7 @@ public class TemplateRoleController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板详情-角色成员-新增成员")
     @PostMapping("/saveTemplateMembers")
     public ApiResult saveTemplateMembers(@RequestBody @Validated TemplateMembersAddOrUpdateDTO dto) {
         Boolean flag = templateMembersService.saveTemplateMembers(dto);
@@ -96,6 +102,7 @@ public class TemplateRoleController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "模板详情-角色成员-删除成员")
     @DeleteMapping("/deleteTemplateMembers")
     public ApiResult deleteTemplateMembers(@RequestBody @Validated TemplateRoleMembersDeleteDTO dto) {
         Boolean flag = templateMembersService.deleteTemplateMembers(dto);

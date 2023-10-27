@@ -8,9 +8,13 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -48,6 +52,7 @@ import java.util.*;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("任务列表")
 @RequestMapping("task")
 public class ProjectTaskController extends BaseController {
 
@@ -105,6 +110,7 @@ public class ProjectTaskController extends BaseController {
      * @author yl
      * @date 2023-06-25 11:55
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出任务")
     @PostMapping("/exportTask")
     public ApiResult exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result =taskService.exportTask(dto,response);
@@ -118,6 +124,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "项目任务-新建任务")
     @PostMapping("/save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.save(dto);
@@ -130,12 +137,15 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "项目任务-编辑任务", keyIdName = "taskId")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.updateTask(dto);
         return flag == true ? success() : failure();
     }
 
+
+    @LogAction(value = LogActionEnum.INSERT, desc = "项目任务-保存子任务")
     @PostMapping("/saveSonTask")
     public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.save(dto);
@@ -160,6 +170,7 @@ public class ProjectTaskController extends BaseController {
      * @param taskId
      * @return
      */
+    @LogViewService
     @GetMapping("/taskDetails")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -177,6 +188,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "项目任务-任务详情-删除任务")
     @PostMapping("/removeTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -196,6 +208,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新前置任务列表:id={id}")
     @PostMapping("/update/pre/task")
     public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
         Boolean flag = preTaskService.updatePreTask(dto);
@@ -220,6 +233,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "项目任务-任务详情-移除前置任务")
     @PostMapping("/removePreTask")
     public ApiResult removePreTask(@RequestBody @Validated SetPreTaskDTO dto) {
         Boolean flag = preTaskService.removePreTask(dto);
@@ -289,6 +303,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改任务")
     @PostMapping("/updateTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -306,6 +321,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目任务发布任务:产品id={productId},任务ids={taskIdList}")
     @PostMapping("/publishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -323,6 +339,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目任务取消发布:产品id={productId},任务ids={taskIdList}")
     @PostMapping("/cancelPublishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -340,6 +357,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "开始项目任务:产品id={productId},任务id={taskIdList}")
     @PostMapping("/startTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -357,6 +375,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "关闭项目任务:产品id={productId},任务id={taskIdList}")
     @PostMapping("/closeTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -375,6 +394,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成项目任务:产品id={productId},任务id={taskIdList}")
     @PostMapping("/finishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -392,6 +412,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核通过项目任务")
     @PostMapping("/approvalPass")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -409,6 +430,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核不通过项目任务")
     @PostMapping("/approvalReject")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -426,6 +448,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销项目任务")
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = projectTaskService.cancelProcess(dto.getIds());
@@ -440,6 +463,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新开始项目任务:产品id={productId},任务id={taskIdList}")
     @PostMapping("/restartTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -686,6 +710,7 @@ public class ProjectTaskController extends BaseController {
      * @author yl
      * @date 2022-11-29 14:42
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "配置表单输出物是否对sku更改:id={id},模板状态={state}(1=启用,0=未启用)")
     @PostMapping(value = "/skuChangeResult")
     public ApiResult skuChangeResult(@RequestBody @Validated StateDTO dto) {
         projectTaskService.skuChangeResult(dto);

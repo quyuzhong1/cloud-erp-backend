@@ -5,8 +5,11 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.service.ProjectTaskTimeRecordService;
@@ -25,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
  * @since 2023-02-23
  */
 @RestController
+@LogSystemModule("工时统计")
 @RequestMapping("task/time/record")
 public class ProjectTaskTimeRecordController extends BaseController {
 
@@ -53,6 +57,7 @@ public class ProjectTaskTimeRecordController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出工时统计")
     @PostMapping(value = "/export")
     public ApiResult exportTaskTime(@RequestBody ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response) {
         Boolean flag = projectTaskTimeRecordService.exportTaskTimeList(dto, response);

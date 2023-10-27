@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.TaskFollowerDTO;
 import com.erp.server.plm.service.TaskFollowerService;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,7 @@ import javax.validation.Valid;
  * @since 2023-06-19
  */
 @RestController
+@LogSystemModule("任务列表")
 @RequestMapping("/taskFollower")
 public class TaskFollowerController extends BaseController {
 
@@ -43,6 +47,7 @@ public class TaskFollowerController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "关注任务:任务id={taskId}")
     @PostMapping("follower")
     public ApiResult followerTask(@RequestBody @Valid TaskFollowerDTO.FollowerDTO dto) {
         Boolean follower = taskFollowerService.followerTask(dto);
@@ -55,6 +60,7 @@ public class TaskFollowerController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消关注:任务id={taskId}")
     @PostMapping("cancelFollower")
     public ApiResult cancelFollower(@RequestBody @Valid TaskFollowerDTO.FollowerDTO dto) {
         Boolean result = taskFollowerService.cancelFollower(dto);

@@ -1,5 +1,9 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.AttachmentDTO;
@@ -20,6 +24,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("WMS系统通用")
 @RequestMapping("/attachment")
 public class WmsAttachmentController extends BaseController {
 
@@ -32,6 +37,7 @@ public class WmsAttachmentController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除附件信息")
     @PostMapping("/delete")
     public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
         wmsAttachmentService.removeAttachment(dto);

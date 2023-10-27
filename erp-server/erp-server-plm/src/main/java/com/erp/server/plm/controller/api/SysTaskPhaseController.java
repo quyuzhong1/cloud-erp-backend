@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -25,6 +28,7 @@ import java.util.List;
  */
 
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("sys/taskPhase")
 public class SysTaskPhaseController extends BaseController {
 
@@ -40,6 +44,7 @@ public class SysTaskPhaseController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:27
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量保存或者修改阶段名:名称={name}")
     @PostMapping("/batchSaveOrUpdate")
     // @RequestPermissions("plm:sys:taskPhase:batchSaveOrUpdate")
     public ApiResult add(@RequestBody @Validated List<UpdateBasicNameDTO> list) {
@@ -67,6 +72,7 @@ public class SysTaskPhaseController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:27
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改阶段名:id={id},名称={name}")
     @PostMapping("/update")
     //  @RequestPermissions("plm:sys:taskPhase:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
@@ -81,6 +87,7 @@ public class SysTaskPhaseController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:27
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除阶段名")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:sys:taskPhase:remove")
     public ApiResult remove(@RequestParam(value = "id") String id) {

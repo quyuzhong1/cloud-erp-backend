@@ -61,4 +61,9 @@ public interface BasicLabelService extends SuperService<BasicLabelEntity> {
      * @return
      */
     void removeBasicLabelById(String id);
+
+    /**
+     * 获取详情
+     */
+    BasicLabelEntity view(String id);
 }

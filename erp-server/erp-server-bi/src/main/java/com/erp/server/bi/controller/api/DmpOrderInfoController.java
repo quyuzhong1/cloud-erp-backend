@@ -1,11 +1,14 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
@@ -22,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -33,6 +38,7 @@ import java.io.OutputStream;
  * @date 2022/12/13 15:15
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dmpOrderInfo")
 public class DmpOrderInfoController extends BaseController {
 
@@ -60,12 +66,12 @@ public class DmpOrderInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售数据修改状态：id={id},订单修正状态={state}(2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款)")
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated DmpOrderStateDTO dto) {
         Boolean flag = dmpOrderInfoService.updateState(dto);
         return flag == true ? this.success() : this.failure();
     }
-
 
     /**
      *  销售数据-导出
@@ -74,6 +80,7 @@ public class DmpOrderInfoController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销售数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpOrderInfo:paging", tableAlias = "doi")
     public ApiResult exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
@@ -90,6 +97,7 @@ public class DmpOrderInfoController extends BaseController {
      * @param importType
      * @param response
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "销售数据导入")
     @PostMapping("/importOrderFile")
     public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         Boolean flag = dmpOrderInfoService.importOrderFile(excelFile, importType, response);
@@ -104,6 +112,7 @@ public class DmpOrderInfoController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "销售数据下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpOrderInfoTemplate.xlsx";

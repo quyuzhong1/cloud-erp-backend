@@ -1,11 +1,14 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.server.plm.service.ProductArchiveService;
@@ -27,6 +30,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("产品归档管理")
 @RequestMapping("product/archive")
 public class ProductArchiveController extends BaseController {
     @Autowired
@@ -49,6 +53,7 @@ public class ProductArchiveController extends BaseController {
     /**
      * 重新激活
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新激活：id={productId}")
     @PostMapping("/activate")
     //@RequestPermissions("plm:product:archive:activate")
     public ApiResult activate(String productId) {

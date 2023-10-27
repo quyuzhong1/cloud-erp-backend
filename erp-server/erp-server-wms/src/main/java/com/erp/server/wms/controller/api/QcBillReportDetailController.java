@@ -2,6 +2,10 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ExcelImportDTO;
@@ -22,6 +26,7 @@ import javax.validation.Valid;
  * @since 2023-04-14
  */
 @RestController
+@LogSystemModule("质检单")
 @RequestMapping("/qcReportDetail")
 public class QcBillReportDetailController extends BaseController {
 
@@ -39,6 +44,7 @@ public class QcBillReportDetailController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检报告")
     @PostMapping("/exportQcReport")
     public ApiResult exportQcReport(@RequestBody @Valid QcReportDetailDTO.ExportDTO dto, HttpServletResponse response) {
         qcReportService.exportQcReport(dto, response);
@@ -52,6 +58,7 @@ public class QcBillReportDetailController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "质检列表导出质检报告")
     @PostMapping("/exportReport")
     public ApiResult exportReport(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
         qcReportDetailService.exportReportByMainId(dto.getId(), response);
@@ -66,6 +73,7 @@ public class QcBillReportDetailController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入质检单")
     @PostMapping("/importFile")
     public ApiResult<QcReportDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.QcReportDetailExcelImportDTO excelImportDTO, HttpServletResponse response) {
         QcReportDetailDTO.ImportDTO result = qcReportDetailService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getQcType(),response);

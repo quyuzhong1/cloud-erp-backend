@@ -2,6 +2,9 @@ package com.erp.server.sys.controller.pda;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
@@ -24,6 +27,7 @@ import java.util.List;
  * @since 2023-08-14
  */
 @RestController
+@LogSystemModule("PDA系统版本控制")
 @RequestMapping("/pdaVersion")
 public class PdaVersionController extends BaseController {
 
@@ -61,6 +65,7 @@ public class PdaVersionController extends BaseController {
      * @Date 2023/8/14 16:27
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.sys.entity.PdaVersionEntity>
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "发版")
     @PostMapping(value = "/release")
     public ApiResult release(@RequestBody PdaVersionDTO.AddDTO dto) {
         Boolean flag = pdaVersionService.release(dto);
@@ -74,6 +79,7 @@ public class PdaVersionController extends BaseController {
      * @param versionId
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "用户跳过此版本升级:版本id={versionId}")
     @GetMapping(value = "/skipVersion")
     public ApiResult skipVersion(@RequestParam("versionId") String versionId) {
         Boolean flag = pdaVersionService.skipVersion(versionId);

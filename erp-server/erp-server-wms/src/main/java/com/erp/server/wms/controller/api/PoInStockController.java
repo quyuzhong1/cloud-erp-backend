@@ -5,6 +5,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -27,6 +31,7 @@ import java.util.List;
  * @since 2023-04-10
  */
 @RestController
+@LogSystemModule("采购入库单")
 @RequestMapping("/poInStock")
 public class PoInStockController extends BaseController {
 
@@ -93,6 +98,7 @@ public class PoInStockController extends BaseController {
     * @param dto 
     * @return ApiResult 
     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增采购入库单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -111,6 +117,7 @@ public class PoInStockController extends BaseController {
     * @param dto
     * @return ApiResult
     */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购入库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -129,6 +136,7 @@ public class PoInStockController extends BaseController {
      * @param dto 
      * @return ApiResult 
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购入库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -147,6 +155,7 @@ public class PoInStockController extends BaseController {
      * @param dto 
      * @return ApiResult 
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购入库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -165,6 +174,7 @@ public class PoInStockController extends BaseController {
      * @param dto 
      * @return ApiResult 
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购入库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -183,6 +193,7 @@ public class PoInStockController extends BaseController {
      * @param id
      * @return ApiResult
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -202,6 +213,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购入库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -220,6 +232,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废采购入库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -238,6 +251,7 @@ public class PoInStockController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购入库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -256,6 +270,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购入库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -274,6 +289,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购入库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -293,6 +309,7 @@ public class PoInStockController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购入库单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id,stock_in_user_id",
@@ -329,6 +346,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推退货单数据保存")
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = poInstockService.generatePurchaseReturnOrder(dto);
@@ -355,6 +373,7 @@ public class PoInStockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推采购入库单保存")
     @PostMapping("/generateStockIn")
     public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
         Boolean flag = poInstockService.generateStockIn(dto);

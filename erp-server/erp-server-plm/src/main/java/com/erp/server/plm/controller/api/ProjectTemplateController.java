@@ -1,44 +1,27 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
-import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.vo.DropdownEnumVO;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.listener.ProjectTaskExcelListener;
-import com.erp.server.plm.listener.TemplateTaskExcelListener;
 import com.erp.server.plm.service.*;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,6 +33,7 @@ import java.util.stream.Collectors;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("template")
 public class ProjectTemplateController extends BaseController {
 
@@ -78,6 +62,7 @@ public class ProjectTemplateController extends BaseController {
      * @author Will
      * @date: 2022/11/11 15:33
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或修改模板管理")
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated ProjectTemplateSaveOrUpdateDTO dto) {
         Boolean flag = projectTemplateService.saveOrUpdate(dto);
@@ -92,6 +77,7 @@ public class ProjectTemplateController extends BaseController {
      * @author Will
      * @date: 2022/11/11 15:33
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改状态模板管理:id={id},模板状态={state}(1=启用,0=未启用)")
     @PutMapping("/updateStatus")
     public ApiResult updateTemplateStatus(@RequestBody @Validated ProjectTemplateUpdateStatusDTO dto) {
         Boolean flag = projectTemplateService.updateTemplateStatus(dto);
@@ -146,6 +132,7 @@ public class ProjectTemplateController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新前置任务列表:模板id={templateId}")
     @PostMapping("/update/pre/task")
     public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") PreTemplateTaskUpdateDTO dto) {
         Boolean flag = projectTemplateService.updatePreTask(dto);
@@ -183,6 +170,7 @@ public class ProjectTemplateController extends BaseController {
      * 同步阶段
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "同步阶段")
     @GetMapping("/migratePhase")
     public ApiResult migratePhaseDb() {
         boolean result = projectTemplateService.migratePhaseDb();
@@ -193,6 +181,7 @@ public class ProjectTemplateController extends BaseController {
      * 迁移文档名
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "迁移文档名")
     @GetMapping("/migrateDocs")
     public ApiResult migrateDocsDb() {
         boolean result = projectTemplateService.migrateDocsDb();

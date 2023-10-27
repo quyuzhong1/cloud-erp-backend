@@ -1,9 +1,12 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import java.util.List;
  * @date 2022/11/14 17:31
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("templateDeliveryDocs")
 public class TemplateDeliveryDocsController extends BaseController {
 
@@ -49,6 +53,7 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "模板详情-输出物-删除")
     @DeleteMapping("/delete")
     public ApiResult delete(@RequestBody TemplateDeliveryDocsDeleteDTO dto) {
         Boolean flag = templateDeliveryDocsService.deleteTemplateDeliveryDocs(dto);
@@ -63,6 +68,7 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = " 模板详情-输出物-修改状态:id={id},状态={status}(true=启用,false=未启用)")
     @PutMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated TemplateDeliveryDocsUpdateStatusDTO dto) {
         Boolean flag = templateDeliveryDocsService.updateStatus(dto);

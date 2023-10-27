@@ -1,8 +1,12 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
@@ -22,6 +26,7 @@ import javax.annotation.Resource;
  * @since 2022-12-08 14:28:26
  */
 @RestController
+@LogSystemModule("专题管理")
 @RequestMapping("layout")
 public class BiLayoutController extends BaseController {
 
@@ -36,6 +41,7 @@ public class BiLayoutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加整个专题")
     @PostMapping("/addSubject")
     public ApiResult addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
         String subjectId = layoutService.addSubject(dto);
@@ -52,6 +58,7 @@ public class BiLayoutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加专题布局")
     @PostMapping("/addSubjectLayout")
     public ApiResult addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
         Boolean flag = layoutService.addSubjectLayout(dto);
@@ -65,6 +72,7 @@ public class BiLayoutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改专题布局")
     @PostMapping("/updateSubjectLayout")
     public ApiResult updateSubjectLayout(@RequestBody @Validated SubjectLayoutDetailsDTO dto) {
         String subjectId = layoutService.updateSubjectLayout(dto);
@@ -83,6 +91,7 @@ public class BiLayoutController extends BaseController {
      * @author yl
      * @date 2022-12-13 17:06
      */
+    @LogViewService
     @PostMapping("/subjectInfo")
     public ApiResult<SubjectLayoutDetailsDTO> subjectInfo(@RequestBody @Validated BaseIdDTO dto) {
         SubjectLayoutDetailsDTO details = layoutService.subjectInfo(dto.getId());
@@ -98,6 +107,7 @@ public class BiLayoutController extends BaseController {
      * @author yl
      * @date 2022-12-13 17:06
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除布局模块")
     @PostMapping("/deleteLayoutModule")
     public ApiResult deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayoutModule(dto);
@@ -112,6 +122,7 @@ public class BiLayoutController extends BaseController {
      * @author yl
      * @date 2022-12-13 17:06
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除布局")
     @PostMapping("/deleteLayout")
     public ApiResult deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayout(dto);

@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.constant.ThirdConstants;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
@@ -8,6 +10,7 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.UpdateUserNoticeStateDTO;
@@ -24,6 +27,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +41,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("PLM系统通用")
 @RequestMapping("app/user/notice/")
 public class UserNoticeMessageController extends BaseController {
 
@@ -95,6 +101,7 @@ public class UserNoticeMessageController extends BaseController {
      * @author yl
      * @date 2022-11-10 15:55
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更改取消的消息通知状态:id={id},状态值={state}(true=打开,false=关闭)")
     @PostMapping("/updateState")
     public ApiResult updateState(@Validated @RequestBody UpdateUserNoticeStateDTO dto) {
         String fsUnionId = dto.getUnionId();
