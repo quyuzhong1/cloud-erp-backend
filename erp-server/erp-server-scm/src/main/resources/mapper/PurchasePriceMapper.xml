@@ -234,10 +234,9 @@
             ppd.min_qty,
             ppd.max_qty,
             ppd.currency
-        ppd.
         FROM purchase_price pp
         LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
-        WHERE pp.is_deleted = false and approve_status = 'approve' AND pp.supplier_id IN
+        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>

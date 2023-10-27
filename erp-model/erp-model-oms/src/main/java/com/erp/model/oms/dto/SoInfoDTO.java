@@ -69,6 +69,10 @@ public class SoInfoDTO implements Serializable {
 
         private BigDecimal discountAmount;
 
+        private BigDecimal taxAmountBefore;
+
+        private BigDecimal taxRate;
+
 
     }
 
@@ -555,7 +559,6 @@ public class SoInfoDTO implements Serializable {
          * 含税单价(本位币)
          */
         private BigDecimal taxPriceLc;
-
 
 
     }
@@ -1169,7 +1172,6 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
-
 
 
         /**
