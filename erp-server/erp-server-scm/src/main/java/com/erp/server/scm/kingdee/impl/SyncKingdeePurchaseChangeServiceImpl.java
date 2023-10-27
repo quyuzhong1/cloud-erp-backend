@@ -89,10 +89,10 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+       /* DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
         if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderTask.getStatus())  && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderTask.getStatus())) {
             return;
-        }
+        }*/
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
         resultMap.put("id",entity.getId());
