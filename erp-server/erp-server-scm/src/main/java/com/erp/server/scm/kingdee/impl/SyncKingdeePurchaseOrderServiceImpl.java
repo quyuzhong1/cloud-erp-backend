@@ -99,11 +99,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
-            DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+            /*DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
             if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subContractOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subContractOrderTask.getStatus())) {
                 log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
                 return;
-            }
+            }*/
             //委外订单明细
             subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
 
