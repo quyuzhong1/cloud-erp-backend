@@ -3054,7 +3054,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             try {
                 //错误的编号集合
-                List<String> errorNoList = errorList.stream().map(B2BSoImportExcelDTO::getNo).collect(Collectors.toList());
+                List<String> errorNoList = errorList.stream().map(B2BSoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
 
                 //表示可以添加
                 if (isAdd&&!errorNoList.contains(no)) {
