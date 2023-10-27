@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -97,4 +98,13 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @Date 2023/4/6 19:29
      **/
     Boolean deleteBySkuId(String mainId, String skuId);
+
+    /**
+     * 更新金蝶明细id
+     * @Author Luo_WG
+     * @Date 2023/7/12 14:20
+     * @param list
+     * @return void
+     **/
+    void updateKingdeeDetailId(JSONArray list);
 }
