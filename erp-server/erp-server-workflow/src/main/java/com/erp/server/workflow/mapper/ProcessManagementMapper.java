@@ -79,4 +79,11 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return
      */
     List<ProcessManagementDTO.CurApproveInfoDTO> listApproverByApprover(@Param("list") ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
+
+    /**
+     * 根据流程实例查询待
+     * @param processInstanceId
+     * @return
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listTaskByProcessInstanceId(String processInstanceId);
 }

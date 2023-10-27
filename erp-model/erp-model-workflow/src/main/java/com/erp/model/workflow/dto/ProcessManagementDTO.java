@@ -810,6 +810,11 @@ public class ProcessManagementDTO {
          * 流程定义版本
          */
         private Integer processVersion;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
         /**
          * 流程名称
          */
