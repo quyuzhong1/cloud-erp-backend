@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -72,9 +73,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
         for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
             Map<String, Object> resultMap = new HashMap<>();
-            DmpPushTaskEntity bomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
-            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(bomHistoryTask.getStatus())  && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(bomHistoryTask.getStatus())) {
-                return;
+            DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+            if (SyncStatusEnum.SUCCESS_SYNC.getCode().equals(productBomHistoryTask.getStatus())) {
+                continue;
             }
             //金蝶id
             resultMap.put("syncKingdeeId",productBomHistoryEntity.getSyncKingdeeId());
@@ -92,7 +93,13 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             //父级sku编码
             resultMap.put("parentSkuNo",parent.getParentSkuNo());
             //版本
-            resultMap.put("version",parent.getParentSkuNo().concat("_").concat(productBomHistoryEntity.getBomVersion()));
+            resultMap.put("version",parent.getParentSkuNo().concat("_").concat(productBomHistoryEntity.getBomVersion().toString()));
+
+            //删除操作
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+                sendMqAndSaveTask(operate,resultMap);
+                return;
+            }
 
             List<Map<String, Object>> mapList = new ArrayList<>();
             for (ProductBomSkuHistoryEntity child: childrenList) {
@@ -108,11 +115,12 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         if (CollectionUtils.isEmpty(listMap)) {
             return;
         }
-        listMap.stream().forEach(obj -> {
+        listMap.forEach(obj -> {
             //生成任务
-            sendMqAndSaveTask(operate,obj);
+            sendMqAndSaveTask(operate, obj);
         });
     }
+
     /**
      * @description: 生成任务
      * @author Will
@@ -134,6 +142,4 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         taskFeignDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
-
-
 }
