@@ -2771,7 +2771,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
 
         //以序号分组
-        Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getSkuNo));
+        Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getNo));
 
         for (Map.Entry<String, List<B2BSoImportExcelDTO>> entry : map.entrySet()) {
             List<B2BSoImportExcelDTO> list = entry.getValue();
@@ -3049,23 +3049,36 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 soDetailList.add(addDetail);
             }
 
-
-            //表示可以添加
-            if (isAdd) {
-                // 金额折扣处理
-                SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
-                for (int i = 0; i < soDetailList.size(); i++) {
-                    SoDetailEntity item = soDetailList.get(i);
-                    // 计算毛利成本
-                    soDetailService.calCost(purchasePriceList, skuList, addSo.getBillDate(), item, Boolean.FALSE);
+            try {
+                //表示可以添加
+                if (isAdd) {
+                    // 金额折扣处理
+                    SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+                    for (int i = 0; i < soDetailList.size(); i++) {
+                        SoDetailEntity item = soDetailList.get(i);
+                        // 计算毛利成本
+                        soDetailService.calCost(purchasePriceList, skuList, addSo.getBillDate(), item, Boolean.FALSE);
+                    }
+                    BigDecimal allAmountLc = soDetailList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addSo.setAllAmountLc(allAmountLc);
+                    this.save(addSo);
+                    soDetailService.saveBatch(soDetailList);
+                } else {
+                    continue;
                 }
-                BigDecimal allAmountLc = soDetailList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
-                addSo.setAllAmountLc(allAmountLc);
-                this.save(addSo);
-                soDetailService.saveBatch(soDetailList);
-            } else {
-                continue;
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
             }
+
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                isAdd = Boolean.FALSE;
+                list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            }
+            //当添加是不
+            if(!isAdd){
+                errorList.addAll(list);
+            }
+
 
         }
 
