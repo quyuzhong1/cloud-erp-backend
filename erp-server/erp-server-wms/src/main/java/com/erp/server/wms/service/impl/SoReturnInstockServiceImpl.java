@@ -1503,7 +1503,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //报价单价
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(obj -> obj.getSupplierId().equals(handleDetailDTO.getChildSupplierId()) && qty > obj.getMinQty() && obj.getMaxQty() >= qty ).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(supplierSkuPrice)) {
-                    String error = String.format("SKU【%s】未找到供应商【%s】数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(),handleDetailDTO.getChildSupplierId(), qty);
+                    String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(), qty);
                     throw new ServiceException(new ApiResult(1,error));
                 }
                 addDetailDTO.setReturnPrice(supplierSkuPrice.getTaxPrice());
