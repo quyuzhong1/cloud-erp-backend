@@ -139,17 +139,10 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //未查找到数据，新增数据
-            SaveResult save;
-            try {
-                JSONObject firstJson = json;
-                firstJson.set("FSaleOrderFinance.FAllDisCount", BigDecimal.ZERO);
-                SaveParam paramFirst = new SaveParam(firstJson);
-                save = apiUtils.save(paramFirst);
-            } catch (Exception ex) {
-                //新增失败时添加日志及定时任务
-                sendWarnMsg(businessId);
-                return;
-            }
+            JSONObject firstJson = json;
+            firstJson.set("FSaleOrderFinance.FAllDisCount", BigDecimal.ZERO);
+            SaveParam paramFirst = new SaveParam(firstJson);
+            SaveResult  save = apiUtils.save(paramFirst);
             //新增成功后编辑折扣额
             String id = save.getResult().getId();
             //主单据id
