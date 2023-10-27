@@ -594,6 +594,7 @@ public class WarehouseDTO implements Serializable {
         public WarehouseDisabledAssertDTO(StocktakingProfitLossDetailDTO.ViewDTO viewDTO) {
             this.warehouseId = viewDTO.getWarehouseId();
             this.warehouseLocation = viewDTO.getWarehouseLocation();
+            this.warehouseName = viewDTO.getWarehouseName();
         }
     }
 

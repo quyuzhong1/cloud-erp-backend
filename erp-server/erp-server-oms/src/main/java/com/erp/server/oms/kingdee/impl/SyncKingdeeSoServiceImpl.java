@@ -1,14 +1,18 @@
 package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
@@ -18,6 +22,7 @@ import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -28,8 +33,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -68,10 +71,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     private SoDetailService soDetailService;
 
     @Resource
-    private MQProducerService mQProducerService;
-
-    @Resource
-    private SoInfoService soInfoService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
@@ -98,20 +98,25 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+
         String id = entity.getId();
+        //业务id
+        resultMap.put("id", id);
+        //编码
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         String warehouseId = entity.getWarehouseId();
         List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        //更新同步状态为待同步
-        soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
-
-        //业务id
-        resultMap.put("id", id);
-        //编码
-        resultMap.put("code", entity.getCode());
-
         //交货方式
         resultMap.put("deliveryMode", entity.getDeliveryMode());
         //单据类型
@@ -122,7 +127,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             createDate = billDate;
         }
         //创建日期
-        resultMap.put("createDate", createDate);
+        resultMap.put("createDate", LocalDateTimeUtil.format(createDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //是否收取运费
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
@@ -236,7 +241,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         // 收款日期
         if (Objects.nonNull(entity.getReceiveDate())) {
-            resultMap.put("receiveDate", entity.getReceiveDate());
+            resultMap.put("receiveDate", LocalDateTimeUtil.format(entity.getReceiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         }
         // 收款金额
         if (Objects.nonNull(entity.getReceiveAmount())) {
@@ -273,7 +278,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         for (SoDetailDTO.ViewDTO item : details) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("skuNo", item.getSkuNo());
-            jsonObject.set("requireDate", requireDate);
+            jsonObject.set("requireDate", LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
             jsonObject.set("qty", item.getQty());
             jsonObject.set("baseQty", item.getQty());
             //对应金蝶含税单价
@@ -297,16 +302,30 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         }
 
         resultMap.put("detailList", list);
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
-            }
-            return Boolean.TRUE;
-        });
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (SoInfoEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 }

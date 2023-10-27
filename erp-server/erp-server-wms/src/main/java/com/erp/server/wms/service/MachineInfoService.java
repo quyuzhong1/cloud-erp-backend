@@ -154,12 +154,10 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @author Will
      * @date: 2023/5/23 17:41
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param operate
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据来源类型和来源id查找

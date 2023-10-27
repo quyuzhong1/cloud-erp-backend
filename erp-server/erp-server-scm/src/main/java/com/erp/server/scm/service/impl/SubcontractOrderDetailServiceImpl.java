@@ -38,6 +38,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -200,7 +201,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         checkSourceDetailQty(list,mainId);
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
-
+        //变更不更新bom版本
+        resultList.forEach(obj -> {
+            obj.setBomVersion(null);
+            obj.setBomHistoryId(null);
+        });
         this.saveOrUpdateBatch(resultList);
     }
 
@@ -358,7 +363,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
 
         //BOM信息
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -399,7 +404,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
 
             //bom信息
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 throw new ServiceException(ApiError.ERROR_95163);
             }
@@ -414,6 +419,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setVariantProperty(skuVO.getVariantProperty());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            detailEntity.setBomHistoryId(bomChildrenSkuDTO.getBomHistoryId());
             //仓库名称
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

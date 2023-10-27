@@ -14,7 +14,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.BiSettlementExchangeRateService;
 import com.erp.server.dmp.service.DmpShopInfoService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +45,7 @@ public class DmpFeignController extends BaseController {
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private PlatformService platformService;
@@ -96,7 +96,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
-         dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+         dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
     }
     
     
@@ -134,7 +134,7 @@ public class DmpFeignController extends BaseController {
     public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
         List<String> result=new ArrayList<>();
 
-        result = dmpSyncTaskService.listKingdeeCode(conditon);
+        result = dmpPullTaskService.listKingdeeCode(conditon);
 
         return result;
     }

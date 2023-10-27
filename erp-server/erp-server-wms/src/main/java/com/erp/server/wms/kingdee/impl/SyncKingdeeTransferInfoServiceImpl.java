@@ -1,36 +1,40 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.service.TransferInfoDetailService;
-import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,26 +53,23 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private TransferInfoService transferInfoService;
-
-    @Resource
     private TransferInfoDetailService transferInfoDetailService;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private WarehouseService warehouseService;
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(TransferInfoEntity entity, String operate) {
         //第三方马帮拉取数据无推送
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return;
         }
-        //更新同步状态为待同步
-        transferInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -77,10 +78,18 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("id", entity.getId());
         //调拨单号
         resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         //调拨类型
         resultMap.put("type", entity.getType());
         //调拨日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //调拨方向
         resultMap.put("transferDirection", entity.getTransferDirection());
@@ -170,17 +179,30 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         }
         resultMap.put("list", list);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return transferInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.IN_SYNC.getCode(), "",operate);
-            }
-            return Boolean.TRUE;
-        });
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

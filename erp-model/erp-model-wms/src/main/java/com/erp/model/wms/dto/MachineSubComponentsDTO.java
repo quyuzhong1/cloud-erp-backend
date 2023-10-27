@@ -109,7 +109,7 @@ public class MachineSubComponentsDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 子级SKU数量(前端需要的标识)
@@ -127,7 +127,7 @@ public class MachineSubComponentsDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 集合
@@ -163,9 +163,10 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         @NotBlank(message = "SKU不能为空")
         private String skuId;
+
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
     }
 }

@@ -241,14 +241,12 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * 修改金蝶同步状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据供应商id集合获取入库单量和入库数量

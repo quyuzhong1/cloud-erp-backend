@@ -1,27 +1,32 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingProfitService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
-import com.erp.server.wms.service.StocktakingProfitLossService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -47,10 +52,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
-
-    @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 同步金蝶
@@ -59,28 +61,39 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
      * @param operate
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(StocktakingProfitLossEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         if (Objects.isNull(entity)) {
             return;
         }
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        if (CollectionUtils.isEmpty(detailDbList)) {
-            return;
-        }
-        //更新同步状态为待同步
-        stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
         resultMap.put("id", entity.getId());
         //业务id
         resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         resultMap.put("sourceCode", entity.getSourceCode());
         //单据类型
         resultMap.put("billType", entity.getBillType().getCode());
         //单据日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailDbList)) {
+            return;
+        }
+
         String warehouseOrgCode = "";
         List<String> warehouseIdList = detailDbList.stream().map(StocktakingProfitLossDetailDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
         //仓库
@@ -117,14 +130,30 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_STOCKTAKING_PROFIT_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
-            }
-            return Boolean.TRUE;
-        });
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (StocktakingProfitLossEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_STOCKTAKING_PROFIT_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

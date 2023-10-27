@@ -1,35 +1,39 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.service.OtherInstockDetailService;
-import com.erp.server.wms.service.OtherInstockService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @description: 同步其他入库单
@@ -43,13 +47,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private OtherInstockService otherInstockService;
-
-    @Resource
     private OtherInstockDetailService otherInstockDetailService;
-
-    @Resource
-    private MQProducerService mQProducerService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -57,12 +55,14 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(OtherInstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-        //更新同步状态为待同步
-        otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -70,10 +70,18 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("id", entity.getId());
         //其他出库单号
         resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         //其他出库类型
         resultMap.put("type", entity.getType());
         //出库日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
 
@@ -156,17 +164,30 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         }
         resultMap.put("list", list);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "",operate);
-            }
-            return Boolean.TRUE;
-        });
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (OtherInstockEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

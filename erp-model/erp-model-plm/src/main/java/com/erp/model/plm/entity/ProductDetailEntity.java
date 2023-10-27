@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -126,18 +125,6 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
      * 是否变更（0否，1是）
      */
     private Integer isChange;
-
-    /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-
-    /**
-     * 同步金蝶时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
 
     /**
      * 同步金蝶id

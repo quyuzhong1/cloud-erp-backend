@@ -134,7 +134,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 更新明细备注
      * @author Will

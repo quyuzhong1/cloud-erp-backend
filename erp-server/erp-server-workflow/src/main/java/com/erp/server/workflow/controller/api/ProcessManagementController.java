@@ -5,8 +5,11 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -29,6 +35,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
+@LogSystemModule("流程管理")
 @RequestMapping("/process/management")
 public class ProcessManagementController extends BaseController {
 
@@ -45,6 +52,7 @@ public class ProcessManagementController extends BaseController {
         ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
         return success(result);
     }
+
     @PostMapping("/batchStart")
     public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
         List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);
@@ -58,7 +66,7 @@ public class ProcessManagementController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
-        ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(dto);
+        ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(dto,Boolean.TRUE);
         return success(resultDTO);
     }
 

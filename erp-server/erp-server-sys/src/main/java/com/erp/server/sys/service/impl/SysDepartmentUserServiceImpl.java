@@ -21,10 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -115,11 +112,18 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     public boolean saveBatchDepartmentUser(BatchSysDepartUserDTO dto) {
         Set<String> userIds = dto.getUserIds();
         String departmentId = dto.getDepartmentId();
-        //先删除对应的关系
-        removeDepartmentUser(departmentId, userIds);
+
+        List<SysDepartmentUserEntity> dbList = this.listByDepartmentIds(Arrays.asList(departmentId));
+        List<String> existUserIdList=dbList.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
+        List<String> removeIdList = dbList.stream().filter(d -> !userIds.contains(d.getUserId())).
+                map(SysDepartmentUserEntity::getId).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(removeIdList)){
+             this.removeByIds(removeIdList);
+        }
+        List<String> addUserList=userIds.stream().filter(a->!existUserIdList.contains(a)).collect(Collectors.toList());
         //在添加
         List<SysDepartmentUserEntity> addList = new LinkedList<>();
-        for (String userId : userIds) {
+        for (String userId : addUserList) {
             SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
             entity.setUserId(userId);
             entity.setDepartmentId(departmentId);

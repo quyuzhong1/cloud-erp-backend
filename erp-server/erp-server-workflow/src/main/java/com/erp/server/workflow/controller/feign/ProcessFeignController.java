@@ -4,6 +4,7 @@ import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -49,6 +50,8 @@ public class ProcessFeignController extends BaseController {
     @Resource
     private ProcessTaskManagementService processManagementTaskService;
 
+    @Resource
+    private ProcessBusinessService processBusinessService;
 
     //启动流程
     @Deprecated
@@ -286,7 +289,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
-        return success(processManagementService.approveProcess(dto));
+        return success(processManagementService.approveProcess(dto,Boolean.TRUE));
     }
 
     /**
@@ -371,6 +374,15 @@ public class ProcessFeignController extends BaseController {
     public List<ProcessTaskManagementEntity> listProcessByBusinessId(@RequestBody List<String> businessIds) {
         List<ProcessTaskManagementEntity> resultList = processManagementTaskService.listProcessByBusinessId(businessIds);
         return resultList;
+    }
+
+
+    /**
+     * 根据业务类型查询流程信息
+     */
+    @PostMapping("/getProcessBusiness")
+    public ProcessBusinessEntity getProcessBusiness(@RequestBody String businessKey) {
+        return processBusinessService.getProcessBusiness(businessKey,"", Boolean.FALSE);
     }
 
 }

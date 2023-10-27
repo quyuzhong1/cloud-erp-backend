@@ -3,12 +3,14 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.WorkOptionService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,7 @@ import java.util.List;
  * @since 2023-04-11
  */
 @RestController
+@LogSystemModule("首页工作台")
 @RequestMapping("/workOption")
 public class WorkOptionController extends BaseController {
     @Resource

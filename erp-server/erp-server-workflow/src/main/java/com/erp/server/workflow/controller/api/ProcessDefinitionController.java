@@ -3,8 +3,11 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.server.workflow.service.ProcessDefinitionService;
@@ -27,6 +30,7 @@ import javax.validation.Valid;
  */
 @Slf4j
 @RestController
+@LogSystemModule("流程设计")
 @RequestMapping("/process/definition")
 public class ProcessDefinitionController extends BaseController {
 

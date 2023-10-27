@@ -82,4 +82,12 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return
      */
     List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds);
+
+    /**
+     * 查询前置审批任务
+     * @param taskManagementId
+     * @param processInstanceId
+     * @return
+     */
+    List<ProcessTaskManagementEntity> listPreActivityTask(String taskManagementId, String processInstanceId);
 }

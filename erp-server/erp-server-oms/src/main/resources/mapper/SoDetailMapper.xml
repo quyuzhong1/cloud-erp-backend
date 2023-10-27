@@ -133,6 +133,7 @@
         sd.price,
         sd.tax_rate,
         sd.amount,
+        sd.all_amount_local_currency,
         sd.currency,
         sd.currency_symbol,
         sd.exchange_rate,

@@ -1673,4 +1673,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .set(StringUtils.isNotBlank(syncOperate), WarehouseReceiveEntity::getSyncOperate, syncOperate)
                 .update();
     }
+
+    /**
+     * 更改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeId
+     * @return void
+     * @author yl
+     * @date 2023-08-14 17:47
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(WarehouseReceiveEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
 }

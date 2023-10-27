@@ -37,6 +37,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.enums.SysDictBasicEnum;
@@ -46,11 +47,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -370,6 +367,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -396,6 +394,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
+        //采购订单删除
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return Boolean.TRUE;
     }
 
@@ -842,6 +842,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -1142,13 +1143,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(PurchaseOrderEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(PurchaseOrderEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), PurchaseOrderEntity::getSyncOperate,syncOperate)
                 .update();
     }
 

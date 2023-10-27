@@ -34,7 +34,7 @@ public class ProductBomHistoryDTO {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
     }
 
 

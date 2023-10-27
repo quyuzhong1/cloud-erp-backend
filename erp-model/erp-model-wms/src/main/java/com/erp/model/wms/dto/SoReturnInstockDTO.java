@@ -4,8 +4,6 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -812,7 +810,7 @@ public class SoReturnInstockDTO {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 拆卸数量
@@ -896,8 +894,8 @@ public class SoReturnInstockDTO {
         /**
          * bom版本
          */
-        @NotNull(message = "BOM版本不能为空")
-        private Integer bomVersion;
+        @NotBlank(message = "BOM版本不能为空")
+        private String bomVersion;
         /**
          * 子级skuId
          */
