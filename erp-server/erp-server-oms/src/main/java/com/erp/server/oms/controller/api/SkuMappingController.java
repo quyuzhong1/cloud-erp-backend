@@ -2,9 +2,13 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +28,7 @@ import java.util.List;
  * @since 2023-06-28
  */
 @RestController
+@LogSystemModule("sku对照表")
 @RequestMapping("/skuMaping")
 public class SkuMappingController extends BaseController {
 
@@ -103,6 +108,7 @@ public class SkuMappingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板sku对照表")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(@RequestParam(value = "importType") String type, HttpServletResponse response) {
         skuMappingService.downloadTemplate(type,response);
@@ -116,6 +122,7 @@ public class SkuMappingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku对照表")
     @PostMapping("/exportPlatformSku")
     public ApiResult exportPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = skuMappingService.exportPlatformSku(dto, response);
@@ -138,6 +145,7 @@ public class SkuMappingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更改sku对照表:id={id},产品sku={productSkuId}")
     @PostMapping("/updateWarehouseSku")
     public ApiResult updateWarehouseSku(@RequestBody @Valid SkuMappingDTO.UpdateWarehouseSkuDTO dto) {
         String id = skuMappingService.updateWarehouseSku(dto);
