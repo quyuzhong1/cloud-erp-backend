@@ -197,7 +197,7 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 是否加急（false否，true是）
@@ -552,7 +552,7 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
 
     }

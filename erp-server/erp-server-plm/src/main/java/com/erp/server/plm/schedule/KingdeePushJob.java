@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.BomInfoService;
+import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -19,6 +21,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -36,6 +39,9 @@ public class KingdeePushJob {
 
     @Resource
     private BomInfoService bomInfoService;
+
+    @Resource
+    private ProductBomHistoryService productBomHistoryService;
 
     @Resource
     private SyncKingdeeBomInfoService syncKingdeeBomInfoService;
@@ -80,6 +86,35 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
+            try {
+                syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            } catch (Exception e) {
+                XxlJobHelper.log("BOM【{}】推送金蝶失败,error = {}",obj.getParentSkuNo(),e);
+                log.error("BOM【{}】推送金蝶失败",obj.getParentSkuNo(),e);
+            }
+        });
+    }
+
+    /**
+     * 推送bom历史数据
+     */
+    @XxlJob("kingdeePushBomHistory")
+    public void kingdeePushBomHistory() {
+        List<ProductBomHistoryEntity> list = productBomHistoryService.lambdaQuery()
+                .in(ProductBomHistoryEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(ProductBomHistoryEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(ProductBomHistoryEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .list();
+        if (ObjectUtils.isEmpty(list)) {
+            log.info("无需要同步的bom历史信息");
+            return;
+        }
+        List<String> bomIdList = list.stream().map(ProductBomHistoryEntity::getBomId).distinct().collect(Collectors.toList());
+        List<BomInfoEntity> bomList = bomInfoService.listByIds(bomIdList);
+        if (ObjectUtils.isEmpty(bomList)) {
+            log.info("kingdeePushBomHistory>>>>>>>>>>无需要同步的bom信息");
+            return;
+        }
+        bomList.forEach(obj->{
             try {
                 syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             } catch (Exception e) {

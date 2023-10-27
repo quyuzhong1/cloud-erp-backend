@@ -65,13 +65,19 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
      * 参照版本
      */
     @TableField("reference_version")
-    private Integer referenceVersion;
+    private String referenceVersion;
 
     /**
      * 备注
      */
     @TableField("remark")
     private String remark;
+
+    /**
+     * bom历史版本id
+     */
+    @TableField("bom_history_id")
+    private String bomHistoryId;
 
     @TableField(exist = false)
     private List<MachineSubComponentsDTO.UpdateDTO> subComponentsList;

@@ -42,4 +42,11 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
      * @return void
      */
     void saveBomApprovalHistory(BomInfoEntity bom);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/3/9 10:04
+     * @return Boolean
+     */
+    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
 }
