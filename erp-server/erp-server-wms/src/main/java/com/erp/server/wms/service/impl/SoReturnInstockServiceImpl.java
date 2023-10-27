@@ -1466,7 +1466,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
          */
 
         //获取报价信息
-        List<String> supplierIdList = list.stream().map(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())).collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId()).collect(Collectors.toList());
         List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
         Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())));
@@ -1510,6 +1510,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 addDetailDTO.setCurrency(supplierSkuPrice.getCurrency());
                 addDetailDTO.setCurrencySymbol(supplierSkuPrice.getCurrencySymbol());
                 addDetailList.add(addDetailDTO);
+
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
             purchaseReturnOrderService.add(addDTO);
