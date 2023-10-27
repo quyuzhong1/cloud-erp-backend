@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -146,7 +145,6 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
                 save = apiUtils.save(paramFirst);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(json), JSONUtil.toJsonStr(ex), type, ApiSendStatusEnum.FAILURE.getCode());
                 sendWarnMsg(businessId);
                 return;
             }
@@ -168,23 +166,6 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
-            return;
-        }
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            }else{
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
-            }
-            return;
-        }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(apiUtils,id);

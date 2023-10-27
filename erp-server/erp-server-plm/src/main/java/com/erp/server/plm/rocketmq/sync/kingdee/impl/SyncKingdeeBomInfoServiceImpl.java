@@ -3,26 +3,22 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
-import com.erp.server.plm.service.BomSkuService;
-import io.seata.spring.annotation.GlobalTransactional;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -49,9 +44,6 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
     @Resource
     private ProductBomSkuHistoryService productBomSkuHistoryService;
-
-    @Resource
-    private BomSkuService bomSkuService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -80,8 +72,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
         for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
             Map<String, Object> resultMap = new HashMap<>();
-            if (SyncStatusEnum.SUCCESS_SYNC.getCode().equals(productBomHistoryEntity.getSyncKingdeeStatus())) {
-                continue;
+            DmpPushTaskEntity bomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(bomHistoryTask.getStatus())  && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(bomHistoryTask.getStatus())) {
+                return;
             }
             //金蝶id
             resultMap.put("syncKingdeeId",productBomHistoryEntity.getSyncKingdeeId());
@@ -124,15 +117,14 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      * @description: 生成任务
      * @author Will
      * @date: 2023/10/16 9:17
-     * @param entity
      * @param operate
      * @param resultMap
      */
     private void sendMqAndSaveTask (String operate,Map<String, Object> resultMap) {
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId((String)obj.get("id"));
-        taskFeignDTO.setSourceCode((String)obj.get("version"));
+        taskFeignDTO.setSourceId((String)resultMap.get("id"));
+        taskFeignDTO.setSourceCode((String)resultMap.get("version"));
         taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName());
