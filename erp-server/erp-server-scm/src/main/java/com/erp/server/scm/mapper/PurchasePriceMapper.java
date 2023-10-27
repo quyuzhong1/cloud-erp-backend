@@ -50,4 +50,6 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return List<SupplierSkuPrice>
      */
     List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@Param("ids") List<String> ids);
+
+
 }

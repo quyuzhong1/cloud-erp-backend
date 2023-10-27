@@ -224,7 +224,6 @@
         WHERE p.rank=1
     </select>
 
-
     <select id="listAllSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
         SELECT
             pp.supplier_id,
