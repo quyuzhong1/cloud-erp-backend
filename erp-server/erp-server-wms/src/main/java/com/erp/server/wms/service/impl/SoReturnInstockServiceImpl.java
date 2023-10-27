@@ -9,7 +9,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -1502,7 +1505,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //报价单价
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(obj -> obj.getSupplierId().equals(handleDetailDTO.getChildSupplierId()) && qty > obj.getMinQty() && obj.getMaxQty() >= qty ).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(supplierSkuPrice)) {
-                    String error = String.format("SKU【%s】未找到供应商【%s】数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(),handleDetailDTO.getChildSupplierId(), qty);
+                    String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(), qty);
                     throw new ServiceException(new ApiResult(1,error));
                 }
                 addDetailDTO.setReturnPrice(supplierSkuPrice.getTaxPrice());
