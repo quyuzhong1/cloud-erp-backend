@@ -1,7 +1,7 @@
 package com.erp.server.dmp.push.service.mabang;
 
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public interface MabangInOutStockService {
      * @param mabangInOutStock
      * @param inventoryInOutEnum
      */
-    void sendToMabangInOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum);
+    void sendToMabangInOutStock(DmpPullTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum);
 
     /**
      * 未配置监控仓库通知

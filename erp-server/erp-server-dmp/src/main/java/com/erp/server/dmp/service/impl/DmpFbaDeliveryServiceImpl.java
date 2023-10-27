@@ -12,13 +12,13 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.erp.server.dmp.service.DmpFbaDeliveryService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
     private DmpFbaDeliveryDetailService dmpFbaDeliveryDetailService;
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Autowired
     private MQProducerService mqProducerService;
@@ -75,7 +75,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         }
 
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
         dmpSyncTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
         dmpSyncTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
@@ -86,7 +86,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(fbaDeliveryEntity);
         dmpSyncTaskEntity.setMqData(mqData);
-        dmpSyncTaskService.save(dmpSyncTaskEntity);
+        dmpPullTaskService.save(dmpSyncTaskEntity);
 
         if(PlatformEnum.MABANG.getDesc().equals(fbaDeliveryEntity.getPlatformSign())) {
             // 发送到ERP WMS系统，生成加工单

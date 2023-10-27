@@ -258,14 +258,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 更改销售订单金蝶推送的状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 方法说明
@@ -418,4 +416,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return void
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+
 }

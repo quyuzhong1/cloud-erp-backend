@@ -699,6 +699,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date 2023-05-15 14:25
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<CustomerInfoEntity> list = this.listByIds(ids);
         //审核中
@@ -744,6 +746,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<CustomerInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -765,6 +768,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String content = "删除客户[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
+            //推送金蝶
+            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
         return result;
     }
@@ -849,6 +854,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> customerList = this.listByIds(ids);
@@ -1017,13 +1023,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(CustomerInfoEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), CustomerInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), CustomerInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -1362,9 +1365,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 log.info("客户【{}】已经存在金蝶id，不处理", customerName);
                 continue;
             }
-            lambdaUpdate().set(CustomerInfoEntity::getSyncKingdeeId, kingdeeId).set(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(CustomerInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+            lambdaUpdate().set(CustomerInfoEntity::getSyncKingdeeId, kingdeeId)
                     .eq(CustomerInfoEntity::getId, customerInfoEntity.getId())
                     .update();
         }
@@ -1397,8 +1398,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public CustomerInfoEntity getByName(String customerName) {
 
-        return this.lambdaQuery().eq(CustomerInfoEntity::getName,customerName).
-                eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(CustomerInfoEntity::getName, customerName).
+                eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).last("LIMIT 1").one();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByNameList(List<String> customerNameList) {
+        if (CollectionUtils.isEmpty(customerNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).
+                in(CustomerInfoEntity::getName,customerNameList).list();
     }
 
     /**

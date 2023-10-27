@@ -6,7 +6,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -15,6 +17,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -30,16 +34,21 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,10 +98,15 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+
     @Resource
     private InventoryHisService inventoryHisService;
+
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -390,6 +404,10 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+
+        List<String> sourceIdList = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
+        DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc());
+        List<DmpPushTaskEntity> pushTaskList = dmpMqFeign.listByParam(listDTO);
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
@@ -399,6 +417,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+            if (CollectionUtils.isNotEmpty(pushTaskList)) {
+                String status = pushTaskList.stream().filter(obj -> obj.getSourceId().equals(data.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getStatus())).orElse("");
+                String statusName = SyncStatusEnum.getNameByCode(status);
+                data.setSyncKingdeeStatus(status);
+                data.setSyncKingdeeStatusName(statusName);
             }
             InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
             data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));

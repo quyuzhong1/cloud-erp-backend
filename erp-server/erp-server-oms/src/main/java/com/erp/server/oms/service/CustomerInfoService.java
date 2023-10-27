@@ -254,14 +254,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 修改金蝶同步信息
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
 
     /**
@@ -324,4 +322,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return com.erp.model.oms.entity.CustomerInfoEntity
      */
     CustomerInfoEntity getByName(String customerName);
+
+    /**
+     * 根据客户名称获取信息
+     * @author yl
+     * @date 2023-10-26 15:18
+     * @param customerNameList
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     */
+    List<CustomerInfoEntity> listByNameList(List<String> customerNameList);
 }

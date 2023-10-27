@@ -18,6 +18,7 @@ import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,6 +55,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, null);
@@ -69,7 +70,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             return;
         }
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
     /**
@@ -82,6 +83,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, dto.getId());
@@ -96,12 +98,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         this.updateById(entity);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
         if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
             List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_UPDATE.getCode()));
+                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             }
         }
         return Boolean.TRUE;
@@ -191,6 +193,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteById(String id) {
         checkId(id);
         BasicCategoryEntity entity = this.getById(id);
@@ -383,11 +386,9 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return  this.lambdaUpdate()
-                .eq(BasicCategoryEntity::getId,categoryId)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(BasicCategoryEntity::getId,id)
                 .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }

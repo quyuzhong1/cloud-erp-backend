@@ -58,6 +58,11 @@ public class SoOutstockDTO implements Serializable {
         private String id;
 
         /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
          * code
          */
         private String code;

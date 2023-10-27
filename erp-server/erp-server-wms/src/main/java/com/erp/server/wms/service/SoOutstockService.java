@@ -217,14 +217,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     /**
      * 修改金蝶同步状态
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @Author Luo_WG
      * @Date 2023/6/1 18:55
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据code 获取到销售出库单信息
