@@ -2774,6 +2774,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getNo));
 
         for (Map.Entry<String, List<B2BSoImportExcelDTO>> entry : map.entrySet()) {
+            String no = entry.getKey();
             List<B2BSoImportExcelDTO> list = entry.getValue();
             SoInfoEntity addSo = new SoInfoEntity();
             String mainId = IdWorker.getIdStr();
@@ -3050,8 +3051,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             try {
+                //错误的编号集合
+                List<String> errorNoList = errorList.stream().map(B2BSoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+
                 //表示可以添加
-                if (isAdd) {
+                if (isAdd&&!errorNoList.contains(no)) {
                     // 金额折扣处理
                     SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
                     for (int i = 0; i < soDetailList.size(); i++) {
@@ -3075,7 +3079,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             }
             //当添加是不
-            if(!isAdd){
+            if (!isAdd) {
                 errorList.addAll(list);
             }
 

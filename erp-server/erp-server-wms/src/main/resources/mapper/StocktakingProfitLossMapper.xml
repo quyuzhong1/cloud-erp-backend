@@ -146,7 +146,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        spl.id DESC,spld.create_time DESC
+        spl.id DESC,spld.id DESC
     </select>
     <!--导出数据-->
     <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$ExportViewDTO">
@@ -265,7 +265,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        spl.id DESC,spld.create_time DESC
+        spl.id DESC,spld.id DESC
     </select>
     <!--  获取到扣减库存所需的参数-->
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">
