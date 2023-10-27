@@ -1,30 +1,23 @@
 package com.common.business.aspect;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zdy
@@ -38,7 +31,9 @@ import java.util.Objects;
 @Component
 public class DataIdempotentAspect {
     @Resource
-    private RedisUtil redisUtil;
+    private RedissonClient redissonClient;
+
+    private static final ThreadLocal<List<RLock>> LOCK_THREAD = new ThreadLocal<>();
 
     @Pointcut("@annotation(com.common.business.annotation.DataIdempotent)")
     public void dataPointCut() {
@@ -50,48 +45,87 @@ public class DataIdempotentAspect {
         //获取到方法的注解对象
         DataIdempotent idempotent = method.getAnnotation(DataIdempotent.class);
         //单位 秒
-        long interval = 60;
-        if (idempotent.interval() > 0) {
-            interval = idempotent.timeUnit().toSeconds(idempotent.interval());
-        }
+        long lockTime = idempotent.lockTime();
+        long tryTime = idempotent.tryTime();
         String businessType = idempotent.businessType();
         //获取传参
         Object obj = proceedingJoinPoint.getArgs()[0];
-        String id = "";
+
+        List<Object> objList = new ArrayList<>();
         if (StringUtils.isNotBlank(idempotent.keyIdName())) {
             if (obj instanceof String || obj instanceof Long || obj instanceof Integer) {
-                id = String.valueOf(obj);
+                objList.add(String.valueOf(obj));
+            } else if (obj instanceof List) {
+                objList = (List<Object>) obj;
+            } else if (obj instanceof String[]) {
+                objList = Arrays.asList((String[]) obj);
             } else if (Objects.nonNull(obj)) {
                 Map map = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
-                id = String.valueOf(map.get(idempotent.keyIdName()));
+                Object object = map.get(idempotent.keyIdName());
+                //单个参数 或 list
+                if (object instanceof String || object instanceof Long || object instanceof Integer) {
+                    objList.add(String.valueOf(object));
+                } else if (object instanceof String[]) {
+                    objList = Arrays.asList((String[]) object);
+                } else if (object instanceof List) {
+                    objList = (List<Object>) object;
+                }
             }
         }
-        String submitKey = "BUSINESS:" + id + "_" + businessType;
-        boolean flag = false;
-        //判断缓存中是否有此key
-        if (redisUtil.hasKey(submitKey)) {
-            log.info("key={},interval={},记录占用中", submitKey, interval);
-        } else {
-            //如果没有表示不是重复提交并设置key存活的缓存时间
-            redisUtil.set(submitKey, "", interval);
-            flag = true;
-            System.out.println("记录未操作");
-        }
-        if (flag) {
-            Object result;
-            try {
-                result = proceedingJoinPoint.proceed();
-            } catch (Throwable e) {
-                /*异常通知方法*/
-                log.error("异常通知方法>目标方法名{},异常为：{}", method.getName(), e);
-                throw e;
-            } finally {
-                redisUtil.del(submitKey);
+        if (CollectionUtil.isNotEmpty(objList)) {
+            List<RLock> rLocks = new ArrayList<>();
+            objList.forEach(o -> {
+                try {
+                    String submitKey = "BUSINESS:" + o + "_" + businessType;
+                    log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, lockTime);
+                    RLock clientLock = redissonClient.getLock(submitKey);
+
+                    //不设置 lockTime watch dog会 默认 锁定30s 10s重试
+                    boolean locked;
+                    locked = clientLock.tryLock(tryTime,lockTime, TimeUnit.SECONDS);
+                    if (!locked) {
+                        log.error("{}上锁失败", submitKey);
+                        throw new ServiceException(ApiError.ERROR_1026);
+                    }
+//                    clientLock.lock(lockTime, TimeUnit.SECONDS);
+                    rLocks.add(clientLock);
+                    log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, lockTime);
+                } catch (Exception e) {
+                    //存在不能上锁情况时 释放已上锁对象
+                    if (CollectionUtil.isNotEmpty(rLocks)) {
+                        // 无需判断锁是否存在，直接调用 unlock
+                        rLocks.forEach(rLock -> {
+                            if (rLock.isLocked()) {
+                                rLock.unlock();
+                            }
+                        });
+                    }
+                    throw new ServiceException(ApiError.ERROR_1026);
+                }
+            });
+            if (CollectionUtil.isNotEmpty(rLocks)) {
+                LOCK_THREAD.set(rLocks);
             }
-            return result;
-        } else {
-            throw new ServiceException(StrUtil.format(ApiError.GLOBAL_EXCEPTION_ID_IN_PROCESS.msg, id));
         }
+        // 调用目标方法
+        return proceedingJoinPoint.proceed();
+    }
+
+    /*** 处理完请求后执行
+     *  @param joinPoint 切点
+     */
+    @AfterReturning(value = "dataPointCut()", returning = "apiResult")
+    public void doAfterReturning(JoinPoint joinPoint, Object apiResult) {
+        handleData();
+    }
+
+    /*** 拦截异常操作
+     * ** @param joinPoint 切点
+     * * @param e         异常
+     * */
+    @AfterThrowing(value = "dataPointCut()", throwing = "e")
+    public void doAfterThrowing(JoinPoint joinPoint, Exception e) {
+        handleData();
     }
 
     /**
@@ -111,46 +145,23 @@ public class DataIdempotentAspect {
         return resultMethod;
     }
 
-    /**
-     * 参数拼装
-     */
-    private String argsToString(Object[] paramsArray) {
-        StringBuilder params = new StringBuilder();
-        if (paramsArray != null && paramsArray.length > 0) {
-            for (Object o : paramsArray) {
-                if (!ObjectUtils.isEmpty(o) && !isFilterObject(o)) {
-                    try {
-                        params.append(JSONObject.toJSONString(o)).append(" ");
-                    } catch (Exception e) {
-                        e.printStackTrace();
+    private void handleData() {
+        List<RLock> rLocks = LOCK_THREAD.get();
+        if (CollectionUtil.isNotEmpty(rLocks)) {
+            try {
+                rLocks.forEach(rLock -> {
+                    log.info("任务执行完成，当前锁状态：{}", rLock.isLocked());
+                    // 无需判断锁是否存在，直接调用 unlock
+                    if (rLock.isLocked()) {
+                        rLock.unlock();
+                        log.info("释放锁");
                     }
-                }
+                });
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            } finally {
+                LOCK_THREAD.remove();
             }
         }
-        return params.toString().trim();
-    }
-
-    /**
-     * 判断是否是需要过滤的对象
-     */
-    @SuppressWarnings("rawtypes")
-    public boolean isFilterObject(final Object o) {
-        Class<?> clazz = o.getClass();
-        if (clazz.isArray()) {
-            return clazz.getComponentType().isAssignableFrom(MultipartFile.class);
-        } else if (Collection.class.isAssignableFrom(clazz)) {
-            Collection collection = (Collection) o;
-            for (Object value : collection) {
-                return value instanceof MultipartFile;
-            }
-        } else if (Map.class.isAssignableFrom(clazz)) {
-            Map map = (Map) o;
-            for (Object value : map.entrySet()) {
-                Map.Entry entry = (Map.Entry) value;
-                return entry.getValue() instanceof MultipartFile;
-            }
-        }
-        return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
-                || o instanceof BindingResult;
     }
 }
