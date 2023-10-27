@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.GlobalExceptionHandler;
@@ -417,10 +418,31 @@ public class SysLoggingAspect {
         return dto;
     }
 
+    public static void main(String[] args) {
+        String json = "[\n" +
+                "    \"1717859116346511361\"\n" +
+                "]";
+        JSONArray jsonArray = new JSONArray(json);
+        if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
+            System.out.println("是");
+        }
+
+        System.out.println(JSONUtil.isTypeJSONArray(json));
+
+    }
+
     /**
      * 获取批量处理IDS
      */
     private static List<String> parseIds(LogAction logAction, String requestParams) {
+        // 兼容直接List<String>数组提交
+        if (JSONUtil.isTypeJSONArray(requestParams)){
+            JSONArray jsonArray = new JSONArray(requestParams);
+            if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
+                return jsonArray.toList(String.class);
+            }
+        }
+
         String idsKey = logAction.value().checkAndGetKeyIdName(logAction.keyIdName());
         if (StringUtils.isBlank(idsKey)) {
             throw new ServiceException("未找到批量查询字段:" + idsKey);
