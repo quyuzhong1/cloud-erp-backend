@@ -292,7 +292,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if(null == inventoryDetail || (inventoryDetail.getQty()+transactionFlow.getQty()<0 && !this.allowNegativeInventory(transactionFlow.getWarehouseId()))) {
             String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
             log.error(errMsg);
-//            throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
+            throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         return inventoryDetail;
     }
