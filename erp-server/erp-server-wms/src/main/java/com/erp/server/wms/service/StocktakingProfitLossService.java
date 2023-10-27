@@ -4,12 +4,10 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
-import com.common.business.service.SuperService;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -91,13 +89,11 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * 更改金蝶同步状态
      * @author yl
      * @date 2023-08-14 17:47
-     * @param businessId
-     * @param status
+     * @param id
      * @param syncKingdeeId
-     * @param syncOperate
      * @return void
      */
-    Boolean updateSyncKingdeeStatus(String businessId, String status, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 流程监听后

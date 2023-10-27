@@ -1,0 +1,21 @@
+package com.erp.server.scm.kingdee;
+
+import com.erp.model.scm.entity.PurchaseChangeEntity;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: 采购变更单推送金蝶接口
+ * @date 2023/9/28 16:18
+ */
+public interface SyncKingdeePurchaseChangeService {
+
+    /**
+     * @description:推送金蝶
+     * @author Will
+     * @date: 2023/4/11 18:06
+     * @param entity
+     * @parChangerate
+     */
+    void syncDataToKingdee(PurchaseChangeEntity entity, String operate);
+}

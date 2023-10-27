@@ -1,8 +1,6 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
@@ -83,24 +81,12 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
 
-
-    /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-
-    /**
-     * 同步金蝶时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
-
     /**
      * 同步金蝶id
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
 
     /**
      * 库存组织
@@ -113,12 +99,6 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
      */
     @TableField("inventory_org_name")
     private String inventoryOrgName;
-
-    /**
-     * 同步操作
-     */
-    @TableField("sync_operate")
-    private String syncOperate;
 
     /**
      * 备注

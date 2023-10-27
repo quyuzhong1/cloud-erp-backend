@@ -1,32 +1,44 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OptChangeTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractChangeService;
-import com.erp.server.scm.service.*;
+import com.erp.server.scm.service.SubcontractChangeDetailService;
+import com.erp.server.scm.service.SubcontractOrderDetailService;
+import com.erp.server.scm.service.SubcontractOrderService;
+import com.erp.server.scm.service.SupplierService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -37,12 +49,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubcontractChangeService {
-
-    @Resource
-    private MQProducerService mQProducerService;
-
-    @Resource
-    private SubcontractChangeService subcontractChangeService;
 
     @Resource
     private SubcontractChangeDetailService subcontractChangeDetailService;
@@ -65,16 +71,17 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+
     /**
      * 组装数据发送到金蝶
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-
-        //更新同步状态为待同步
-        subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //如果上游单据未发送成功则无需发送
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
@@ -82,11 +89,11 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
-        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+        DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subContractOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subContractOrderTask.getStatus())) {
             log.error("委外订单未推送成功，不支持推送委外变更单，委外订单单号【{}】",subcontractOrderEntity.getCode());
             return;
         }
-
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -94,8 +101,17 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         resultMap.put("code",entity.getCode());
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         //采购日期
-        resultMap.put("billDate",entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         //变更原因
         resultMap.put("changeReason",entity.getChangeReason());
 
@@ -153,7 +169,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("price",detailEntity.getPrice());
             //单据日期
-            jsonObject.set("billDate",entity.getBillDate());
+            jsonObject.set("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
@@ -203,17 +219,30 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         }
         resultMap.put("list",list);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SUBCONTRACT_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.IN_SYNC.getCode(),"",operate);
-            }
-            return Boolean.TRUE;
-        });
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (SubcontractChangeEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SUBCONTRACT_CHANGE.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SUBCONTRACT_CHANGE_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

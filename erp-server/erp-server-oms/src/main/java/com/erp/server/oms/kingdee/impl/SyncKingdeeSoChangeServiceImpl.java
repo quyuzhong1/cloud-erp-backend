@@ -1,12 +1,14 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
@@ -16,23 +18,24 @@ import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +54,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
 
     @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private SoInfoService soInfoService;
@@ -88,8 +91,19 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @date 2023-05-30 11:50
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoChangeEntity entity, String operate) {
         String id = entity.getId();
+
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", id);
+        //编码
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -100,18 +114,13 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         if (Objects.isNull(soInfo) || Objects.isNull(soInfoEntity)) {
             return;
         }
-        //更新同步状态为待同步
-        soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //填充数据
         fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
-        Map<String, Object> resultMap = new HashMap<>();
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //业务id
-        resultMap.put("id", id);
-        //编码
-        resultMap.put("code", entity.getCode());
+
         List<String> orgIdList = new ArrayList<>(2);
         //库存组织
         String warehouseOrgId = soInfo.getWarehouseOrgId();
@@ -147,7 +156,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
-        resultMap.put("billDate", soInfo.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(soInfo.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         //客户
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
@@ -203,7 +212,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             jsonObject.set("skuNo", item.getSkuNo());
             jsonObject.set("changeType", item.getChangeType().getCode());
             jsonObject.set("soDetailId", item.getSoDetailId());
-            jsonObject.set("requireDate", requireDate);
+            jsonObject.set("requireDate", LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
             jsonObject.set("oldQty", item.getOldQty());
             if (isDelete) {
                 jsonObject.set("qty", item.getOldQty());
@@ -240,18 +249,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
 
         resultMap.put("detailList", list);
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
-            }
-            return Boolean.TRUE;
-        });
 
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
     }
 
 
@@ -315,5 +315,28 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         return entity;
     }
 
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getCode());
+        taskFeignDTO.setSourceType(SourceTypeEnum.SO_CHANGE.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
 
 }

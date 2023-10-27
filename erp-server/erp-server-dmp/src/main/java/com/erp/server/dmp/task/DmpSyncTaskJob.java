@@ -8,6 +8,11 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.DmpPushTaskService;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -35,7 +40,10 @@ import java.util.List;
 public class DmpSyncTaskJob {
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
+
+    @Autowired
+    private DmpPushTaskService dmpPushTaskService;
 
     @Autowired
     private MQProducerService mqProducerService;
@@ -45,7 +53,7 @@ public class DmpSyncTaskJob {
      * @return
      */
     @XxlJob("DmpSyncTaskJob")
-    public ReturnT<String> dmpSyncTaskJob() {
+    public ReturnT<String> dmpPullTaskJob() {
         XxlJobHelper.log("DmpSyncTaskJob start");
         String jobParam = XxlJobHelper.getJobParam();
         Integer diffMinute = 60;
@@ -58,10 +66,10 @@ public class DmpSyncTaskJob {
         }
 
         // 查询DMP同步数据
-        List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
-                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
-                .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
-                .orderByAsc(DmpSyncTaskEntity::getUpdateTime)
+        List<DmpPullTaskEntity> recordEntityList = dmpPullTaskService.lambdaQuery()
+                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .le(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
+                .orderByAsc(DmpPullTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))
                 .list();
         XxlJobHelper.log("DmpSyncTaskJob 查询到{}条待推送数据", recordEntityList.size());
@@ -69,13 +77,13 @@ public class DmpSyncTaskJob {
         if(CollectionUtil.isEmpty(recordEntityList)) {
             return ReturnT.SUCCESS;
         }
-        recordEntityList.sort(Comparator.comparing(DmpSyncTaskEntity::getUpdateTime));
-        for (DmpSyncTaskEntity recordEntity : recordEntityList) {
+        recordEntityList.sort(Comparator.comparing(DmpPullTaskEntity::getUpdateTime));
+        for (DmpPullTaskEntity recordEntity : recordEntityList) {
             try {
-               // 发送推送同步任务消息
+                // 发送推送同步任务消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
                 SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                        dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                        dmpSyncMqDTO, recordEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }
@@ -86,6 +94,55 @@ public class DmpSyncTaskJob {
             }
         }
         XxlJobHelper.log("DmpSyncTaskJob end");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * DMP推送同步任务消息到其他平台
+     * @return
+     */
+    @XxlJob("DmpPushTaskJob")
+    public ReturnT<String> dmpPushTaskJob() {
+        XxlJobHelper.log("DmpPushTaskJob start");
+        String jobParam = XxlJobHelper.getJobParam();
+        Integer diffMinute = 60;
+        Integer size = 1000;
+        if(StrUtil.isNotBlank(jobParam)){
+            XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            diffMinute = jsonParam.getInt("diffMinute", 60);
+            size = jsonParam.getInt("size", 1000);
+        }
+
+        // 查询DMP同步数据
+        List<DmpPushTaskEntity> recordEntityList = dmpPushTaskService.lambdaQuery()
+                .in(DmpPushTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .le(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
+                .orderByAsc(DmpPushTaskEntity::getUpdateTime)
+                .last(null != size && size > 0, StrUtil.format("limit {}", size))
+                .list();
+        XxlJobHelper.log("DmpPushTaskJob 查询到{}条待推送数据", recordEntityList.size());
+        // 按修改时间升序
+        if(CollectionUtil.isEmpty(recordEntityList)) {
+            return ReturnT.SUCCESS;
+        }
+        recordEntityList.sort(Comparator.comparing(DmpPushTaskEntity::getUpdateTime));
+        for (DmpPushTaskEntity recordEntity : recordEntityList) {
+            try {
+                // 发送推送同步任务消息
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
+                SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
+                        dmpSyncMqDTO, recordEntity.getSourceId());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                }
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
+                log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
+                XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
+            }
+        }
+        XxlJobHelper.log("DmpPushTaskJob end");
         return ReturnT.SUCCESS;
     }
 

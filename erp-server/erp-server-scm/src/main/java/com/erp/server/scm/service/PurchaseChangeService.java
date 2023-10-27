@@ -127,5 +127,8 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      */
     List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount(PermissionsDTO dto);
 
-
+    /**
+     * 更新金蝶推送信息
+     */
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId);
 }

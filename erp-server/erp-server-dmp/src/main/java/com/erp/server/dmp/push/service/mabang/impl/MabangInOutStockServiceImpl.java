@@ -14,13 +14,13 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -50,14 +50,14 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
     private MQProducerService mqProducerService;
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void inOutStock(MabangInOutStockDTO mabangInOutStock, String sourceId, String sourceCode,
                         String sourceType, String approveType) {
         // 保存任务数据
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskEntity.setSourceType(sourceType);
         dmpSyncTaskEntity.setSourceId(sourceId);
@@ -69,7 +69,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         String mqData = JSONObject.toJSONString(mabangInOutStock);
         dmpSyncTaskEntity.setMqData(mqData);
 
-        dmpSyncTaskService.save(dmpSyncTaskEntity);
+        dmpPullTaskService.save(dmpSyncTaskEntity);
 
         // 此处防止数据库还未保存成功，MQ先消费
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -95,10 +95,10 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             return;
         }
 
-        List<DmpSyncTaskEntity> dmpSyncTaskList = Lists.newArrayList();
+        List<DmpPullTaskEntity> dmpSyncTaskList = Lists.newArrayList();
         for(MabangInOutStockDTO mabangInOutStock : mabangInOutStockDTOList) {
             // 保存任务数据
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+            DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskEntity.setSourceType(sourceType);
             dmpSyncTaskEntity.setSourceId(sourceId);
@@ -110,7 +110,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             String mqData = JSONObject.toJSONString(mabangInOutStock);
             dmpSyncTaskEntity.setMqData(mqData);
 
-            dmpSyncTaskService.save(dmpSyncTaskEntity);
+            dmpPullTaskService.save(dmpSyncTaskEntity);
             dmpSyncTaskList.add(dmpSyncTaskEntity);
         }
 
@@ -118,7 +118,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                for(DmpSyncTaskEntity dmpSyncTaskEntity : dmpSyncTaskList) {
+                for(DmpPullTaskEntity dmpSyncTaskEntity : dmpSyncTaskList) {
                     log.warn("保存同步任务成功，目标平台：{}, 待同步的单据类型：{}，单据编号：{}", dmpSyncTaskEntity.getTargetPlatformName(), dmpSyncTaskEntity.getSourceType(), dmpSyncTaskEntity.getSourceCode());
 
                     // 发送MQ消息处理发送到马帮
@@ -137,7 +137,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void sendToMabangInOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum) {
+    public void sendToMabangInOutStock(DmpPullTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum) {
         String taskName = "";
         if(Objects.equals(inventoryInOutEnum, InventoryInOutEnum.IN_STOCK)) {
             taskName = PlatformApiEnum.MABANG_IN_STORAGE.getTaskName();
@@ -150,11 +150,11 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         if(isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");
             // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
+            dmpPullTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
         } else {
             String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.FAILED_SYNC.getCode(), msg);
+            dmpPullTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.FAILED_SYNC.getCode(), msg);
 
             String sourceType = dmpSyncTaskEntity.getSourceType();
             String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));

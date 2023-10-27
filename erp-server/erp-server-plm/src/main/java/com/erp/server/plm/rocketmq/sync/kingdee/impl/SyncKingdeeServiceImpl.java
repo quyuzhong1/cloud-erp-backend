@@ -41,7 +41,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //产品管理
         if (ApiModuleTypeEnum.PRODUCT_DETAIL.getCode().toString().equals(code)) {
-            productDetailService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
+            productDetailService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //bom管理
         if (ApiModuleTypeEnum.BOM_INFO.getCode().toString().equals(code)) {
@@ -49,7 +49,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //产品管理
         if (ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode().toString().equals(code) || ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode().toString().equals(code)) {
-            basicCategoryService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
+            basicCategoryService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

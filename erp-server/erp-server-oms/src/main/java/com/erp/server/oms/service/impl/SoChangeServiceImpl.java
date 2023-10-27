@@ -895,40 +895,29 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * 更改销售订单金蝶推送的状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
 
         if (StringUtils.isEmpty(id)) {
             return Boolean.TRUE;
         }
         SoChangeEntity soChange = this.getById(id);
         if (Objects.nonNull(soChange)) {
-            //同步成功的
-            String successSyncStatus = SyncStatusEnum.SUCCESS_SYNC.getCode();
-            //表示同步成功
-            if (successSyncStatus.equals(syncKingdeeStatus)) {
-                Boolean existAdd = soChangeDetailService.existAdd(id);
-                //如果有添加新的sku 销售订单需要重新推送
-                if (existAdd) {
-                    String soId = soChange.getSoId();
-                    soDetailService.updateDetailKingdeeId(soId);
-                }
+            Boolean existAdd = soChangeDetailService.existAdd(id);
+            //如果有添加新的sku 销售订单需要重新推送
+            if (existAdd) {
+                String soId = soChange.getSoId();
+                soDetailService.updateDetailKingdeeId(soId);
             }
-
         }
         return this.lambdaUpdate()
                 .eq(SoChangeEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), SoChangeEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SoChangeEntity::getSyncOperate, syncOperate)
                 .update();
 
     }
