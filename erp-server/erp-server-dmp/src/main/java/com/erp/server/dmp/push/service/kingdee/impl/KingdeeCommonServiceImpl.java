@@ -297,7 +297,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
-        log.info("msg>>>>>{}，param>>>>>>>{}",msg,param);
+        log.warn("msg>>>>>{}，param>>>>>>>{}",msg,param);
         SaveResult save = apiUtils.save(param);
         if (!save.isSuccessfully()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
