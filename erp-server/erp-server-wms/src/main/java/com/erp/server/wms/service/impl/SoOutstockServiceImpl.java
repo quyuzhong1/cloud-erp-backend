@@ -187,10 +187,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
-        //销售订单的总金额
+        //销售订单的含税销售金额折扣前
         BigDecimal soAmount = BigDecimal.ZERO;
         for (SoDetailEntity soDetail : soDetailList) {
-            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+            soAmount = soAmount.add(soDetail.getTaxAmountBefore());
         }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
@@ -201,12 +201,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Integer actualQty = item.getActualQty();
             BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
-            outStockAmount = outStockAmount.add(MathUtil.multiply(price, actualQty));
+            //税率
+            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
+
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+
+            BigDecimal taxPrice=MathUtil.getTaxValue(price,flagTaxRate, 4);
+
+            outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
         }
         //销售订单折扣额
         BigDecimal discountAmount = soInfo.getDiscountAmount();
         //折扣总额占比
-        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 4);
+        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
         //整单折扣额
         BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
 
@@ -1108,7 +1116,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //销售订单的总金额
         BigDecimal soAmount = BigDecimal.ZERO;
         for (SoDetailEntity soDetail : soDetailList) {
-            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+            soAmount = soAmount.add(soDetail.getTaxAmountBefore());
         }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
@@ -1119,12 +1127,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             Integer actualQty = item.getActualQty();
             BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
-            outStockAmount = outStockAmount.add(MathUtil.multiply(price, actualQty));
+
+            //税率
+            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            BigDecimal taxPrice=MathUtil.getTaxValue(price,flagTaxRate, 4);
+            outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
         }
         //销售订单折扣额
         BigDecimal discountAmount = soInfo.getDiscountAmount();
         //折扣总额占比
-        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 4);
+        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
         //整单折扣额
         BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
 
@@ -1746,7 +1760,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //销售订单的总金额
             BigDecimal soAmount = BigDecimal.ZERO;
             for (SoInfoDTO.ListDTO soDetail : soDetailList) {
-                soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+                soAmount = soAmount.add(soDetail.getTaxAmountBefore());
             }
             List<SoOutstockDetailEntity> detailList = soOutstockDetailList.stream().
                     filter(d -> d.getMainId().equals(id)).collect(Collectors.toList());
@@ -1759,12 +1773,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 Integer actualQty = itemDetail.getActualQty();
                 BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         findFirst().map(SoInfoDTO.ListDTO::getPrice).orElse(BigDecimal.ZERO);
-                outStockAmount = outStockAmount.add(MathUtil.multiply(price, actualQty));
+                //税率
+                BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().map(SoInfoDTO.ListDTO::getTaxRate).orElse(BigDecimal.ZERO);
+
+                BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                BigDecimal taxPrice=MathUtil.getTaxValue(price,flagTaxRate, 4);
+
+                outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
             }
             //销售订单折扣额
             BigDecimal discountAmount = soDetailList.get(0).getDiscountAmount();
             //折扣总额占比
-            BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 4);
+            BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
             //整单折扣额
             BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
             item.setTotalDiscountAmount(totalDiscountAmount);
