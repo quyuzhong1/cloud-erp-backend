@@ -273,7 +273,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
         }
-        log.info("msg>>>>>{}，param>>>>>>>{}",msg,param);
+        log.info("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}",msg,JSONUtil.toJsonStr(param),json);
         //保存客户分组
         RepoRet repoRet = apiUtils.customerGroupSave(param);
         if (ObjectUtil.isNotEmpty(repoRet.getResult()) && repoRet.getResult().getResponseStatus().getSuccessEntitys() != null) {
