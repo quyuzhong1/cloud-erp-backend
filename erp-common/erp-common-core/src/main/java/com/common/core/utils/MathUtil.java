@@ -347,8 +347,8 @@ public class MathUtil {
      * @param scale
      * @return
      */
-    public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale,int roundingMode) {
-        if (d2 == null||d2.compareTo(BigDecimal.ZERO)==0) {
+    public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale, int roundingMode) {
+        if (d2 == null || d2.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
         BigDecimal newd1 = d1;
@@ -440,7 +440,7 @@ public class MathUtil {
      * @author yl
      * @date 2023-10-23 11:03
      */
-    public static BigDecimal getUntaxed(BigDecimal taxPrice, BigDecimal taxRate,int scale) {
+    public static BigDecimal getUntaxed(BigDecimal taxPrice, BigDecimal taxRate, int scale) {
         if (Objects.isNull(taxPrice)) {
             return BigDecimal.ZERO;
         }
@@ -450,6 +450,19 @@ public class MathUtil {
         BigDecimal divValue = taxRate.add(BigDecimal_1);
         return MathUtil.divide(taxPrice, divValue, scale);
 
+    }
+
+    /**
+     * 获取含税值
+     *
+     * @param price   未税的
+     * @param taxRate taxRate  税率 除以过100 的
+     * @param i
+     * @return
+     */
+    public static BigDecimal getTaxValue(BigDecimal price, BigDecimal taxRate, int scale) {
+        BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+        return MathUtil.multiply(price, multiplyTax,scale);
     }
 
     public static BigDecimal getBigDecimalByStr(String priceStr) {
