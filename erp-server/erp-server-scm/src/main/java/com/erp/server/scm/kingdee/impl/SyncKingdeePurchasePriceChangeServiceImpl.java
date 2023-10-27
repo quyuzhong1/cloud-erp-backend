@@ -81,11 +81,11 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
-        DmpPushTaskEntity purchasePriceTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+        /*DmpPushTaskEntity purchasePriceTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
         if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceTask.getStatus())) {
             log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
             return;
-        }
+        }*/
 
         //业务id
         resultMap.put("id",entity.getId());
