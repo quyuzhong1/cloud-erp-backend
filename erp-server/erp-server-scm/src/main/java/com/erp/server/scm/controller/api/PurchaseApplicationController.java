@@ -9,9 +9,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -38,6 +42,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("采购申请单")
 @RequestMapping("/purchaseApplication")
 public class PurchaseApplicationController extends BaseController {
 
@@ -100,6 +105,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增采购申请单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -118,6 +124,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购申请单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -136,6 +143,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购申请单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -154,6 +162,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购申请单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -172,6 +181,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param id
      * @return ApiResult<PurchaseApplicationDTO.ViewDTO>
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -190,6 +200,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "批量提交采购申请单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -208,6 +219,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核采购申请单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -226,6 +238,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "批量反审核采购申请单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -245,6 +258,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除采购申请单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -281,6 +295,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成采购单")
     @PostMapping("/generatePurchaseOrder")
     public ApiResult generatePurchaseOrder(@RequestBody @Validated PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
         Boolean flag = purchaseApplicationService.generatePurchaseOrder(dto);
@@ -294,6 +309,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
@@ -314,6 +330,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购单")
     @PostMapping("/importFile")
     public ApiResult<PurchaseApplicationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
         PurchaseApplicationDetailDTO.ImportDTO dto = purchaseApplicationService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
@@ -327,6 +344,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载采购单模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/purchaseApplicationTemplate.xlsx";
@@ -358,6 +376,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
@@ -393,6 +412,7 @@ public class PurchaseApplicationController extends BaseController {
      * @param list
      * @return ApiResult<Void>
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推委外订单保存")
     @PostMapping(value = "/generateSubcontractOrder")
     public ApiResult<Void> generateSubcontractOrder(@RequestBody @Validated ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list) {
         purchaseApplicationService.generateSubcontractOrder(list);

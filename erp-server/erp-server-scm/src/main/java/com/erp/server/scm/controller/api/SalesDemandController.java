@@ -9,9 +9,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -40,6 +44,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("备货申请单")
 @RequestMapping("/salesDemand")
 public class SalesDemandController extends BaseController {
 
@@ -86,6 +91,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增备货申请单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -104,6 +110,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改备货申请单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -122,6 +129,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交备货申请单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -140,6 +148,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交备货申请单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -158,6 +167,7 @@ public class SalesDemandController extends BaseController {
      * @param id
      * @return ApiResult<ScmSalesDemandDTO>
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -176,6 +186,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "修改并提交备货申请单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -195,6 +206,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "批量作废备货申请单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -213,6 +225,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "批量提交备货申请单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -231,6 +244,7 @@ public class SalesDemandController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核备货申请单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -249,6 +263,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "批量反审核备货申请单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -268,6 +283,7 @@ public class SalesDemandController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销备货申请单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
@@ -286,6 +302,7 @@ public class SalesDemandController extends BaseController {
      * @param excelImportDTO
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入备货申请单")
     @PostMapping("/importFile")
     public ApiResult<SalesDemandDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
         SalesDemandDetailDTO.ImportDTO list = salesDemandService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
@@ -299,6 +316,7 @@ public class SalesDemandController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板备货申请单")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/salesDemandTemplate.xlsx";
@@ -331,6 +349,7 @@ public class SalesDemandController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出备货申请单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
@@ -348,6 +367,7 @@ public class SalesDemandController extends BaseController {
      * @param list
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推备货申请单保存")
     @PostMapping(value = "/generateSalesDemand")
     public ApiResult generateSalesDemand(@RequestBody @Valid ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
         Boolean flag = salesDemandService.generateSalesDemand(list);

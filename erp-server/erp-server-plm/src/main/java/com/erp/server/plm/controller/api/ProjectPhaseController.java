@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicProductIdDTO;
 import com.erp.model.plm.dto.BatchTaskPhaseDTO;
 import com.erp.model.plm.dto.SelectShowDTO;
@@ -21,6 +24,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("task/phase")
 public class ProjectPhaseController extends BaseController {
 
@@ -46,6 +50,7 @@ public class ProjectPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量保存或者修改阶段:产品ID={productId}")
     @PostMapping("/batchSaveOrUpdate")
     //@RequestPermissions("plm:task:phase:batchSaveOrUpdate")
     public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
@@ -59,6 +64,7 @@ public class ProjectPhaseController extends BaseController {
      * @param id
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "项目任务-删除阶段")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:task:phase:remove")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:task:phase:remove", serviceClass = ProductInfoServiceImpl.class)

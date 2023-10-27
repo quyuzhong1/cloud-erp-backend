@@ -4,8 +4,11 @@ package com.erp.server.oms.controller.api;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMapingDTO;
 import com.erp.server.oms.service.SkuMapingService;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +28,7 @@ import java.util.List;
  * @since 2023-06-28
  */
 @RestController
+@LogSystemModule("sku对照表")
 @RequestMapping("/skuMaping")
 public class SkuMapingController extends BaseController {
 
@@ -63,6 +67,7 @@ public class SkuMapingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入sku对照表")
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = skuMapingService.importExcel(excelFile, response);
@@ -75,6 +80,7 @@ public class SkuMapingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板sku对照表")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         skuMapingService.downloadTemplate(response);
@@ -86,6 +92,7 @@ public class SkuMapingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku对照表")
     @PostMapping("/export")
     public ApiResult exportSkuMaping(@RequestBody @Valid SkuMapingDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = skuMapingService.exportSkuMaping(dto, response);
@@ -97,6 +104,7 @@ public class SkuMapingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更改sku对照表:id={id},产品sku={productSkuId},平台sku={platformSkuNo}")
     @PostMapping("/updateSkuMaping")
     public ApiResult updateSkuMaping(@RequestBody @Valid SkuMapingDTO.UpdateDTO dto) {
         String id = skuMapingService.updateSkuMaping(dto);

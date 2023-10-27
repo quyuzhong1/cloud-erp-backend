@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductFieldDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldPagingDTO;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("field")
 public class ProductFieldController  extends BaseController {
 
@@ -44,6 +48,7 @@ public class ProductFieldController  extends BaseController {
     /**
      * 修改字段状态
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改字段状态:id={id},模板状态={state}(1=启用,0=未启用)")
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
         Boolean flag = productFieldService.updateState(dto);
@@ -55,6 +60,7 @@ public class ProductFieldController  extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增加字段")
     @PostMapping("/save")
     public ApiResult  save(@RequestBody @Validated ProductFieldDTO dto) {
         Boolean flag= productFieldService.saveField(dto);

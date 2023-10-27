@@ -8,6 +8,7 @@ import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -30,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Slf4j
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("/biTargetSkuSetting")
 public class BiTargetSkuSettingController extends BaseController {
 
@@ -126,6 +128,7 @@ public class BiTargetSkuSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标单品模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         biTargetSkuSettingService.downloadTemplate(response);

@@ -3,7 +3,10 @@ package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.dto.CategoryControllerDTO;
 import com.erp.model.plm.dto.DictControllerDTO;
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("dict")
 public class BasicDictController extends BaseController {
 
@@ -40,6 +44,7 @@ public class BasicDictController extends BaseController {
      * @param dtos dtos
      * @return com.common.core.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "保存或者修改plm字典表")
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdateDict(@RequestBody @Validated List<BasicDictDTO> dtos) {
         Boolean flag = basicDictService.saveOrUpdateDict(dtos);
@@ -52,6 +57,7 @@ public class BasicDictController extends BaseController {
      * @param id id
      * @return com.common.core.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除plm字典表")
     @PostMapping("/remove")
     public ApiResult saveOrUpdateDict(String id) {
         Boolean flag = basicDictService.removeById(id);

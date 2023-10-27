@@ -1,7 +1,10 @@
 package com.erp.server.scm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.scm.service.AttachmentService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +23,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("供应商管理通用")
 @RequestMapping("/attachment")
 public class AttachmentController extends BaseController {
 
@@ -32,6 +36,7 @@ public class AttachmentController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除附件信息")
     @PostMapping("/delete")
     public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
         attachmentService.removeAttachment(dto);

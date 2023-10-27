@@ -1,7 +1,10 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.server.bi.service.BiTargetReportService;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +24,7 @@ import java.util.LinkedHashMap;
  * @date 2023/9/14 12:16
  */
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("/report")
 public class BiTargetReportController extends BaseController {
 
@@ -48,6 +52,7 @@ public class BiTargetReportController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "业绩目标完成导出")
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody @Validated TargetFinishDTO.ParamDTO dto, HttpServletResponse response) {
         biTargetReportService.exportExcel(dto, response);

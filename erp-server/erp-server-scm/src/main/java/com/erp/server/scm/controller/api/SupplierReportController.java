@@ -2,8 +2,11 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.server.scm.service.SupplierReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
  * @Author: zhangchunlin
  */
 @RestController
+@LogSystemModule("WMS供应商报表")
 @RequestMapping(value = "/supplierReport")
 public class SupplierReportController extends BaseController {
 
@@ -43,6 +47,7 @@ public class SupplierReportController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "供应商报表导出")
     @PostMapping(value = "/exportExcel")
     public void exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         supplierReportService.exportList(dto, response);

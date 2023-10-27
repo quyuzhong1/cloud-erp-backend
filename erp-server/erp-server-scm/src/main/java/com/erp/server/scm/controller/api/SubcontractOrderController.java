@@ -5,8 +5,12 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
@@ -25,6 +29,7 @@ import java.util.List;
  * @since 2023-06-08
  */
 @RestController
+@LogSystemModule("委外订单")
 @RequestMapping("/subcontractOrder")
 public class SubcontractOrderController extends BaseController {
 
@@ -82,6 +87,7 @@ public class SubcontractOrderController extends BaseController {
    * @param dto
    * @return ApiResult<Void>
    */
+   @LogAction(value = LogActionEnum.INSERT, desc = "新增委外订单")
    @PostMapping("/add")
    public ApiResult<Void> add(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
       subcontractOrderService.add(dto);
@@ -95,6 +101,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改委外订单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -113,6 +120,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交委外订单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -131,6 +139,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交委外订单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -149,6 +158,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交委外订单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -167,6 +177,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核委外订单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -185,6 +196,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核委外订单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -203,6 +215,7 @@ public class SubcontractOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "结束交货委外订单:ids={ids},备注={remark}")
     @PostMapping("/finishDelivery")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -222,6 +235,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除委外订单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -240,6 +254,7 @@ public class SubcontractOrderController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销委外订单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -258,6 +273,7 @@ public class SubcontractOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "批量作废委外订单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -276,6 +292,7 @@ public class SubcontractOrderController extends BaseController {
     * @param id
     * @return ApiResult<SubcontractOrderDTO.ViewDTO>>
     */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -294,6 +311,7 @@ public class SubcontractOrderController extends BaseController {
     * @param response
     * @return
     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出委外订单")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -330,6 +348,7 @@ public class SubcontractOrderController extends BaseController {
      * @param list
      * @return ApiResult<Void>
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "委外订单下推采购单保存")
     @PostMapping(value = "/generatePo")
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
          subcontractOrderService.generatePo(list,Boolean.FALSE);

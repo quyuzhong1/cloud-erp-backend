@@ -1,5 +1,8 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +23,7 @@ import java.util.List;
  * @since 2023-06-12
  */
 @RestController
+@LogSystemModule("WMS库龄计算表")
 @RequestMapping("/cfgUserRange")
 public class CfgUserRangeController extends BaseController {
 
@@ -41,6 +45,7 @@ public class CfgUserRangeController extends BaseController {
      * @param userRangeDTO
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "设置库龄天数")
     @PostMapping("/setUserRange")
     public ApiResult<Void> setUserRange(@RequestBody @Validated CfgUserRangeDTO.SaveDTO userRangeDTO) {
         cfgUserRangeService.save(userRangeDTO);

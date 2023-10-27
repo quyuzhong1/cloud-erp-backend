@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductRefLabelDTO;
 import com.erp.server.plm.service.ProductRefLabelService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @RestController
+@LogSystemModule("产品管理")
 @RequestMapping("/productRefLabel")
 public class ProductRefLabelController extends BaseController {
 
@@ -36,6 +40,7 @@ public class ProductRefLabelController extends BaseController {
      * @author Lambda
      * @date: 2023-09-13
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增产品标签关系")
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated ProductRefLabelDTO.BatchAddDTO dtos) {
         productRefLabelService.batchAdd(dtos);
@@ -45,6 +50,7 @@ public class ProductRefLabelController extends BaseController {
     /**
      * 删除产品标签关系
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除产品标签关系")
     @PostMapping("/remove")
     public ApiResult delete(@RequestBody @Validated ProductRefLabelDTO.RemoveDTO dto) {
         productRefLabelService.removeProductRef(dto);

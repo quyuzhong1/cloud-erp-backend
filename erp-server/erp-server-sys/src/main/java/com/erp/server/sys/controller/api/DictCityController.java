@@ -1,8 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.server.sys.service.DictCityService;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +21,7 @@ import java.util.List;
  * @since 2023-03-21
  */
 @RestController
+@LogSystemModule("系统管理通用")
 @RequestMapping("/dict/city")
 public class DictCityController extends BaseController {
 
@@ -31,6 +35,7 @@ public class DictCityController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加城市")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated DictCityDTO.AddDTO dto) {
         Boolean result = dictCityService.add(dto);

@@ -6,17 +6,19 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.anno.StateEnumValue;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
 import org.springframework.validation.annotation.Validated;
@@ -25,6 +27,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +40,7 @@ import java.util.Objects;
  * @since 2023-04-14
  */
 @RestController
+@LogSystemModule("质检单")
 @RequestMapping("/qcBill")
 public class QcInfoController extends BaseController {
 
@@ -79,6 +85,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "暂存质检单")
     @PostMapping("/draft")
     public ApiResult draft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.draft(dto);
@@ -91,6 +98,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增质检单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -109,6 +117,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     public ApiResult<QcInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         QcInfoDTO.ViewDTO view = qcInfoService.view(dto.getId());
@@ -121,6 +130,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成质检:id={id}")
     @PostMapping("/finish")
     public ApiResult finish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.finish(dto);
@@ -133,6 +143,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "免检:id={id}")
     @PostMapping("/exemption")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -151,6 +162,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量完成质检:ids={ids}")
     @PostMapping("/batchFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -169,6 +181,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量免检:ids={ids}")
     @PostMapping("/batchExemption")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -187,6 +200,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量取消质检:ids={ids}")
     @PostMapping("/batchCancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -205,6 +219,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除质检单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -223,6 +238,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销质检单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -238,6 +254,7 @@ public class QcInfoController extends BaseController {
     /**
      * 导出质检单
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单")
     @PostMapping("/exportQcBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
@@ -253,6 +270,7 @@ public class QcInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "分配质检员:ids={ids},质检员={qcUserId}")
     @PostMapping("/assign")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -269,6 +287,7 @@ public class QcInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新处理措施:处理措施={handleModeDict},ids={ids}")
     @PostMapping("/updateHandleMode")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -308,6 +327,7 @@ public class QcInfoController extends BaseController {
      * @author yl
      * @date 2023-04-24 9:25
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推退货单数据保存")
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = qcInfoService.generatePurchaseReturnOrder(dto);
@@ -328,6 +348,7 @@ public class QcInfoController extends BaseController {
      * @param ids ids
      * @return java.lang.Boolean
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "退货签收单下推质检单")
     @PostMapping("/returnReceiveGenerateQCSave")
     public ApiResult returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
         Boolean flag = qcInfoService.returnReceiveGenerateQCSave(ids);
@@ -350,6 +371,7 @@ public class QcInfoController extends BaseController {
     /**
      * 导出质检单日报
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单日报")
     @PostMapping("/exportDailyQcBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
@@ -378,6 +400,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复检抽检:复检抽检结果={qcSampleResult},ids={ids}")
     @PostMapping("/reQcSample")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",

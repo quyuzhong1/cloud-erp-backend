@@ -4,8 +4,11 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.SalesOrderService;
@@ -28,6 +31,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("我的仪表盘")
 @RequestMapping("sales")
 public class BiSalesModuleController extends BaseController {
 
@@ -72,6 +76,7 @@ public class BiSalesModuleController extends BaseController {
     /**
      * 导出 sku 销售额
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku销售额")
     @PostMapping("/exportSkuSales")
     public ApiResult exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
         Boolean result = salesOrderService.exportSkuSalesExcel(params, response);
@@ -622,6 +627,7 @@ public class BiSalesModuleController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/9/21 9:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出新老品销售额")
     @PostMapping(value = "/newAndOldSalesExportExcel")
     public ApiResult newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
         Boolean flag = salesOrderService.newAndOldSalesExportExcel(dto, response);
@@ -673,6 +679,7 @@ public class BiSalesModuleController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/9/21 9:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出部门完成率排行")
     @PostMapping(value = "/completionRateRankingExportExcel")
     public ApiResult completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
         Boolean flag = salesOrderService.completionRateRankingExportExcel(dto, response);

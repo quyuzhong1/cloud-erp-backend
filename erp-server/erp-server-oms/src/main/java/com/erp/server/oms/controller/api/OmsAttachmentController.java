@@ -1,7 +1,10 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.server.oms.service.OmsAttachmentService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +22,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("OMS系统")
 @RequestMapping("/attachment")
 public class OmsAttachmentController  extends BaseController {
     @Resource
@@ -29,6 +33,7 @@ public class OmsAttachmentController  extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除附件信息")
     @PostMapping("/delete")
     public ApiResult removeAttachment(@RequestBody OmsAttachmentDTO.DeleteDTO dto) {
         omsAttachmentService.removeAttachment(dto);

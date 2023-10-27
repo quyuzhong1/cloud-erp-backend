@@ -1,8 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
 import com.erp.model.sys.dto.SysRoleMenuDTO;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("角色管理")
 @RequestMapping("roleMenu")
 public class SysRoleMenuController extends BaseController {
 
@@ -27,6 +31,7 @@ public class SysRoleMenuController extends BaseController {
     private SysRoleMenuService sysRoleMenuService;
 
 
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量保存角色菜单")
     @RequestMapping("/batchSave")
     public ApiResult batchSave(@RequestBody SysRoleMenuBatchDTO batchDTO) {
         boolean flag = sysRoleMenuService.batchSaveRoleMenu(batchDTO);
@@ -39,6 +44,7 @@ public class SysRoleMenuController extends BaseController {
         return success(vo);
     }
 
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存角色菜单")
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysRoleMenuDTO dto) {
         boolean flag=sysRoleMenuService.saveRoleMenu(dto);

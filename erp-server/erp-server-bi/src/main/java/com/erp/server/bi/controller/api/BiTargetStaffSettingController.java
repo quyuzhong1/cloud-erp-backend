@@ -132,6 +132,7 @@ public class BiTargetStaffSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标人员模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         biTargetStaffSettingService.downloadTemplate(response);

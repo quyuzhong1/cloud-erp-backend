@@ -7,7 +7,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
@@ -28,6 +32,7 @@ import java.util.List;
  * @Date 2023/8/11 10:08
  **/
 @RestController
+@LogSystemModule("PDA采购收货单")
 @RequestMapping(value = "/pdaPoReceive")
 public class PdaPoReceiveController extends BaseController {
     @Resource
@@ -76,6 +81,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增采购收货单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
         String id = warehouseReceiveService.pdaAdd(dto);
@@ -89,6 +95,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购收货单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -107,6 +114,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param id
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.SoReturnInstockDTO.ViewDTO>
      **/
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -125,6 +133,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购收货单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -143,6 +152,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购收货单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -161,6 +171,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购收货单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -179,6 +190,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购收货单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -197,6 +209,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购收货单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -215,6 +228,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购收货单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -233,6 +247,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param remarkDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废采购收货单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
@@ -251,6 +266,7 @@ public class PdaPoReceiveController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购收货单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",

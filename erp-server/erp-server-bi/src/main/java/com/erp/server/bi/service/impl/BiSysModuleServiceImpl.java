@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 系统模块表(BiSysModule)表服务实现类
@@ -119,6 +120,13 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         ModuleSysConfigurationDTO dto = new ModuleSysConfigurationDTO();
         BeanUtils.copyProperties(biSysModuleEntity,dto);
         return dto;
+    }
+
+    @Override
+    public BiSysModuleEntity view(String id) {
+        BiSysModuleEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("模板不存在id=" + id));
+        return entity;
     }
 
     private void checkName(String id, String name) {

@@ -6,8 +6,11 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
@@ -28,6 +31,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("taskDocs")
 public class TaskDeliveryDocsController extends BaseController {
 
@@ -97,6 +101,7 @@ public class TaskDeliveryDocsController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "输出物设置权限:文档id={id},角色ids={roleIdList}")
     @PostMapping("/setPower")
     public ApiResult setPower(@RequestBody @Validated SetDocsPowerDTO dto) {
         taskDeliveryService.setPower(dto);

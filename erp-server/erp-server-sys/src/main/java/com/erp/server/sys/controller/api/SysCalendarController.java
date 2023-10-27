@@ -4,8 +4,11 @@ package com.erp.server.sys.controller.api;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.HolidayUtils;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.entity.SysCalendarEntity;
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
  * @since 2023-02-24
  */
 @RestController
+@LogSystemModule("系统管理通用")
 @RequestMapping("calendar")
 public class SysCalendarController extends BaseController {
 
@@ -51,6 +55,7 @@ public class SysCalendarController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "新增或更新日期状态:组织={organization}")
     @PostMapping("/save/or/update")
     public ApiResult<Boolean> saveOrUpdateBatchDate(@RequestBody @Validated SysCalendarDTO.SaveOrUpdateDTO dto){
         Boolean result = sysCalendarService.saveOrUpdateBatchDate(dto);
@@ -58,6 +63,7 @@ public class SysCalendarController extends BaseController {
     }
 
 
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增年份")
     @PostMapping("/save/year")
     public ApiResult saveYearHoliday(@RequestBody SysCalendarDTO.SaveYearDTO dto){
         if(null == dto.getYear()){

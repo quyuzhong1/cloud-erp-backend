@@ -6,8 +6,11 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectReportFormsService;
@@ -24,6 +27,7 @@ import java.util.List;
  * @Date 2023/6/12 19:10
  **/
 @RestController
+@LogSystemModule("项目报表")
 @RequestMapping("/ProjectReportForms")
 public class ProjectReportFormsController extends BaseController {
     @Resource
@@ -72,6 +76,7 @@ public class ProjectReportFormsController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目报表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
 /*    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -90,6 +95,7 @@ public class ProjectReportFormsController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目任务明细")
     @PostMapping(value = "/exportExcelTaskDetail")
 /*    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",

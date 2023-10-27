@@ -1,7 +1,10 @@
 package com.erp.server.wms.controller.pda;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
@@ -16,6 +19,7 @@ import java.util.List;
  **/
 @AllArgsConstructor
 @RestController
+@LogSystemModule("PDA仓位管理")
 @RequestMapping("/pdaWarehouseLocation")
 public class PdaWarehouseLocationController extends BaseController {
 
@@ -38,6 +42,7 @@ public class PdaWarehouseLocationController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位")
     @PostMapping(value = "/addWarehouseLocation")
     public ApiResult addWarehouseLocation(@RequestBody PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
         Boolean flag = warehouseLocationService.addWarehouseLocation(dto);

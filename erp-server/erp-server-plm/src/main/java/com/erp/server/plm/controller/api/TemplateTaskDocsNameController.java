@@ -1,10 +1,16 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +25,7 @@ import java.util.List;
  * @date 2022/11/16 12:23
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("templateTaskName")
 public class TemplateTaskDocsNameController extends BaseController {
 
@@ -34,6 +41,7 @@ public class TemplateTaskDocsNameController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板详情-输出物-新增文档")
     @PostMapping("/save")
     public ApiResult saveDocsName(@RequestBody @Validated TmeplateDocsNameDTO dto) {
         Boolean flag = templateTaskDocsNameService.saveDocsName(dto);
@@ -48,6 +56,7 @@ public class TemplateTaskDocsNameController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "模板详情-输出物-编辑文档", keyIdName = "deliveryDocsId")
     @PutMapping("/update")
     public ApiResult updateDocsName(@RequestBody @Validated TmeplateDocsNameDTO dto) {
         Boolean flag = templateTaskDocsNameService.updateDocsName(dto);
@@ -67,5 +76,19 @@ public class TemplateTaskDocsNameController extends BaseController {
     public ApiResult<List<DocsDTO>> list(@RequestParam(value = "templateId") String templateId) {
         List<DocsDTO> list = templateTaskDocsNameService.getDocsNameList(templateId);
         return success(list);
+    }
+
+    /**
+     * 文档详情
+     * @author Jim
+     * @date: 2023/10/25
+     * @param deliveryDocsId String
+     * @return ApiResult<DocsDTO>
+     */
+    @LogViewService
+    @GetMapping("/details")
+    public ApiResult<DocsDTO> view(@Param("deliveryDocsId") String deliveryDocsId) {
+        DocsDTO result = templateTaskDocsNameService.view(deliveryDocsId);
+        return success(result);
     }
 }

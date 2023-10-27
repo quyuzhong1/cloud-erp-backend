@@ -6,6 +6,10 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.TransferInDTO;
@@ -29,6 +33,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("分布式调入单")
 @RequestMapping("/transfer/in")
 public class TransferInController extends BaseController {
 
@@ -73,6 +78,7 @@ public class TransferInController extends BaseController {
      * @author yl
      * @date 2023-05-23 15:15
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "分布式调出单下推")
     @PostMapping("/generateTransferIn")
     public ApiResult generateTransferIn(@RequestBody @Valid ValidList<TransferInDTO.ViewGenerateTransferInDTO> list) {
         Boolean result = transferInService.generateTransferIn(list);
@@ -87,6 +93,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交分布式调入单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -106,6 +113,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -124,6 +132,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改分布式调入单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -143,6 +152,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交分布式调入单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -162,6 +172,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核分布式调入单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -182,6 +193,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销分布式调入单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -197,6 +209,7 @@ public class TransferInController extends BaseController {
     /**
      * 反审核
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核分布式调入单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -215,6 +228,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调入单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -236,6 +250,7 @@ public class TransferInController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:11
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废分布式调入单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -252,6 +267,7 @@ public class TransferInController extends BaseController {
      * 导出
      * 数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调入单")
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid TransferInDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = transferInService.exportExcel(dto, response);

@@ -5,8 +5,12 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerDTO;
@@ -31,6 +35,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("B2B客户列表")
 @RequestMapping("/customer")
 public class CustomerInfoController extends BaseController {
 
@@ -80,6 +85,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增客户信息")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         String id = customerInfoService.add(dto);
@@ -92,6 +98,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交客户信息")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -110,6 +117,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交客户信息")
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         Boolean result = customerInfoService.addAndSubmit(dto);
@@ -123,6 +131,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -141,6 +150,7 @@ public class CustomerInfoController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改客户信息")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -159,6 +169,7 @@ public class CustomerInfoController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交客户信息")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -177,6 +188,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核交客户信息")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -192,6 +204,7 @@ public class CustomerInfoController extends BaseController {
     /**
      * 反审核
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核交客户信息")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -211,6 +224,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销客户信息")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -229,6 +243,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "删除客户信息")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -244,6 +259,7 @@ public class CustomerInfoController extends BaseController {
     /**
      * 导出数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出客户信息")
     @PostMapping("/export")
     public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerInfoService.exportExcel(dto, response);
@@ -289,6 +305,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用或者停用客户：ids={ids},禁用状态={disabled}(true=禁用;false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         Boolean result = customerInfoService.updateStatus(dto);
@@ -339,6 +356,7 @@ public class CustomerInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "处理平台的历史数据")
     @GetMapping("/processData")
     public ApiResult processData() {
         Boolean result = customerInfoService.processData();
@@ -350,6 +368,7 @@ public class CustomerInfoController extends BaseController {
      * @param file
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入客户信息")
     @PostMapping(value = "importCustomer")
     public ApiResult<Void> importCustomer(@RequestParam(value = "file") MultipartFile file) throws IOException {
         customerInfoService.importCustomer(file);
@@ -361,6 +380,7 @@ public class CustomerInfoController extends BaseController {
      * @param file
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入客户关联金蝶信息")
     @PostMapping(value = "importCustomerKingdee")
     public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
         customerInfoService.importCustomerKingdee(file);

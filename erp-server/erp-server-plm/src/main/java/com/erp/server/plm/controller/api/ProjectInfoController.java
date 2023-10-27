@@ -4,8 +4,11 @@ package com.erp.server.plm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.SelectShowDTO;
@@ -31,6 +34,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("project")
 public class ProjectInfoController extends BaseController {
 
@@ -43,7 +47,7 @@ public class ProjectInfoController extends BaseController {
      * @param dto
      * @return
      */
-
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-启动项目:负责人id={chargeId},产品id={productId},项目id={projectId}")
     @PostMapping("/startProject")
     public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
         Boolean flag = projectInfoService.startProject(dto);
@@ -57,7 +61,7 @@ public class ProjectInfoController extends BaseController {
      * @param dto
      * @return
      */
-
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量启动项目:负责人id={chargeId},项目ids={projectIdList}")
     @PostMapping("/batchStartProject")
     public ApiResult batchStartProject(@RequestBody @Validated StartProjectDTO.BatchStartProjectDTO dto) {
         Boolean flag = projectInfoService.batchStartProject(dto);
@@ -98,6 +102,7 @@ public class ProjectInfoController extends BaseController {
      * @author yl
      * @date 2022-10-09 14:38
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目归档：产品id={productId}")
     @PostMapping("/archive")
     //@RequestPermissions("plm:project:archive")
     public ApiResult archive(@RequestParam(value = "productId") String productId) {
@@ -146,6 +151,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目:ids={ids}")
     @PostMapping("/restart")
     public ApiResult restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.restart(dto.getIds());
@@ -158,6 +164,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-暂停项目:ids={ids}")
     @PostMapping("/suspend")
     public ApiResult suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.suspend(dto.getIds());
@@ -169,6 +176,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-终止项目:ids={ids}")
     @PostMapping("/stop")
     public ApiResult terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.terminate(dto.getIds());
@@ -180,6 +188,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目结项:ids={ids}")
     @PostMapping("/finish")
     public ApiResult finish(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.finish(dto.getIds());
@@ -194,6 +203,7 @@ public class ProjectInfoController extends BaseController {
      * @author yl
      * @date 2022-10-09 14:38
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量项目归档:ids={ids}")
     @PostMapping("/batchArchive")
     public ApiResult batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         boolean flag = projectInfoService.batchArchive(dto.getIds());

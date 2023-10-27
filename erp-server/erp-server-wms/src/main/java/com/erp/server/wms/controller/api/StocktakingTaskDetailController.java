@@ -3,13 +3,15 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +26,7 @@ import javax.validation.Valid;
  * @since 2023-07-31
  */
 @RestController
+@LogSystemModule("盘点任务")
 @RequestMapping("/stocktakingTask/detail")
 public class StocktakingTaskDetailController extends BaseController {
 
@@ -33,6 +36,7 @@ public class StocktakingTaskDetailController extends BaseController {
     /**
      * 导出盘点任务明细数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务明细")
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingTaskDetailService.exportExcel(dto, response);
@@ -42,6 +46,7 @@ public class StocktakingTaskDetailController extends BaseController {
     /**
      * 导入盘点任务明细数据
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入盘点任务明细")
     @PostMapping("/import")
     public ApiResult exportWarehouse(@RequestParam(value = "mainId") String mainId, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = stocktakingTaskDetailService.importFile(mainId,excelFile, response);
@@ -60,6 +65,7 @@ public class StocktakingTaskDetailController extends BaseController {
     /**
      * 修改盘点数量
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修改盘点数量:id={id}")
     @PostMapping("/update")
     public ApiResult exportWarehouse(@RequestBody @Validated ValidList<StocktakingTaskDetailDTO.UpdateDTO> dto) {
         Boolean result = stocktakingTaskDetailService.updateBatchDetail(dto);

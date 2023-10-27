@@ -1,8 +1,11 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopInfoService;
@@ -20,6 +23,7 @@ import java.util.List;
  * @since 2023-06-28
  */
 @RestController
+@LogSystemModule("店铺管理")
 @RequestMapping("/shop")
 public class ShopInfoController extends BaseController {
 
@@ -32,6 +36,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         String id = shopInfoService.add(dto);
@@ -44,6 +49,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改店铺")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
         String id = shopInfoService.updateShop(dto);
@@ -67,6 +73,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "初始同步dmp店铺信息")
     @PostMapping("/initialSync")
     public ApiResult initialSync() {
         Boolean result = shopInfoService.initialSync();

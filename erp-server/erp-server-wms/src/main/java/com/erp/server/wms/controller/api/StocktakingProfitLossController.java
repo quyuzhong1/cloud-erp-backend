@@ -6,6 +6,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
@@ -38,6 +42,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
+@LogSystemModule("盘盈盘亏单")
 @RequestMapping("/stocktakingProfitLoss")
 public class StocktakingProfitLossController extends BaseController {
 
@@ -65,6 +70,7 @@ public class StocktakingProfitLossController extends BaseController {
     /**
      * 添加
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增盘盈盘亏单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto){
         String id = stocktakingProfitLossService.add(dto);
@@ -93,6 +99,7 @@ public class StocktakingProfitLossController extends BaseController {
      * 导出
      * 数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘盈盘亏单")
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingProfitLossService.exportExcel(dto, response);
@@ -106,6 +113,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -125,6 +133,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交盘盈盘亏单")
     @PostMapping("/submit")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
@@ -161,6 +170,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核盘盈盘亏单")
     @PostMapping("/approve")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
@@ -199,6 +209,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销盘盈盘亏单")
     @PostMapping("/cancelProcess")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
