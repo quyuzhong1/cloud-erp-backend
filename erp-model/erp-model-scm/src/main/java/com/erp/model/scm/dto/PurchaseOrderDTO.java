@@ -1140,12 +1140,12 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 父级SKUbom版本
          */
-        private Integer parentBomVersion;
+        private String parentBomVersion;
 
         /**
          * 子级SKUbom版本
          */
-        private Integer childBomVersion;
+        private String childBomVersion;
 
         /**
          * 父级采购明细id
