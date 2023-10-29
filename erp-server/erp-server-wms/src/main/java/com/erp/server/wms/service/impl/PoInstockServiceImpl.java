@@ -1304,8 +1304,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             Integer stockInQty = poInstockDetailEntity.getStockInQty();
 
             //子级SKU版本
-            Integer bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(poInstockDetailEntity.getPurchaseOrderDetailId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse(MathUtil.ONE);
+            String bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(poInstockDetailEntity.getPurchaseOrderDetailId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse("");
 
             //子集BOM信息
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomList.stream().filter(obj -> bomVersion.equals(obj.getBomVersion()) && obj.getParentSkuId().equals(poInstockDetailEntity.getSkuId())).collect(Collectors.toList());
@@ -1439,8 +1439,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         for (PoInstockDetailEntity parentInstockDetail : poInstockDetailList) {
 
             //子级SKU版本
-            Integer bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(parentInstockDetail.getPurchaseOrderDetailId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse(MathUtil.ONE);
+            String bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(parentInstockDetail.getPurchaseOrderDetailId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse("");
 
             //父级委外明细id
             String subParentDetailId = childList.stream()
