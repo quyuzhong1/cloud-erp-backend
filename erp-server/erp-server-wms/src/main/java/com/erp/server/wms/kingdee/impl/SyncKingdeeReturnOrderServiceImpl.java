@@ -129,7 +129,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("returnOrgName", returnOrgCode);
 
         //退货日期
-        resultMap.put("billDate",entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
