@@ -187,6 +187,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "保存并提交盘盈盘亏单")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
         stocktakingProfitLossService.addAndSubmit(dto);
@@ -207,6 +208,7 @@ public class StocktakingProfitLossController extends BaseController {
     }
 
 
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核盘盈盘亏单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
