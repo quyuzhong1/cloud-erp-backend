@@ -11,6 +11,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -25,17 +26,18 @@ import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.BillTypeEnum;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.PoInstockDetailService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseReceiveService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -260,25 +262,16 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("detailId", detail.getId());
             //销售订单金蝶id
             jsonObject.set("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+
             //销售单金蝶明细id
             jsonObject.set("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
 
             List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> map = new HashMap<>();
-            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(entity.getSourceType())) {
-                WarehouseReceiveDetailEntity receiveDetailEntity = warehouseReceiveDetailService.getById(detail.getSourceDetailId());
-                WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(receiveDetailEntity.getMainId());
-                map.put("poKingdeeDetailId", receiveDetailEntity.getKingdeeDetailId());
-                map.put("poSyncKingdeeId", receiveEntity.getSyncKingdeeId());
-                map.put("FInStockEntry_Link_FSTableName", "T_PUR_ReceiveEntry");
-                map.put("FInStockEntry_Link_FRuleId", "PUR_ReceiveBill-STK_InStock");
-            } else {
-                map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
-                map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
-                map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
-                map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
-            }
-
+            map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+            map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
+            map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
             mapList.add(map);
             //销售单金蝶明细id
             jsonObject.set("FInStockEntry_Link", mapList);
