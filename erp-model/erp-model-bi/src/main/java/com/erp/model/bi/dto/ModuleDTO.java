@@ -52,14 +52,12 @@ public class ModuleDTO implements Serializable {
      * 模块名称
      */
     @NotBlank(message = "模块名称不能为空")
-    //@Size(max = 30, message = "最大30字符")
     private String name;
 
 
     /**
      * 模块说明
      */
-   // @Size(max = 200, message = "最大200字符")
     private String remark;
 
 

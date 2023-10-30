@@ -59,7 +59,6 @@ public class SubjectLayoutDetailsDTO implements Serializable {
     /**
      * 分类id
      */
-    // @NotBlank(message = "分类id 不能为空")
     private String categoryId;
 
     /**
