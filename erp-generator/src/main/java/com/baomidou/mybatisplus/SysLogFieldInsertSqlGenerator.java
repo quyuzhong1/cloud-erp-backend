@@ -5,26 +5,38 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.syslog.JavadocReader;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
-import com.erp.model.bi.dto.ModuleDTO;
-import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
-import com.erp.model.bi.entity.*;
+import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSysModuleEntity;
-import com.erp.model.dmp.dto.*;
-import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.plm.dto.BomDTO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.ProductDTO;
+import com.erp.model.plm.dto.ProductPlanDetailsDTO;
+import com.erp.model.plm.entity.BasicLabelEntity;
 import com.erp.model.plm.entity.NoticeMessageEntity;
+import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SysTaskVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.*;
+import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysLogRecordFieldEntity;
 import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
@@ -45,37 +57,98 @@ public class SysLogFieldInsertSqlGenerator {
 
     static {
         targetClassList = Arrays.asList(
-                BiSysModuleEntity.class,
-                BiDictEntity.class,
-                SubjectLayoutDetailsDTO.class,
-                ModuleDTO.class,
-                DmpShopInfoDTO.class,
-                BasicLabelEntity.class,
-                BomDTO.class,
-                NoticeMessageEntity.class,
-                ProductDTO.class,
-                ProductPlanDetailsDTO.class,
-                ProjectPlanDetailsVO.class,
-                ProjectTaskVO.class,
-                SysTaskVO.class,
-                DocsDTO.class,
-                SysAccountingCompanyEntity.class,
-                SysRoleEntity.class,
-                SysUserInfoEntity.class
-                );
+//                BiSysModuleEntity.class,
+//                BiDictEntity.class,
+//                SubjectLayoutDetailsDTO.class,
+//                ModuleDTO.class,
+//                DmpShopInfoDTO.class,
+//                BasicLabelEntity.class,
+//                BomDTO.class,
+//                NoticeMessageEntity.class,
+//                ProductDTO.class,
+//                ProductPlanDetailsDTO.class,
+//                ProjectPlanDetailsVO.class,
+//                ProjectTaskVO.class,
+//                SysTaskVO.class,
+//                DocsDTO.class,
+//                SysAccountingCompanyEntity.class,
+//                SysRoleEntity.class,
+//                SysUserInfoEntity.class,
+
+//                BiTargetCategorySettingDTO.ViewDTO.class,
+//                BiTargetNewProductSettingDTO.ViewDTO.class,
+//                BiTargetShopSettingDTO.ViewDTO.class,
+//                BiTargetSkuSettingDTO.ViewDTO.class,
+//                BiTargetStaffSettingDTO.ViewDTO.class,
+//                CustomerDTO.ViewDTO.class,
+//                SoChangeDTO.ViewDTO.class,
+//                SoInfoDTO.ViewDTO.class,
+//                SoReturnDTO.View.class,
+//                PurchaseApplicationDTO.ViewDTO.class,
+//                PurchaseChangeDTO.ViewDTO.class,
+//                PurchaseOrderDTO.ViewDTO.class,
+//                PurchasePriceChangeDTO.ViewDTO.class,
+//                PurchasePriceDTO.ViewDTO.class,
+//                SalesDemandDTO.ViewDTO.class,
+//                SubcontractChangeDTO.ViewDTO.class,
+//                SubcontractOrderDTO.ViewDTO.class,
+//                SupplierDTO.SupplierViewDTO.class,
+//                SupplierPhaseDTO.UpdateDTO.class,
+//                NoticeDTO.ViewDTO.class,
+//                InitStockDTO.ViewDTO.class,
+//                MachineInfoDTO.ViewDTO.class,
+//                OtherInstockDTO.ViewDTO.class,
+//                OtherOutstockDTO.ViewDTO.class,
+//                PoInstockDTO.ViewDTO.class,
+//                PurchaseReturnOrderDTO.ViewDTO.class,
+//                QcInfoDTO.ViewDTO.class,
+//                QcRuleDTO.ViewDTO.class,
+//                SoDeliveryNoticeDTO.View.class,
+//                SoOutstockDTO.ViewDTO.class,
+//                SoReturnInstockDTO.View.class,
+//                SoReturnNoticeDTO.View.class,
+//                SoReturnReceiveDTO.View.class,
+//                StocktakingPlanDTO.ViewDTO.class,
+//                StocktakingProfitLossDTO.ViewDTO.class,
+//                StocktakingTaskDTO.ViewDTO.class,
+//                TransferApplicationDTO.ViewDTO.class,
+//                TransferInDTO.ViewDTO.class,
+//                TransferInfoDTO.ViewDTO.class,
+//                TransferOutDTO.ViewDTO.class,
+//                WarehouseDTO.UpdateDTO.class,
+//                WarehouseReceiveDTO.ViewDTO.class,
+//                OtherInstockDTO.ViewDTO.class,
+//                OtherOutstockDTO.ViewDTO.class,
+//                PoInstockDTO.ViewDTO.class,
+//                WarehouseReceiveDTO.ViewDTO.class,
+//                PurchaseReturnOrderDTO.ViewDTO.class,
+//                SoReturnInstockDTO.View.class,
+//                SoReturnReceiveDTO.View.class,
+//                TransferInfoDTO.ViewDTO.class,
+//                WarehouseLocationMoveInfoDTO.ViewDTO.class
+        );
     }
 
     /**
      * 指定需要生成配置的class类(可修改)
      */
-    public final static Class<?> targetClass = BiTargetNewProductSettingDTO.ViewDTO.class;
+    public final static Class<?> targetClass = null;
 
     /**
      * 主类忽略记录的字段名(可修改)
      */
     public final static String[] targetDtoExcludesFields = new String[]{
             "id",
-            "code"
+            "code",
+            "createTime",
+            "updateTime",
+            "createUserName",
+            "createUserId",
+            "updateUserName",
+            "updateUserId",
+            "version",
+            "isDeleted",
+            "serialVersionUID"
     };
 
     /**
@@ -83,7 +156,7 @@ public class SysLogFieldInsertSqlGenerator {
      */
     public final static String[] targetDetailDtoExcludesFields = new String[]{
             "id",
-            "mainId"
+            "mainId",
     };
 
     /**
@@ -132,7 +205,7 @@ public class SysLogFieldInsertSqlGenerator {
 
     }
 
-    private static List<Map<String, String>> createParamsMapByList(List<Class<?>> targetClassList, String[] targetDtoExcludesFields, String[] targetDetailDtoExcludesFields) throws Exception{
+    private static List<Map<String, String>> createParamsMapByList(List<Class<?>> targetClassList, String[] targetDtoExcludesFields, String[] targetDetailDtoExcludesFields) throws Exception {
         List<Map<String, String>> params = new LinkedList<>();
         for (Class<?> aClass : targetClassList) {
             List<Map<String, String>> paramsMap = createParamsMap(aClass, targetDtoExcludesFields, targetDetailDtoExcludesFields);
@@ -146,25 +219,47 @@ public class SysLogFieldInsertSqlGenerator {
         Map<String, String> javadocMap = JavadocReader.readToJavadocMap(aClass);
         List<Map<String, String>> result = new LinkedList<>();
         for (Field field : ReflectUtil.getFields(aClass)) {
-            if (Arrays.stream(targetDtoExcludesFields).anyMatch(e -> e.contains(field.getName()))) {
+            // 过滤指定字段
+            if (Arrays.stream(targetDtoExcludesFields).anyMatch(e -> e.equalsIgnoreCase(field.getName()))) {
                 continue;
             }
-            if (field.getType() == List.class) {
-                Type genericType = field.getGenericType();
-                if (genericType instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType) genericType;
-                    Class<?> detailClazz = (Class<?>) pt.getActualTypeArguments()[0];
-                    for (Field fieldDetail : ReflectUtil.getFields(detailClazz)) {
-                        if (Arrays.stream(targetDetailDtoExcludesFields).anyMatch(e -> e.contains(fieldDetail.getName()))) {
-                            continue;
-                        }
-                        Map<String, String> map = putDetailToMap(field, aClass, fieldDetail, javadocMap);
-                        result.add(map);
-                    }
-                }
-            } else {
+            // 过滤静态字段
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            // 非数组添加
+            if (field.getType() != List.class) {
                 Map<String, String> map = createMap(aClass, field, javadocMap);
                 result.add(map);
+                continue;
+            }
+            Type genericType = field.getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                Type[] typeArguments = pt.getActualTypeArguments();
+                // 参数map不记录
+                String typeName = pt.getActualTypeArguments()[0].getTypeName();
+                if (typeName.contains("java.util.Map")) {
+                    continue;
+                }
+                // 过滤非detail数组
+                if (!(field.getName().contains("detail") || field.getName().contains("Detail"))) {
+                    continue;
+                }
+
+                if ("java.lang.String".equals(typeName) || "java.lang.Long".equals(typeName) || "java.lang.Integer".equals(typeName)) {
+                    Map<String, String> map = createMap(aClass, field, javadocMap);
+                    result.add(map);
+                    continue;
+                }
+                Class<?> detailClazz = (Class<?>) typeArguments[0];
+                for (Field fieldDetail : ReflectUtil.getFields(detailClazz)) {
+                    if (Arrays.stream(targetDetailDtoExcludesFields).anyMatch(e -> e.contains(fieldDetail.getName()))) {
+                        continue;
+                    }
+                    Map<String, String> map = putDetailToMap(field, aClass, fieldDetail, javadocMap);
+                    result.add(map);
+                }
             }
         }
         return result;
