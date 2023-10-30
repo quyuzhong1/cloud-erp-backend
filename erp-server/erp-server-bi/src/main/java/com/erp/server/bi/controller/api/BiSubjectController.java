@@ -177,6 +177,7 @@ public class BiSubjectController extends BaseController {
     /**
      * 复制专题
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制专题:专题id={subjectId}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
         String copySubjectId = biSubjectService.copy(dto);
