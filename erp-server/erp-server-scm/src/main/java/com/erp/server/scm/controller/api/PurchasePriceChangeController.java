@@ -110,7 +110,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核采购变更")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购变更")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",

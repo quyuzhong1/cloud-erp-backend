@@ -108,7 +108,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核供应商阶段")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交供应商阶段")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         Boolean result = supplierPhaseService.addAndSubmit(dto);

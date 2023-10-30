@@ -82,7 +82,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核供应商")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交供应商")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
@@ -228,7 +228,7 @@ public class SupplierController extends BaseController {
      * @author yl
      * @date 2023-03-22 11:56
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "反审核供应商")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核供应商")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
