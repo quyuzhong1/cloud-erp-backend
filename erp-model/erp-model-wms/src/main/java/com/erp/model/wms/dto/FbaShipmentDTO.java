@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -261,7 +263,7 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class PagingParamDTO {
+    public class PagingParamDTO extends SortDTO {
         /**
          * 单据编号
          */
@@ -326,6 +328,13 @@ public class FbaShipmentDTO implements Serializable {
          * 签收时间（拉取签收数据的日期）
          */
         private List<String> shipmentReceiveTimeList;
+
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    public class ListDTO {
 
     }
 }

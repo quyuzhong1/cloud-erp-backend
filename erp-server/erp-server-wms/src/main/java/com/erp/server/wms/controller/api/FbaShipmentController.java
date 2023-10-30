@@ -68,15 +68,16 @@ public class FbaShipmentController extends BaseController {
     }
 
 
-/*    *//**
+    /**
      * 列表查询
      * @author Luo_WG
      * @date: 2023-10-30
      * @param dto
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
-     *//*
+     */
     @PostMapping("/paging")
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
-        return success(fbaShipmentService.paging(dto));
-    }*/
+//        fbaShipmentService.paging(dto)
+        return success();
+    }
 }
