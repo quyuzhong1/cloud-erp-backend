@@ -276,6 +276,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "采购调价表数据导出")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "pricing_user_id",
