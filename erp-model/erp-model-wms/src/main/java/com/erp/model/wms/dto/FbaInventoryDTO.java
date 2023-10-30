@@ -1,0 +1,270 @@
+package com.erp.model.wms.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * FBI库存请求响应实体
+ * </p>
+ *
+ * @author Luo_WG
+ * @since 2023-10-30
+*/
+@Data
+@NoArgsConstructor
+public class FbaInventoryDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 平台唯一id
+        */
+        private String platformCode;
+
+        /**
+        * 仓库名称
+        */
+        private String name;
+
+        /**
+        * 平台sku
+        */
+        private String asin;
+
+        /**
+        * 卖家sku
+        */
+        private String mSku;
+
+        /**
+        * FNSKU
+        */
+        private String fnSku;
+
+        /**
+        * ERP的SKU
+        */
+        private String skuNo;
+
+        /**
+        * 产品名称
+        */
+        private String productName;
+
+        /**
+        * 配送渠道
+        */
+        private String deliveryChannels;
+
+        /**
+        * FBM可售
+        */
+        private Integer fbmFulfillableQty;
+
+        /**
+        * 计划入库数量
+        */
+        private Integer inboundWorkingQty;
+
+        /**
+        * 已发货数量
+        */
+        private Integer inboundShippedQty;
+
+        /**
+        * 入库中数量
+        */
+        private Integer inboundReceivingQty;
+
+        /**
+        * FBI可售
+        */
+        private Integer fulfillableQty;
+
+        /**
+        * 预留
+        */
+        private Integer reservedQty;
+
+        /**
+        * 调查中数量
+        */
+        private Integer researchingQty;
+
+        /**
+        * 不可售数量
+        */
+        private Integer unsellableQty;
+
+        /**
+        * 库龄
+        */
+        private String inventoryAge;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 平台唯一id
+        */
+        @NotBlank(message = "平台唯一id不能为空")
+        @Size(max = 255,message = "平台唯一id最大长度不能超过255位")
+        private String platformCode;
+
+        /**
+        * 仓库名称
+        */
+        @NotBlank(message = "仓库名称不能为空")
+        @Size(max = 255,message = "仓库名称最大长度不能超过255位")
+        private String name;
+
+        /**
+        * 平台sku
+        */
+        @NotBlank(message = "平台sku不能为空")
+        @Size(max = 64,message = "平台sku最大长度不能超过64位")
+        private String asin;
+
+        /**
+        * 卖家sku
+        */
+        @NotBlank(message = "卖家sku不能为空")
+        @Size(max = 64,message = "卖家sku最大长度不能超过64位")
+        private String mSku;
+
+        /**
+        * FNSKU
+        */
+        @NotBlank(message = "FNSKU不能为空")
+        @Size(max = 64,message = "FNSKU最大长度不能超过64位")
+        private String fnSku;
+
+        /**
+        * ERP的SKU
+        */
+        @NotBlank(message = "ERP的SKU不能为空")
+        @Size(max = 64,message = "ERP的SKU最大长度不能超过64位")
+        private String skuNo;
+
+        /**
+        * 产品名称
+        */
+        @NotBlank(message = "产品名称不能为空")
+        @Size(max = 500,message = "产品名称最大长度不能超过500位")
+        private String productName;
+
+        /**
+        * 配送渠道
+        */
+        @NotBlank(message = "配送渠道不能为空")
+        @Size(max = 64,message = "配送渠道最大长度不能超过64位")
+        private String deliveryChannels;
+
+        /**
+        * FBM可售
+        */
+        @NotNull(message = "FBM可售不能为空")
+        private Integer fbmFulfillableQty;
+
+        /**
+        * 计划入库数量
+        */
+        @NotNull(message = "计划入库数量不能为空")
+        private Integer inboundWorkingQty;
+
+        /**
+        * 已发货数量
+        */
+        @NotNull(message = "已发货数量不能为空")
+        private Integer inboundShippedQty;
+
+        /**
+        * 入库中数量
+        */
+        @NotNull(message = "入库中数量不能为空")
+        private Integer inboundReceivingQty;
+
+        /**
+        * FBI可售
+        */
+        @NotNull(message = "FBI可售不能为空")
+        private Integer fulfillableQty;
+
+        /**
+        * 预留
+        */
+        @NotNull(message = "预留不能为空")
+        private Integer reservedQty;
+
+        /**
+        * 调查中数量
+        */
+        @NotNull(message = "调查中数量不能为空")
+        private Integer researchingQty;
+
+        /**
+        * 不可售数量
+        */
+        @NotNull(message = "不可售数量不能为空")
+        private Integer unsellableQty;
+
+        /**
+        * 库龄
+        */
+        @NotBlank(message = "库龄不能为空")
+        @Size(max = 255,message = "库龄最大长度不能超过255位")
+        private String inventoryAge;
+
+
+    }
+
+
+}
