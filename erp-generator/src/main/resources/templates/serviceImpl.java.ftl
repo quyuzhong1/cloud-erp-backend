@@ -97,7 +97,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(${table.dtoName}.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addDTO) {
         ${entity} ${entity?uncap_first} = new ${entity}();
         BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
 
@@ -125,7 +125,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, ${entity?uncap_first}.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
-        return ${entity?uncap_first}.getId();
+
+        <#if fieldMap["code"]??>
+        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
+        <#else >
+        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        </#if>
     }
 
     /**
@@ -252,11 +257,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(${table.dtoName}.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(${table.dtoName}.AddDTO dto) {
         // 新增
-        String id = this.add(dto);
+        BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(id);
+        this.submit(result.getId());
+        return result;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
