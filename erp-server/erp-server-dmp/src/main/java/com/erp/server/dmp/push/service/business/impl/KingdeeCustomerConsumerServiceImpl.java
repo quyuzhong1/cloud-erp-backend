@@ -92,7 +92,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
          * 删除
          */
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            operateDelete(apiUtils,platformEntity, map,type,json);
+            operateDelete(apiUtils,platformEntity, map);
         }
 
     }
@@ -299,16 +299,12 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
      * @param apiUtils
      * @param platformEntity
      * @param map
-     * @param type
-     * @param json
      */
-    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map) {
         //操作项
         String operate = (String) map.get("operate");
-        //反审核
-        operateDisapprove(apiUtils,platformEntity, map,type,json);
         //删除
-        kingdeeCommonService.delete(apiUtils,platformEntity,map,ApiModuleTypeEnum.BOM_INFO.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.CUSTOMER_INFO.getCode(),operate);
         return;
     }
 

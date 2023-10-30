@@ -670,6 +670,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //判断状态是否一致
         String documentStatus = (String) model.get("DocumentStatus");
+        //金蝶id
+        String id = String.valueOf(model.get("Id")) ;
+        if (StringUtils.isBlank(syncKingdeeId)) {
+            map.put("syncKingdeeId",id);
+        }
         if (docStatusEnum.getCode().equals(documentStatus)) {
             return Boolean.TRUE;
         }
