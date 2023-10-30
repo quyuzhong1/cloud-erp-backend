@@ -26,23 +26,17 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -70,7 +64,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(FbaDeliveryDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(FbaDeliveryDTO.AddDTO addDTO) {
         FbaDeliveryEntity fbaDeliveryEntity = new FbaDeliveryEntity();
         BeanMapperUtils.copy(addDTO, fbaDeliveryEntity);
 
@@ -92,7 +86,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, fbaDeliveryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
-        return fbaDeliveryEntity.getId();
+
+        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
     }
 
     /**
@@ -209,9 +204,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Override
     public void addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
         // 新增
-        String id = this.add(dto);
+        BaseResultDTO.AddDTO resultAdd = this.add(dto);
         // 提交
-        this.submit(id);
+        this.submit(resultAdd.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)

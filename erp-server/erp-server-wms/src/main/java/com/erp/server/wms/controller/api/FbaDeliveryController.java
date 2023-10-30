@@ -48,7 +48,7 @@ public class FbaDeliveryController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "FBI发货单新增")
-    public ApiResult<String> add(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
         return success(fbaDeliveryService.add(dto));
     }
 

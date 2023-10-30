@@ -24,7 +24,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     * @param dto
     * @return
     */
-    String add(FbaDeliveryDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(FbaDeliveryDTO.AddDTO dto);
 
     /**
     * 修改
