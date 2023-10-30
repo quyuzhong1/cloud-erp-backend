@@ -320,7 +320,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             case SO_OUTSTOCK:
                 wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
-            case SO_RETURN:
+            case SO_RETURN_INSTOCK:
                 wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case STOCKTAKING_PROFIT_LOSS:
