@@ -9,6 +9,7 @@ import com.erp.server.sys.service.SyncTaskService;
 import com.erp.server.sys.service.SysUserInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
  * @description: 同步任务实现
  * @date 2023/10/30 11:44
  */
-@Resource
+@Service
 @Slf4j
 public class SyncTaskServiceImpl implements SyncTaskService {
 
