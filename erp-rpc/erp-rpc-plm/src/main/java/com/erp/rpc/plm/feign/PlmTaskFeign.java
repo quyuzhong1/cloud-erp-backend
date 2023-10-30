@@ -430,6 +430,6 @@ public interface PlmTaskFeign {
      * @date: 2023/10/30 10:38
      * @param syncParamDTO
      */
-    @PostMapping("/feign/syncTask/findDataSendSyncTask")
+    @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

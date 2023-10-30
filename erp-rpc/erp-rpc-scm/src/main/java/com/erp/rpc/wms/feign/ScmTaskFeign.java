@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -404,4 +405,12 @@ public interface ScmTaskFeign {
     @PostMapping("feign/subcontractOrder/listByBomSku")
     List<SubcontractOrderDTO.ListDTO> listByBomSku(@RequestBody String bomSkuId);
 
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/scmSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

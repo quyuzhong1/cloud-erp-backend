@@ -1,7 +1,7 @@
-package com.erp.server.plm.controller.feign;
+package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.server.plm.service.SyncTaskService;
+import com.erp.server.scm.service.SyncTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,14 +16,14 @@ import javax.annotation.Resource;
  * @date: 2023/10/19 11:05
  */
 @RestController
-@RequestMapping("feign/plmSyncTask")
-public class PlmSyncTaskController {
+@RequestMapping("feign/scmSyncTask")
+public class ScmSyncTaskController {
 
     @Resource
     private SyncTaskService syncTaskService;
 
     /**
-     * 更新任务列表负责人名称
+     * 发送推送任务
      * @author Will
      * @date: 2023/10/19 11:07
      * @param syncParamDTO

@@ -1,7 +1,7 @@
-package com.erp.server.plm.controller.feign;
+package com.erp.server.sys.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.server.plm.service.SyncTaskService;
+import com.erp.server.sys.service.SyncTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,8 +16,8 @@ import javax.annotation.Resource;
  * @date: 2023/10/19 11:05
  */
 @RestController
-@RequestMapping("feign/plmSyncTask")
-public class PlmSyncTaskController {
+@RequestMapping("feign/sysSyncTask")
+public class SysSyncTaskController {
 
     @Resource
     private SyncTaskService syncTaskService;
