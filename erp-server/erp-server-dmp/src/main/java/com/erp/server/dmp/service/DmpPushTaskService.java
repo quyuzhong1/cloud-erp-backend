@@ -94,4 +94,12 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return Boolean
      */
     Boolean batchSync(List<String> ids);
+    /**
+     * @description: 批量查询数据后同步
+     * @author Will
+     * @date: 2023/10/30 9:42
+     * @param ids
+     * @return Boolean
+     */
+    Boolean batchFindDataSync(List<String> ids);
 }

@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -491,5 +492,12 @@ public interface SysUserFeign {
     @PostMapping("feign/dept/listSameLevelDeptIdList")
     List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList);
 
-
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

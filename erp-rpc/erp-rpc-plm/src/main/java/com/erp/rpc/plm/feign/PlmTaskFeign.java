@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -422,4 +423,13 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/projectTask/updateProjectTaskChargeName")
     void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
+
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 10:38
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

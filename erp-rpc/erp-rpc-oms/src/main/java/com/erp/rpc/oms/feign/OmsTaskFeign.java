@@ -1,6 +1,6 @@
 package com.erp.rpc.oms.feign;
 
-import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,4 +25,12 @@ public interface OmsTaskFeign {
     @PostMapping("feign/omsWorkflow/getTableNum")
     List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/omsSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

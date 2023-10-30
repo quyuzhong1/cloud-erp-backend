@@ -88,4 +88,18 @@ public class DmpPushTaskController extends BaseController {
         Boolean flag = dmpPushTaskService.batchSync(dto.getIds());
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 重新查询数据后同步（批量同步）
+     * @author Will
+     * @date: 2023/10/13 15:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/batchFindDataSync")
+    public ApiResult batchFindDataSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpPushTaskService.batchFindDataSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
 }
