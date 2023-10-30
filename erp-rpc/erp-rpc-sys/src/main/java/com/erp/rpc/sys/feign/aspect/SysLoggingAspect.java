@@ -231,9 +231,14 @@ public class SysLoggingAspect {
                 return "";
             }
             Object paramsObj = args[0];
+            // 文件上传处理
+            if (paramsObj instanceof MultipartFile[]){
+                return "";
+            }
             // 兼容接口product/plan/uploadImageUrl
-            if (paramsObj instanceof MultipartFile && "uploadImageUrl".equalsIgnoreCase(joinPoint.getSignature().getName())){
-                return logAction.desc().replace("{id}", args[1].toString());
+            if (paramsObj instanceof MultipartFile){
+                MultipartFile file = (MultipartFile) paramsObj;
+                return logAction.desc().replace("{name}", Objects.requireNonNull(file.getOriginalFilename()));
             }
             // 1:非数组请求参数处理
             if (!(paramsObj instanceof Collection)) {
@@ -294,7 +299,7 @@ public class SysLoggingAspect {
         if (logAction.value().checkIsBatchOperation(logAction.isBatchOperationStr())) {
             // 批量处理创建
             dtoList = constructBatchByIds(logAction, request, actionPath, requestParams, currentSysName, description);
-        } else if (0 != paramsArrays.length && (paramsArrays[0] instanceof Collection)) {
+        } else if (0 != paramsArrays.length && ((paramsArrays[0] instanceof Collection) || (paramsArrays[0] instanceof MultipartFile[])) ) {
             // 数组请求参数批量处理创建
             dtoList = constructBatchByParams(logAction, request, actionPath, requestParams, currentSysName, joinPoint);
         } else {
@@ -341,20 +346,37 @@ public class SysLoggingAspect {
                                                                        JoinPoint joinPoint
     ) {
         Object[] args = joinPoint.getArgs();
-        // 数组请求参数处理
-        return ((Collection<?>) args[0]).stream()
-                .map(e -> {
-                    Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
-                    // 将请求参数填充  {paramName1} {paramName2}
-                    String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
-                    // 初始化
-                    SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
-                    // 设置记录ID
-                    Object idObj = paramsMap.get(logAction.keyIdName());
-                    dto.setRecordId(null != idObj ? idObj.toString() : "");
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        if (args[0] instanceof Collection){
+            // 数组请求参数处理
+            return ((Collection<?>) args[0]).stream()
+                    .map(e -> {
+                        Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
+                        // 初始化
+                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        // 设置记录ID
+                        Object idObj = paramsMap.get(logAction.keyIdName());
+                        dto.setRecordId(null != idObj ? idObj.toString() : "");
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+        } else if (args[0] instanceof MultipartFile[]){
+            MultipartFile[] files = (MultipartFile[]) args[0];
+            // 数组请求参数处理
+            return Arrays.stream(files)
+                    .map(e -> {
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
+                        // 初始化
+                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            throw new ServiceException("未找到能解析的Collection");
+        }
+
+
     }
 
 
