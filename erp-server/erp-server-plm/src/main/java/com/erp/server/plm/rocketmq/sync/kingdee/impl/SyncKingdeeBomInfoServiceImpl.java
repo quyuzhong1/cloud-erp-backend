@@ -73,10 +73,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
         for (ProductBomHistoryEntity productBomHistoryEntity : bomHistoryList) {
             Map<String, Object> resultMap = new HashMap<>();
-            DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
-            if (SyncStatusEnum.SUCCESS_SYNC.getCode().equals(productBomHistoryTask.getStatus())) {
-                continue;
-            }
+
+
             //金蝶id
             resultMap.put("syncKingdeeId",productBomHistoryEntity.getSyncKingdeeId());
             //操作（枚举SyncKingdeeOperateEnum）
@@ -99,6 +97,12 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
                 sendMqAndSaveTask(operate,resultMap);
                 return;
+            }
+            if (!entity.getBomVersion().equals(productBomHistoryEntity.getBomVersion())) {
+                DmpPushTaskEntity productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PRODUCT_BOM_INFO.getCode(), productBomHistoryEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+                if (SyncStatusEnum.SUCCESS_SYNC.getCode().equals(productBomHistoryTask.getStatus())) {
+                    continue;
+                }
             }
 
             List<Map<String, Object>> mapList = new ArrayList<>();

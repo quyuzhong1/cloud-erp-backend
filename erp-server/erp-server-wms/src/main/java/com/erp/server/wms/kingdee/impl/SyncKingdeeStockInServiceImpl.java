@@ -99,12 +99,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
-            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+           /* PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
             if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderTask.getStatus())) {
                 log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】", purchaseOrderEntity.getCode());
                 return;
-            }
+            }*/
         }
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -271,7 +271,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 map.put("poKingdeeDetailId", receiveDetailEntity.getKingdeeDetailId());
                 map.put("poSyncKingdeeId", receiveEntity.getSyncKingdeeId());
                 map.put("FInStockEntry_Link_FSTableName", "T_PUR_ReceiveEntry");
-                map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
+                map.put("FInStockEntry_Link_FRuleId", "PUR_ReceiveBill-STK_InStock");
             } else {
                 map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
                 map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());

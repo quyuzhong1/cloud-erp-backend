@@ -215,8 +215,8 @@
                 ppd.sku_id,
                 ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
             FROM purchase_price pp
-            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id
-            WHERE approve_status = 'approve' AND pp.supplier_id IN
+            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+            WHERE pp.is_deleted = false and approve_status = 'approve' AND pp.supplier_id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
@@ -224,4 +224,21 @@
         WHERE p.rank=1
     </select>
 
+    <select id="listAllSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+            pp.supplier_id,
+            ppd.sku_id,
+            ppd.sku_no,
+            ppd.tax_price,
+            ppd.tax_rate,
+            ppd.min_qty,
+            ppd.max_qty,
+            ppd.currency
+        FROM purchase_price pp
+        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

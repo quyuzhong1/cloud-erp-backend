@@ -9,12 +9,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -28,6 +32,7 @@ import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -45,6 +50,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
@@ -143,6 +149,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
 
     @Override
@@ -1457,6 +1466,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
          * 1、同一加工单下，相同仓库、供应商数据生成同一个采购退货单
          * 2、基于1条件下，相同sku、库位则可合并明细
          */
+
+        //获取报价信息
+        List<String> supplierIdList = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId()).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
+
         Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())));
         for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
             List<MachineSubComponentsEntity> value = entry.getValue();
@@ -1487,7 +1501,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //来源单据明细id
                 String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
                 addDetailDTO.setSourceDetailId(sourceIds);
+
+                //报价单价
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(obj -> obj.getSupplierId().equals(handleDetailDTO.getChildSupplierId()) && qty > obj.getMinQty() && obj.getMaxQty() >= qty ).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(supplierSkuPrice)) {
+                    String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", subComponentsEntity.getSkuNo(), qty);
+                    throw new ServiceException(new ApiResult(1,error));
+                }
+                addDetailDTO.setReturnPrice(supplierSkuPrice.getTaxPrice());
+                addDetailDTO.setCurrency(supplierSkuPrice.getCurrency());
+                addDetailDTO.setCurrencySymbol(supplierSkuPrice.getCurrencySymbol());
                 addDetailList.add(addDetailDTO);
+
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
             purchaseReturnOrderService.add(addDTO);

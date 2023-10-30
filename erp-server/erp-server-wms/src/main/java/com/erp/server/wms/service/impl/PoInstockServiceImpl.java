@@ -11,7 +11,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -1301,8 +1304,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             Integer stockInQty = poInstockDetailEntity.getStockInQty();
 
             //子级SKU版本
-            Integer bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(poInstockDetailEntity.getPurchaseOrderDetailId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse(MathUtil.ONE);
+            String bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(poInstockDetailEntity.getPurchaseOrderDetailId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse("");
 
             //子集BOM信息
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomList.stream().filter(obj -> bomVersion.equals(obj.getBomVersion()) && obj.getParentSkuId().equals(poInstockDetailEntity.getSkuId())).collect(Collectors.toList());
@@ -1436,8 +1439,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         for (PoInstockDetailEntity parentInstockDetail : poInstockDetailList) {
 
             //子级SKU版本
-            Integer bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(parentInstockDetail.getPurchaseOrderDetailId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse(MathUtil.ONE);
+            String bomVersion = childList.stream().filter(obj -> obj.getParentPodId().equals(parentInstockDetail.getPurchaseOrderDetailId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentBomVersion())).orElse("");
 
             //父级委外明细id
             String subParentDetailId = childList.stream()
