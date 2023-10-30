@@ -18,6 +18,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -27,6 +28,12 @@ import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.excel.DmpPushTaskExportExcelDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpPushTaskMapper;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +46,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -59,6 +64,22 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private OmsTaskFeign omsTaskFeign;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void sendMqAndSaveTask(DmpPushTaskFeignDTO dto) {
@@ -72,6 +93,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -80,18 +102,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         updateWrapper.set(DmpPushTaskEntity::getLastSyncTime, LocalDateTime.now());
         updateWrapper.set(DmpPushTaskEntity::getStatus, paramDTO.getSyncStatus());
         updateWrapper.set(StrUtil.isNotBlank(paramDTO.getResponseMsg()), DmpPushTaskEntity::getReturnMsg, paramDTO.getResponseMsg());
-        updateWrapper.set(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now());
-        this.update(updateWrapper);
-
-    }
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateStatus(String id, String status, String msg) {
-        LambdaUpdateWrapper<DmpPushTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(DmpPushTaskEntity::getId, id);
-        updateWrapper.set(DmpPushTaskEntity::getLastSyncTime, LocalDateTime.now());
-        updateWrapper.set(DmpPushTaskEntity::getStatus, status);
-        updateWrapper.set(StrUtil.isNotBlank(msg), DmpPushTaskEntity::getReturnMsg, msg);
         updateWrapper.set(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now());
         this.update(updateWrapper);
 
@@ -206,14 +216,140 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
         for (DmpPushTaskEntity dmpPushTaskEntity : list) {
-            // 发送MQ消息
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPushTaskEntity.getId(), dmpPushTaskEntity.getMqData());
-            SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpSyncMqDTO, dmpPushTaskEntity.getSourceId());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            try {
+                // 发送MQ消息
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPushTaskEntity.getId(), dmpPushTaskEntity.getMqData());
+                SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpSyncMqDTO, dmpPushTaskEntity.getSourceId());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                }
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
+                log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
             }
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean batchFindDataSync(List<String> ids) {
+        List<DmpPushTaskEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
+        }
+        long count = list.stream().filter(obj -> !PlatformEnum.ERP.getDesc().equals(obj.getSourcePlatformName()) || !PlatformEnum.KINGDEE.getDesc().equals(obj.getTargetPlatformName())).count();
+        if (count > 0) {
+            throw new ServiceException(new ApiResult(10000,"只允许推送自研ERP>>>>金蝶的数据"));
+        }
+        Map<String, List<DmpPushTaskEntity>> map = list.stream().collect(Collectors.groupingBy(DmpPushTaskEntity::getSourceType));
+        for (Map.Entry<String, List<DmpPushTaskEntity>> entry : map.entrySet()) {
+            String sourceType = entry.getKey();
+            List<DmpPushTaskEntity> value = entry.getValue();
+            List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList = value.stream().map(obj -> new DmpSyncMqDTO.SyncParamDetailDTO(obj.getSourceId(), obj.getSyncOperate())).collect(Collectors.toList());
+            try {
+                // 发送MQ消息
+                findDataAndSendMq(paramDetailList,sourceType);
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(sourceType);
+                log.error("从{}推送{}到{}发送消息异常", PlatformEnum.ERP.getDesc(), sourceTypeName, PlatformEnum.KINGDEE.getDesc(), e);
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 重新查询数据发送MQ
+     * @author Will
+     * @date: 2023/10/30 10:03
+     */
+    private void findDataAndSendMq (List<DmpSyncMqDTO.SyncParamDetailDTO> paramDetailList,String sourceType) {
+        SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getEnum(sourceType);
+        DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
+        switch (SourceTypeEnum.getEnum(sourceType)) {
+            case BASIC_CATEGORY:
+                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PRODUCT_DETAIL:
+                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PRODUCT_BOM_INFO:
+                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SYS_USER_INFO:
+                sysUserFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PURCHASE_ORDER:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PURCHASE_CHANGE:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PURCHASE_PRICE:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PURCHASE_PRICE_CHANGE:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SUBCONTRACT_CHANGE:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SUBCONTRACT_ORDER:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SUPPLIER:
+                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case MACHINE_INFO:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case OTHER_OUTSTOCK:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case OTHER_INSTOCK:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PO_INSTOCK:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PO_RECEIVE:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case PO_RETURN:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SO_OUTSTOCK:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SO_RETURN_INSTOCK:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case STOCKTAKING_PROFIT_LOSS:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case TRANSFER_INFO:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case WAREHOUSE:
+                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case CUSTOMER_INFO:
+                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case CUSTOMER_CONTACT:
+                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case CUSTOMER_GROUP:
+                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SO_INFO:
+                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            case SO_CHANGE:
+                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
+                return;
+            default:
+                return;
+        }
     }
 
     /**
