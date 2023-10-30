@@ -109,7 +109,6 @@ public class NoticeMessageController extends BaseController {
      */
     @LogViewService
     @GetMapping("/view")
-
     public ApiResult<NoticeMessageEntity> view(@RequestParam(value = "id") String id) {
         NoticeMessageEntity view = noticeMessageService.view(id);
         return success(view);

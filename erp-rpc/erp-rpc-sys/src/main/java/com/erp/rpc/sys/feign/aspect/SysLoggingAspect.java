@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -222,7 +223,7 @@ public class SysLoggingAspect {
      * @return 空=logAction的desc
      */
     private String generateSingleDesc(Object originalObj, Object newObject, LogAction logAction, String classPath, ProceedingJoinPoint joinPoint) {
-        // 生成自定义描述(包含{任意字段})
+        // 1:生成自定义描述(包含{任意字段})
         if (Pattern.matches(CUSTOM_MATCH_REGEX, logAction.desc())) {
             // 获取请求参数转Map
             Object[] args = joinPoint.getArgs();
@@ -230,6 +231,10 @@ public class SysLoggingAspect {
                 return "";
             }
             Object paramsObj = args[0];
+            // 兼容接口product/plan/uploadImageUrl
+            if (paramsObj instanceof MultipartFile && "uploadImageUrl".equalsIgnoreCase(joinPoint.getSignature().getName())){
+                return logAction.desc().replace("{id}", args[1].toString());
+            }
             // 1:非数组请求参数处理
             if (!(paramsObj instanceof Collection)) {
                 Map<String, Object> paramsMap = BeanUtil.beanToMap(paramsObj);
@@ -418,18 +423,6 @@ public class SysLoggingAspect {
         return dto;
     }
 
-    public static void main(String[] args) {
-        String json = "[\n" +
-                "    \"1717859116346511361\"\n" +
-                "]";
-        JSONArray jsonArray = new JSONArray(json);
-        if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
-            System.out.println("是");
-        }
-
-        System.out.println(JSONUtil.isTypeJSONArray(json));
-
-    }
 
     /**
      * 获取批量处理IDS
@@ -449,6 +442,11 @@ public class SysLoggingAspect {
         }
         Object idsValueObj = new JSONObject(requestParams).get(idsKey);
         if (null == idsValueObj) {
+            // 兼容旧单删除(单id删除)
+            Object idValueObj = new JSONObject(requestParams).get("id");
+            if (null != idValueObj){
+                return Collections.singletonList(idValueObj.toString());
+            }
             String msg = StrUtil.format("未找到批量查询字段内容,key={}", idsKey);
             throw new ServiceException(msg);
         }

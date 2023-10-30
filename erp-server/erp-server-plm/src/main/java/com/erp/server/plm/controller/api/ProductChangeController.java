@@ -69,7 +69,7 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "更新变更")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新变更:id={id},数据源id={源数据id},变更类型={type}")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated UpdateChangeDTO dto) {
         Boolean result = productChangeService.edit(dto);
@@ -96,7 +96,6 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogViewService
     @PostMapping("/view")
     public ApiResult details(@RequestBody @Validated BaseIdDTO dto) {
 
