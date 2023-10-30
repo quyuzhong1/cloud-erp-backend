@@ -99,6 +99,7 @@ public class BiDashboardController extends BaseController {
     /**
      * 复制仪表盘
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制仪表盘:专题id={subjectId}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
         String id = subjectService.copyDashboard(dto);
