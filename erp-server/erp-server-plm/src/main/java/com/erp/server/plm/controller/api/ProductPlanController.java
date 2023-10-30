@@ -103,7 +103,7 @@ public class ProductPlanController extends BaseController {
      * @param id
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品规划-图片上传:id={id}")
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "产品规划-图片上传:文件名={name}")
     @PostMapping("/uploadImageUrl")
     public ApiResult uploadImageUrl(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("id") String id) {
         Boolean flag = productPlanService.uploadImageUrl(multipartFile,id);

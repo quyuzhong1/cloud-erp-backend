@@ -1,6 +1,9 @@
 package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.controller.BaseController;
@@ -33,6 +36,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("PLM通用")
 @RequestMapping("common")
 public class CommonController extends BaseController {
 
@@ -87,6 +91,7 @@ public class CommonController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping("/upload")
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
