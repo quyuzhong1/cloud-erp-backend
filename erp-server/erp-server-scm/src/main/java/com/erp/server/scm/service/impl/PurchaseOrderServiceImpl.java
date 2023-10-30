@@ -416,9 +416,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
         //调用审核流程
-//        approveProcess(list, baseApproveParamDTO);
-
-        approveEnd(baseApproveParamDTO, list);
+        approveProcess(list, baseApproveParamDTO);
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

@@ -268,19 +268,10 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
             List<Map<String, Object>> mapList = new ArrayList<>();
             Map<String, Object> map = new HashMap<>();
-            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(entity.getSourceType())) {
-                WarehouseReceiveDetailEntity receiveDetailEntity = warehouseReceiveDetailService.getById(detail.getSourceDetailId());
-                WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(receiveDetailEntity.getMainId());
-                map.put("poKingdeeDetailId", receiveDetailEntity.getKingdeeDetailId());
-                map.put("poSyncKingdeeId", receiveEntity.getSyncKingdeeId());
-                map.put("FInStockEntry_Link_FSTableName", "T_PUR_ReceiveEntry");
-                map.put("FInStockEntry_Link_FRuleId", "PUR_ReceiveBill-STK_InStock");
-            } else {
-                map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
-                map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
-                map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
-                map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
-            }
+            map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+            map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
+            map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
             mapList.add(map);
             //销售单金蝶明细id
             jsonObject.set("FInStockEntry_Link", mapList);
