@@ -51,7 +51,7 @@ public class SysLoginAuthController extends BaseController {
     private AuthTokenService authTokenService;
 
     //账号登录
-    @LogAction(value = LogActionEnum.LOGIN, desc = "账号登录")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号登录:账号={account}")
     @RequestMapping("/accountLogin")
     public ApiResult accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
