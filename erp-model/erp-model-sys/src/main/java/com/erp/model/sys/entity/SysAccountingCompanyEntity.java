@@ -40,6 +40,9 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     private String contactName;
 
+    /**
+     * 联系电话
+     */
     private String contactMobile;
 
     /**
@@ -47,6 +50,9 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     private String contactAddress;
 
+    /**
+     * 币种
+     */
     private String currency;
 
     /**

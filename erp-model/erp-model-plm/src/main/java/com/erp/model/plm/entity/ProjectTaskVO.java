@@ -75,16 +75,16 @@ public class ProjectTaskVO implements Serializable {
      */
     private LocalDate planEndTime;
 
+    //  @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
     /**
      * 任务优先级 1 低级 2 中级 3 高级
      */
-    //  @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
     private Integer priority;
 
+    //  @NotBlank(message = "阶段id 不能为空")
     /**
      * 任务阶段id
      */
-    //  @NotBlank(message = "阶段id 不能为空")
     private String phaseId;
 
     /**
@@ -152,11 +152,11 @@ public class ProjectTaskVO implements Serializable {
     private List<String> refSkuNoList;
 
 
+    //   @NotBlank(message = "字段配置类型 不能为空")
+    //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
     /**
      * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
      */
-    //   @NotBlank(message = "字段配置类型 不能为空")
-    //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
     private String fieldConfigType;
 
 

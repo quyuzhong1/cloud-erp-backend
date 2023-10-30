@@ -262,7 +262,6 @@ public class SupplierDTO implements Serializable {
         /**
          * 公司网址
          */
-
         private String companyWebsite;
 
 

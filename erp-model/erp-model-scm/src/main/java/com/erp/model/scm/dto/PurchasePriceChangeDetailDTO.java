@@ -36,6 +36,9 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空")
         private String skuId;
 
+        /**
+         * 采购价目详情表id
+         */
         @NotBlank(message = "采购价目详情表id 不能为空")
         private String purchasePriceDetailId;
 
