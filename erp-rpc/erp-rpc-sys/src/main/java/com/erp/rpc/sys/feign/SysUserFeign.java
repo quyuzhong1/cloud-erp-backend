@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * @Classname 系统管理 服务
+
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
@@ -522,4 +523,12 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/dept/getDeptByParentId")
     List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId);
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }
