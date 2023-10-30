@@ -187,6 +187,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "保存并提交盘盈盘亏单")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
         stocktakingProfitLossService.addAndSubmit(dto);
