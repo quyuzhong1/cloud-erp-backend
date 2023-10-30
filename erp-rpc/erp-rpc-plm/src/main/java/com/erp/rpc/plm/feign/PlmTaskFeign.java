@@ -1,11 +1,13 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -412,4 +414,22 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/productPack/backFillPackaging")
     void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
+
+    /**
+     * @description: 更新任务列表负责人名称
+     * @author Will
+     * @date: 2023/10/19 11:06
+     * @param sysUserInfoDTO
+     */
+    @PostMapping("/feign/projectTask/updateProjectTaskChargeName")
+    void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
+
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 10:38
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

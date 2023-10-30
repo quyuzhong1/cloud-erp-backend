@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -301,4 +302,16 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
+
+
+    /**
+     * 更改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeId
+     * @return void
+     * @author yl
+     * @date 2023-08-14 17:47
+     */
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 }

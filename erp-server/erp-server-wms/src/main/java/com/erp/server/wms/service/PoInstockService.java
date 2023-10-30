@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -159,7 +160,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 12:00
      */
-    Boolean exportExcel(PoInstockDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PoInstockDTO.ExportParamDTO dto, HttpServletResponse response);
 
     /**
      * @param ids
@@ -240,14 +241,12 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * 修改金蝶同步状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据供应商id集合获取入库单量和入库数量
@@ -319,4 +318,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return com.erp.model.wms.dto.PoInstockDTO.ViewDTO
      **/
     PoInstockDTO.ViewDTO pdaView(String id);
+
+    /**
+     * 统计数量
+     * @author yl
+     * @date 2023-10-24 12:11
+     * @param dto
+     * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
+     */
+    PoInstockDTO.PagingTotalDTO pagingTotal(PoInstockDTO.SearchParamDTO  dto);
 }

@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,7 +16,6 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
@@ -37,12 +37,14 @@ import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -102,11 +104,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
@@ -144,18 +150,21 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
+        //用户名
+        String userName = entity.getUserName();
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         entity.setRealName(sysUserInfoDTO.getRealName());
@@ -167,9 +176,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-
+        //更新plm任务列表任务负责人名称
+        if (!StrUtil.equals(sysUserInfoDTO.getUserName(),userName)) {
+            plmTaskFeign.updateProjectTaskChargeName(sysUserInfoDTO);
+        }
     }
 
     /**
@@ -345,6 +357,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateState(UpdateUserStateDTO stateDTO) {
         LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
@@ -985,28 +998,24 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(SysUserInfoEntity::getUid, businessIds)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(SysUserInfoEntity::getUid, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SysUserInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void deleteByIds(List<String> uids) {
         List<SysUserInfoEntity> list = this.listByIds(uids);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (SysUserInfoEntity entity : list) {
-            //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
-        }
         this.removeByIds(uids);
+        //同步金蝶员工数据
+        list.forEach(obj -> syncKingdeeSysUserInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
     }
 
     /**
@@ -1256,9 +1265,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 log.info("人员【{}】已经存在金蝶id，不处理", name);
                 continue;
             }
-            lambdaUpdate().set(SysUserInfoEntity::getSyncKingdeeId, kingdeeId).set(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysUserInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+            lambdaUpdate().set(SysUserInfoEntity::getSyncKingdeeId, kingdeeId)
                     .set(SysUserInfoEntity::getCode, code)
                     .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid())
                     .update();

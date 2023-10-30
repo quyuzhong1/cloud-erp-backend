@@ -2,17 +2,16 @@ package com.erp.server.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import com.erp.model.dmp.dto.GoodcangDTO;
 import com.common.business.enums.SyncKingdeeOmsStatusEnum;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.dto.GoodcangDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -115,9 +114,9 @@ public class DmpWarehouseInboundRecordEntity extends BaseEntity<DmpWarehouseInbo
 
     public static final String PLATFORM_SIGN = "platform_sign";
 
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+    
 
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+    
 
     public DmpWarehouseInboundRecordEntity(GoodcangDTO.MessageDTO ext) {
         this.receivingCode = ext.getReceivingCode();

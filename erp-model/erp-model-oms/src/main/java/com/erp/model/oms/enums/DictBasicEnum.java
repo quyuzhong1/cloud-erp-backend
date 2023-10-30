@@ -12,6 +12,7 @@ public enum DictBasicEnum {
     SUPPLIER_PAY_MODE("supplierPayMode",  "供应商结算方式"),
     SUPPLIER_CATEGORY("supplierCategory" , "供应商分类"),
     PLATFORM("platform" , "平台类型"),
+    SALES_PLATFORM("salesPlatform" , "销售平台"),
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式"),
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
     COLLECTION_TERMS("collectionTerms",  "收款条件"),

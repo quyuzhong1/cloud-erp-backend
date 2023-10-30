@@ -215,5 +215,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
                 throw new ServiceException(ApiError.ERROR_99057.code, String.format(ApiError.ERROR_99057.msg,detail.getIndex(), bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));
             }
         }
+        detail.setBomHistoryId(bomList.get(0).getBomHistoryId());
     }
 }

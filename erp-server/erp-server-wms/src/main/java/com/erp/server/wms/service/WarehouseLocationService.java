@@ -120,4 +120,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return java.lang.Boolean
      **/
     Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto);
+
+    /**
+     * 根据仓库id和库区code查询库区信息
+     * @param warehouseId
+     * @param warehouseAreaCode
+     */
+    WarehouseLocationEntity findArea(String warehouseId, String warehouseAreaCode);
 }

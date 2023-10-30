@@ -20,7 +20,7 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
      * @param taskIdList
      * @return
      */
-    List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList);
+    List<StocktakingTaskUserEntity> listBaseBySourceIdList(List<String> taskIdList);
     /**
      * 分配任务盘点人
      * @param taskEntity
@@ -36,4 +36,24 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
      * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskUserEntity>
      */
     List<StocktakingTaskUserEntity> listByUserIds(List<String> userIdList);
+
+    /**
+     * 添加盘点人
+     * @author yl
+     * @date 2023-10-20 10:02
+     * @param sourceId 来源id
+     * @param sourceType 来源类型
+     * @param stocktakingUserIdList
+     * @return java.lang.Boolean
+     */
+    Boolean addTaskUser(String sourceId,String sourceType,List<String> stocktakingUserIdList);
+
+    /**
+     * 删除盘点人根据来源id
+     * @author yl
+     * @date 2023-10-20 14:25
+     * @param sourceId
+     * @return void
+     */
+    void removeBySourceId(String sourceId);
 }

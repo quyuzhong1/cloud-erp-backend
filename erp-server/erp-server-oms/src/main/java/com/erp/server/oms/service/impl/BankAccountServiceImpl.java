@@ -10,6 +10,7 @@ import com.erp.server.oms.listener.KingdeeBankAccountListener;
 import com.erp.server.oms.mapper.BankAccountMapper;
 import com.erp.server.oms.service.BankAccountService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
 
     /**
      * 根据组织id和银行名称获取到收款账户信息
+     *
      * @param orgId
      * @param accountName
      * @return
@@ -93,6 +95,14 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
 
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BankAccountEntity> listByAccountNameList(List<String> receiveAccountList) {
+        if (CollectionUtils.isEmpty(receiveAccountList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(BankAccountEntity::getAccountName,receiveAccountList).list();
     }
 
 }

@@ -67,7 +67,7 @@ public class MQConsumerService {
     private MongoService mongoService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -388,7 +388,7 @@ public class MQConsumerService {
         public void onMessage(KingdeeReturnOrderEntity ext) {
             log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
-            dmpSyncTaskService.syncKingdeeReturnOrderToWms(ext);
+            dmpPullTaskService.syncKingdeeReturnOrderToWms(ext);
         }
     }
 
@@ -403,7 +403,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
             log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
-            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+            dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
         }
     }
 

@@ -49,7 +49,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.kingdee.SyncKingdeePoReceiveService;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -128,9 +127,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
-
+/*
     @Autowired
-    private SyncKingdeePoReceiveService syncKingdeePoReceiveService;
+    private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
 
     /**
      * 主页分页查询
@@ -542,7 +541,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .update();
 
             //审核通过发送金蝶
-            warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+//            warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //根据条件生成质检单
             createQcBill(ids);
 
@@ -628,7 +627,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
+            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(newProduct);
@@ -672,7 +671,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //旧品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if ((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(stockInSaleMethod))) {
+            if ((StringUtils.isNotBlank(stockInProductGrade) && StringUtils.isNotBlank(stockInSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(stockInItem, stockInQc);
                 stockInQc.setQcType(stockIn);
@@ -766,7 +765,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //审核通过发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -853,7 +852,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
 
         //作废发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
+//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -889,6 +888,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
         //修改到货状态
         purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
+
+        //审核通过发送金蝶
+//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表
         return flag;
     }
@@ -1671,6 +1673,24 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseReceiveEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
                 .set(StringUtils.isNotBlank(syncOperate), WarehouseReceiveEntity::getSyncOperate, syncOperate)
+                .update();
+    }
+
+    /**
+     * 更改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeId
+     * @return void
+     * @author yl
+     * @date 2023-08-14 17:47
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(WarehouseReceiveEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 }

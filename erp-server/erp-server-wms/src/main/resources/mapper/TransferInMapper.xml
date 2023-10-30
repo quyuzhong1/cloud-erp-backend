@@ -19,25 +19,25 @@
         SELECT
         ti.id,
         ti.code,
-        ti.source_code,
-        ti.transfer_direction,
-        ti.approve_status,
-        ti.invalid_status,
-        ti.bill_date,
-        ti.out_warehouse_id,
-        ti.out_warehouse_name,
-        ti.in_warehouse_id,
-        ti.in_warehouse_name,
-        ti.approve_user_name,
-        ti.create_user_name,
-        ti.create_time,
-        tid.sku_id,
-        tid.sku_no,
+        ti.source_code AS sourceCode,
+        ti.transfer_direction AS transferDirection,
+        ti.approve_status AS approveStatus,
+        ti.invalid_status AS invalidStatus,
+        ti.bill_date AS billDate,
+        ti.out_warehouse_id AS outWarehouseId,
+        ti.out_warehouse_name AS outWarehouseName,
+        ti.in_warehouse_id AS inWarehouseId,
+        ti.in_warehouse_name AS inWarehouseName,
+        ti.approve_user_name AS approveUserName,
+        ti.create_user_name AS createUserName,
+        ti.create_time AS createTime,
+        tid.sku_id AS skuId,
+        tid.sku_no AS skuNo,
         tid.qty,
-        tid.out_warehouse_location,
+        tid.out_warehouse_location AS outWarehouseLocation,
         tid.remark,
-        tid.plan_qty,
-        tid.source_detail_id
+        tid.plan_qty AS planQty,
+        tid.source_detail_id AS sourceDetailId
         FROM transfer_in ti
         INNER JOIN transfer_in_detail tid
         ON ti.id=tid.main_id AND tid.is_deleted=FALSE
@@ -100,32 +100,38 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY ti.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            ti.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.TransferInDTO$PagingViewDTO">
         SELECT
         ti.id,
         ti.code,
-        ti.source_code,
-        ti.transfer_direction,
-        ti.approve_status,
-        ti.invalid_status,
-        ti.bill_date,
-        ti.out_warehouse_id,
-        ti.out_warehouse_name,
-        ti.in_warehouse_id,
-        ti.in_warehouse_name,
-        ti.approve_user_name,
-        ti.create_user_name,
-        ti.create_time,
-        tid.sku_id,
-        tid.sku_no,
+        ti.source_code AS sourceCode,
+        ti.transfer_direction AS transferDirection,
+        ti.approve_status AS approveStatus,
+        ti.invalid_status AS invalidStatus,
+        ti.bill_date AS billDate,
+        ti.out_warehouse_id AS outWarehouseId,
+        ti.out_warehouse_name AS outWarehouseName,
+        ti.in_warehouse_id AS inWarehouseId,
+        ti.in_warehouse_name AS inWarehouseName,
+        ti.approve_user_name AS approveUserName,
+        ti.create_user_name AS createUserName,
+        ti.create_time AS createTime,
+        tid.sku_id AS skuId,
+        tid.sku_no AS skuNo,
         tid.qty,
-        tid.out_warehouse_location,
+        tid.out_warehouse_location AS outWarehouseLocation,
         tid.remark,
-        tid.plan_qty,
-        tid.source_detail_id
+        tid.plan_qty AS planQty,
+        tid.source_detail_id AS sourceDetailId
         FROM transfer_in ti
         INNER JOIN transfer_in_detail tid
         ON ti.id=tid.main_id AND tid.is_deleted=FALSE
@@ -200,7 +206,13 @@
                 </if>
             </otherwise>
         </choose>
-        ORDER BY ti.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            ti.create_time DESC
     </select>
 
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">

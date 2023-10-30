@@ -1,10 +1,15 @@
 package com.common.business.dto;
 
+import com.common.business.enums.SourceTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @CreateTime: 2023-06-29  14:31
@@ -13,12 +18,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DmpSyncMqDTO implements Serializable {
-
-    /**
-     * dmp同步任务id
-     */
-    private String dmpSyncTaskId;
+public class DmpSyncMqDTO extends DmpSyncTaskIdDTO  implements Serializable {
 
     /**
      * dmp同步任务mq消息内容实体
@@ -26,8 +26,13 @@ public class DmpSyncMqDTO implements Serializable {
     private String mqData;
 
 
+    public DmpSyncMqDTO(String id, String mqData) {
+        super(id);
+        this.mqData = mqData;
+    }
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ParamDTO {
 
         /**
@@ -46,4 +51,39 @@ public class DmpSyncMqDTO implements Serializable {
         private String responseMsg;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SyncParamDTO {
+
+        /**
+         * 来源集合
+         */
+        @NotEmpty(message = "来源集合不能为空")
+        private List<SyncParamDetailDTO> sourceDetailList;
+
+        /**
+         * 来源类型
+         */
+        @NotNull(message = "来源类型不能为空")
+        private SourceTypeEnum sourceType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SyncParamDetailDTO {
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * 同步操作
+         */
+        @NotBlank(message = "同步操作不能为空")
+        private String syncOperate;
+    }
 }

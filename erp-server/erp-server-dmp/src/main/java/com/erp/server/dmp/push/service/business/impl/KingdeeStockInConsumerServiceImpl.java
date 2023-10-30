@@ -5,15 +5,14 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -80,11 +79,18 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
-
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
 
     }
 
-
+    /**
+     * 作废
+     */
     public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
         //判断金蝶系统是否已存在该数据
         JSONObject model;
@@ -99,29 +105,29 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         String id = String.valueOf(model.get("Id")) ;
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //反审核
-            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+            Boolean unAudit = kingdeeCommonService.unAudit(apiUtils, id);
             if (!unAudit) {
                 return;
             }
         }
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
         return;
     }
 
+    /**
+     * 反审核
+     */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
-        if (StringUtils.isBlank(syncKingdeeId)) {
-            return;
-        }
         //反审核
-        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
         return;
     }
 
+    /**
+     * 审核
+     */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -130,8 +136,7 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
 
         //判断金蝶系统是否已存在该数据
@@ -156,7 +161,7 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
 
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
@@ -176,6 +181,15 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
                 updateKingdeeDetailId(jsonArray);
             }
         }
+    }
+
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),operate);
+        return;
     }
 
     /**
@@ -200,8 +214,7 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
-            return list;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DETAIL_ID);
         }
         JSONArray removeObj = new JSONArray();
         JSONArray addObj = new JSONArray();

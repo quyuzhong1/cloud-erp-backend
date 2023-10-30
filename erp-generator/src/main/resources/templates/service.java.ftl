@@ -33,7 +33,7 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     * @param dto
     * @return
     */
-    String add(${table.dtoName}.AddDTO dto);
+    BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO dto);
 
     /**
     * 修改
@@ -45,50 +45,50 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     Boolean update(${table.dtoName}.UpdateDTO dto);
 
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
-      /**
-      * 分页列表查询
-      * @author ${author}
-      * @date: ${date}
-      * @param pagingParamDTO
-      * @return PagingVO<${table.dtoName}.ListDTO>>
-      */
-      PagingVO<${table.dtoName}.ListDTO> paging(PagingDTO<${table.dtoName}.PagingParamDTO> pagingParamDTO);
+    /**
+    * 分页列表查询
+    * @author ${author}
+    * @date: ${date}
+    * @param pagingParamDTO
+    * @return PagingVO<${table.dtoName}.ListDTO>>
+    */
+    PagingVO<${table.dtoName}.ListDTO> paging(PagingDTO<${table.dtoName}.PagingParamDTO> pagingParamDTO);
 
-     /**
-     * 状态统计
-     * @author ${author}
-     * @date: ${date}
-     * @param dto
-     * @return List<${table.dtoName}.TabListDTO>>
-     */
-     List<${table.dtoName}.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+    * 状态统计
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @return List<${table.dtoName}.TabListDTO>>
+    */
+    List<${table.dtoName}.TabListDTO> tabList(PermissionsDTO dto);
 
-     /**
-     * 详情
-     * @author ${author}
-     * @date: ${date}
-     * @param id
-     * @return
-     */
-     ${table.dtoName}.ViewDTO view(String id);
+    /**
+    * 详情
+    * @author ${author}
+    * @date: ${date}
+    * @param id
+    * @return
+    */
+    ${table.dtoName}.ViewDTO view(String id);
 
-     /**
-     * 新增并提交审核
-     * @author ${author}
-     * @date: ${date}
-     * @param dto
-     * @return
-     */
-     void addAndSubmit(${table.dtoName}.AddDTO dto);
+    /**
+    * 新增并提交审核
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @return BaseResultDTO.AddDTO
+    */
+    BaseResultDTO.AddDTO addAndSubmit(${table.dtoName}.AddDTO dto);
 
-     /**
-     * 修改并提交审核
-     * @author ${author}
-     * @date: ${date}
-     * @param dto
-     * @return
-     */
-     void updateAndSubmit(${table.dtoName}.UpdateDTO dto);
+    /**
+    * 修改并提交审核
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @return
+    */
+    void updateAndSubmit(${table.dtoName}.UpdateDTO dto);
 
      /**
      * 提交审核

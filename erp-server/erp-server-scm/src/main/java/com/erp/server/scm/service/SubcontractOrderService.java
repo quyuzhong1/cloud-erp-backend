@@ -220,13 +220,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * 修改金蝶同步信息
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
-     * @param ids
-     * @param syncKingdeeStatus
+     * @param id
      * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据bom skuId 获取数据

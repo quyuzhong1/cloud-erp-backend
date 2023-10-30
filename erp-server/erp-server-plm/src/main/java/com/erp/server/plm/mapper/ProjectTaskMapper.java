@@ -224,7 +224,13 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      */
     List<String> listProductIdByTaskChargeId(@Param("chargeId") String userId);
 
-
-
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/23 17:22
+     * @param chargeId
+     * @return List<ProjectTaskEntity>
+     */
+    List<ProjectTaskEntity> listByChargeId(@Param("chargeId")String chargeId);
 }
 

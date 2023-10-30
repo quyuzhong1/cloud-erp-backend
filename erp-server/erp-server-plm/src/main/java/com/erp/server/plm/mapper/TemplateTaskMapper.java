@@ -35,4 +35,13 @@ public interface TemplateTaskMapper  extends BaseMapper<TemplateTaskEntity> {
     IPage<TemplateTaskShowDTO> templateTaskList(Page query, @Param("params") TemplateTaskSearchDTO params, @Param("chargeNameStr")String chargeNameStr, @Param("docsNameStr")String docsNameStr);
 
     List<TemplateTaskEntity> getByTemplateId(@Param("templateId") String templateId, @Param("tastIdList") List<String> tastIdList);
+
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/23 17:22
+     * @param chargeId
+     * @return List<TemplateTaskEntity>
+     */
+    List<TemplateTaskEntity> listByChargeId(@Param("chargeId")String chargeId);
 }

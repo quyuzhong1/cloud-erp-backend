@@ -73,6 +73,12 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
+    /**
+     * 金蝶明细id
+     */
+    @TableField("Kingdee_detail_id")
+    private String kingdeeDetailId;
+
     @TableField(exist = false)
     private String approveUserName;
 

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * bom 信息表(BomInfo)实体类
@@ -43,19 +42,7 @@ public class BomInfoEntity extends BaseEntity implements Serializable {
     /**
      * BOM 的版本
      */
-    private Integer bomVersion;
-
-    /**
-     * 同步金蝶状态（默认0无需发送,1待发送,2发送成功,3发送失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-
-    /**
-     * 同步金蝶时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
+    private String bomVersion;
 
     /**
      * 同步金蝶id

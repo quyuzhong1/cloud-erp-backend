@@ -1,14 +1,22 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -21,22 +29,24 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.PoInstockDetailService;
-import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -58,20 +68,22 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private PoInstockService poInstockService;
-
-    @Resource
     private PoInstockDetailService poInstockDetailService;
-
-    @Resource
-    private MQProducerService mQProducerService;
 
     @Resource
     private WarehouseService warehouseService;
 
     @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+    @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
     /**
      * 发送消息同步金蝶
      *
@@ -82,20 +94,35 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      * @Date 2023/4/24 11:27
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(PoInstockEntity entity, String operate) {
-
-        //更新同步状态为待同步
-        poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
-            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
-            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
+           /* PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+            DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
+            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderTask.getStatus())) {
                 log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】", purchaseOrderEntity.getCode());
                 return;
-            }
+            }*/
         }
+        Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //业务id
+        resultMap.put("id", entity.getId());
+        //入库单号
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
 
         //组织机构编码
@@ -108,13 +135,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrderEntity.getPurchaseOrgId())).distinct()
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
 
-        Map<String, Object> resultMap = new HashMap<>();
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //业务id
-        resultMap.put("id", entity.getId());
-        //入库单号
-        resultMap.put("code", entity.getCode());
+
         //入库组织
         resultMap.put("receiveOrgName", entity.getReceiveOrgName());
         //单据类型
@@ -130,7 +151,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             }
         }
         //入库日期
-        resultMap.put("billDate", entity.getStockInDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getStockInDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
@@ -196,6 +217,14 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("poKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         resultMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
         List<JSONObject> list = new ArrayList<>();
+
+
+
+
+        List<String> ids = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(ids);
+
+
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
@@ -241,6 +270,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             Map<String, Object> map = new HashMap<>();
             map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
             map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            map.put("FInStockEntry_Link_FSTableName", "t_PUR_POOrderEntry");
+            map.put("FInStockEntry_Link_FRuleId", "PUR_PurchaseOrder-STK_InStock");
             mapList.add(map);
             //销售单金蝶明细id
             jsonObject.set("FInStockEntry_Link", mapList);
@@ -249,17 +280,30 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         }
         resultMap.put("list", list);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
-            }
-            return Boolean.TRUE;
-        });
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (PoInstockEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

@@ -310,13 +310,10 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(SysDepartmentEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysDepartmentEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(SysDepartmentEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SysDepartmentEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(org.apache.commons.lang3.StringUtils.isNotBlank(syncOperate), SysDepartmentEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -361,9 +358,8 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 log.info("部门【{}】已经存在金蝶id，不处理", name);
                 continue;
             }
-            lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysDepartmentEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+            lambdaUpdate()
+                    .set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId)
                     .set(SysDepartmentEntity::getCode, code)
                     .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())
                     .update();

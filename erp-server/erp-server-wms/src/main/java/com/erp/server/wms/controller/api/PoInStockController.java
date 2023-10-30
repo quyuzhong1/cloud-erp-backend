@@ -57,6 +57,23 @@ public class PoInStockController extends BaseController {
     }
 
     /**
+     * 列表查询总数
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:paging",
+            tableAlias = "psi"
+    )
+    public ApiResult<PoInstockDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PoInstockDTO.SearchParamDTO  dto) {
+        PoInstockDTO.PagingTotalDTO viewDTO = poInstockService.pagingTotal(dto);
+        return success(viewDTO);
+    }
+
+    /**
      * 列表数量
      * @author Will
      * @date: 2023/4/11 20:08
@@ -299,7 +316,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
     )
-    public ApiResult exportExcel(@RequestBody PoInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto, HttpServletResponse response) {
         Boolean flag = poInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

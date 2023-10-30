@@ -688,6 +688,31 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -814,6 +839,31 @@ public class PurchaseApplicationDTO implements Serializable {
          * bom比率
          */
         private Integer quantity;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
         /**
          * 供应商id

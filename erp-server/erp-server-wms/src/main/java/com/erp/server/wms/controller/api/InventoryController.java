@@ -129,6 +129,20 @@ public class InventoryController extends BaseController {
         return success(usableInventoryTotal);
     }
 
+
+    /**
+     * 查询状态库存，特别注意：不传仓位字段则查询仓库下面的该SKU的状态库存，传仓位（含空字符串）则查询仓库下面该仓位的可用库存
+     * @author Will
+     * @date: 2023/5/11 10:10
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping(value = "/getInventoryQty")
+    public ApiResult<InventoryDTO.InventoryQtyDTO> getInventoryQty(@RequestBody @Validated InventoryDTO.InventoryBySkuNoDTO dto) {
+        InventoryDTO.InventoryQtyDTO  result= inventoryService.getInventoryQty(dto);
+        return success(result);
+    }
+
     /**
      * 在途库存分页列表
      * @param dto

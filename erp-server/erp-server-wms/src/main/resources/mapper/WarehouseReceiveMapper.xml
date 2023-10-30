@@ -7,26 +7,26 @@
             wr.id,
             wrd.id AS detailId,
             wr.code,
-            wr.purchase_order_id,
-            wr.purchase_order_code,
-            wr.supplier_name,
-            wr.approve_status,
-            wr.invalid_status,
-            wrd.sku_id,
-            wrd.sku_no,
-            wr.bill_date,
-            wrd.receive_qty,
-            wr.delivery_warehouse_name,
-            wr.receive_user_name,
-            wr.purchase_user_name,
-            wrd.purchase_qty,
-            wrd.exceed_qty,
-            wr.approve_user_name,
-            wr.create_user_name,
-            wrd.purchase_order_detail_id,
+            wr.purchase_order_id AS purchaseOrderId,
+            wr.purchase_order_code AS purchaseOrderCode,
+            wr.supplier_name AS supplierName,
+            wr.approve_status AS approveStatus,
+            wr.invalid_status AS invalidStatus,
+            wrd.sku_id AS skuId,
+            wrd.sku_no AS skuNo,
+            wr.bill_date AS billDate,
+            wrd.receive_qty AS receiveQty,
+            wr.delivery_warehouse_name AS deliveryWarehouseName,
+            wr.receive_user_name AS receiveUserName,
+            wr.purchase_user_name AS purchaseUserName,
+            wrd.purchase_qty AS purchaseQty,
+            wrd.exceed_qty AS exceedQty,
+            wr.approve_user_name AS approveUserName,
+            wr.create_user_name AS createUserName,
+            wrd.purchase_order_detail_id AS purchaseOrderDetailId,
             wrd.remark,
             wr.subcontract_type as subcontractType,
-            wr.create_time
+            wr.create_time AS createTime
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
@@ -202,24 +202,24 @@
         SELECT
         wr.id,
         wr.code,
-        wr.purchase_order_id,
-        wr.purchase_order_code,
-        wr.supplier_name,
-        wr.approve_status,
-        wr.invalid_status,
-        wrd.sku_id,
-        wrd.sku_no,
-        wr.bill_date,
-        wrd.receive_qty,
-        wr.delivery_warehouse_name,
-        wr.receive_user_name,
-        wr.purchase_user_name,
-        wrd.purchase_qty,
-        wrd.exceed_qty,
-        wr.approve_user_name,
-        wr.create_user_name,
-        wrd.purchase_order_detail_id,
-        wr.create_time,
+        wr.purchase_order_id AS purchaseOrderId,
+        wr.purchase_order_code AS purchaseOrderCode,
+        wr.supplier_name AS supplierName,
+        wr.approve_status AS approveStatus,
+        wr.invalid_status AS invalidStatus,
+        wrd.sku_id AS skuId,
+        wrd.sku_no AS skuNo,
+        wr.bill_date AS billDate,
+        wrd.receive_qty AS receiveQty,
+        wr.delivery_warehouse_name AS deliveryWarehouseName,
+        wr.receive_user_name AS receiveUserName,
+        wr.purchase_user_name AS purchaseUserName,
+        wrd.purchase_qty AS purchaseQty,
+        wrd.exceed_qty AS exceedQty,
+        wr.approve_user_name AS approveUserName,
+        wr.create_user_name AS createUserName,
+        wrd.purchase_order_detail_id AS purchaseOrderDetailId,
+        wr.create_time AS createTime,
         wrd.remark
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
@@ -291,7 +291,13 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY wr.create_time DESC, wr.id
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            wr.create_time DESC, wr.id
     </select>
 
     <select id="getQcList" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveToQcDTO">

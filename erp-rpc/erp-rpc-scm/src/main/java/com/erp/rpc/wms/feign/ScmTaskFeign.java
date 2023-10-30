@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -9,7 +10,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -344,6 +344,16 @@ public interface ScmTaskFeign {
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
 
     /**
+     * 根据供应商Ids查询所有sku价格信息
+     * @author Will
+     * @date: 2023/10/27 10:06
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    @PostMapping("feign/purchasePrice/listAllSupplierSkuPrice")
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@RequestBody List<String> ids);
+
+    /**
      * @param skuIds
      * @return List<PurchaseOrderDetailEntity>
      * @description: 根据sku id获取审核通过的最新的采购订单(采购日期倒序)
@@ -395,4 +405,12 @@ public interface ScmTaskFeign {
     @PostMapping("feign/subcontractOrder/listByBomSku")
     List<SubcontractOrderDTO.ListDTO> listByBomSku(@RequestBody String bomSkuId);
 
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/scmSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

@@ -752,13 +752,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return  this.lambdaUpdate()
                 .eq(SoReturnEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
                 .update();
     }
 

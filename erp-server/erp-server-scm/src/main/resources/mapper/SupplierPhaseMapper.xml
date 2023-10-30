@@ -6,19 +6,19 @@
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierPhaseDTO$PagingViewDTO">
         SELECT
         sp.id,
-        sp.create_user_name,
-        sp.create_time,
-        sp.supplier_id,
-        sp.operate_type,
-        sp.current_phase,
-        sp.target_phase,
-        sp.approve_status,
-        sp.description,
+        sp.create_user_name AS createUserName,
+        sp.create_time AS createTime,
+        sp.supplier_id AS supplierId,
+        sp.operate_type AS operateType,
+        sp.current_phase AS currentPhase,
+        sp.target_phase AS targetPhase,
+        sp.approve_status AS approveStatus,
+        sp.description ,
         su.name AS supplierName,
         su.id AS supplierId,
         su.code AS supplierCode,
-        su.category_id,
-        su.category_name
+        su.category_id AS categoryId,
+        su.category_name AS categoryName
         FROM supplier_phase sp
         INNER JOIN supplier su
         ON su.id=sp.supplier_id
@@ -55,6 +55,12 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             #{params.permissionSql}
         </if>
-        ORDER BY sp.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sp.create_time DESC
     </select>
 </mapper>

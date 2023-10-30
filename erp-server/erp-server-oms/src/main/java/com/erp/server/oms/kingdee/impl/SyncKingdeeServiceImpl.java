@@ -40,34 +40,32 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         String code = (String)params.get("code");
         //业务id
         String businessId = (String)params.get("businessId");
-        //更新状态
-        String status = (String)params.get("status");
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
 
         //客户列表
         if (ApiModuleTypeEnum.CUSTOMER_INFO.getCode().toString().equals(code)) {
-            customerInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //客户分组
         if (ApiModuleTypeEnum.CUSTOMER_GROUP.getCode().toString().equals(code)) {
-            customerGroupService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerGroupService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //销售退货
         if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
-            soReturnService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soReturnService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //销售订单
         if (ApiModuleTypeEnum.SO_INFO.getCode().toString().equals(code)) {
-            soInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //销售变更
         if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
-            soChangeService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soChangeService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //客户联系人
         if (ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode().toString().equals(code)) {
-            customerContactService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerContactService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -30,12 +31,14 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -47,7 +50,9 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -67,11 +72,13 @@ import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoExcelListener;
+import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
@@ -92,6 +99,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -334,7 +342,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
             throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空或者为零");
         }
-        List<String> checkSoIdList=checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+        List<String> checkSoIdList = checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(checkSoIdList);
         //这个是 单价为空的集合
         List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && !s.getIsReissue() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
@@ -639,7 +647,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setOrderTypeName(BillTypeEnum.getName(type));
             String soId = item.getId();
             //运单号集合
-            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)
+                            && StringUtils.isNotBlank(s.getTrackNo())).
                     map(SoOutstockEntity::getTrackNo).collect(Collectors.toList());
             item.setTrackNoList(trackNoList);
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
@@ -1286,6 +1295,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1299,6 +1309,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //检查能否删除
         checkRemove(ids);
+
+
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -1307,7 +1320,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
             //删除明细
             soDetailService.removeByMainIdList(ids);
-
+            //推送金蝶
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
 
         return result;
@@ -1325,6 +1339,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1803,57 +1818,50 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 更改销售订单金蝶推送的状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         try {
             if (StringUtils.isEmpty(id)) {
                 return Boolean.TRUE;
             }
-            //同步成功
-            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())) {
-                KingdeeDTO dto = new KingdeeDTO();
-                dto.setId(syncKingdeeId);
-                dto.setNumber("");
-                dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
-                JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
-                List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
-                List<SoDetailEntity> updateList = new ArrayList<>(10);
-                if (soJson != null) {
-                    List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
-                    if (CollectionUtils.isNotEmpty(resultList)) {
-                        for (int i = 0; i < resultList.size(); i++) {
-                            Map<String, Object> item = resultList.get(i);
-                            String KingdeeId = item.get("Id").toString();
-                            Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
-                            String skuNo = materialMap.get("Number").toString();
-                            if (soDetailList.size() >= resultList.size()) {
-                                SoDetailEntity soDetail = soDetailList.get(i);
-                                if (soDetail.getSkuNo().equals(skuNo)) {
-                                    soDetail.setKingdeeDetailId(KingdeeId);
-                                    updateList.add(soDetail);
-                                }
+
+            KingdeeDTO dto = new KingdeeDTO();
+            dto.setId(syncKingdeeId);
+            dto.setNumber("");
+            dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+            JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
+            List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
+            List<SoDetailEntity> updateList = new ArrayList<>(10);
+            if (soJson != null) {
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
+                if (CollectionUtils.isNotEmpty(resultList)) {
+                    for (int i = 0; i < resultList.size(); i++) {
+                        Map<String, Object> item = resultList.get(i);
+                        String KingdeeId = item.get("Id").toString();
+                        Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
+                        String skuNo = materialMap.get("Number").toString();
+                        if (soDetailList.size() >= resultList.size()) {
+                            SoDetailEntity soDetail = soDetailList.get(i);
+                            if (soDetail.getSkuNo().equals(skuNo)) {
+                                soDetail.setKingdeeDetailId(KingdeeId);
+                                updateList.add(soDetail);
                             }
                         }
                     }
                 }
-                if (updateList.size() > 0) {
-                    soDetailService.updateBatchById(updateList);
-                }
+            }
+            if (updateList.size() > 0) {
+                soDetailService.updateBatchById(updateList);
             }
 
             return this.lambdaUpdate()
                     .eq(SoInfoEntity::getId, id)
-                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                     .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                    .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
                     .update();
         } catch (Exception e) {
             log.error("同步状态出错>>>>{}", e);
@@ -2590,8 +2598,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewPi.setProductName("");
                 viewPi.setMaterials("");
             }
-
-
+            viewPi.setImageUrl("");
             i++;
             viewPiList.add(viewPi);
 
@@ -2662,17 +2669,81 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-10-17 10:34
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
-        //组织
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Lists.newArrayList());
+        B2BSoImportExcelListener excelListenerUtil = new B2BSoImportExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<B2BSoImportExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+            //错误的
+            List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //数据验证
+            List<B2BSoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+            //处理验证成功数据
+            handleImportSuccessList(successList, errorList);
+            if (errorList.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/b2bsoExportError.xlsx";
+                String name = "B2BSo";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        } catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        return Boolean.TRUE;
+
+    }
+
+    /**
+     * 处理导入数据
+     *
+     * @param successList
+     * @param errorList
+     * @return void
+     * @author yl
+     * @date 2023-10-26 11:53
+     */
+    private void handleImportSuccessList(List<B2BSoImportExcelDTO> successList, List<B2BSoImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //销售员标识
+        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
         //币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+
+        //核算组织
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Lists.newArrayList());
+        //部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //金蝶业务员列表
+        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorList = kingdeeFeign.listBusinessOperatorByUserIdList(new ArrayList<>());
+        //仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+        //收款账号
+        List<String> receiveAccountList = successList.stream().map(B2BSoImportExcelDTO::getReceiveAccount).distinct().collect(Collectors.toList());
+        //根据收款账号获取数据
+        List<BankAccountEntity> bankAccountList = bankAccountService.listByAccountNameList(receiveAccountList);
         List<String> keyList = new ArrayList<>(5);
         //收款方式
         keyList.add(DictBasicEnum.RECEIVE_METHOD.getType());
@@ -2683,28 +2754,337 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //贸易条款
         keyList.add(DictBasicEnum.TRADE_TERM.getType());
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        List<String> customerNameList = successList.stream().map(B2BSoImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
+        //客户列表
+        List<CustomerInfoEntity> customerList = customerInfoService.listByNameList(customerNameList);
+        //收货地址
+        List<String> customerIdList = customerList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressList = customerAddressService.listByMainIdList(customerIdList);
+        //sku
+        List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        // 供应商id集合
+        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(supplierIds)) {
+            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
+        }
 
-        B2BSoExcelListener excelListenerUtil = new B2BSoExcelListener(warehouseList, orgList,
-                currencyList, dictBasicList, kingdeeFeign, deptList,
-                bankAccountService, customerInfoService, customerAddressService,
-                skuList, userList, this);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("销售订单导入错误！==={}", e);
-            return Boolean.FALSE;
+
+        //以序号分组
+        Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getNo));
+
+        for (Map.Entry<String, List<B2BSoImportExcelDTO>> entry : map.entrySet()) {
+            String no = entry.getKey();
+            List<B2BSoImportExcelDTO> list = entry.getValue();
+            SoInfoEntity addSo = new SoInfoEntity();
+            String mainId = IdWorker.getIdStr();
+            addSo.setId(mainId);
+            List<String> errorMsgList = new ArrayList<>();
+            B2BSoImportExcelDTO mainInfo = list.get(0);
+            //要货日期
+            String requireDateStr = mainInfo.getRequireDate();
+            LocalDate requireDate = LocalDateUtil.parseStrToLocalDate(requireDateStr);
+            if (Objects.isNull(requireDate)) {
+                errorMsgList.add("要货日期不能为空");
+            }
+            addSo.setRequireDate(requireDate);
+            //单据日期
+            String billDateStr = mainInfo.getBillDate();
+            LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
+            if (Objects.isNull(billDate)) {
+                errorMsgList.add("单据日期不能为空");
+            }
+            addSo.setBillDate(billDate);
+            if (Objects.nonNull(requireDate) && Objects.nonNull(billDate) && requireDate.compareTo(billDate) < 0) {
+                errorMsgList.add("要货日期必须大于单据日期");
+            }
+            //单据类型
+            String orderTypeStr = mainInfo.getOrderTypeStr();
+            String orderType = BillTypeEnum.getCodeByName(orderTypeStr);
+            if (StringUtils.isBlank(orderType)) {
+                errorMsgList.add("单据类型不存在");
+            }
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+            addSo.setCode(code);
+
+            addSo.setOrderType(orderType);
+            //销售组织
+            String salesOrgName = mainInfo.getSalesOrgName();
+            BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> o.getName().equals(salesOrgName)).findFirst().
+                    orElse(null);
+            if (Objects.isNull(salesOrg)) {
+                errorMsgList.add("销售组织不存在");
+            }
+            String salesOrgId = "";
+            String salesOrgCode = "";
+            if (Objects.nonNull(salesOrg)) {
+                salesOrgId = salesOrg.getId();
+                salesOrgCode = salesOrg.getCode();
+            }
+            addSo.setSalesOrgId(salesOrgId);
+            addSo.setSalesOrgName(salesOrgName);
+            //销售部门
+            String salesDeptName = mainInfo.getSalesDeptName();
+            String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
+                    map(SysDepartmentDTO::getId).orElse("");
+            addSo.setSalesDeptId(salesDeptId);
+            if (StringUtils.isBlank(salesDeptId)) {
+                errorMsgList.add("销售部门不存在");
+            }
+            //销售员
+            String sellerName = mainInfo.getSellerName();
+            String sellerId = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().
+                    map(FindUserDTO::getUserId).orElse("");
+            addSo.setSellerId(sellerId);
+            addSo.setSellerName(sellerName);
+            if (StringUtils.isBlank(sellerId)) {
+                errorMsgList.add("销售员不存在");
+            }
+            String finalSalesOrgCode = salesOrgCode;
+            KingdeeBusinessOperatorEntity businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getErpUserId().equals(sellerId) &&
+                    k.getKingdeeOrgCode().equals(finalSalesOrgCode) &&
+                    xsyCode.equals(k.getKingdeeType())
+            ).findFirst().orElse(null);
+            if (Objects.isNull(businessOperator)) {
+                errorMsgList.add("金蝶未存在该销售员");
+            }
+            //是否收取运费
+            String isCollectShippingFeeStr = mainInfo.getIsCollectShippingFee();
+            Boolean isCollectShippingFee = Boolean.FALSE;
+            if (StringUtils.isNotBlank(isCollectShippingFeeStr)) {
+                isCollectShippingFee = isCollectShippingFeeStr.equals("是");
+            }
+            addSo.setIsCollectShippingFee(isCollectShippingFee);
+            //仓库
+            String warehouseName = mainInfo.getWarehouseName();
+            WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
+                    orElse(null);
+            String warehouseId = "";
+            String warehouseOrgId = "";
+            if (Objects.isNull(warehouse)) {
+                errorMsgList.add("仓库不存在");
+            } else {
+                warehouseId = warehouse.getId();
+                warehouseOrgId = warehouse.getOrgId();
+            }
+            addSo.setWarehouseId(warehouseId);
+            addSo.setWarehouseOrgId(warehouseOrgId);
+            String finalWarehouseOrgId = warehouseOrgId;
+            String warehouseOrgName = orgList.stream().filter(o -> o.getId().equals(finalWarehouseOrgId)).findFirst().
+                    map(BaseIdDTO.CodeDTO::getName).orElse("");
+            addSo.setWarehouseOrgName(warehouseOrgName);
+            //收款账号
+            String receiveAccountStr = mainInfo.getReceiveAccount();
+            String receiveAccount = "";
+            String finalSalesOrgId = salesOrgId;
+            BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> b.getAccountName().equals(receiveAccountStr) &&
+                    finalSalesOrgId.equals(b.getOrgId())).findFirst().orElse(null);
+            if (Objects.isNull(bankAccount)) {
+                errorMsgList.add("收款账号不存在");
+            } else {
+                receiveAccount = bankAccount.getBankAccountNo();
+            }
+            addSo.setReceiveAccount(receiveAccount);
+
+            //收款方式
+            String receiveMethodStr = mainInfo.getReceiveMethod();
+            String receiveMethod = dictBasicList.stream().filter(d -> d.getName().equals(receiveMethodStr)).findFirst().
+                    map(DictBasicEntity::getValue).orElse("");
+            if (StringUtils.isBlank(receiveMethod)) {
+                errorMsgList.add("收款方式不存在");
+            }
+            addSo.setReceiveMethod(receiveMethod);
+            //收款日期
+            String receiveDateStr = mainInfo.getReceiveDate();
+            if (StringUtils.isNotBlank(receiveDateStr)) {
+                addSo.setReceiveDate(LocalDateUtil.parseStrToLocalDate(receiveDateStr));
+            }
+            //贸易条款
+            String tradeTermStr = mainInfo.getTradeTerm();
+            String tradeTerm = "";
+            if (StringUtils.isNotBlank(tradeTermStr)) {
+                tradeTerm = dictBasicList.stream().filter(d -> d.getName().equals(tradeTermStr)).findFirst().
+                        map(DictBasicEntity::getValue).orElse("");
+                if (StringUtils.isBlank(tradeTerm)) {
+                    errorMsgList.add("贸易条款不存在");
+                }
+            }
+            addSo.setTradeTerm(tradeTerm);
+            //客户
+            String customerName = mainInfo.getCustomerName();
+            String customerId = customerList.stream().filter(c -> c.getName().equals(customerName)).map(CustomerInfoEntity::getId).
+                    findFirst().orElse("");
+            if (StringUtils.isBlank(customerId)) {
+                errorMsgList.add("客户不存在");
+            }
+            addSo.setCustomerId(customerId);
+            //收货人
+            String receiverName = mainInfo.getReceiverName();
+            addSo.setReceiverName(receiverName);
+
+            //联系电话
+            String telNumber = mainInfo.getTelNumber();
+            addSo.setTelNumber(telNumber);
+            //收货地址
+            String receiveAddress = mainInfo.getReceiveAddress();
+            String customerAddressId = customerAddressList.stream().filter(c -> c.getAddress().equals(receiveAddress)).
+                    findFirst().map(CustomerAddressEntity::getId).orElse("");
+            if (StringUtils.isBlank(customerAddressId)) {
+                errorMsgList.add("联系地址不存在");
+            }
+            addSo.setReceiveAddressId(customerAddressId);
+            //交货方式
+            String deliveryModeStr = mainInfo.getDeliveryMode();
+            String deliveryMode = dictBasicList.stream().filter(d -> d.getName().equals(deliveryModeStr)).findFirst().
+                    map(DictBasicEntity::getValue).orElse("");
+            if (StringUtils.isBlank(deliveryMode)) {
+                errorMsgList.add("交货方式不存在");
+            }
+            addSo.setDeliveryMode(deliveryMode);
+
+            //地址类型
+            String addressTypeStr = mainInfo.getAddressType();
+            String addressType = AddressTypeEnum.getCodeByName(addressTypeStr);
+            if (StringUtils.isBlank(addressType)) {
+                errorMsgList.add("地址类型不存在");
+            }
+            addSo.setAddressType(addressType);
+            //币别
+            String currencyStr = mainInfo.getCurrency();
+            DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
+                    findFirst().orElse(null);
+            String symbol = "";
+            String currency = "";
+            if (Objects.isNull(currencyEntity)) {
+                errorMsgList.add("币种不存在");
+            } else {
+                symbol = currencyEntity.getSymbol();
+                currency = currencyEntity.getId();
+            }
+            addSo.setCurrencySymbol(symbol);
+            addSo.setCurrency(currency);
+            //是否含税
+            String isTaxStr = mainInfo.getIsTax();
+            Boolean isTax = "是".equals(isTaxStr);
+            addSo.setIsTax(isTax);
+
+            String receiveConditionStr = mainInfo.getReceiveCondition();
+            String receiveCondition = dictBasicList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
+                    map(DictBasicEntity::getValue).orElse("");
+            if (StringUtils.isBlank(receiveCondition)) {
+                errorMsgList.add("收款条件不存在");
+            }
+            addSo.setReceiveCondition(receiveCondition);
+            String remark = mainInfo.getRemark();
+            addSo.setRemark(remark);
+            //银行手续费
+            String bankServiceFeeStr = mainInfo.getBankServiceFee();
+            BigDecimal bankServiceFee = MathUtil.getBigDecimalByStr(bankServiceFeeStr);
+            //运费
+            String shippingFeeStr = mainInfo.getShippingFee();
+            BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
+
+            //收款金额
+            String receiveAmountStr = mainInfo.getReceiveAmount();
+            BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
+
+            //报关费
+            String customsFeeStr = mainInfo.getCustomsFee();
+            BigDecimal customsFee = MathUtil.getBigDecimalByStr(customsFeeStr);
+
+            //折扣总额
+            String discountAmountStr = mainInfo.getDiscountAmount();
+            BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
+            addSo.setBankServiceFee(bankServiceFee);
+            addSo.setShippingFee(shippingFee);
+            addSo.setReceiveAmount(receiveAmount);
+            addSo.setCustomsFee(customsFee);
+            addSo.setDiscountAmount(discountAmount);
+            Boolean isAdd = Boolean.TRUE;
+            List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
+            for (B2BSoImportExcelDTO item : list) {
+                SoDetailEntity addDetail = new SoDetailEntity();
+                addDetail.setMainId(mainId);
+                //是否赠品
+                String isGiftStr = item.getIsGift();
+                addDetail.setIsGift("是".equals(isGiftStr));
+                //是否补发
+                String isReissueStr = item.getIsReissue();
+                addDetail.setIsReissue("是".equals(isReissueStr));
+                //是否关闭
+                String isCloseStr = item.getIsClose();
+                addDetail.setIsClose("是".equals(isCloseStr));
+                addDetail.setRemark(item.getDetailRemark());
+                //sku no
+                String skuNo = item.getSkuNo();
+                String skuId = "";
+                SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+                if (Objects.isNull(skuVO)) {
+                    errorMsgList.add("sku不存在");
+                } else {
+                    skuId = skuVO.getSkuId();
+                }
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isAdd = Boolean.FALSE;
+                    errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
+                    item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(item);
+                }
+                addDetail.setSkuId(skuId);
+                addDetail.setSkuNo(skuNo);
+                //币种
+                addDetail.setCurrency(currency);
+                //数量
+                String qtyStr = item.getQty();
+                Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
+                addDetail.setQty(qty);
+                //销售单价
+                String priceStr = item.getPrice();
+                BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
+                addDetail.setPrice(price);
+
+                //税率
+                String taxRateStr = item.getTaxRate();
+                BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
+                addDetail.setTaxRate(taxRate);
+                soDetailList.add(addDetail);
+            }
+
+            try {
+                //错误的编号集合
+                List<String> errorNoList = errorList.stream().map(B2BSoImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+
+                //表示可以添加
+                if (isAdd && !errorNoList.contains(no)) {
+                    // 金额折扣处理
+                    SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+                    for (int i = 0; i < soDetailList.size(); i++) {
+                        SoDetailEntity item = soDetailList.get(i);
+                        // 计算毛利成本
+                        soDetailService.calCost(purchasePriceList, skuList, addSo.getBillDate(), item, Boolean.FALSE);
+                    }
+                    BigDecimal allAmountLc = soDetailList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addSo.setAllAmountLc(allAmountLc);
+                    this.save(addSo);
+                    soDetailService.saveBatch(soDetailList);
+                } else {
+                    continue;
+                }
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
+                isAdd = Boolean.FALSE;
+                list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.addAll(list);
+            }
 
         }
-        List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        if (errorList.size() > 0) {
-            String fileName = "销售订单错误信息";
-            ExcelUtil.export(fileName, "error", errorList, B2BSoImportExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
-
     }
 
 

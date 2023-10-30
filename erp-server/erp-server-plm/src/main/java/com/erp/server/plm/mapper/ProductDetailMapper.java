@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -91,6 +90,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     CleanSkuDto getProductIdBySkuClean(@Param("sku") String sku);
 
     List<SkuVO> getSkuBySkuNos(@Param("skuList") List<String> skuNoList,@Param("status") Integer status);
+    /**
+     * @description: 根据sku编号查询（带权限）
+     * @author Will
+     * @date: 2023/10/24 12:09
+     * @param skuParamDTO
+     * @return List<ProductSearchDTO.SkuListDTO>
+     */
+    List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(@Param("params") ProductSearchDTO.SkuParamDTO skuParamDTO);
 
     List<SkuVO> searchSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
 
@@ -154,6 +161,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
      **/
     PdaProductDetailDTO.View pdaProductView(@Param("skuNo") String skuNo);
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:23
+     * @param chargeId
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByChargeId(@Param("chargeId") String chargeId);
 }
 
 

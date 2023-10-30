@@ -8,6 +8,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -133,7 +134,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 更新明细备注
      * @author Will
@@ -143,6 +144,14 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/10/18 16:30
+     * @param dto
+     * @param response
+     */
+    void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 修复历史数据

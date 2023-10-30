@@ -461,8 +461,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "反审核操作");
     }
 
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
        List<SubcontractOrderEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
@@ -473,17 +475,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        if (count > 0) {
          throw new ServiceException(ApiError.ERROR_98009);
        }
+
        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
 
        // 删除明细数据（如果有明细数据的话）
        subcontractOrderDetailService.removeByMainIds(ids);
-
-
        // 删除主单数据
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
+
+        //删除发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
     }
 
     /**
@@ -982,6 +986,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void invalid(List<String> ids, String remark) {
         List<SubcontractOrderEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
@@ -1035,7 +1040,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //BOM信息
         List<String> parentSkuIds = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1082,7 +1087,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
 
                 //bom信息
-                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId()) && obj.getBomVersion().equals(parentEntity.getBomVersion())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                     throw new ServiceException(ApiError.ERROR_95163);
                 }
@@ -1103,13 +1108,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(SubcontractOrderEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(SubcontractOrderEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SubcontractOrderEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

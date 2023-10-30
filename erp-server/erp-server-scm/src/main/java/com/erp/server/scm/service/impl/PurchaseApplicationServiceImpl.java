@@ -764,6 +764,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setQty(viewDTO.getToPushdownQty());
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+            //报价信息
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId());
+            getTaxPrice(priceDTO,viewDTO,null);
             viewDTO.setIndex(index);
             index++;
             //填充BOM子件信息
@@ -787,6 +790,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setQty(viewDTO.getQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setDeliveryQty(viewDTO.getDeliveryQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setPlanDeliveryDate(viewDTO.getPlanDeliveryDate());
+                viewGenerateDTO.setPrice(null);
+                viewGenerateDTO.setTaxRate(null);
+                viewGenerateDTO.setCurrency(null);
+                viewGenerateDTO.setCurrencySymbol(null);
+                viewGenerateDTO.setAmount(null);
+                //报价信息
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId());
+                getTaxPrice(childPriceDTO,null,viewGenerateDTO);
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
@@ -970,33 +981,34 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     /**
-     * 新增验证sku是否重复
+     * @description: 获取报价
+     * @author Will
+     * @date: 2023/10/24 11:54
+     * @param priceDTO
+     * @param viewDTO
+     * @param viewChildDTO
      */
-    private void checkAddDetailsRepeatSku(List<PurchaseApplicationDetailDTO.AddDTO> list) {
-        Map<String, List<PurchaseApplicationDetailDTO.AddDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDetailDTO.AddDTO::getSkuId));
-        for (Map.Entry<String, List<PurchaseApplicationDetailDTO.AddDTO>> entry: map.entrySet()) {
-            List<PurchaseApplicationDetailDTO.AddDTO> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+    private void getTaxPrice (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO,PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO,PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO viewChildDTO) {
+        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
+        String error = pair.getKey();
+        //存在报价信息
+        if (StringUtils.isBlank(error) && CollectionUtils.isNotEmpty(pair.getValue())) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO = pair.getValue().get(0);
+            if (ObjectUtils.isNotEmpty(viewDTO)) {
+                viewDTO.setPrice(priceViewDTO.getTaxPrice());
+                viewDTO.setTaxRate(priceViewDTO.getTaxRate());
+                viewDTO.setCurrency(priceViewDTO.getCurrency());
+                viewDTO.setCurrencySymbol(priceViewDTO.getCurrencySymbol());
+                viewDTO.setAmount(MathUtil.multiply(viewDTO.getPrice(),viewDTO.getQty()));
             }
-        }
-    }
+            if (ObjectUtils.isNotEmpty(viewChildDTO)) {
+                viewChildDTO.setPrice(priceViewDTO.getTaxPrice());
+                viewChildDTO.setTaxRate(priceViewDTO.getTaxRate());
+                viewChildDTO.setCurrency(priceViewDTO.getCurrency());
+                viewChildDTO.setCurrencySymbol(priceViewDTO.getCurrencySymbol());
+                viewChildDTO.setAmount(MathUtil.multiply(viewChildDTO.getPrice(),viewChildDTO.getQty()));
+            }
 
-    /**
-     * 编辑验证sku是否重复
-     */
-    private void checkUpdateDetailsRepeatSku(List<PurchaseApplicationDetailDTO.UpdateDTO> list,String purchaseApplicationId) {
-        Map<String, List<PurchaseApplicationDetailDTO.UpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDetailDTO.UpdateDTO::getSkuId));
-        for (Map.Entry<String, List<PurchaseApplicationDetailDTO.UpdateDTO>> entry: map.entrySet()) {
-            List<PurchaseApplicationDetailDTO.UpdateDTO> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
-            }
-            PurchaseApplicationDetailEntity entity = purchaseApplicationDetailService.getByPurchaseApplicationIdAndSkuId(purchaseApplicationId, entry.getKey());
-            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
-                value.forEach(obj -> obj.setId(entity.getId()));
-                //throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
-            }
         }
     }
 

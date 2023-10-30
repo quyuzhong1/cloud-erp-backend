@@ -10,9 +10,9 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.DmpTransferInfoService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -30,7 +30,7 @@ import javax.annotation.Resource;
 public class DmpTransferInfoServiceImpl implements DmpTransferInfoService {
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -39,7 +39,7 @@ public class DmpTransferInfoServiceImpl implements DmpTransferInfoService {
     @Transactional(rollbackFor = Exception.class)
     public void sendSyncTask(DmpTransferInfoDTO ext) {
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
         dmpSyncTaskEntity.setSourceId(ext.getSourceId());
@@ -50,7 +50,7 @@ public class DmpTransferInfoServiceImpl implements DmpTransferInfoService {
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(ext);
         dmpSyncTaskEntity.setMqData(mqData);
-        dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
 
         //直接调拨单消息推送
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);

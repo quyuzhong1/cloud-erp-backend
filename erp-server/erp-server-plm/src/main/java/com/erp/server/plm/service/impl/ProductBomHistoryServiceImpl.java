@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
@@ -18,10 +17,12 @@ import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +66,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             bomHistory.setBomId(bom.getId());
             bomHistory.setSerialNumber(bom.getSerialNumber());
             bomHistory.setType(bom.getType());
-            bomHistory.setVersion(bom.getBomVersion());
+            bomHistory.setBomVersion(bom.getBomVersion());
             boolean saveFlag = this.save(bomHistory);
             //当保存成功的时候
             if (saveFlag) {
@@ -149,12 +150,12 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             throw new ServiceException(ApiError.ERROR_95163);
         }
         List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomChildrenSkuList.get(0).getBomId())
-                .select(ProductBomHistoryEntity::getVersion)
+                .select(ProductBomHistoryEntity::getBomVersion)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
+        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getBomVersion())).collect(Collectors.toList());
         return resultList;
     }
 
@@ -185,7 +186,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             bomHistory.setBomId(bom.getId());
             bomHistory.setSerialNumber(bom.getSerialNumber());
             bomHistory.setType(bom.getType());
-            bomHistory.setVersion(bom.getBomVersion());
+            bomHistory.setBomVersion(bom.getBomVersion());
             boolean saveFlag = this.save(bomHistory);
             //当保存成功的时候
             if (saveFlag) {
@@ -193,5 +194,15 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             }
         }
 
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(ProductBomHistoryEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), ProductBomHistoryEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 }

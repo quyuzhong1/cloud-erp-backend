@@ -25,4 +25,20 @@ public interface StocktakingProfitLossDetailService extends SuperService<Stockta
      * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDetailDTO.ViewDTO>
      */
     List<StocktakingProfitLossDetailDTO.ViewDTO> listByMainIds(List<String> mainIdList);
+
+    /**
+     * 修改 盘盈盘亏单详情
+     * @param mainId
+     * @param detailList
+     */
+    void updateInfo(String mainId, List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList);
+
+    /**
+     * 根据主表id 删除数据
+     * @author yl
+     * @date 2023-10-20 14:23
+     * @param id
+     * @return void
+     */
+    void removeByMainId(String id);
 }
