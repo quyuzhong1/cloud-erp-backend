@@ -45,8 +45,8 @@ public class DataIdempotentAspect {
         //获取到方法的注解对象
         DataIdempotent idempotent = method.getAnnotation(DataIdempotent.class);
         //单位 秒
-        long lockTime = idempotent.lockTime();
-        long tryTime = idempotent.tryTime();
+        long leaseTime = idempotent.leaseTime();
+        long waitTime = idempotent.waitTime();
         String businessType = idempotent.businessType();
         //获取传参
         Object obj = proceedingJoinPoint.getArgs()[0];
@@ -77,19 +77,18 @@ public class DataIdempotentAspect {
             objList.forEach(o -> {
                 try {
                     String submitKey = "BUSINESS:" + o + "_" + businessType;
-                    log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, lockTime);
+                    log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
                     RLock clientLock = redissonClient.getLock(submitKey);
 
                     //不设置 lockTime watch dog会 默认 锁定30s 10s重试
-                    boolean locked;
-                    locked = clientLock.tryLock(tryTime,lockTime, TimeUnit.SECONDS);
+                    boolean locked = clientLock.tryLock(waitTime,leaseTime, TimeUnit.SECONDS);
                     if (!locked) {
                         log.error("{}上锁失败", submitKey);
                         throw new ServiceException(ApiError.ERROR_1026);
                     }
 //                    clientLock.lock(lockTime, TimeUnit.SECONDS);
                     rLocks.add(clientLock);
-                    log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, lockTime);
+                    log.info("分布式锁上锁成功，key：{}，lockTime：{}", submitKey, leaseTime);
                 } catch (Exception e) {
                     //存在不能上锁情况时 释放已上锁对象
                     if (CollectionUtil.isNotEmpty(rLocks)) {

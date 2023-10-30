@@ -18,15 +18,15 @@ public @interface DataIdempotent {
     /*** 上锁时长，默认设置时间 30秒
      *** @return
      **/
-    long lockTime() default -1L;
+    long leaseTime() default -1L;
 
     /***
      * 尝试时间，设置时间内通过自旋一致尝试获取锁，
-     * 默认 10秒
-     * 通常时间要小于lockTime时间**
+     * 默认 0秒
+     * 通常时间要小于 leaseTime 时间**
      * @return
      * */
-    long tryTime() default 0L;
+    long waitTime() default 0L;
 
     /**
      * 业务类型
