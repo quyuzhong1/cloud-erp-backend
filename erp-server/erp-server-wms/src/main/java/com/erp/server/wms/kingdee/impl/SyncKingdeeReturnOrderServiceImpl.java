@@ -84,9 +84,6 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     private KingdeeFeign kingdeeFeign;
 
     @Resource
-    private DmpMqFeign dmpMqFeign;
-
-    @Resource
     private MQProducerService mQProducerService;
 
     /**
