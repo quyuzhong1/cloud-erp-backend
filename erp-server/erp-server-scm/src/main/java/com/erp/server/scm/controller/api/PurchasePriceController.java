@@ -91,7 +91,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核采购价目")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购价目")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         Boolean result = purchasePriceService.addAndSubmit(dto);
