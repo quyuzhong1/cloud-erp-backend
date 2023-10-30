@@ -876,6 +876,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
         //修改到货状态
         purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
+
+        //审核通过发送金蝶
+        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表
         return flag;
     }
