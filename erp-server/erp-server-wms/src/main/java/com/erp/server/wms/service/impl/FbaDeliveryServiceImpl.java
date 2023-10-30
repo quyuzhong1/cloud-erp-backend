@@ -1,136 +1,93 @@
-package ${package.ServiceImpl};
-<#assign fieldMap={}/>
-<#list table.fields as field>
- <#assign fieldMap += {field.propertyName:field.propertyName} />
-</#list>
-<#assign docName = "${table.comment!}">
-<#if docName?ends_with("表") && !docName?ends_with("单表") >
-    <#assign docName = docName[0..<docName?length-1] + "单">
-</#if>
+package com.erp.server.wms.service.impl;
 
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
-</#if>
 
 import cn.hutool.core.util.StrUtil;
-import ${package.Entity}.${entity};
-import ${package.Mapper}.${table.mapperName};
-import ${package.Service}.${table.serviceName};
-import ${superServiceImplClassPackage};
-import ${package.Service}.OperateLogService;
-import ${package.Service}.CommonService;
+import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.server.wms.mapper.FbaDeliveryMapper;
+import com.erp.server.wms.service.FbaDeliveryService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-<#if fieldMap["code"]??>
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-</#if>
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import ${package.Dto}.${table.dtoName};
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
-<#if fieldMap["invalidStatus"]??>
 import com.erp.model.scm.enums.InvalidStatusEnum;
-</#if>
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
-<#if fieldMap["approveTime"]??>
 import java.time.LocalDateTime;
-</#if>
-import javax.annotation.Resource;
 import java.util.stream.Collectors;
-</#if>
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- * ${table.comment!} 服务实现类
+ * FBI发货单 服务实现类
  * </p>
  *
- * @author ${author}
- * @since ${date}
+ * @author Luo_WG
+ * @since 2023-10-30
  */
 @Slf4j
 @Service
-<#if kotlin>
-open class ${table.serviceImplName} : ${superServiceImplClass}<${table.mapperName}, ${entity}>(), ${table.serviceName} {
-
-}
-<#else>
-public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.mapperName}, ${entity}> implements ${table.serviceName} {
+public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, FbaDeliveryEntity> implements FbaDeliveryService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
-    <#if fieldMap["code"]??>
     @Autowired
     private DocNoGenHelper docNoGenHelper;
-    </#if>
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     @Autowired
     private WorkflowFeign workflowFeign;
-    </#if>
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addDTO) {
-        ${entity} ${entity?uncap_first} = new ${entity}();
-        BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
+    public BaseResultDTO.AddDTO add(FbaDeliveryDTO.AddDTO addDTO) {
+        FbaDeliveryEntity fbaDeliveryEntity = new FbaDeliveryEntity();
+        BeanMapperUtils.copy(addDTO, fbaDeliveryEntity);
 
         // 数据处理
-        handleData(${entity?uncap_first});
+        handleData(fbaDeliveryEntity);
 
-        log.info("开始新增${docName}");
-        <#if fieldMap["code"]??>
+        log.info("开始新增FBI发货单");
         // 生成单号
         // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(null);
-        ${entity?uncap_first}.setCode(code);
-        </#if>
-        boolean save = super.save(${entity?uncap_first});
+        fbaDeliveryEntity.setCode(code);
+        boolean save = super.save(fbaDeliveryEntity);
         if(!save) {
-            throw new ServiceException("${docName}保存失败");
+            throw new ServiceException("FBI发货单保存失败");
         }
 
         // 操作日志
-        <#if fieldMap["code"]??>
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "${docName}" , ${entity?uncap_first}.getCode());
-        <#else >
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "${docName}" , ${entity?uncap_first}.getId());
-        </#if>
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBI发货单" , fbaDeliveryEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, ${entity?uncap_first}.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, null, fbaDeliveryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        <#if fieldMap["code"]??>
         return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
-        <#else >
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
-        </#if>
     }
 
     /**
@@ -138,50 +95,38 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(${table.dtoName}.UpdateDTO updateDTO) {
-        ${entity} old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
-        <#if fieldMap["approveStatus"]??>
+    public Boolean update(FbaDeliveryDTO.UpdateDTO updateDTO) {
+        FbaDeliveryEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBI发货单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        </#if>
-        ${entity} ${entity?uncap_first} =  BeanMapperUtils.map(${entity}.class, updateDTO);
+        FbaDeliveryEntity fbaDeliveryEntity =  BeanMapperUtils.map(FbaDeliveryEntity.class, updateDTO);
 
         // 数据处理
-        handleData(${entity?uncap_first});
-        <#if fieldMap["code"]??>
-        log.info("编辑 开始修改${docName}数据，单号：【{}】", old.getCode());
-        <#else >
-        log.info("编辑 开始修改${docName}数据，id：【{}】", old.getId());
-        </#if>
-        boolean save = super.updateById(${entity?uncap_first});
+        handleData(fbaDeliveryEntity);
+        log.info("编辑 开始修改FBI发货单数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(fbaDeliveryEntity);
         if(!save) {
-            throw new ServiceException("${docName}保存失败");
+            throw new ServiceException("FBI发货单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-        <#if fieldMap["code"]??>
-            log.info("编辑 开始记录${docName!}日志数据，单号：【{}】", ${entity?uncap_first}.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ${entity?uncap_first}.getCode(), "${docName!}");
-        <#else >
-            log.info("编辑 开始记录${docName!}日志数据，id：【{}】", ${entity?uncap_first}.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ${entity?uncap_first}.getId(), "${docName!}");
-        </#if>
+            log.info("编辑 开始记录FBI发货单日志数据，单号：【{}】", fbaDeliveryEntity.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaDeliveryEntity.getCode(), "FBI发货单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, ${entity?uncap_first}, null, ${entity?uncap_first}.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, fbaDeliveryEntity, null, fbaDeliveryEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
 
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     @Override
-    public PagingVO<${table.dtoName}.ListDTO> paging(PagingDTO<${table.dtoName}.PagingParamDTO> pagingParamDTO) {
+    public PagingVO<FbaDeliveryDTO.ListDTO> paging(PagingDTO<FbaDeliveryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<${table.dtoName}.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        IPage<FbaDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
@@ -191,27 +136,27 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     }
 
     @Override
-    public List<${table.dtoName}.TabListDTO> tabList(PermissionsDTO param) {
-        ${table.dtoName}.PagingParamDTO searchParam = new ${table.dtoName}.PagingParamDTO();
+    public List<FbaDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
+        FbaDeliveryDTO.PagingParamDTO searchParam = new FbaDeliveryDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<${table.dtoName}.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<FbaDeliveryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(${table.dtoName}.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<String> existStatusList = list.stream().map(FbaDeliveryDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new ${table.dtoName}.TabListDTO(status, 0));
+            list.add(new FbaDeliveryDTO.TabListDTO(status, 0));
         }
         });
-        list.add(new ${table.dtoName}.TabListDTO("all", list.stream().mapToInt(${table.dtoName}.TabListDTO::getCount).sum()));
+        list.add(new FbaDeliveryDTO.TabListDTO("all", list.stream().mapToInt(FbaDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
 
     @Override
-    public void exportList(${table.dtoName}.ExportDTO param, HttpServletResponse response) {
-        List<${table.dtoName}.ListDTO> list = this.baseMapper.listExport(param);
+    public void exportList(FbaDeliveryDTO.ExportDTO param, HttpServletResponse response) {
+        List<FbaDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
         }
@@ -220,8 +165,8 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
 
         // 导出数据
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/${entity?replace('Entity', '')?uncap_first}.xlsx";
-        String name = "${docName}导出";
+        String excelPath = "excel/fbaDelivery.xlsx";
+        String name = "FBI发货单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
@@ -234,21 +179,21 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
-        ${entity} entity = getById(id);
+        FbaDeliveryEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到${docName!}数据");
+            throw new ServiceException("未找到FBI发货单数据");
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改${docName!}状态数据，id：【{}】", id);
+        log.info("提交 开始修改FBI发货单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
         // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动${docName!}流程，id=：【{}】", entity.getId());
+        log.info("提交 开始启动FBI发货单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录${docName}日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
+        log.info("提交 开始记录FBI发货单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
@@ -257,18 +202,17 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addAndSubmit(${table.dtoName}.AddDTO dto) {
+    public void addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
         // 新增
-        BaseResultDTO.AddDTO result = this.add(dto);
+        BaseResultDTO.AddDTO resultAdd = this.add(dto);
         // 提交
-        this.submit(result.getId());
-        return result;
+        this.submit(resultAdd.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(${table.dtoName}.UpdateDTO dto) {
+    public void updateAndSubmit(FbaDeliveryDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
         // 提交
@@ -283,7 +227,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        ${entity} entity = getById(dto.getId());
+        FbaDeliveryEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -291,7 +235,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单", approveType.getName(), dto.getComment());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -303,7 +247,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     * @param entity
     * @param dto
     */
-    private void approveProcess(${entity} entity, ApproveOneDTO dto) {
+    private void approveProcess(FbaDeliveryEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -329,7 +273,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
-        ${entity} entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到${docName}单数据"));
+        FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBI发货单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
@@ -338,13 +282,13 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
-    private Boolean validateDisApprove(${entity} entity) {
+    private Boolean validateDisApprove(FbaDeliveryEntity entity) {
         // 已审核支持反审核
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
@@ -356,7 +300,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        ${entity} entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到${docName}数据"));
+        FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBI发货单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -364,39 +308,37 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除${docName}主单数据，id：【{}】", id);
+        log.info("删除 开始删除FBI发货单主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除${docName}日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除${docName}数据");
+        log.info("删除 开始删除FBI发货单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单");
+        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除FBI发货单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
-    <#if fieldMap["invalidStatus"]?? && fieldMap["invalidRemark"]??>
     /**
     * 作废
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        ${entity} entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到${docName}数据"));
+        FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBI发货单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
-        log.info("作废 开始修改${docName}状态数据，id：【{}】", id);
-        lambdaUpdate().eq(${entity}::getId, id)
-            .set(${entity}::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-            .set(${entity}::getInvalidRemark, remark)
+        log.info("作废 开始修改FBI发货单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(FbaDeliveryEntity::getId, id)
+            .set(FbaDeliveryEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+            .set(FbaDeliveryEntity::getInvalidRemark, remark)
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}", remark);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单", remark);
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
-     </#if>
 
     /**
     * 撤销
@@ -405,7 +347,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
-        ${entity} entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到${docName}数据"));
+        FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBI发货单数据"));
         // 只有审核中的单据允许撤销
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -413,12 +355,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
-        log.info("撤销 开始修改${docName}状态，id：【{}】", id);
+        log.info("撤销 开始修改FBI发货单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBI发货单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -432,7 +374,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, ${entity} entity) {
+    public Boolean approveEnd(ApproveOneDTO dto, FbaDeliveryEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -444,9 +386,9 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     }
 
     @Override
-    public ${table.dtoName}.ViewDTO view(String id) {
-        ${entity} ${entity?uncap_first} = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到${docName}数据"));
-        ${table.dtoName}.ViewDTO data = BeanMapperUtils.map(${table.dtoName}.ViewDTO.class, ${entity?uncap_first});
+    public FbaDeliveryDTO.ViewDTO view(String id) {
+        FbaDeliveryEntity fbaDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到FBI发货单数据"));
+        FbaDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FbaDeliveryDTO.ViewDTO.class, fbaDeliveryEntity);
         // 数据填充处理
         fillOne(data);
         // TODO 查询明细数据（如果有的话）
@@ -460,7 +402,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     * @Date 2023/7/4 10:07
     **/
 
-    public void startProcess(${entity} entity) {
+    public void startProcess(FbaDeliveryEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
@@ -474,7 +416,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(${table.dtoName}.ViewDTO data) {
+    private void fillOne(FbaDeliveryDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
@@ -486,22 +428,14 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     * @param approveStatus
     */
     public void updateForApprove(String id, String approveStatus) {
-        <#if fieldMap["approveUserId"]?? && fieldMap["approveUserName"]??>
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
-        </#if>
-        this.lambdaUpdate().eq(${entity}::getId, id)
-            <#if fieldMap["approveUserId"]??>
-            .set(${entity}::getApproveUserId, userInfo.getUid())
-            </#if>
-            <#if fieldMap["approveUserName"]??>
-            .set(${entity}::getApproveUserName, userInfo.getUserName())
-            </#if>
-            .set(${entity}::getApproveStatus, approveStatus)
-            <#if fieldMap["approveTime"]??>
-            .set(${entity}::getApproveTime, LocalDateTime.now())
-            </#if>
-            .update(new ${entity}());
+        this.lambdaUpdate().eq(FbaDeliveryEntity::getId, id)
+            .set(FbaDeliveryEntity::getApproveUserId, userInfo.getUid())
+            .set(FbaDeliveryEntity::getApproveUserName, userInfo.getUserName())
+            .set(FbaDeliveryEntity::getApproveStatus, approveStatus)
+            .set(FbaDeliveryEntity::getApproveTime, LocalDateTime.now())
+            .update(new FbaDeliveryEntity());
      }
 
     /**
@@ -511,18 +445,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(${entity}::getId, id)
-            <#if fieldMap["approveUserId"]??>
-            .set(${entity}::getApproveUserId, "")
-            </#if>
-            <#if fieldMap["approveUserName"]??>
-            .set(${entity}::getApproveUserName, "")
-            </#if>
-            .set(${entity}::getApproveStatus, approveStatus)
-            <#if fieldMap["approveTime"]??>
-            .set(${entity}::getApproveTime, null)
-            </#if>
-            .update(new ${entity}());
+        this.lambdaUpdate().eq(FbaDeliveryEntity::getId, id)
+            .set(FbaDeliveryEntity::getApproveUserId, "")
+            .set(FbaDeliveryEntity::getApproveUserName, "")
+            .set(FbaDeliveryEntity::getApproveStatus, approveStatus)
+            .set(FbaDeliveryEntity::getApproveTime, null)
+            .update(new FbaDeliveryEntity());
         }
 
     /**
@@ -530,34 +458,30 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
-        lambdaUpdate().eq(${entity}::getId, id)
-        .set(${entity}::getApproveStatus, approveStatus)
-        .update(new ${entity}());
+        lambdaUpdate().eq(FbaDeliveryEntity::getId, id)
+        .set(FbaDeliveryEntity::getApproveStatus, approveStatus)
+        .update(new FbaDeliveryEntity());
     }
 
     /**
     * 分页查询、导出 数据处理
     */
-    private void fillList(List<${table.dtoName}.ListDTO> list) {
+    private void fillList(List<FbaDeliveryDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
            return;
         }
 
         // 属性赋值
-        for(${table.dtoName}.ListDTO data : list) {
-            <#if fieldMap["approveStatus"]??>
+        for(FbaDeliveryDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            </#if>
-            <#if fieldMap["invalidStatus"]??>
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            </#if>
             // TODO 其他如需要显示名称的字段赋值
         }
     }
     /**
     * 分页查询、导出 数据处理
     */
-    private void validateSubmit(${entity} entity) {
+    private void validateSubmit(FbaDeliveryEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
@@ -565,12 +489,10 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         return;
     }
 
-    </#if>
     /**
     * 新增修改处理数据
     */
-    private void handleData(${entity} ${entity?uncap_first}) {
+    private void handleData(FbaDeliveryEntity fbaDeliveryEntity) {
     // TODO 验证数据 & 数据赋值
     }
 }
-</#if>
