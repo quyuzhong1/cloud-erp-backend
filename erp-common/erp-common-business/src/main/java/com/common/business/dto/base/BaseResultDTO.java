@@ -17,7 +17,7 @@ public class BaseResultDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
         /**
          * 表 id
          */
@@ -27,6 +27,12 @@ public class BaseResultDTO implements Serializable {
          * 编码
          */
         private String code;
+
+
+        public AddDTO(String id, String code) {
+            this.id = id;
+            this.code = code;
+        }
     }
 
     /**

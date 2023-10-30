@@ -19,6 +19,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
+import com.common.business.dto.base.*;
 <#if restControllerStyle>
 import org.springframework.web.bind.annotation.RestController;
 <#else>
@@ -81,7 +82,7 @@ public class ${table.controllerName} {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "${table.comment!}新增")
-    public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         return success(${serviceBean}.add(dto));
     }
 
@@ -149,9 +150,9 @@ public class ${table.controllerName} {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
-        ${serviceBean}.addAndSubmit(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
+        BaseResultDTO.AddDTO result = ${serviceBean}.addAndSubmit(dto);
+        return success(result);
     }
 
     /**
