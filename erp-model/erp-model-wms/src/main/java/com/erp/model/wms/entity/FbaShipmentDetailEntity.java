@@ -60,7 +60,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("declare_qty")
     private Integer declareQty;
     /**
-    * 签收数量
+    * 发货数量
     */
     @TableField("delivery_qty")
     private Integer deliveryQty;

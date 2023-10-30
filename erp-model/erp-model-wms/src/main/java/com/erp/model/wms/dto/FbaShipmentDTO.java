@@ -114,7 +114,10 @@ public class FbaShipmentDTO implements Serializable {
         */
         private String deliveryToAddress;
 
-
+        /**
+         * 详情
+         */
+        private List<FbaShipmentDetailDTO.ViewDTO> itemList;
     }
 
     /**
@@ -263,7 +266,7 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class PagingParamDTO extends SortDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 单据编号
          */
@@ -334,7 +337,268 @@ public class FbaShipmentDTO implements Serializable {
     /**
      * 列表查询返回值
      */
-    public class ListDTO {
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 货件单号
+         */
+        private String code;
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 国家Id
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 平台物流中心
+         */
+        private String fulfillmentCenter;
+        /**
+         * 发货状态编码
+         */
+        private String deliveryStatus;
+        /**
+         * 发货状态名称
+         */
+        private String deliveryStatusName;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 平台货件状态
+         */
+        private String platformShipmentStatus;
+        /**
+         * 平台sku
+         */
+        private String asin;
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+        /**
+         * 卖家sku
+         */
+        private String mSku;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 收发差异
+         */
+        private Integer diffQty;
+        /**
+         * 在途数量
+         */
+        private Integer transportQty;
+        /**
+         * 创建时间（拉取数据的日期）
+         */
+        private LocalDateTime platformCreateTime;
+        /**
+         * 签收时间（拉取签收数据的日期）
+         */
+        private LocalDateTime platformReceiveTime;
+        /**
+         * 是否组合品 true 是
+         */
+        private Boolean isCombo;
+    }
+
+    /**
+     * 发货记录
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverRecordView {
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 发货状态编码
+         */
+        private String deliveryStatus;
+        /**
+         * 发货状态名称
+         */
+        private String deliveryStatusName;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliverTime;
+    }
+
+    /**
+     * 货件状态记录
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShipmentStatusRecordView {
+        /**
+         * 货件状态
+         */
+        private String shipmentStatus;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+    }
+
+    /**
+     * 查询收货记录参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveRecordParam {
+        /**
+         * 货件单号
+         */
+        @NotBlank(message = "货件单号不能为空")
+        private String code;
+        /**
+         * 卖家sku
+         */
+        @NotBlank(message = "mSku不能为空")
+        private String mSku;
+        /**
+         * fnSku
+         */
+        @NotBlank(message = "fnSku不能为空")
+        private String fnSku;
+    }
+
+    /**
+     * 查询收货记录返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveRecordView {
+        /**
+         * 签收时间
+         */
+        private LocalDateTime receiveTime;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+    }
+
+    /**
+     * 下推发货单列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliverView {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 货件单号
+         */
+        private String code;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+        /**
+         * 发货仓名称
+         */
+        private String deliveryWarehouseName;
+        /**
+         * 目的仓id
+         */
+        private String destWarehouseId;
+        /**
+         * 目的仓名称
+         */
+        private String destWarehouseName;
+        /**
+         * 平台sku
+         */
+        private String asin;
+        /**
+         * 卖家sku
+         */
+        private String mSku;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 是否组合品 true 是
+         */
+        private Boolean isCombo;
 
     }
 }
