@@ -6,38 +6,40 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
         si.code,
-        si.order_type,
-        si.approve_status,
-        si.customer_id,
-        si.invalid_status,
-        si.sales_org_name,
-        si.seller_name,
-        sod.delivery_status,
-        si.require_date,
-        si.create_user_name,
-        si.create_time,
-        si.warehouse_id,
+        si.order_type AS orderType,
+        si.approve_status AS approveStatus,
+        si.customer_id AS customerId,
+        si.invalid_status AS invalidStatus,
+        si.sales_org_name AS salesOrgName,
+        si.seller_name AS sellerName,
+        sod.delivery_status AS deliveryStatus,
+        si.require_date AS requireDate,
+        si.create_user_name AS createUserName,
+        si.create_time AS createTime,
+        si.warehouse_id AS warehouseId,
+        si.receive_amount AS receiveAmount,
         si.id,sod.id AS detailId,
-        si.approve_user_name,
-        si.approve_time,
-        si.sales_dept_id,
-        si.all_amount_lc,
+        si.approve_user_name AS approveUserName,
+        si.approve_time AS approveTime,
+        si.sales_dept_id AS salesDeptId,
+        si.all_amount_lc AS allAmountLc,
         si.remark,
-        si.customer_order_no,
-        sod.sku_id,
-        sod.sku_no,
+        si.customer_order_no AS customerOrderNo,
+        sod.sku_id AS skuId,
+        sod.sku_no AS skuNo,
         sod.qty,
         sod.amount,
         sod.currency,
-        sod.currency_symbol,
+        sod.currency_symbol AS currencySymbol,
         sod.price,
-        sod.tax_amount,
-        sod.tax_rate,
+        sod.tax_amount AS taxAmount,
+        sod.tax_rate AS taxRate,
+        sod.tax,
         sod.remark as detailRemark,
         ci.country_id as countryId,
-        sod.exchange_rate,
-        sod.amount_local_currency,
-        sod.all_amount_local_currency
+        sod.exchange_rate AS exchangeRate,
+        sod.amount_local_currency AS amountLocalCurrency,
+        sod.all_amount_local_currency AS allAmountLocalCurrency
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -47,6 +49,12 @@
             AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
+            </foreach>
+        </if>
+        <if test="soIdList !=null and soIdList.size>0">
+            AND si.id IN
+            <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                #{soId}
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
@@ -130,7 +138,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY si.create_time DESC,sod.id  ASC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        si.create_time DESC,sod.id  ASC
     </select>
 
     <select id="pagingTotal" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingTotalDTO">
@@ -149,6 +163,12 @@
             AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
+            </foreach>
+        </if>
+        <if test="soIdList !=null and soIdList.size>0">
+            AND si.id IN
+            <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                #{soId}
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
@@ -237,68 +257,70 @@
     <select id="listExport" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
             si.code,
-            si.order_type,
-            si.approve_status,
-            si.customer_id,
-            si.invalid_status,
-            si.sales_org_name,
-            si.seller_name,
-            sod.delivery_status,
-            si.require_date,
-            si.create_user_name,
-            si.create_time,
-            si.warehouse_id,
-            si.sales_dept_id,
+            si.order_type AS orderType,
+            si.approve_status AS approveStatus,
+            si.customer_id AS customerId,
+            si.invalid_status AS invalidStatus,
+            si.sales_org_name AS salesOrgName,
+            si.seller_name AS sellerName,
+            sod.delivery_status AS deliveryStatus,
+            si.require_date AS requireDate,
+            si.create_user_name AS createUserName,
+            si.create_time AS createTime,
+            si.warehouse_id AS warehouseId,
+            si.sales_dept_id AS salesDeptId,
+            si.all_amount_lc AS allAmountLc,
             si.id,
             sod.id AS detailId,
-            si.approve_user_name,
+            si.approve_user_name AS approveUserName,
             si.remark,
-            sod.sku_id,
-            sod.sku_no,
+            sod.sku_id AS skuId,
+            sod.sku_no AS skuNo,
             sod.qty,
             sod.amount,
             sod.currency,
-            sod.currency_symbol,
+            sod.currency_symbol AS currencySymbol,
             sod.price,
-            sod.tax_amount,
-            sod.purchase_price,
-            sod.sale_cost,
-            sod.sale_profit,
-            sod.sale_profit_rate,
+            sod.tax_amount AS taxAmount,
+            sod.tax,
+            sod.purchase_price AS purchasePrice,
+            sod.sale_cost AS saleCost,
+            sod.sale_profit AS saleProfit,
+            sod.sale_profit_rate AS saleProfitRate,
             sod.remark as detailRemark,
             ci.country_id as countryId,
-            si.receive_account,
-            si.receive_method,
-            si.receive_date,
-            si.receive_amount,
-            si.trade_term,
-            sod.amount_local_currency,
-            sod.all_amount_local_currency,
-            sod.exchange_rate,
-            si.customs_fee,
-            si.bank_service_fee,
-            si.shipping_fee,
-            si.warehouse_id,
-            si.warehouse_org_id,
-            si.bill_date,
-            si.discount_amount,
+            si.receive_account AS receiveAccount,
+            si.receive_method AS receiveMethod,
+            si.receive_date AS receiveDate,
+            si.receive_amount AS receiveAmount,
+            si.trade_term AS tradeTerm,
+            sod.amount_local_currency AS amountLocalCurrency,
+            sod.all_amount_local_currency AS allAmountLocalCurrency,
+            sod.exchange_rate AS exchangeRate,
+            si.customs_fee AS customsFee,
+            si.bank_service_fee AS bankServiceFee,
+            si.shipping_fee AS shippingFee,
+            si.warehouse_id AS warehouseId,
+            si.warehouse_org_id AS warehouseOrgId,
+            si.bill_date AS billDate,
+            si.discount_amount AS discountAmount,
             sod.discount_amount as detailDiscountAmount,
-            si.sales_org_id,
-            si.receiver_name,
-            si.tel_number,
-            si.receive_address,
-            si.receive_address_id,
-            si.delivery_mode,
-            si.address_type,
-            si.receive_condition,
-            si.customer_order_no,
-            sod.tax_rate,
+            si.sales_org_id AS salesOrgId,
+            si.receiver_name AS receiverName,
+            si.tel_number AS telNumber,
+            si.receive_address AS receiveAddress,
+            si.receive_address_id AS receiveAddressId,
+            si.delivery_mode AS deliveryMode,
+            si.address_type AS addressType,
+            si.receive_condition AS receiveCondition,
+            si.customer_order_no AS customerOrderNo,
+            sod.tax_rate AS taxRate,
             sod.price,
-            sod.tax_amount_before,
-            sod.is_gift,
-            sod.is_reissue,
-            sod.is_close,
-            sod.platform_sku_no
+            sod.tax_amount_before AS taxAmountBefore,
+            sod.is_gift AS isGift,
+            sod.is_reissue AS isReissue,
+            sod.is_close AS isClose,
+            sod.platform_sku_no AS platformSkuNo
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -316,6 +338,12 @@
                     AND sod.sku_no IN
                     <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                         #{skuNo}
+                    </foreach>
+                </if>
+                <if test="soIdList !=null and soIdList.size>0">
+                    AND si.id IN
+                    <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                        #{soId}
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
@@ -403,7 +431,13 @@
                 </if>
             </otherwise>
         </choose>
-        ORDER BY si.create_time DESC,sod.id  ASC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            si.create_time DESC,sod.id  ASC
     </select>
 
     <select id="viewGenerateSalesDemand"
@@ -481,7 +515,9 @@
             sd.sku_id,
             sd.sku_no,
             sd.qty,
-            sd.price
+            sd.price,
+            sd.tax_amount_before,
+            sd.tax_rate
         FROM so_info si
         LEFT JOIN so_detail sd
         ON si.id = sd.main_id AND si.is_deleted = FALSE
@@ -490,18 +526,20 @@
         AND si.discount_amount>0
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update so_info set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
+    <select id="listFirstListingTime" resultType="com.erp.model.oms.dto.ListingTimeDTO">
+        SELECT
+        min(si.bill_date) AS soDate,
+        sd.sku_id
+        FROM so_info si
+        INNER JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND si.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
         </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+        GROUP BY sd.sku_id
+    </select>
+
 </mapper>

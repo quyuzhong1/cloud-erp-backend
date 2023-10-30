@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
  * @author Lambda
  * @Classname SoInfoDTO
-
  * @Date 2023-05-10 17:55
  * @Created by yl
  */
@@ -40,8 +40,8 @@ public class SoDetailDTO implements Serializable {
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空", groups = {AddGroup.class})
-        @DecimalMax(value = "999999999",message ="销售数量最大值",groups = {AddGroup.class})
-        @DecimalMin(value = "1",message ="销售数量最小值不能为0",groups = {AddGroup.class})
+        @DecimalMax(value = "999999999", message = "销售数量最大值", groups = {AddGroup.class})
+        @DecimalMin(value = "1", message = "销售数量最小值不能为0", groups = {AddGroup.class})
         private Integer qty;
 
         /**
@@ -137,15 +137,12 @@ public class SoDetailDTO implements Serializable {
 
         /**
          * id
-         *
+         * <p>
          * 对与销售出库单 以及下推的单据
          * 这个id 就是
          * sourceDetailId
          */
         private String id;
-
-
-
 
 
         /**
@@ -215,6 +212,11 @@ public class SoDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+
+        /**
+         * 税额
+         */
+        private BigDecimal tax;
 
 
         /**
@@ -348,12 +350,17 @@ public class SoDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewPiDTO{
+    public static class ViewPiDTO {
 
 
         private Integer no;
 
         private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         /**
          * 规格类型
@@ -370,6 +377,11 @@ public class SoDetailDTO implements Serializable {
 
         private String priceStr;
 
+        /**
+         * 含税单价
+         */
+        private String taxPriceStr;
+
         private BigDecimal amount;
 
         private BigDecimal taxAmount;
@@ -378,6 +390,13 @@ public class SoDetailDTO implements Serializable {
         private String skuId;
 
         private String desc;
+
+        /**
+         * 主要材料
+         */
+        private String materials;
+
+        private String imageUrl;
 
 
     }
@@ -437,7 +456,7 @@ public class SoDetailDTO implements Serializable {
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空")
-        @DecimalMax(value = "999999999",message ="销售数量最大值")
+        @DecimalMax(value = "999999999", message = "销售数量最大值")
         private Integer qty;
 
         /**
@@ -503,6 +522,103 @@ public class SoDetailDTO implements Serializable {
          * 价税合计(本位币)
          */
         private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 备注
+         */
+        @Size(max = 200, message = "备注最大200字符")
+        private String remark;
+    }
+
+
+    /**
+     * 临时修改数据 的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TempUpdateDTO {
+
+        /**
+         * 详情id
+         */
+        private String id;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+        /**
+         * 单价日期
+         */
+        private LocalDate BillDate;
+
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
 
         /**
          * 备注
@@ -650,20 +766,18 @@ public class SoDetailDTO implements Serializable {
         /**
          * skuNo List
          */
-        @Size(min = 1,message = "sku至少需要一个")
+        @Size(min = 1, message = "sku至少需要一个")
         @NotNull(message = "sku不能为空")
         private List<String> skuNoList;
 
         /**
-         *仓库id
+         * 仓库id
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
 
     }
-
-
 
 
     /**
@@ -999,7 +1113,7 @@ public class SoDetailDTO implements Serializable {
         private String skuId;
 
         /**
-          物料编码
+         * 物料编码
          */
         private String skuNo;
 
@@ -1057,7 +1171,6 @@ public class SoDetailDTO implements Serializable {
     }
 
 
-
     /**
      * 修改发货状态
      */
@@ -1106,8 +1219,8 @@ public class SoDetailDTO implements Serializable {
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空")
-        @DecimalMax(value = "999999999",message ="销售数量最大值")
-        @Min(value = 0,message ="销售数量最小值小于0")
+        @DecimalMax(value = "999999999", message = "销售数量最大值")
+        @Min(value = 0, message = "销售数量最小值小于0")
         private Integer qty;
 
         /**
@@ -1184,6 +1297,11 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal taxPrice;
 
         /**
+         * 含税单价本位币
+         */
+        private BigDecimal taxPriceLc;
+
+        /**
          * 是否赠品
          */
         private Boolean isGift;
@@ -1240,7 +1358,7 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal allAmountLocalCurrency;
 
         /**
-         *  销售金额（折后）本位币
+         * 销售金额（折后）本位币
          */
         private BigDecimal amountLocalCurrency;
 

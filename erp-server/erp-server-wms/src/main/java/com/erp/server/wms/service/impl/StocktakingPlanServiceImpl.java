@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -29,6 +30,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
@@ -47,10 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +75,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WorkflowFeign workflowFeign;
     @Resource
     private StocktakingTaskService stocktakingTaskService;
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @Override
@@ -549,6 +550,17 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ValidatorUtil.isNotNull(dto.getEndTime(), ApiError.TIME_NOT_NULL, "动销结束时间");
         if (dto.getEndTime().compareTo(dto.getStartTime()) <= 0) {
             throw new ServiceException(ApiError.START_GE_END_ERROR, "动销开始时间", "动销结束时间");
+        }
+        // 按仓库盘点如果仓库被禁用无法选择
+        List<String> disabledWarehouseList = new ArrayList<>();
+        dto.getDetailList().forEach(detail -> {
+            WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(detail.getWarehouseId());
+            if(ObjectUtil.isNotEmpty(updateDTO) && (updateDTO.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(updateDTO.getApproveStatusCode()))){
+                disabledWarehouseList.add(updateDTO.getName());
+            }
+        });
+        if (CollectionUtil.isNotEmpty(disabledWarehouseList)){
+            throw new ServiceException(ApiError.WAREHOUSE_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
         }
     }
 

@@ -2,14 +2,10 @@ package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
-import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +24,6 @@ public class StockMQConsumerService {
     @Resource
     private DmpWarehouseInboundRecordService dmpWarehouseInboundRecordService;
 
-    @Resource
-    private ApiPlmSyncLogService apiPlmSyncLogService;
 
     /**
      * rocketmq 监听第三方仓库存变更
@@ -54,7 +48,6 @@ public class StockMQConsumerService {
                 throw new RuntimeException(e);
             }finally {
                 // 写入日志 执行结果
-                apiPlmSyncLogService.insert(new ApiPlmSyncLogDTO(PlatformEnum.KINGDEE, ApiModuleTypeEnum.STOCK_OVERSEAS.getCode(),ext.getReceivingCode(),sendResult, msg,JSONUtil.toJsonStr(ext)));
             }
         }
         /**

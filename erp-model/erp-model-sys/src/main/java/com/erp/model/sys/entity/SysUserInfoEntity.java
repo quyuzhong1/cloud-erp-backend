@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -21,7 +20,7 @@ public class SysUserInfoEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * $column.comments
+	 * 用户ID
 	 */
    @TableId(value = "uid",type = IdType.ASSIGN_ID)
 	private String uid;
@@ -107,9 +106,14 @@ public class SysUserInfoEntity implements Serializable {
 	 */
 	private String salt;
 
+	/**
+	 * 头像图片
+	 */
 	private String headIcon;
 
-
+	/**
+	 * 邮箱
+	 */
 	private String email;
 
 	/**
@@ -119,26 +123,10 @@ public class SysUserInfoEntity implements Serializable {
 	private String code;
 
 	/**
-	 * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-	 */
-	@TableField("sync_kingdee_status")
-	private String syncKingdeeStatus;
-
-	/**
-	 * 同步金蝶时间
-	 */
-	@TableField("sync_kingdee_time")
-	private LocalDateTime syncKingdeeTime;
-
-	/**
 	 * 同步金蝶id
 	 */
 	@TableField("sync_kingdee_id")
 	private String syncKingdeeId;
 
-	/**
-	 * 同步操作
-	 */
-	@TableField("sync_operate")
-	private String syncOperate;
+	
 }

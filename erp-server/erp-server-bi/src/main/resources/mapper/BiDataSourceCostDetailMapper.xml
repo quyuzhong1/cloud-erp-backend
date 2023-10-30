@@ -107,9 +107,9 @@
         </if>
         <!-- 店铺id -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND dsc.shop_id IN
-            <foreach collection="params.shopName" item="shopId" open="(" separator="," close=")">
-                #{shopId}
+            AND dsc.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- 平台 -->

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -311,9 +310,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(SysDepartmentEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SysDepartmentEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     @Override
@@ -357,9 +358,8 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 log.info("部门【{}】已经存在金蝶id，不处理", name);
                 continue;
             }
-            lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysDepartmentEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
+            lambdaUpdate()
+                    .set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId)
                     .set(SysDepartmentEntity::getCode, code)
                     .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())
                     .update();
@@ -433,6 +433,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             resultList.add(departmentDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public List<SysDepartmentTreeDTO> getDeptByParentId(String deptId) {
+        if (StringUtils.isEmpty(deptId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getDeptByParentId(deptId);
     }
 
     /**

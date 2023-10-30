@@ -31,20 +31,6 @@
         <result column="invalid_time" property="invalidTime" />
     </resultMap>
 
-    <update id="updateSyncKingdeeStatus">
-        update purchase_change set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseChangeDTO$ListDTO">
         select
@@ -62,7 +48,7 @@
             pcd.old_amount as oldAmount,
             pcd.qty as qty,
             pcd.price as price,
-            pcd.currency_symbol,
+            pcd.currency_symbol as currencySymbol,
             pcd.amount as amount,
             pcd.remark as remark,
             pc.change_user_name as changeUserName,

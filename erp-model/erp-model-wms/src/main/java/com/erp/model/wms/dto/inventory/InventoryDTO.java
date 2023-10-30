@@ -1,8 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
-import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,6 +29,11 @@ public class InventoryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 产品名称
+         */
+        private String productName;
 
 
         /**
@@ -63,6 +66,50 @@ public class InventoryDTO implements Serializable {
          * 是否过滤0实际库存，默认前端页面勾上不显示0库存
          */
         private Boolean hideZeroInventory;
+
+    }
+
+    /**
+     * 即时库存查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
+
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+
+
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 库位集合
+         */
+        private List<String> warehouseLocationList;
+
+
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdList;
+
+
 
     }
 
@@ -233,6 +280,16 @@ public class InventoryDTO implements Serializable {
          * 待检库存数量
          */
         private Integer waitqcQty;
+
+        /**
+         * 金蝶库存
+         */
+        private String kingdeeQty;
+
+        /**
+         * 库存差异
+         */
+        private String diffQty;
 
     }
 
@@ -564,6 +621,10 @@ public class InventoryDTO implements Serializable {
          */
         private String sourceCode;
 
+        /**
+         * 单据编号id
+         */
+        private String sourceId;
 
         /**
          * 操作类型编码
@@ -647,6 +708,16 @@ public class InventoryDTO implements Serializable {
          * 批次日期
          */
         private LocalDate instockBatchDate;
+
+        /**
+         * 金蝶同步状态
+         */
+        private String syncKingdeeStatus;
+
+        /**
+         * 金蝶同步状态名称
+         */
+        private String syncKingdeeStatusName;
 
     }
 
@@ -1043,6 +1114,35 @@ public class InventoryDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryQtyDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
     }
 
     @Data

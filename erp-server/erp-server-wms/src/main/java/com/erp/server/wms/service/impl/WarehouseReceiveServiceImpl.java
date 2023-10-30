@@ -127,6 +127,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
+/*
+    @Autowired
+    private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
 
     /**
      * 主页分页查询
@@ -537,6 +540,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .in(WarehouseReceiveEntity::getId, ids)
                     .update();
 
+            //审核通过发送金蝶
+//            warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //根据条件生成质检单
             createQcBill(ids);
 
@@ -743,9 +748,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (CollectionUtils.isNotEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
-            List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-                throw new ServiceException(ApiError.ERROR_99042);
+            List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(req.getId());
+            if (CollectionUtils.isNotEmpty(qcList)) {
+                String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_99042,codes);
             }
         });
 
@@ -757,6 +763,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         // 更新库存数据，回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //审核通过发送金蝶
+//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -841,6 +850,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
         //修改到货状态
         purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
+
+        //作废发送金蝶
+//        warehouseReceiveList.forEach(obj -> syncKingdeePoReceiveService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -1651,5 +1663,34 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(WarehouseReceiveEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseReceiveEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseReceiveEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), WarehouseReceiveEntity::getSyncOperate, syncOperate)
+                .update();
+    }
+
+    /**
+     * 更改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeId
+     * @return void
+     * @author yl
+     * @date 2023-08-14 17:47
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(WarehouseReceiveEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 }

@@ -8,10 +8,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopCostService;
@@ -34,6 +37,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
+@LogSystemModule("店铺管理")
 @RequestMapping("/shop")
 public class ShopInfoController extends BaseController {
 
@@ -66,6 +70,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         Boolean result = shopInfoService.add(dto);
@@ -78,6 +83,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改店铺")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -116,7 +122,7 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> list = shopInfoService.list();
         return success(list);
     }
-    
+
     /**
      * 获取已授权店铺
      * @author Will

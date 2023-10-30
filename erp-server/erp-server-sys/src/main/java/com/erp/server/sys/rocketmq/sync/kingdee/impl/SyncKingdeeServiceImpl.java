@@ -1,6 +1,5 @@
 package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -36,15 +35,13 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
 
-        PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(businessId,"",syncKingdeeId, status);
-
         //系统用户
         if (ApiModuleTypeEnum.SYS_USER_INFO.getCode().toString().equals(code)) {
-            sysUserInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            sysUserInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //部门
         if (ApiModuleTypeEnum.SYS_DEPARTMENT.getCode().toString().equals(code)) {
-            sysDepartmentService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            sysDepartmentService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

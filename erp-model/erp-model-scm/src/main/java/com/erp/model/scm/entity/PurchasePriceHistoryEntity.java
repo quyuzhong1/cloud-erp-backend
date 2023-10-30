@@ -112,6 +112,12 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
     @TableField("effective_date")
     private LocalDate effectiveDate;
 
+    /**
+     *变更详情id
+     */
+    @TableField("change_detail_id")
+    private String changeDetailId;
+
 
     public static final String SKU_ID = "sku_id";
 

@@ -16,17 +16,22 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
+import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -77,7 +82,7 @@ public class MabangPullServiceTest {
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         SaveParam param = new SaveParam(json);
 //        kingdeeCommonService.queryGroupInfo(apiUtils, map.get("Ids").toString());
-        kingdeeCommonService.customerGroupDelete(apiUtils, platformEntity, map, type);
+        kingdeeCommonService.customerGroupDelete(apiUtils, (String)map.get("syncKingdeeId"),(String)map.get("groupName"));
 
 
 //        Boolean aBoolean = kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);

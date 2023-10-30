@@ -2,7 +2,6 @@ package com.erp.server.plm.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.plm.dto.BasicCategoryTreeDTO;
 import com.erp.model.plm.dto.SkuCategoryDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -32,11 +31,4 @@ public interface BasicCategoryMapper extends BaseMapper<BasicCategoryEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      */
     List<SkuCategoryDTO> getSkuByCategoryIds(@Param("categoryIds") List<String> categoryIds);
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

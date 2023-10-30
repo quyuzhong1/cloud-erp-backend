@@ -2,23 +2,27 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.dto.*;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.*;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,6 +47,9 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private DmpPullTaskService dmpPullTaskService;
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
+
 
     @Resource
     private PlatformService platformService;
@@ -68,14 +75,14 @@ public class DmpFeignController extends BaseController {
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(dto.getKingdeePushModuleCode());
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
-        if (ObjectUtils.isEmpty(platformEntity)){
+        if (ObjectUtils.isEmpty(platformEntity)) {
             log.error("第三方平台【{}】未找到！", PlatformEnum.KINGDEE.getDesc());
             throw new ServiceException(ApiError.ERROR_97022);
         }
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("syncKingdeeId",dto.getId());
-        map.put("code",dto.getNumber());
-        return kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        map.put("syncKingdeeId", dto.getId());
+        map.put("code", dto.getNumber());
+        return kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
     }
 
 
@@ -94,49 +101,53 @@ public class DmpFeignController extends BaseController {
 
     /**
      * 更新任务状态
+     *
+     * @param paramDTO
      * @author Will
      * @date: 2023/6/30 10:00
-     * @param paramDTO
      */
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
-         dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(), paramDTO.getSyncStatus(), paramDTO.getResponseMsg());
     }
-    
-    
+
+
     /**
      * 获取到所有的店铺信息
+     *
+     * @param
+     * @return
      * @author yl
      * @date 2023-07-06 12:26
-     * @param
-     * @return 
      */
     @PostMapping("/listShop")
-    public List<DmpShopInfoEntity> listShop(){
+    public List<DmpShopInfoEntity> listShop() {
         return dmpShopInfoService.list();
     }
 
     /**
      * 获取汇率
+     *
      * @param date
      * @param sourceCurrencyCode
      * @return
      */
     @PostMapping("/getRate")
-    public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode){
+    public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
 
     /**
      * 从DmpSyncTask中查询金蝶的单据编号
+     *
      * @param conditon 查询过滤条件
      *                 支持：id，is_deleted，source_type，source_code，source_id，status，mq_tag，return_msg
      *                 注：lastSql 用于表示扩展SQL(慎用)
      * @return
      */
     @PostMapping("/getKingdeeSourceCode")
-    public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
-        List<String> result=new ArrayList<>();
+    public List<String> getKingdeeSourceCode(@RequestBody Map<String, Object> conditon) {
+        List<String> result = new ArrayList<>();
 
         result = dmpPullTaskService.listKingdeeCode(conditon);
 
@@ -145,10 +156,11 @@ public class DmpFeignController extends BaseController {
 
     /**
      * 根据id获取到第三方应用信息
-     * @author yl
-     * @date 2023-08-28 16:22
+     *
      * @param dto
      * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     * @author yl
+     * @date 2023-08-28 16:22
      */
     @PostMapping("/getCfgAppClient")
     public CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto){
@@ -179,4 +191,37 @@ public class DmpFeignController extends BaseController {
         return cfgAppClientService.update(dto);
     }
 
+
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     *
+     * @param dto 查询过滤条件
+     * @return
+     */
+    @PostMapping("/send/mq/save/task")
+    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
+        return dmpPullTaskService.sendMqAndSaveTask(dto);
+    }
+
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     *
+     * @param dto 查询过滤条件
+     * @return
+     */
+    @PostMapping("/save/pull/task")
+    public String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
+        return dmpPullTaskService.savePullTask(dto);
+    }
+
+    /**
+     * 根据订单id删除订单
+     *
+     * @param ids
+     * @return
+     */
+    @PostMapping("/remove/orderByIds")
+    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids) {
+        return dmpOrderInfoService.removeOrderByIds(ids);
+    }
 }

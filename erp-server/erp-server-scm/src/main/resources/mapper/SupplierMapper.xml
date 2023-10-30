@@ -183,6 +183,12 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
     </select>
     <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT
@@ -195,18 +201,5 @@
         (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update supplier set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+
 </mapper>

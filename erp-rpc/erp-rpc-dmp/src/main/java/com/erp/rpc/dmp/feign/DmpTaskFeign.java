@@ -2,6 +2,8 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
@@ -136,4 +138,28 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/disabledPlatformTask")
     Boolean disabledPlatformTask(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
+
+    /**
+     * 发送MQ消息并保存任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/send/mq/save/task")
+    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
+
+    /**
+     * 发送MQ消息并保存任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/save/pull/task")
+    String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
+
+    /**
+     * 根据订单id删除订单
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/remove/orderByIds")
+    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids);
 }

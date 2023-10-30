@@ -140,7 +140,7 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
         this.retryTimes = 0;
     }
 
-    public DmpPullTaskEntity(DmpSyncTaskDTO dto) {
+    public DmpPullTaskEntity(DmpSyncTaskDTO.AddDTO dto) {
         this.targetPlatformName = dto.getTargetPlatformName();
         this.mqTopic = dto.getMqTopic();
         this.mqTag = dto.getMqTag();
@@ -150,6 +150,20 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
         this.sourceType = dto.getSourceType();
         this.sourceId = dto.getSourceId();
         this.sourceCode = dto.getSourceCode();
+    }
+
+    public DmpPullTaskEntity(String targetPlatformName, String mqTopic, String mqTag, String mqData, String code,
+                             String sourcePlatformName, String sourceType, String sourceId, String sourceCode, int i) {
+        this.targetPlatformName = targetPlatformName;
+        this.mqTopic = mqTopic;
+        this.mqTag = mqTag;
+        this.mqData = mqData;
+        this.status = code;
+        this.sourcePlatformName = sourcePlatformName;
+        this.sourceType = sourceType;
+        this.sourceId = sourceId;
+        this.sourceCode = sourceCode;
+        this.retryTimes = i;
     }
 
     @Override

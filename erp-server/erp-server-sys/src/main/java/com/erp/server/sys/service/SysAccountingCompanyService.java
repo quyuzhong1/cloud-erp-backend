@@ -75,4 +75,9 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @return List<CodeDTO>
      */
     List<BaseIdDTO.CodeDTO> listByCodes(List<String> codes);
+
+    /**
+     * 公司详情
+     */
+    SysAccountingCompanyEntity view(String id);
 }

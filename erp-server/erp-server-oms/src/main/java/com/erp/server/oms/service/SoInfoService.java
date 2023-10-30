@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -253,11 +254,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 更改销售订单金蝶推送的状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 方法说明
@@ -328,7 +331,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     Boolean exportSoContractExcel(String id, HttpServletResponse response);
 
-    Boolean temporaryUpdate();
+    List<String> temporaryUpdate();
 
     /**
      * @description: 更新明细备注
@@ -380,4 +383,43 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+
+    /**
+     * 推送订单数据到mq
+     * @param soInfoEntity
+     * @param syncOperate
+     */
+    void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate);
+
+
+    /**
+     * 导出国内的spi 数据
+     * @author yl
+     * @date 2023-10-12 14:42
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportSoDomesticPI(String id, HttpServletResponse response);
+
+    /**
+     * 下载b2b 导入模板
+     * @author yl
+     * @date 2023-10-17 10:26
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入销售订单
+     * @author yl
+     * @date 2023-10-17 10:34
+     * @param excelFile
+     * @param response
+     * @return void
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+
 }

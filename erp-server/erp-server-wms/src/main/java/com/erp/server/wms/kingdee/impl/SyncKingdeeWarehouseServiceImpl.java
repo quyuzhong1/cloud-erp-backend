@@ -1,34 +1,34 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -46,10 +46,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     private DictBasicService dictBasicService;
 
     @Resource
-    private WarehouseService warehouseService;
-
-    @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
@@ -64,12 +61,10 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
      * @return void
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(WarehouseEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-        //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
-        warehouseService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
@@ -79,6 +74,13 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("name",entity.getName());
         //金蝶编号
         resultMap.put("code",entity.getKingdeeWarehouseCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
@@ -100,8 +102,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("disabled",entity.getDisabled());
         //是否启用仓位
         resultMap.put("isEnableLocation",entity.getIsEnableLocation());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+
 
         //审核未通过、非反审核不推送
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
@@ -156,16 +157,30 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("areaJsonList",areaJsonList);
         }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_WAREHOUSE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
-                return warehouseService.updateSyncKingdeeStatus(syncKingdeeDTO);
-            }
-            return Boolean.TRUE;
-        });
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (WarehouseEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getKingdeeWarehouseCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.WAREHOUSE.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_WAREHOUSE_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

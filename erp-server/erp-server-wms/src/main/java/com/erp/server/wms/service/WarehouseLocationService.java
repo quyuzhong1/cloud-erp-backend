@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
@@ -102,4 +103,28 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     Map<String, String> locationAreaMap();
+
+    /**
+     * 获取仓库加仓库下的区位
+     * @Author Luo_WG
+     * @Date 2023/10/17 16:15
+     * @return java.util.List<com.erp.model.wms.dto.PdaWarehouseLocationDTO.WarehouseAreaDTO>
+     **/
+    List<PdaWarehouseLocationDTO.WarehouseAreaDTO> listWarehouseArea();
+
+    /**
+     * 新增仓位
+     * @Author Luo_WG
+     * @Date 2023/10/17 17:34
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto);
+
+    /**
+     * 根据仓库id和库区code查询库区信息
+     * @param warehouseId
+     * @param warehouseAreaCode
+     */
+    WarehouseLocationEntity findArea(String warehouseId, String warehouseAreaCode);
 }

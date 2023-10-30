@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
@@ -40,13 +39,6 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
      */
     List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@Param("params") PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
 
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * PDA:分页查询

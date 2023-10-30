@@ -8,8 +8,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +32,7 @@ import javax.validation.Valid;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("采购价目表")
 @RequestMapping("/purchase/price")
 public class PurchasePriceController extends BaseController {
 
@@ -56,6 +61,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加采购价目表")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -85,6 +91,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核采购价目")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         Boolean result = purchasePriceService.addAndSubmit(dto);
@@ -97,6 +104,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -114,6 +122,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购价目")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -131,6 +140,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核采购价目")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -149,6 +159,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购价目")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -166,6 +177,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购价目")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -184,6 +196,7 @@ public class PurchasePriceController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购价目")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -204,6 +217,7 @@ public class PurchasePriceController extends BaseController {
      * @author yl
      * @date 2023-03-23 17:57
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购价目")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -219,6 +233,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 采购价目数据导出
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "采购价目数据导出")
     @PostMapping("/exportPurchasePrice")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "pricing_user_id",
@@ -232,6 +247,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 批量导入
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "采购价目数据批量导入")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = purchasePriceService.importFile(excelFile, response);
@@ -242,6 +258,7 @@ public class PurchasePriceController extends BaseController {
      * 下载模板
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板采购价目")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         purchasePriceService.downloadTemplate(response);
@@ -251,6 +268,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 反审核
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购价目")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -266,6 +284,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 更新明细备注
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新明细备注采购价目:ids={ids},明细备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",

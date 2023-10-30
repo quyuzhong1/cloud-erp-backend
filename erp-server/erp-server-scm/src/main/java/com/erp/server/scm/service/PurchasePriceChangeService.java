@@ -2,13 +2,13 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -134,7 +134,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 更新明细备注
      * @author Will
@@ -144,4 +144,30 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/10/18 16:30
+     * @param dto
+     * @param response
+     */
+    void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 修复历史数据
+     * @author yl
+     * @date 2023-10-23 19:19
+     * @param
+     * @return void
+     */
+    void tempUpdateHistoryDb();
+
+    /**
+     * 根据采购价目ids获取变更信息
+     * @author yl
+     * @date 2023-10-24 14:28
+     * @param purchasePriceIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceChangeEntity>
+     */
+    List<PurchasePriceChangeEntity> listByPurchasePriceIds(List<String> purchasePriceIds);
 }

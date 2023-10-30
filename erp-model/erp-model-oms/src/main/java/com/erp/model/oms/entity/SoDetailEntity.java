@@ -42,13 +42,13 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
 
-
     /**
      * 平台sku no
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
- /**
+
+    /**
      * 销售数量
      */
     @TableField("qty")
@@ -63,6 +63,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private String deliveryStatus;
 
     /**
+     * 库位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
      * 单价
      */
     @TableField("price")
@@ -75,16 +81,17 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private BigDecimal taxRate;
 
     /**
-     * 销售金额
+     * 销售金额 （折后）
+     * 销售金额= 含税单价*数量-折扣-税额
      */
     @TableField("amount")
     private BigDecimal amount;
 
-   /**
-    * 金额含税（折扣后）
-    */
-   @TableField("tax_amount")
-   private BigDecimal taxAmount;
+    /**
+     * 金额含税（折扣后）
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
 
     /**
      * 币种
@@ -127,9 +134,6 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
-
-    @TableField(exist = false)
-    private String approveStatus;
 
     /**
      * 采购单价
@@ -174,19 +178,34 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private BigDecimal discountAmount;
 
     /**
+     * 税额
+     *  不含税 税额=（单价*数量-折扣额）* (税率/100) ps (税率/100) 为1 因为税率为100
+     *  含税 税额=（（含税单价*数量-折扣额）/(100+税率)）*税率
+     */
+    @TableField(value = "tax")
+    private BigDecimal tax;
+
+    /**
      * 含税的销售金额（折扣前）
      */
     @TableField(value = "tax_amount_before")
     private BigDecimal taxAmountBefore;
+
+    /**
+     * 汇率
+     */
+    @TableField(value = "exchange_rate")
+    private BigDecimal exchangeRate;
+
+
+    @TableField(exist = false)
+    private String approveStatus;
 
     @TableField(exist = false)
     private Integer index;
 
     @TableField(exist = false)
     private BigDecimal taxPrice;
-
-    @TableField(value = "exchange_rate")
-    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 

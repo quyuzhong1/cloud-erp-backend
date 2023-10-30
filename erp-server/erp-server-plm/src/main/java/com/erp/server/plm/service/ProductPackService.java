@@ -86,7 +86,7 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @description: 回填产品包装信息
      * @author Will
      * @date: 2023/9/20 11:39
-     * @param productPackDTO
+     * @param productPackList
      */
-    void backFillPackaging(ProductPackDTO productPackDTO);
+    void backFillPackaging(List<ProductPackDTO>  productPackList);
 }

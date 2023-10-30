@@ -3,9 +3,10 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
-import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.wms.dto.FirstMassInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -47,7 +48,7 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @param dto
      * @return List<PurchaseStockInDTO.ListDTO>
      */
-    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.SearchParamDTO dto);
+    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.ExportParamDTO dto);
     /**
      * @description: 查询退货单
      * @author Will
@@ -82,13 +83,6 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds,
                                                                           @Param("dateList") List<LocalDate> dateList);
 
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * PDA:分页查询
@@ -99,4 +93,20 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PoInstockDTO.PdaPagingView>
      **/
     IPage<PoInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") PoInstockDTO.PdaSearchParamDTO params);
+
+    /**
+     * 查询首批入库日期
+     * @param ids
+     * @return list
+     */
+    List<FirstMassInstockDTO> listFirstMassInstock(@Param("ids") List<String> ids);
+
+    /**
+     * 统计金额
+     * @author yl
+     * @date 2023-10-24 12:15
+     * @param dto
+     * @return com.erp.model.wms.dto.PoInstockDTO.PagingTotalDTO
+     */
+    PoInstockDTO.PagingTotalDTO pagingTotal(@Param("params") PoInstockDTO.SearchParamDTO  dto);
 }

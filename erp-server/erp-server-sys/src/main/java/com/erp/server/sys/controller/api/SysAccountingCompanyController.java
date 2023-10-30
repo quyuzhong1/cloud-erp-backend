@@ -1,21 +1,24 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,6 +30,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("核算公司")
 @RequestMapping("company")
 public class SysAccountingCompanyController extends BaseController {
 
@@ -45,6 +49,7 @@ public class SysAccountingCompanyController extends BaseController {
     /**
      * 添加公司
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加公司")
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysAccountingCompanyDTO dto) {
         boolean flag = sysAccountingCompanyService.saveCompany(dto);
@@ -54,6 +59,7 @@ public class SysAccountingCompanyController extends BaseController {
     /**
      * 修改公司
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改公司")
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysAccountingCompanyDTO dto) {
         boolean flag = sysAccountingCompanyService.updateCompany(dto);
@@ -61,8 +67,20 @@ public class SysAccountingCompanyController extends BaseController {
     }
 
     /**
+     * 模块详情
+     */
+    @LogViewService
+    @PostMapping("/view")
+    public ApiResult<SysAccountingCompanyEntity> view(@RequestBody @Validated BaseIdDTO dto) {
+        SysAccountingCompanyEntity result = sysAccountingCompanyService.view(dto.getId());
+        return success(result);
+    }
+
+
+    /**
      * 更改状态 禁用或者启用
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更改禁用或者启用公司:id={id},状态值={state}(true=禁用,false=启用)")
     @RequestMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         boolean flag = sysAccountingCompanyService.updateCompanyState(dto);
@@ -73,6 +91,7 @@ public class SysAccountingCompanyController extends BaseController {
     /**
      * 更改状态 禁用或者启用
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更改禁用或者启用公司:ids={ids},状态值={state}(true=禁用,false=启用)")
     @RequestMapping("/batchUpdateState")
     public ApiResult batchUpdateState(@RequestBody @Validated BatchStateDTO dto) {
         boolean flag = sysAccountingCompanyService.batchUpdateCompanyState(dto);
@@ -83,6 +102,7 @@ public class SysAccountingCompanyController extends BaseController {
     /**
      * 更改状态 禁用或者启用
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除公司")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody @Validated List<String> ids) {
         sysAccountingCompanyService.removeByIds(ids);

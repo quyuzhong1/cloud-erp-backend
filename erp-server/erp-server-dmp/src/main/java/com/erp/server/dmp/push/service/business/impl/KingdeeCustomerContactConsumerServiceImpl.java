@@ -5,16 +5,16 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
+import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -87,7 +87,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
         }
     }
 
@@ -118,9 +118,6 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
 
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
-
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
@@ -128,8 +125,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
         //地址编号
         String addressCode = String.valueOf(map.get("addressCode"));
@@ -140,7 +136,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         //如果所有编码都没有无法同步，需要手动设置好编号
         if (StringUtils.isBlank(addressCode) || (StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code))) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "地址编码或联系人编号是空，同步金蝶失败，请手动维护数据", type, ApiSendStatusEnum.FAILURE.getCode());
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT);
         }
 
         //判断金蝶系统是否已存在该数据
@@ -173,7 +169,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
             if (forbidStatus.equals("B")) {
                 return;
             }
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //给修改json对象赋值ID
         KingdeeUtils.makeFieldJson(json, "FCONTACTID", ".", id);

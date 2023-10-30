@@ -41,6 +41,14 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
     List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo);
 
     /**
+     * 根据组织id和银行名称获取到收款账户信息
+     * @param orgId
+     * @param accountName
+     * @return
+     */
+    BankAccountEntity findByOrgIdAndAccountName(String orgId, String accountName);
+
+    /**
      * 导入金蝶银行账号信息
      * @author yl
      * @date 2023-07-19 10:04
@@ -49,4 +57,13 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      * @return java.lang.Boolean
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 根据账号获取对应数据
+     * @author yl
+     * @date 2023-10-26 15:01
+     * @param receiveAccountList
+     * @return java.util.List<com.erp.model.oms.entity.BankAccountEntity>
+     */
+    List<BankAccountEntity> listByAccountNameList(List<String> receiveAccountList);
 }

@@ -8,6 +8,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
@@ -28,6 +32,7 @@ import java.util.List;
  * @since 2023-04-07
  */
 @RestController
+@LogSystemModule("采购退货单")
 @RequestMapping("/purchaseReturnOrder")
 public class PurchaseReturnOrderController extends BaseController {
     @Resource
@@ -75,6 +80,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增采购退货单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         String id = purchaseReturnOrderService.add(dto);
@@ -88,6 +94,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购退货单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -106,6 +113,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param id
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO>
      **/
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "return_user_id",
@@ -124,6 +132,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购退货单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -142,6 +151,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购退货单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -160,6 +170,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购退货单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -178,6 +189,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购退货单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -196,6 +208,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购退货单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -214,6 +227,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购退货单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -232,6 +246,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param remarkDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废采购退货单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -250,6 +265,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购退货单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
@@ -282,6 +298,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购退货单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
@@ -300,6 +317,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "采购订单下推退货单")
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean  flag = purchaseReturnOrderService.generatePurchaseReturnOrder(dto);
@@ -324,9 +342,22 @@ public class PurchaseReturnOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推自动生成采购订单")
     @PostMapping("/autoGeneratePurchaseOrder")
     public ApiResult autoGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseReturnOrderService.autoGeneratePurchaseOrder(dto);
+        return flag?success():failure();
+    }
+
+    /**
+     * 修复退货来源错误数据
+     * @Author Luo_WG
+     * @Date 2023/10/12 10:21
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/dataRepairTemp")
+    public ApiResult dataRepairTemp() {
+        Boolean flag = purchaseReturnOrderService.dataRepairTemp();
         return flag?success():failure();
     }
 

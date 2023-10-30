@@ -78,7 +78,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
         * bom版本
         */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * 即时库存数量
@@ -148,7 +148,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
 
         /**
          * bom用量

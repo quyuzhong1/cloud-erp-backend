@@ -3,7 +3,6 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -181,8 +180,9 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * 更新同步状态
      * @author Will
      * @date: 2023/4/26 19:26
+     * @param id
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 
     /**
      * 根据id获取仓库详情带缓存
@@ -234,4 +234,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return List<ListTreeDTO>
      */
     List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto);
+
+    /**
+     * 仓库，库区，库位判断是否禁用
+     * @param assertList
+     * @return
+     */
+    void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList);
 }

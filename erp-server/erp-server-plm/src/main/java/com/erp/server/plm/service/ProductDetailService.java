@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -413,9 +412,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 更新同步状态
      * @author Will
      * @date: 2023/3/9 9:26
-     * @param kingdeeDTO
+     * @param id
+     * @param syncKingdeeStatus
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
 
 
@@ -583,4 +583,27 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
      **/
     PdaProductDetailDTO.View pdaProductView(String skuNo);
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.lang.Boolean
+     */
+    Boolean updateProductDetailBatch(List<ProductDetailEntity> list);
+    /**
+     * @description: 根据编号查询
+     * @author Will
+     * @date: 2023/10/24 12:06
+     * @param skuParamDTO
+     * @return List<ProductSearchDTO.SkuListDTO>
+     */
+    List<ProductSearchDTO.SkuListDTO> listSkuBySkuNos(ProductSearchDTO.SkuParamDTO skuParamDTO);
+    /**
+     * @description: 根据负责人id查询
+     * @author Will
+     * @date: 2023/10/24 18:22
+     * @param chargeId
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByChargeId(String chargeId);
 }

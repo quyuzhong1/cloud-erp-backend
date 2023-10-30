@@ -44,4 +44,13 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      * @return
      */
     InventoryHisEntity findLastInventory(String inventoryId, LocalDate localDate);
+
+    /**
+     * 历史库存重算方法
+     * @param startTime
+     * @param endTime
+     * @param status
+     * @param inventoryId
+     */
+    void overrideInventoryHis(LocalDate startTime, LocalDate endTime, String status, String inventoryId);
 }

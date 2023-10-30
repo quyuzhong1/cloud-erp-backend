@@ -270,10 +270,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 detailEntity.setId(IdWorker.getIdStr());
                 detailEntity.setIsAdd(Boolean.TRUE);
             }
-            detailEntity.setMainId(mainId);
-            detailEntity.setVariantProperty(skuVO.getVariantProperty());
-            detailEntity.setSkuNo(skuVO.getSkuNo());
-            detailEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
             //仓库名称
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -291,8 +287,13 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 detailEntity.setOldPrice(subEntity.getPrice());
                 detailEntity.setOldAmount(subEntity.getAmount());
                 detailEntity.setOldDeliveryQty(subEntity.getDeliveryQty());
+                detailEntity.setBomVersion(subEntity.getBomVersion());
             }
 
+            detailEntity.setMainId(mainId);
+            detailEntity.setVariantProperty(skuVO.getVariantProperty());
+            detailEntity.setSkuNo(skuVO.getSkuNo());
+            detailEntity.setBomVersion(StringUtils.isBlank(detailEntity.getBomVersion()) ? bomChildrenSkuDTO.getBomVersion() : detailEntity.getBomVersion());
 
             handleSupplierTaxPrice(detailEntity,subEntity,Boolean.FALSE);
             //子集SKU信息
@@ -303,11 +304,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 if (ObjectUtils.isEmpty(childSkuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
-                childEntity.setMainId(mainId);
-                childEntity.setParentId(detailEntity.getId());
-                childEntity.setVariantProperty(childSkuVO.getVariantProperty());
-                childEntity.setSkuNo(childSkuVO.getSkuNo());
-                childEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
                 //仓库名称
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -325,7 +321,14 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                     childEntity.setOldPrice(childSubEntity.getPrice());
                     childEntity.setOldAmount(childSubEntity.getAmount());
                     childEntity.setOldDeliveryQty(childSubEntity.getDeliveryQty());
+                    childEntity.setBomVersion(childSubEntity.getBomVersion());
                 }
+
+                childEntity.setMainId(mainId);
+                childEntity.setParentId(detailEntity.getId());
+                childEntity.setVariantProperty(childSkuVO.getVariantProperty());
+                childEntity.setSkuNo(childSkuVO.getSkuNo());
+                childEntity.setBomVersion(StringUtils.isBlank(childEntity.getBomVersion()) ? bomChildrenSkuDTO.getBomVersion() : childEntity.getBomVersion());
 
                 handleSupplierTaxPrice(childEntity,childSubEntity,Boolean.TRUE);
             }

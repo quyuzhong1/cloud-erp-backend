@@ -86,9 +86,11 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * 更改金蝶同步状态
      * @author yl
      * @date 2023-08-14 17:47
+     * @param id
+     * @param syncKingdeeId
      * @return void
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 流程监听后
@@ -106,13 +108,20 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
     String add(StocktakingProfitLossDTO.AddDTO dto);
 
     /**
+     * 修改盘盈盘亏单
+     * @param dto
+     * @return
+     */
+    String update(StocktakingProfitLossDTO.UpdateDTO dto);
+
+    /**
      * 新增 并提交
      * @author yl
      * @date 2023-08-23 10:25
      * @param dto
      * @return java.lang.Boolean
      */
-    String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
+    void addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
 
     /**
      * 批量保存提交
@@ -131,4 +140,22 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return java.util.List<com.erp.model.wms.entity.StocktakingProfitLossEntity>
      */
     List<StocktakingProfitLossEntity> listBySourceId(String sourceId);
+
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-10-20 14:11
+     * @param dto
+     * @return void
+     */
+    void updateAndSubmit(StocktakingProfitLossDTO.UpdateDTO dto);
+
+    /**
+     * 删除盘盈盘亏单
+     * @author yl
+     * @date 2023-10-20 14:19
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
 }

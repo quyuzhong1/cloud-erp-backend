@@ -9,9 +9,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -47,6 +50,7 @@ import java.util.*;
  * @Date 2022/9/22 11:48
  **/
 @RestController
+@LogSystemModule("产品管理")
 @RequestMapping("product/detail")
 public class
 
@@ -135,6 +139,21 @@ ProductDetailController extends BaseController {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
     }
+
+    /**
+     * 根据sku编号查询
+     * @author Will
+     * @date: 2023/10/24 12:06
+     * @param skuParamDTO
+     * @return ApiResult<List<ProductDetailShowDTO>>
+     */
+    @PostMapping("/listSkuBySkuNos")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        List<ProductSearchDTO.SkuListDTO> list = productDetailService.listSkuBySkuNos(skuParamDTO);
+        return this.success(list);
+    }
+
 
     /**
      * 产品信息-无规格-产品详情-PLM-1.3
@@ -233,6 +252,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
      **/
+    @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-无规格-新增/修改")
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
     public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
@@ -248,6 +268,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
+    @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
@@ -263,6 +284,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-无规格-基础信息上传图片:产品表id={productId}")
     @PostMapping("/insertProductImage")
     //@RequestPermissions("plm:product:detail:insertProductImage")
     public ApiResult insertProductImage(@RequestBody ProductImagesDTO productImagesDTO) {
@@ -278,6 +300,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品信息-多规格-自动生成：任务id={taskId}")
     @PostMapping("/InsertManySpecSku")
     //@RequestPermissions("plm:product:detail:InsertManySpecAuto")
     public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody @Validated VariantAutoAddDTO variantAutoAddDTO) {
@@ -293,6 +316,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-多规格sku-删除")
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
@@ -313,6 +337,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-取消按钮-删除")
     @PostMapping("/deleteByProductId")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
@@ -440,6 +465,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "证书信息-主页列表-删除")
     @GetMapping("/removeCertificate")
     //@RequestPermissions("plm:product:detail:removeCertificate")
     public ApiResult removeCertificateById(@RequestParam("id") String id) {
@@ -470,6 +496,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "采购信息-备注信息-新增")
     @PostMapping("/saveOrUpdatePurchaseRemark")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemark")
     public ApiResult saveOrUpdatePurchaseRemark(@RequestBody ProductPurchaseRemarkDTO dto) {
@@ -485,6 +512,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "采购信息-备注信息-新增-批量：id={id}")
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
     public ApiResult saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
@@ -527,6 +555,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-变体管理-下拉列表-新增/修改:id={id},变体属性类型={propertyType}")
     @PostMapping("/saveOrUpdateVariant")
     //@RequestPermissions("plm:product:detail:saveOrUpdateVariant")
     public ApiResult saveOrUpdateVariant(@RequestBody ProductVariantDTO productVariantDTO) {
@@ -542,6 +571,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-变体管理-下拉列表-删除")
     @PostMapping("/deleteVariant")
     //@RequestPermissions("plm:product:detail:deleteVariant")
     public ApiResult deleteVariant(@RequestParam(value = "variantId") String variantId) {
@@ -586,6 +616,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-变体管理-变体值-删除")
     @GetMapping("/deleteVariantProperty")
     public ApiResult deleteVariantProperty(@RequestParam(value = "variantPropertyId") String variantPropertyId) {
         Boolean flag = productVariantPropertyService.deleteVariant(variantPropertyId);
@@ -600,6 +631,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "产品信息-单位管理-新增|修改：单位名称={name}")
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
     public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
@@ -628,6 +660,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品信息-单位管理-删除")
     @PostMapping("/deleteProductUnit")
     //@RequestPermissions("plm:product:detail:deleteProductUnit")
     public ApiResult deleteProductUnit(String id) {
@@ -645,6 +678,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品信息")
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
@@ -687,6 +721,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
     //@RequestPermissions("plm:product:detail:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
@@ -720,6 +755,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     //@RequestPermissions("plm:product:detail:exportProduct")
     public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
@@ -741,6 +777,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/11/28 16:43
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-设置审批人:产品信息审批表id={id},审批人1={firstApproveId},审批人2={secondApproveId},审批人3={thirdApproveId}")
     @PostMapping("/updateApprover")
     public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
         Boolean result = productDetailService.updateApprover(dto);
@@ -754,6 +791,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/11/28 16:43
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "产品信息-设置审批人回显")
     @GetMapping("/getProductDetailApprover")
     public ApiResult<ProductDetailApproverEntity> getProductDetailApprover() {
         ProductDetailApproverEntity entity = productDetailApproverService.getProductDetailApprover();
@@ -768,6 +806,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/11/28 16:37
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息-状态操作-审核通过")
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalPass(dto);
@@ -782,6 +821,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/11/28 16:37
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息-状态操作-审核不通过")
     @PostMapping("/approvalReject")
     public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalReject(dto);
@@ -796,6 +836,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/12/1 16:56
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品信息-反审核")
     @PostMapping("/deApprove")
     public ApiResult deApprove(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.deApprove(dto.getId());
@@ -811,6 +852,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/12/1 15:41
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-申请变更:产品信息id={id}")
     @PostMapping("/applyChange")
     public ApiResult applyChange(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.applyChange(dto.getId());
@@ -826,6 +868,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/12/1 15:55
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-重启审核流程:产品信息id={id}")
     @PostMapping("/restartProcessPass")
     public ApiResult restartProcessPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.restartProcessPass(dto);
@@ -840,6 +883,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2022/12/1 15:21
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-审核完成监听调用:流程id={processId}")
     @PostMapping("/productDetailProcessPass")
     public ApiResult productDetailProcessPass(String processId) {
         Boolean result = productDetailService.productDetailProcessPass(processId);
@@ -911,6 +955,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2023/2/9 13:34
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品信息-提交")
     @PostMapping("/commit")
     public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.commit(dto.getId());
@@ -925,6 +970,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2023/2/9 13:34
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "产品信息-撤销")
     @PostMapping("/unCommit")
     public ApiResult unCommit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.unCommit(dto.getId());
@@ -939,6 +985,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2023/2/13 13:30
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-发送金蝶数据:id={id}")
     @PostMapping("/sendKingDeeData")
     public ApiResult sendKingDeeData(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.sendKingDeeData(dto.getId());
@@ -964,6 +1011,7 @@ ProductDetailController extends BaseController {
      * @author Will
      * @date: 2023/3/2 19:17
      */
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "更新负责人")
     @PostMapping("/handleChargeId")
     public void handleChargeId() {
         productDetailService.handleChargeId();
@@ -977,6 +1025,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      **/
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品详情提交")
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = productDetailService.submit(dto.getIds(), Boolean.TRUE);
@@ -991,6 +1040,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "产品详情批量审核")
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         Boolean flag = productDetailService.approve(baseApproveParamDTO);
@@ -1005,6 +1055,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品详情批量反审核")
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = productDetailService.disApprove(dto.getIds());
@@ -1019,6 +1070,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      **/
+    @LogAction(value = LogActionEnum.CANCEL, desc = "产品详情取消流程")
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = productDetailService.cancelProcess(dto.getIds());
@@ -1033,6 +1085,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品详情批量删除")
     @PostMapping("/deleteBatch")
     public ApiResult deleteBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = productDetailService.deleteBatch(idsDTO.getIds());
@@ -1047,6 +1100,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/6/15 11:32
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品详情批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
     @PostMapping("/updateBatchFiled")
     public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
         Boolean flag = productDetailService.updateBatchFiled(dto);

@@ -2,8 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.dto.base.PushSyncStatusDTO;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -14,6 +12,7 @@ import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
 import com.erp.server.oms.mapper.CustomerGroupMapper;
 import com.erp.server.oms.service.CustomerGroupService;
 import com.erp.server.oms.service.CustomerInfoService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -51,6 +50,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateBatchGroup(ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         if (CollectionUtils.isEmpty(groupList)) {
             throw new ServiceException(ApiError.ERROR_92000);
@@ -67,6 +67,8 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
             throw new ServiceException(ApiError.ERROR_92002);
         }
         List<CustomerGroupEntity> batchGroupList = BeanMapper.copyList(groupList, CustomerGroupEntity.class);
+
+        List<CustomerGroupEntity> removeList = dbList.stream().filter(obj -> deleteIdList.contains(obj.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
@@ -77,7 +79,8 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         boolean flag = this.saveOrUpdateBatch(batchGroupList);
         //审核通过发送金蝶
         batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-
+        //删除
+        removeList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return flag;
 
     }
@@ -164,9 +167,11 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(CustomerGroupEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerGroupEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
 }

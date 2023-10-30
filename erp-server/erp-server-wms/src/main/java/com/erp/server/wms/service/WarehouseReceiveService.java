@@ -290,4 +290,23 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
      **/
      List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockListCount(PermissionsDTO dto);
+
+    /**
+     * 修改金蝶同步状态
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
+
+    /**
+     *更改金蝶同步状态
+     * @param id
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 }

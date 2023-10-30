@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@LogSystemModule("产品便签关系")
+@LogSystemModule("产品管理")
 @RequestMapping("/productRefLabel")
 public class ProductRefLabelController extends BaseController {
 
@@ -47,8 +47,8 @@ public class ProductRefLabelController extends BaseController {
      * @author Lambda
      * @date: 2023-09-13
      */
-    @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增产品标签关系")
+    @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated ProductRefLabelDTO.BatchAddDTO dtos) {
         productRefLabelService.batchAdd(dtos);
         return success();
@@ -57,6 +57,7 @@ public class ProductRefLabelController extends BaseController {
     /**
      * 删除产品标签关系
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除产品标签关系")
     @PostMapping("/remove")
     public ApiResult delete(@RequestBody @Validated ProductRefLabelDTO.RemoveDTO dto) {
         productRefLabelService.removeProductRef(dto);

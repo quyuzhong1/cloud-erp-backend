@@ -3,7 +3,6 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -62,10 +61,12 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
     List<String> listPodIdsByDetailIds(@Param("detailIds") List<String> detailIds);
 
     /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
+     * 根据bom sku 查询数据
+     * @author yl
+     * @date 2023-10-12 9:54
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
      */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    List<SubcontractOrderDTO.ListDTO> listByBomSku(@Param("bomSkuId") String bomSkuId);
+
 }

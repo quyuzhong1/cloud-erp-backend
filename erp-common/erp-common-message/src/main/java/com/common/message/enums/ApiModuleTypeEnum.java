@@ -40,6 +40,10 @@ public enum ApiModuleTypeEnum {
     STOCKTAKING_PROFIT(29, "stocktakingProfit", "盘盈单","wms"),
     STOCKTAKING_LOSS(30, "stocktakingLoss", "盘亏单","wms"),
     PURCHASE_CHANGE(31, "purchaseChange", "采购变更单","scm"),
+
+    PO_RECEIVE(32, "poReceive", "采购收货单","wms"),
+
+
     ;
     private Integer code;
 

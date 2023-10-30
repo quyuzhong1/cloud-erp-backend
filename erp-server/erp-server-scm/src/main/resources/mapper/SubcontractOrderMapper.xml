@@ -332,19 +332,15 @@
             </if>
         </where>
     </select>
+    <select id="listByBomSku" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ListDTO">
+        select distinct so.code
+        from subcontract_order so
+        INNER JOIN subcontract_order_detail  sod
+        ON so.id=sod.main_id AND so.is_deleted=FALSE
+        WHERE sod.is_deleted=FALSE and parent_id=''
+        and sod.sku_id=#{bomSkuId}
 
-    <update id="updateSyncKingdeeStatus">
-        update subcontract_order set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+    </select>
+
+
 </mapper>

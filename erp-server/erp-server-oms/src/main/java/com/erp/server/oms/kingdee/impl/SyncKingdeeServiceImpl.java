@@ -1,6 +1,5 @@
 package com.erp.server.oms.kingdee.impl;
 
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.oms.kingdee.SyncKingdeeService;
 import com.erp.server.oms.service.*;
@@ -41,33 +40,32 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         String code = (String)params.get("code");
         //业务id
         String businessId = (String)params.get("businessId");
-        //更新状态
-        String status = (String)params.get("status");
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
 
-        PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(businessId,"",syncKingdeeId, status);
-
-
         //客户列表
         if (ApiModuleTypeEnum.CUSTOMER_INFO.getCode().toString().equals(code)) {
-            customerInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            customerInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //客户分组
         if (ApiModuleTypeEnum.CUSTOMER_GROUP.getCode().toString().equals(code)) {
-            customerGroupService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            customerGroupService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+        //销售退货
+        if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
+            soReturnService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //销售订单
         if (ApiModuleTypeEnum.SO_INFO.getCode().toString().equals(code)) {
-            soInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            soInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //销售变更
         if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
-            soChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            soChangeService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //客户联系人
         if (ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode().toString().equals(code)) {
-            customerContactService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            customerContactService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

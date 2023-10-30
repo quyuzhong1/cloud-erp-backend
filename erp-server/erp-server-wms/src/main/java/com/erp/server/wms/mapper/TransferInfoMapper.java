@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -55,11 +54,4 @@ public interface TransferInfoMapper extends BaseMapper<TransferInfoEntity> {
      **/
     IPage<TransferInfoDTO.PdaListDTO> pdaPaging(Page query, @Param("params") TransferInfoDTO.PdaSearchParamDTO params);
 
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

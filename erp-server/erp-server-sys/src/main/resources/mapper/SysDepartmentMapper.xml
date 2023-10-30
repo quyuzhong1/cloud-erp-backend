@@ -35,18 +35,16 @@
         </if>
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update sys_department set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+
+    <select id="getDeptByParentId" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
+        WITH RECURSIVE T ( ID, NAME, parent_id ) AS (
+            SELECT ID,NAME,PARENT_ID FROM sys_department
+            WHERE parent_id = #{deptId}
+            UNION ALL
+            SELECT st.ID,st.NAME,st.PARENT_ID
+            FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,NAME,PARENT_ID FROM T
+    </select>
+
 </mapper>

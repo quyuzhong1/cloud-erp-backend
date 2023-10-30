@@ -53,12 +53,15 @@
         slr.request_id
         FROM sys_log_record as slr
         WHERE slr.is_deleted=FALSE
-        <if test="params.systemModule != null ">
-            and slr.system_module = #{params.systemModule}
+        <if test="params.actionList !=null and params.actionList.size > 0">
+            AND slr.action IN
+            <foreach collection="params.actionList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
-        <if test="params.recordIds != null and params.recordIds.size > 0">
+        <if test="params.recordIdList != null and params.recordIdList.size > 0">
             AND slr.record_id IN
-            <foreach collection="params.recordIds" item="item" open="(" separator="," close=")">
+            <foreach collection="params.recordIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
@@ -69,10 +72,12 @@
             </foreach>
         </if>
         <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-            INTERVAL '1
-            DAY' ) > slr.create_time
+            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 SECOND') > slr.create_time
         </if>
+        <if test="params.systemModule != null and params.systemModule != ''">
+            AND slr.system_module ILIKE concat('%', #{params.systemModule}::text,'%')
+        </if>
+
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

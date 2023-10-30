@@ -285,11 +285,14 @@ public enum RocketMqTagEnum {
     KINGDEE_STOCKTAKING_LOSS_TAG(1027, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_stocktaking_loss_tag"),
 
     /**
+     *采购收货单同步到金蝶
+     */
+    KINGDEE_PO_RECEIVE_TAG(1028, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_receive_tag"),
+
+    /**
      * 采购订单变更单同步金蝶
      */
-    KINGDEE_PURCHASE_CHANGE_TAG(1028, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_change_tag"),
-
-
+    KINGDEE_PURCHASE_CHANGE_TAG(1029, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_change_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -323,7 +326,10 @@ public enum RocketMqTagEnum {
      */
     CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
 
-
+    /**
+     * 订单审核通过后同步dmp
+     */
+    APPROVED_RETURN_ORDER_TO_DMP_TAG(2010, RocketMqTagEnum.SYNC_DMP,"approved_return_order_to_dmp_tag"),
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间
@@ -403,7 +409,6 @@ public enum RocketMqTagEnum {
      * 金蝶退货订单同步到WMS退货入库单
      */
     SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG(6004,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_return_order_to_wms_tag"),
-
 
     /**
      * 金蝶汇率列表同步到DMP

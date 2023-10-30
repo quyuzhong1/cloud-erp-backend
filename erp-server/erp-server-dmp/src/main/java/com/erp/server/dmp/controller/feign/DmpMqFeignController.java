@@ -1,6 +1,10 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 中台发送MQFeign控制类
@@ -36,4 +42,25 @@ public class DmpMqFeignController {
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据单个id查询推送任务
+     * @param oneDTO
+     * @return
+     */
+    @PostMapping("/getByParam")
+    public DmpPushTaskEntity getByParam(@RequestBody @Valid DmpSyncTaskDTO.OneDTO oneDTO){
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getByParam(oneDTO);
+        return ObjectUtils.isEmpty(dmpPushTaskEntity) ? new DmpPushTaskEntity() : dmpPushTaskEntity;
+    }
+
+    /**
+     * 根据多个id查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("/listByParam")
+    public List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO){
+        List<DmpPushTaskEntity> list = dmpPushTaskService.listByParam(listDTO);
+        return CollectionUtils.isEmpty(list) ? new ArrayList<>() : list;
+    }
 }

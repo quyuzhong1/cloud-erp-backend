@@ -2,7 +2,6 @@ package com.erp.server.sys.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -14,7 +13,7 @@ import java.util.List;
 
 /**
  * 部门表
- * 
+ *
  * @author yl
  * @email ylstrive@gmail.com
  * @date 2022-07-11 14:05:47
@@ -25,20 +24,22 @@ public interface SysDepartmentMapper extends BaseMapper<SysDepartmentEntity> {
     List<SysDepartmentTreeDTO> findTree();
 
     List<SysDepartmentDTO> getDeptList();
+
     /**
+     * @param deptNames
+     * @return List<SysUserDeptDTO>
      * @description: 根据部门名称查询上级领导
      * @author Will
      * @date: 2023/1/17 10:09
-     * @param deptNames
-     * @return List<SysUserDeptDTO>
      */
     List<SysUserDeptDTO> getByDeptNames(@Param("deptNames") List<String> deptNames);
 
+
     /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
+     * 根据部门获取下级全量子集
+     *
+     * @param deptId
+     * @return
      */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    List<SysDepartmentTreeDTO> getDeptByParentId(@Param("deptId") String deptId);
 }

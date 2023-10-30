@@ -1,9 +1,12 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProjectTaskViewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import java.util.List;
  * @date 2022/11/22 18:06
  */
 @RestController
+@LogSystemModule("任务视图")
 @RequestMapping("task/view")
 public class ProjectTaskViewController extends BaseController {
 
@@ -96,6 +100,7 @@ public class ProjectTaskViewController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "任务视图-导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
     public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {

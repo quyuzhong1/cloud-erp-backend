@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -36,11 +35,4 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      */
     IPage<WarehouseDTO.PagingProductViewDTO> pagingProduct(Page query, @Param("params") WarehouseDTO.PagingProductDTO params);
 
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

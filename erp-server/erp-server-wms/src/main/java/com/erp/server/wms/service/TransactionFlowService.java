@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
+import com.erp.model.wms.entity.InventoryDetailEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
@@ -110,11 +111,18 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     PagingVO<InventoryReportDTO.ListTransportPagingDTO> transportList(PagingDTO<InventoryReportDTO.ListTransportSearchParam> pagingParamDTO);
 
     /**
-     * 在途查询单据明细导出
+     * 库存流水重算方法
      * @param startTime
      * @param endTime
      * @param status
      * @param inventoryId
      */
     void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId);
+
+    /**
+     * 增加反审核流水
+     * @param detail 库存明细
+     * @param txnFlow 原交易流水
+     */
+    void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty);
 }

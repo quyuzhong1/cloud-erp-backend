@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
@@ -23,6 +24,8 @@ import java.util.Map;
  */
 @FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
 public interface WmsTaskFeign {
+
+
 
     /**
      * 根据仓库id
@@ -235,4 +238,17 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseReturnOrder/listPoReturnByIdList")
     List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList);
+
+    @PostMapping("feign/machineInfo/listBySku")
+    List<MachineInfoDTO.ListDTO> listBySku(@RequestBody MachineInfoDTO.FindInfoBySkuDTO dto);
+
+    /**
+     * wms同步数据
+     * @Author Luo_WG
+     * @Date 2023/10/30 12:22
+     * @param syncParamDTO
+     * @return void
+     **/
+    @PostMapping("/feign/wmsSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

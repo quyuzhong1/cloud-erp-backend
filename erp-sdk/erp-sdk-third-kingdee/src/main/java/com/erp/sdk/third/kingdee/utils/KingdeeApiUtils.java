@@ -11,10 +11,9 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 金蝶API 处理类
@@ -34,6 +33,13 @@ public class KingdeeApiUtils {
     private static String APPSECRET;
 
     private static String DCID;
+
+    private static String SWITCH_TIME;
+
+    @Value("${openApi.kingdee.switchTime}")
+    private void setSwitchTime(String switchTime) {
+        KingdeeApiUtils.SWITCH_TIME = switchTime;
+    }
 
     @Value("${openApi.kingdee.appId}")
     public void setAppId(String appId) {
@@ -519,15 +525,14 @@ public class KingdeeApiUtils {
      * @return JSONObject
      * @description: 删除客户分组
      */
-    public JSONObject customerGroupDelete(String id) {
+    public JSONObject customerGroupDelete(String id,String groupFieldKey) {
         JSONObject json;
         try {
             LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
             viewMap.put("FormId", this.formId);
-            viewMap.put("GroupFieldKey", "0");
-            viewMap.put("GroupPkIds", "379804");
-            viewMap.put("FID", "379804");
-            viewMap.put("FNumber", "测试1");
+            viewMap.put("GroupFieldKey", groupFieldKey);
+            viewMap.put("GroupPkIds", id);
+            viewMap.put("FID", id);
             //[{"FID":379804,"FNUMBER":"测试分组","FGROUPID":"66f39f43-f586-4ec7-9419-8e21cf5c7196","FPARENTID":0,"FFULLPARENTID":" ","FLEFT":0,"FRIGHT":0,"FNAME":"测试分组","FDESCRIPTION":" "}]}}
             String jsonData = JSONUtil.toJsonStr(viewMap);
             String view = client.groupDelete(jsonData);
@@ -603,5 +608,17 @@ public class KingdeeApiUtils {
             result.append(joinStr);
         }
         return result.replace(1, 1, joinStr).toString();
+    }
+
+    public boolean needPushMQ(LocalDateTime lastTime) {
+        if (Objects.nonNull(SWITCH_TIME)) {
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME, df);
+            if (Objects.nonNull(lastTime) && lastTime.isAfter(dateTime)) {
+                //使用下次调用时间进行判断是否在切换时间之后，在之后就停止调用
+                return true;
+            }
+        }
+        return false;
     }
 }

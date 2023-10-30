@@ -1,7 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BusinessProcessDTO;
 import com.erp.model.plm.dto.BusinessProcessInfoDTO;
 import com.erp.server.plm.service.BusinessProcessService;
@@ -19,6 +22,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("process")
 public class BusinessProcessController extends BaseController {
 
@@ -43,6 +47,7 @@ public class BusinessProcessController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存流程信息")
     @PostMapping("/save")
     public ApiResult saveProcess(@RequestBody BusinessProcessDTO dto) {
         Boolean flag = businessProcessService.saveProcess(dto);

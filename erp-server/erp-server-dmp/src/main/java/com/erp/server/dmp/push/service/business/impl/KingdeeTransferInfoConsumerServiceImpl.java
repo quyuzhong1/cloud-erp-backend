@@ -5,16 +5,16 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.server.dmp.push.service.business.KingdeeTransferInfoConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
+import com.erp.server.dmp.push.service.business.KingdeeTransferInfoConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,8 +48,6 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
         Integer type = ApiModuleTypeEnum.TRANSFER_INFO.getCode();
         //操作项
         String operate = (String) map.get("operate");
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -99,7 +97,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
        //反审核
         operateDisapprove(apiUtils,platformEntity, map);
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, ApiModuleTypeEnum.TRANSFER_INFO.getCode(),(String) map.get("code"),(String) map.get("operate"));
+        kingdeeCommonService.excuteOperation(apiUtils, map,(String) map.get("code"),(String) map.get("operate"));
         return;
     }
 
@@ -129,8 +127,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
     public void operateApprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //模块类型
         Integer type = ApiModuleTypeEnum.TRANSFER_INFO.getCode();
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
 
@@ -138,8 +135,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
@@ -158,7 +154,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
         Boolean flag = Boolean.FALSE;
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {

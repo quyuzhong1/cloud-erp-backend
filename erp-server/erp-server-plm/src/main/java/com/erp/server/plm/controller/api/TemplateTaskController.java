@@ -3,9 +3,12 @@ package com.erp.server.plm.controller.api;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -46,6 +49,7 @@ import java.util.Map;
  * @date 2022/11/14 9:15
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("template/task")
 public class TemplateTaskController extends BaseController {
 
@@ -85,6 +89,7 @@ public class TemplateTaskController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板详情-模板任务-新增或修改")
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated TemplateTaskDTO dto) {
         Boolean flag = templateTaskService.saveOrUpdate(dto);
@@ -99,6 +104,7 @@ public class TemplateTaskController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "模板详情-模板任务-删除")
     @DeleteMapping("/remove")
     public ApiResult remove(@RequestBody @Validated TemplateTaskParamDTO dto) {
         Boolean flag = templateTaskService.removeTask(dto.getId(),dto.getTemplateId());
@@ -141,6 +147,7 @@ public class TemplateTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入模板任务")
     @PostMapping("/importTemplateTaskFile")
     public ApiResult importTemplateTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "templateId") String templateId, HttpServletResponse response) {
         TemplateTaskExcelListener excelListenerUtil = new TemplateTaskExcelListener(templateId, sysUserFeign, templatePhaseService, templateTaskService, templateTaskDocsNameService);
@@ -181,6 +188,7 @@ public class TemplateTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入任务模板")
     @GetMapping("/importTemplate")
     public void importTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/templateTaskExportTemplate.xlsx";
@@ -211,6 +219,7 @@ public class TemplateTaskController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "模板详情-模板任务-批量删除")
     @PostMapping("/removeTaskBatch")
     public ApiResult removeTaskBatch(@RequestBody @Validated TemplateTaskParamsDTO dto) {
         Boolean flag = templateTaskService.removeTaskBatch(dto.getIds(),dto.getTemplateId());

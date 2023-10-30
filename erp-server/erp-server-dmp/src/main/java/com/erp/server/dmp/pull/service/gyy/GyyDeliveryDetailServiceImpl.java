@@ -269,7 +269,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         //备注
         deliveryDetailInfoEntity.setRemark(gyyDeliveryDetailEntity.getSellerMemo());
         //平台标识
-        deliveryDetailInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
+        deliveryDetailInfoEntity. setPlatformSign(PlatformEnum.GYY.getDesc());
         //企业Id
 //        deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称

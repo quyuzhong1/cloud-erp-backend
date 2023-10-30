@@ -10,18 +10,18 @@
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
         pp.create_time AS createTime,
-        pp.supplier_id,
+        pp.supplier_id AS supplierId,
         (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
-        ppd.sku_id,
-        ppd.sku_no,
-        ppd.product_name,ppd.min_qty,ppd.max_qty,
-        pp.approve_status,
-        ppd.tax_price,
+        ppd.sku_id AS skuId,
+        ppd.sku_no AS skuNo,
+        ppd.product_name AS productName,ppd.min_qty as minQty,ppd.max_qty as maxQty,
+        pp.approve_status as approveStatus,
+        ppd.tax_price as taxPrice,
         ppd.currency,
         ppd.tax_rate*100 AS taxRate ,
-        ppd.effective_date,
-        pp.purchase_org_id,
-        pp.purchase_org_name,
+        ppd.effective_date AS effectiveDate,
+        pp.purchase_org_id as purchase_Org_Id,
+        pp.purchase_org_name as purchaseOrgName,
         ppd.id AS purchasePriceDetailId,
         ppd.disabled,
         ppd.remark as detailRemark
@@ -109,19 +109,19 @@
         pp.code,
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
-        pp.create_time,
-        pp.supplier_id,
+        pp.create_time AS createTime,
+        pp.supplier_id AS supplierId,
         (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
-        ppd.sku_id,
-        ppd.sku_no,
-        ppd.product_name,ppd.min_qty,ppd.max_qty,
-        pp.approve_status,
-        ppd.tax_price,
+        ppd.sku_id AS skuId,
+        ppd.sku_no AS skuNo,
+        ppd.product_name AS productName,ppd.min_qty AS minQty,ppd.max_qty AS maxQty,
+        pp.approve_status AS approveStatus,
+        ppd.tax_price AS taxPrice,
         ppd.tax_rate*100 AS taxRate ,
-        ppd.effective_date,
+        ppd.effective_date AS effectiveDate,
         ppd.currency,
-        pp.purchase_org_id,
-        pp.purchase_org_name,
+        pp.purchase_org_id AS purchaseOrgId,
+        pp.purchase_org_name AS purchaseOrgName,
         PPd.disabled
         FROM purchase_price_detail ppd
         LEFT JOIN purchase_price pp
@@ -185,6 +185,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC,ppd.id DESC
     </select>
 
     <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
@@ -208,8 +215,8 @@
                 ppd.sku_id,
                 ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
             FROM purchase_price pp
-            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id
-            WHERE approve_status = 'approve' AND pp.supplier_id IN
+            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+            WHERE pp.is_deleted = false and approve_status = 'approve' AND pp.supplier_id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
@@ -217,18 +224,21 @@
         WHERE p.rank=1
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update purchase_price set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+    <select id="listAllSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+            pp.supplier_id,
+            ppd.sku_id,
+            ppd.sku_no,
+            ppd.tax_price,
+            ppd.tax_rate,
+            ppd.min_qty,
+            ppd.max_qty,
+            ppd.currency
+        FROM purchase_price pp
+        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

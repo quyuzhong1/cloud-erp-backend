@@ -32,7 +32,7 @@ public class TimeoutWarnJob {
     /**
      * 超时处理任务
      */
-    @XxlJob("TimeoutHandleJob")
+    @XxlJob("TimeoutWarnJob")
     public void timeoutWarnJob() {
         XxlJobHelper.log("TimeoutWarnJob start.");
         // 获取未发送任务

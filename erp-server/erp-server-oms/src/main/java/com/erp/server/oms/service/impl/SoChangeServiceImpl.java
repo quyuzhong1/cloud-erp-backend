@@ -13,7 +13,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -894,34 +893,32 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     /**
      * 更改销售订单金蝶推送的状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        String id = kingdeeDTO.getBusinessId();
-        String syncKingdeeStatus = kingdeeDTO.getSyncKingdeeStatus();
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+
         if (StringUtils.isEmpty(id)) {
             return Boolean.TRUE;
         }
         SoChangeEntity soChange = this.getById(id);
         if (Objects.nonNull(soChange)) {
-            //同步成功的
-            String successSyncStatus = SyncStatusEnum.SUCCESS_SYNC.getCode();
-            //表示同步成功
-            if (successSyncStatus.equals(syncKingdeeStatus)) {
-                Boolean existAdd = soChangeDetailService.existAdd(id);
-                //如果有添加新的sku 销售订单需要重新推送
-                if (existAdd) {
-                    String soId = soChange.getSoId();
-                    soDetailService.updateDetailKingdeeId(soId);
-                }
+            Boolean existAdd = soChangeDetailService.existAdd(id);
+            //如果有添加新的sku 销售订单需要重新推送
+            if (existAdd) {
+                String soId = soChange.getSoId();
+                soDetailService.updateDetailKingdeeId(soId);
             }
-
         }
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+        return this.lambdaUpdate()
+                .eq(SoChangeEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+
     }
 
 

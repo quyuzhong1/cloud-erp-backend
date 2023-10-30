@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductRoleDTO;
 import com.erp.model.plm.dto.ProjectRoleDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
@@ -20,6 +23,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("role")
 public class ProjectRoleController extends BaseController {
 
@@ -49,6 +53,7 @@ public class ProjectRoleController extends BaseController {
      * @author yl
      * @date 2022-10-09 19:33
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "设置-项目成员-新增角色")
     @PostMapping("/save")
     //  @RequestPermissions("plm:role:save")
     public ApiResult save(@RequestBody @Validated ProjectRoleDTO dto) {

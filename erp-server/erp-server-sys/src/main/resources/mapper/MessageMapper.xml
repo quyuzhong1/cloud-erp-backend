@@ -50,8 +50,17 @@
         LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
         WHERE M.is_deleted = FALSE
         AND mur.is_read = FALSE
-        <if test="userId != null and userId != ''">
-            AND mur.user_id = #{userId}
+        <if test="param.userId != null and param.userId != ''">
+            AND mur.user_id = #{param.userId}
+        </if>
+        <if test="param.type != null and param.type != ''">
+            AND m.type = #{param.type}
+        </if>
+        <if test="param.application != null and param.application.size > 0">
+            AND m.application IN
+            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                #{app}
+            </foreach>
         </if>
     </select>
 
@@ -77,6 +86,12 @@
         </if>
         <if test="param.type != null and param.type != ''">
             AND m.type = #{param.type}
+        </if>
+        <if test="param.application != null and param.application.size > 0">
+            AND m.application IN
+            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                #{app}
+            </foreach>
         </if>
         ORDER BY m.create_time DESC
     </select>

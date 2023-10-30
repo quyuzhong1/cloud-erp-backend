@@ -6,9 +6,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
@@ -36,6 +40,7 @@ import java.util.List;
  * @date: 2023/2/21 9:45
  */
 @RestController
+@LogSystemModule("产品规划管理")
 @RequestMapping("product/plan")
 public class ProductPlanController extends BaseController {
 
@@ -64,6 +69,7 @@ public class ProductPlanController extends BaseController {
      * @param id
      * @return ApiResult<ProductPlanDetailsDTO>
      */
+    @LogViewService
     @GetMapping("/productPlanDetails")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -97,6 +103,7 @@ public class ProductPlanController extends BaseController {
      * @param id
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品规划-图片上传:id={id}")
     @PostMapping("/uploadImageUrl")
     public ApiResult uploadImageUrl(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("id") String id) {
         Boolean flag = productPlanService.uploadImageUrl(multipartFile,id);
@@ -110,6 +117,7 @@ public class ProductPlanController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品规划-规划开发")
     @PostMapping("/planDevelopProduct")
     public ApiResult planDevelopProduct(@RequestBody @Validated ProductPlanDevelopDTO dto) {
         Boolean flag = productPlanService.planDevelopProduct(dto);
@@ -124,6 +132,7 @@ public class ProductPlanController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品规划-删除")
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = productPlanService.deleteById(dto.getId());
@@ -137,6 +146,7 @@ public class ProductPlanController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品规划-添加备注:规划id={productPlanId},备注={remark}")
     @PostMapping("/addRemark")
     public ApiResult addRemark(@RequestBody @Validated ProductPlanRemarkDTO dto) {
         Boolean flag = productPlanService.addRemark(dto);
@@ -230,6 +240,7 @@ public class ProductPlanController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "产品规划-导入规划")
     @PostMapping("/importFile")
     public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean flag = productPlanService.importFile(excelFile,response);
@@ -242,8 +253,8 @@ public class ProductPlanController extends BaseController {
      * @date: 2023/2/21 10:26
      * @param request
      * @param response
-
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品规划-下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productPlanTemplate.xlsx";
@@ -275,6 +286,7 @@ public class ProductPlanController extends BaseController {
     * @param response
     * @return ApiResult
     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品规划-导出规划")
     @PostMapping(value = "/exportProductPlan")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
     public ApiResult exportProductPlan(@RequestBody ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response) {

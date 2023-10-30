@@ -17,6 +17,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
@@ -77,6 +78,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private PurchasePriceService priceService;
+
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
     private PurchasePriceHistoryService purchasePriceHistoryService;
@@ -541,13 +545,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds,List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds,skuIdList);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds, skuIdList);
         return list;
     }
 
@@ -759,11 +763,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
-                        && obj.getSupplierId().equals(searchDTO.getSupplierId())
-                        && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
+                                && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                                && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {
-                    BeanMapperUtils.copy(viewDTO,purchaseTaxPriceViewDTO);
+                    BeanMapperUtils.copy(viewDTO, purchaseTaxPriceViewDTO);
                     //币种符号
                     if (CollectionUtils.isNotEmpty(currencyViewList)) {
                         CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -782,18 +786,24 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public void updateDetailRemark(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
-            return ;
+            return;
         }
         this.lambdaUpdate()
-                .in(PurchasePriceDetailEntity::getId,ids)
-                .set(PurchasePriceDetailEntity::getRemark,remark)
+                .in(PurchasePriceDetailEntity::getId, ids)
+                .set(PurchasePriceDetailEntity::getRemark, remark)
                 .update(new PurchasePriceDetailEntity());
     }
+
 
 
     @Override
     public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> resultList = new ArrayList<>();
+
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(dto.getSkuId()));
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
 
         //采购价目表
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
@@ -810,7 +820,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //未找到报价信息
         if (CollectionUtils.isEmpty(resultList)) {
             if (StringUtils.isNotBlank(dto.getSupplierId())) {
-                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", dto.getSkuNo(), dto.getPurchaseQty());
+                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", skuList.get(0).getSkuNo(), dto.getPurchaseQty());
                 log.error(error);
                 return new Pair<>(error, resultList);
             }

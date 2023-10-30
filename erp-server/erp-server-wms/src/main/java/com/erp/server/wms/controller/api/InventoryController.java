@@ -2,6 +2,10 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -23,6 +27,7 @@ import java.util.LinkedHashMap;
  * @Author: zhangchunlin
  */
 @RestController
+@LogSystemModule("即时库存")
 @RequestMapping(value = "/inventory")
 public class InventoryController extends BaseController {
 
@@ -48,6 +53,7 @@ public class InventoryController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "即时库存导出")
     @PostMapping(value = "/exportInventoryExcel")
     public ApiResult<Void> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         inventoryService.exportExcel(dto, response);
@@ -81,6 +87,7 @@ public class InventoryController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "出入库流水导出")
     @PostMapping(value = "/exportExcelInOutStock")
     public ApiResult<Void> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportExcel(dto, response);
@@ -103,6 +110,7 @@ public class InventoryController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "出入库列表导出")
     @PostMapping(value = "/exportExcelInOutStockSummary")
     public void exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportSummaryExcel(dto, response);
@@ -121,6 +129,20 @@ public class InventoryController extends BaseController {
         return success(usableInventoryTotal);
     }
 
+
+    /**
+     * 查询状态库存，特别注意：不传仓位字段则查询仓库下面的该SKU的状态库存，传仓位（含空字符串）则查询仓库下面该仓位的可用库存
+     * @author Will
+     * @date: 2023/5/11 10:10
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping(value = "/getInventoryQty")
+    public ApiResult<InventoryDTO.InventoryQtyDTO> getInventoryQty(@RequestBody @Validated InventoryDTO.InventoryBySkuNoDTO dto) {
+        InventoryDTO.InventoryQtyDTO  result= inventoryService.getInventoryQty(dto);
+        return success(result);
+    }
+
     /**
      * 在途库存分页列表
      * @param dto
@@ -137,6 +159,7 @@ public class InventoryController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "在途库存导出")
     @PostMapping(value = "/exportTransport")
     public void exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportTransportExcel(dto, response);
@@ -168,6 +191,7 @@ public class InventoryController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "库龄计算表导出")
     @PostMapping(value = "/exportInventoryAge")
     public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto, HttpServletResponse response) {
         inventoryService.exportInventoryAge(dto, response);

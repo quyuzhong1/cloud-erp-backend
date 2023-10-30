@@ -1,12 +1,15 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @author Will
@@ -22,6 +25,22 @@ public interface DmpMqFeign {
      * @return
      */
     @PostMapping("send/mq/save/task")
-    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpSyncTaskDTO dto);
+    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
+
+    /**
+     * 根据单个id查询推送任务
+     * @param oneDTO
+     * @return
+     */
+    @PostMapping("getByParam")
+    DmpPushTaskEntity getByParam(@RequestBody @Valid DmpSyncTaskDTO.OneDTO oneDTO);
+
+    /**
+     * 根据多个id查询推送任务
+     * @param listDTO
+     * @return
+     */
+    @PostMapping("listByParam")
+    List<DmpPushTaskEntity> listByParam(@RequestBody @Valid DmpSyncTaskDTO.ListDTO listDTO);
 
 }

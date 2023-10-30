@@ -241,4 +241,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return baseMapper.listBomBySkuIds(skuIds);
     }
+
+    @Override
+    public List<BomSkuEntity> listBomSkuByBomId(String bomId) {
+        return this.lambdaQuery().eq(BomSkuEntity::getBomId,bomId).list();
+    }
 }

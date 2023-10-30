@@ -22,6 +22,9 @@ public enum ProductBatchFieldEnum implements EnumMessage  {
     ENGLISH_USAGE("english_usage","英文用途", "product_logistics", "sku_id"),
     CHARGE_ID("charge_id","产品经理", "product_info", "id"),
     PURCHASE_USER_ID("purchase_user_id","采购员", "product_purchase", "sku_id"),
+    SALE_METHOD("sale_method","销售方式", "product_info", "id"),
+    GROSS_WEIGHT("gross_weight","毛重", "product_pack", "sku_id"),
+
     ;
     /**
      * 类型

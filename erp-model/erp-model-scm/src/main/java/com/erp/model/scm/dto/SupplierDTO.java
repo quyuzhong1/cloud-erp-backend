@@ -217,7 +217,6 @@ public class SupplierDTO implements Serializable {
         /**
          * 名称
          */
-
         private String name;
 
 
@@ -229,7 +228,6 @@ public class SupplierDTO implements Serializable {
         /**
          * 等级id
          */
-
         private String gradeId;
 
         /**

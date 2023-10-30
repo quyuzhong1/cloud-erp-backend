@@ -8,6 +8,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -27,6 +31,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("销售出库发货通知单")
 @RequestMapping("/soDeliveryNotice")
 public class SoDeliveryNoticeController extends BaseController {
     @Resource
@@ -78,6 +83,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:46
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增发货通知单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoDeliveryNoticeDTO.Add dto) {
         String id = soDeliveryNoticeService.add(dto);
@@ -92,6 +98,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:46
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改发货通知单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -111,6 +118,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:57
      **/
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -130,6 +138,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      **/
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货通知单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -149,6 +158,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      **/
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交发货通知单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -168,6 +178,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      **/
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交发货通知单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -187,6 +198,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核发货通知单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -206,6 +218,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核发货通知单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -225,6 +238,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      **/
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销发货通知单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -244,6 +258,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废发货通知单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -263,6 +278,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除发货通知单")
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = soDeliveryNoticeService.delete(idsDTO.getIds());
@@ -278,6 +294,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货通知单")
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soDeliveryNoticeService.exportExcel(dto, response);
@@ -291,6 +308,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:5
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库单")
     @PostMapping(value = "/generateSoDeliverySave")
     public ApiResult generateSoDeliverySave(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = soDeliveryNoticeService.generateSoDeliverySave(idsDTO.getIds());
@@ -304,6 +322,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @param validList validList
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货通知单")
     @PostMapping("/generateDeliverySave")
     public ApiResult generateDeliverySave(@RequestBody @Validated ValidList<SoInfoDTO.GenerateDeliveryView> validList) {
         Boolean flag = soDeliveryNoticeService.generateDeliverySave(validList.getList());

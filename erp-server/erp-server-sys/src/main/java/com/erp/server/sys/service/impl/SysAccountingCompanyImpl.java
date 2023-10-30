@@ -235,5 +235,12 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return BeanMapperUtils.copyList(BaseIdDTO.CodeDTO.class, list);
     }
 
+    @Override
+    public SysAccountingCompanyEntity view(String id) {
+        SysAccountingCompanyEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("公司信息" + id));
+        return entity;
+    }
+
 
 }

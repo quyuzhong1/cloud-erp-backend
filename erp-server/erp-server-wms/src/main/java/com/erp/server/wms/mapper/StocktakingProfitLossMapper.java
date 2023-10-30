@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
@@ -36,10 +35,10 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * @param query
      * @param params
      * @param billType
-     * @param taskIdList
+     * @param sourceIdList
      * @return
      */
-    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params, @Param("billType")String billType,@Param("sourceIdList") List<String> taskIdList);
+    IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params, @Param("billType")String billType,@Param("sourceIdList") List<String> sourceIdList);
 
     /**
      * 获取到导出数据
@@ -60,11 +59,4 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      */
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
 
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

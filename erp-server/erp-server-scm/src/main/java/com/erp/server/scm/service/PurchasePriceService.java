@@ -2,7 +2,6 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -149,7 +148,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 修改状态
@@ -159,6 +158,15 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.SupplierSkuPrice>
      **/
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
+
+    /**
+     * @description: 查询所有供应商价格
+     * @author Will
+     * @date: 2023/10/27 10:05
+     * @param ids
+     * @return List<SupplierSkuPrice>
+     */
+    List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(List<String> ids);
 
     /**
      * 采购价目表导入

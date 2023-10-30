@@ -150,7 +150,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
         this.businessName = dto.getBusinessName();
         this.businessKey = dto.getBusinessKey();
         this.actProcessDefinitionId = definitionId;
-        this.processVersion = processDefinition.getVersion();
+        this.processVersion = processDefinition.getProcessVersion();
         this.processName = processDefinition.getProcessName();
     }
 

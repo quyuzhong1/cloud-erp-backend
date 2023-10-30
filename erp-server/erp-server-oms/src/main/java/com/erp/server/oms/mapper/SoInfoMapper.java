@@ -3,7 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
+import com.erp.model.oms.dto.ListingTimeDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -22,15 +22,15 @@ import java.util.List;
 @Mapper
 public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
 
-    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
+    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
 
     /**
      * 查询所有总数
      */
-    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
+    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
 
 
-    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds);
+    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList);
     /**
      * @description: 下推备货申请单数据显示
      * @author Will
@@ -57,13 +57,6 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      **/
     List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(@Param("ids") List<String> ids);
-    /**
-     * @description: 更新金蝶推送状态
-     * @author Will
-     * @date: 2023/9/26 18:34
-     * @param kingdeeDTO
-     */
-    void updateSyncKingdeeStatus(@Param("params") PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 获取折扣额大于0 的
@@ -73,4 +66,11 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+
+    /**
+     * 获取首批上市时间
+     * @param ids
+     * @return java.util.List<com.erp.model.oms.dto.ListingTimeDTO>
+     **/
+    List<ListingTimeDTO> listFirstListingTime(@Param("ids") List<String> ids);
 }

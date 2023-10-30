@@ -30,6 +30,9 @@
                 #{skuNo}
             </foreach>
         </if>
+        <if test="remoteSearchSku != null  and remoteSearchSku != ''">
+            AND sd.sku_no ILIKE concat('%',#{remoteSearchSku},'%')
+        </if>
     </select>
 
     <select id="listSkuPriceHistory" resultType="com.erp.model.oms.dto.SoDetailDTO$SkuHistoryPriceDTO">
@@ -130,8 +133,10 @@
         sd.price,
         sd.tax_rate,
         sd.amount,
+        sd.all_amount_local_currency,
         sd.currency,
         sd.currency_symbol,
+        sd.exchange_rate,
         sd.is_gift,
         sd.is_reissue,
         sd.is_close,

@@ -117,6 +117,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
+    @Autowired
+    private QcInfoService qcInfoService;
+
+    @Autowired
+    private PoInstockService poInstockService;
+
+    @Autowired
+    private MachineInfoService machineInfoService;
+
     @Value("${companyCode}")
     private String companyCode;
 
@@ -275,6 +284,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return purchaseReturnOrderEntity.getId();
     }
 
+
     /**
      * 修改
      *
@@ -311,6 +321,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         }
+
 
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
@@ -768,6 +779,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<PurchaseReturnOrderEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -809,6 +821,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         List<PurchaseReturnOrderEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -822,11 +835,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        //删除发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除详情表
         purchaseReturnOrderDetailService.delete(ids);
-
+        //审核通过发送金蝶
+        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表
         return this.removeByIds(ids);
     }
@@ -980,14 +992,18 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     /**
      * 修改金蝶同步状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
      **/
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchaseReturnOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseReturnOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
 
@@ -1438,12 +1454,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+                // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode();
+                // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
+                // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */
@@ -1894,5 +1913,46 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 throw new ServiceException(ApiError.ERROR_99070);
             }
         }
+    }
+
+    @Override
+    public Boolean dataRepairTemp() {
+        List<PurchaseReturnOrderEntity> list = lambdaQuery().eq(PurchaseReturnOrderEntity::getSourceType, ReturnOrderSourceEnum.OTHER.getCode()).list();
+        for (PurchaseReturnOrderEntity entity : list) {
+            if (StringUtils.isBlank(entity.getSourceId())) {
+                entity.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(qcInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.QC_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PoInstockEntity poInstockEntity = poInstockService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(poInstockEntity)) {
+                entity.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
+                entity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            MachineInfoEntity machineInfoEntity = machineInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(machineInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+        }
+        return Boolean.TRUE;
     }
 }

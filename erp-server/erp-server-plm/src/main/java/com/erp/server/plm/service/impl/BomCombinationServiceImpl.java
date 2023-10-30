@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -485,7 +486,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
     private Boolean addBomCombination (BomCombinationDTO.AddDTO dto,String skuId) {
         AddBomDTO addBomDTO = new AddBomDTO();
         //BOM主表信息
-        addBomDTO.setVersion(MathUtil.ONE);
+        addBomDTO.setVersion(StringPool.ONE);
         addBomDTO.setType(BomTypeEnum.COMBINATION.getType());
         addBomDTO.setSubmitType(BomTypeEnum.CREATE.getType());
         addBomDTO.setSourceType(SourceTypeEnum.PRODUCT_COMBINATION.getCode());

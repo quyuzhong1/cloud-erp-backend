@@ -218,9 +218,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 更新金蝶发送状态
      * @author Will
      * @date: 2023/4/21 10:04
+     * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据采购订单id 集合获取对应数量

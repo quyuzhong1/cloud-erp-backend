@@ -18,24 +18,24 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SoChangeDTO$PagingViewDTO">
         SELECT
         sc.id,
-        sc.so_id,
+        sc.so_id AS soId,
         sc.code,
-        sc.approve_status,
-        sc.invalid_status,
-        sc.approve_user_name,
-        sc.create_user_name,
-        sc.create_time,
+        sc.approve_status AS approveStatus,
+        sc.invalid_status AS invalidStatus,
+        sc.approve_user_name AS approveUserName,
+        sc.create_user_name AS createUserName,
+        sc.create_time AS createTime,
         si.code AS soCode,
-        si.customer_id,
-        si.order_type,
-        scd.sku_id,
-        scd.sku_no,
+        si.customer_id AS customerId,
+        si.order_type AS orderType,
+        scd.sku_id AS skuId,
+        scd.sku_no AS skuNo,
         scd.qty,
-        scd.old_qty,
+        scd.old_qty AS oldQty,
         scd.amount,
-        scd.currency_symbol,
-        scd.old_currency_symbol,
-        scd.old_amount
+        scd.currency_symbol AS currencySymbol,
+        scd.old_currency_symbol AS oldCurrencySymbol,
+        scd.old_amount AS oldAmount
         FROM so_change sc
         INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
         INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
@@ -96,30 +96,36 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY sc.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sc.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoChangeDTO$PagingViewDTO">
         SELECT
         sc.id,
-        sc.so_id,
+        sc.so_id AS soId,
         sc.code,
-        sc.approve_status,
-        sc.invalid_status,
-        sc.approve_user_name,
-        sc.create_user_name,
-        sc.create_time,
+        sc.approve_status AS approveStatus,
+        sc.invalid_status AS invalidStatus,
+        sc.approve_user_name AS approveUserName,
+        sc.create_user_name AS createUserName,
+        sc.create_time AS createTime,
         si.code AS soCode,
-        si.customer_id,
-        si.order_type,
-        scd.sku_id,
-        scd.sku_no,
+        si.customer_id AS customerId,
+        si.order_type AS orderType,
+        scd.sku_id AS skuId,
+        scd.sku_no AS skuNo,
         scd.qty,
-        scd.old_qty,
+        scd.old_qty AS oldQty,
         scd.amount,
-        scd.currency_symbol,
-        scd.old_currency_symbol,
-        scd.old_amount
+        scd.currency_symbol AS currencySymbol,
+        scd.old_currency_symbol AS oldCurrencySymbol,
+        scd.old_amount AS oldAmount
         FROM so_change sc
         INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
         INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
@@ -186,7 +192,13 @@
                 </if>
             </otherwise>
         </choose>
-        ORDER BY sc.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            sc.create_time DESC
     </select>
     <select id="listSoRefSoChangeBySoId" resultType="com.erp.model.oms.dto.SoChangeDTO$SoRefDTO">
        SELECT
@@ -218,18 +230,4 @@
        ORDER BY sc.create_time DESC
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update so_change set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 </mapper>

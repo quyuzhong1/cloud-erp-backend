@@ -4,10 +4,10 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeePurchasePriceChangeConsumerService;
@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -42,8 +44,6 @@ public class KingdeePurchasePriceChangeConsumerServiceImpl implements KingdeePur
 
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode();
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -59,8 +59,7 @@ public class KingdeePurchasePriceChangeConsumerServiceImpl implements KingdeePur
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
 
         //判断金蝶系统是否已存在该数据
@@ -83,7 +82,7 @@ public class KingdeePurchasePriceChangeConsumerServiceImpl implements KingdeePur
 
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {

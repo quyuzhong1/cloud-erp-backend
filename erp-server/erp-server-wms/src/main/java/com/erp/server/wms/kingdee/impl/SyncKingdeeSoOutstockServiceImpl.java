@@ -1,16 +1,21 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
-import com.common.business.dto.base.PushSyncStatusDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -26,29 +31,27 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -68,25 +71,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
     private SoInfoFeign soInfoFeign;
 
     @Resource
     private CustomerFeign customerFeign;
 
     @Resource
-    private SoOutstockService soOutstockService;
-
-    @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
-
-    @Resource
-    private MQProducerService mQProducerService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -96,6 +90,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     /**
      * 发送消息同步金蝶
@@ -107,12 +104,25 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @Date 2023/4/24 11:27
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-        //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
-        soOutstockService.updateSyncKingdeeStatus(kingdeeDTO);
+        //推送同步中台dmp任务
+        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //业务id
+        resultMap.put("id", entity.getId());
+        //退货单号
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
 
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
@@ -141,17 +151,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
         //员工岗位
         List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId()));
-
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //业务id
-        resultMap.put("id", entity.getId());
-        //退货单号
-        resultMap.put("code", entity.getCode());
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         //单据日期
-        resultMap.put("billDate", Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : entity.getCreateTime().toLocalDate());
+        resultMap.put("billDate",  Objects.nonNull(entity.getBillDate()) ? LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) : LocalDateTimeUtil.format(entity.getCreateTime().toLocalDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         //销售组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
@@ -182,7 +186,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(salesOrgCode);
             findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
@@ -294,18 +298,57 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         resultMap.put("FEntity", fEntityList);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
-                return soOutstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
-            }
-            return Boolean.TRUE;
-        });
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
+    }
+
+    /**
+     * 推送订单到mq
+     *
+     * @param entity
+     * @param syncOperate
+     */
+    @Override
+    public String syncOrderToDmp(SoOutstockEntity entity, String syncOperate) {
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
+                .setMqData(JSON.toJSONString(entity))
+                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
+                .setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName())
+                .setSourceCode(entity.getCode())
+                .setSourceId(entity.getId())
+                .setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(syncOperate);
+        log.info("推送消息开始：{}", dto.toString());
+        //推送mq
+        try {
+            return dmpTaskFeign.savePullTask(dto);
+        }catch (Exception e){
+            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        }
     }
 }

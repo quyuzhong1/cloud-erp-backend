@@ -11,15 +11,15 @@ import lombok.Getter;
 @Getter
 public enum CurrencyEnum {
 
-    CNY("CNY","人民币","￥"),
-    CNH("CNH","离岸人民币","￥"),
+    CNY("CNY","人民币","¥"),
+    CNH("CNH","离岸人民币","¥"),
     SKK("SKK","斯洛伐克克朗","Sk"),
     HKD("HKD","港币","HK$"),
     MOP("MOP","澳门元","MOP$"),
     USD("USD","美元","$"),
     EUR("EUR","欧元","€"),
     GBP("GBP","英镑","￡"),
-    JPY("JPY","日元","¥"),
+    JPY("JPY","日元","Ұ"),
     AUD("AUD","澳大利亚元","A$"),
     NZD("NZD","纽元","NZ$"),
     CHF("CHF","瑞士法郎","CHF"),

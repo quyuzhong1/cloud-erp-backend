@@ -248,6 +248,10 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String changeDetailId;
 
+        /**
+         * 价目明细id
+         */
+        private String purchasePriceDetailId;
 
         /**
          * code
@@ -451,5 +455,15 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 创建人id 集合
          */
         private List<String> createUserIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  extends PagingParamDTO{
+
+        /**
+         * 主键id集合
+         */
+        private List<String> ids;
     }
 }

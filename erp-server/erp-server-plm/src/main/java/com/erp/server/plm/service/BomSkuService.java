@@ -102,4 +102,14 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
      **/
     List<BomChildrenSkuDTO> listBomBySkuIds(List<String> skuIds);
+
+
+    /**
+     * 根据bom id 获取到 bom到sku
+     * @author yl
+     * @date 2023-10-11 19:23
+     * @param bomId
+     * @return java.util.List<com.erp.model.plm.entity.BomSkuEntity>
+     */
+    List<BomSkuEntity> listBomSkuByBomId(String bomId);
 }

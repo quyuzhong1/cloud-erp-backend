@@ -3,8 +3,12 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.server.scm.service.SupplierPhaseService;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +29,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("供应商阶段审核")
 @RequestMapping("/supplier/phase")
 public class SupplierPhaseController extends BaseController {
 
@@ -50,6 +55,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加供应商阶段")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         String id = supplierPhaseService.add(dto);
@@ -76,6 +82,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改供应商阶段")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierPhaseDTO.UpdateDTO dto) {
         String id = supplierPhaseService.updateSupplierPhase(dto);
@@ -88,6 +95,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核供应商阶段")
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated SupplierPhaseDTO.UpdateDTO dto) {
         Boolean result = supplierPhaseService.updateAndSubmit(dto);
@@ -100,6 +108,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核供应商阶段")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         Boolean result = supplierPhaseService.addAndSubmit(dto);
@@ -112,6 +121,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "供应商阶段提交审核")
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.submit(dto.getIds());
@@ -124,6 +134,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     public ApiResult<SupplierPhaseDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         SupplierPhaseDTO.UpdateDTO supplierPhase = supplierPhaseService.view(dto.getId());
@@ -137,6 +148,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "供应商阶段审核")
     @PostMapping("/approve")
     public ApiResult view(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = supplierPhaseService.approve(dto);
@@ -152,6 +164,7 @@ public class SupplierPhaseController extends BaseController {
      * @author yl
      * @date 2023-03-23 17:57
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销供应商阶段")
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.cancelProcess(dto.getIds());
@@ -165,6 +178,7 @@ public class SupplierPhaseController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除供应商阶段")
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierPhaseService.deleteByIds(dto.getIds());

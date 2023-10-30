@@ -1,7 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.TaskCommentDTO;
 import com.erp.server.plm.service.TaskCommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import java.util.List;
  */
 
 @RestController
+@LogSystemModule("任务列表")
 @RequestMapping("taskComment")
 public class TaskCommentController extends BaseController {
 
@@ -32,6 +36,7 @@ public class TaskCommentController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加评论")
     @PostMapping("/save")
     public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO.AddDTO dto) {
         Boolean result = taskCommentService.saveTaskComment(dto);

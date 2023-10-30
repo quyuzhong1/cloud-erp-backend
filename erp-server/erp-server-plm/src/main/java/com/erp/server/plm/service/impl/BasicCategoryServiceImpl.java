@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -19,6 +18,7 @@ import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -55,6 +55,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, null);
@@ -82,6 +83,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, dto.getId());
@@ -191,6 +193,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteById(String id) {
         checkId(id);
         BasicCategoryEntity entity = this.getById(id);
@@ -383,9 +386,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(BasicCategoryEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     /**

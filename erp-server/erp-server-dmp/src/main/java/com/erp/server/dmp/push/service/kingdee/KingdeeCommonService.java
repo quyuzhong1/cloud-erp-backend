@@ -2,8 +2,8 @@ package com.erp.server.dmp.push.service.kingdee;
 
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.SaveParam;
 
 import java.util.Map;
 
@@ -24,32 +24,6 @@ public interface KingdeeCommonService {
      * @date: 2023/3/3 12:05
      */
     JSONObject makeApiFieldJson(Map<String, Object> map, String apiPlatformId, Integer moduleType);
-
-    /**
-     * 操作成功添加日志
-     *
-     * @param platformEntity
-     * @param businessId
-     * @param jsonData
-     * @param msg
-     * @author Will
-     * @date: 2023/3/3 14:05
-     */
-    void insertSyncLog(PlatformEntity platformEntity, String businessId, String jsonData, String msg, Integer type, Integer status);
-
-    /**
-     * @param platformEntity
-     * @param businessId
-     * @param jsonData
-     * @param msg
-     * @param type
-     * @param status
-     * @description: 添加日志并且回写金蝶同步状态
-     * @author Will
-     * @date: 2023/3/30 10:06
-     */
-    void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
-                                             String jsonData, String msg, Integer type, Integer status);
 
     /**
      * @param code
@@ -104,17 +78,15 @@ public interface KingdeeCommonService {
     /**
      * 提交及审核
      *
-     * @param platformEntity
      * @param map
      * @param apiUtils
      * @param id
      * @author Will
      * @date: 2023/3/3 14:03
      */
-    Boolean submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
+    Boolean submit( Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
 
     /**
-     * @param platformEntity
      * @param map
      * @param apiUtils
      * @param id
@@ -123,7 +95,7 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/30 9:46
      */
-    Boolean audit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
+    Boolean audit(Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
     /**
      * @description: 审核（判断状态）
      * @author Will
@@ -135,18 +107,16 @@ public interface KingdeeCommonService {
      * @return Boolean
      */
     Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type);
-
     /**
      * 反审核
      *
-     * @param platformEntity
-     * @param map
      * @param apiUtils
+     * @param id
      * @return String
      * @author Will
      * @date: 2023/3/3 14:07
      */
-    Boolean unAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
+    Boolean unAudit( KingdeeApiUtils apiUtils, String id);
 
     /**
      * @param apiUtils
@@ -182,34 +152,14 @@ public interface KingdeeCommonService {
 
     /**
      * @param apiUtils
-     * @param platformEntity
      * @param map
-     * @param type
      * @param number
      * @param operate
      * @description: 禁用、反禁用
      * @author Will
      * @date: 2023/4/10 18:03
      */
-    Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate);
-
-    /**
-     * 检查并禁用，反禁用
-     * 检查是否同步到金蝶 如果没有就不用同步
-     * 审核不通过不用同步到金蝶 但是作废缺要同步金蝶 避免这个问题
-     *
-     * @param apiUtils
-     * @param platformEntity
-     * @param map
-     * @param type
-     * @param number
-     * @param operate
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-07-26 10:13
-     */
-
-    Boolean checkAndExcuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate);
+    Boolean excuteOperation(KingdeeApiUtils apiUtils,  Map<String, Object> map, String number, String operate);
 
     /**
      * @description: 删除（状态判断）
@@ -222,7 +172,6 @@ public interface KingdeeCommonService {
      * @param number
      */
     void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number);
-
     /**
      * @param apiUtils
      * @param platformEntity
@@ -239,14 +188,13 @@ public interface KingdeeCommonService {
      * 删除客户分组
      *
      * @param apiUtils
-     * @param platformEntity
-     * @param map
-     * @param type
+     * @param syncKingdeeId
+     * @param groupFieldKey
      * @return void
      * @Author Luo_WG
      * @Date 2023/5/26 15:32
      **/
-    void customerGroupDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type);
+    void customerGroupDelete(KingdeeApiUtils apiUtils, String syncKingdeeId,String groupFieldKey);
 
     /**
      * 客户分组新增或修改

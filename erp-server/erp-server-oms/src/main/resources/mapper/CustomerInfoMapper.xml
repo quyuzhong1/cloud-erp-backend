@@ -163,7 +163,7 @@
     <select id="listCustomerByGroup" resultType="com.erp.model.oms.vo.CustomerInfoVO">
         select id,"name", code,group_id,group_name
         from customer_info ci
-        where ci.is_deleted = FALSE and group_id != ''
+        where ci.is_deleted = FALSE and group_id != '' ORDER BY group_name
     </select>
 
     <select id="listCustomerByProperty" resultType="com.erp.model.oms.vo.CustomerInfoVO">
@@ -173,18 +173,4 @@
     </select>
 
 
-    <update id="updateSyncKingdeeStatus">
-        update customer_info set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 </mapper>

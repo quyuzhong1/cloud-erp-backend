@@ -2,12 +2,10 @@ package com.erp.server.wms.controller.feign;
 
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -91,13 +89,36 @@ public class SoDeliveryNoticeFeignController {
 
     /**
      * 根据来源id list 查询已下推的发货通知单数量
+     *
      * @param soIds
-     * @return Map<String,Long>
+     * @return Map<String, Long>
      * @author zhangchunlin
      * @date 2023-07-26 17:30
      */
     @PostMapping("/getPushDownDeliveryNoticeCnt")
-    public Map<String,Long> getPushDownDeliveryNoticeCnt(@RequestBody List<String> soIds) {
+    public Map<String, Long> getPushDownDeliveryNoticeCnt(@RequestBody List<String> soIds) {
         return soDeliveryNoticeService.getPushDownDeliveryNoticeCnt(soIds);
     }
+
+    /**
+     * 通过源id获取通知记录
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/getDeliveryNoticeById")
+    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(@RequestParam(value = "id") String id) {
+        return soDeliveryNoticeService.getById(id);
+    }
+    /**
+     * 通过明细id获取通知记录详情
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/getNoticeDetailById")
+    public SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id) {
+        return soDeliveryNoticeDetailService.getById(id);
+    }
+
 }

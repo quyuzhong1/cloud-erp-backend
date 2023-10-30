@@ -7,18 +7,18 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.dmp.push.service.business.KingdeeSubcontractOrderConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
+import com.erp.server.dmp.push.service.business.KingdeeSubcontractOrderConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,8 +53,6 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
 
         //操作项
         String operate = (String) map.get("operate");
-        //业务编码
-        String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -63,11 +61,21 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
 
+        //根据录入值和字段配置生成JSONObject
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
+
+        //未配置发送字段
+        if (CollectionUtils.isEmpty(json)) {
+            log.error(ApiError.ERROR_97025.msg);
+            //错误日志
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
+        }
+
         /**
          * 作废
          */
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,platformEntity,map,type);
+            operateInvalid(apiUtils,platformEntity,map,json,type);
         }
         /**
          * 反审核
@@ -79,7 +87,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
          * 审核
          */
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils,platformEntity, map,type);
+            operateApprove(apiUtils,platformEntity, map,json,type);
         }
         /**
          * 删除
@@ -92,12 +100,35 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
     /**
      * 作废
      */
-    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map, JSONObject json,Integer type){
         //业务编码
         String code = (String) map.getOrDefault("code","");
         String operate = (String) map.get("operate");
+        //判断金蝶系统是否已存在该数据
+        SaveParam param = new SaveParam(json);
+        JSONObject model;
+        try {
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        } catch (Exception e) {
+            //新增数据
+            Boolean isSaveOrUpdate = saveOrUpdate(apiUtils, platformEntity, map, type, json, param);
+            if (!isSaveOrUpdate) {
+                return;
+            }
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        }
+        //查找到数据后，判断其审核状态
+        String documentStatus = (String)model.get("DocumentStatus");
+        String id = String.valueOf(model.get("Id")) ;
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //反审核
+            Boolean unAudit = kingdeeCommonService.unAudit(apiUtils, id);
+            if (!unAudit) {
+                return;
+            }
+        }
         //作废
-        kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
+        kingdeeCommonService.excuteOperation(apiUtils, map, code, operate);
         return;
     }
 
@@ -107,21 +138,15 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
      */
     public Boolean operateDisapprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
 
-        //模块类型
-        Integer type = ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode();
         //业务编码
         String code = (String) map.get("code");
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
-        //金蝶id
-        String  syncKingdeeId = String.valueOf(map.get("kingdeeId"));
+
         //判断金蝶系统是否已存在该数据
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-            //操作成功添加日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, syncKingdeeId, "查询无数据，无需处理", type, ApiSendStatusEnum.SUCCESS.getCode());
+            //反审核不存在数据则无需处理
             return Boolean.TRUE;
         }
         //查找到数据后，判断其审核状态
@@ -129,33 +154,24 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         String id = String.valueOf(model.get("Id")) ;
         if (KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //将业务状态反执行至计划确认
-            Boolean confirm = kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, SyncOperateEnum.OPERATE_UNDO_TO_PLAN_CONFIRM.getCode());
+            Boolean confirm = kingdeeCommonService.excuteOperation(apiUtils, map, code, SyncOperateEnum.OPERATE_UNDO_TO_PLAN_CONFIRM.getCode());
             if (!confirm) {
                 return Boolean.FALSE;
             }
         }
         //反审核
-        Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+        Boolean unAudit = Boolean.TRUE;
+        if (!KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+            //反审核
+             unAudit = kingdeeCommonService.unAudit(apiUtils, id);
+        }
         return unAudit;
     }
 
     /**
      * 审核
      */
-    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
-
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
-
-        //未配置发送字段
-        if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,Integer type) {
 
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
@@ -163,15 +179,8 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-
-            //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (isAdd) {
-                //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
-                //更新明细id
-                updateKingdeeDetailId(jsonArray);
-            }
+            //新增或编辑
+            saveOrUpdate(apiUtils,platformEntity,map,type,json,param);
             return;
         }
 
@@ -195,7 +204,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
                 //更新明细id
                 updateKingdeeDetailId(jsonArray);
             }
@@ -220,12 +229,10 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
      * @author Will
      * @date: 2023/6/26 17:11
      * @param apiUtils
-     * @param platformEntity
      * @param map
-     * @param type
      * @return JSONArray
      */
-    public JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    public JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,Map<String, Object> map) {
 
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = (String)map.get("syncKingdeeId");
@@ -238,8 +245,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
-            return list;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DETAIL_ID);
         }
         JSONArray removeObj = new JSONArray();
         JSONArray addObj = new JSONArray();
@@ -269,6 +275,22 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         params.put("code",ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode().toString());
         params.put("details",jsonArray);
         scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+    }
+
+
+    /**
+     * 新增
+     */
+    public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,SaveParam param) {
+
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        if (isAdd) {
+            //给明细id赋值
+            JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
+            //更新明细id
+            updateKingdeeDetailId(jsonArray);
+        }
+        return  isAdd;
     }
 
 }

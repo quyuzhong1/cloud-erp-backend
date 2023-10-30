@@ -8,8 +8,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.server.scm.service.PurchasePriceChangeService;
@@ -19,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -29,6 +34,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("采购价目表")
 @RequestMapping("/purchase/price/change")
 public class PurchasePriceChangeController extends BaseController {
 
@@ -62,6 +68,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加采购变更")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -104,6 +111,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "提交并审核采购变更")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -122,6 +130,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -140,6 +149,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购价目变更")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -157,6 +167,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核采购价目变更")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -175,6 +186,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购价目变更")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -193,6 +205,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购价目变更")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -211,6 +224,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购价目变更")
     @PostMapping("/approve")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = purchasePriceChangeService.approve(dto);
@@ -226,6 +240,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @author yl
      * @date 2023-03-23 17:57
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购价目变更")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -240,6 +255,7 @@ public class PurchasePriceChangeController extends BaseController {
     /**
      * 更新明细备注
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新采购价目变更明细备注:ids={ids},备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -250,5 +266,36 @@ public class PurchasePriceChangeController extends BaseController {
     public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
         Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
         return result ? success() : failure();
+    }
+
+    /**
+     * 采购调价表数据导出
+     * @author Will
+     * @date: 2023/10/18 16:30
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:change:paging",
+            tableAlias = "pp")
+    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+        purchasePriceChangeService.export(dto, response);
+        return success();
+    }
+
+
+
+    /**
+     * 修复历史数据
+     *
+     * @return
+     */
+    @PostMapping("/updateHistoryDb")
+    public ApiResult tempUpdateHistoryDb() {
+        purchasePriceChangeService.tempUpdateHistoryDb();
+        return success();
     }
 }

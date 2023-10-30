@@ -4,8 +4,11 @@ package com.erp.server.scm.controller.api;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.server.scm.service.SupplierVisitService;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +26,7 @@ import javax.annotation.Resource;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("供应商列表")
 @RequestMapping("/supplier/visit")
 public class SupplierVisitController extends BaseController {
 
@@ -48,6 +52,7 @@ public class SupplierVisitController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存或者修改供应商拜访")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierVisitDTO.AddDTO dto) {
        Boolean  result= supplierVisitService.add(dto);

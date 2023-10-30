@@ -160,6 +160,11 @@ public class WarehouseDTO implements Serializable {
     public static class ListDTO {
 
         /**
+         * code
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
          * id
          */
         private String id;
@@ -590,6 +595,38 @@ public class WarehouseDTO implements Serializable {
          * 最近动销时间
          */
         private String latestSalesTime;
+    }
+
+    /**
+     * 仓库禁用校验实体类
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseDisabledAssertDTO {
+
+        /**
+         * 仓库id 必填
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称 用于错误提示
+         */
+        private String warehouseName;
+        /**
+         * 仓库区域
+         */
+        private String warehouseArea;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        public WarehouseDisabledAssertDTO(StocktakingProfitLossDetailDTO.ViewDTO viewDTO) {
+            this.warehouseId = viewDTO.getWarehouseId();
+            this.warehouseLocation = viewDTO.getWarehouseLocation();
+            this.warehouseName = viewDTO.getWarehouseName();
+        }
     }
 
 }

@@ -6,10 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeAssistantDataDetailConsumerService;
@@ -47,8 +47,6 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
 
         //模块类型
         Integer type = (Integer) map.get("moduleType");
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
         //操作项
         String operate = (String) map.get("operate");
 
@@ -59,13 +57,12 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
 
-        //map中设置父级id
-        setPid(platformEntity, apiUtils, map, businessId, type);
-
         /**
          * 审核
          */
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            //map中设置父级id
+            setPid(apiUtils, map);
             operateApprove(apiUtils,platformEntity, map,type);
         }
 
@@ -80,7 +77,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
     /**
      * 设置父级id
      */
-    public void setPid(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String businessId, Integer type) {
+    public void setPid(KingdeeApiUtils apiUtils, Map<String, Object> map) {
         //判断是否存在上级
         Boolean isExistParent = (Boolean) map.get("isExistParent");
         if (isExistParent) {
@@ -93,8 +90,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
                 model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
             } catch (Exception e) {
                 //更新数据
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(viewMap), "未找到上级辅助资料", type, ApiSendStatusEnum.FAILURE.getCode());
-                return;
+                throw new ServiceException(ApiError.ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA);
             }
             String id = (String) model.get("Id");
             map.put("pid", id);
@@ -111,8 +107,6 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
      * @param type
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), ApiModuleTypeEnum.ASSISTANT_DATA.getCode());
@@ -121,8 +115,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
         //判断金蝶系统是否已存在该数据
         JSONObject model;
@@ -143,7 +136,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         String operate = (String) map.get("operate");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {

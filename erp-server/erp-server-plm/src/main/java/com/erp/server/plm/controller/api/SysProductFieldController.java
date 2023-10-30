@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldDTO;
 import com.erp.model.plm.dto.SysProductFieldPagingDTO;
@@ -25,6 +28,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("sys/field")
 public class SysProductFieldController extends BaseController {
 
@@ -37,6 +41,7 @@ public class SysProductFieldController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或者修改产品字段")
     @PostMapping("/saveOrUpdate")
     //  @RequestPermissions("plm:sys:field:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated SysProductFieldDTO dto) {
@@ -47,6 +52,7 @@ public class SysProductFieldController extends BaseController {
     /**
      * 修改字段状态
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改字段产品状态:id={id},模板状态={state}(1=启用,0=未启用)")
     @PostMapping("/updateState")
     //  @RequestPermissions("plm:sys:field:updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto) {

@@ -9,6 +9,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 /**
  * @author Lambda
  * @Classname DeptKingFeign
@@ -40,4 +42,12 @@ public interface KingdeeFeign {
      */
     @PostMapping("/feign/kingdee/getBusinessOperator")
     KingdeeBusinessOperatorEntity getBusinessOperator(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO  dto);
+
+    /**
+     * 获取到所有业务员信息
+     * @param userIdList
+     * @return
+     */
+    @PostMapping("/feign/kingdee/listBusinessOperatorByUserIdList")
+    List<KingdeeBusinessOperatorEntity> listBusinessOperatorByUserIdList(@RequestBody List<String> userIdList);
 }

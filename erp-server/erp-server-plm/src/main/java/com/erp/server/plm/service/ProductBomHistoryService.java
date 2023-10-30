@@ -33,4 +33,20 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
      * @return List<VersionDTO>
      */
     List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto);
+
+    /**
+     * 保存bom 审核通过的的历史数据
+     * @author yl
+     * @date 2023-10-11 18:50
+     * @param bom
+     * @return void
+     */
+    void saveBomApprovalHistory(BomInfoEntity bom);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/3/9 10:04
+     * @return Boolean
+     */
+    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
 }

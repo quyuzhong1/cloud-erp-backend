@@ -2,8 +2,11 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CustomerGroupDTO;
 import com.erp.server.oms.service.CustomerGroupService;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("B2B客户列表")
 @RequestMapping("/customer/group")
 public class CustomerGroupController extends BaseController {
 
@@ -32,6 +36,7 @@ public class CustomerGroupController extends BaseController {
      * @param groupList
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量保存客户分组:分组名称={name}")
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Valid ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         Boolean result = customerGroupService.saveOrUpdateBatchGroup(groupList);

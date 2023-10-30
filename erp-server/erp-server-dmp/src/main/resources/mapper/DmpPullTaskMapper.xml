@@ -16,11 +16,8 @@
        <result column="mq_topic" property="mqTopic" />
        <result column="mq_tag" property="mqTag" />
        <result column="mq_data" property="mqData" />
-       <result column="sync_status" property="syncStatus" />
-       <result column="err_msg" property="errMsg" />
        <result column="last_sync_time" property="lastSyncTime" />
        <result column="source_platform_name" property="sourcePlatformName" />
-       <result column="souce_type" property="souceType" />
        <result column="source_id" property="sourceId" />
     </resultMap>
 
@@ -35,8 +32,106 @@
         update_user_name,
         version,
         is_deleted,
-        target_platform_name, mq_topic, mq_tag, mq_data, sync_status, err_msg, last_sync_time, source_platform_name, souce_type, source_id
+        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times
     </sql>
 
+    <!-- 根据状态分组查询数量 -->
+    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$TabListDTO">
+        select
+        dpt.status as tabFlag,
+        count(dpt.id) as count
+        from dmp_pull_task dpt
+        where dpt.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        group by dpt.status
+    </select>
 
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_pull_task
+        where is_deleted = false
+        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
+            and source_type in
+            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != '' ">
+            and source_code ilike concat('%',#{params.sourceCode},'%')
+        </if>
+        <if test="params.returnMsg != null and params.returnMsg != '' ">
+            and return_msg ilike concat('%',#{params.returnMsg},'%')
+        </if>
+        <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
+            and target_platform_name = #{params.targetPlatformName}
+        </if>
+        <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
+            and source_platform_name = #{params.sourcePlatformName}
+        </if>
+        <if test="params.statusList != null and params.statusList != '' ">
+            and status in
+            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
+            and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by id desc
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpPullTaskDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_pull_task
+        where is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.ids == null or params.ids.size == 0">
+            <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0 ">
+                and source_type in
+                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != '' ">
+                and source_code ilike concat('%',#{params.sourceCode},'%')
+            </if>
+            <if test="params.returnMsg != null and params.returnMsg != '' ">
+                and return_msg ilike concat('%',#{params.returnMsg},'%')
+            </if>
+            <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
+                and target_platform_name = #{params.targetPlatformName}
+            </if>
+            <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
+                and source_platform_name = #{params.sourcePlatformName}
+            </if>
+            <if test="params.statusList != null and params.statusList != '' ">
+                and status in
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.lastSyncTime != null and params.lastSyncTime.size > 0">
+                and last_sync_time >= #{params.lastSyncTime[0]} and  (#{params.lastSyncTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > last_sync_time
+            </if>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by id desc
+    </select>
 </mapper>

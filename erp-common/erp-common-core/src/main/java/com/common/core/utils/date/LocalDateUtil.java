@@ -2,7 +2,9 @@ package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -56,8 +58,6 @@ public class LocalDateUtil {
     }
 
 
-
-
     /**
      * LocalDateTime转换为Date
      *
@@ -100,7 +100,7 @@ public class LocalDateUtil {
     public static LocalDateTime getRingRatioDate(LocalDateTime startDate, LocalDateTime endDate) {
         if (endDate != null && startDate != null) {
             long diff = Duration.between(startDate, endDate).toDays();
-            return LocalDateTime.of(startDate.minusDays(diff).toLocalDate(),LocalTime.MIN) ;
+            return LocalDateTime.of(startDate.minusDays(diff).toLocalDate(), LocalTime.MIN);
         }
         return null;
     }
@@ -241,7 +241,7 @@ public class LocalDateUtil {
      */
     public static LocalDateTime stringToLocalDateTime(String strDate) {
         Date date = EnumTimePattern.parseDate(strDate);
-       return LocalDateUtil.date2LocalDateTime(date);
+        return LocalDateUtil.date2LocalDateTime(date);
     }
 
 
@@ -295,38 +295,39 @@ public class LocalDateUtil {
 
     /**
      * 获取开始时间
+     *
      * @param localDateTime
      * @return
      */
 
     public static LocalDateTime getStartTime(LocalDateTime localDateTime) {
-        if(localDateTime!=null){
+        if (localDateTime != null) {
             return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MIN);
         }
-        return LocalDateTime.of(LocalDate.now(),LocalTime.MIN);
+        return LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
     }
 
     public static LocalDateTime getEndTime(LocalDateTime localDateTime) {
-        if(localDateTime!=null){
+        if (localDateTime != null) {
             return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MAX);
         }
-        return LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
+        return LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
     }
 
-    public static Integer countDaysForLocalDate(LocalDate startDate, LocalDate endDate, List<LocalDate> dateList){
+    public static Integer countDaysForLocalDate(LocalDate startDate, LocalDate endDate, List<LocalDate> dateList) {
         endDate = endDate.plusDays(1);
         if (null == dateList) {
             return 0;
         }
         long diffDaysLong = endDate.toEpochDay() - startDate.toEpochDay();
         Integer diffDays = Integer.valueOf(String.valueOf(diffDaysLong));
-        if(CollectionUtil.isEmpty(dateList)){
+        if (CollectionUtil.isEmpty(dateList)) {
             return diffDays;
         }
         AtomicReference<Integer> count = new AtomicReference<>(0);
         LocalDate finalEndDate = endDate.minusDays(1);
         dateList.stream().forEach(date -> {
-            if(date.compareTo(startDate) >= 0 && date.compareTo(finalEndDate) <= 0){
+            if (date.compareTo(startDate) >= 0 && date.compareTo(finalEndDate) <= 0) {
                 count.getAndSet(count.get() + 1);
             }
 
@@ -334,10 +335,10 @@ public class LocalDateUtil {
         return diffDays - count.get();
     }
 
-    public static Map<String, LocalDate> relationshipLocalDate(String code,LocalDate startDate, LocalDate endDate, Integer intervalWorkPeriod, Integer planWorkPeriod, List<LocalDate> dateList){
+    public static Map<String, LocalDate> relationshipLocalDate(String code, LocalDate startDate, LocalDate endDate, Integer intervalWorkPeriod, Integer planWorkPeriod, List<LocalDate> dateList) {
         LocalDate planEndDate = null;
         LocalDate planStartDate = null;
-        switch (code){
+        switch (code) {
             case "fs":
                 // 间隔工期
                 planStartDate = endDate;
@@ -354,7 +355,7 @@ public class LocalDateUtil {
                 break;
             case "sf":
                 planEndDate = startDate;
-                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod-1, dateList, planEndDate, 1, 0);
+                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod - 1, dateList, planEndDate, 1, 0);
                 planStartDate = planEndDate;
                 planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1, 1);
                 break;
@@ -405,6 +406,49 @@ public class LocalDateUtil {
         }
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
+
+    public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
+        if (StrUtil.isBlank(hourStr)){
+            return startTime;
+        }
+        BigDecimal hour = new BigDecimal(hourStr);
+        int intValue = hour.intValue();
+        LocalDateTime result = null;
+        if(intValue >= 0){
+            result = startTime.plusHours(intValue);
+        }
+        BigDecimal remainder = hour.remainder(BigDecimal.ONE);
+        if(remainder.compareTo(BigDecimal.ZERO) > 0){
+            result = result.plusMinutes(new BigDecimal(60).multiply(remainder).intValue());
+        }
+        return result;
+    }
+
+    /**
+     * 转化日期
+     *
+     * @param dateStr
+     * @return java.time.LocalDate
+     * @author yl
+     * @date 2023-10-24 15:06
+     */
+    public static LocalDate parseStrToLocalDate(String dateStr) {
+        try {
+            if (StringUtils.isBlank(dateStr)) {
+                return null;
+            }
+            if (dateStr.contains("/")) {
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+                return LocalDate.parse(dateStr, dateTimeFormatter);
+            } else {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            }
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
 
 }
 

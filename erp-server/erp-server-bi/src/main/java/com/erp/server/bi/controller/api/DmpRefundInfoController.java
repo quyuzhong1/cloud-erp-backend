@@ -1,11 +1,14 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
@@ -36,6 +39,7 @@ import java.io.OutputStream;
  * @date 2022/12/13 15:15
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dmpRefundInfo")
 public class DmpRefundInfoController extends BaseController {
 
@@ -74,6 +78,7 @@ public class DmpRefundInfoController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退款数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
@@ -90,6 +95,7 @@ public class DmpRefundInfoController extends BaseController {
      * @param importType
      * @param response
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "退款数据导入")
     @PostMapping("/importRefundFile")
     public ApiResult importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         Boolean flag = dmpRefundInfoService.importOrderFile(excelFile, importType, response);
@@ -104,6 +110,7 @@ public class DmpRefundInfoController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退款数据下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpRefundInfoTemplate.xlsx";

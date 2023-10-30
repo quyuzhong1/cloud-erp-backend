@@ -9,8 +9,8 @@
         purchase_user_name, purchase_org_id, purchase_org_name, purchase_dept_id, purchase_dept_name,
         is_first_mass_product, invalid_status, invalid_time, approve_time, approve_user_name,
         approve_user_id, invalid_remark, delivery_warehouse_id, delivery_warehouse_name,
-        receive_org_id, receive_org_name, sync_kingdee_status, sync_kingdee_time, sync_kingdee_id,
-        sync_operate, source_id, source_type, subcontract_type
+        receive_org_id, receive_org_name, sync_kingdee_id,
+        source_id, source_type, subcontract_type
     </sql>
     <select id="listByIds" resultType="com.erp.model.scm.entity.PurchaseOrderEntity">
         SELECT
@@ -222,31 +222,10 @@
                     </if>
                 </foreach>
             </trim>
-            <trim prefix="sync_kingdee_status = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.syncKingdeeStatus != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.syncKingdeeStatus,jdbcType=CHAR}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="sync_kingdee_time = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.syncKingdeeTime != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.syncKingdeeTime,jdbcType=TIMESTAMP}
-                    </if>
-                </foreach>
-            </trim>
             <trim prefix="sync_kingdee_id = case" suffix="end,">
                 <foreach collection="list" index="index" item="item">
                     <if test="item.syncKingdeeId != null">
                         when id = #{item.id,jdbcType=CHAR} then #{item.syncKingdeeId,jdbcType=VARCHAR}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="sync_operate = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.syncOperate != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.syncOperate,jdbcType=VARCHAR}
                     </if>
                 </foreach>
             </trim>

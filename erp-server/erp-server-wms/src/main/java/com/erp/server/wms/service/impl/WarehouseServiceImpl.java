@@ -1,5 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -22,6 +26,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -30,6 +35,7 @@ import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -76,6 +82,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Autowired
     private RedisService redisService;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
 
 
     @Override
@@ -131,6 +140,51 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return resultList;
     }
 
+    @Override
+    public void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList) {
+        if (CollectionUtil.isEmpty(assertList)) {
+            return ;
+        }
+        List<WarehouseDTO.WarehouseDisabledAssertDTO> invalidList = new ArrayList<>();
+        assertList.stream().forEach(item -> {
+            // 仓库禁用/未审核
+            if(StrUtil.isBlank(item.getWarehouseId())){
+                throw new ServiceException("仓库id不能为空");
+            }
+            WarehouseDTO.UpdateDTO warehouse = detailWithCache(item.getWarehouseId());
+            if(ObjectUtil.isNotEmpty(warehouse)){
+                item.setWarehouseName(item.getWarehouseName());
+            }
+            if (ObjectUtil.isNotEmpty(warehouse) && (warehouse.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatusCode()))){
+                invalidList.add(item);
+                return;
+            }
+            // 库区禁用/未审核
+            if(StrUtil.isNotBlank(item.getWarehouseArea())){
+                WarehouseLocationEntity area = warehouseLocationService.findArea(item.getWarehouseId(), item.getWarehouseArea());
+                if (ObjectUtil.isEmpty(area) || area.getDisabled()){
+                    invalidList.add(item);
+                    return;
+                }
+            }
+            // 仓位禁用/未审核
+            if(StrUtil.isNotBlank(item.getWarehouseLocation())){
+                WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(item.getWarehouseId(), item.getWarehouseLocation());
+                if (ObjectUtil.isEmpty(location) || location.getDisabled()){
+                    invalidList.add(item);
+                }
+            }
+        });
+        if (CollectionUtil.isNotEmpty(invalidList)){
+            List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
+            List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
+            List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
+            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
+            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
+            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
+            throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList) );
+        }
+    }
 
 
     /**
@@ -260,6 +314,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateStatus(UpdateStateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
@@ -284,13 +339,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     /**
      * 审核仓库
      *
-     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-22 11:45
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         // 删除缓存
@@ -334,6 +389,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> warehouseIds) {
         // 删除缓存
         removeCache(warehouseIds);
@@ -371,6 +427,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         // 删除缓存
         removeCache(ids);
@@ -382,7 +439,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        //反审核后发送金蝶
+        //审核通过后发送金蝶
         list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return this.removeByIds(ids);
     }
@@ -610,9 +667,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(WarehouseEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     @Override

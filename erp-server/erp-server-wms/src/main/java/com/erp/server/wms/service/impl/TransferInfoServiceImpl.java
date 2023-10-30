@@ -389,6 +389,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -410,12 +411,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表数据
         return this.removeByIds(ids);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -447,6 +451,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -473,12 +478,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (isSyncKingDee) {
                 //发送金蝶
                 list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-            } else {
-                ids.stream().forEach(obj -> {
-                    //更新金蝶状态
-                    PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(obj,SyncOperateEnum.OPERATE_APPROVE.getCode(),"",SyncStatusEnum.SUCCESS_SYNC.getCode());
-                    updateSyncKingdeeStatus(syncKingdeeDTO);
-                });
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -507,6 +506,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -603,9 +603,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferInfoEntity::getId,id)
+                .ne(TransferInfoEntity::getThirdPartySystem,ThirdPartySystemEnum.ENUM_MB.getCode())
+                .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     @Override

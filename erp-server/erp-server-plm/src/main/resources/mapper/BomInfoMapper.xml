@@ -169,6 +169,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+                AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+            </if>
             <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
                 and pi.category_id in
                 <foreach collection="params.categoryIdList" item="item" open="(" separator="," close=")">
@@ -210,21 +213,6 @@
             </if>
         </where>
     </select>
-
-    <update id="updateSyncKingdeeStatus">
-        update product_bom_info set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 
 
     <select id="combinationPaging" resultMap="listCombination">

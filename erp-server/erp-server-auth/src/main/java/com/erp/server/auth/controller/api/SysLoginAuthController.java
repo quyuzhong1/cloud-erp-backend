@@ -3,9 +3,12 @@ package com.erp.server.auth.controller.api;
 
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.IpUtils;
 import com.erp.model.sys.dto.AccountLoginDTO;
@@ -36,6 +39,7 @@ import java.util.Objects;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("用户登录模块")
 @RequestMapping("user")
 public class SysLoginAuthController extends BaseController {
 
@@ -47,6 +51,7 @@ public class SysLoginAuthController extends BaseController {
     private AuthTokenService authTokenService;
 
     //账号登录
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "账号登录:账号={account}")
     @RequestMapping("/accountLogin")
     public ApiResult accountLogin(@RequestBody @Validated AccountLoginDTO loginDTO, HttpServletRequest request) {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
@@ -81,6 +86,7 @@ public class SysLoginAuthController extends BaseController {
 
 
     //扫码登录
+    @LogAction(value = LogActionEnum.LOGIN, desc = "扫码登录")
     @RequestMapping("/scanCodeLogin")
     public ApiResult scanCodeLogin(@RequestBody @Validated SysUserThirdDTO loginDTO, HttpServletRequest request) {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.scanCodeLogin(loginDTO);
@@ -113,6 +119,7 @@ public class SysLoginAuthController extends BaseController {
 
 
     //退出登录
+    @LogAction(value = LogActionEnum.LOGOUT, desc = "退出登录")
     @RequestMapping("/logout")
     public ApiResult Logout(HttpServletRequest request) {
         String accountToken = request.getHeader(TokenConstants.AUTHENTICATION);

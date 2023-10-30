@@ -322,6 +322,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     }
 
+    @Override
+    public List<ProjectInfoEntity> listByChargeId(String chargeId) {
+        return baseMapper.listByChargeId(chargeId);
+    }
+
 
     /**
      * 修改项目负责人 望里面添加

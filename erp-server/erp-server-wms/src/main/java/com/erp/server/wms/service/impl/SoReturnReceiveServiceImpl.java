@@ -621,15 +621,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //TODO 待加审核流程
 
         //下推质检单不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
         }
 
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
         }
 
         //修改状态为待提交
@@ -923,15 +925,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //TODO 待加审核流程
 
         //下推质检单不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
         }
 
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
         }
 
         //修改状态为待提交

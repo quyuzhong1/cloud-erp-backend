@@ -105,6 +105,14 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
         return list;
     }
 
+    @Override
+    public List<PurchasePriceHistoryEntity> listByChangeDetailIdList(List<String> changeDetailIdList) {
+        if (CollectionUtils.isEmpty(changeDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PurchasePriceHistoryEntity::getChangeDetailId,changeDetailIdList).list();
+    }
+
 
     private List<PurchasePriceHistoryEntity> getByPriceDetailId(String priceDetailId) {
         LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();

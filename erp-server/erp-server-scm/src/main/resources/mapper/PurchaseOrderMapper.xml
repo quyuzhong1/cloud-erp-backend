@@ -629,20 +629,6 @@
         ORDER BY po.create_time DESC
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update purchase_order set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 
     <select id="listPurchaseOrderByPurchaseDate" resultType="com.erp.model.scm.dto.SkuCostDTO">
         SELECT
@@ -674,5 +660,39 @@
             AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         GROUP BY
             T."sku_no", T."LatestPurchaseDate";
+    </select>
+    <!--获取首批采购日期-->
+    <select id="listFirstPlaceOrderDate" resultType="com.erp.model.scm.dto.FirstPlaceOrderDTO">
+        SELECT
+        min(po.purchase_date) AS purchaseDate,
+        pod.sku_id
+        FROM purchase_order po
+        INNER JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND po.is_deleted = FALSE
+        WHERE pod.is_deleted = FALSE
+        AND po.is_first_mass_product = TRUE
+        <if test="ids != null and ids.size > 0">
+            AND po.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY pod.sku_id
+    </select>
+    <!--获取首批采购日期-->
+    <select id="listFirstPlaceOrderDate" resultType="com.erp.model.scm.dto.FirstPlaceOrderDTO">
+        SELECT
+        min(po.purchase_date) AS purchaseDate,
+        pod.sku_id
+        FROM purchase_order po
+        INNER JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND po.is_deleted = FALSE
+        WHERE pod.is_deleted = FALSE
+        AND po.is_first_mass_product = TRUE
+        <if test="ids != null and ids.size > 0">
+            AND po.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY pod.sku_id
     </select>
 </mapper>

@@ -85,6 +85,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
     GLOBAL_EXCEPTION_UN_KNOW(1048, "未知异常：【{}】"),
+    ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
 
 
@@ -146,6 +147,19 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
 
+
+
+    /**
+     * DMP服务错误
+     * 80001开始
+     */
+    ERROR_NOT_EXIST_KINGDEE_FIELD(80001,"金蝶推送未配置同步字段"),
+    ERROR_NOT_EXIST_KINGDEE_DATA(80002,"查询无数据，无需处理"),
+    ERROR_ADD_KINGDEE_DATA(80003,"金蝶系统新增数据失败"),
+    ERROR_NOT_EXIST_KINGDEE_DETAIL_ID(80004,"未查询到子单据id"),
+    ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT(80005,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
+    ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
+    ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
 
 
     /**
@@ -640,6 +654,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
+    ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
 
 
 
@@ -694,7 +709,7 @@ public enum ApiError implements Serializable {
     ERROR_99039(99039,"库存交易当前仓和目的仓不能一样"),
     ERROR_99040(99040,"库存交易流水不存在或已经反审核，无法反审核"),
     ERROR_99041(99041,"【%s】下推的数量合计不能大于收货数量"),
-    ERROR_99042(99042,"已下推质检单，不能反审核"),
+    ERROR_99042(99042,"已下推质检单【{}】，不能反审核"),
     ERROR_99043(99043,"未找到调拨申请单"),
     ERROR_99044(99044,"未找到调拨申请明细"),
     ERROR_99045(99045,"调拨申请单已下推直接调拨单，不支持反审核"),
@@ -751,7 +766,7 @@ public enum ApiError implements Serializable {
     STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 【{}】库存【{}】中, 无法操作"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     // 已下推退货入库单不能反审核
-    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单【{}】，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
     ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
@@ -762,7 +777,24 @@ public enum ApiError implements Serializable {
     SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
     CURRENT_TARGET_WAREHOUSE_SAME(99039,"仓位移动当前仓和目的仓必须相同"),
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
-    ERROR_INVENTORY_CLOSED(99093, "库存已关账不允许炒作【{}】之前单据"),
+    ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
+    ERROR_MACHINE_WAREHOUSE_ORG_DIFF(99094, "加工单子件【{}】仓库【{}】不属于库存组织【{}】"),
+    ERROR_DIFF_QTY_NOT_ZERO(99094,"盘点差异数量不能为0"),
+    ERROR_PROFIT_DIFF_GREATER_ZERO(99096,"盘盈单差异数量必须大于0"),
+    ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
+    ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
+
+    WAREHOUSE_DISABLED(99099, "仓库【{}】未审核或已被禁用，无法进行盘点"),
+    WAREHOUSE_AREA_LOCATION_DISABLED(99100, "仓库【{}】 库区【{}】 仓位【{}】 未审核或已被禁用，无法进行盘点"),
+
+
+    ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
+
+
+
+
+
+
 
     /**
      * OMS 错误
@@ -893,15 +925,10 @@ public enum ApiError implements Serializable {
 
 
 
-
-    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
-
-
-
-    ;
+;
 
     public Integer code;
     public String msg;

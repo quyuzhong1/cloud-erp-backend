@@ -127,5 +127,5 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
     /**
      * 更新金蝶推送信息
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId);
 }

@@ -1,5 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,6 +14,7 @@ import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -320,5 +324,21 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 .eq(WarehouseReceiveDetailEntity::getMainId, mainId)
                 .eq(WarehouseReceiveDetailEntity::getSkuId, skuId)
                 .update();
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(WarehouseReceiveDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(WarehouseReceiveDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 }

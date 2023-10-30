@@ -1,37 +1,36 @@
 package com.erp.server.oms.controller.api;
 
 
-import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.MathUtil;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.utils.SoUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售管理-销售订单
@@ -40,6 +39,7 @@ import java.util.Objects;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("销售订单")
 @RequestMapping("/so")
 public class SoInfoController extends BaseController {
 
@@ -48,7 +48,6 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-
 
     /**
      * 获取 tab列表
@@ -102,6 +101,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "暂存销售订单")
     @PostMapping("/draft")
     public ApiResult draft(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
         String id = soInfoService.draft(dto);
@@ -140,6 +140,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "创建销售订单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
@@ -153,6 +154,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "批量提交审核销售订单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -171,6 +173,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核销售订单")
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         Boolean result = soInfoService.addAndSubmit(dto);
@@ -184,6 +187,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -202,6 +206,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售订单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -220,6 +225,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售订单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -234,11 +240,13 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新明细备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单明细备注:ids={ids},备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -252,11 +260,13 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单备注:ids={ids},备注={remark}")
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -269,13 +279,13 @@ public class SoInfoController extends BaseController {
     }
 
 
-
     /**
      * 审核
      *
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售订单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -291,6 +301,7 @@ public class SoInfoController extends BaseController {
     /**
      * 反审核
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售订单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -309,6 +320,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售订单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -326,6 +338,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售订单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -345,6 +358,7 @@ public class SoInfoController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:11
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废销售订单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -360,6 +374,7 @@ public class SoInfoController extends BaseController {
      * 导出
      * 数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单")
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soInfoService.exportExcel(dto, response);
@@ -388,6 +403,7 @@ public class SoInfoController extends BaseController {
      * @author yl
      * @date 2023-05-18 12:01
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单合同PDF")
     @GetMapping("/exportSoContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -406,9 +422,10 @@ public class SoInfoController extends BaseController {
      * @author yl
      * @date 2023-05-18 12:01
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单合同excel")
     @PostMapping("/exportSoContractExcel")
     public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractExcel(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoContractExcel(dto.getId(),response);
+        Boolean result = soInfoService.exportSoContractExcel(dto.getId(), response);
         return result ? success() : failure();
     }
 
@@ -420,9 +437,27 @@ public class SoInfoController extends BaseController {
      * @author yl
      * @date 2023-07-04 14:44
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单的的发票信息")
     @PostMapping("/exportSoPI")
     public ApiResult exportSoPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoPI(dto.getId(), response);
+        return result ? success() : failure();
+
+    }
+
+    /**
+     * 导出销售订单国内PI
+     *
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-12 14:39
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单国内PI")
+    @PostMapping("/exportSoDomesticPI")
+    public ApiResult exportSoDomesticPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(), response);
         return result ? success() : failure();
 
     }
@@ -472,6 +507,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据sku id和数量计算成本毛利
+     *
      * @param costParam
      * @return
      */
@@ -482,35 +518,40 @@ public class SoInfoController extends BaseController {
 
     /**
      * 补录销售订单毛利历史数据
+     *
      * @param startDate
      * @param endDate
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补录销售订单毛利历史数据,开始时间={startDate},结束时间={endDate}")
     @GetMapping("/brushData")
-    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")String startDate,
-                                            @RequestParam(value = "endDate")String endDate) {
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate") String startDate,
+                                            @RequestParam(value = "endDate") String endDate) {
         soInfoService.brushCostData(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 LocalDate.parse(endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-       return success();
+        return success();
     }
 
     /**
      * 补录销售订单毛利历史数据（根据id）
+     *
      * @param id
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补录销售订单毛利历史数据id={id}")
     @GetMapping("/brushById")
-    public ApiResult<Void> brushById(@RequestParam(value = "id")String id) {
+    public ApiResult<Void> brushById(@RequestParam(value = "id") String id) {
         soInfoService.brushCostData(id);
         return success();
     }
 
     /**
      * 打印
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
@@ -519,24 +560,31 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 临时接口：修改未税单价
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
-     **/
+     * 临时接口：添加折扣额 修复历史的数据销售额数据
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-13 9:06
+     */
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
-        Boolean aBoolean = soInfoService.temporaryUpdate();
-        return aBoolean ? success() : failure();
+        List<String> errorList = soInfoService.temporaryUpdate();
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            return ApiResult.error(1,"以下订单出错: "+errorList.stream().collect(Collectors.joining(",")));
+        }
+        return ApiResult.success();
     }
 
     /**
      * 根据销售订单判断是否已经下推过有效发货通知单
+     *
      * @param id
      * @return com.common.core.controller.vo.ApiResult<Boolean>
      * @author zhangchunlin
      * @date 2023-07-26 17:40
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "根据销售订单判断是否已经下推过有效发货通知单：id={id}")
     @PostMapping("/checkPushDownDeliveryNotice")
     public ApiResult<Boolean> checkPushDownDeliveryNotice(@RequestParam(value = "id") String id) {
         Boolean isPush = soInfoService.checkSoPushDeliveryNotice(id);
@@ -545,6 +593,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 获取销售成本毛利信息
+     *
      * @param calCostProfitDTO
      * @return
      */
@@ -553,4 +602,30 @@ public class SoInfoController extends BaseController {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
     }
 
+    /**
+     * 下载销售订单导入模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载销售订单导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        soInfoService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入销售订单
+     *
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-17 10:28
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售订单")
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soInfoService.importExcel(excelFile, response);
+        return result?success():failure();
+    }
 }

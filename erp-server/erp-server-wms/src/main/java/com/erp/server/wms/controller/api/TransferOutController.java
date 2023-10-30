@@ -6,6 +6,10 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.TransferOutDTO;
@@ -25,6 +29,7 @@ import java.util.List;
  */
 @AllArgsConstructor
 @RestController
+@LogSystemModule("分布式调出单")
 @RequestMapping("/transfer/out")
 public class TransferOutController extends BaseController {
 
@@ -66,6 +71,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交分布式调出单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -83,6 +89,7 @@ public class TransferOutController extends BaseController {
      * @param id
      * @return
      */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -98,6 +105,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改分布式调出单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -114,6 +122,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交分布式调出单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -132,6 +141,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核分布式调出单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -147,6 +157,7 @@ public class TransferOutController extends BaseController {
      * 反审核
      *
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核分布式调出单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -164,6 +175,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调出单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -180,6 +192,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废分布式调出单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -196,6 +209,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销分布式调出单")
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
@@ -210,6 +224,7 @@ public class TransferOutController extends BaseController {
     /**
      * 导出数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分布式调出单")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
@@ -242,6 +257,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推分布式调入数据保存")
     @PostMapping(value = "/generateTransferIn")
     public ApiResult<Void> generateTransferIn(@RequestBody @Validated ValidList<TransferOutDTO.GenerateTransferInDTO> dto) {
         transferOutService.generateTransferIn(dto);

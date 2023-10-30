@@ -1,30 +1,34 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.*;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -61,23 +65,37 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     private BasicDictService basicDictService;
 
     @Resource
-    private ProductDetailService productDetailService;
-
-    @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
+
 
     /**
      * 组装数据发送到金蝶
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
 
-        //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
-        productDetailService.updateSyncKingdeeStatus(kingdeeDTO);
+        Map<String, Object> resultMap = new HashMap<>();
+        //sku
+        resultMap.put("id", entity.getId());
+        //sku
+        resultMap.put("skuNo", entity.getSkuNo());
+        //名称
+        resultMap.put("name", entity.getName());
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
 
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
@@ -95,17 +113,6 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         //采购信息
         ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(entity.getId());
 
-        Map<String, Object> resultMap = new HashMap<>();
-        //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //sku
-        resultMap.put("id", entity.getId());
-        //sku
-        resultMap.put("skuNo", entity.getSkuNo());
-        //名称
-        resultMap.put("name", entity.getName());
         //spu
         resultMap.put("spuNo", productInfoEntity.getSpuNo());
         //产品功能描述
@@ -143,7 +150,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         //销售信息
         if (ObjectUtils.isNotEmpty(productSaleEntity)) {
             //上市时间
-            resultMap.put("listingTime", productSaleEntity.getListingTime());
+            resultMap.put("listingTime", LocalDateTimeUtil.format(productSaleEntity.getListingTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         }
         //物流信息
         if (ObjectUtils.isNotEmpty(productLogisticsEntity)) {
@@ -256,16 +263,32 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             //一级供应商
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
         }
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
-                return productDetailService.updateSyncKingdeeStatus(syncKingdeeDTO);
-            }
-           return Boolean.TRUE;
-        });
+
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
     }
 
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getSkuNo());
+        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
+    }
 }

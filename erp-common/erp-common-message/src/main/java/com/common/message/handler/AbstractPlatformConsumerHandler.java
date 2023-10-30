@@ -29,7 +29,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 log.error("平台数据消费异常:找不到dmpSyncTaskId, object={}", JSONUtil.toJsonStr(obj));
                 return;
             }
-            ApiResult<?> handle = handle(obj);
+            ApiResult<?> handle = handle(new JSONObject(obj).get("mqData"));
             if (!handle.isSuccess()) {
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
                 updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());

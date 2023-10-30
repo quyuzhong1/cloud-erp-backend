@@ -1,7 +1,10 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
  * @date 2022-07-11 14:05:47
  */
 @RestController
+@LogSystemModule("部门管理")
 @RequestMapping("department")
 public class SysDepartmentController extends BaseController {
 
@@ -60,6 +64,7 @@ public class SysDepartmentController extends BaseController {
     /**
      * 保存
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存或更新部门信息")
     @RequestMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody SysDepartmentEntity sysDepartment) {
         sysDepartmentService.saveOrUpdateSysDept(sysDepartment);
@@ -67,6 +72,7 @@ public class SysDepartmentController extends BaseController {
     }
 
 
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量保存部门信息:名称={name}")
     @RequestMapping("/batchSave")
     public ApiResult batchSave(@RequestBody List<SysDepartmentDTO> sysDepartmentTree) {
         sysDepartmentService.saveBatchDepartment(sysDepartmentTree);
@@ -84,6 +90,7 @@ public class SysDepartmentController extends BaseController {
     /**
      * 删除
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除部门信息")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody List<String> ids) {
         sysDepartmentService.removeByIdList(ids);
@@ -110,6 +117,7 @@ public class SysDepartmentController extends BaseController {
      * @param file
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入部门关联金蝶信息")
     @PostMapping(value = "importDepatKingdee")
     public ApiResult<Void> importDepatKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
         sysDepartmentService.importDeptKingdee(file);

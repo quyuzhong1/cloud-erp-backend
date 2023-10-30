@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -29,7 +30,7 @@ import java.util.Map;
 public interface SysUserFeign {
 
     /**
-     *  账号登录
+     * 账号登录
      */
     @PostMapping("feign/user/accountLogin")
     ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO loginDTO);
@@ -55,7 +56,7 @@ public interface SysUserFeign {
 
     /**
      * 获取用户权限
-     * */
+     */
     @PostMapping("feign/user/getRequestPermissionsList")
     List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId);
 
@@ -78,13 +79,14 @@ public interface SysUserFeign {
     List<String> getDepUserList(@RequestBody String userId);
 
     /**
-     *  根据用户id 获取用户角色的id
+     * 根据用户id 获取用户角色的id
      */
     @PostMapping("feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
      * 查询左菜单栏
+     *
      * @param roleIds
      * @return
      */
@@ -92,7 +94,7 @@ public interface SysUserFeign {
     List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds);
 
     /**
-     *   根据第三方平台 以及union id 获取用户id
+     * 根据第三方平台 以及union id 获取用户id
      */
     @PostMapping("feign/user/getUserIdByThird")
     String getUidByUnionId(@RequestBody FindUserByThirdDTO third);
@@ -101,27 +103,26 @@ public interface SysUserFeign {
     List<ThirdUnionDTO> getThirdUnionId(@RequestBody String fsPlatform);
 
     /**
-     *   根据userId查询用户
+     * 根据userId查询用户
      */
     @PostMapping("feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
 
-
     /**
-     *  根据用户名称查询用户
+     * 根据用户名称查询用户
      */
     @GetMapping("feign/user/getUserByUserName")
     FindUserDTO getUserByUserName(@RequestBody String userName);
 
     /**
-     *  根据用户名称集合查询用户
+     * 根据用户名称集合查询用户
      */
     @GetMapping("feign/user/listUserByUserNames")
     List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames);
 
     /**
-     *  根据userIds查询用户集合
+     * 根据userIds查询用户集合
      */
     @GetMapping("feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
@@ -140,7 +141,7 @@ public interface SysUserFeign {
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
 
     /**
-     *  查询spu编码
+     * 查询spu编码
      */
     @PostMapping("feign/code/getSpuNo")
     String getSpuNo(@RequestBody SysCodeDTO dto);
@@ -155,19 +156,19 @@ public interface SysUserFeign {
     List<SysUserDeptDTO> getUserDeptList();
 
     /**
-     *  根据部门id查询部门
+     * 根据部门id查询部门
      */
     @PostMapping("feign/user/getUserDeptById")
     SysDepartmentDTO getUserDeptById(@RequestBody String deptId);
 
     /**
-     *  根据部门id查询部门
+     * 根据部门id查询部门
      */
     @PostMapping("feign/dept/listDepartByIds")
     List<SysDepartmentEntity> listDeptByIds(@RequestBody List<String> deptIdList);
 
     /**
-     *  根据部门金蝶Code查询部门
+     * 根据部门金蝶Code查询部门
      */
     @PostMapping("feign/user/getUserDeptByCode")
     SysDepartmentDTO getUserDeptByCode(@RequestBody String code);
@@ -181,12 +182,13 @@ public interface SysUserFeign {
 
     /**
      * 获取所有的部门信息
-      */
+     */
     @GetMapping("feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
     @PostMapping("feign/user/getSysUserById")
     SysUserDTO getSysUserById(@RequestBody String uid);
+
     /**
      * 根据用户id查询所有上级用户
      */
@@ -194,25 +196,26 @@ public interface SysUserFeign {
     List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
 
     /**
-     *  根据角色id查用户名称
+     * 根据角色id查用户名称
      */
     @PostMapping("feign/user/listRoleByIds")
     List<String> listRoleByIds(@RequestBody List<String> roleIds);
 
     /**
-     *  根据用户ids查询角色
+     * 根据用户ids查询角色
      */
     @PostMapping("feign/user/listRoleByUserIds")
     List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
 
     /**
-     *  根据部门名称查询部门负责人
+     * 根据部门名称查询部门负责人
      */
     @PostMapping("feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 
     /**
      * 查询日历列表
+     *
      * @param dto
      * @return
      */
@@ -222,6 +225,7 @@ public interface SysUserFeign {
 
     /**
      * 查询银行卡列表
+     *
      * @param ids
      * @return
      */
@@ -229,31 +233,33 @@ public interface SysUserFeign {
     List<BaseIdDTO> getBankList(@RequestBody List<String> ids);
 
 
-     /**
-      * 查询组织列表
-      * @author yl
-      * @date 2023-03-22 15:34
-      * @param ids
-      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
-      */
+    /**
+     * 查询组织列表
+     *
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-03-22 15:34
+     */
     @PostMapping("feign/accountingCompany/getByIds")
     List<BaseIdDTO.CodeDTO> getAccountingCompanyList(@RequestBody List<String> ids);
+
     /**
+     * @param codes
+     * @return List<CodeDTO>
      * @description: 查询组织列表
      * @author Will
      * @date: 2023/6/29 12:27
-     * @param codes
-     * @return List<CodeDTO>
      */
     @PostMapping("feign/accountingCompany/listByCodes")
     List<BaseIdDTO.CodeDTO> listAccountingCompanyByCodeList(@RequestBody List<String> codes);
 
 
     /**
+     * @return List<BaseIdDTO>
      * @description: 查询所有已启用组织
      * @author Will
      * @date: 2023/3/22 16:35
-     * @return List<BaseIdDTO>
      */
     @GetMapping("feign/accountingCompany/list")
     List<BaseIdDTO> listAccountingCompany();
@@ -266,20 +272,22 @@ public interface SysUserFeign {
 
     /**
      * 根据主键id查询组织信息
-     * @Author Luo_WG
-     * @Date 2023/4/13 12:19
+     *
      * @param id id:组织id
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
      **/
     @PostMapping("feign/accountingCompany/getCompanyById")
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
 
     /**
      * 根据用户Id获取部门
-     * @Author Luo_WG
-     * @Date 2023/4/18 9:53
+     *
      * @param userId userId
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/18 9:53
      **/
     @PostMapping("feign/dept/getDeptByUserId")
     SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
@@ -295,6 +303,7 @@ public interface SysUserFeign {
 
     /**
      * 批量根据用户id获取第三方平台账号信息
+     *
      * @param platform
      * @param userIds
      * @return
@@ -304,19 +313,21 @@ public interface SysUserFeign {
 
     /**
      * 根据主键获取消息配置信息
+     *
      * @param id
      * @return
      */
     @GetMapping("feign/msgConfig/getById")
-     MsgConfigDTO getMsgConfigById(@RequestParam(value = "id")String id);
+    MsgConfigDTO getMsgConfigById(@RequestParam(value = "id") String id);
 
     /**
      * 根据主键获取消息配置信息
+     *
      * @param msgConfigId
      * @return
      */
     @GetMapping("feign/msgChannelConfig/findByMsgConfigId")
-    List<MsgChannelConfigDTO> findByMsgConfigId(@RequestParam(value = "msgConfigId")String msgConfigId);
+    List<MsgChannelConfigDTO> findByMsgConfigId(@RequestParam(value = "msgConfigId") String msgConfigId);
 
     /**
      * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
@@ -328,6 +339,7 @@ public interface SysUserFeign {
 
     /**
      * 根据角色id查询用户列表
+     *
      * @param dto
      * @return
      */
@@ -337,6 +349,7 @@ public interface SysUserFeign {
 
     /**
      * 根据node key 获取到接收信息
+     *
      * @param nodeKey 节点key
      * @return
      */
@@ -346,20 +359,22 @@ public interface SysUserFeign {
 
     /**
      * 根据国家id获取到地区信息
-     * @author yl
-     * @date 2023-05-15 11:44
+     *
      * @param countryIds
      * @return java.util.List<com.erp.model.sys.dto.DictGlobalAreaDTO.InfoDTO>
+     * @author yl
+     * @date 2023-05-15 11:44
      */
     @PostMapping("feign/dict/listGlobalAreaByCountryIds")
     List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds);
 
     /**
      * 根据id获取国家信息
-     * @Author Luo_WG
-     * @Date 2023/5/26 10:45
+     *
      * @param id
      * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     * @Author Luo_WG
+     * @Date 2023/5/26 10:45
      **/
     @PostMapping("feign/dictCountry/getCountryById")
     DictCountryEntity getCountryById(@RequestBody String id);
@@ -378,62 +393,68 @@ public interface SysUserFeign {
 
     /**
      * 根据用戶id 获取金蝶的对应岗位code
-     * @author yl
-     * @date 2023-06-05 10:08
+     *
      * @param userId
      * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     * @author yl
+     * @date 2023-06-05 10:08
      */
     @PostMapping("feign/user/getUserKingdeePostByUserId")
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
+
     /**
+     * @param userIds
+     * @return List<UserKingdeePostInfoDTO>
      * @description: 根据用戶ids 获取金蝶的对应岗位code
      * @author Will
      * @date: 2023/6/6 10:44
-     * @param userIds
-     * @return List<UserKingdeePostInfoDTO>
      */
     @PostMapping("feign/user/listUserKingdeePostByUserIds")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds);
 
     /**
      * 获取用户区间配置
+     *
      * @param type
      * @return
      */
     @GetMapping("feign/cfgUserRange/getByType")
-    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type,
+    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type") String type,
                                                               @RequestParam(value = "addLast", required = false, defaultValue = "true") Boolean addLast);
+
     /**
+     * @param kingdeePostCodes
+     * @return List<UserKingdeePostInfoDTO>
      * @description: 根据金蝶的对应岗位code获取信息
      * @author Will
      * @date: 2023/6/6 10:44
-     * @param kingdeePostCodes
-     * @return List<UserKingdeePostInfoDTO>
      */
     @PostMapping("feign/user/listUserKingdeePostByKingdeePostCodes")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> kingdeePostCodes);
 
     /**
+     * @param deptCodeList
+     * @return List<SysDepartmentDTO>
      * @description: 根据部门编码查询
      * @author Will
      * @date: 2023/7/5 18:14
-     * @param deptCodeList
-     * @return List<SysDepartmentDTO>
      */
     @PostMapping("feign/dept/listDeptByCodeList")
     List<SysDepartmentDTO> listDeptByCodeList(List<String> deptCodeList);
+
     /**
+     * @param currCodeList
+     * @return List<CurrencyDTO>
      * @description: 根据金蝶编码查询币别
      * @author Will
      * @date: 2023/7/5 18:37
-     * @param currCodeList
-     * @return List<CurrencyDTO>
      */
     @PostMapping("feign/currency/listCurrencyByKingdeeCodeList")
     List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList);
 
     /**
      * 获取国家列表
+     *
      * @param
      * @return
      */
@@ -442,6 +463,7 @@ public interface SysUserFeign {
 
     /**
      * 获取省份城市列表
+     *
      * @param countryCode
      * @return
      */
@@ -457,6 +479,7 @@ public interface SysUserFeign {
 
     /**
      * 根据用户 获取到部门的负责人
+     *
      * @param userIdList
      * @return
      */
@@ -465,6 +488,7 @@ public interface SysUserFeign {
 
     /**
      * 根据角色id获取角色菜单
+     *
      * @param roleIdList
      * @return
      */
@@ -473,23 +497,39 @@ public interface SysUserFeign {
 
     /**
      * 根据部门名称查询用户
+     *
+     * @param deptName
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.FindUserDTO>>
      * @Author Luo_WG
      * @Date 2023/7/20 15:49
-     * @param deptName
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.FindUserDTO>>
      **/
     @PostMapping("feign/user/listUserByDept")
     List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
 
     /**
+     * @param deptNameList
+     * @return List<SysDepartmentDTO>
      * @description: 根据部门名称查询最高级别部门及下级
      * @author Will
      * @date: 2023/9/20 18:52
-     * @param deptNameList
-     * @return List<SysDepartmentDTO>
      */
     @PostMapping("feign/dept/listSameLevelDeptIdList")
     List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList);
 
-
+    /**
+     * 根据父级获取全量子集
+     *
+     * @param deptId
+     * @return
+     */
+    @GetMapping("feign/dept/getDeptByParentId")
+    List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId);
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 11:41
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

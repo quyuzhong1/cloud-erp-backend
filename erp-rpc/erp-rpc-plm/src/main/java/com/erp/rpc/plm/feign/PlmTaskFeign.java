@@ -1,14 +1,13 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -371,8 +370,66 @@ public interface PlmTaskFeign {
     BasicCategoryDTO getParent(Map<String, String> categoryParams);
 
     /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductDetailBatch")
+    Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list);
+
+    /**
      * 回填产品包装信息
      */
     @PostMapping("/feign/productPack/backFillPackaging")
-    void backFillPackaging(@RequestBody ProductPackDTO productPackDTO);
+    void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
+
+    /**
+     * 批量修改产品采购信息首批下单日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductPlaceOrderTimeBatch")
+    Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list);
+
+    /**
+     * 批量修改产品销售信息上市日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductSaleListingTimeBatch")
+    Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list);
+
+    /**
+     * 根据skuId查询产品采购信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
+     **/
+    @PostMapping("feign/product/listProductPurchaseBySkuId")
+    List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuId查询产品销售信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
+     **/
+    @PostMapping("feign/product/listProductSaleBySkuId")
+    List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds);
+
+    /**
+     * @description: 更新任务列表负责人名称
+     * @author Will
+     * @date: 2023/10/19 11:06
+     * @param sysUserInfoDTO
+     */
+    @PostMapping("/feign/projectTask/updateProjectTaskChargeName")
+    void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
+
+    /**
+     * @description: 查询数据发送同步任务
+     * @author Will
+     * @date: 2023/10/30 10:38
+     * @param syncParamDTO
+     */
+    @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
+    void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

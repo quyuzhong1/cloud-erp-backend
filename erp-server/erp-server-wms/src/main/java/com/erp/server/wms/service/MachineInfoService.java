@@ -3,7 +3,6 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
@@ -154,9 +153,11 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @description: 更新金蝶状态等信息
      * @author Will
      * @date: 2023/5/23 17:41
+     * @param id
+     * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据来源类型和来源id查找
@@ -172,4 +173,13 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return java.util.List<com.erp.model.wms.entity.MachineInfoEntity>
      **/
     List<MachineInfoEntity> listBySourceIds(List<String> ids);
+
+    /**
+     * 根据sku 信息查询加工单信息
+     * @author yl
+     * @date 2023-10-11 19:54
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.MachineInfoDTO.ListDTO>
+     */
+    List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto);
 }

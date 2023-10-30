@@ -22,7 +22,10 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeOrderItemEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -55,7 +58,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
     /**
      * 可用销售订单CODE
      */
-    private static final List<String> ORDER_TYPES = new ArrayList<>(Arrays.asList("B2BXSDD","XSDD01_SYS"));
+    private static final List<String> ORDER_TYPES = new ArrayList<>(Arrays.asList("B2BXSDD", "XSDD01_SYS"));
 
     @Resource
     private MongoService mongoService;
@@ -108,7 +111,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateTime.now().toString());
-            if(CollectionUtil.isEmpty(mongoData)){
+            if (CollectionUtil.isEmpty(mongoData)) {
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
@@ -123,10 +126,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
+        if (CollectionUtil.isNotEmpty(insertList)) {
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
         }
-        if (CollectionUtil.isEmpty(pushToMqList)){
+
+        if (CollectionUtil.isEmpty(pushToMqList)) {
             log.warn("金蝶销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
@@ -137,10 +141,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
@@ -169,23 +173,24 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
     public void updateAndSaveDb(KingdeeOrderEntity mongoDatum) {
         DmpOrderInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
-        if(null == orderInfo){
+        if (null == orderInfo) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
-            mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
             return;
         }
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SALE_ORDER_TAG.getName(),
                 orderInfo, StrUtil.format("{}_{}", orderInfo.getPlatformOrderId(), orderInfo.getSalesRecordNumber()));
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 
     /**
      * 请求金蝶云星空订单接口
+     *
      * @param dto
      * @return
      */
@@ -195,7 +200,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
-
+        //判断是否需要推送MQ
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
+            return Collections.emptyList();
+        }
 //            queryFilters.add(StrUtil.format("FBillNo ='{}'", "XSD-20230105-33831"));
         // 移除 订单类型过滤
 //            queryFilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
@@ -204,7 +213,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
-                "FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
+                "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
                 "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +
                 "FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifierId.FName," +
@@ -218,10 +227,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         Integer pageSize = 10000;
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+//            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             log.info("获取金蝶销售订单数据第[{}]页 有{}条记录", pageIndex, pageSize);
-            if (result.size() < pageSize){
+            if (result.size() < pageSize) {
                 dataSign = false;
             }
             if (CollectionUtil.isEmpty(result)) {
@@ -239,10 +248,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                         "FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus," +
                         "F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName,FAllAmount";
                 List<Map<String, Object>> itemResult = kingdeeApiUtils.queryList(itemFilterStr, itemFieldKeys, pageSize, 1, 10000);
-                if (CollectionUtil.isEmpty(itemResult)){
+                if (CollectionUtil.isEmpty(itemResult)) {
                     log.error("详情数据为空异常 itemFilterStr = {}  itemFieldKeys={} result ={}", itemFilterStr, itemFieldKeys, result);
                     // 保存异常信息到日志表
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(dto.getJobTaskDTO().getId(), itemFilterStr,JSONObject.toJSONString(itemResult),"详情数据为空异常");
+                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(dto.getJobTaskDTO().getId(), itemFilterStr, JSONObject.toJSONString(itemResult), "详情数据为空异常");
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 List<KingdeeOrderItemEntity> itemList = itemResult.stream().map(entity ->
@@ -250,7 +259,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
                 orderEntity.setOrderItemEntityList(itemList);
             }
             infoArrayList.addAll(entityList);
-            pageIndex ++;
+            pageIndex++;
         }
         return infoArrayList;
     }
@@ -263,11 +272,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         if (StrUtil.isEmpty(kingdeeOrderEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeOrderEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOrderEntity.getFSaleOrgId())
-        ){
+        ) {
             return null;
         }
         // 跳过单据类型
-        if (StrUtil.isBlank(kingdeeOrderEntity.getFBillTypeCode()) || !ORDER_TYPES.contains(kingdeeOrderEntity.getFBillTypeCode())){
+        if (StrUtil.isBlank(kingdeeOrderEntity.getFBillTypeCode()) || !ORDER_TYPES.contains(kingdeeOrderEntity.getFBillTypeCode())) {
             return null;
         }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
@@ -280,11 +289,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //买家姓名
         dmpOrderInfoEntity.setBuyerName(kingdeeOrderEntity.getFLinkMan());
         //店铺编号
-        dmpOrderInfoEntity.setShopNo("B2B");
+        dmpOrderInfoEntity.setShopNo(kingdeeOrderEntity.getCustomerCode());
         //店铺名称
-        dmpOrderInfoEntity.setShopName("B2B");
-        //客户名称
-        dmpOrderInfoEntity.setCustomerName(kingdeeOrderEntity.getFCustId());
+        dmpOrderInfoEntity.setShopName(kingdeeOrderEntity.getFCustId());
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
         BigDecimal orderFee = BigDecimal.ZERO;
@@ -295,7 +302,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         }
         List<KingdeeOrderItemEntity> orderItemEntityList = kingdeeOrderEntity.getOrderItemEntityList();
         for (KingdeeOrderItemEntity orderItemEntity : orderItemEntityList) {
-            if (Objects.nonNull(orderItemEntity.getFAllAmount())){
+            if (Objects.nonNull(orderItemEntity.getFAllAmount())) {
                 orderFee = orderFee.add(orderItemEntity.getFAllAmount().multiply(dmpOrderInfoEntity.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN));
             }
             totalCost = totalCost.add(orderItemEntity.getF_ulz_Decimal());
@@ -438,16 +445,16 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             dmpOrderItemEntity.setSpecifics("");
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
             switch (orderItemBean.getFDeliveryStatus()) {
-                case "C" :
-                    dmpOrderItemEntity.setStatus(3);
+                case "C":
+                    dmpOrderItemEntity.setStatus(String.valueOf(3));
                     break;
                 case "B":
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                 case "A":
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                     break;
                 default:
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                     break;
             }
             //商品仓库编号

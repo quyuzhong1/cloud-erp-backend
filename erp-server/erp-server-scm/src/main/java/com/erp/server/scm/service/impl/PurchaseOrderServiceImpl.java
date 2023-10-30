@@ -31,14 +31,17 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.dto.FirstMassInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -50,6 +53,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -369,6 +373,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -377,9 +382,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-
-        //采购订单删除
-        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除供应商数据
@@ -398,6 +400,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
+        //采购订单删除
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return Boolean.TRUE;
     }
 
@@ -430,7 +434,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchaseOrderEntity> list) {
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
         List<String> ids = list.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
@@ -450,6 +454,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
             updateInventoryTransCore(list);
+
+            // 填入首批下单时间
+            setFirstPlaceOrder(ids);
+
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //同步到WMS
@@ -457,6 +465,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         }
         return Boolean.TRUE;
+    }
+
+
+    private void setFirstPlaceOrder(List<String> ids) {
+        //填入首批下单时间
+        List<FirstPlaceOrderDTO> firstPlaceOrderList = baseMapper.listFirstPlaceOrderDate(ids);
+        List<String> skuIds = firstPlaceOrderList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIds);
+        //获取到没有设置首批下单时间的sku
+        List<String> skuIdList = productPurchaseEntities.stream().filter(req -> req.getPlaceOrderTime() == null).map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<ProductPurchaseEntity> purchaseEntityList = new ArrayList<>();
+        for (String skuId : skuIdList) {
+            FirstPlaceOrderDTO firstPlaceOrderDTO = firstPlaceOrderList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(firstPlaceOrderDTO)) {
+                ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
+                purchaseEntity.setSkuId(skuId);
+                purchaseEntity.setPlaceOrderTime(firstPlaceOrderDTO.getPurchaseDate());
+                purchaseEntityList.add(purchaseEntity);
+            }
+        }
+        plmTaskFeign.updateProductPlaceOrderTimeBatch(purchaseEntityList);
     }
 
     @Override
@@ -817,6 +846,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -1117,9 +1147,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchaseOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     /**

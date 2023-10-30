@@ -213,11 +213,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     /**
      * 修改金蝶同步状态
+     * @param id
+     * @param syncKingdeeId
      * @Author Luo_WG
      * @Date 2023/6/1 18:55
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据code 获取到销售出库单信息
@@ -326,4 +328,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void tempRepairHistoryDb();
+
+    /**
+     * 根据运单号模糊查询销售出库信息
+     * @author yl
+     * @date 2023-10-19 15:48
+     * @param trackNo
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     */
+    List<SoOutstockEntity> listByTrackNo(String trackNo);
 }

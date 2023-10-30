@@ -17,12 +17,16 @@ import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -55,13 +59,14 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
      * @date 2023-01-12 18:47
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void insert(BomInfoEntity bom, List<BomSkuDTO> bomSkuList) {
         if (bom != null) {
             ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
             bomHistory.setBomId(bom.getId());
             bomHistory.setSerialNumber(bom.getSerialNumber());
             bomHistory.setType(bom.getType());
-            bomHistory.setVersion(bom.getBomVersion());
+            bomHistory.setBomVersion(bom.getBomVersion());
             boolean saveFlag = this.save(bomHistory);
             //当保存成功的时候
             if (saveFlag) {
@@ -104,23 +109,27 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
             if (findUserDTO != null) {
                 item.setCreateUserName(findUserDTO.getUserName());
+            }else{
+                item.setCreateUserName("system");
             }
             String bomHistoryId = item.getBomHistoryId();
             List<ProductBomSkuHistoryEntity> refSkuList = skuList.stream().filter(h -> bomHistoryId.equals(h.getBomHistoryId())).collect(Collectors.toList());
-            StringBuilder sb=new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             if (CollectionUtils.isNotEmpty(refSkuList)) {
-                List<String> childrenSkuList=refSkuList.stream().map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
+                List<ProductBomSkuHistoryEntity> childrenSkuList = refSkuList.stream().collect(Collectors.toList());
                 //父sku
                 String parentSkuNo = refSkuList.get(0).getParentSkuNo();
                 sb.append("父物料:").append(parentSkuNo).append(";");
-                boolean addFlag=false;
-                for(String childrenSku:childrenSkuList){
-                    if(addFlag){
+                boolean addFlag = false;
+                for (ProductBomSkuHistoryEntity childrenSku : childrenSkuList) {
+                    if (addFlag) {
                         sb.append(",");
                     }
                     sb.append("子物料:");
-                    sb.append(childrenSku);
-                    addFlag=true;
+                    sb.append(childrenSku.getSkuNo());
+                    sb.append(" 数量:");
+                    sb.append(childrenSku.getQuantity());
+                    addFlag = true;
                 }
             }
             item.setRefSku(sb.toString());
@@ -141,12 +150,59 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             throw new ServiceException(ApiError.ERROR_95163);
         }
         List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomChildrenSkuList.get(0).getBomId())
-                .select(ProductBomHistoryEntity::getVersion)
+                .select(ProductBomHistoryEntity::getBomVersion)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        List<ProductBomHistoryDTO.VersionDTO>  resultList= list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
+        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getBomVersion())).collect(Collectors.toList());
         return resultList;
+    }
+
+    /**
+     * 保存bom 审核通过过的历史数据
+     *
+     * @param bom
+     * @return void
+     * @author yl
+     * @date 2023-10-11 18:52
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveBomApprovalHistory(BomInfoEntity bom) {
+        if (Objects.isNull(bom)) {
+            return;
+        }
+        String bomId = bom.getId();
+        //历史版本
+        List<ProductBomHistoryEntity> historyList = this.listByBomId(bomId);
+        //表示第一次升级
+        if(CollectionUtils.isEmpty(historyList)||historyList.size()==1){
+            List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
+            //先删除历史 bom
+            deleteByBomId(bom.getId());
+            //历史版本
+            ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
+            bomHistory.setBomId(bom.getId());
+            bomHistory.setSerialNumber(bom.getSerialNumber());
+            bomHistory.setType(bom.getType());
+            bomHistory.setBomVersion(bom.getBomVersion());
+            boolean saveFlag = this.save(bomHistory);
+            //当保存成功的时候
+            if (saveFlag) {
+                productBomSkuHistoryService.saveBomSku(bomHistory.getId(), bomSkuList);
+            }
+        }
+
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(ProductBomHistoryEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductBomHistoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), ProductBomHistoryEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 }

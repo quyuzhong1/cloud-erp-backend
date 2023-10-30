@@ -31,17 +31,17 @@
             ism.id,
             isd.id as detailId,
             ism.code,
-            isd.sku_id,
-            isd.sku_no,
-            ism.approve_status,
-            ism.invalid_status,
-            ism.org_id,
-            ism.warehouse_id,
-            ism.warehouse_name,
-            isd.warehouse_location,
+            isd.sku_id AS skuId,
+            isd.sku_no AS skuNo,
+            ism.approve_status AS approveStatus,
+            ism.invalid_status AS invalidStatus,
+            ism.org_id AS orgId,
+            ism.warehouse_id AS warehouseId,
+            ism.warehouse_name AS warehouseName,
+            isd.warehouse_location AS warehouseLocation,
             isd.qty,
-            pi.spu_no,
-            ps.sale_state
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState
             from init_stock_detail isd
             inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false and ism.dict_trade_type = '00'
             left join product_detail pd on pd.id = isd.sku_id
@@ -98,16 +98,16 @@
         ism.id,
         isd.id as detailId,
         ism.code,
-        isd.sku_id,
-        isd.sku_no,
-        ism.approve_status,
-        ism.invalid_status,
-        ism.org_id,
-        ism.warehouse_id,
-        isd.warehouse_location,
+        isd.sku_id AS skuId,
+        isd.sku_no AS skuNo,
+        ism.approve_status AS approveStatus,
+        ism.invalid_status AS invalidStatus,
+        ism.org_id AS orgId,
+        ism.warehouse_id AS warehouseId,
+        isd.warehouse_location AS warehouseLocation,
         isd.qty,
-        pi.spu_no,
-        ps.sale_state
+        pi.spu_no AS spuNo,
+        ps.sale_state AS saleState
         from init_stock_detail isd
         inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false and ism.dict_trade_type = '00'
         left join product_detail pd on pd.id = isd.sku_id
@@ -154,6 +154,11 @@
             ${params.permissionSql}
         </if>
         ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
         ism.create_time desc,isd.create_time asc
     </select>
     <select id="getTotalQty" resultType="java.lang.Integer">

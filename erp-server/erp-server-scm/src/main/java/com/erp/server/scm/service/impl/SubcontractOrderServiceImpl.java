@@ -458,8 +458,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "反审核操作");
     }
 
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
        List<SubcontractOrderEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
@@ -471,9 +473,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
          throw new ServiceException(ApiError.ERROR_98009);
        }
 
-        //删除发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
@@ -483,6 +482,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        // 删除主单数据
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
+
+        //删除发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
     }
 
     /**
@@ -981,6 +983,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void invalid(List<String> ids, String remark) {
         List<SubcontractOrderEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
@@ -1034,7 +1037,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //BOM信息
         List<String> parentSkuIds = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -1081,7 +1084,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
 
                 //bom信息
-                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId()) && obj.getBomVersion().equals(parentEntity.getBomVersion())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                     throw new ServiceException(ApiError.ERROR_95163);
                 }
@@ -1102,9 +1105,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(SubcontractOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
+
+    /**
+     * 根据bom skuId 获取数据
+     * @author yl
+     * @date 2023-10-12 9:53
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    @Override
+    public List<SubcontractOrderDTO.ListDTO> listByBomSku(String bomSkuId) {
+        return baseMapper.listByBomSku(bomSkuId);
     }
 
     /**

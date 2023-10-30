@@ -83,6 +83,9 @@
                 #{skuNo}
             </foreach>
         </if>
+        <if test="remoteSearchSku != null  and remoteSearchSku != ''">
+            AND srd.sku_no ILIKE concat('%',#{remoteSearchSku},'%')
+        </if>
     </select>
 
     <select id="listAddDetailViewById" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">

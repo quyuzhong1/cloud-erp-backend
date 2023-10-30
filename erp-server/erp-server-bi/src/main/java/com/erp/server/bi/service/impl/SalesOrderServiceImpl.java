@@ -2395,7 +2395,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             }
             sales.setType(ChartType.BAR);
 
-            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory() != null && req.getCategory().equals(category) ).collect(Collectors.toList());
+            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory() != null && req.getCategory().equals(category)).collect(Collectors.toList());
             for (String date : dateList) {
                 SalesFlagVO salesFlagVO = salesFlagVOList.stream().filter(req -> req.getName().equals(date)).findFirst().orElse(null);
                 switch (DateSalesTrendSearchTypeEnum.getEnumByCode(dto.getSearchType())) {
@@ -2476,7 +2476,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "MONTH":
                 String format = "{}月";
-                list = salesList.stream().map( req -> (req.getGroupDate() + "").substring(0, 7)).collect(Collectors.toList());
+                list = salesList.stream().map(req -> (req.getGroupDate() + "").substring(0, 7)).collect(Collectors.toList());
                 // 月度分组数据销售毛利率
                 Map<String, BigDecimal> monthMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> (e + "").substring(0, 7), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
@@ -3471,16 +3471,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setDepartment(deptIds);
         List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listDeptTargetFinish(paramDTO);
-        dto.setStartTime(dto.getEndTime());
-        dto.setEndTime(dto.getEndTime().plusMonths(1));
-        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
+        dto.setEndTime(dto.getStartTime());
+        dto.setStartTime(localDateTime);
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = null;
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            lastMonthList = biDataSourceCostService.deptCompletionRateRanking(dto, settleRate);
+        } else {
+            lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        }
+
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
             SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
-            if (dept != null) {
-                pagingDTO.setName(dept.getName());
-            } else {
-                pagingDTO.setName("无");
-            }
             //计算本月完成率
             List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetFinishList)) {
@@ -3493,6 +3495,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
                 pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+            if (dept != null) {
+                pagingDTO.setName(dept.getName());
+            } else {
+                pagingDTO.setName("无");
             }
         }
         return list;
@@ -3521,16 +3528,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setUserId(userIds);
         List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listUserTargetFinish(paramDTO);
-        dto.setStartTime(dto.getEndTime());
-        dto.setEndTime(dto.getEndTime().plusMonths(1));
-        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
+        dto.setEndTime(dto.getStartTime());
+        dto.setStartTime(localDateTime);
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = null;
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            lastMonthList = biDataSourceCostService.userCompletionRateRanking(dto, settleRate);
+        } else {
+            lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        }
+
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
-            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
-            if (findUserDTO != null) {
-                pagingDTO.setName(findUserDTO.getUserName());
-            } else {
-                pagingDTO.setName("无");
-            }
+
             //计算本月完成率
             List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetFinishList)) {
@@ -3543,6 +3552,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
                 pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                pagingDTO.setName(findUserDTO.getUserName());
+            } else {
+                pagingDTO.setName("无");
             }
         }
         return list;
@@ -3605,16 +3620,34 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> dataStrList = dataValueList.stream().filter(d -> d.getType().
                         equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
                 sorted().collect(Collectors.toList());
-        chartVO.setXAxis(dataStrList);
+
+        //如果是季度
+        if (dateType.equals("QUARTER")) {
+            List<String> quarterList = new ArrayList<>(12);
+            for (String dateStr : dataStrList) {
+                String quarterStr = conversionQuarterName(dateStr);
+                quarterList.add(quarterStr);
+            }
+            chartVO.setXAxis(quarterList);
+        } else {
+            chartVO.setXAxis(dataStrList);
+        }
+
         //对应值
         List<SeriesVO> seriesList = new ArrayList<>(2);
         //毛利额
         SeriesVO grossProfitSeries = new SeriesVO();
         grossProfitSeries.setName(MetricsEnum.GROSS_PROFIT.getName());
         grossProfitSeries.setType(ChartType.BAR);
-        List<BigDecimal> grossProfitValueList = dataValueList.stream().filter(d -> d.getType().
-                        equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
-                sorted().collect(Collectors.toList());
+        List<BigDecimal> grossProfitValueList = new ArrayList<>(2);
+        for (String str : dataStrList) {
+            BigDecimal dataValue = dataValueList.stream().filter(d ->
+                            d.getType().equals(grossProfit) && d.getDateStr().equals(str)
+                    ).map(BiDataSourceCostDTO.DataValueDTO::getValue).findFirst().
+                    orElse(BigDecimal.ZERO);
+            grossProfitValueList.add(dataValue);
+        }
+
         grossProfitSeries.setData(grossProfitValueList);
         seriesList.add(grossProfitSeries);
 
@@ -3622,9 +3655,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO grossProfitRateSeries = new SeriesVO();
         grossProfitRateSeries.setName(MetricsEnum.GROSS_PROFIT_RATE.getName());
         grossProfitRateSeries.setType(ChartType.LINE);
-        List<BigDecimal> grossProfitRateValueList = dataValueList.stream().filter(d -> d.getType().
-                        equals(grossProfitRate)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
-                sorted().collect(Collectors.toList());
+        List<BigDecimal> grossProfitRateValueList = new ArrayList<>(12);
+        for (String str : dataStrList) {
+            BigDecimal dataValue = dataValueList.stream().filter(d ->
+                    d.getType().equals(grossProfitRate) && d.getDateStr().equals(str)
+            ).map(BiDataSourceCostDTO.DataValueDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
+            grossProfitRateValueList.add(dataValue);
+        }
         grossProfitRateSeries.setData(grossProfitRateValueList);
         seriesList.add(grossProfitRateSeries);
         chartVO.setSeries(seriesList);
@@ -3638,12 +3675,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setName("B2B客户属性销售额占比");
         statistical.setChartType(ChartType.PIE);
         List<CustomerInfoVO> customerInfoVOS = customerFeign.listCustomerByProperty();
-        if (CollectionUtils.isEmpty(customerInfoVOS)){
+        if (CollectionUtils.isEmpty(customerInfoVOS)) {
             return statistical;
         }
         //分组
         Map<String, List<CustomerInfoVO>> map = customerInfoVOS.stream().collect(Collectors.groupingBy(CustomerInfoVO::getCustomerProperty));
-        if (map.isEmpty()){
+        if (map.isEmpty()) {
             return statistical;
         }
         //获取到结算汇率
@@ -3656,17 +3693,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
         List<Object> dataList = new ArrayList<>();
-        for(String s : map.keySet()){
+        for (String s : map.keySet()) {
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
-            if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+            if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
                 Map<String, Object> siteMap = new HashMap<>();
                 Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 siteMap.put("name", customerInfoVOS1.get(0).getCustomerProperty());
-                if(Objects.isNull(bigDecimal)){
+                if (Objects.isNull(bigDecimal)) {
                     siteMap.put("value", "0.00");
-                }else {
+                } else {
                     siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
                 }
                 dataList.add(siteMap);
@@ -3685,12 +3722,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setName("B2B客户等级销售额占比");
         statistical.setChartType(ChartType.PIE);
         List<CustomerInfoVO> customerInfoVOS = customerFeign.listCustomerByGroup();
-        if (CollectionUtils.isEmpty(customerInfoVOS)){
+        if (CollectionUtils.isEmpty(customerInfoVOS)) {
             return statistical;
         }
         //分组
         Map<String, List<CustomerInfoVO>> map = customerInfoVOS.stream().collect(Collectors.groupingBy(CustomerInfoVO::getGroupId));
-        if (map.isEmpty()){
+        if (map.isEmpty()) {
             return statistical;
         }
         //获取到结算汇率
@@ -3703,17 +3740,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
         List<Object> dataList = new ArrayList<>();
-        for(String s : map.keySet()){
+        for (String s : map.keySet()) {
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
-            if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+            if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
                 Map<String, Object> siteMap = new HashMap<>();
                 Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
-                if(Objects.isNull(bigDecimal)){
+                if (Objects.isNull(bigDecimal)) {
                     siteMap.put("value", "0.00");
-                }else {
+                } else {
                     siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
                 }
                 dataList.add(siteMap);

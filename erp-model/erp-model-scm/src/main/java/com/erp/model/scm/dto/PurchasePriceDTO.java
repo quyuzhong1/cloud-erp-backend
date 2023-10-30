@@ -465,10 +465,26 @@ public class PurchasePriceDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
         /**
          * 币制
          */
         private String currency;
+
+        /**
+         * 币制符号
+         */
+        private String currencySymbol;
     }
 
 

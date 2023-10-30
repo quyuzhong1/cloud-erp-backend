@@ -1,18 +1,25 @@
 package com.erp.server.dmp.push.consumer;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,11 +35,18 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_contact_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_CONTACT, consumeMode = ConsumeMode.ORDERLY)
-public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
+        selectorExpression = "kingdee_customer_contact_tag",
+        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_CONTACT,
+        consumeMode = ConsumeMode.ORDERLY)
+public class KingdeeCustomerContactConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private KingdeeCustomerContactConsumerService kingdeeCustomerContactConsumerService;
+
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
+
 
     public static void main(String[] args) {
 /*        //模块类型
@@ -75,16 +89,17 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
 
     }
 
+
     @Override
-    public void onMessage(Map<String, Object> map) {
-        try {
-            kingdeeCustomerContactConsumerService.executeConsumer(map);
-        }catch (Exception e){
-            log.error("KingdeeCustomerContactConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
-        }
+    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
 
-
-
+    @Override
+    public ApiResult<?> handle(Object ext) {
+        Map<String, Object> map = JSONUtil.parseObj(ext);
+        kingdeeCustomerContactConsumerService.executeConsumer(map);
+        return ApiResult.success();
     }
 
 

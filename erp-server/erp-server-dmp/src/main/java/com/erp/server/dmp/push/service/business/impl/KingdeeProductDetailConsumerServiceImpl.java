@@ -1,20 +1,20 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.server.dmp.push.service.business.KingdeeProductDetailConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
+import com.erp.server.dmp.push.service.business.KingdeeProductDetailConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
@@ -90,16 +90,13 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
      * @param type
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map,platformEntity.getId(),type);
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
         //判断金蝶系统是否已存在该数据
         JSONObject model;
@@ -108,14 +105,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //未查找到数据，新增数据
-            SaveResult save;
-            try {
-                save = apiUtils.save(param);
-            } catch (Exception ex) {
-                //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(json),JSONUtil.toJsonStr(ex),type, ApiSendStatusEnum.FAILURE.getCode());
-                return;
-            }
+            SaveResult  save = apiUtils.save(param);
             //新增成功后编辑二级类目
             String id = save.getResult().getId();
             //主单据id
@@ -133,7 +123,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
         Boolean flag = Boolean.FALSE;
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            flag = kingdeeCommonService.unAudit(platformEntity, map,apiUtils,String.valueOf(id),type);
+            flag = kingdeeCommonService.unAudit(apiUtils,String.valueOf(id));
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {

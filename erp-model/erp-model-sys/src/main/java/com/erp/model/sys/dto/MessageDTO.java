@@ -108,5 +108,10 @@ public class MessageDTO implements Serializable {
          */
         public String type;
 
+        /**
+         * 应用：PDA、PC
+         */
+        public List<String> application;
+
     }
 }

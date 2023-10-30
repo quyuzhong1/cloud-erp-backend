@@ -8,9 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
-import com.common.business.service.SuperService;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -207,6 +204,16 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     Integer getPushDownBySourceIds(List<String> soIds);
 
     /**
+     * 更新金蝶状态等信息
+     * @Author Luo_WG
+     * @date: 2023/5/23 17:41
+     * @param id
+     * @param syncKingdeeId
+     * @return Boolean
+     **/
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
+
+    /**
      * 更新销售订单地址信息
      * @param soId
      * @param receiveAddress
@@ -232,4 +239,6 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return com.erp.model.oms.dto.SoReturnDTO.View
      **/
     SoReturnDTO.View pdaView(String id);
+
+    String syncOrderToDmp(SoReturnEntity entity, String syncOperate);
 }

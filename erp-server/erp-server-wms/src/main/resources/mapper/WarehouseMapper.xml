@@ -2,20 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.WarehouseMapper">
 
-    <update id="updateSyncKingdeeStatus">
-        update warehouse set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
 
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
       SELECT
@@ -85,20 +71,20 @@
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
          SELECT
          id,
-         create_user_name,
-         create_time,
+         create_user_name AS createUserName,
+         create_time AS createTime,
          name,
-         type_id,
-         charge_id,
+         type_id AS typeId,
+         charge_id AS chargeId,
          contacts,
-         contact_tel_number,
+         contact_tel_number AS contactTelNumber,
          disabled,
          address,
-         org_id,
-         kingdee_warehouse_code,
-         is_virtual,
-         approve_status,
-         is_enable_location
+         org_id AS orgId,
+         kingdee_warehouse_code AS kingdeeWarehouseCode,
+         is_virtual AS isVirtual,
+         approve_status AS approveStatus,
+         is_enable_location AS isEnableLocation
       FROM  warehouse  WHERE is_deleted=false
       <choose>
           <when test="params.ids!=null and params.ids.size>0">
@@ -145,7 +131,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
 
 
     </select>
@@ -157,7 +149,7 @@
         disabled,
         org_id AS orgId,
         kingdee_warehouse_code AS code
-        FROM warehouse  WHERE is_deleted=false
+        FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="params.name !=null  and params.name!=''">
             AND  name ILIKE concat('%', #{params.name} ,'%')
         </if>
@@ -219,7 +211,7 @@
             AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
         </if>
         group by inventory_id) as tf on inv.id = tf.inventory_id
-        where pd.is_deleted = false
+        where pd.is_deleted = false and wh.disabled = false and wl.is_deleted = false and wlt.is_deleted = false and wh.approve_status = 'approve'
         and pi.property not in ('服务','费用')
         and pd.status = 2
         AND inv.org_id is not null

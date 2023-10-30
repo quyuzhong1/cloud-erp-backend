@@ -92,6 +92,9 @@
         <if test="params.no != null  and params.no != ''">
             AND (pi.spu_no ILIKE concat('%',#{params.no},'%') OR pd.sku_no ILIKE concat('%',#{params.no},'%') OR pd.name ILIKE concat('%', #{params.no},'%'))
         </if>
+        <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+            AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+        </if>
         <if test="params.productId != null and params.productId != ''  ">
             AND pd.product_id = #{params.productId}
         </if>
@@ -601,6 +604,53 @@
         </if>
 
     </select>
+
+    <select id="listSkuBySkuNos" resultType="com.erp.model.plm.dto.ProductSearchDTO$SkuListDTO">
+        SELECT
+            pd.id AS skuId,
+            pi.id AS productId,
+            pi.spu_no,
+            pi.name AS spuName,
+            pi.sale_method,
+            pd.sku_no,
+            pd.images_url,
+            pd.name AS productName,
+            pd.variant_property,
+            pl.declare_chinese_name,
+            pl.declare_model,
+            pi.brand_name,
+            pd.unit_name,
+            pd.status,
+            pp.moq,
+            pp.main_supplier,
+            ppk.box_qty
+        FROM  product_detail pd
+        left join product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
+        left join product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        WHERE  pd.is_deleted = FALSE
+        <if test="params.statusList != null and params.statusList.size>0">
+            AND pd.status IN
+            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size>0">
+            AND pd.sku_no IN
+            <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != '' and params.permissionSql != null">
+            ${params.permissionSql}
+        </if>
+        ORDER BY pd.create_time DESC
+    </select>
+
+
+
     <select id="searchSku" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
         pd.id AS skuId,
@@ -872,18 +922,13 @@
         LIMIT 1
     </select>
 
-    <update id="updateSyncKingdeeStatus">
-        update product_detail set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+    <select id="listByChargeId" resultType="com.erp.model.plm.entity.ProductDetailEntity">
+        SELECT
+            id,
+            charge_id,
+            charge_name
+        FROM  product_detail
+        WHERE is_deleted = false and string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
+    </select>
+
 </mapper>

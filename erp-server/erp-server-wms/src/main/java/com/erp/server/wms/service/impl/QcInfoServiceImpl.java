@@ -553,7 +553,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
 
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
             bill.setCode(code);
@@ -650,7 +650,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (ObjectUtils.isEmpty(qcProductEntity)) {
                 throw new ServiceException(ApiError.ERROR_99015);
             }
-
+            long count = productPactList.stream().filter(obj -> obj.getSkuId().equals(qcProductEntity.getSkuId())).count();
+            if (count > 0) {
+                continue;
+            }
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
@@ -659,13 +662,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
-            plmTaskFeign.backFillPackaging(productPackDTO);
-
             productPactList.add(productPackDTO);
         }
         if (CollectionUtils.isEmpty(productPactList)){
             return;
         }
+        //plm回填信息
+        plmTaskFeign.backFillPackaging(productPactList);
         //异步发送通知
         qcResultService.sendQcBackFillPackaging(productPactList);
     }
@@ -878,7 +881,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //当采购订单明细id 不为空的时候
@@ -970,7 +973,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         bill.setId(id);
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
@@ -1413,9 +1416,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
             dto.setStockInQty(qty);
             //币种符号
-            String currencySymbol = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getCurrencySymbol).findFirst().orElse(null);
-            dto.setCurrencySymbol(currencySymbol);
-
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            dto.setCurrency(detailEntity.getCurrency());
+            dto.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //单价
             BigDecimal taxPrice = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getTaxPrice())).orElse(BigDecimal.ZERO);
             dto.setTaxPrice(taxPrice);
@@ -2399,4 +2402,21 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcResultService.updateQcSampleResult(dto.getIds(), dto.getQcSampleResult());
     }
 
+    @Override
+    public void repairQcInfoSourceCode() {
+        List<QcInfoEntity> list = this.list();
+        for (QcInfoEntity qcInfoEntity : list) {
+            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(qcInfoEntity.getSourceType())) {
+                WarehouseReceiveEntity info = warehouseReceiveService.getById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(qcInfoEntity.getSourceType())) {
+                PurchaseOrderEntity info = scmTaskFeign.getPurchaseOrderById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(qcInfoEntity.getSourceType())) {
+                SoReturnReceiveEntity info = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            }
+        }
+
+    }
 }

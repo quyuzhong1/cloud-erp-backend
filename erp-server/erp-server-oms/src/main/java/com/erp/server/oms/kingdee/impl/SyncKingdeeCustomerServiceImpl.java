@@ -2,15 +2,16 @@ package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
@@ -26,20 +27,20 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -61,16 +62,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     private CustomerInvoiceService customerInvoiceService;
 
     @Resource
-    private CustomerSellerService customerSellerService;
-
-    @Resource
     private CustomerAddressService customerAddressService;
 
     @Resource
     private CustomerContactService customerContactService;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private DictBasicService dictBasicService;
@@ -82,12 +80,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-        //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
-        customerInfoService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -95,6 +91,14 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("id", entity.getId());
         //客户编号
         resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
+
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));
         String useOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getUseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
         //使用组织
@@ -189,7 +193,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode("100");
             findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
@@ -224,7 +228,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("customerAddressList", customerAddressList);
         String platformType = entity.getPlatformType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.PLATFORM.getType(), platformType);
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SALES_PLATFORM.getType(), platformType);
         String platformTypeKingdeeCode = "";
         if (dictBasic != null) {
             platformTypeKingdeeCode = dictBasic.getRemark();
@@ -242,17 +246,34 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //同步好客户信息后再同步客户联系人
         List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
         resultMap.put("customerList", contactEntities);
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //审核通过发送金蝶
-                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-                //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
-                return customerInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
-            }
-            return Boolean.TRUE;
-        });
+
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+        //审核通过联系人发送金蝶
+        contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+    }
+
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+        taskFeignDTO.setSourceId(entity.getId());
+        taskFeignDTO.setSourceCode(entity.getName());
+        taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
+        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        taskFeignDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 }

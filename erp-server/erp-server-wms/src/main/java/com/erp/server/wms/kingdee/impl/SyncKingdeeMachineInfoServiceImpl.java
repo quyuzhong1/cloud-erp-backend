@@ -1,37 +1,40 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.service.MachineDetailService;
-import com.erp.server.wms.service.MachineInfoService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -49,13 +52,10 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private MachineInfoService machineInfoService;
-
-    @Resource
     private MachineDetailService machineDetailService;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private DmpMqFeign dmpMqFeign;
 
     @Resource
     private WarehouseService warehouseService;
@@ -64,13 +64,25 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     private MachineSubComponentsService machineSubComponentsService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(MachineInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
-        //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
-        machineInfoService.updateSyncKingdeeStatus(kingdeeDTO);
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //业务id
+        resultMap.put("id", entity.getId());
+        //其他出库单号
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
 
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            sendMqAndSaveTask(entity,operate,resultMap);
+            return;
+        }
         //加工明细
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -86,27 +98,17 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(entity.getWarehouseId());
 
-        //根据明细skuIds查询bom
-        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
-
-
         //所有仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
 
         //员工岗位
         List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getReceiverId()));
 
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //业务id
-        resultMap.put("id", entity.getId());
-        //其他出库单号
-        resultMap.put("code", entity.getCode());
+
         //其他出库类型
         resultMap.put("type", entity.getType());
         //出库日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
             //领料人
@@ -163,12 +165,10 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
-            if (CollectionUtils.isNotEmpty(bomInfoList)) {
-                String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
-                //参照版本
-                jsonObject.set("referenceVersion", referenceVersion);
-            }
+
+            String referenceVersion = detail.getSkuNo() + "_" + detail.getReferenceVersion();
+            //参照版本
+            jsonObject.set("referenceVersion", referenceVersion);
             //库存组织编码
             jsonObject.set("inventoryOrgCode", inventoryOrgCode);
             //领料组织编码
@@ -209,21 +209,30 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         }
         resultMap.put("detailList", list);
 
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
+        //生成任务
+        sendMqAndSaveTask(entity,operate,resultMap);
+    }
 
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_MACHINE_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
-                return machineInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
-            }
-            return Boolean.TRUE;
-        });
-
-
-
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private void sendMqAndSaveTask (MachineInfoEntity entity, String operate, Map<String, Object> resultMap) {
+        //添加推送任务
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_MACHINE_INFO_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

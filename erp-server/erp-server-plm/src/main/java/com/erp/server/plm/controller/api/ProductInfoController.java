@@ -7,8 +7,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductProgressStatusEnum;
@@ -32,6 +36,7 @@ import java.util.*;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("product")
 public class ProductInfoController extends BaseController {
 
@@ -134,6 +139,7 @@ public class ProductInfoController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理所有导出")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "plm:product:paging",
@@ -152,6 +158,7 @@ public class ProductInfoController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理我的项目导出")
     @PostMapping("/myProjectExport")
     public ApiResult myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result= productInfoService.myProjectExport(dto,response);
@@ -165,6 +172,7 @@ public class ProductInfoController extends BaseController {
      * @param response
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理收藏项目导出")
     @PostMapping("/collectExport")
     public ApiResult collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result= productInfoService.collectExport(dto,response);
@@ -206,6 +214,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-编辑时候详情
      */
+    @LogViewService
     @PostMapping("/productInfo")
     public ApiResult<ProductDTO> info(@RequestBody @Validated BaseIdDTO dto) {
         ProductDTO product = productInfoService.info(dto.getId());
@@ -215,6 +224,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-更改对应数据
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品列表-更改对应数据")
     @PostMapping("/updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);
@@ -225,6 +235,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-新建产品
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品列表-新建产品")
     @PostMapping("/saveOrUpdate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -240,6 +251,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-移动分类
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品列表-移动分类:产品ids={productIds},分类id={categoryId}")
     @PostMapping("/updateCategory")
     public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
         Boolean flag = productInfoService.updateCategory(dto);
@@ -249,12 +261,14 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-删除产品
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品列表-删除产品")
     @PostMapping("/remove")
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();
     }
 
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品列表-下载模板")
     @GetMapping("/exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         productInfoService.exportTemplate(request, response);
@@ -290,6 +304,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 保存模板
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品列表-保存模板")
     @PostMapping("/saveTemplate")
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
@@ -309,6 +324,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 数据导出
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品列表-数据导出")
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
@@ -375,6 +391,7 @@ public class ProductInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置产品进度:产品id={productId},进展状态={progressStatus}(normal=正常;postpone=延期;risk=风险;no=暂无)")
     @PostMapping("/setProgressStatus")
     public ApiResult setProgressStatus(@RequestBody @Validated SetProductProgressStatusDTO dto) {
         Boolean result = productInfoService.setProgressStatus(dto);
@@ -387,6 +404,7 @@ public class ProductInfoController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置产品示意图:产品id={productId}")
     @PostMapping("/setSchematicImageUrl")
     public ApiResult setSchematicImageUrl(@RequestBody @Validated SetSchematicImageUrlDTO dto) {
         Boolean result = productInfoService.setSchematicImageUrl(dto);
@@ -403,6 +421,7 @@ public class ProductInfoController extends BaseController {
      * @author yl
      * @date 2022-10-09 14:38
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "确认立项:ids={ids}")
     @PostMapping("/batchEstablish")
     public ApiResult batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         boolean flag = productInfoService.batchEstablish(dto.getIds());

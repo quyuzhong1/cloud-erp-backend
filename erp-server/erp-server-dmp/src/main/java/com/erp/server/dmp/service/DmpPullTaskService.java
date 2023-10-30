@@ -1,10 +1,16 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -57,5 +63,66 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * 统一发送MQ消息并保存任务
      * @param dto
      */
-    void sendMqAndSaveTask(DmpSyncTaskDTO dto);
+    void sendMqAndSaveTask(DmpSyncTaskDTO.AddDTO dto);
+    /**
+     * @description: 列表tab
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<DmpPullTaskDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<DmpPullTaskDTO.ListDTO> paging(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 批量同步
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param ids
+     * @return Boolean
+     */
+    Boolean batchSync(List<String> ids);
+     /* 处理oms推送订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncOmsOrderToDmp(Map<String, Object> resultMap);
+    /**
+     * 处理oms推送出库订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncWmsOutStockToDmp(Map<String, Object> resultMap);
+    /**
+     * 处理oms推送入库订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncOmsReturnToDmp(Map<String, Object> resultMap);
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto);
+
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    String savePullTask(DmpPullTaskFeignDTO dto);
 }

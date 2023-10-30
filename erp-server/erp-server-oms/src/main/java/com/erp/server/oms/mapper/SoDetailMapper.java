@@ -85,4 +85,6 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return
      */
     List<SoDetailDTO.TypeCountDTO> listDeliveryCount(@Param("permissionSql") String permissionSql);
+
+
 }

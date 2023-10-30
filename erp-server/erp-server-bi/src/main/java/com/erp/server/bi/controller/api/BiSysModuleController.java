@@ -1,16 +1,25 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.validator.UpdateGroup;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
+import com.erp.model.bi.entity.BiSysModuleEntity;
+import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.service.BiSysModuleService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +30,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("模块管理")
 @RequestMapping("sys/module")
 public class BiSysModuleController extends BaseController {
 
@@ -35,6 +45,7 @@ public class BiSysModuleController extends BaseController {
      * @param dto 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增系统模块")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated ModuleSysDTO dto) {
         Boolean flag = this.sysModuleService.insert(dto);
@@ -42,15 +53,26 @@ public class BiSysModuleController extends BaseController {
     }
 
     /**
-     * 新增模块
+     * 更新模块
      *
      * @param dto 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新系统模块")
     @PostMapping("/update")
     public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
         Boolean flag = this.sysModuleService.updateSysModule(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 模块详情
+     */
+    @LogViewService
+    @PostMapping("/view")
+    public ApiResult<BiSysModuleEntity> view(@RequestBody @Validated BaseIdDTO dto) {
+        BiSysModuleEntity result = sysModuleService.view(dto.getId());
+        return success(result);
     }
 
 
@@ -82,6 +104,7 @@ public class BiSysModuleController extends BaseController {
     /**
      * 模块配置
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新系统模块配置:id={id},模块名称={name}")
     @PostMapping("/moduleConfiguration")
     public ApiResult moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
         Boolean flag = this.sysModuleService.moduleConfiguration(dto);

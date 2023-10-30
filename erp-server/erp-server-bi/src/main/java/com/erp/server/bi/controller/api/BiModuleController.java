@@ -2,22 +2,27 @@ package com.erp.server.bi.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiBatchShareDTO;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
-import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.service.BiModuleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +34,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@LogSystemModule("模块管理")
 @RequestMapping("module")
 @Validated
 public class BiModuleController extends BaseController {
@@ -57,6 +63,7 @@ public class BiModuleController extends BaseController {
      * @param dto 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增模块")
     @PostMapping("/add")
     public ApiResult add(@Validated @ModelAttribute  ModuleDTO dto) {
         Boolean flag = this.biModuleService.insert(dto);
@@ -69,6 +76,7 @@ public class BiModuleController extends BaseController {
      * @param dto 实体
      * @return 新增结果
      */
+    @LogViewService
     @PostMapping("/details")
     public ApiResult<ModuleDTO> add(@RequestBody @Validated BaseIdDTO dto) {
         ModuleDTO result = this.biModuleService.details(dto.getId());
@@ -82,6 +90,7 @@ public class BiModuleController extends BaseController {
      * @param dto 实体
      * @return 编辑结果
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新模块")
     @PostMapping("/update")
     public ApiResult edit(@ModelAttribute @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
         Boolean flag = this.biModuleService.update(dto);
@@ -93,6 +102,7 @@ public class BiModuleController extends BaseController {
      *
      * @return 删除是否成功
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除模块")
     @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = this.biModuleService.deleteById(dto.getId());
@@ -105,6 +115,7 @@ public class BiModuleController extends BaseController {
      *
      * @return 删除是否成功
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置模板状态:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean flag = this.biModuleService.updateState(dto);
@@ -132,6 +143,7 @@ public class BiModuleController extends BaseController {
      * @param dtoList
      * @return ApiResult<List<BatchResultDTO>>
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "模板批量设置权限:id={id}, 分享标示={shareFlag},分享的身份id列表={shareFlagIdList}")
     @PostMapping("/batchShare")
     public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());

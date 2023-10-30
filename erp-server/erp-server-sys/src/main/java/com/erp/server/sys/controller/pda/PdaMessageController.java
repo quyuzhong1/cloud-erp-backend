@@ -1,7 +1,10 @@
 package com.erp.server.sys.controller.pda;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.server.sys.service.MessageService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +21,7 @@ import java.util.List;
  * @Date 2023/8/10 14:33
  **/
 @RestController
+@LogSystemModule("PDA消息通知")
 @RequestMapping("/pdaMessage")
 public class PdaMessageController extends BaseController {
 
@@ -78,6 +82,7 @@ public class PdaMessageController extends BaseController {
      * @Date 2023/8/22 12:18
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "关闭消息通知")
     @GetMapping(value = "/closeMessageNotice")
     public ApiResult closeMessageNotice() {
         Boolean flag = messageService.closeMessageNotice();

@@ -1,10 +1,14 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
@@ -34,6 +38,7 @@ import java.util.Objects;
  * @since 2023-01-11 14:05:03
  */
 @RestController
+@LogSystemModule("BOM管理")
 @RequestMapping("change")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 @Slf4j
@@ -50,6 +55,7 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加变更")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated AddChangeDTO dto) {
         Boolean result = productChangeService.add(dto);
@@ -63,6 +69,7 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新变更:id={id},数据源id={源数据id},变更类型={type}")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated UpdateChangeDTO dto) {
         Boolean result = productChangeService.edit(dto);
@@ -121,6 +128,7 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废变更")
     @PostMapping("/cancellation")
     public ApiResult cancellation(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productChangeService.cancellation(dto.getId());
@@ -146,6 +154,7 @@ public class ProductChangeController extends BaseController {
      * @param
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "变更审核通过")
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
         productChangeService.approvalPass(dto);
@@ -158,6 +167,7 @@ public class ProductChangeController extends BaseController {
      * @param
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "变更审核不通过")
     @PostMapping("/approvalNoPass")
     public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         productChangeService.approvalNoPass(dto);
@@ -170,6 +180,7 @@ public class ProductChangeController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "变更反审核")
     @PostMapping("/restartAudit")
     public ApiResult restartAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productChangeService.restartAudit(dto.getId());
@@ -183,6 +194,7 @@ public class ProductChangeController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "变更流程监听后最后通过:流程id={processId},具体业务表id={businessTableId}")
     @PostMapping("/workflow/pass")
     public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
         productChangeService.processPass(dto);

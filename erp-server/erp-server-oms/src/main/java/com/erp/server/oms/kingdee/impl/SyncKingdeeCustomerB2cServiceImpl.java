@@ -187,7 +187,7 @@ public class SyncKingdeeCustomerB2cServiceImpl implements SyncKingdeeCustomerB2c
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode("100");
             findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
@@ -222,7 +222,7 @@ public class SyncKingdeeCustomerB2cServiceImpl implements SyncKingdeeCustomerB2c
         }
         resultMap.put("customerAddressList", customerAddressList);
         String platformType = entity.getPlatformType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.PLATFORM.getType(), platformType);
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SALES_PLATFORM.getType(), platformType);
         String platformTypeKingdeeCode = "";
         if (dictBasic != null) {
             platformTypeKingdeeCode = dictBasic.getRemark();
