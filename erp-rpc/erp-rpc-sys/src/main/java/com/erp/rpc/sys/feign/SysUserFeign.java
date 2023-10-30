@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign;
 
 
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseIdDTO;
