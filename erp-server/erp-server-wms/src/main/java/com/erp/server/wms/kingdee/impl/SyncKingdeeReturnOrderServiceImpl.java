@@ -101,6 +101,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         Map<String, Object> resultMap = new HashMap<>();
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("returnType", ReturnOrderSourceEnum.QC.getKingdeeCode());
+            return;
         } else {
             resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getKingdeeCode());
         }
