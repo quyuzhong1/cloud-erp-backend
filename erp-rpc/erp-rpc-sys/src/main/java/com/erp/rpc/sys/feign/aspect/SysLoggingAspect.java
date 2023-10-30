@@ -511,6 +511,9 @@ public class SysLoggingAspect {
         if (!LogActionEnum.UPDATE.equals(controllerLog.value())) {
             return null;
         }
+        if (null == id){
+            return null;
+        }
         // 查询更新后的信息
         return invokeViewMethod(joinPoint.getTarget(), id);
     }
@@ -522,6 +525,9 @@ public class SysLoggingAspect {
      */
     public Object beforeFindObj(JoinPoint joinPoint, LogAction controllerLog, Object id) {
         if (!controllerLog.value().hasCompare()) {
+            return null;
+        }
+        if (null == id){
             return null;
         }
         // 记录更新前后信息
@@ -635,6 +641,10 @@ public class SysLoggingAspect {
         if (!logAction.value().hasCompare()) {
             return "";
         }
+        if (null == original || null == updated){
+            throw new ServiceException("未找到对比请求详情前对象或请求详情后对象:请检查提交的keyIdName是否是id");
+        }
+
         // 查询需要记录修改的字段
         List<SysLogRecordFieldListDTO> fieldList = sysLogRecordFieldFeign.list(new SysLogRecordFieldDTO.ListDTO(Collections.singletonList(classPath)));
         if (CollectionUtils.isEmpty(fieldList)) {
