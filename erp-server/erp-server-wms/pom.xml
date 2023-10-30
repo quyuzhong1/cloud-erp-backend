@@ -126,6 +126,12 @@
             <version>2.3.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.erp.server</groupId>
+            <artifactId>erp-server-plm</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
