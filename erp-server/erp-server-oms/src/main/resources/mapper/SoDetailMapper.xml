@@ -144,7 +144,18 @@
         sd.delivery_status,
         si.approve_status,
         sd.kingdee_detail_id,
-        sd.platform_sku_no
+        sd.platform_sku_no,
+        sd.purchase_price,
+        sd.sale_cost,
+        sd.sale_profit,
+        sd.sale_profit_rate,
+        sd.tax_amount,
+        sd.warehouse_location,
+        sd.amount_local_currency,
+        sd.all_amount_local_currency,
+        sd.discount_amount,
+        sd.tax_amount_before,
+        sd.exchange_rate
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
