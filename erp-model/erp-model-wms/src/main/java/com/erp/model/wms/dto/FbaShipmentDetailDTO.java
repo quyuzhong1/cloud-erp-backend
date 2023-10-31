@@ -89,8 +89,6 @@ public class FbaShipmentDetailDTO implements Serializable {
         * 是否组合品
         */
         private Boolean isCombo;
-
-
     }
 
     /**
