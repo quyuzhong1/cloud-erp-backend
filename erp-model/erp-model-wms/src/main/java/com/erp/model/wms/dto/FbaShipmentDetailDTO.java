@@ -33,7 +33,12 @@ public class FbaShipmentDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        private String  id;
+        private String id;
+
+        /**
+         * 图片地址
+         */
+        private String imageUrl;
 
         /**
         * 主表id
