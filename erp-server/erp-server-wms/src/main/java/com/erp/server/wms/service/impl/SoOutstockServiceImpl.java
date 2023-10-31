@@ -1038,7 +1038,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 String detailId = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId()))
                         .max(Comparator.comparing(SoOutstockDetailEntity::getId)).map(SoOutstockDetailEntity::getId).orElse("");
                 if (item.getDetailId().equals(detailId)) {
-                    BigDecimal otherAmount = soOutStockDetailList.stream().filter(obj -> !obj.getId().equals(item.getDetailId())).map(obj -> MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), obj.getActualQty()),
+                    BigDecimal otherAmount = soOutStockDetailList.stream().filter(obj -> !obj.getId().equals(item.getDetailId()) && thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(obj -> MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), obj.getActualQty()),
                             MathUtil.valueOf(soDetailEntity.getQty().toString())).setScale(2, BigDecimal.ROUND_DOWN)).reduce(BigDecimal.ZERO, BigDecimal::add);
                     cnyTaxAmount = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(), otherAmount);
                 }
