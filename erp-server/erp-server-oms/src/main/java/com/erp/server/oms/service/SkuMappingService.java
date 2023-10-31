@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -124,10 +125,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @description: 根据skuIds查询
      * @author Will
      * @date: 2023/8/24 18:52
-     * @param skuNoList
+     * @param list
      * @return List<ListSkuDTO>
      */
-    List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<String> skuNoList);
+    List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(ValidList<SkuMappingDTO.ListSkuParamDTO> list);
 
     
     /**

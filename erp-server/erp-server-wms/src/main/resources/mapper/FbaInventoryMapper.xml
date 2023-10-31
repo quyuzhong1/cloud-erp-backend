@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbaInventoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaInventoryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="platform_code" property="platformCode" />
+       <result column="name" property="name" />
+       <result column="asin" property="asin" />
+       <result column="m_sku" property="mSku" />
+       <result column="fn_sku" property="fnSku" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="delivery_channels" property="deliveryChannels" />
+       <result column="fbm_fulfillable_qty" property="fbmFulfillableQty" />
+       <result column="inbound_working_qty" property="inboundWorkingQty" />
+       <result column="inbound_shipped_qty" property="inboundShippedQty" />
+       <result column="inbound_receiving_qty" property="inboundReceivingQty" />
+       <result column="fulfillable_qty" property="fulfillableQty" />
+       <result column="reserved_qty" property="reservedQty" />
+       <result column="researching_qty" property="researchingQty" />
+       <result column="unsellable_qty" property="unsellableQty" />
+       <result column="inventory_age" property="inventoryAge" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_code, name, asin, m_sku, fn_sku, sku_no, product_name, delivery_channels, fbm_fulfillable_qty, inbound_working_qty, inbound_shipped_qty, inbound_receiving_qty, fulfillable_qty, reserved_qty, researching_qty, unsellable_qty, inventory_age
+    </sql>
+
+
+</mapper>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbaShipmentMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaShipmentEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+       <result column="fulfillment_center" property="fulfillmentCenter" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="platform_shipment_status" property="platformShipmentStatus" />
+       <result column="shipment_create_time" property="shipmentCreateTime" />
+       <result column="shipment_receive_time" property="shipmentReceiveTime" />
+       <result column="label_type" property="labelType" />
+       <result column="pack_type" property="packType" />
+       <result column="delivery_from_address" property="deliveryFromAddress" />
+       <result column="delivery_to_address" property="deliveryToAddress" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, name, shop_id, shop_name, country_id, country_name, fulfillment_center, delivery_status, platform_shipment_status, shipment_create_time, shipment_receive_time, label_type, pack_type, delivery_from_address, delivery_to_address
+    </sql>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
+        SELECT
+            fs.id,
+            fs.code,
+            fs.shop_id,
+            fs.shop_name,
+            fs.country_id,
+            fs.country_name,
+            fs.fulfillment_center,
+            fs.delivery_status,
+            (SELECT fd.code FROM fba_delivery fd WHERE fd.source_id = fs.id ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode
+            fs.platform_shipment_status,
+            fs.shipment_create_time,
+            fs.shipment_receive_time,
+            fsd.asin,
+            fsd.fn_sku,
+            fsd.m_sku,
+            fsd.sku_no,
+            fsd.product_name,
+            fsd.declare_qty,
+            fsd.delivery_qty,
+            fsd.delivery_qty,
+            fsd.diff_qty,
+            fsd.is_combo
+        FROM fba_shipment fs
+        INNER JOIN fba_shipment_detail fsd ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        WHERE fs.is_deleted = FALSE
+        <where>
+            <!--单据编号-->
+            <if test="params.code != null and params.code != ''">
+                AND fs.code ILIKE concat('%',#{params.code},'%')
+            </if>
+            <!--sku编号-->
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                AND fsd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <!--店铺id-->
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                AND fs.shop_id in
+                <foreach collection="params.shopIdList" item="shopId" open="(" close=")" separator=",">
+                    #{shopId}
+                </foreach>
+            </if>
+            <!--国家二字码-->
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                AND fs.country_id in
+                <foreach collection="params.countryIdList" item="countryId" open="(" close=")" separator=",">
+                    #{countryId}
+                </foreach>
+            </if>
+            <!--平台物流中心-->
+            <if test="params.fulfillmentCenter != null and params.fulfillmentCenter != ''">
+                AND fs.fulfillment_center ILIKE concat('%',#{params.fulfillmentCenter},'%')
+            </if>
+            <!--发货状态-->
+            <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
+                AND fs.delivery_status in
+                <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
+                    #{deliveryStatus}
+                </foreach>
+            </if>
+            <!--平台货件状态-->
+            <if test="params.platformShipmentStatusList != null and params.platformShipmentStatusList.size > 0">
+                AND fs.platform_shipment_status in
+                <foreach collection="params.platformShipmentStatusList" item="platformShipmentStatus" open="(" close=")" separator=",">
+                    #{platformShipmentStatus}
+                </foreach>
+            </if>
+            <!--平台sku-->
+            <if test="params.asin != null and params.asin != ''">
+                AND fsd.asin ILIKE concat('%',#{params.asin},'%')
+            </if>
+            <!--fnSku-->
+            <if test="params.fnSku != null and params.fnSku != ''">
+                AND fsd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+            </if>
+            <!--卖家sku-->
+            <if test="params.mSku != null and params.mSku != ''">
+                AND fsd.m_sku ILIKE concat('%',#{params.mSku},'%')
+            </if>
+            <!--数据权限-->
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <!--收发差异（大于0，小于0，等于0，不等于0）-->
+            <if test="params.diffRule != null and params.diffRule != ''">
+                AND fsd.diff_qty ${params.diffRule} 0
+            </if>
+            <!--创建时间（拉取数据的日期）-->
+            <if test="params.shipmentCreateTimeList !=null and params.shipmentCreateTimeList.size>0">
+                AND fs.shipment_create_time >= #{params.shipmentCreateTimeList[0]} and (#{params.shipmentCreateTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > fs.shipment_create_time
+            </if>
+            <!--签收时间（拉取签收数据的日期）-->
+            <if test="params.shipmentReceiveTimeList !=null and params.shipmentReceiveTimeList.size>0">
+                AND fs.shipment_receive_time >= #{params.shipmentReceiveTimeList[0]} and (#{params.shipmentReceiveTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > fs.shipment_receive_time
+            </if>
+
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,137 @@
+package com.erp.model.wms.dto;
+
+import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * FBI发货单物流信息表请求响应实体
+ * </p>
+ *
+ * @author Luo_WG
+ * @since 2023-10-30
+*/
+@Data
+@NoArgsConstructor
+public class FbaDeliveryLogisticsDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 主表id
+        */
+        private String mainId;
+
+        /**
+        * 发货单号
+        */
+        private String deliveryCode;
+
+        /**
+        * 物流方式
+        */
+        private String logisticsMethod;
+
+        /**
+        * 物流渠道
+        */
+        private String logisticsChannel;
+
+        /**
+        * 发货时间
+        */
+        private LocalDateTime deliveryTime;
+
+        private Integer trackingNo;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 主表id
+        */
+        @NotBlank(message = "主表id不能为空")
+        @Size(max = 19,message = "主表id最大长度不能超过19位")
+        private String mainId;
+
+        /**
+        * 发货单号
+        */
+        @NotBlank(message = "发货单号不能为空")
+        @Size(max = 64,message = "发货单号最大长度不能超过64位")
+        private String deliveryCode;
+
+        /**
+        * 物流方式
+        */
+        @NotBlank(message = "物流方式不能为空")
+        @Size(max = 64,message = "物流方式最大长度不能超过64位")
+        private String logisticsMethod;
+
+        /**
+        * 物流渠道
+        */
+        @NotBlank(message = "物流渠道不能为空")
+        @Size(max = 64,message = "物流渠道最大长度不能超过64位")
+        private String logisticsChannel;
+
+        /**
+        * 发货时间
+        */
+        private LocalDateTime deliveryTime;
+
+        private Integer trackingNo;
+
+
+    }
+
+
+}

@@ -15,8 +15,11 @@ package com.erp.sdk.oms.amz.spapi.api;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
+import lombok.Data;
 import lombok.Getter;
 import okhttp3.Call;
 import okhttp3.Interceptor;
@@ -31,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Getter
+@Data
 public class FbaInboundApi {
     private ApiClient apiClient;
 
@@ -46,6 +49,30 @@ public class FbaInboundApi {
     public void setApiClient(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
+
+    /**
+     * 初始化Api
+     */
+    public static FbaInboundApi initApi(AmazonMarketplaceEnum marketplaceEnum) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+        FbaInboundApi fbaInboundApi = new FbaInboundApi.Builder()
+                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+                //北美，https://sellingpartnerapi-na.amazon.com
+                //欧洲，https://sellingpartnerapi-eu.amazon.com
+                //远东，https://sellingpartnerapi-fe.amazon.com
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .build();
+        if (null == fbaInboundApi) {
+            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+        }
+        return fbaInboundApi;
+    }
+
 
     /**
      * Build call for confirmPreorder
