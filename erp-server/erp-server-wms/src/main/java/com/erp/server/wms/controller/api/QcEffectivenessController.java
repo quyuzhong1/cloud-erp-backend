@@ -4,6 +4,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
@@ -24,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
  * @date 2023/4/12 11:16
  */
 @RestController
+@LogSystemModule("品质时效报表")
 @RequestMapping("/qcEffectiveness")
 public class QcEffectivenessController extends BaseController {
 
@@ -110,6 +115,7 @@ public class QcEffectivenessController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出品质时")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",

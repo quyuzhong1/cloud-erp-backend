@@ -4,6 +4,7 @@ package com.erp.server.bi.controller.api;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
@@ -33,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("/biTargetShopSetting")
 public class BiTargetShopSettingController extends BaseController {
 
@@ -131,6 +133,7 @@ public class BiTargetShopSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标管理店铺模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         biTargetShopSettingService.downloadTemplate(response);
@@ -142,6 +145,7 @@ public class BiTargetShopSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入目标管理店铺模板")
     @PostMapping("/importFile")
     public ApiResult<BiTargetShopSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetShopSettingDTO.ImportDTO result = biTargetShopSettingService.importFile(excelFile, response);

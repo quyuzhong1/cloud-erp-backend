@@ -1,11 +1,14 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
@@ -33,6 +36,7 @@ import java.util.List;
  * @date 2022/12/14 16:33
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dataSourceCost")
 public class BiDataSourceCostController extends BaseController {
 
@@ -60,6 +64,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "成本数据-导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dataSourceCost:exportExcel", tableAlias = "bdsc")
     public ApiResult exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
@@ -75,6 +80,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param excelFile
      * @param response
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "成本数据-导入")
     @PostMapping("/importBiDataSourceCostFile")
     public ApiResult importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean flag = biDataSourceCostService.importExcel(excelFile, response);
@@ -87,6 +93,7 @@ public class BiDataSourceCostController extends BaseController {
      * @date: 2022/12/21 17:02
      * @param list
      */
+    @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "成本数据-编辑")
     @PostMapping("/updateBiDataSourceCost")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -105,6 +112,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param request
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "成本数据-下载模板")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biDataSourceCost.xlsx";

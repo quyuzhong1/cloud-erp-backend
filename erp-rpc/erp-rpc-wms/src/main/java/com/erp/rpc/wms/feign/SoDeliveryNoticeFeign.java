@@ -2,9 +2,11 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -37,4 +39,20 @@ public interface SoDeliveryNoticeFeign {
     @PostMapping("feign/soDeliveryNotice/getPushDownDeliveryNoticeCnt")
     Map<String,Long> getPushDownDeliveryNoticeCnt(@RequestBody List<String> soIds);
 
+    /**
+     * 通过源id获取通知记录
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soDeliveryNotice/getDeliveryNoticeById")
+    SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(@RequestParam(value = "id") String id);
+    /**
+     * 通过源id获取通知记录
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soDeliveryNotice/getNoticeDetailById")
+    SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id);
 }

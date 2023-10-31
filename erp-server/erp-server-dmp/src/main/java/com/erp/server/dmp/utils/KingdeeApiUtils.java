@@ -11,10 +11,9 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 金蝶API 处理类
@@ -34,6 +33,13 @@ public class KingdeeApiUtils {
     private static String APPSECRET;
 
     private static String DCID;
+
+    private static String SWITCH_TIME;
+
+    @Value("${openApi.kingdee.switchTime}")
+    private void setSwitchTime(String switchTime) {
+        KingdeeApiUtils.SWITCH_TIME = switchTime;
+    }
 
     @Value("${openApi.kingdee.appId}")
     public void setAppId(String appId) {
@@ -602,5 +608,17 @@ public class KingdeeApiUtils {
             result.append(joinStr);
         }
         return result.replace(1, 1, joinStr).toString();
+    }
+
+    public boolean needPushMQ(LocalDateTime lastTime) {
+        if (Objects.nonNull(SWITCH_TIME)) {
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME, df);
+            if (Objects.nonNull(lastTime) && lastTime.isAfter(dateTime)) {
+                //使用下次调用时间进行判断是否在切换时间之后，在之后就停止调用
+                return true;
+            }
+        }
+        return false;
     }
 }

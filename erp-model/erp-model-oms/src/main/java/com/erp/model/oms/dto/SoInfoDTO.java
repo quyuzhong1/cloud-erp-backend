@@ -56,7 +56,7 @@ public class SoInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
 
-
+        private String id;
         private String soId;
 
         private String skuId;

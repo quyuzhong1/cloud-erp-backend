@@ -9,6 +9,9 @@ import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -80,6 +83,7 @@ public class StocktakingPlanController extends BaseController {
    * @param dto
    * @return ApiResult<Void>
    */
+   @LogAction(value = LogActionEnum.INSERT, desc = "新增盘点计划")
    @PostMapping("/add")
 //   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //           tableField = "create_user_id",
@@ -96,6 +100,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改盘点计划")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -114,6 +119,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交盘点计划")
     @PostMapping("/addAndSubmit")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
@@ -132,6 +138,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交盘点计划")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -150,13 +157,13 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "盘点计划提交审核盘点计划")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:stocktakingPlan:submit",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "盘点计划提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -185,6 +192,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核盘点计划")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -223,6 +231,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核盘点计划")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -261,6 +270,7 @@ public class StocktakingPlanController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除盘点计划")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -330,6 +340,7 @@ public class StocktakingPlanController extends BaseController {
     * @param id
     * @return ApiResult<StocktakingPlanDTO.ViewDTO>>
     */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

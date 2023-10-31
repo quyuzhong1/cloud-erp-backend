@@ -1,9 +1,12 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceDTO;
 import com.erp.server.bi.service.BiDataSourceService;
@@ -24,6 +27,7 @@ import java.util.List;
  * @date 2022/12/16 19:20
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dataSource")
 public class BiDataSourceController extends BaseController {
 
@@ -44,6 +48,7 @@ public class BiDataSourceController extends BaseController {
     }
 
 
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量添加数据源:数据源类型={type}")
     @PostMapping("/batchAdd")
     public ApiResult batchAddBiDataSource(@RequestBody @Validated List<BiDataSourceDTO> list) {
         Boolean flag = this.biDataSourceService.batchAddBiDataSource(list);

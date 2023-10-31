@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -89,4 +90,16 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @return Boolean
      */
     Boolean batchSync(List<String> ids);
+
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto);
+
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    String savePullTask(DmpPullTaskFeignDTO dto);
 }

@@ -239,4 +239,6 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return com.erp.model.oms.dto.SoReturnDTO.View
      **/
     SoReturnDTO.View pdaView(String id);
+
+
 }

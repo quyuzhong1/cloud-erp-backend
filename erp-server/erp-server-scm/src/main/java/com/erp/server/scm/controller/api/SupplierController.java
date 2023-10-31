@@ -5,8 +5,12 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
@@ -28,6 +32,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("供应商列表")
 @RequestMapping("/supplier")
 public class SupplierController extends BaseController {
 
@@ -63,6 +68,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加供应商")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         String supplierId = supplierService.addSupplier(dto);
@@ -76,6 +82,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交供应商")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
@@ -89,6 +96,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "提交并审核供应商")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -107,6 +115,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核供应商")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -126,6 +135,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -145,6 +155,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除供应商")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -164,6 +175,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "供应商提交审核")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -182,6 +194,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用供应商:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = supplierService.updateStatus(dto);
@@ -194,6 +207,7 @@ public class SupplierController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核供应商")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -214,6 +228,7 @@ public class SupplierController extends BaseController {
      * @author yl
      * @date 2023-03-22 11:56
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核供应商")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -230,6 +245,7 @@ public class SupplierController extends BaseController {
     /**
      * 供应商导入
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商")
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = supplierService.importFile(excelFile, response);
@@ -239,6 +255,7 @@ public class SupplierController extends BaseController {
     /**
      * 供应商导出
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商")
     @PostMapping("/exportSupplier")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
@@ -255,6 +272,7 @@ public class SupplierController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板供应商")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         supplierService.downloadTemplate(response);

@@ -6,7 +6,6 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -19,7 +18,6 @@ import com.erp.server.dmp.service.DmpSkuCostService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -140,6 +138,13 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             }
         }
         return itemListAll;
+    }
+
+    @Override
+    public List<DmpDeliveryDetailItemEntity> getItemByMainId(String mainId) {
+        LambdaQueryWrapper<DmpDeliveryDetailItemEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpDeliveryDetailItemEntity::getDeliveryDetailId, mainId);
+        return baseMapper.selectList(queryWrapper);
     }
 }
 

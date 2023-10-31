@@ -43,6 +43,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return ApiResult<Boolean>
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或修改流程定义")
     @PostMapping("/addOrUpdate")
     public ApiResult<Boolean> addOrUpdate(@RequestBody @Valid ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         boolean result = processDefinitionService.addOrUpdate(dto);
@@ -67,6 +68,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return ApiResult<Boolean>
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除流程定义")
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid ProcessDefinitionDTO.DeleteDTO dto) {
         boolean result = processDefinitionService.deleteByIds(dto.getIds());
@@ -78,6 +80,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程定义发布:部署流程id={processDefinitionId}")
     @PostMapping("/deploy")
     public ApiResult<ProcessDTO.DeployResultDTO> deploy(@RequestBody @Validated ProcessDTO.DeployDTO dto) {
         try {
@@ -92,6 +95,7 @@ public class ProcessDefinitionController extends BaseController {
     /**
      * 流程定义复制
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程定义复制:流程定义ID={id}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated ProcessDefinitionDTO.CopyDTO dto){
         // 复制流程定义
@@ -102,6 +106,7 @@ public class ProcessDefinitionController extends BaseController {
     /**
      * 流程定义导出excel
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "流程定义导出excel")
     @PostMapping("/exportExcel")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response){
         // 导出excel

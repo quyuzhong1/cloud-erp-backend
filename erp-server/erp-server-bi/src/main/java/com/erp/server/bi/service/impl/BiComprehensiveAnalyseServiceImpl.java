@@ -272,6 +272,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     public StatisticalDataVO salePriceDistribution(BiFilterDTO biFilterDTO) {
         Optional.ofNullable(biFilterDTO.getRangeType()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST));
+        Optional.ofNullable(biFilterDTO.getSettleMethod()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
         return dmpOrderInfoService.salePriceDistribution(biFilterDTO);
     }
 

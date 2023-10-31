@@ -6,6 +6,7 @@ import com.common.core.enums.LogStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -132,6 +133,23 @@ public class SysLogRecordDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 操作类型：
+         * insert=插入
+         * update=更新
+         * delete=删除
+         * grant=授权
+         * import=导入
+         * export=导出
+         * cancel=撤销
+         * submit=提交
+         * approve=审核
+         * disapprove=反审核
+         * invalid=作废
+         * addAndSubmit=新增并提交
+         * updateAndSubmit=更新并提交
+         */
+        private List<String> actionList;
 
         /**
          * 系统模块
@@ -141,7 +159,7 @@ public class SysLogRecordDTO implements Serializable {
         /**
          * 创建时间列表
          */
-        private List<LocalDate> createTimeList;
+        private List<LocalDateTime> createTimeList;
 
         /**
          * 创建人id列表
@@ -176,6 +194,11 @@ public class SysLogRecordDTO implements Serializable {
          * 操作类型
          */
         private String action;
+
+        /**
+         * 操作类型名称
+         */
+        private String actionName;
 
         /**
          * 操作路径
@@ -241,6 +264,22 @@ public class SysLogRecordDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+
+        /**
+         * 通过Action设置操作类型名称
+         */
+        public void setActionNameByAction() {
+            if (StringUtils.isBlank(this.action)){
+                this.setActionName("");
+                return;
+            }
+            LogActionEnum actionEnum = LogActionEnum.getByCode(this.action);
+            if (null == actionEnum){
+                this.setActionName("");
+                return;
+            }
+            this.setActionName(actionEnum.getName());
+        }
     }
 
 }

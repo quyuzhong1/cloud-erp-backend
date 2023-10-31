@@ -1,7 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
 import com.erp.model.plm.dto.BatchTemplatePhaseDTO;
 import com.erp.model.plm.dto.TemplatePhaseDTO;
@@ -21,6 +24,7 @@ import java.util.List;
  * @date 2022/11/17 9:58
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("templatePhase")
 public class TemplatePhaseController extends BaseController {
 
@@ -48,6 +52,7 @@ public class TemplatePhaseController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板详情-模板阶段-新增或修改:模板id={templateId}")
     @PostMapping("/batchSaveOrUpdate")
     public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTemplatePhaseDTO dto) {
         templatePhaseService.batchSaveOrUpdate(dto);
@@ -62,6 +67,7 @@ public class TemplatePhaseController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "模板详情-模板阶段-删除")
     @DeleteMapping("/remove")
     public ApiResult remove(@RequestBody @Validated TemplatePhaseDeleteDTO dto) {
         Boolean flag = templatePhaseService.removeTemplatePhase(dto.getId(),dto.getTemplateId());

@@ -47,4 +47,9 @@ public interface BiSysModuleService  extends IService<BiSysModuleEntity> {
      * @return ModuleSysConfigurationDTO
      */
     ModuleSysConfigurationDTO getBySysModuleId(String sysModuleId);
+
+    /**
+     * 模块详情
+     */
+    BiSysModuleEntity view(String id);
 }

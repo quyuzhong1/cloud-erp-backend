@@ -1,8 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.server.sys.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +20,7 @@ import java.util.List;
  * @since 2023-04-26
  */
 @RestController
+@LogSystemModule("系统管理通用")
 @RequestMapping("/dictBasic")
 public class DictBasicController extends BaseController {
 
@@ -28,6 +32,7 @@ public class DictBasicController extends BaseController {
      * @param list
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加字典")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> list) {
         Boolean result = dictBasicService.addOrUpdate(list);

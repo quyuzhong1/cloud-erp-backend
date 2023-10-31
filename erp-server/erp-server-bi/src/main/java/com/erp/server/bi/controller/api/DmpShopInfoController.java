@@ -1,11 +1,15 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.server.bi.service.DmpShopChangeLogService;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 
 /**
  * 数据源管理
@@ -24,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
  * @date 2022/12/14 14:42
  */
 @RestController
+@LogSystemModule("数据源管理")
 @RequestMapping("dmpShopInfo")
 public class DmpShopInfoController extends BaseController {
 
@@ -54,6 +60,7 @@ public class DmpShopInfoController extends BaseController {
     * @param dto
     * @return ApiResult
     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "店铺数据新增")
     @PostMapping("/add")
     public ApiResult addDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
         Boolean flag = this.dmpShopInfoService.addDmpShopInfo(dto);
@@ -67,6 +74,7 @@ public class DmpShopInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
     public ApiResult updateDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
         Boolean flag = this.dmpShopInfoService.updateDmpShopInfo(dto);
@@ -80,6 +88,7 @@ public class DmpShopInfoController extends BaseController {
      * @param id
      * @return ApiResult<DmpShopInfoDTO>
      */
+    @LogViewService
     @RequestMapping("/getDmpShopInfoById")
     public ApiResult<DmpShopInfoDTO>  getDmpShopInfoById(@RequestParam("id") String id) {
         DmpShopInfoDTO dto = dmpShopInfoService.getDmpShopInfoById(id);
@@ -94,12 +103,12 @@ public class DmpShopInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据负责人变更:店铺id={id},负责人id={chargeId}")
     @PostMapping("/changeChargeName")
     public ApiResult changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
         Boolean flag = this.dmpShopInfoService.changeChargeName(dto);
         return flag == true ? success() : failure();
     }
-
 
     /**
      * 店铺数据-部门变更
@@ -108,6 +117,7 @@ public class DmpShopInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据部门变更:部门id={deptId},负责人id={chargeId}")
     @PostMapping("/changeDept")
     public ApiResult changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
         Boolean flag = this.dmpShopInfoService.changeDept(dto);
@@ -134,6 +144,7 @@ public class DmpShopInfoController extends BaseController {
      * @param dto
      * @param response
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "店铺数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
     public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {

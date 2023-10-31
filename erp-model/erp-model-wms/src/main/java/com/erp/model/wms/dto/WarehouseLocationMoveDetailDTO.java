@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import javax.validation.constraints.*;
 
@@ -13,87 +14,85 @@ import javax.validation.constraints.*;
  *
  * @author Luo_WG
  * @since 2023-08-24
-*/
+ */
 @Data
 @NoArgsConstructor
 public class WarehouseLocationMoveDetailDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 主表id
-        */
+         * 主表id
+         */
         private String mainId;
 
         /**
-        * sku表id
-        */
+         * sku表id
+         */
         private String skuId;
 
         /**
-        * sku编号
-        */
+         * sku编号
+         */
         private String skuNo;
 
         /**
-        * 产品名称
-        */
+         * 产品名称
+         */
         private String productName;
 
         /**
-        * sku图片
-        */
+         * sku图片
+         */
         private String skuImg;
 
         /**
-        * 单位
-        */
+         * 单位
+         */
         private String unitName;
 
         /**
-        * 取货仓位
-        */
+         * 取货仓位
+         */
         private String outWarehouseLocation;
 
         /**
-        * 取货仓位名称
-        */
+         * 取货仓位名称
+         */
         private String outWarehouseLocationName;
 
         /**
-        * 上架仓位
-        */
+         * 上架仓位
+         */
         private String inWarehouseLocation;
 
         /**
-        * 上架仓位名称
-        */
+         * 上架仓位名称
+         */
         private String inWarehouseLocationName;
 
         /**
-        * 移动数量
-        */
+         * 移动数量
+         */
         private Integer qty;
 
 
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -102,15 +101,15 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -121,46 +120,46 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
+         * 主表id
+         */
         @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
+        @Size(max = 19, message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
-        * sku表id
-        */
+         * sku表id
+         */
         @NotBlank(message = "sku表id不能为空")
-        @Size(max = 19,message = "sku表id最大长度不能超过19位")
+        @Size(max = 19, message = "sku表id最大长度不能超过19位")
         private String skuId;
 
         /**
-        * sku编号
-        */
+         * sku编号
+         */
         @NotBlank(message = "sku编号不能为空")
-        @Size(max = 255,message = "sku编号最大长度不能超过255位")
+        @Size(max = 255, message = "sku编号最大长度不能超过255位")
         private String skuNo;
 
         /**
-        * 取货仓位
-        */
+         * 取货仓位
+         */
         @NotBlank(message = "取货仓位不能为空")
-        @Size(max = 50,message = "取货仓位最大长度不能超过50位")
+        @Size(max = 50, message = "取货仓位最大长度不能超过50位")
         private String outWarehouseLocation;
 
         /**
-        * 上架仓位
-        */
+         * 上架仓位
+         */
         @NotBlank(message = "上架仓位不能为空")
-        @Size(max = 50,message = "上架仓位最大长度不能超过50位")
+        @Size(max = 50, message = "上架仓位最大长度不能超过50位")
         private String inWarehouseLocation;
 
         /**
-        * 移动数量
-        */
+         * 移动数量
+         */
         @NotNull(message = "移动数量不能为空")
         @Min(value = 0, message = "移动数量不能小于0")
-        @Max(value = 999999999,message = "移动数量最大值为999999999")
+        @Max(value = 999999999, message = "移动数量最大值为999999999")
         private Integer qty;
 
 

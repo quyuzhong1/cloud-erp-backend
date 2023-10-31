@@ -4,6 +4,7 @@ package com.erp.server.bi.controller.api;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
@@ -34,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
+@LogSystemModule("目标管理")
 @RequestMapping("/biTargetNewProductSetting")
 public class BiTargetNewProductSettingController extends BaseController {
 
@@ -87,6 +89,7 @@ public class BiTargetNewProductSettingController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增目标管理新品")
     public ApiResult<String> add(@RequestBody @Validated BiTargetNewProductSettingDTO.AddDTO dto) {
         return success(biTargetNewProductSettingService.add(dto));
     }
@@ -117,6 +120,7 @@ public class BiTargetNewProductSettingController extends BaseController {
 //        menuCode = "dmp:biTargetNewProductSetting:update",
 //        serviceClass = BiTargetNewProductSettingService.class,
 //        keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改目标管理新品")
     public ApiResult update(@RequestBody @Validated BiTargetNewProductSettingDTO.UpdateDTO dto) {
         biTargetNewProductSettingService.update(dto);
         return success();
@@ -128,6 +132,7 @@ public class BiTargetNewProductSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出目标管理新品")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         biTargetNewProductSettingService.downloadTemplate(response);
@@ -139,6 +144,7 @@ public class BiTargetNewProductSettingController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导出目标管理新品")
     @PostMapping("/importFile")
     public ApiResult<BiTargetNewProductSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetNewProductSettingDTO.ImportDTO result = biTargetNewProductSettingService.importFile(excelFile, response);

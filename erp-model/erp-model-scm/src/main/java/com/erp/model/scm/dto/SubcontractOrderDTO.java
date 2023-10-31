@@ -364,7 +364,6 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 采购部门id
          */
-
         private String deptId;
 
         /**

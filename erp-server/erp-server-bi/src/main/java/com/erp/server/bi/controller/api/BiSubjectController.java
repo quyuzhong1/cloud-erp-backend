@@ -2,15 +2,21 @@ package com.erp.server.bi.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.core.controller.BaseController;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
+import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +41,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@LogSystemModule("专题管理")
 @RequestMapping("subject")
 public class BiSubjectController extends BaseController {
 
@@ -82,6 +91,7 @@ public class BiSubjectController extends BaseController {
      * @param dto 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增专题")
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated SubjectDTO dto) {
         String id = this.biSubjectService.addSubject(dto);
@@ -97,6 +107,7 @@ public class BiSubjectController extends BaseController {
      * @param biSubject 实体
      * @return 编辑结果
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑数据:id={id}, 专题名={name}")
     @PostMapping("/update")
     public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) SubjectDTO biSubject) {
         String id = this.biSubjectService.update(biSubject);
@@ -106,12 +117,12 @@ public class BiSubjectController extends BaseController {
         return failure();
     }
 
-
     /**
      * 设置仪表盘的分享
      *
      * @return 查询结果
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置仪表盘的分享:id={id},名称={name}")
     @PostMapping("/setShare")
     public ApiResult setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
         String id = biSubjectShareService.setShare(dto);
@@ -126,6 +137,7 @@ public class BiSubjectController extends BaseController {
      *
      * @return 删除是否成功
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除专题")
     @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = this.biSubjectService.deleteById(dto.getId());
@@ -137,6 +149,7 @@ public class BiSubjectController extends BaseController {
      *
      * @return 删除是否成功
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置专题状态:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateState")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -164,6 +177,7 @@ public class BiSubjectController extends BaseController {
     /**
      * 复制专题
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制专题:专题id={subjectId}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
         String copySubjectId = biSubjectService.copy(dto);
@@ -190,6 +204,7 @@ public class BiSubjectController extends BaseController {
      * @param dtoList
      * @return ApiResult<List<BatchResultDTO>>
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "专题批量设置权限:id={id}")
     @PostMapping("/batchShare")
     public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());

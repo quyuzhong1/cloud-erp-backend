@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.GlobalExceptionHandler;
@@ -40,16 +41,20 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -82,6 +87,8 @@ public class SysLoggingAspect {
     private static final String DETAIL_UPDATE_LOG_DEC = "明细数据 id为:{}，修改 {} 字段，修改前:{}，修改后:{}\n";
     // 批量操作描述:（操作行为）了（系统模块）id为: 结果为:
     private static final String BATCH_OPERATION_LOG_DEC = "{}了{}\n id为:{}\n 结果为:{}\n";
+    // 自定义描述格式(包含任意{})
+    private static final String CUSTOM_MATCH_REGEX = ".*\\{.*\\}.*";
 
     /**
      * 数据缓存
@@ -156,6 +163,7 @@ public class SysLoggingAspect {
         Object obj = null;
         try {
             log.debug("Sys Logging doAround.before");
+            log.warn("Sys Logging doAround.before");
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
             Method method = signature.getMethod();
             LogAction logAction = method.getAnnotation(LogAction.class);
@@ -166,7 +174,8 @@ public class SysLoggingAspect {
             Object id = null;
             Object firstObjArg = Arrays.stream(joinPoint.getArgs()).findFirst().orElse(null);
             if (null != firstObjArg) {
-                id = ReflectUtil.getFieldValue(firstObjArg, "id");
+                String idKeyName = StringUtils.isBlank(logAction.keyIdName()) ? "id" : logAction.keyIdName();
+                id = ReflectUtil.getFieldValue(firstObjArg, idKeyName);
             }
 
             // 初始化数据缓存
@@ -176,7 +185,7 @@ public class SysLoggingAspect {
             // 处理前操作
             Object originalObj = beforeFindObj(joinPoint, logAction, id);
             // 更新使用view的DTO作为classPath
-            if (logAction.value().isUpdate() && null != originalObj) {
+            if (logAction.value().hasCompare() && null != originalObj) {
                 classPath = String.valueOf(originalObj.getClass());
                 bo.setClassPath(classPath);
             }
@@ -190,8 +199,8 @@ public class SysLoggingAspect {
             }
             // 处理后操作
             Object newObject = afterFindObj(joinPoint, logAction, id);
-            // 生成对比描述
-            String description = compareDataDesc(originalObj, newObject, logAction, classPath);
+            // 生成对比描述或单记录自定义描述
+            String description = generateSingleDesc(originalObj, newObject, logAction, classPath, joinPoint);
 
             // 添加日志到mq队列
             handleLog(joinPoint, logAction, description);
@@ -207,6 +216,44 @@ public class SysLoggingAspect {
                 LOG_INFO_THREAD_LOCAL.remove();
             }
         }
+    }
+
+    /**
+     * 生成描述
+     *
+     * @return 空=logAction的desc
+     */
+    private String generateSingleDesc(Object originalObj, Object newObject, LogAction logAction, String classPath, ProceedingJoinPoint joinPoint) {
+        // 1:生成自定义描述(包含{任意字段})
+        if (Pattern.matches(CUSTOM_MATCH_REGEX, logAction.desc())) {
+            // 获取请求参数转Map
+            Object[] args = joinPoint.getArgs();
+            if (0 == args.length) {
+                return "";
+            }
+            Object paramsObj = args[0];
+            // 文件上传处理
+            if (paramsObj instanceof MultipartFile[]){
+                return "";
+            }
+            // 兼容接口product/plan/uploadImageUrl
+            if (paramsObj instanceof MultipartFile){
+                MultipartFile file = (MultipartFile) paramsObj;
+                return logAction.desc().replace("{name}", Objects.requireNonNull(file.getOriginalFilename()));
+            }
+            // 1:非数组请求参数处理
+            if (!(paramsObj instanceof Collection)) {
+                Map<String, Object> paramsMap = BeanUtil.beanToMap(paramsObj);
+                // 将请求参数填充  {paramName1} {paramName2}
+                return StrUtil.format(logAction.desc(), paramsMap);
+            }
+            return "";
+        }
+        // 3:生成对比描述
+        if (logAction.value().hasCompare()) {
+            return compareDataDesc(originalObj, newObject, logAction, classPath);
+        }
+        return "";
     }
 
 
@@ -245,12 +292,17 @@ public class SysLoggingAspect {
             Object requestParamObj = Arrays.stream(joinPoint.getArgs()).findFirst().orElse(new JSONObject());
             requestParams = JSONUtil.toJsonStr(requestParamObj);
         }
+        // 请求参数
+        Object[] paramsArrays = joinPoint.getArgs();
 
         // 组合添加的DTO列表
         List<SysLogRecordDTO.AddDTO> dtoList;
         if (logAction.value().checkIsBatchOperation(logAction.isBatchOperationStr())) {
             // 批量处理创建
-            dtoList = constructBatch(logAction, request, actionPath, requestParams, currentSysName, description);
+            dtoList = constructBatchByIds(logAction, request, actionPath, requestParams, currentSysName, description);
+        } else if (0 != paramsArrays.length && ((paramsArrays[0] instanceof Collection) || (paramsArrays[0] instanceof MultipartFile[])) ) {
+            // 数组请求参数批量处理创建
+            dtoList = constructBatchByParams(logAction, request, actionPath, requestParams, currentSysName, joinPoint);
         } else {
             // 其他单条处理创建
             dtoList = Collections.singletonList(initDto(logAction, request, actionPath, requestParams, currentSysName, description));
@@ -262,12 +314,12 @@ public class SysLoggingAspect {
     /**
      * 构建批量添加DTO
      */
-    private static List<SysLogRecordDTO.AddDTO> constructBatch(LogAction logAction,
-                                                               HttpServletRequest request,
-                                                               String actionPath,
-                                                               String requestParams,
-                                                               String currentSysName,
-                                                               String description
+    private static List<SysLogRecordDTO.AddDTO> constructBatchByIds(LogAction logAction,
+                                                                    HttpServletRequest request,
+                                                                    String actionPath,
+                                                                    String requestParams,
+                                                                    String currentSysName,
+                                                                    String description
     ) {
         // ids的DTO列表
         List<SysLogRecordDTO.AddDTO> dtoList = new ArrayList<>();
@@ -283,6 +335,51 @@ public class SysLoggingAspect {
         });
         return dtoList;
     }
+
+    /**
+     * 构建批量添加DTO
+     */
+    private static List<SysLogRecordDTO.AddDTO> constructBatchByParams(LogAction logAction,
+                                                                       HttpServletRequest request,
+                                                                       String actionPath,
+                                                                       String requestParams,
+                                                                       String currentSysName,
+                                                                       JoinPoint joinPoint
+    ) {
+        Object[] args = joinPoint.getArgs();
+        if (args[0] instanceof Collection){
+            // 数组请求参数处理
+            return ((Collection<?>) args[0]).stream()
+                    .map(e -> {
+                        Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
+                        // 初始化
+                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        // 设置记录ID
+                        Object idObj = paramsMap.get(logAction.keyIdName());
+                        dto.setRecordId(null != idObj ? idObj.toString() : "");
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+        } else if (args[0] instanceof MultipartFile[]){
+            MultipartFile[] files = (MultipartFile[]) args[0];
+            // 数组请求参数处理
+            return Arrays.stream(files)
+                    .map(e -> {
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
+                        // 初始化
+                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            throw new ServiceException("未找到能解析的Collection");
+        }
+
+
+    }
+
 
     /**
      * 批量操作数据处理
@@ -349,21 +446,41 @@ public class SysLoggingAspect {
         return dto;
     }
 
+
     /**
      * 获取批量处理IDS
      */
     private static List<String> parseIds(LogAction logAction, String requestParams) {
+        // 兼容直接List<String>数组提交
+        if (JSONUtil.isTypeJSONArray(requestParams)){
+            JSONArray jsonArray = new JSONArray(requestParams);
+            if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
+                return jsonArray.toList(String.class);
+            }
+        }
+
         String idsKey = logAction.value().checkAndGetKeyIdName(logAction.keyIdName());
         if (StringUtils.isBlank(idsKey)) {
             throw new ServiceException("未找到批量查询字段:" + idsKey);
         }
+        // 兼容非json参数
+        if (!JSONUtil.isTypeJSON(requestParams)){
+            return Collections.singletonList(requestParams);
+        }
         Object idsValueObj = new JSONObject(requestParams).get(idsKey);
         if (null == idsValueObj) {
+            // 兼容旧单删除(单id删除)
+            Object idValueObj = new JSONObject(requestParams).get("id");
+            if (null != idValueObj){
+                return Collections.singletonList(idValueObj.toString());
+            }
             String msg = StrUtil.format("未找到批量查询字段内容,key={}", idsKey);
             throw new ServiceException(msg);
         }
+        // 兼容非List
         if (!(idsValueObj instanceof List<?>)) {
-            throw new ServiceException("批量查询字段:" + idsKey);
+//            throw new ServiceException("批量查询字段:" + idsKey);
+            return Collections.singletonList(idsValueObj.toString());
         }
         List<String> idsResult = new LinkedList<>();
         for (Object o : (List<?>) idsValueObj) {
@@ -398,7 +515,10 @@ public class SysLoggingAspect {
      * @return 更新后的对象
      */
     private Object afterFindObj(ProceedingJoinPoint joinPoint, LogAction controllerLog, Object id) {
-        if (!LogActionEnum.UPDATE.equals(controllerLog.value())) {
+        if (!LogActionEnum.UPDATE.equals(controllerLog.value()) && !LogActionEnum.UPDATE_AND_SUBMIT.equals(controllerLog.value())) {
+            return null;
+        }
+        if (null == id){
             return null;
         }
         // 查询更新后的信息
@@ -411,7 +531,10 @@ public class SysLoggingAspect {
      * @return 更新前的对象
      */
     public Object beforeFindObj(JoinPoint joinPoint, LogAction controllerLog, Object id) {
-        if (!controllerLog.value().isUpdate()) {
+        if (!controllerLog.value().hasCompare()) {
+            return null;
+        }
+        if (null == id){
             return null;
         }
         // 记录更新前后信息
@@ -475,6 +598,9 @@ public class SysLoggingAspect {
                 } else if (targetMethod.isAnnotationPresent(GetMapping.class)) {
                     // view方法为Get
                     invokeResult = targetMethod.invoke(target, idObj);
+                } else if (targetMethod.isAnnotationPresent(RequestMapping.class)){
+                    // 兼容旧接口
+                    invokeResult = targetMethod.invoke(target, idObj);
                 }
                 // 解析结果
                 if (invokeResult instanceof ApiResult) {
@@ -507,7 +633,7 @@ public class SysLoggingAspect {
      * 默认解析controller的主实体做为类名
      */
     private String parseEntityClassName(JoinPoint joinPoint) {
-        String controllerClassName = String.valueOf(joinPoint.getTarget().getClass().getName());
+        String controllerClassName = joinPoint.getTarget().getClass().getName();
         // class com.erp.model.sys.entity.BiDataSourceCustomEntity
         return "class ".concat(controllerClassName
                 .replace("controller.api", "entity")
@@ -519,9 +645,13 @@ public class SysLoggingAspect {
      * 生成对比描述
      */
     private String compareDataDesc(Object original, Object updated, LogAction logAction, String classPath) {
-        if (!logAction.value().isUpdate()) {
+        if (!logAction.value().hasCompare()) {
             return "";
         }
+        if (null == original || null == updated){
+            throw new ServiceException("未找到对比请求详情前对象或请求详情后对象:请检查提交的keyIdName是否是id");
+        }
+
         // 查询需要记录修改的字段
         List<SysLogRecordFieldListDTO> fieldList = sysLogRecordFieldFeign.list(new SysLogRecordFieldDTO.ListDTO(Collections.singletonList(classPath)));
         if (CollectionUtils.isEmpty(fieldList)) {
@@ -683,7 +813,7 @@ public class SysLoggingAspect {
      */
     private Object checkAndResolveException(Object obj, Throwable otherException) {
         // 打印其他日志
-        if (null != otherException){
+        if (null != otherException) {
             log.error("");
         }
         // 非异常正常响应

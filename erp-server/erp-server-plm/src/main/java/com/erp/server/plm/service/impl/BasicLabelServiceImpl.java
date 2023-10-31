@@ -176,6 +176,12 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         super.removeById(id);
     }
 
+    @Override
+    public BasicLabelEntity view(String id) {
+        return this.getByIdOpt(id)
+                .orElseThrow(()-> new ServiceException("未找到对应标签ID="+id));
+    }
+
     private boolean updateBasicLabel(BasicLabelEntity basicLabelEntity) {
         LambdaUpdateWrapper<BasicLabelEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BasicLabelEntity::getName, basicLabelEntity.getName());

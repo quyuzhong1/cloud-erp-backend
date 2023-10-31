@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
@@ -25,6 +28,7 @@ import java.util.Map;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("系统通用设置")
 @RequestMapping("sys/docs")
 public class SysDocsController extends BaseController {
 
@@ -53,6 +57,7 @@ public class SysDocsController extends BaseController {
      * @param dto
      * @return com.common.core.vo.ApiResult
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新建输出文档或者修改输出文档")
     @PostMapping("/saveOrUpdate")
     //   @RequestPermissions("plm:sys:docs:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody DocsDTO dto){
@@ -68,6 +73,7 @@ public class SysDocsController extends BaseController {
      * @param dto
      * @return com.common.core.vo.ApiResult
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改模板状态:id={id},模板状态={state}(1=启用,0=未启用)")
     @PostMapping("/updateState")
 //    @RequestPermissions("plm:sys:docs:updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto){

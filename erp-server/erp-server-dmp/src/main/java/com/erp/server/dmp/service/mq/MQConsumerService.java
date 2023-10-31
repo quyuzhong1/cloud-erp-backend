@@ -1,8 +1,11 @@
 package com.erp.server.dmp.service.mq;
 
+import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;

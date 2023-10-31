@@ -1,6 +1,9 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
@@ -22,6 +25,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("project/member")
 public class ProjectMembersController extends BaseController {
 
@@ -47,6 +51,7 @@ public class ProjectMembersController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存或者修改项目成员")
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:project:member:saveOrUpdate")
     public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
@@ -61,6 +66,7 @@ public class ProjectMembersController extends BaseController {
      * @param
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "移除成员")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:project:member:remove")
     public ApiResult remove(@RequestBody @Validated RemoveProjectMemberDTO dto) {

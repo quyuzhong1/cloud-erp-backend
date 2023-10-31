@@ -8,6 +8,7 @@ class ErpServerPlmApplicationTests {
 
     @Test
     void contextLoads() {
+        System.out.println("sss");
     }
 
 }

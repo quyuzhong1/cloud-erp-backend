@@ -4,6 +4,10 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
@@ -23,6 +27,7 @@ import java.util.List;
  * @Date 2023/6/12 17:31
  **/
 @RestController
+@LogSystemModule("采购业务汇总表")
 @RequestMapping("/reportFormsManage")
 public class ReportFormsManageController extends BaseController {
     @Resource
@@ -49,6 +54,7 @@ public class ReportFormsManageController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购业务汇总表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
     public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto, response);

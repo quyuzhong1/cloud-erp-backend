@@ -8,7 +8,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
+import com.common.core.enums.LogActionEnum;
 import com.erp.server.wms.service.WarehouseLocationMoveInfoService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
@@ -29,6 +33,7 @@ import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
  */
 @Slf4j
 @RestController
+@LogSystemModule("PDA仓位移动")
 @RequestMapping("/pdaWarehouseLocationMoveInfo")
 public class PdaWarehouseLocationMoveInfoController extends BaseController {
 
@@ -42,6 +47,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<String>
     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位移动")
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
         return success(warehouseLocationMoveInfoService.add(dto));
@@ -54,6 +60,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult
     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改仓位移动")
     @PostMapping("/update")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
@@ -103,6 +110,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交仓位移动")
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.AddDTO dto) {
         warehouseLocationMoveInfoService.addAndSubmit(dto);
@@ -116,6 +124,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交仓位移动")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -134,6 +143,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交仓位移动")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -168,6 +178,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核仓位移动")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -203,6 +214,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核仓位移动")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -238,6 +250,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除仓位移动")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -272,6 +285,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销仓位移动")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -306,6 +320,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废仓位移动")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -324,6 +339,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     * @param id
     * @return ApiResult<WarehouseLocationMoveInfoDTO.ViewDTO>>
     */
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

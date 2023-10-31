@@ -3,7 +3,10 @@ package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CategoryControllerDTO;
@@ -27,6 +30,7 @@ import java.util.stream.Collectors;
  * @since 2022-09-13
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("category")
 public class BasicCategoryController extends BaseController {
 
@@ -39,6 +43,7 @@ public class BasicCategoryController extends BaseController {
      * @param dto dto
      * @return com.common.core.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增产品分类")
     @PostMapping("/save")
     //@RequestPermissions("plm:category:save")
     public ApiResult addCategory(@RequestBody @Validated SaveBasicCategoryDTO dto) {
@@ -52,6 +57,7 @@ public class BasicCategoryController extends BaseController {
      * @param dto dto
      * @return com.common.core.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改产品分类:id={id},名称={name}")
     @PostMapping("/update")
     //@RequestPermissions("plm:category:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
@@ -89,6 +95,7 @@ public class BasicCategoryController extends BaseController {
      * @param id id
      * @return com.common.core.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除产品分类")
     @RequestMapping(value = "/remove", method = {RequestMethod.POST})
     //@RequestPermissions("plm:category:remove")
     public ApiResult remove(String id) {

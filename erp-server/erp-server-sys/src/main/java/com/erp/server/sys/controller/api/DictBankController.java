@@ -2,8 +2,11 @@ package com.erp.server.sys.controller.api;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.BankDTO;
 import com.erp.server.sys.service.DictBankService;
 import org.springframework.validation.annotation.Validated;
@@ -22,12 +25,14 @@ import java.util.List;
  * @since 2023-03-21
  */
 @RestController
+@LogSystemModule("系统管理通用")
 @RequestMapping("bank")
 public class DictBankController extends BaseController {
 
     @Resource
     private DictBankService bankService;
 
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或更新银行")
     @PostMapping("/saveOrUpdate")
     public ApiResult add(@RequestBody @Valid ValidList<BankDTO.AddOrUpdateDTO> bankList) {
         Boolean result = bankService.saveOrUpdateBatchBank(bankList);
@@ -43,6 +48,7 @@ public class DictBankController extends BaseController {
      * @author yl
      * @date 2023-03-21 16:29
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除银行")
     @PostMapping("/delete")
     public ApiResult add(@RequestBody @Validated List<String> ids) {
         Boolean result = bankService.removeByIds(ids);

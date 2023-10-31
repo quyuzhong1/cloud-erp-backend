@@ -80,4 +80,9 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return java.lang.String
      **/
     String saveDocs(TmeplateDocsNameDTO dto);
+
+    /**
+     * 根据ID查询文档详情
+     */
+    DocsDTO view(String id);
 }

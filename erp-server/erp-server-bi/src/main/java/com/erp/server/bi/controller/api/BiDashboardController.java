@@ -1,14 +1,14 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.dto.CopySubjectDTO;
-import com.erp.model.bi.dto.MyDashboardDTO;
-import com.erp.model.bi.dto.SubjectDTO;
-import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.CommonService;
@@ -26,6 +26,7 @@ import java.util.Objects;
  * @since 2022-12-08 14:33:46
  */
 @RestController
+@LogSystemModule("我的仪表盘")
 @RequestMapping("dashboard")
 public class BiDashboardController extends BaseController {
 
@@ -47,6 +48,7 @@ public class BiDashboardController extends BaseController {
      * @param dto 实体
      * @return 新增结果
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仪表盘")
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated SubjectDTO dto) {
         String id = subjectService.addDashboard(dto);
@@ -74,6 +76,7 @@ public class BiDashboardController extends BaseController {
      *
      * @return 查询结果
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置仪表盘默认,id={id}")
     @PostMapping("/setDefault")
     public ApiResult setShare(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = subjectDefaultService.setDefault(dto.getId());
@@ -96,6 +99,7 @@ public class BiDashboardController extends BaseController {
     /**
      * 复制仪表盘
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制仪表盘:专题id={subjectId}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
         String id = subjectService.copyDashboard(dto);

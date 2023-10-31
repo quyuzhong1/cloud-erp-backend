@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -256,4 +257,42 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
     }
 
+
+    @Override
+    public String savePullTask(DmpPullTaskFeignDTO dto) {
+        // 保存任务表
+        try {
+            DmpPullTaskEntity entity = new DmpPullTaskEntity(dto.getTargetPlatformName(),
+                    dto.getMqTopic(), dto.getMqTag(), dto.getMqData(), SyncStatusEnum.IN_SYNC.getCode(),
+                    dto.getSourcePlatformName(), dto.getSourceType(), dto.getSourceId(), dto.getSourceCode(), 0);
+            this.saveOrUpdateDmpSyncTask(entity);
+            return entity.getId();
+        } catch (Exception e) {
+            log.error("savePullTask 保存数据异常，{}", e.getMessage());
+        }
+        return null;
+    }
+
+
+    @Override
+    public Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto) {
+        // 保存任务表
+        try {
+            DmpPullTaskEntity entity = new DmpPullTaskEntity(dto.getTargetPlatformName(),
+                    dto.getMqTopic(), dto.getMqTag(), dto.getMqData(), SyncStatusEnum.IN_SYNC.getCode(),
+                    dto.getSourcePlatformName(), dto.getSourceType(), dto.getSourceId(), dto.getSourceCode(), 0);
+            this.saveOrUpdateDmpSyncTask(entity);
+            // 发送MQ消息
+            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entity.getId(), dto.getMqData());
+            SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), dmpSyncMqDTO, entity.getSourceId());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("发送MQ数据异常，{}", JSONUtil.toJsonStr(result));
+                return Boolean.FALSE;
+            }
+        } catch (Exception e) {
+            log.error("sendMqAndSaveTask 发送MQ数据异常，{}", e.getMessage());
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
 }

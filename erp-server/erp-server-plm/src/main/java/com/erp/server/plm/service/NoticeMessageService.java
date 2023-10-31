@@ -290,6 +290,8 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     NoticeMessageEntity getByNodeFlag(NoticeEnum flagEnum);
 
 
-
-
+    /**
+     * 通过ID获取通知详情
+     */
+    NoticeMessageEntity view(String id);
 }

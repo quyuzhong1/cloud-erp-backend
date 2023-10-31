@@ -6,20 +6,33 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.HashMap;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 销售出库-销售出库单
@@ -28,11 +41,18 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("销售出库单")
 @RequestMapping("/so/outstock")
 public class SoOutstockController extends BaseController {
 
     @Resource
     private SoOutstockService soOutstockService;
+
+    @Resource
+    private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
+
+    @Resource
+    private MQProducerService mQProducerService;
 
     /**
      * 获取 tab列表
@@ -68,6 +88,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增销售出库单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         String id = soOutstockService.add(dto);
@@ -80,6 +101,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售出库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -99,6 +121,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售出库单")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         Boolean result = soOutstockService.addAndSubmit(dto);
@@ -111,6 +134,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -129,6 +153,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售出库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -147,6 +172,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售出库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -167,6 +193,7 @@ public class SoOutstockController extends BaseController {
      * @author Will
      * @date: 2023/7/12 16:54
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售出库单列表修改:运输单号={trackNo},ids={idList}")
     @PostMapping("/pagingUpdate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -185,6 +212,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售出库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -200,6 +228,7 @@ public class SoOutstockController extends BaseController {
     /**
      * 反审核
      */
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售出库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -219,6 +248,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售出库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -236,6 +266,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售出库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -255,6 +286,7 @@ public class SoOutstockController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:11
      */
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废销售出库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -270,6 +302,7 @@ public class SoOutstockController extends BaseController {
      * 导出
      * 数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -291,6 +324,7 @@ public class SoOutstockController extends BaseController {
      * @author yl
      * @date 2023-05-23 15:15
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "销售订单下推")
     @PostMapping("/generateSoOutstock")
     public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
         Boolean result = soOutstockService.generateSoSave(dto);
@@ -337,4 +371,6 @@ public class SoOutstockController extends BaseController {
         soOutstockService.tempRepairHistoryDb();
         return success();
     }
+
+
 }

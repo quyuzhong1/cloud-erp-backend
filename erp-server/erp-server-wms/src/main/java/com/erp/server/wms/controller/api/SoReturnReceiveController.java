@@ -5,6 +5,10 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
@@ -30,6 +34,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
+@LogSystemModule("销售退货签收单")
 @RequestMapping("/soReturnReceive")
 public class SoReturnReceiveController extends BaseController {
 
@@ -79,6 +84,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增销售退货签收单")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
         String id = soReturnReceiveService.add(dto);
@@ -92,6 +98,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售退货签收单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -110,6 +117,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param id
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.SoReturnReceiveDTO.ViewDTO>
      **/
+    @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -128,6 +136,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售退货签收单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -146,6 +155,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售退货签收单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -164,6 +174,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售退货签收单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -182,6 +193,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货签收单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -200,6 +212,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售退货签收单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -236,6 +249,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售退货签收单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -254,6 +268,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param remarkDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废销售退货签收单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -272,6 +287,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货签收单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -291,6 +307,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货签收单")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -309,6 +326,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param validList validList
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推退货签收单")
     @PostMapping(value = "/generateSoReturnReceiveSave")
     public ApiResult generateSoReturnReceiveSave(@RequestBody @Validated ValidList<SoReturnNoticeDTO.GenerateSoReturnReceiveView> validList) {
         Boolean flag = soReturnReceiveService.generateSoReturnReceiveSave(validList.getList());
@@ -322,6 +340,7 @@ public class SoReturnReceiveController extends BaseController {
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推退货入库单")
     @PostMapping(value = "/generateSoReturnInstockView")
     public ApiResult<List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> generateSoDeliveryViews = soReturnReceiveService.generateSoReturnInstockView(dto.getIds());

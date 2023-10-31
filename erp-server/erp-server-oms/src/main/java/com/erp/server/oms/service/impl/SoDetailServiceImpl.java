@@ -379,6 +379,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return baseMapper.listSoDetailByMainIds(ids);
     }
 
+    @Override
+    public List<SoDetailEntity> listSoDetailByMainId(String id) {
+        LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoDetailEntity::getMainId, id);
+        queryWrapper.eq(SoDetailEntity::getIsDeleted, false);
+        return baseMapper.selectList(queryWrapper);
+    }
+
 
     /**
      * 根据搜索类型 获取到对应的明细id
@@ -1457,6 +1465,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         LambdaUpdateWrapper<SoDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SoDetailEntity::getIsClose, Boolean.TRUE);
+        updateWrapper.set(SoDetailEntity::getDiscountAmount,BigDecimal.ZERO);
         updateWrapper.in(SoDetailEntity::getId, closeSoDetailIdList);
         this.update(updateWrapper);
 

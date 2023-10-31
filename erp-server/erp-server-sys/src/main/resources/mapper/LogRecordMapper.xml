@@ -3,28 +3,28 @@
 <mapper namespace="com.erp.server.sys.mapper.LogRecordMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.SysLogRecordEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="system_module" property="systemModule" />
-       <result column="action" property="action" />
-       <result column="path" property="path" />
-       <result column="description" property="description" />
-       <result column="ip" property="ip" />
-       <result column="request_params" property="requestParams" />
-       <result column="response_params" property="responseParams" />
-       <result column="class_path" property="classPath" />
-       <result column="record_id" property="recordId" />
-       <result column="record_code" property="recordCode" />
-       <result column="error_msg" property="errorMsg" />
-       <result column="status" property="status" />
-       <result column="request_id" property="requestId" />
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="system_module" property="systemModule" />
+        <result column="action" property="action" />
+        <result column="path" property="path" />
+        <result column="description" property="description" />
+        <result column="ip" property="ip" />
+        <result column="request_params" property="requestParams" />
+        <result column="response_params" property="responseParams" />
+        <result column="class_path" property="classPath" />
+        <result column="record_id" property="recordId" />
+        <result column="record_code" property="recordCode" />
+        <result column="error_msg" property="errorMsg" />
+        <result column="status" property="status" />
+        <result column="request_id" property="requestId" />
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.sys.dto.SysLogRecordDTO$ListDTO">
@@ -53,12 +53,15 @@
         slr.request_id
         FROM sys_log_record as slr
         WHERE slr.is_deleted=FALSE
-        <if test="params.systemModule != null ">
-            and slr.system_module = #{params.systemModule}
+        <if test="params.actionList !=null and params.actionList.size > 0">
+            AND slr.action IN
+            <foreach collection="params.actionList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
-        <if test="params.recordIds != null and params.recordIds.size > 0">
+        <if test="params.recordIdList != null and params.recordIdList.size > 0">
             AND slr.record_id IN
-            <foreach collection="params.recordIds" item="item" open="(" separator="," close=")">
+            <foreach collection="params.recordIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
@@ -69,10 +72,12 @@
             </foreach>
         </if>
         <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-            INTERVAL '1
-            DAY' ) > slr.create_time
+            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 SECOND') > slr.create_time
         </if>
+        <if test="params.systemModule != null and params.systemModule != ''">
+            AND slr.system_module ILIKE concat('%', #{params.systemModule}::text,'%')
+        </if>
+
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>

@@ -540,7 +540,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
 
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
-                this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap);
+                this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
                 // 供应商id集合
@@ -554,7 +554,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     // 金额信息加上折扣额计算
                     String soId = soEntry.getKey();
                     SoInfoEntity soInfoEntity = soInfoMap.get(soId);
-                    //SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
                     for (SoDetailEntity item : saveOrUpdateList) {
                         // 计算毛利成本
                         soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
@@ -578,10 +577,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @author yl
      * @date 2023-10-16 16:05
      */
-    public void handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap) {
+    public void handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap, List<String> closeSoDetailIdList) {
         if (CollectionUtils.isEmpty(saveOrUpdateList)) {
             return;
         }
+        List<SoDetailEntity> newList = new ArrayList<>();
         //根据销售订单分组
         Map<String, List<SoDetailEntity>> map = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
         for (Map.Entry<String, List<SoDetailEntity>> item : map.entrySet()) {
@@ -590,15 +590,23 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (Objects.isNull(soInfo)) {
                 continue;
             }
-
             List<SoDetailEntity> soDetailList = item.getValue();
+            List<String> updateIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+            updateIdList.addAll(closeSoDetailIdList);
+            List<SoDetailEntity> soDbDetailList = soDetailService.listSoDetailByMainId(soId);
+            //表示只有只有未修改的
+            soDbDetailList = soDbDetailList.stream().filter(s -> !updateIdList.contains(s.getId())).collect(Collectors.toList());
             //是否含税
             Boolean isTax = soInfo.getIsTax();
             //折扣总额
             BigDecimal discountAmount = soInfo.getDiscountAmount();
+            soDetailList.addAll(soDbDetailList);
 
-            SoUtils.handleDetailAmount(isTax,discountAmount,soDetailList);
+            SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+            newList.addAll(soDetailList);
+
         }
+        saveOrUpdateList = newList;
 
 
     }

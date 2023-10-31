@@ -2,8 +2,11 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.validator.AddGroup;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.server.oms.service.SoDetailService;
@@ -22,6 +25,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 @RestController
+@LogSystemModule("销售订单")
 @RequestMapping("/soDetail")
 public class SoDetailController extends BaseController {
 
@@ -75,6 +79,7 @@ public class SoDetailController extends BaseController {
     /**
      * 销售订单 产品信息导入
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售订单产品信息")
     @PostMapping("/import")
     public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "warehouseId") String warehouseId, HttpServletResponse response) {
         SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId);
@@ -86,6 +91,7 @@ public class SoDetailController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板销售订单产品信息")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         soDetailService.downloadTemplate(response);

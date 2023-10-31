@@ -2,12 +2,15 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.service.SysUserInfoService;
@@ -29,6 +32,7 @@ import java.util.Map;
  * @date 2022-07-07 18:28:29
  */
 @RestController
+@LogSystemModule("用户管理")
 @RequestMapping("user")
 public class SysUserInfoController extends BaseController {
 
@@ -63,8 +67,9 @@ public class SysUserInfoController extends BaseController {
     /**
      * 信息
      */
+    @LogViewService
     @RequestMapping("/info/{uid}")
-    public ApiResult info(@PathVariable("uid") Long uid) {
+    public ApiResult info(@PathVariable("uid") String uid) {
         SysUserInfoEntity sysUserInfo = sysUserInfoService.getById(uid);
         return success(sysUserInfo);
     }
@@ -72,6 +77,7 @@ public class SysUserInfoController extends BaseController {
     /**
      * 添加用户
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加用户")
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoService.add(sysUserInfoDTO);
@@ -81,6 +87,7 @@ public class SysUserInfoController extends BaseController {
     /**
      * 修改用户
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户", keyIdName = "uid")
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoService.update(sysUserInfoDTO);
@@ -91,6 +98,7 @@ public class SysUserInfoController extends BaseController {
     /**
      * 删除
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除用户")
     @RequestMapping("/remove")
     public ApiResult delete(@RequestBody List<String> uids) {
         sysUserInfoService.deleteByIds(uids);
@@ -103,6 +111,7 @@ public class SysUserInfoController extends BaseController {
      * @param stateDTO
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户状态:ids={ids},状态={state}(1=启用,0=未启用)")
     @RequestMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
@@ -116,6 +125,7 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
     @GetMapping("/resetPassword")
     public ApiResult resetPassword(@RequestParam("uid") String uid) {
         Boolean flag = sysUserInfoService.resetPassword(uid);
@@ -129,6 +139,7 @@ public class SysUserInfoController extends BaseController {
      * @param dto dto
      * @return
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "忘记密码:账号={userAccount}")
     @PostMapping("/forgotPassword")
     public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
         Boolean flag = sysUserInfoService.forgotPassword(dto);
@@ -142,6 +153,7 @@ public class SysUserInfoController extends BaseController {
      * @param userAccount userAccount
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "忘记密码-获取验证码:账号={userAccount}")
     @GetMapping("/forgotPasswordGetCode")
     public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
         Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
@@ -164,6 +176,7 @@ public class SysUserInfoController extends BaseController {
      * @param file
      * @return
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入用户关联金蝶信息")
     @PostMapping(value = "importUserKingdee")
     public ApiResult<Void> importUserKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
         sysUserInfoService.importUserKingdee(file);

@@ -20,7 +20,7 @@ public class SysUserInfoEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * $column.comments
+	 * 用户ID
 	 */
    @TableId(value = "uid",type = IdType.ASSIGN_ID)
 	private String uid;
@@ -80,9 +80,14 @@ public class SysUserInfoEntity implements Serializable {
 	 */
 	private String salt;
 
+	/**
+	 * 头像图片
+	 */
 	private String headIcon;
 
-
+	/**
+	 * 邮箱
+	 */
 	private String email;
 
 	/**

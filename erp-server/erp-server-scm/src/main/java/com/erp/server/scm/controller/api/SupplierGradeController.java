@@ -2,9 +2,12 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.validator.ValidList;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierGradeEntity;
@@ -22,6 +25,7 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
+@LogSystemModule("供应商列表")
 @RequestMapping("/supplier/grade")
 public class SupplierGradeController extends BaseController {
 
@@ -35,6 +39,7 @@ public class SupplierGradeController extends BaseController {
      * @param gradeList
      * @return
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量保存供应商等级")
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Valid ValidList<SupplierDTO.SupplierGradeDTO> gradeList) {
         Boolean result = supplierGradeService.saveOrUpdateBatchGrade(gradeList);

@@ -10,30 +10,31 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.dto.TransferInDTO;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.lang.reflect.UndeclaredThrowableException;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 盘点管理-盘点任务
@@ -43,6 +44,7 @@ import java.util.Objects;
  */
 @Slf4j
 @RestController
+@LogSystemModule("盘点任务")
 @RequestMapping("/stocktakingTask")
 public class StocktakingTaskController extends BaseController {
 
@@ -91,6 +93,7 @@ public class StocktakingTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交盘点任务")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -139,6 +142,7 @@ public class StocktakingTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -157,6 +161,7 @@ public class StocktakingTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核盘点任务")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -216,6 +221,7 @@ public class StocktakingTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销盘点任务")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -252,6 +258,7 @@ public class StocktakingTaskController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "盘点任务分配盘点人:盘点任务ids={ids},分配用户ids={userIdList}")
     @PostMapping("/assignUser")
     public ApiResult assignStocktakingUser(@RequestBody @Validated StocktakingTaskDTO.AssignUserDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -279,6 +286,7 @@ public class StocktakingTaskController extends BaseController {
      * 导出
      * 数据
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务")
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid StocktakingTaskDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingTaskService.exportExcel(dto, response);
@@ -289,6 +297,7 @@ public class StocktakingTaskController extends BaseController {
      * 导入
      * 数据
      */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入盘点任务")
     @PostMapping("/import")
     public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = stocktakingTaskService.importFile(excelFile, response);
@@ -300,6 +309,7 @@ public class StocktakingTaskController extends BaseController {
      *
      * @return
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板盘点任务")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         stocktakingTaskService.downloadTemplate(response);

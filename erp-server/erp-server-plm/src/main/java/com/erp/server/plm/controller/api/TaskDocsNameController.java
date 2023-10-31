@@ -1,7 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsNameDTO;
 import com.erp.server.plm.service.TaskDocsNameService;
@@ -20,6 +23,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("产品开发管理")
 @RequestMapping("taskName")
 public class TaskDocsNameController extends BaseController {
 
@@ -34,6 +38,7 @@ public class TaskDocsNameController extends BaseController {
      * @author yl
      * @date 2022-10-31 11:26
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新建任务-设置目标交付文档-保存自定义文档")
     @PostMapping("/save")
     public ApiResult saveDocsName(@RequestBody @Validated DocsNameDTO dto) {
         Boolean flag = taskDocsNameService.saveDocsName(dto);
