@@ -889,11 +889,26 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> thisNoticeDetailIdList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
             Integer totalQty = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
+            //税率
+            BigDecimal taxRate = soDetailEntity.getTaxRate();
             BigDecimal price = soDetailEntity.getPrice();
-            item.setPrice(price);
-            item.setCnyPrice(MathUtil.multiply(price, soDetailEntity.getExchangeRate()));
-            item.setTaxPrice(MathUtil.multiply(price, MathUtil.add(MathUtil.BigDecimal_100, soDetailEntity.getTaxRate())).divide(MathUtil.BigDecimal_100));
-            item.setCnyTaxPrice(MathUtil.multiply(item.getTaxPrice(), soDetailEntity.getExchangeRate()));
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //汇率
+            BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
+            //销售单价(本位币)
+            item.setCnyPrice(MathUtil.multiply(price, exchangeRate));
+
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
+            //含税单价(本位币)
+            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
+
             //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
             //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
 
@@ -1023,11 +1038,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> thisNoticeDetailIdList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
             Integer totalQty = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
+
+            //税率
+            BigDecimal taxRate = soDetailEntity.getTaxRate();
             BigDecimal price = soDetailEntity.getPrice();
-            item.setPrice(price);
-            item.setCnyPrice(MathUtil.multiply(price, soDetailEntity.getExchangeRate()));
-            item.setTaxPrice(MathUtil.multiply(price, MathUtil.add(MathUtil.BigDecimal_100, soDetailEntity.getTaxRate())).divide(MathUtil.BigDecimal_100));
-            item.setCnyTaxPrice(MathUtil.multiply(item.getTaxPrice(), soDetailEntity.getExchangeRate()));
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //汇率
+            BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
+            //销售单价(本位币)
+            item.setCnyPrice(MathUtil.multiply(price, exchangeRate));
+
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
+            //含税单价(本位币)
+            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
+
             //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
             //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
 
