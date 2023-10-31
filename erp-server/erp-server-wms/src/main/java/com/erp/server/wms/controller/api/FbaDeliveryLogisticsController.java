@@ -20,7 +20,7 @@ import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
 import java.util.List;
 
 /**
- * FBI发货单物流信息表
+ * FBA发货单物流信息表
  *
  * @author Luo_WG
  * @since 2023-10-30
