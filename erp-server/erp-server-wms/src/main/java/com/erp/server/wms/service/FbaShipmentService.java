@@ -75,4 +75,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView>>
      **/
     List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids);
+
+    /**
+     * 下推发货单保存
+     * @Author Luo_WG
+     * @Date 2023/10/31 14:35
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
 }

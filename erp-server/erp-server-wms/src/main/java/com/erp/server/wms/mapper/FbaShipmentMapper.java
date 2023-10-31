@@ -6,6 +6,7 @@ import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -25,5 +26,5 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaShipmentDTO.ListDTO>
      **/
-    IPage<FbaShipmentDTO.ListDTO> paging(Page query, FbaShipmentDTO.PagingParamDTO params);
+    IPage<FbaShipmentDTO.ListDTO> paging(Page query, @Param("params") FbaShipmentDTO.PagingParamDTO params);
 }

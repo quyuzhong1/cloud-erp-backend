@@ -126,5 +126,18 @@ public class FbaShipmentController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 下推发货单保存
+     * @Author Luo_WG
+     * @Date 2023/10/31 14:35
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSave")
+    public ApiResult generateDeliverSave(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
+        Boolean flag = fbaShipmentService.generateDeliverSave(list);
+        return flag ? success() : failure();
+    }
+
 
 }

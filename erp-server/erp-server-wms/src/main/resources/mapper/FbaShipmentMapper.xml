@@ -43,7 +43,7 @@
         code, name, shop_id, shop_name, country_id, country_name, fulfillment_center, delivery_status, platform_shipment_status, shipment_create_time, shipment_receive_time, label_type, pack_type, delivery_from_address, delivery_to_address
     </sql>
 
-
+    <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
         SELECT
             fs.id,
@@ -69,5 +69,22 @@
         FROM fba_shipment fs
         INNER JOIN fba_shipment_detail fsd ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE fs.is_deleted = FALSE
+
+        <where>
+            <if test="params.code != null and params.code != ''">
+                AND fs.code ILIKE concat('%',#{params.code},'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                AND fsd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+
+
+        </where>
     </select>
 </mapper>

@@ -91,4 +91,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     public Boolean finishShipment(BaseIdsDTO.IdsDTO ids) {
         return null;
     }
+
+    @Override
+    public List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list) {
+        return null;
+    }
 }
