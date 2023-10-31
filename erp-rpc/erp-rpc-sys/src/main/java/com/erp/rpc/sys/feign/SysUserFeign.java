@@ -531,12 +531,5 @@ public interface SysUserFeign {
      */
     @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
-    /**
-     * 根据父级获取全量子集
-     *
-     * @param deptId
-     * @return
-     */
-    @GetMapping("feign/dept/getDeptByParentId")
-    List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId);
+
 }

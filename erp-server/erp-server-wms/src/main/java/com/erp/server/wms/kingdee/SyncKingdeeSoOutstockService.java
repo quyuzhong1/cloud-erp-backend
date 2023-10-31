@@ -18,11 +18,5 @@ public interface SyncKingdeeSoOutstockService {
      **/
     void syncDataToKingdee(SoOutstockEntity entity, String operate);
 
-    /**
-     * 推送订单到mq
-     *
-     * @param entity
-     * @param syncOperate
-     */
-    public String syncOrderToDmp(SoOutstockEntity entity, String syncOperate);
+
 }

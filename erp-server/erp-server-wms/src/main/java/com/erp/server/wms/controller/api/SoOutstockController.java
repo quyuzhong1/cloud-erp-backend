@@ -352,27 +352,5 @@ public class SoOutstockController extends BaseController {
         return success();
     }
 
-    /**
-     * 订单监听测试方法
-     *
-     * @param id
-     * @return
-     */
-    @PostMapping("/testOrderPush")
-    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
-        SoOutstockEntity soInfoEntity = soOutstockService.getById(id);
-        String dmpPullTaskId = syncKingdeeSoOutstockService.syncOrderToDmp(soInfoEntity, operate);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("id", id);
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        resultMap.put("code", soInfoEntity.getCode());
-        resultMap.put("operate", operate);
-        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(),
-                resultMap, id);
-        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            return success();
-        } else {
-            return failure();
-        }
-    }
+
 }

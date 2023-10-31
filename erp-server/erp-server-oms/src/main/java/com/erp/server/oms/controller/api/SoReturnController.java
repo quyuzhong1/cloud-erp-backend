@@ -374,28 +374,5 @@ public class SoReturnController extends BaseController {
         return success(list);
     }
 
-    /**
-     * 订单监听测试方法
-     *
-     * @param id
-     * @return
-     */
-    @PostMapping("/testOrderPush")
-    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
-        SoReturnEntity soInfoEntity = soReturnService.getById(id);
-//        soInfoService.syncOrderToDmp(soInfoEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        String dmpPullTaskId = soReturnService.syncOrderToDmp(soInfoEntity, operate);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("id", id);
-        resultMap.put("dmpPullTaskId", dmpPullTaskId);
-        resultMap.put("code", soInfoEntity.getCode());
-        resultMap.put("operate", operate);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(),
-                resultMap, id);
-        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            return success();
-        } else {
-            return failure();
-        }
-    }
+
 }
