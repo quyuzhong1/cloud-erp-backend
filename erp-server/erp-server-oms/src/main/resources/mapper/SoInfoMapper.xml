@@ -508,6 +508,7 @@
     </select>
     <select id="listRepairHistoryDb" resultType="com.erp.model.oms.dto.SoInfoDTO$ListDTO">
         SELECT
+            sd.id,
             si.id AS  soId,
             si.discount_amount,
             sd.sku_id,
