@@ -92,4 +92,9 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     private void handleData(FbaShipmentDetailEntity fbaShipmentDetailEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public List<FbaShipmentDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(FbaShipmentDetailEntity::getMainId, mainIds).list();
+    }
 }

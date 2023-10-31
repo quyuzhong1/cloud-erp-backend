@@ -60,7 +60,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ReceiveRecordView>>
      **/
-    List<FbaShipmentDTO.ViewDTO> view(String id);
+    FbaShipmentDTO.ViewDTO view(String id);
 
     /**
      * 完结货件

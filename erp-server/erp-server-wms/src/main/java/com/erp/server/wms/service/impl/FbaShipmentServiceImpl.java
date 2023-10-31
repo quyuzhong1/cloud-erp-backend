@@ -10,10 +10,13 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
+import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
+import com.erp.server.wms.service.FbaShipmentDetailService;
 import com.erp.server.wms.service.FbaShipmentService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -46,6 +49,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Autowired
+    private FbaShipmentConverter fbaShipmentConverter;
+    @Autowired
+    private FbaShipmentDetailService fbaShipmentDetailService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -95,8 +102,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public List<FbaShipmentDTO.ViewDTO> view(String id) {
+    public FbaShipmentDTO.ViewDTO view(String id) {
+
         FbaShipmentEntity entity = this.getById(id);
+
+        FbaShipmentDTO.ViewDTO viewDTO = fbaShipmentConverter.fbaShipmentToViewDTO(entity);
+
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
+
 
         return null;
     }
