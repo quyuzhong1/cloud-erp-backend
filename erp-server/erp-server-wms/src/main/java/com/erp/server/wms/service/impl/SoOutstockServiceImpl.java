@@ -195,15 +195,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
+        //通知单详情
+        List<String> noticeDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
             //sku id
             String skuId = item.getSkuId();
             //实发数量
             Integer actualQty = item.getActualQty();
-            BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+            String sourceDetailId = item.getSourceDetailId();
+            String soDetailId = soDeliveryNoticeDetailEntityList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                    map(SoDeliveryNoticeDetailEntity::getSourceDetailId).findFirst().orElse("");
+
+            BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
             //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+            BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
 
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
@@ -1125,6 +1132,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal taxAmountBefore = soDetail.getTaxAmountBefore();
             soAmount = soAmount.add(Objects.isNull(taxAmountBefore) ? BigDecimal.ZERO : taxAmountBefore);
         }
+        //通知单详情
+        List<String> noticeDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
@@ -1132,12 +1142,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String skuId = item.getSkuId();
             //实发数量
             Integer actualQty = item.getActualQty();
-            BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
-                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
 
+            String sourceDetailId = item.getSourceDetailId();
+            String soDetailId = soDeliveryNoticeDetailEntityList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                    map(SoDeliveryNoticeDetailEntity::getSourceDetailId).findFirst().orElse("");
+
+            BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
+                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
             //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+            BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
+
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
             outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
@@ -1754,6 +1769,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //销售出库详情
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(soOutstockIdList);
 
+        //通知单详情
+        List<String> noticeDetailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
+
         for (SoOutstockEntity item : soOutstockList) {
             String soId = item.getSoId();
             String id = item.getId();
@@ -1772,13 +1791,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             for (SoOutstockDetailEntity itemDetail : detailList) {
                 //sku id
                 String skuId = itemDetail.getSkuId();
-                //实发数量
-                Integer actualQty = itemDetail.getActualQty();
-                BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+
+                String sourceDetailId = itemDetail.getSourceDetailId();
+                String soDetailId = soDeliveryNoticeDetailEntityList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                        map(SoDeliveryNoticeDetailEntity::getSourceDetailId).findFirst().orElse("");
+
+                BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                         findFirst().map(SoInfoDTO.ListDTO::getPrice).orElse(BigDecimal.ZERO);
                 //税率
-                BigDecimal taxRate = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
                         findFirst().map(SoInfoDTO.ListDTO::getTaxRate).orElse(BigDecimal.ZERO);
+
+                //实发数量
+                Integer actualQty = itemDetail.getActualQty();
+
 
                 BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
                 BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
