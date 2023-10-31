@@ -303,7 +303,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改任务")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改任务", keyIdName = "taskId")
     @PostMapping("/updateTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -412,7 +412,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "审核通过项目任务")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核通过项目任务", keyIdName = "productId")
     @PostMapping("/approvalPass")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -430,7 +430,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "审核不通过项目任务")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核不通过项目任务", keyIdName = "productId")
     @PostMapping("/approvalReject")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -725,6 +725,7 @@ public class ProjectTaskController extends BaseController {
      * @author Will
      * @date: 2023/2/1 14:13
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "飞书提醒:用户ids={userIds}")
     @PostMapping(value = "/flyingBookReminder")
     public ApiResult flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
         projectTaskService.flyingBookReminder(dto);
@@ -752,6 +753,7 @@ public class ProjectTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/3/20 10:17
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "模板引入任务")
     @PostMapping(value = "/templateCiteTask")
     public ApiResult templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
         return success(templateTaskService.templateCiteTask(dto));
@@ -765,6 +767,7 @@ public class ProjectTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/3/29 18:16
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除任务")
     @PostMapping("/removeBatch")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -826,6 +829,7 @@ public class ProjectTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
     @GetMapping("/importTemplate")
     public void importTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productTaskTemplate.xlsx";
