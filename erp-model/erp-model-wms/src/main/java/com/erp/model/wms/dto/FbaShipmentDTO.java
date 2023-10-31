@@ -24,9 +24,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class FbaShipmentDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -20,9 +21,6 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class FbaDeliveryLogisticsDTO implements Serializable {
-
-
-
 
     /**
     * 详情
@@ -47,9 +45,17 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         private String deliveryCode;
 
         /**
-        * 物流方式
-        */
+         * 物流方式:/wms/common/enumDropDown?type=LogisticsMethod
+         * 描述：airfreight:空运, express:快递, oceanFreightBulk:海运散装
+         * , oceanFreightFCL:海运整箱, railwayTransportationBulk:铁运散装
+         * , railwayTransportationFCL:铁运整箱
+         */
         private String logisticsMethod;
+
+        /**
+        * 物流方式名称
+        */
+        private String logisticsMethodName;
 
         /**
         * 物流渠道
@@ -57,13 +63,19 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         private String logisticsChannel;
 
         /**
+        * 物流渠道名称
+        */
+        private String logisticsChannelName;
+
+        /**
         * 发货时间
         */
         private LocalDateTime deliveryTime;
 
-        private Integer trackingNo;
-
-
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
     }
 
     /**
@@ -72,7 +84,6 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
 
     }
 
@@ -128,8 +139,10 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         */
         private LocalDateTime deliveryTime;
 
-        private Integer trackingNo;
-
+        /**
+         * 物流跟踪号
+         */
+        private List<String> trackingNo;
 
     }
 
