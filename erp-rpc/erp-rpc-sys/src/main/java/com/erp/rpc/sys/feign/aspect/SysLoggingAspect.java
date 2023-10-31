@@ -163,6 +163,7 @@ public class SysLoggingAspect {
         Object obj = null;
         try {
             log.debug("Sys Logging doAround.before");
+            log.warn("Sys Logging doAround.before");
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
             Method method = signature.getMethod();
             LogAction logAction = method.getAnnotation(LogAction.class);
@@ -514,7 +515,7 @@ public class SysLoggingAspect {
      * @return 更新后的对象
      */
     private Object afterFindObj(ProceedingJoinPoint joinPoint, LogAction controllerLog, Object id) {
-        if (!LogActionEnum.UPDATE.equals(controllerLog.value())) {
+        if (!LogActionEnum.UPDATE.equals(controllerLog.value()) && !LogActionEnum.UPDATE_AND_SUBMIT.equals(controllerLog.value())) {
             return null;
         }
         if (null == id){
