@@ -50,8 +50,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
-    private FbaShipmentConverter fbaShipmentConverter;
-    @Autowired
     private FbaShipmentDetailService fbaShipmentDetailService;
 
     @Override
@@ -106,7 +104,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         FbaShipmentEntity entity = this.getById(id);
 
-        FbaShipmentDTO.ViewDTO viewDTO = fbaShipmentConverter.fbaShipmentToViewDTO(entity);
+        FbaShipmentDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentToViewDTO(entity);
 
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
 
