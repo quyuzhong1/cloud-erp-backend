@@ -581,6 +581,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isEmpty(saveOrUpdateList)) {
             return;
         }
+        List<SoDetailEntity> newList = new ArrayList<>();
         //根据销售订单分组
         Map<String, List<SoDetailEntity>> map = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
         for (Map.Entry<String, List<SoDetailEntity>> item : map.entrySet()) {
@@ -589,7 +590,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (Objects.isNull(soInfo)) {
                 continue;
             }
-
             List<SoDetailEntity> soDetailList = item.getValue();
             List<String> updateIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
             updateIdList.addAll(closeSoDetailIdList);
@@ -603,7 +603,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             soDetailList.addAll(soDbDetailList);
 
             SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+            newList.addAll(soDetailList);
+
         }
+        saveOrUpdateList = newList;
 
 
     }
