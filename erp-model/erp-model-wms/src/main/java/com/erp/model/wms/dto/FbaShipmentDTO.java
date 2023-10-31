@@ -293,12 +293,14 @@ public class FbaShipmentDTO implements Serializable {
         private String fulfillmentCenter;
 
         /**
-         * 发货状态
+         * 发货状态:/wms/common/enumDropDown?type=FbaDeliveryStatus
+         * 描述：shipped:已发货  isOver:已完结  unShipped:未发货
          */
         private List<String> deliveryStatusList;
 
         /**
-         * 平台货件状态
+         * 平台货件状态:/wms/common/enumDropDown?type=FbaPlatformShipmentStatus
+         * 描述： CLOSED WORKING SHIPPED RECEIVING
          */
         private List<String> platformShipmentStatusList;
 
@@ -308,7 +310,7 @@ public class FbaShipmentDTO implements Serializable {
         private String asin;
 
         /**
-         * FNSKU
+         * fnSku
          */
         private String fnSku;
 
@@ -318,7 +320,8 @@ public class FbaShipmentDTO implements Serializable {
         private String mSku;
 
         /**
-         * 收发差异（大于0，小于0，等于0，不等于0）
+         * 收发差异：/wms/common/enumDropDown?type=DiffRule
+         * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
          */
         private String diffRule;
 

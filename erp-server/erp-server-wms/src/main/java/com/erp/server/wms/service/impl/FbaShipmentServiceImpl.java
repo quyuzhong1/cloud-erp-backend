@@ -11,6 +11,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
+import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.FbaShipmentService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -60,6 +62,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
 
+        for (FbaShipmentDTO.ListDTO record : records) {
+            //设置发货状态中文
+            record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
+            //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总 TODO
+            record.setDeliveryQty(0);
+            //签收数量 QuantityReceived TODO
+            record.setReceiveQty(0);
+            //在途数量 QuantityReceived-发货数量，不为0时显示红色 TODO
+            record.setTransportQty(0);
+        }
     }
 
     @Override

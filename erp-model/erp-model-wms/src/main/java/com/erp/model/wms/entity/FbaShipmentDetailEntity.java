@@ -74,6 +74,11 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     */
     @TableField("is_combo")
     private Boolean isCombo;
+    /**
+     * 收货数量
+     */
+    @TableField("receive_qty")
+    private Integer receiveQty;
 
 
     public static final String MAIN_ID = "main_id";
