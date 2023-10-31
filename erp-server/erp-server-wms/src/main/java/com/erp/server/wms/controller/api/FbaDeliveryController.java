@@ -145,7 +145,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:submit",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "FBI发货单提交审核")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "FBA发货单提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -153,10 +153,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 submit = fbaDeliveryService.submit(id);
             }catch (Exception e){
-                log.error("FBI发货单 提交审核失败",e);
+                log.error("FBA发货单 提交审核失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "FBI发货单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "FBA发货单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -180,7 +180,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:approve",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "FBI发货单审核")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "FBA发货单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -189,10 +189,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 approveResult = fbaDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("FBI发货单审核失败",e);
+                log.error("FBA发货单审核失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "FBI发货单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -216,7 +216,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:disApprove",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "FBI发货单反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "FBA发货单反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -224,10 +224,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 disApproveResult = fbaDeliveryService.disApprove(id);
             }catch (Exception e){
-                log.error("FBI发货单反审核失败",e);
+                log.error("FBA发货单反审核失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "FBI发货单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -252,7 +252,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:delete",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "FBI发货单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "FBA发货单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -260,10 +260,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 deleteResult = fbaDeliveryService.delete(id);
             }catch (Exception e){
-                log.error("FBI发货单删除失败",e);
+                log.error("FBA发货单删除失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "FBI发货单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -286,7 +286,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:invalid",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.INVALID, desc = "FBI发货单作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "FBA发货单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -294,10 +294,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 invalidResult = fbaDeliveryService.invalid(id,dto.getRemark());
             }catch (Exception e){
-                log.error("FBI发货单作废失败",e);
+                log.error("FBA发货单作废失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "FBI发货单不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
@@ -321,7 +321,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:cancel",
             serviceClass = FbaDeliveryService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "FBI发货单撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "FBA发货单撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -329,10 +329,10 @@ public class FbaDeliveryController extends BaseController {
             try {
                 cancelResult = fbaDeliveryService.cancelProcess(id);
             }catch (Exception e){
-                log.error("FBI发货单撤回流程失败",e);
+                log.error("FBA发货单撤回流程失败",e);
                 FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "FBI发货单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -375,7 +375,7 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:export",
             tableAlias = ""
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "FBI发货单导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出Excel数据")
     public void exportList(@RequestBody @Validated FbaDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         fbaDeliveryService.exportList(dto, response);
     }
