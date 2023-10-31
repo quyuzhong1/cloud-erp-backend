@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -266,5 +268,140 @@ public class FbaInventoryDTO implements Serializable {
 
     }
 
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
 
+        /**
+         * 仓库名称
+         */
+        private String name;
+        /**
+         * 平台sku
+         */
+        private String asin;
+        /**
+         * 卖家sku
+         */
+        private String mSku;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * 配送渠道
+         */
+        private String deliveryChannels;
+        /**
+         * 更新时间
+         */
+        private List<String> updateTimeList;
+    }
+
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 平台唯一编号
+         */
+        private String platformCode;
+
+        /**
+         * 仓库名称
+         */
+        private String name;
+
+        /**
+         * 平台sku
+         */
+        private String asin;
+
+        /**
+         * 卖家sku
+         */
+        private String mSku;
+
+        /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 配送渠道
+         */
+        private String deliveryChannels;
+
+        /**
+         * FBM可售
+         */
+        private String fbmFulfillableQty;
+
+        /**
+         * 计划入库数量
+         */
+        private Integer inboundWorkingQty;
+
+        /**
+         * 已发货数量
+         */
+        private Integer inboundShippedQty;
+
+        /**
+         * 入库中数量
+         */
+        private Integer inboundReceivingQty;
+
+        /**
+         * FBI可售
+         */
+        private Integer fulfillableQty;
+
+        /**
+         * 预留
+         */
+        private Integer reservedQty;
+
+        /**
+         * 调查中数量
+         */
+        private Integer researchingQty;
+
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
+
+        /**
+         * 库龄
+         */
+        private String inventoryAge;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+    }
 }

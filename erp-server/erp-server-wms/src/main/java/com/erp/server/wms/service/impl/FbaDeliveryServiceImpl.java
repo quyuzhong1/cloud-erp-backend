@@ -463,6 +463,21 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         .update(new FbaDeliveryEntity());
     }
 
+    @Override
+    public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(BaseIdsDTO.IdsDTO ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean fbaDeliveryGenerateMachineSave(List<FbaDeliveryDTO.GenerateMachineView> list) {
+        return null;
+    }
+
+    @Override
+    public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids) {
+        return null;
+    }
+
     /**
     * 分页查询、导出 数据处理
     */
@@ -474,7 +489,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         // 属性赋值
         for(FbaDeliveryDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             // TODO 其他如需要显示名称的字段赋值
         }
     }

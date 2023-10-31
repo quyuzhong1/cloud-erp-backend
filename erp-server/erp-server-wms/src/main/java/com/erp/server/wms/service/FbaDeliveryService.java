@@ -152,4 +152,30 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, FbaDeliveryEntity entity);
 
+    /**
+     * 下推加工单列表查询
+     * @Author Luo_WG
+     * @Date 2023/10/31 9:44
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
+     **/
+    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(BaseIdsDTO.IdsDTO ids);
+
+    /**
+     * 下推加工单保存
+     * @Author Luo_WG
+     * @Date 2023/10/31 9:57
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean fbaDeliveryGenerateMachineSave(List<FbaDeliveryDTO.GenerateMachineView> list);
+
+    /**
+     * 打印子件明细查询
+     * @Author Luo_WG
+     * @Date 2023/10/31 10:12
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
+     **/
+    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids);
 }

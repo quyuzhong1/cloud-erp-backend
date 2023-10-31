@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,12 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
     */
     Boolean update(FbaDeliveryLogisticsDTO.UpdateDTO dto);
 
-
+    /**
+     * 更新物流信息列表查询
+     * @Author Luo_WG
+     * @Date 2023/10/30 18:35
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
+     **/
+    List<FbaDeliveryDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids);
 }

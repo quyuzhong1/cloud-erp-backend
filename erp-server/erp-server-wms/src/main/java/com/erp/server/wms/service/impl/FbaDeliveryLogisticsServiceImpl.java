@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.server.wms.mapper.FbaDeliveryLogisticsMapper;
 import com.erp.server.wms.service.FbaDeliveryLogisticsService;
@@ -91,5 +93,10 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     */
     private void handleData(FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<FbaDeliveryDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids) {
+        return null;
     }
 }

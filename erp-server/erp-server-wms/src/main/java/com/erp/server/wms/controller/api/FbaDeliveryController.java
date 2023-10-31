@@ -25,14 +25,14 @@ import java.util.*;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 
 /**
- * FBI发货单
+ * FBA发货单
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Slf4j
 @RestController
-@LogSystemModule("FBI发货单")
+@LogSystemModule("FBA发货单")
 @RequestMapping("/fbaDelivery")
 public class FbaDeliveryController extends BaseController {
 
@@ -47,7 +47,7 @@ public class FbaDeliveryController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBI发货单新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
         return success(fbaDeliveryService.add(dto));
     }
@@ -60,11 +60,11 @@ public class FbaDeliveryController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:fbaDelivery:update",
-        serviceClass = FbaDeliveryService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "wms:fbaDelivery:update",
+    serviceClass = FbaDeliveryService.class,
+    keyIdName = "id")
     public ApiResult update(@RequestBody @Validated FbaDeliveryDTO.UpdateDTO dto) {
         fbaDeliveryService.update(dto);
         return success();
@@ -380,5 +380,42 @@ public class FbaDeliveryController extends BaseController {
         fbaDeliveryService.exportList(dto, response);
     }
 
+    /**
+     * 下推加工单列表查询
+     * @Author Luo_WG
+     * @Date 2023/10/31 9:44
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
+     **/
+    @PostMapping("/generateMachineView")
+    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineView(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
+        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineView(ids);
+        return success(result);
+    }
 
+    /**
+     * 下推加工单保存
+     * @Author Luo_WG
+     * @Date 2023/10/31 9:57
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/FbaDeliveryGenerateMachineSave")
+    public ApiResult fbaDeliveryGenerateMachineSave(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
+        Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 打印子件明细查询
+     * @Author Luo_WG
+     * @Date 2023/10/31 10:12
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
+     **/
+    @PostMapping("/printSonItemDetail")
+    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
+        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(ids);
+        return success(list);
+    }
 }
