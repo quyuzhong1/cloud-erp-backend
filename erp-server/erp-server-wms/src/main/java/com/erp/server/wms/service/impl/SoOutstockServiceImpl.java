@@ -892,6 +892,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //税率
             BigDecimal taxRate = soDetailEntity.getTaxRate();
             BigDecimal price = soDetailEntity.getPrice();
+            item.setPrice(price);
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
             BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
@@ -1042,6 +1043,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //税率
             BigDecimal taxRate = soDetailEntity.getTaxRate();
             BigDecimal price = soDetailEntity.getPrice();
+            item.setPrice(price);
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
             BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
