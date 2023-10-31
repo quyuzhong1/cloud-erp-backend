@@ -72,7 +72,7 @@ public class ProjectScheduleController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交排期")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交排期", keyIdName = "productId")
     @PostMapping("/submit")
     public ApiResult submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanService.submitSchedule(dto);

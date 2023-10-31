@@ -137,7 +137,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "项目任务-编辑任务", keyIdName = "taskId")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "项目任务-编辑任务")
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.updateTask(dto);
@@ -786,6 +786,7 @@ public class ProjectTaskController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导入产品任务")
     @PostMapping("/importProjectTaskFile")
     public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String productId, HttpServletResponse response) {
         ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(productId, projectTaskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService, taskChargeDistributionService);

@@ -462,6 +462,10 @@ public class SysLoggingAspect {
         if (StringUtils.isBlank(idsKey)) {
             throw new ServiceException("未找到批量查询字段:" + idsKey);
         }
+        // 兼容非json参数
+        if (!JSONUtil.isTypeJSON(requestParams)){
+            return Collections.singletonList(requestParams);
+        }
         Object idsValueObj = new JSONObject(requestParams).get(idsKey);
         if (null == idsValueObj) {
             // 兼容旧单删除(单id删除)
@@ -472,8 +476,10 @@ public class SysLoggingAspect {
             String msg = StrUtil.format("未找到批量查询字段内容,key={}", idsKey);
             throw new ServiceException(msg);
         }
+        // 兼容非List
         if (!(idsValueObj instanceof List<?>)) {
-            throw new ServiceException("批量查询字段:" + idsKey);
+//            throw new ServiceException("批量查询字段:" + idsKey);
+            return Collections.singletonList(idsValueObj.toString());
         }
         List<String> idsResult = new LinkedList<>();
         for (Object o : (List<?>) idsValueObj) {
