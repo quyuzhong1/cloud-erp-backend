@@ -1204,6 +1204,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setDictPlatformName(name);
         }
 
+        //物流方式
+        List<DictBasicDTO.ViewDTO> dictLogisticsList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_METHOD.getType());
+        if (CollectionUtils.isNotEmpty(dictLogisticsList)) {
+            String name = dictList.stream().filter(obj -> obj.getValue().equals(data.getLogisticsDTO().getDictLogisticsMethod())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.getLogisticsDTO().setDictLogisticsMethodName(name);
+        }
+
         //产品信息
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
