@@ -490,7 +490,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
 
         }
         if (CollectionUtils.isNotEmpty(existShop)) {
-            String existShopName = existShop.stream().collect(Collectors.joining(","));
+            String existShopName = existShop.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existShopName);
         }
 

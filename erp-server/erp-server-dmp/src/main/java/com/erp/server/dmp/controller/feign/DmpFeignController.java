@@ -2,6 +2,8 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,6 +14,7 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.service.BiSettlementExchangeRateService;
 import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.service.DmpPullTaskService;
@@ -22,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,6 +50,11 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private DmpPullTaskService dmpPullTaskService;
+
+
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
+
 
     @Resource
     private PlatformService platformService;
@@ -137,5 +146,36 @@ public class DmpFeignController extends BaseController {
         result = dmpPullTaskService.listKingdeeCode(conditon);
 
         return result;
+    }
+
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     * @param dto 查询过滤条件
+     *
+     * @return
+     */
+    @PostMapping("/send/mq/save/task")
+    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto){
+        return dmpPullTaskService.sendMqAndSaveTask(dto);
+    }
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     * @param dto 查询过滤条件
+     *
+     * @return
+     */
+    @PostMapping("/save/pull/task")
+    public String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto){
+        return dmpPullTaskService.savePullTask(dto);
+    }
+
+    /**
+     * 根据订单id删除订单
+     * @param ids
+     * @return
+     */
+    @PostMapping("/remove/orderByIds")
+    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids){
+        return dmpOrderInfoService.removeOrderByIds(ids);
     }
 }

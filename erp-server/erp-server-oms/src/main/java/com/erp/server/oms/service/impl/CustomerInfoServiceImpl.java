@@ -1396,6 +1396,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
+    public CustomerInfoEntity getCustomerById(String id) {
+        if (StringUtils.isEmpty(id)) {
+            return null;
+        }
+        return this.getById(id);
+    }
+
+    @Override
     public CustomerInfoEntity getByName(String customerName) {
 
         return this.lambdaQuery().eq(CustomerInfoEntity::getName, customerName).

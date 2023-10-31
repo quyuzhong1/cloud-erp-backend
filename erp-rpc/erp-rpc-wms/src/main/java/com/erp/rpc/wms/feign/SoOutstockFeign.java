@@ -6,6 +6,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -47,4 +48,22 @@ public interface SoOutstockFeign {
 
     @PostMapping("feign/soOutstock/listByTrackNo")
     List<SoOutstockEntity> listByTrackNo(String trackNo);
+    /**
+     * 获取销售出货单
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soOutstock/getSoOutstockEntityById")
+    public SoOutstockEntity getSoOutstockEntityById(@RequestParam(value = "id") String id);
+
+    /**
+     * 获取销售出货单 明细
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soOutstock/getSoOutstockDetailByDetailId")
+    public List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
+
 }

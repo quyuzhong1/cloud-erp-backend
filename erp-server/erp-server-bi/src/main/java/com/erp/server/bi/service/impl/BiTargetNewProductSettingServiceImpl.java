@@ -639,7 +639,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
 
         }
         if (CollectionUtils.isNotEmpty(existStaffList)) {
-            String existCategoryName = existStaffList.stream().collect(Collectors.joining(","));
+            String existCategoryName = existStaffList.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
         }
         //部门id

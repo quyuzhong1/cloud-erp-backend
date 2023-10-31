@@ -617,7 +617,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
 
         }
         if (CollectionUtils.isNotEmpty(existStaff)) {
-            String existStaffName = existStaff.stream().collect(Collectors.joining(","));
+            String existStaffName = existStaff.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existStaffName);
         }
 

@@ -34,6 +34,15 @@
             </foreach>
         </if>
     </select>
-
+    <select id="getDeptByParentId" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
+        WITH RECURSIVE T ( ID, NAME, parent_id ) AS (
+            SELECT ID,NAME,PARENT_ID FROM sys_department
+            WHERE parent_id = #{deptId}
+            UNION ALL
+            SELECT st.ID,st.NAME,st.PARENT_ID
+            FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,NAME,PARENT_ID FROM T
+    </select>
 
 </mapper>

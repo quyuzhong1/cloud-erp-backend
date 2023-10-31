@@ -14,8 +14,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -37,7 +39,10 @@ public class SoReturnInstockController extends BaseController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
-
+    @Resource
+    private MQProducerService mQProducerService;
+    @Resource
+    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
     /**
      * 列表查询
      * @Author Luo_WG

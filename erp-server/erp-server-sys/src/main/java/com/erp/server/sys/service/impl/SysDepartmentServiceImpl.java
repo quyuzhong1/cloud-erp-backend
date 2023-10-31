@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -33,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -316,7 +313,6 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 .set(StringUtils.isNotBlank(syncKingdeeId), SysDepartmentEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
-
     @Override
     public List<SysDepartmentDTO> listDeptByCodeList(List<String> codeList) {
         if (CollectionUtils.isEmpty(codeList)) {
@@ -433,6 +429,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             resultList.add(departmentDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public List<SysDepartmentTreeDTO> getDeptByParentId(String deptId) {
+        if (StringUtils.isEmpty(deptId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getDeptByParentId(deptId);
     }
 
     /**

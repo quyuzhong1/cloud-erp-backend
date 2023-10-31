@@ -41,7 +41,7 @@
         from bi_data_source_cost bdsc
         <where>
             <if test="params.month != null ">
-                and to_char(bdsc.month,'yyyyMM') = to_char(#{params.month}::timestamp,'yyyyMM')
+                and to_char(bdsc.month,'yyyy-MM') = #{params.month}
             </if>
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
@@ -186,7 +186,7 @@
             AND bdsc.month >= #{params.startTime}
         </if>
         <if test="null != params.endTime">
-            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+            AND bdsc.month <![CDATA[ < ]]> #{params.endTime}
         </if>
         <if test="params.department!=null and params.department.size>0">
             AND bdsc.dept_id IN
@@ -241,7 +241,7 @@
             AND bdsc.month >= #{params.startTime}
         </if>
         <if test="null != params.endTime">
-            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+            AND bdsc.month <![CDATA[ < ]]> #{params.endTime}
         </if>
         <if test="params.department!=null and params.department.size>0">
             AND bdsc.dept_id IN

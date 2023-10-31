@@ -223,9 +223,10 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     return monthGrossProfitRate;
                 }
 
+            default:
+                return BigDecimal.ZERO;
         }
 
-        return BigDecimal.ZERO;
     }
 
     /**
