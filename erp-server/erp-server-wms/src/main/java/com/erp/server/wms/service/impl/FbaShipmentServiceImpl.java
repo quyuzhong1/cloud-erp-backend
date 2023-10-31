@@ -96,6 +96,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.ViewDTO> view(String id) {
+        FbaShipmentEntity entity = this.getById(id);
+
         return null;
     }
 
