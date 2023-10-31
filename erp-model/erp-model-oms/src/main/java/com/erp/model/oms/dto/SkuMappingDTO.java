@@ -4,6 +4,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -591,12 +592,21 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ListSkuParamDTO {
         /**
-         * 录入skuNo
+         * SKU编号
          */
-        private List<String> skuNoList;
+        @NotBlank(message = "SKU不能为空")
+        private String skuNo;
+
+        /**
+         * 出库id
+         */
+        private String warehouseId;
+
     }
+
 
     @Data
     @NoArgsConstructor
@@ -653,6 +663,11 @@ public class SkuMappingDTO implements Serializable {
          * 图片url
          */
         private String imageUrl;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
     }
 
 

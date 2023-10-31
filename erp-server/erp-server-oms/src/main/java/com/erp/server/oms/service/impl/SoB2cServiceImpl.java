@@ -1198,9 +1198,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
         //平台信息
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
         if (CollectionUtils.isNotEmpty(dictList)) {
             String name = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             data.setDictPlatformName(name);
+        }
+
+        //产品信息
+        List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        for (SoB2cDetailDTO.ViewDTO viewDTO : data.getDetailList()) {
+
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            viewDTO.setProductName(skuVO.getSkuName());
         }
     }
 
@@ -1667,12 +1681,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setSourceAmount(totalSourceAmount);
                 //总本位币金额
-                BigDecimal totalAmount = mainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
+                BigDecimal totalAmount = mainList.stream().map(obj -> MathUtil.multiply(obj.getSourceAmount(),obj.getExchangeRate()))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setAmount(totalAmount);
                 mergeListDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //总重量
-                BigDecimal totalWeight = mainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
+                BigDecimal totalWeight = mainList.stream().map(SoB2cDTO.MergeMainDTO::getWeight)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setWeight(totalWeight);
             }

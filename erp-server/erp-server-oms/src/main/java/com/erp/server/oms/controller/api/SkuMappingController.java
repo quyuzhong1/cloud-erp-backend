@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -181,12 +182,12 @@ public class SkuMappingController extends BaseController {
      * 根据sku集合查询库存sku
      * @author Will
      * @date: 2023/8/24 19:13
-     * @param dto
+     * @param list
      * @return ApiResult<List<ListSkuDTO>>
      */
     @PostMapping("/listBySkuNoList")
-    public ApiResult<List<SkuMappingDTO.ListSkuDTO>> listBySkuNoList(@RequestBody @Validated SkuMappingDTO.ListSkuParamDTO dto) {
-        List<SkuMappingDTO.ListSkuDTO> list = skuMappingService.listBySkuNoList(dto.getSkuNoList());
-        return success(list);
+    public ApiResult<List<SkuMappingDTO.ListSkuDTO>> listBySkuNoList(@RequestBody @Validated ValidList<SkuMappingDTO.ListSkuParamDTO> list) {
+        List<SkuMappingDTO.ListSkuDTO> resultList = skuMappingService.listBySkuNoList(list);
+        return success(resultList);
     }
 }

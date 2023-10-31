@@ -183,6 +183,11 @@ public class SoB2cDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
         * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609
         */
         private String warehouseSkuNo;
@@ -200,7 +205,7 @@ public class SoB2cDetailDTO implements Serializable {
         /**
         * 成本（本位币）
         */
-        private BigDecimal cost;
+        private BigDecimal taxCost;
 
     }
 

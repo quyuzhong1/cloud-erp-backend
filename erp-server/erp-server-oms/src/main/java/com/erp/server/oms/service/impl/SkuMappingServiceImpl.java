@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -535,8 +536,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
     @Override
-    public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<String> skuNoList) {
-
+    public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(ValidList<SkuMappingDTO.ListSkuParamDTO> dataList) {
+        if (CollectionUtils.isEmpty(dataList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SkuMappingDTO.ListSkuParamDTO> paramList = dataList.getList();
+        List<String> skuNoList = paramList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
@@ -550,17 +555,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
-        for (SkuVO skuVO : skuList) {
+        for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : paramList) {
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
             listSkuDTO.setProductSkuId(skuVO.getSkuId());
-            listSkuDTO.setProductSkuNo(skuVO.getSkuNo());
+            listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
             listSkuDTO.setVariantProperty(skuVO.getVariantProperty());
             listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             //查询sku映射表
-            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId())).findFirst().orElse(null);
+            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuMappingEntity)) {
                 resultList.add(listSkuDTO);
                 continue;
@@ -571,6 +577,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && RuleTypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
+                listSkuDTO.setWarehouseId(skuMappingEntity.getWarehouseId());
                 listSkuDTO.setWarehouseSkuNo(listingInfoEntity.getSkuNo());
                 listSkuDTO.setWarehouseProductName(listingInfoEntity.getProductName());
                 listSkuDTO.setPlatformSkuNo(listingInfoEntity.getPlatformSkuNo());

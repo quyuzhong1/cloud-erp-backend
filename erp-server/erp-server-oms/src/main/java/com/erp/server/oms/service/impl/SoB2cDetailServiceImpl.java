@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -223,8 +224,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
 
         //SKU对照表信息
-        List<String> skuNoList = list.stream().map(SoB2cDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(skuNoList);
+        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId())).collect(Collectors.toList());
+        ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
+        listSkuParamList.setList(listParamList);
+        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
 
         for (SoB2cDetailEntity detailEntity :list) {
 
@@ -238,6 +241,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setCurrency(soB2cEntity.getCurrency());
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
+            detailEntity.setImageUrl(skuVO.getSkuImagesUrl());
             //建议售价
             detailEntity.setAdvicePrice(skuVO.getRetailPrice());
             //含税单价
@@ -265,7 +269,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
             //库存SKU
             if (CollectionUtils.isNotEmpty(SkuMappingList)) {
-                SkuMappingDTO.ListSkuDTO listSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                SkuMappingDTO.ListSkuDTO listSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(listSkuDTO)) {
                     detailEntity.setWarehouseSkuNo(listSkuDTO.getWarehouseSkuNo());
                     detailEntity.setPlatformSkuNo(listSkuDTO.getPlatformSkuNo());
