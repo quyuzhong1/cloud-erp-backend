@@ -19,14 +19,14 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import java.util.List;
 
 /**
- * FBI货件表
+ * FBA货件表
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Slf4j
 @RestController
-@LogSystemModule("FBI货件表")
+@LogSystemModule("FBA货件表")
 @RequestMapping("/fbaShipment")
 public class FbaShipmentController extends BaseController {
 
