@@ -133,6 +133,23 @@ public class SysLogRecordDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 操作类型：
+         * insert=插入
+         * update=更新
+         * delete=删除
+         * grant=授权
+         * import=导入
+         * export=导出
+         * cancel=撤销
+         * submit=提交
+         * approve=审核
+         * disapprove=反审核
+         * invalid=作废
+         * addAndSubmit=新增并提交
+         * updateAndSubmit=更新并提交
+         */
+        private List<String> actionList;
 
         /**
          * 系统模块
