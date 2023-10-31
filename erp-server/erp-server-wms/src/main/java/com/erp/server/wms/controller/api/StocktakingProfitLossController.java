@@ -81,6 +81,7 @@ public class StocktakingProfitLossController extends BaseController {
     /**
      * 修改
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改盘盈盘亏单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -200,7 +201,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "审核盘盈盘亏单")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交盘盈盘亏单")
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.UpdateDTO dto) {
         stocktakingProfitLossService.updateAndSubmit(dto);
@@ -284,6 +285,7 @@ public class StocktakingProfitLossController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除盘盈盘亏单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
