@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,6 +17,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 /**
  * 订单服务类
  */
+@Slf4j
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
         implements DmpOrderInfoService {
@@ -95,6 +99,42 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         lambdaQueryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId, dmpOrderInfoEntity.getPlatformOrderId());
         lambdaQueryWrapper.eq(DmpOrderInfoEntity::getPlatformSign, dmpOrderInfoEntity.getPlatformSign());
         return this.update(dmpOrderInfoEntity, lambdaQueryWrapper);
+    }
+
+    @Override
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeOrderByIds(List<String> ids) {
+        //删除订单
+        List<DmpOrderInfoEntity> list = baseMapper.selectBatchIds(ids);
+        log.info("删除dmp_order_info订单：{}", JSON.toJSONString(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            //删除明细记录
+            list.forEach(dmpOrderInfoEntity -> {
+                List<DmpOrderItemEntity> itemEntities = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
+                dmpOrderItemService.removeByIds(itemEntities.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                this.removeById(dmpOrderInfoEntity.getId());
+            });
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean removeOrderByCode(List<String> codes) {
+        //删除订单
+        LambdaQueryWrapper<DmpOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DmpOrderInfoEntity::getPlatformOrderId, codes);
+        List<DmpOrderInfoEntity> list = baseMapper.selectList(queryWrapper);
+        log.info("删除dmp_order_info订单：{}", JSON.toJSONString(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            //删除明细记录
+            list.forEach(dmpOrderInfoEntity -> {
+                List<DmpOrderItemEntity> itemEntities = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
+                dmpOrderItemService.removeByIds(itemEntities.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                this.removeById(dmpOrderInfoEntity.getId());
+            });
+        }
+        return Boolean.TRUE;
     }
 
     /**

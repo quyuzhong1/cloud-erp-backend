@@ -753,7 +753,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
             }
         }
         if (CollectionUtils.isNotEmpty(existSku)) {
-            String existSkuName = existSku.stream().collect(Collectors.joining(","));
+            String existSkuName = existSku.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existSkuName);
         }
 

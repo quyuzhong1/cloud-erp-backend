@@ -516,6 +516,14 @@ public interface SysUserFeign {
     List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList);
 
     /**
+     * 根据父级获取全量子集
+     *
+     * @param deptId
+     * @return
+     */
+    @GetMapping("feign/dept/getDeptByParentId")
+    List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId);
+    /**
      * @description: 查询数据发送同步任务
      * @author Will
      * @date: 2023/10/30 11:41

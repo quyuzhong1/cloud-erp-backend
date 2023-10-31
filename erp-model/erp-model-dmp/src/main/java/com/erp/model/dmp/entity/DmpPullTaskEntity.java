@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,8 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_pull_task")
+@NoArgsConstructor
+@AllArgsConstructor
 public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
 
 

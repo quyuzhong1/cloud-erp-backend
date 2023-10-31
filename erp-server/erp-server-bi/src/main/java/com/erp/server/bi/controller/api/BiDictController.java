@@ -99,7 +99,6 @@ public class BiDictController extends BaseController {
         List<BiDictEntity> list = this.biDictService.listEntityByType(type);
         return success(list);
     }
-
     /**
      * 根据分类查询值和编码
      *

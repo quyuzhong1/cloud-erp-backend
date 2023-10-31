@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
  * @author LUO_WG
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoReturnEntity> implements SoReturnService {
 

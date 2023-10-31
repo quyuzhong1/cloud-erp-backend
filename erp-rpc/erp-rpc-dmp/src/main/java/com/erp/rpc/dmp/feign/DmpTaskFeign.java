@@ -2,6 +2,8 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -78,4 +81,28 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getKingdeeSourceCode")
     List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon);
+
+    /**
+     * 发送MQ消息并保存任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/send/mq/save/task")
+    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
+
+    /**
+     * 发送MQ消息并保存任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/save/pull/task")
+    String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto);
+
+    /**
+     * 根据订单id删除订单
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/remove/orderByIds")
+    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids);
 }

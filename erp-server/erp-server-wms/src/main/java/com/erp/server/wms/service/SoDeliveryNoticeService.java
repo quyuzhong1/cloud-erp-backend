@@ -232,4 +232,11 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PdaSoDeliveryNotice>
      **/
     List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto);
+
+    /**
+     * 根据sourceId 获取发货单通知信息
+     * @param sourceId
+     * @return
+     */
+    SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId);
 }

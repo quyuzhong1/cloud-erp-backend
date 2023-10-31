@@ -71,7 +71,7 @@
 
     <select id="getAllRefundInfo" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
-        dri.refund_code as refundId
+        dri.refund_code as refundId,
         dri.platform_order_id,
         dri.platform_name,
         dri.shop_name,
@@ -121,6 +121,8 @@
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
+        INNER JOIN dmp_order_info o
+        ON dri.platform_order_id=o.platform_order_id
         WHERE   dri.refund_status=4
         <if test="params.startTime !=null">
             AND dri.refund_time &gt;= #{params.startTime}
@@ -130,23 +132,28 @@
         </if>
         <!-- 平台 -->
         <if test="params.platform!=null and params.platform.size>0">
-            AND dri.platform_name IN
+            AND o.source_platform IN
             <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
                 #{platform}
             </foreach>
         </if>
-
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND dri.shop_name IN
+            AND o.shop_name IN
             <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
                 #{shopName}
             </foreach>
         </if>
-
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
-            AND dri.charge_id IN
+            AND o.charge_id IN
             <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
                 #{userId}
             </foreach>

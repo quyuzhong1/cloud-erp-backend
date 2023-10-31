@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 
+import java.util.List;
+
 /**
  * 出库详情
  */
@@ -67,4 +69,10 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
      * @return void
      */
     void syncTask(KingdeeDeliveryDetailEntity ext);
+
+    /**
+     * 根据编码删除出库单记录及明细
+     * @param codes
+     */
+    void removeDeliveryByCodes(List<String> codes);
 }
