@@ -147,6 +147,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String demandType;
 
         /**
+         * 备货类型名称
+         */
+        private String demandTypeName;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
@@ -317,6 +322,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String approveStatus;
 
         /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+        /**
         * 审核时间
         */
         private LocalDateTime approveTime;
@@ -337,6 +347,11 @@ public class FbaDeliveryDTO implements Serializable {
         private Boolean invalidStatus;
 
         /**
+        * 作废状态名称
+        */
+        private String invalidStatusName;
+
+        /**
         * 作废原因
         */
         private String invalidRemark;
@@ -352,6 +367,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String sourceType;
 
         /**
+        * 来源类型名称
+        */
+        private String sourceTypeName;
+
+        /**
         * 来源编码
         */
         private String sourceCode;
@@ -360,6 +380,11 @@ public class FbaDeliveryDTO implements Serializable {
         * 备货类型
         */
         private String demandType;
+
+        /**
+        * 备货类型名称
+        */
+        private String demandTypeName;
 
         /**
         * 店铺id
@@ -696,7 +721,9 @@ public class FbaDeliveryDTO implements Serializable {
     /**
      * 打印子件产品列表
      */
-    public class PrintSonItem {
+    @Data
+    @NoArgsConstructor
+    public static class PrintSonItem {
         /**
          * 主键id
          */
