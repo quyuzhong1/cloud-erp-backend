@@ -31,7 +31,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- * FBI货件表 服务实现类
+ * FBA货件表 服务实现类
  * </p>
  *
  * @author Luo_WG
