@@ -56,7 +56,7 @@
         <if test="params.systemModule != null ">
             and slr.system_module = #{params.systemModule}
         </if>
-        <if test="params.recordIds != null and params.recordIds.size > 0">
+        <if test="params.recordIdList != null and params.recordIdList.size > 0">
             AND slr.record_id IN
             <foreach collection="params.recordIds" item="item" open="(" separator="," close=")">
                 #{item}
