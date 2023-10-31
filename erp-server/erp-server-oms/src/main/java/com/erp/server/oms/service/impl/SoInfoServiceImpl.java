@@ -1310,6 +1310,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //检查能否删除
         checkRemove(ids);
+        //需要同步的数据
+        List<SoInfoEntity> syncList = list.stream().filter(obj -> !BillApproveStatusEnum.DRAFT.equals(obj.getApproveStatus())).collect(Collectors.toList());
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -1319,7 +1322,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //删除明细
             soDetailService.removeByMainIdList(ids);
             //推送金蝶
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            if (CollectionUtils.isNotEmpty(syncList)) {
+                syncList.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            }
         }
 
         return result;
