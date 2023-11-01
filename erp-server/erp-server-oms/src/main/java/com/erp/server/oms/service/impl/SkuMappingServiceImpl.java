@@ -565,6 +565,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setVariantProperty(skuVO.getVariantProperty());
             listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
+            listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
             //查询sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuMappingEntity)) {
@@ -577,7 +578,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && RuleTypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
-                listSkuDTO.setWarehouseId(skuMappingEntity.getWarehouseId());
                 listSkuDTO.setWarehouseSkuNo(listingInfoEntity.getSkuNo());
                 listSkuDTO.setWarehouseProductName(listingInfoEntity.getProductName());
                 listSkuDTO.setPlatformSkuNo(listingInfoEntity.getPlatformSkuNo());
