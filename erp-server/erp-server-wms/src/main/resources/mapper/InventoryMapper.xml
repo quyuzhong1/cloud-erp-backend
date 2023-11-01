@@ -555,14 +555,13 @@
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT
-            inv.id,
             inv.org_id,
             inv.warehouse_id,
             inv.warehouse_location,
             inv.sku_id,
             inv.sku_no,
             inv.dict_inventory_status,
-            inv.qty
+            sum(inv.qty) AS qty
         FROM inventory inv
         WHERE is_deleted=FALSE
         <if test="params.skuIdList != null and params.skuIdList.size > 0">
@@ -596,5 +595,11 @@
                 #{orgId}
             </foreach>
         </if>
+        GROUP BY inv.org_id,
+        inv.warehouse_id,
+        inv.warehouse_location,
+        inv.sku_id,
+        inv.sku_no,
+        inv.dict_inventory_status
     </select>
 </mapper>

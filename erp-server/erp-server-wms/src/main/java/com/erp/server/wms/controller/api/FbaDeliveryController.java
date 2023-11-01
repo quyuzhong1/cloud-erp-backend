@@ -394,14 +394,27 @@ public class FbaDeliveryController extends BaseController {
     }
 
     /**
-     * 下推加工单保存
+     * 下推加工单提交
      * @Author Luo_WG
      * @Date 2023/10/31 9:57
      * @param list
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/FbaDeliveryGenerateMachineSave")
+    @PostMapping("/FbaDeliveryGenerateMachineSubmit")
     public ApiResult fbaDeliveryGenerateMachineSave(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
+        Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下推加工单提交并审核
+     * @Author Luo_WG
+     * @Date 2023/10/31 9:57
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/FbaDeliveryGenerateMachineSubmitAndApprove")
+    public ApiResult FbaDeliveryGenerateMachineSaveAndApprove(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
         Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
         return flag ? success() : failure();
     }
