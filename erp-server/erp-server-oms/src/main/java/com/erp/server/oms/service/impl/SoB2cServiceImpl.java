@@ -689,7 +689,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Integer mergePagingCount(SoB2cDTO.MergePagingParamDTO pagingParamDTO) {
         pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
-        return this.baseMapper.mergePagingCount(pagingParamDTO);
+        List<Integer> list = this.baseMapper.mergePagingCount(pagingParamDTO);
+        return  CollectionUtils.isEmpty(list) ? MathUtil.ZERO :MathUtil.ONE;
     }
 
 
