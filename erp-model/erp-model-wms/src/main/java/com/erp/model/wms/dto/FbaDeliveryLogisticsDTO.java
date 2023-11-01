@@ -75,7 +75,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private String trackingNo;
+        private List<String> trackingNoList;
     }
 
     /**
@@ -142,7 +142,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private List<String> trackingNo;
+        private List<String> trackingNoList;
 
     }
 

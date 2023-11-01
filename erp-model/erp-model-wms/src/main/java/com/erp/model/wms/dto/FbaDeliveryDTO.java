@@ -284,9 +284,14 @@ public class FbaDeliveryDTO implements Serializable {
         private String createTime;
 
         /**
-         * 审核人（最新）
+         * 审核人
          */
         private String approveUserName;
+
+        /**
+         * 待审核人
+         */
+        private String waitApproveUserName;
 
         /**
          * 审核时间
@@ -673,7 +678,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private String trackingNo;
+        private List<String> trackingNoList;
         /**
          * 发货时间
          */

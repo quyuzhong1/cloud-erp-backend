@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -52,4 +53,13 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
     * @return
     */
     List<FbaDeliveryDTO.TabListDTO> tabList(@Param("params") FbaDeliveryDTO.PagingParamDTO searchParam);
+
+    /**
+     * 根据来源单号查询发货记录
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:07
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
+     **/
+    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("ids") List<String> ids);
 }

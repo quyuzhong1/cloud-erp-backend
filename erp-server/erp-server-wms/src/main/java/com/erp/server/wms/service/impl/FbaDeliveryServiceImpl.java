@@ -5,6 +5,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.FbaDeliveryService;
@@ -476,6 +477,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Override
     public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids) {
         return null;
+    }
+
+    @Override
+    public List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
+        return baseMapper.listDeliveryRecordBySourceIds(ids);
     }
 
     /**

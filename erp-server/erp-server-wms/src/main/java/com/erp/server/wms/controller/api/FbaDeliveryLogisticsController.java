@@ -63,7 +63,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    @PostMapping("/ViewUpdateLogistics")
+    @PostMapping("/viewUpdateLogistics")
     public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> ViewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
         List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
         return success(result);
@@ -77,7 +77,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    @PostMapping("/SaveUpdateLogistics")
+    @PostMapping("/saveUpdateLogistics")
     public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> SaveUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
         List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
         return success(result);

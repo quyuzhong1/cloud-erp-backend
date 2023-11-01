@@ -165,4 +165,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param cfClientId
      */
     Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
+
+    /**
+     * 查询亚马逊店铺信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:56
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    List<ShopInfoEntity> listShopByAmazon();
 }
