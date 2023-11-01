@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
@@ -101,27 +102,40 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public FbaShipmentDTO.ViewDTO view(String id) {
-
         FbaShipmentEntity entity = this.getById(id);
-
+        //映射字段
         FbaShipmentDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentToViewDTO(entity);
 
+        //根据主表id查询详情信息
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
 
+        //设置详情信息
+        List<FbaShipmentDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
         for (FbaShipmentDetailEntity fbaShipmentDetailEntity : fbaShipmentDetailEntities) {
 
+            //映射详情字段
+            FbaShipmentDetailDTO.ViewDTO detailViewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentDetailToViewDTO(fbaShipmentDetailEntity);
+
+            //组装详情信息
+            detailViewList.add(detailViewDTO);
         }
 
-        return null;
+        //给产品信息赋值
+        viewDTO.setItemList(detailViewList);
+        return viewDTO;
     }
 
     @Override
     public Boolean finishShipment(BaseIdsDTO.IdsDTO ids) {
-        return null;
+        Boolean flag = lambdaUpdate()
+                .set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.IS_OVER.getCode())
+                .in(FbaShipmentEntity::getId, ids).update();
+        return flag;
     }
 
     @Override
     public List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids) {
+        List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
         return null;
     }
 
