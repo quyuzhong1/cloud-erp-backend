@@ -916,7 +916,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
             item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
-
+            item.setCurrency(soDetailEntity.getCurrency());
+            item.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
             //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
 
@@ -1067,7 +1068,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
             item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
-
+            item.setCurrency(soDetailEntity.getCurrency());
+            item.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
             //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
 
