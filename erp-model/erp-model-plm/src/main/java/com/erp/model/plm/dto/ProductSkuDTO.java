@@ -141,6 +141,11 @@ public class ProductSkuDTO extends PermissionsDTO {
 
 
     /**
+     * 销售方式(后端用)
+     */
+    private String saleMethod;
+
+    /**
      * ean 码
      */
     private String ean;

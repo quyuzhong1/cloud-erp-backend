@@ -203,11 +203,8 @@
             </foreach>
         </if>
 
-        <if test="params.saleMethodList !=null and params.saleMethodList.size>0">
-            AND pi.sale_method IN
-            <foreach collection="params.saleMethodList" item="saleMethod" open="(" separator="," close=")">
-                #{saleMethod}
-            </foreach>
+        <if test="params.saleMethod !=null and params.saleMethod != ''">
+            AND string_to_array(pi.sale_method,',') &amp;&amp; string_to_array(#{params.saleMethod},',')
         </if>
 
         <if test="params.skuList != null and params.skuList.size>0">
