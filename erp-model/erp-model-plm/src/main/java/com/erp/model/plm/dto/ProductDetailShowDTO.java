@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
 * @Description 产品明细查询列表返回值（VO）
@@ -237,7 +238,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 销售方式
      * product_info
      */
-    private String saleMethod;
+    private List<String> saleMethodList;
 
     /**
      * 销售渠道
