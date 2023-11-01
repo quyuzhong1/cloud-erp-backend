@@ -10,8 +10,10 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
@@ -26,6 +28,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -140,23 +143,57 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids) {
+        //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
 
         //获取所有店铺id
         List<String> shopIds = list.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
+
+        //根据店铺id查询店铺信息
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
 
         for (FbaShipmentDTO.GenerateDeliverView view : list) {
-            //设置店铺的仓位为目的仓
-            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> view.getShopId().equals(req.getId())).findFirst().orElse(null);
-            view.setDestWarehouseId(shopInfoEntity.getWarehouseId());
-            view.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+            //处理字段映射
+            generateDeliverViewFieldHandle(view, shopInfoEntities);
         }
         return list;
     }
 
     @Override
     public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        //校验货件单据是否存在
+        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getId).collect(Collectors.toList());
+        List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
+        if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
+            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+        }
+
+        Map<String, List<FbaShipmentDTO.GenerateDeliverView>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateDeliverView::getMainId));
+        List<FbaShipmentDTO.AddDTO> addList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<FbaShipmentDTO.GenerateDeliverView>> entry : map.entrySet()) {
+
+        }
         return null;
+    }
+
+    /**
+     * 处理下推发货单列表需要映射和配置的字段
+     * @Author Luo_WG
+     * @Date 2023/11/1 15:19
+     * @param view 货件信息
+     * @param shopInfoEntities 店铺信息
+     * @return com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView
+     **/
+    private FbaShipmentDTO.GenerateDeliverView generateDeliverViewFieldHandle(FbaShipmentDTO.GenerateDeliverView view, List<ShopInfoEntity> shopInfoEntities) {
+        //设置店铺的仓位为目的仓
+        ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> view.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
+        view.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+        view.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        //发货数量默认给申报数量
+        view.setDeliveryQty(view.getDeclareQty());
+        return view;
     }
 }

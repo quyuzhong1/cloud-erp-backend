@@ -163,7 +163,6 @@
             fsd.sku_no,
             fsd.product_name,
             fsd.declare_qty,
-            fsd.declare_qty AS deliveryQty,
             fsd.is_combination
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
