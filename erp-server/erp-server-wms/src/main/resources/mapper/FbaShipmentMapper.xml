@@ -160,36 +160,19 @@
             fsd.asin,
             fsd.m_sku,
             fsd.fn_sku,
-
-
+            fsd.sku_no,
+            fsd.product_name,
+            fsd.declare_qty,
+            fsd.declare_qty AS deliveryQty,
+            fsd.is_combination
         FROM fba_shipment_detail fsd
-        LEFT JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE fs.is_deleted = FALSE
-
-
-        /**
-         * skuId
-         */
-        private String skuId;
-        /**
-         * ERP的SKU
-         */
-        private String skuNo;
-        /**
-         * 产品名称
-         */
-        private String productName;
-        /**
-         * 申报数量
-         */
-        private Integer declareQty;
-        /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
-        /**
-         * 是否组合品 true 是
-         */
-        private Boolean isCombination;
+        <if test="params.ids != null and params.ids.size > 0">
+            and fs.id in
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

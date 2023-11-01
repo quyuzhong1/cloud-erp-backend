@@ -9,12 +9,14 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
@@ -31,6 +33,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -52,6 +56,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private FbaShipmentDetailService fbaShipmentDetailService;
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -135,7 +141,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids) {
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
-        return null;
+
+        //获取所有店铺id
+        List<String> shopIds = list.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
+
+        for (FbaShipmentDTO.GenerateDeliverView view : list) {
+            //设置店铺的仓位为目的仓
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> view.getShopId().equals(req.getId())).findFirst().orElse(null);
+            view.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            view.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        }
+        return list;
     }
 
     @Override

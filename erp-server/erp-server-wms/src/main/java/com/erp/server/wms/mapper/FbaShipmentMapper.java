@@ -38,5 +38,5 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView>
      **/
-    List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(@Param("ids") BaseIdsDTO.IdsDTO ids);
+    List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(@Param("params") BaseIdsDTO.IdsDTO ids);
 }
