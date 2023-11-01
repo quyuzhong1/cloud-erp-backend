@@ -238,6 +238,7 @@
         sdn.warehouse_name,
         sdn.type AS orderType,
         sdnd.id AS sourceDetailId,
+        sdnd.source_detail_id as soDetailId,
         sdnd.sku_id,
         sdnd.is_close,
         sdnd.sku_no,
