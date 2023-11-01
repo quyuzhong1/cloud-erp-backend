@@ -332,6 +332,13 @@ public class SoOutstockDetailDTO implements Serializable {
         private String sourceDetailId;
 
 
+        /**
+         * 销售明细id
+         */
+        @NotBlank(message = "销售明细id不能为空")
+        private String soDetailId;
+
+
     }
 
     @Data

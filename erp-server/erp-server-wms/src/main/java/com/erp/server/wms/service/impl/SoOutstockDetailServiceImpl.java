@@ -4,11 +4,13 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -128,6 +131,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
         }
+        //处理明细数据
+        handleDetailData( addList);
+
         this.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
     }
@@ -398,6 +404,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
         }
+
+        //处理明细数据
+        handleDetailData(addOrUpdateList);
         this.saveOrUpdateBatch(addOrUpdateList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
 
@@ -585,5 +594,67 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         return Collections.emptyList();
 
+    }
+
+    /**
+     * @description: 处理明细数据
+     * @author Will
+     * @date: 2023/11/1 15:27
+     * @param detailList
+     */
+    private void handleDetailData(List<SoOutstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
+
+        //查询销售订单下的销售出库单
+        List<SoOutstockDetailEntity> soOutstockDetailList = this.listBySoDetailIds(soDetailIdList);
+
+        for (SoOutstockDetailEntity detailEntity : detailList) {
+            //销售订单明细
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_92015);
+            }
+            //单价信息
+            detailEntity.setPrice(soDetailEntity.getPrice());
+            detailEntity.setTaxRate(soDetailEntity.getTaxRate());
+            detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
+            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(),detailEntity.getActualQty()));
+            detailEntity.setCurrency(soDetailEntity.getCurrency());
+            detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            //销售订单明细已下推的销售出库单
+            /**
+             *  单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
+             *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
+             */
+            List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
+            BigDecimal allAmountLocalCurrency =  MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(),MathUtil.divide(new BigDecimal(detailEntity.getActualQty()) ,new BigDecimal(soDetailEntity.getQty())));
+            if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
+                Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(),soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO ) {
+                    BigDecimal totalAllAmount = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    allAmountLocalCurrency = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(),totalAllAmount);
+                }
+            }
+            detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
+        }
+    }
+
+    /**
+     * @description: 根据销售订单明细ids查询
+     * @author Will
+     * @date: 2023/11/1 15:45
+     * @param soDetailIdList
+     * @return List<SoOutstockDetailEntity>
+     */
+    private List<SoOutstockDetailEntity> listBySoDetailIds (List<String> soDetailIdList) {
+        if (CollectionUtils.isEmpty(soDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SoOutstockDetailEntity> list = baseMapper.listBySoDetailIds(soDetailIdList);
+        return list;
     }
 }

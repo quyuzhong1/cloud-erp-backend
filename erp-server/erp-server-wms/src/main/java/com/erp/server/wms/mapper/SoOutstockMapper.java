@@ -65,4 +65,13 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      */
     void updateBatch(@Param("params") List<SoOutstockEntity> soOutstockList);
 
+    /**
+     * @description: 查询合计数据
+     * @author Will
+     * @date: 2023/11/1 14:25
+     * @param params
+     * @param approveList
+     * @return PagingTotalDTO
+     */
+    SoOutstockDTO.PagingTotalDTO getTotalByQuery(@Param("params") SoOutstockDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
 }

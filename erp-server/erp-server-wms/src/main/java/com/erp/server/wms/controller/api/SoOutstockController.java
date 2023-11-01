@@ -83,6 +83,24 @@ public class SoOutstockController extends BaseController {
     }
 
     /**
+     * 查询总数量
+     * @author Will
+     * @date: 2023/11/1 14:16
+     * @param dto
+     * @return ApiResult<PagingTotalDTO>
+     */
+    @PostMapping("/getTotalByQuery")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
+    public ApiResult<SoOutstockDTO.PagingTotalDTO> getTotalByQuery(@RequestBody @Validated SoOutstockDTO.PagingParamDTO dto) {
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
+        return success(pagingTotalDTO);
+    }
+
+    /**
      * 创建
      *
      * @param dto
@@ -316,21 +334,14 @@ public class SoOutstockController extends BaseController {
     }
 
 
-    /**
-     * 销售订单下推 销售出库单
-     *
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     * @author yl
-     * @date 2023-05-23 15:15
-     */
-    @LogAction(value = LogActionEnum.INSERT, desc = "销售订单下推")
+
+   /* @LogAction(value = LogActionEnum.INSERT, desc = "销售订单下推")
     @PostMapping("/generateSoOutstock")
     public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
         Boolean result = soOutstockService.generateSoSave(dto);
         return result ? success() : failure();
 
-    }
+    }*/
 
 
     /**

@@ -34,4 +34,12 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
      **/
     List<SoOutstockDetailEntity> listDetailBySoIds(@Param("ids") List<String> ids);
+    /**
+     * @description: 根据销售订单明细ids查询
+     * @author Will
+     * @date: 2023/11/1 15:42
+     * @param soDetailIdList
+     * @return List<SoOutstockDetailEntity>
+     */
+    List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
 }
