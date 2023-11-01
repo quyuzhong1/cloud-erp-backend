@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -100,6 +102,11 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     */
     @TableField("product_size_height")
     private BigDecimal productSizeHeight;
+    /**
+     * 最新签收日期
+     */
+    @TableField("receive_date")
+    private LocalDateTime receiveDate;
 
 
     public static final String MAIN_ID = "main_id";
