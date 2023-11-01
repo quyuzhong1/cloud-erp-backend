@@ -943,8 +943,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
 
         //调用审核流程
-       // approveProcess(list, dto);
-        approveEnd(dto, list);
+        approveProcess(list, dto);
+
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

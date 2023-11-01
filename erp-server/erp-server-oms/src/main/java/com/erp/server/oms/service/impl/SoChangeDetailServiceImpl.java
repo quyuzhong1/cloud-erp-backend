@@ -540,8 +540,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
 
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
-                this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
-                List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+                //所有的要修复或者保存的销售订单数据
+                List<SoDetailEntity>  allSaveOrUpdateList=  this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
+                List<String> skuIdList = allSaveOrUpdateList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
                 // 供应商id集合
                 List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
@@ -549,18 +550,21 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if (CollUtil.isNotEmpty(supplierIds)) {
                     purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
                 }
-                Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
+                Map<String, List<SoDetailEntity>> soDetailSaveMap = allSaveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
                 for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算
                     String soId = soEntry.getKey();
                     SoInfoEntity soInfoEntity = soInfoMap.get(soId);
-                    for (SoDetailEntity item : saveOrUpdateList) {
+                    for (SoDetailEntity item : allSaveOrUpdateList) {
                         // 计算毛利成本
                         soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
                     }
                 }
+                if(CollectionUtils.isNotEmpty(allSaveOrUpdateList)){
+                    soDetailService.saveOrUpdateBatch(allSaveOrUpdateList);
+                }
             }
-            soDetailService.saveOrUpdateBatch(saveOrUpdateList);
+
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
         }
@@ -577,9 +581,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @author yl
      * @date 2023-10-16 16:05
      */
-    public void handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap, List<String> closeSoDetailIdList) {
+    public List<SoDetailEntity> handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap, List<String> closeSoDetailIdList) {
         if (CollectionUtils.isEmpty(saveOrUpdateList)) {
-            return;
+            return Collections.emptyList();
         }
         List<SoDetailEntity> newList = new ArrayList<>();
         //根据销售订单分组
@@ -606,9 +610,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             newList.addAll(soDetailList);
 
         }
-        saveOrUpdateList = newList;
-
-
+        return newList;
     }
 
     private List<SoChangeDetailEntity> listDetailByMainIds(List<String> mainIds) {
