@@ -1853,7 +1853,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setTotalDiscountAmount(totalDiscountAmount);
 
         }
-        this.updateBatchById(soOutstockList);
+        baseMapper.updateBatch(soOutstockList);
 
 
     }
