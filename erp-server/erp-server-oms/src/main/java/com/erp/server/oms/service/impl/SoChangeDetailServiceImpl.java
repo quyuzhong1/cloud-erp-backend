@@ -546,7 +546,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //销售订单详情
             List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(soIds);
             //去除关闭的就是终止的 不用分摊折扣额
-            soDetailList = soDetailList.stream().filter(s -> !closeSoDetailIdList.contains(s.getId())).collect(Collectors.toList());
+            soDetailList = soDetailList.stream().filter(s -> !s.getIsClose()).collect(Collectors.toList());
             List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
             List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
