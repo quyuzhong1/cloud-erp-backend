@@ -78,8 +78,8 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     /**
     * 是否组合品
     */
-    @TableField("is_combo")
-    private Boolean isCombo;
+    @TableField("is_combination")
+    private Boolean isCombination;
     /**
     * 单品净重
     */

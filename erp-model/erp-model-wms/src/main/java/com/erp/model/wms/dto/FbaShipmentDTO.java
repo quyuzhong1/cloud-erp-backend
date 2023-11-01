@@ -435,7 +435,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 是否组合品 true 是
          */
-        private Boolean isCombo;
+        private Boolean isCombination;
     }
 
     /**
@@ -598,7 +598,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 是否组合品 true 是
          */
-        private Boolean isCombo;
+        private Boolean isCombination;
 
     }
 }

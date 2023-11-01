@@ -108,7 +108,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 是否组合品
          */
-         private Boolean isCombo;
+         private Boolean isCombination;
          /**
          * 平台sku
          */

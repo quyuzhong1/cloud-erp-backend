@@ -72,8 +72,8 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     /**
     * 是否组合品
     */
-    @TableField("is_combo")
-    private Boolean isCombo;
+    @TableField("is_combination")
+    private Boolean isCombination;
     /**
      * 收货数量
      */
