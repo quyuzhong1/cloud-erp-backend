@@ -56,7 +56,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    Integer mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params);
+    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params);
 
     /**
      * @param mergeParamDTO
