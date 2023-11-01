@@ -67,7 +67,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
-
         for (FbaShipmentDTO.ListDTO record : records) {
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
