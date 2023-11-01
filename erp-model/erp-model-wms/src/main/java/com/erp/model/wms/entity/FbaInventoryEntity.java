@@ -25,10 +25,10 @@ import com.common.business.enums.ApproveStatusEnum;
 public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
 
     /**
-    * 平台唯一id
-    */
-    @TableField("platform_code")
-    private String platformCode;
+     * 第三方唯一编码
+     */
+    @TableField("fba_shipment_id")
+    private String fbaShipmentId;
     /**
     * 仓库名称
     */

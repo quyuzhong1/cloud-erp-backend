@@ -103,8 +103,8 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     /**
     * 第三方唯一编码
     */
-    @TableField("platform_code")
-    private String platformCode;
+    @TableField("fba_shipment_id")
+    private String fbaShipmentId;
 
 
     public static final String CODE = "code";
