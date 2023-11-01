@@ -41,5 +41,5 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * @param soDetailIdList
      * @return List<SoOutstockDetailEntity>
      */
-    List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
+    List<SoOutstockDetailEntity> listBySoDetailIds(@Param("soDetailIdList")List<String> soDetailIdList);
 }
