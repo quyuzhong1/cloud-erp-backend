@@ -476,7 +476,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 产品信息
          */
-        private List<FbaDeliveryDetailDTO.ViewDTO> itemList;
+        private List<FbaDeliveryDetailDTO.ViewDTO> detailList;
     }
 
     /**
