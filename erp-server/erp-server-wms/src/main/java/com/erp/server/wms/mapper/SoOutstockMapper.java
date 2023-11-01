@@ -57,4 +57,12 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @return java.lang.Integer
      **/
     Integer listCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
+
+
+    /**
+     * 临时接口批量更新
+     * @param soOutstockList
+     */
+    void updateBatch(@Param("params") List<SoOutstockEntity> soOutstockList);
+
 }

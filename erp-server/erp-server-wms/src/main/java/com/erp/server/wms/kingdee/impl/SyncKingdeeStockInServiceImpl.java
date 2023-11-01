@@ -256,6 +256,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("priceBaseQty", detail.getStockInQty());
             //含税单价
             jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
+            //税率
+            jsonObject.set("taxRate", purchaseOrderDetailEntity.getTaxRate());
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             //明细id
