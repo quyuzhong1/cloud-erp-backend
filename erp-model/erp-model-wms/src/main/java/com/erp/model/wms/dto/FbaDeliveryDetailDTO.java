@@ -112,7 +112,10 @@ public class FbaDeliveryDetailDTO implements Serializable {
         */
         private BigDecimal productSizeHeight;
 
-
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
     }
 
     /**

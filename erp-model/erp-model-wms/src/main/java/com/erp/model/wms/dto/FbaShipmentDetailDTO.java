@@ -86,9 +86,9 @@ public class FbaShipmentDetailDTO implements Serializable {
         private Integer diffQty;
 
         /**
-        * 是否组合品
-        */
-        private Boolean isCombo;
+         * 是否组合品
+         */
+        private Boolean isCombination;
     }
 
     /**
@@ -184,7 +184,7 @@ public class FbaShipmentDetailDTO implements Serializable {
         * 是否组合品
         */
         @NotNull(message = "是否组合品不能为空")
-        private Boolean isCombo;
+        private Boolean isCombination;
 
 
     }
