@@ -29,6 +29,7 @@ public interface FbaShipmentConverter {
     @Mapping(source = "id", target = "id")
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
+
     List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(List<FbaShipmentReceiveEntity> entities);
 
 }
