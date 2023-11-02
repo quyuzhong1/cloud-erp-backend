@@ -102,12 +102,12 @@ public class BomSkuFeignController {
      * 查询sku版本信息
      * @Author Luo_WG
      * @Date 2023/11/2 8:57
-     * @param skuNos
+     * @param dto
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
-        return bomSkuService.listBomVersionBySkuNos(skuNos);
+    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
+        return bomSkuService.listBomVersionBySkuNos(dto);
     }
 
 }
