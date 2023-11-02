@@ -78,9 +78,9 @@
     <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FbaShipmentDTO$DeliverRecordView">
         SELECT
         fd.code AS deliveryCode,
-        fd.delivery_status AS deliveryStatus,
+        CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
         SUM(fdd.delivery_qty) AS deliveryQty,
-        fdl.deliver_time AS deliverTime
+        fdl.delivery_time AS deliveryTime
         FROM  fba_delivery fd
         INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
@@ -91,9 +91,10 @@
                 #{id}
             </foreach>
         </if>
-        GROUP BY fd.code ,
-        fd.delivery_status ,
-        fdl.deliver_time
+        GROUP BY fd.code,
+        deliveryStatus,
+        fdl.delivery_time
+        ORDER BY fd.code DESC
     </select>
 
 </mapper>

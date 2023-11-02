@@ -5,21 +5,25 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.dto.FbaShipmentDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.FbaShipmentDetailEntity;
-import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
+import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
@@ -32,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.FbaShipmentDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +65,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private ShopInfoFeign shopInfoFeign;
     @Autowired
     private FbaShipmentReceiveService fbaShipmentReceiveService;
+    @Autowired
+    private FbaShipmentStatusService fbaShipmentStatusService;
+    @Autowired
+    private FbaDeliveryService fbaDeliveryService;
+    @Autowired
+    private WarehouseService warehouseService;
+    @Autowired
+    private SysUserFeign sysUserFeign;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -100,20 +114,32 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.DeliverRecordView> listDeliverRecord(String id) {
-
-        return null;
+        List<FbaShipmentDTO.DeliverRecordView> deliverRecordViews = fbaDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
+        return deliverRecordViews;
     }
 
     @Override
-    public List<FbaShipmentDTO.ShipmentStatusRecordView> listShipmentStatusRecord(String code) {
-        return null;
+    public List<FbaShipmentDTO.ShipmentStatusRecordView> listShipmentStatusRecord(String id) {
+        List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByIds(Arrays.asList(id));
+        List<FbaShipmentDTO.ShipmentStatusRecordView> list = new ArrayList<>();
+        for (FbaShipmentStatusEntity fbaShipmentReceiveEntity : fbaShipmentStatusEntities) {
+            //映射字段
+            FbaShipmentDTO.ShipmentStatusRecordView shipmentStatusRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentStatusEntityToView(fbaShipmentReceiveEntity);
+            list.add(shipmentStatusRecordView);
+        }
+        return list;
     }
 
     @Override
     public List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id) {
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(Arrays.asList(id));
-
-        return null;
+        List<FbaShipmentDTO.ReceiveRecordView> list = new ArrayList<>();
+        for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntities) {
+            //映射字段
+            FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
+            list.add(receiveRecordView);
+        }
+        return list;
     }
 
     @Override
@@ -179,10 +205,37 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
         }
 
+        //根据仓库id查询仓库信息
+        List<String> warehouseIds = list.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> destWarehouseIds = list.stream().map(req -> req.getDestWarehouseId()).distinct().collect(Collectors.toList());
+        warehouseIds.addAll(destWarehouseIds);
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
+
+        //根据仓库信息获取核算公司
+        List<String> orgIds = warehouseEntities.stream().map(req -> req.getOrgId()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
+        //获取sku信息
+        List<String> skuNoList = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+
+        //根据货件单分组一个货件单生成一个发货单
         Map<String, List<FbaShipmentDTO.GenerateDeliverView>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateDeliverView::getMainId));
         List<FbaShipmentDTO.AddDTO> addList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<FbaShipmentDTO.GenerateDeliverView>> entry : map.entrySet()) {
+            List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
+            //映射字段
+            FbaDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0), warehouseEntities, accountingCompanyList);
 
+            //详情信息
+            List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+            for (FbaShipmentDTO.GenerateDeliverView generateDeliverView : shipmentList) {
+                //映射字段
+                FbaDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
+
+                detailAddList.add(detailAdd);
+            }
+            addDTO.setDetailList(detailAddList);
         }
         return null;
     }

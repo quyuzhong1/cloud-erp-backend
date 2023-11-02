@@ -86,12 +86,12 @@ public class FbaShipmentController extends BaseController {
      * 查询货件状态记录
      * @Author Luo_WG
      * @Date 2023/10/30 17:40
-     * @param code
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<FbaShipmentDTO.ShipmentStatusRecordDTO>>
      **/
     @GetMapping("/listShipmentStatusRecord")
-    public ApiResult<List<FbaShipmentDTO.ShipmentStatusRecordView>> listShipmentStatusRecord(@RequestParam(value = "code") String code) {
-        List<FbaShipmentDTO.ShipmentStatusRecordView> result = fbaShipmentService.listShipmentStatusRecord(code);
+    public ApiResult<List<FbaShipmentDTO.ShipmentStatusRecordView>> listShipmentStatusRecord(@RequestParam(value = "id") String id) {
+        List<FbaShipmentDTO.ShipmentStatusRecordView> result = fbaShipmentService.listShipmentStatusRecord(id);
         return success(result);
     }
 

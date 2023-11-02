@@ -190,15 +190,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 500,message = "产品名称最大长度不能超过500位")
         private String productName;
 
         /**
         * 库存sku
         */
-        @NotBlank(message = "库存sku不能为空")
-        @Size(max = 64,message = "库存sku最大长度不能超过64位")
         private String stockSku;
 
         /**
@@ -228,30 +224,22 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * 单品净重
         */
-        @NotNull(message = "单品净重不能为空")
-        @Digits(integer = 8, fraction = 2, message = "单品净重整数位不能超过8位，小数位不能超过2位")
         private BigDecimal netWeight;
 
         /**
         * 产品尺寸（长）
         */
-        @NotNull(message = "产品尺寸（长）不能为空")
-        @Digits(integer = 8, fraction = 2, message = "产品尺寸（长）整数位不能超过8位，小数位不能超过2位")
         private BigDecimal productSizeLength;
 
         /**
         * 产品尺寸（宽）
         */
-        @NotNull(message = "产品尺寸（宽）不能为空")
         private BigDecimal productSizeWidth;
 
         /**
         * 产品尺寸（高）
         */
-        @NotNull(message = "产品尺寸（高）不能为空")
         private BigDecimal productSizeHeight;
-
-
     }
 
 

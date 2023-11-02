@@ -487,7 +487,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 发货时间
          */
-        private LocalDateTime deliverTime;
+        private LocalDateTime deliveryTime;
     }
 
     /**
@@ -548,6 +548,14 @@ public class FbaShipmentDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+        /**
+         * 国家二字码
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
         /**
          * 发货仓id
          */
