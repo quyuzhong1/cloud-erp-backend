@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -207,8 +208,8 @@ public class InventoryController extends BaseController {
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      **/
     @PostMapping(value = "/listByParam")
-    public ApiResult<List<InventoryEntity>> listByParam(@RequestBody InventoryDTO.ParamDTO dto) {
-        List<InventoryEntity> list = inventoryService.listByParam(dto);
+    public ApiResult<List<InventoryDTO.UsableInventoryViewDTO>> listByParam(@RequestBody ValidList<InventoryDTO.UsableInventoryParamDTO> dto) {
+        List<InventoryDTO.UsableInventoryViewDTO> list = inventoryService.listByParam(dto.getList());
         return success(list);
     }
 

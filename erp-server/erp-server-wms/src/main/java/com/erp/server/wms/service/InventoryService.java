@@ -261,8 +261,8 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 根据条件查询库存信息
      * @Author Luo_WG
      * @Date 2023/11/1 19:27
-     * @param dto
+     * @param list
      * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
      **/
-    List<InventoryEntity> listByParam(InventoryDTO.ParamDTO dto);
+    List<InventoryDTO.UsableInventoryViewDTO> listByParam(List<InventoryDTO.UsableInventoryParamDTO> list);
 }
