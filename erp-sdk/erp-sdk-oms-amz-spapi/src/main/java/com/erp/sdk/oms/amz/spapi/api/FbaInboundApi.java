@@ -15,20 +15,20 @@ package com.erp.sdk.oms.amz.spapi.api;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
 import lombok.Data;
-import lombok.Getter;
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +65,8 @@ public class FbaInboundApi {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
                 .build();
         if (null == fbaInboundApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -1520,7 +1521,7 @@ public class FbaInboundApi {
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
      */
-    public Call getShipmentItemsCall(String queryType, String marketplaceId, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public Call getShipmentItemsCall(String queryType, String marketplaceId, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1572,7 +1573,7 @@ public class FbaInboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getShipmentItemsValidateBeforeCall(String queryType, String marketplaceId, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private Call getShipmentItemsValidateBeforeCall(String queryType, String marketplaceId, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
 
         // verify the required parameter 'queryType' is set
         if (queryType == null) {
@@ -1601,7 +1602,7 @@ public class FbaInboundApi {
      * @return GetShipmentItemsResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public GetShipmentItemsResponse getShipmentItems(String queryType, String marketplaceId, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken) throws ApiException {
+    public GetShipmentItemsResponse getShipmentItems(String queryType, String marketplaceId, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken) throws ApiException {
         ApiResponse<GetShipmentItemsResponse> resp = getShipmentItemsWithHttpInfo(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         return resp.getData();
     }
@@ -1617,7 +1618,7 @@ public class FbaInboundApi {
      * @return ApiResponse&lt;GetShipmentItemsResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public ApiResponse<GetShipmentItemsResponse> getShipmentItemsWithHttpInfo(String queryType, String marketplaceId, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken) throws ApiException {
+    public ApiResponse<GetShipmentItemsResponse> getShipmentItemsWithHttpInfo(String queryType, String marketplaceId, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken) throws ApiException {
         Call call = getShipmentItemsValidateBeforeCall(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, nextToken, null, null);
         Type localVarReturnType = new TypeToken<GetShipmentItemsResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
@@ -1635,7 +1636,7 @@ public class FbaInboundApi {
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      */
-    public Call getShipmentItemsAsync(String queryType, String marketplaceId, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ApiCallback<GetShipmentItemsResponse> callback) throws ApiException {
+    public Call getShipmentItemsAsync(String queryType, String marketplaceId, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ApiCallback<GetShipmentItemsResponse> callback) throws ApiException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -1734,7 +1735,6 @@ public class FbaInboundApi {
     }
 
     /**
-     *
      * Returns a list of items in a specified inbound shipment.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
      * @param shipmentId A shipment identifier used for selecting items in a specific inbound shipment. (required)
      * @param marketplaceId A marketplace identifier. Specifies the marketplace where the product would be stored. (required)
@@ -1747,7 +1747,6 @@ public class FbaInboundApi {
     }
 
     /**
-     *
      * Returns a list of items in a specified inbound shipment.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
      * @param shipmentId A shipment identifier used for selecting items in a specific inbound shipment. (required)
      * @param marketplaceId A marketplace identifier. Specifies the marketplace where the product would be stored. (required)
@@ -1809,7 +1808,7 @@ public class FbaInboundApi {
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
      */
-    public Call getShipmentsCall(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public Call getShipmentsCall(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1865,7 +1864,7 @@ public class FbaInboundApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getShipmentsValidateBeforeCall(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private Call getShipmentsValidateBeforeCall(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
 
         // verify the required parameter 'queryType' is set
         if (queryType == null) {
@@ -1896,9 +1895,35 @@ public class FbaInboundApi {
      * @return GetShipmentsResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public GetShipmentsResponse getShipments(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken) throws ApiException {
+    public GetShipmentsResponse getShipments(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken) throws ApiException {
         ApiResponse<GetShipmentsResponse> resp = getShipmentsWithHttpInfo(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         return resp.getData();
+    }
+
+    /**
+     *
+     * Returns all list of inbound shipments based on criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * @param queryType Indicates whether shipments are returned using shipment information (by providing the ShipmentStatusList or ShipmentIdList parameters), using a date range (by providing the LastUpdatedAfter and LastUpdatedBefore parameters), or by using NextToken to continue returning items specified in a previous request. (required)
+     * @param marketplaceId A marketplace identifier. Specifies the marketplace where the product would be stored. (required)
+     * @param shipmentStatusList A list of ShipmentStatus values. Used to select shipments with a current status that matches the status values that you specify. (optional)
+     * @param shipmentIdList A list of shipment IDs used to select the shipments that you want. If both ShipmentStatusList and ShipmentIdList are specified, only shipments that match both parameters are returned. (optional)
+     * @param lastUpdatedAfter A date used for selecting inbound shipments that were last updated after (or at) a specified time. The selection includes updates made by Amazon and by the seller. (optional)
+     * @param lastUpdatedBefore A date used for selecting inbound shipments that were last updated before (or at) a specified time. The selection includes updates made by Amazon and by the seller. (optional)
+     * @param nextToken A string token returned in the response to your previous request. (optional)
+     * @return GetShipmentsResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     */
+    public InboundShipmentList getAllShipments(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken) throws ApiException {
+        ApiResponse<GetShipmentsResponse> resp = getShipmentsWithHttpInfo(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
+        String currentNextToken = resp.getData().getPayload().getNextToken();
+        InboundShipmentList resultList = resp.getData().getPayload().getShipmentData();
+        while (StringUtils.isNotBlank(currentNextToken)) {
+            String currentQueryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
+            GetShipmentsResponse response = getShipments(currentQueryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, currentNextToken);
+            resultList.addAll(response.getPayload().getShipmentData());
+            currentNextToken = response.getPayload().getNextToken();
+        }
+        return resultList;
     }
 
     /**
@@ -1914,7 +1939,7 @@ public class FbaInboundApi {
      * @return ApiResponse&lt;GetShipmentsResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public ApiResponse<GetShipmentsResponse> getShipmentsWithHttpInfo(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken) throws ApiException {
+    public ApiResponse<GetShipmentsResponse> getShipmentsWithHttpInfo(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken) throws ApiException {
         Call call = getShipmentsValidateBeforeCall(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken, null, null);
         Type localVarReturnType = new TypeToken<GetShipmentsResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
@@ -1934,7 +1959,7 @@ public class FbaInboundApi {
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      */
-    public Call getShipmentsAsync(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, OffsetDateTime lastUpdatedAfter, OffsetDateTime lastUpdatedBefore, String nextToken, final ApiCallback<GetShipmentsResponse> callback) throws ApiException {
+    public Call getShipmentsAsync(String queryType, String marketplaceId, List<String> shipmentStatusList, List<String> shipmentIdList, String lastUpdatedAfter, String lastUpdatedBefore, String nextToken, final ApiCallback<GetShipmentsResponse> callback) throws ApiException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;

@@ -2,23 +2,22 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
@@ -26,6 +25,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
@@ -37,8 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapping;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -46,8 +44,9 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * <p>
  * FBA货件表 服务实现类
@@ -348,5 +347,38 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
             }
         }
+    }
+
+    @Override
+    public void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList) {
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FBAS);
+        entity.setCode(code);
+        if (!this.save(entity)){
+            throw new ServiceException("[FbaShipmentEntity] 保存失败: entity="+ JSONUtil.toJsonStr(entity));
+        }
+        // 记录货件状态
+        fbaShipmentStatusService.saveByFbaShipment(entity);
+        if (CollectionUtils.isEmpty(receiveDTOList)){
+            return;
+        }
+        // 记录详情
+        List<FbaShipmentDetailEntity> newDetailEntityList = receiveDTOList
+                .stream()
+                .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToDetailEntity(e,
+                        entity,
+                        listingInfoMap.get(e.getMSku())))
+                .collect(Collectors.toList());
+        if (!fbaShipmentDetailService.saveBatch(newDetailEntityList)){
+            throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity="+ JSONUtil.toJsonStr(newDetailEntityList));
+        }
+    }
+
+    @Override
+    public FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId) {
+        return lambdaQuery()
+                .eq(FbaShipmentEntity::getFbaShipmentId, fbaShipmentId)
+                .last("LIMIT 1")
+                .one();
     }
 }

@@ -56,11 +56,6 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 产品名称
-    */
-    @TableField("product_name")
-    private String productName;
-    /**
     * 申报数量
     */
     @TableField("declare_qty")
@@ -75,11 +70,6 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     */
     @TableField("diff_qty")
     private Integer diffQty;
-    /**
-    * 是否组合品
-    */
-    @TableField("is_combo")
-    private Boolean isCombo;
     /**
     * 收货数量
     */
