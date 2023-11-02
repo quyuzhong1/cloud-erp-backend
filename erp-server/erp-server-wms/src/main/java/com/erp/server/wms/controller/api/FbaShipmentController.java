@@ -44,6 +44,17 @@ public class FbaShipmentController extends BaseController {
         return success(list);
     }
 
+/*    *//**
+     * sku映射
+     * @param dto
+     * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
+     *//*
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> skuMapping(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
+        return success(list);
+    }*/
+
     /**
      * 拉取货件信息
      * @param dto
