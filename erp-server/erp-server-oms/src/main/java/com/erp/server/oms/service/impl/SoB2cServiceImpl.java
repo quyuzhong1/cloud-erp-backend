@@ -690,7 +690,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Integer mergePagingCount(SoB2cDTO.MergePagingParamDTO pagingParamDTO) {
         pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
         List<Integer> list = this.baseMapper.mergePagingCount(pagingParamDTO);
-        return  CollectionUtils.isEmpty(list) ? MathUtil.ZERO :MathUtil.ONE;
+        return  CollectionUtils.isEmpty(list) ? MathUtil.ZERO :list.stream().reduce(MathUtil.ZERO,Integer::sum);
     }
 
 
@@ -1665,7 +1665,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         && mergeListDTO.getWarehouseId().equals(obj.getWarehouseId())
                         && StrUtil.equals(mergeListDTO.getDictLogisticsMethod(),obj.getDictLogisticsMethod())
                 ).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(mainList)) {
+                if (CollectionUtils.isEmpty(mainList) || mainList.size() == 1) {
                     continue;
                 }
 
