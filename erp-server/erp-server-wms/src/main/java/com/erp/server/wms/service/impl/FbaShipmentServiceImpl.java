@@ -130,7 +130,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         //给产品信息赋值
-        viewDTO.setItemList(detailViewList);
+        viewDTO.setDetailList(detailViewList);
         return viewDTO;
     }
 
