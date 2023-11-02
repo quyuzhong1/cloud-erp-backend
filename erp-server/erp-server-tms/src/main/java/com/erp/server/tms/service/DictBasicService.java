@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DictBasicDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 字典表 服务类
@@ -14,14 +16,7 @@ import com.erp.model.tms.dto.DictBasicDTO;
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
 
-    /**
-    * 新增
-    * @author Lambda
-    * @date: 2023-11-02
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(DictBasicDTO.AddDTO dto);
+
 
     /**
     * 修改
@@ -32,5 +27,12 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
     */
     Boolean update(DictBasicDTO.UpdateDTO dto);
 
-
+    /**
+     * 保存或者修改字典信息
+     * @author yl
+     * @date 2023-03-17 12:21
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean saveOrUpdateDict(List<DictBasicDTO.AddOrUpdateDTO> dto);
 }

@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.LogisticsAuthService;
@@ -56,7 +57,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
     }
 
     /**

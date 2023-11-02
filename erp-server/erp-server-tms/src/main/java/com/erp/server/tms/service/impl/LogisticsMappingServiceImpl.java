@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.server.tms.mapper.LogisticsMappingMapper;
 import com.erp.server.tms.service.LogisticsMappingService;
@@ -56,7 +57,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
         operateLogService.addModuleOperateLog(msg, null, logisticsMappingEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(logisticsMappingEntity.getId(), logisticsMappingEntity.getId());
     }
 
     /**

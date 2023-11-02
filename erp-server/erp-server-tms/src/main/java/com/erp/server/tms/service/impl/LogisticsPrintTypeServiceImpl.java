@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
@@ -56,7 +57,7 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         operateLogService.addModuleOperateLog(msg, null, logisticsPrintTypeEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(logisticsPrintTypeEntity.getId(), logisticsPrintTypeEntity.getId());
     }
 
     /**

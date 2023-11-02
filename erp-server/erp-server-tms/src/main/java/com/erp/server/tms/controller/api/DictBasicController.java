@@ -19,6 +19,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 
+import java.util.List;
+
 /**
  * 字典表
  *
@@ -34,35 +36,17 @@ public class DictBasicController extends BaseController {
     @Autowired
     private DictBasicService dictBasicService;
 
-    /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "字典表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DictBasicDTO.AddDTO dto) {
-        return success(dictBasicService.add(dto));
-    }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:dictBasic:update",
-        serviceClass = DictBasicService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated DictBasicDTO.UpdateDTO dto) {
-        dictBasicService.update(dto);
-        return success();
+     * 保存或者修改字典信息
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/saveOrUpdateBatch")
+    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
+        Boolean result = dictBasicService.saveOrUpdateDict(dto);
+        return result == true ? success() : failure();
     }
 
 
