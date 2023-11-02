@@ -13,6 +13,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -257,7 +258,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //含税单价
             jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
             //税率
-            jsonObject.set("taxRate", purchaseOrderDetailEntity.getTaxRate());
+            jsonObject.set("taxRate", MathUtil.multiply(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             //明细id
