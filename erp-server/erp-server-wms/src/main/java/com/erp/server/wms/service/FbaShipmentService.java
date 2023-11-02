@@ -84,4 +84,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return java.lang.Boolean
      **/
     Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
+
+    /**
+     * sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/2 11:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto);
 }

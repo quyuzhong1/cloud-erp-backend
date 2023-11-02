@@ -89,6 +89,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    public Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
     public Boolean pullShipment(FbaShipmentDTO.pullShipmentDTO dto) {
         return null;
     }

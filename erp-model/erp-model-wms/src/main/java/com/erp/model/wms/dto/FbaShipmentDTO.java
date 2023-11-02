@@ -259,6 +259,26 @@ public class FbaShipmentDTO implements Serializable {
     }
 
     /**
+     * sku映射参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class skuMappingParamDTO {
+        /**
+         * 详情id
+         */
+        private String detailId;
+        /**
+         * erp下拉的sku编号
+         */
+        private String skuNo;
+        /**
+         * 卖家sku
+         */
+        private String mSku;
+    }
+
+    /**
      * 列表查询参数
      */
     @Data
@@ -344,6 +364,10 @@ public class FbaShipmentDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 详情Id
+         */
+        private String detailId;
         /**
          * 货件单号
          */
