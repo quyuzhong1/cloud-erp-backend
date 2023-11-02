@@ -94,6 +94,7 @@ public class ${table.controllerName} {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "${table.comment!}修改")
     <#if dataPermission>
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",

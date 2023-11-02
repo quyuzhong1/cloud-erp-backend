@@ -59,6 +59,15 @@ public class DictBasicDTO implements Serializable {
     }
 
 
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
 
     /**
     * 修改
