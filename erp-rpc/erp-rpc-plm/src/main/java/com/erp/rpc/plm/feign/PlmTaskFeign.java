@@ -432,4 +432,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    @PostMapping("feign/bom/listBomVersionBySkuNos")
+    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos);
 }

@@ -98,7 +98,6 @@ public class BomSkuFeignController {
         return bomSkuService.listBomByParentSkuNos(skuNos);
     }
 
-
     /**
      * 查询sku版本信息
      * @Author Luo_WG

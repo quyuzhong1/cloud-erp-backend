@@ -9,7 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductBomInfoDTO {
     /**
-     * 查询sku版本
+     * 查询sku版本返回值
      */
     @Data
     @NoArgsConstructor
@@ -23,5 +23,16 @@ public class ProductBomInfoDTO {
          * 版本
          */
         private List<String> bomVersionList;
+    }
+    /**
+     * 查询sku版本查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class skuBomVersionParams{
+        /**
+         * sku编码
+         */
+        private List<String> skuNos;
     }
 }
