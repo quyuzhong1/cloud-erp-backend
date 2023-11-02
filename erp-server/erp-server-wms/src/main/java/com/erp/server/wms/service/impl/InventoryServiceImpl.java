@@ -925,4 +925,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         result.setUsableQty(usableQty);
         return result;
     }
+
+    @Override
+    public List<InventoryEntity> listByParam(InventoryDTO.ParamDTO dto) {
+        List<InventoryEntity> inventoryEntities = baseMapper.listByParam(dto);
+        List<InventoryEntity> resultList = inventoryEntities.stream().filter(req -> InventoryStatusEnum.USABLE.getCode().equals(req.getDictInventoryStatus())).collect(Collectors.toList());
+        return resultList;
+    }
 }

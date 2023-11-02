@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
@@ -95,6 +96,18 @@ public class BomSkuFeignController {
     @PostMapping("/listBomByParentSkuNos")
     public List<BomInfoEntity> listBomByParentSkuNos(@RequestBody List<String> skuNos) {
         return bomSkuService.listBomByParentSkuNos(skuNos);
+    }
+
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    @PostMapping("/listBomVersionBySkuNos")
+    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
+        return bomSkuService.listBomVersionBySkuNos(dto);
     }
 
 }

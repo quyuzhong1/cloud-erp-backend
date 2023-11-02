@@ -24,9 +24,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class FbaShipmentDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -117,7 +114,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 详情
          */
-        private List<FbaShipmentDetailDTO.ViewDTO> itemList;
+        private List<FbaShipmentDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -438,7 +435,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 是否组合品 true 是
          */
-        private Boolean isCombo;
+        private Boolean isCombination;
     }
 
     /**
@@ -579,10 +576,6 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String fnSku;
         /**
-         * skuId
-         */
-        private String skuId;
-        /**
          * ERP的SKU
          */
         private String skuNo;
@@ -601,7 +594,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 是否组合品 true 是
          */
-        private Boolean isCombo;
+        private Boolean isCombination;
 
     }
 }

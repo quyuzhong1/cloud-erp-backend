@@ -71,7 +71,29 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${permissionSql}
         </if>
+
         GROUP BY approve_status
+    </select>
+
+    <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FbaShipmentDTO$DeliverRecordView">
+        SELECT
+        fd.code AS deliveryCode,
+        fd.delivery_status AS deliveryStatus,
+        SUM(fdd.delivery_qty) AS deliveryQty,
+        fdl.deliver_time AS deliverTime
+        FROM  fba_delivery fd
+        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND fd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY fd.code ,
+        fd.delivery_status ,
+        fdl.deliver_time
     </select>
 
 </mapper>

@@ -462,6 +462,7 @@
                 </foreach>
             </if>
         </where>
+        order by sb2c.id desc
     </select>
 
     <select id="productSalesPaging" resultType="com.erp.model.oms.dto.ReportDTO$ProductSalesPagingViewDTO">

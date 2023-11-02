@@ -36,4 +36,14 @@ public interface ShopInfoFeign {
      */
     @GetMapping("/getShopInfoById")
     public ShopInfoEntity getShopInfoById(@RequestParam String id);
+
+    /**
+     * 根据店铺id查询店铺信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 12:09
+     * @param ids
+     * @return com.erp.model.oms.entity.ShopInfoEntity
+     **/
+    @PostMapping("/listShopInfoByIds")
+    List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids);
 }

@@ -786,9 +786,10 @@ public enum ApiError implements Serializable {
 
     WAREHOUSE_DISABLED(99099, "仓库【{}】未审核或已被禁用，无法进行盘点"),
     WAREHOUSE_AREA_LOCATION_DISABLED(99100, "仓库【{}】 库区【{}】 仓位【{}】 未审核或已被禁用，无法进行盘点"),
-
+    SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
+
 
 
 

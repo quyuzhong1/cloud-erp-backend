@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 
@@ -112,4 +113,13 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return java.util.List<com.erp.model.plm.entity.BomSkuEntity>
      */
     List<BomSkuEntity> listBomSkuByBomId(String bomId);
+
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(ProductBomInfoDTO.skuBomVersionParams dto);
 }

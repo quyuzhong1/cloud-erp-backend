@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -60,11 +62,6 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("declare_qty")
     private Integer declareQty;
     /**
-    * 发货数量
-    */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-    /**
     * 收发差异
     */
     @TableField("diff_qty")
@@ -72,13 +69,18 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     /**
     * 是否组合品
     */
-    @TableField("is_combo")
-    private Boolean isCombo;
+    @TableField("is_combination")
+    private Boolean isCombination;
     /**
      * 收货数量
      */
     @TableField("receive_qty")
     private Integer receiveQty;
+    /**
+     * 最新收货日期
+     */
+    @TableField("receive_date")
+    private LocalDateTime receiveDate;
 
 
     public static final String MAIN_ID = "main_id";

@@ -4,6 +4,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -393,5 +394,16 @@ public class BomInfoController extends BaseController {
     }
 
 
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    @PostMapping("/listBomVersionBySkuNos")
+    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
+        return bomSkuService.listBomVersionBySkuNos(dto);
+    }
 }
 

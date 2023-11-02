@@ -3,6 +3,9 @@ package com.erp.model.wms.dto;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -32,10 +35,12 @@ public class FbaDeliveryDTO implements Serializable {
      @NoArgsConstructor
      @AllArgsConstructor
      public static class TabListDTO {
-
          /**
-         * 类型
-         */
+          * 标识
+          * 描述：waitSubmit:待提交, approveIng:审核中, reject:审核不通过, approve:已审核
+          */
+         @StateEnumValue(clazz = ApproveStatusEnum.class, message = "tab类型有误")
+         @NotBlank(message = "tab不能为空")
          private String tabFlag;
 
          /**
@@ -51,7 +56,8 @@ public class FbaDeliveryDTO implements Serializable {
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
          /**
-         * 搜索类型
+         * tab：/wms/common/enumDropDown?type=ApproveStatusEnum
+         * 描述：waitSubmit:待提交, approveIng:审核中, reject:审核不通过, approve:已审核
          */
          private String  tabFlag;
          /**
@@ -69,10 +75,11 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 来源单号
          */
-         private String sourceCode;
+         private List<String> sourceCodeList;
          /**
-         * 备货类型
-         */
+          * 备货类型:/wms/common/enumDropDown?type=FbaDemandType
+          * 描述：demandPlatformWarehouse:备货平台仓  demandOverseasWarehouse:备货海外仓
+          */
          private String demandType;
          /**
          * 店铺id
@@ -101,7 +108,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 是否组合品
          */
-         private Boolean isCombo;
+         private Boolean isCombination;
          /**
          * 平台sku
          */
@@ -139,12 +146,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 来源单号
          */
-        private String sourceCode;
+        private List<String> sourceCodeList;
 
         /**
          * 备货类型
          */
-        private String demandType;
+        private List<String> demandTypeList;
 
         /**
          * 备货类型名称
@@ -277,9 +284,14 @@ public class FbaDeliveryDTO implements Serializable {
         private String createTime;
 
         /**
-         * 审核人（最新）
+         * 审核人
          */
         private String approveUserName;
+
+        /**
+         * 待审核人
+         */
+        private String waitApproveUserName;
 
         /**
          * 审核时间
@@ -446,7 +458,25 @@ public class FbaDeliveryDTO implements Serializable {
         */
         private String inventoryOrgName;
 
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
 
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+        /**
+         * 物流信息
+         */
+        private FbaDeliveryLogisticsDTO.ViewDTO logisticsView;
+
+        /**
+         * 产品信息
+         */
+        private List<FbaDeliveryDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -455,7 +485,15 @@ public class FbaDeliveryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
 
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
 
     }
 
@@ -471,6 +509,16 @@ public class FbaDeliveryDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
 
     }
 
@@ -630,7 +678,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流跟踪号
          */
-        private String trackingNo;
+        private List<String> trackingNoList;
         /**
          * 发货时间
          */

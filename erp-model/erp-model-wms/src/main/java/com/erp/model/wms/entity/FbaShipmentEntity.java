@@ -100,6 +100,11 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     */
     @TableField("delivery_to_address")
     private String deliveryToAddress;
+    /**
+    * 第三方唯一编码
+    */
+    @TableField("fba_shipment_id")
+    private String fbaShipmentId;
 
 
     public static final String CODE = "code";
@@ -131,6 +136,8 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     public static final String DELIVERY_FROM_ADDRESS = "delivery_from_address";
 
     public static final String DELIVERY_TO_ADDRESS = "delivery_to_address";
+
+    public static final String PLATFORM_CODE = "platform_code";
 
     @Override
     public Serializable pkVal() {
