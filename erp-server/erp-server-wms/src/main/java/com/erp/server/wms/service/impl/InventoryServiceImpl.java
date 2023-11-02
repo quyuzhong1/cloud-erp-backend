@@ -927,9 +927,36 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public List<InventoryEntity> listByParam(InventoryDTO.ParamDTO dto) {
-        List<InventoryEntity> inventoryEntities = baseMapper.listByParam(dto);
-        List<InventoryEntity> resultList = inventoryEntities.stream().filter(req -> InventoryStatusEnum.USABLE.getCode().equals(req.getDictInventoryStatus())).collect(Collectors.toList());
-        return resultList;
+    public List<InventoryDTO.UsableInventoryViewDTO> listByParam(List<InventoryDTO.UsableInventoryParamDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+
+        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        // 查询仓库下面仓位的SKU可用库存
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
+
+        List<InventoryDTO.UsableInventoryViewDTO> viewList = new ArrayList<>();
+        for (InventoryDTO.UsableInventoryParamDTO usableInventoryParamDTO : list) {
+            InventoryDTO.UsableInventoryViewDTO view = new InventoryDTO.UsableInventoryViewDTO();
+            // 查询仓库下面的SKU的可用库存
+            if (Objects.isNull(usableInventoryParamDTO.getWarehouseLocation())) {
+                view.setSkuId(usableInventoryParamDTO.getSkuId());
+                view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
+                view.setWarehouseLocation(usableInventoryParamDTO.getWarehouseLocation());
+                view.setUsableQty(this.getUsableInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
+                viewList.add(view);
+            } else {
+                WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(usableInventoryParamDTO.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
+                Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+                Integer inventoryTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                view.setSkuId(usableInventoryParamDTO.getSkuId());
+                view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
+                view.setWarehouseLocation(usableInventoryParamDTO.getWarehouseLocation());
+                view.setUsableQty(this.getUsableInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
+                viewList.add(view);
+            }
+        }
+        return viewList;
     }
 }
