@@ -413,8 +413,8 @@ public class FbaDeliveryController extends BaseController {
      * @param list
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/FbaDeliveryGenerateMachineSubmit")
-    public ApiResult FbaDeliveryGenerateMachineSubmit(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
+    @PostMapping("/fbaDeliveryGenerateMachineSubmit")
+    public ApiResult fbaDeliveryGenerateMachineSubmit(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
         Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
         return flag ? success() : failure();
     }
@@ -426,8 +426,8 @@ public class FbaDeliveryController extends BaseController {
      * @param list
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/FbaDeliveryGenerateMachineSubmitAndApprove")
-    public ApiResult FbaDeliveryGenerateMachineSaveAndApprove(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
+    @PostMapping("/fbaDeliveryGenerateMachineSubmitAndApprove")
+    public ApiResult fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
         Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
         return flag ? success() : failure();
     }
