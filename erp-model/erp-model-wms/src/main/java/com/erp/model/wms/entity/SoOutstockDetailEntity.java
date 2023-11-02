@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -73,7 +74,54 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     private String warehouseName;
 
 
+    /**
+     * 单价
+     */
+    @TableField("price")
+    private BigDecimal price;
 
+    /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+
+    /**
+     * 销售金额
+     */
+    @TableField("amount")
+    private BigDecimal amount;
+
+    /**
+     * 币种
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+
+    /**
+     * 价税合计(本位币)
+     */
+    @TableField("all_amount_local_currency")
+    private BigDecimal allAmountLocalCurrency;
+
+    /**
+     * 汇率
+     */
+    @TableField(value = "exchange_rate")
+    private BigDecimal exchangeRate;
+
+    /**
+     * 销售明细id
+     */
+    @TableField(value = "so_detail_id")
+    private String soDetailId;
 
     /**
      * 备注

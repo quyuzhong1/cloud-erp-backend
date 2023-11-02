@@ -851,16 +851,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
 
-        //销售明细
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIdList);
-
-        //销售订单下所有通知单
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIdList);
-        //销售出库单
-        List<String> noticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailService.listDetailBySourceDetailId(noticeDetailIdList);
-
         for (SoOutstockDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -886,23 +876,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
 
-
-            //销售通知单明细
-            String sourceDetailId = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getId().equals(item.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
-            //销售订单明细 (sku对应)
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).findFirst().orElse(null);
-
-            //同一个销售明细已下推出库数量合计
-            List<String> thisNoticeDetailIdList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-            Integer totalQty = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-
             //税率
-            BigDecimal taxRate = soDetailEntity.getTaxRate();
-            BigDecimal price = soDetailEntity.getPrice();
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal price = item.getPrice();
             item.setPrice(price);
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
-            BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
+            BigDecimal exchangeRate = item.getExchangeRate();
             if (Objects.isNull(exchangeRate)) {
                 exchangeRate = MathUtil.BigDecimal_1;
             }
@@ -916,24 +896,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
             item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
-            item.setCurrency(soDetailEntity.getCurrency());
-            item.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-            //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
-            //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
-
-            BigDecimal cnyTaxAmount = MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), item.getActualQty())
-                    , MathUtil.valueOf(soDetailEntity.getQty().toString())).setScale(2, BigDecimal.ROUND_DOWN);
-            //判断销售明细数量是否下推完
-            if (MathUtil.compareTo(soDetailEntity.getQty(), totalQty) == MathUtil.ZERO) {
-                String detailId = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId()))
-                        .max(Comparator.comparing(SoOutstockDetailEntity::getId)).map(SoOutstockDetailEntity::getId).orElse("");
-                if (item.getDetailId().equals(detailId)) {
-                    BigDecimal otherAmount = soOutStockDetailList.stream().filter(obj -> !obj.getId().equals(item.getDetailId()) && thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(obj -> MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), obj.getActualQty()),
-                            MathUtil.valueOf(soDetailEntity.getQty().toString())).setScale(2, BigDecimal.ROUND_DOWN)).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    cnyTaxAmount = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(), otherAmount);
-                }
-            }
-            item.setCnyTaxAmount(cnyTaxAmount);
+            item.setCurrency(item.getCurrency());
+            item.setCurrencySymbol(item.getCurrencySymbol());
+            item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
             //国家id
             if (CollectionUtils.isNotEmpty(customerList)) {
@@ -1008,16 +973,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
-        //销售明细
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIdList);
-
-        //销售订单下所有通知单
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIdList);
-        //销售出库单
-        List<String> noticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailService.listDetailBySourceDetailId(noticeDetailIdList);
-
         for (SoOutstockDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -1038,23 +993,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
 
-            //销售通知单明细
-            String sourceDetailId = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getId().equals(item.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
-            //销售订单明细 (sku对应)
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).findFirst().orElse(null);
-
-            //同一个销售明细已下推出库数量合计
-            List<String> thisNoticeDetailIdList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-            Integer totalQty = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-
-
             //税率
-            BigDecimal taxRate = soDetailEntity.getTaxRate();
-            BigDecimal price = soDetailEntity.getPrice();
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal price = item.getPrice();
             item.setPrice(price);
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
-            BigDecimal exchangeRate = soDetailEntity.getExchangeRate();
+            BigDecimal exchangeRate = item.getExchangeRate();
             if (Objects.isNull(exchangeRate)) {
                 exchangeRate = MathUtil.BigDecimal_1;
             }
@@ -1068,24 +1013,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
             item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate));
-            item.setCurrency(soDetailEntity.getCurrency());
-            item.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-            //单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
-            //最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
-
-            BigDecimal cnyTaxAmount = MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), item.getActualQty())
-                    , MathUtil.valueOf(soDetailEntity.getQty().toString())).setScale(2, BigDecimal.ROUND_DOWN);
-            //判断销售明细数量是否下推完
-            if (MathUtil.compareTo(soDetailEntity.getQty(), totalQty) == MathUtil.ZERO) {
-                String detailId = soOutStockDetailList.stream().filter(obj -> thisNoticeDetailIdList.contains(obj.getSourceDetailId()))
-                        .max(Comparator.comparing(SoOutstockDetailEntity::getId)).map(SoOutstockDetailEntity::getId).orElse("");
-                if (item.getDetailId().equals(detailId)) {
-                    BigDecimal otherAmount = soOutStockDetailList.stream().filter(obj -> !obj.getId().equals(item.getDetailId()) && thisNoticeDetailIdList.contains(obj.getSourceDetailId())).map(obj -> MathUtil.divide(MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), obj.getActualQty()),
-                            MathUtil.valueOf(soDetailEntity.getQty().toString())).setScale(2, BigDecimal.ROUND_DOWN)).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    cnyTaxAmount = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(), otherAmount);
-                }
-            }
-            item.setCnyTaxAmount(cnyTaxAmount);
+            item.setCurrency(item.getCurrency());
+            item.setCurrencySymbol(item.getCurrencySymbol());
+            item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
 
             //国家id
             if (CollectionUtils.isNotEmpty(customerList)) {
@@ -1279,7 +1209,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(soInfoList)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-
         Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map = list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
         List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry : map.entrySet()) {
@@ -1305,6 +1234,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
+                    detail.setSoDetailId(item.getSoDetailId());
                     detail.setSourceDetailId(item.getSourceDetailId());
                     detail.setSkuId(item.getSkuId());
                     detail.setRemark(item.getRemark());
@@ -1867,5 +1797,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         return this.lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE).
                 like(SoOutstockEntity::getTrackNo, trackNo).list();
+    }
+    @Override
+    public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
+        params.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
+        String searchType = params.getSearchType();
+        //根据搜索类型获取到审核状态
+        List<String> approveList = listBySearchType(searchType);
+        if (CollectionUtils.isNotEmpty(approveList)) {
+            params.setInvalidStatus(Boolean.FALSE);
+        }
+        //处理国家数据
+        handleCountryIdList(params);
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params, approveList);
+        return pagingTotalDTO;
     }
 }
