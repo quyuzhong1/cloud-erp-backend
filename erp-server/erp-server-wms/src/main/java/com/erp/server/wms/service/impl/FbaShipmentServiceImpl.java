@@ -11,6 +11,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -21,6 +22,7 @@ import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,6 +33,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapping;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,11 +76,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Autowired
     private FbaDeliveryService fbaDeliveryService;
     @Autowired
+    private FbaDeliveryDetailService fbaDeliveryDetailService;
+    @Autowired
     private WarehouseService warehouseService;
     @Autowired
     private SysUserFeign sysUserFeign;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -90,21 +99,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return new PagingVO(pageData);
     }
 
-    private void fillList(List<FbaShipmentDTO.ListDTO> records) {
-        for (FbaShipmentDTO.ListDTO record : records) {
-            //设置发货状态中文
-            record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
-            //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总 TODO
-            record.setDeliveryQty(0);
-            //签收数量 QuantityReceived TODO
-            record.setReceiveQty(0);
-            //在途数量 QuantityReceived-发货数量，不为0时显示红色 TODO
-            record.setTransportQty(0);
-        }
-    }
-
     @Override
     public Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto) {
+
         return null;
     }
 
@@ -195,6 +192,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
@@ -220,9 +218,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> skuNoList = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
+        //获取库存sku信息
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+
         //根据货件单分组一个货件单生成一个发货单
         Map<String, List<FbaShipmentDTO.GenerateDeliverView>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateDeliverView::getMainId));
-        List<FbaShipmentDTO.AddDTO> addList = new ArrayList<>(map.size());
+
         for (Map.Entry<String, List<FbaShipmentDTO.GenerateDeliverView>> entry : map.entrySet()) {
             List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
             //映射字段
@@ -247,11 +248,50 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 //映射字段
                 FbaDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
 
+                //映射产品信息
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+                detailAdd.setProductName(skuVO.getSkuName());
+                detailAdd.setNetWeight(skuVO.getNetWeight());
+                //拆分产品尺寸
+                String productSize = skuVO.getProductSize();
+                splitProductSize(detailAdd, productSize);
+                String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+                detailAdd.setStockSku(stockSku);
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);
+            fbaDeliveryService.add(addDTO);
         }
-        return null;
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 处理列表查询字段
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:35
+     * @param records
+     **/
+    private void fillList(List<FbaShipmentDTO.ListDTO> records) {
+        List<String> ids = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<String> detailIds = records.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
+        //根据来源详情id查询发货详情
+        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(ids);
+        //根据详情id查询收货记录
+        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
+        for (FbaShipmentDTO.ListDTO record : records) {
+            //设置发货状态中文
+            record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
+            //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+            Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(record.getDetailId())).mapToInt(FbaDeliveryDetailEntity::getDeliveryQty).sum();
+            record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
+            record.setDeliveryQty(deliveryQty);
+            //签收数量 QuantityReceived
+            Integer receiveQty = fbaShipmentReceiveEntities.stream().filter(req -> req.getDetailId().equals(record.getDetailId())).mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+            record.setReceiveQty(receiveQty);
+            //在途数量 QuantityReceived-发货数量，不为0时显示红色
+            record.setTransportQty(receiveQty - deliveryQty);
+        }
     }
 
     /**
@@ -270,5 +310,43 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //发货数量默认给申报数量
         view.setDeliveryQty(view.getDeclareQty());
         return view;
+    }
+
+    /**
+     * 拆分产品尺寸长宽高存入数据集
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:28
+     * @param detailAdd 数据集
+     * @param productSize 需要拆分的尺寸
+     * @return void
+     **/
+    private void splitProductSize(FbaDeliveryDetailDTO.AddDTO detailAdd, String productSize) {
+        if (StringUtils.isNotBlank(productSize)) {
+            String[] productSizes = productSize.split("X");
+            //长
+            if (productSizes.length > 0) {
+                if (StringUtils.isNotBlank(productSizes[0])) {
+                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
+                } else {
+                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+            //宽
+            if (productSizes.length > 1) {
+                if (StringUtils.isNotBlank(productSizes[1])) {
+                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
+                } else {
+                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+            //高
+            if (productSizes.length > 2) {
+                if (StringUtils.isNotBlank(productSizes[2])) {
+                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
+                } else {
+                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+        }
     }
 }

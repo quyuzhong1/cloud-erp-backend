@@ -604,6 +604,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.listByPlatformSkuNoList(platformSkuNoList);
     }
 
+    @Override
+    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList) {
+        if (CollectionUtils.isEmpty(productSkuNoList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listStockSkuNoByProductSkuNo(productSkuNoList);
+    }
+
     /**
      * 库存sku 对照表分页
      *

@@ -1,10 +1,12 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -104,5 +106,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .eq(!CollectionUtils.isEmpty(dto.getPlatformSkuNoList()), ListingInfoEntity::getPlatformSkuNo, dto.getPlatformSkuNoList())
                 .eq(null != dto.getMatchResult(), ListingInfoEntity::getMatchResult, dto.getMatchResult())
                 .list();
+    }
+
+    @Override
+    public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+        return null;
     }
 }

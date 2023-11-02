@@ -1,14 +1,14 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
@@ -37,6 +37,20 @@ public class ListingInfoController extends BaseController {
     public ApiResult<List<ListingInfoDTO.ListDTO>> listByType(@RequestParam("type") String type) {
         List<ListingInfoDTO.ListDTO> list = listingInfoService.listByType(type);
         return success(list);
+    }
+
+
+    /**
+     * sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/2 11:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/skuMapping")
+    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
+        Boolean flag = listingInfoService.skuMapping(dto);
+        return flag ? success() : failure();
     }
 
 }

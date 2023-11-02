@@ -711,4 +711,32 @@ public class SkuMappingDTO implements Serializable {
 
 
     }
+
+    /**
+     * 库存sku对照产品sku返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class listStockSkuNoByProductSkuNoView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+        /**
+         * 产品sku编号
+         */
+        private String productSkuNo;
+        /**
+         * 库存sku
+         */
+        private String warehouseSkuNo;
+        /**
+         * 库存产品名称
+         */
+        private String warehouseProductName;
+    }
 }
