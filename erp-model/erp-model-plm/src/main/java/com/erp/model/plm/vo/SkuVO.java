@@ -173,4 +173,14 @@ public class SkuVO implements Serializable {
      * 二级供应商名称
      */
     private String secondSupplierName;
+
+    /**
+     * 尺寸
+     */
+    private String productSize;
+
+    /**
+     * 净重
+     */
+    private BigDecimal netWeight;
 }

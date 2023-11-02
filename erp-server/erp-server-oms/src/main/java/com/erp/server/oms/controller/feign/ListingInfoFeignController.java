@@ -5,8 +5,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -26,6 +28,9 @@ public class ListingInfoFeignController extends BaseController {
     @Resource
     private ListingInfoService listingInfoService;
 
+    @Resource
+    private SkuMappingService skuMappingService;
+
 
     /**
      * 通过条件查询ListingInfoEntity列表
@@ -39,4 +44,16 @@ public class ListingInfoFeignController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 根据产品sku查询库存sku
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:24
+     * @param productSkuNoList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
+     **/
+    @PostMapping("/listStockSkuNoByProductSkuNo")
+    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList) {
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> list = skuMappingService.listStockSkuNoByProductSkuNo(productSkuNoList);
+        return list;
+    }
 }

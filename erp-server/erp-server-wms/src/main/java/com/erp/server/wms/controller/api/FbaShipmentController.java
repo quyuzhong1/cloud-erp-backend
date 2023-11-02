@@ -45,19 +45,6 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
-     * sku映射
-     * @Author Luo_WG
-     * @Date 2023/11/2 11:19
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/skuMapping")
-    public ApiResult skuMapping(@RequestBody @Validated PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto) {
-        Boolean flag = fbaShipmentService.skuMapping(dto);
-        return flag ? success() : failure();
-    }
-
-    /**
      * 拉取货件信息
      * @param dto
      * @return com.common.core.controller.vo.ApiResult

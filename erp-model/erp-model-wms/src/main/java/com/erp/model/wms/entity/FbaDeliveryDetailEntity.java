@@ -108,6 +108,12 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     @TableField("receive_date")
     private LocalDateTime receiveDate;
 
+    /**
+     * 来源详情id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 

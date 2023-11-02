@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.server.wms.mapper.FbaDeliveryDetailMapper;
 import com.erp.server.wms.service.FbaDeliveryDetailService;
@@ -9,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +87,13 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<FbaDeliveryDetailEntity> listBySourceDetailIds(List<String> detailIds) {
+        if (CollectionUtils.isEmpty(detailIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaDeliveryDetailEntity::getSourceDetailId, detailIds).list();
+    }
 
     /**
     * 新增修改处理数据

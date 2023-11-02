@@ -1,9 +1,11 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 
 import java.util.List;
 
@@ -59,4 +61,13 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @date 2023/11/2
      */
     List<ListingInfoEntity> findList(ListingInfoParamDTO dto);
+
+    /**
+     * 新增映射skuNo
+     * @Author Luo_WG
+     * @Date 2023/11/2 19:24
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
 }

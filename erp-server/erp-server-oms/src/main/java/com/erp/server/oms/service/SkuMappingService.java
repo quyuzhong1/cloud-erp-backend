@@ -6,6 +6,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -139,4 +140,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.ListSkuDTO>
      */
     List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(List<String> platformSkuNoList);
+
+    /**
+     * 根据产品sku查询库存sku
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:20
+     * @param productSkuNoList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
+     **/
+    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList);
 }

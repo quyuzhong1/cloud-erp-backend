@@ -582,13 +582,16 @@
         pp.main_supplier as supplierId,
         pc.actual_tax_cost,
         pc.target_tax_cost,
-        pc.retail_price
+        pc.retail_price,
+        ppk.product_size,
+        ppk.net_weight
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="status!=null">
             AND pd.status=#{status}
@@ -774,7 +777,9 @@
         ppk.gross_weight,
         pc.actual_tax_cost,
         pc.target_tax_cost,
-        pc.retail_price
+        pc.retail_price,
+        ppk.product_size,
+        ppk.net_weight
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
@@ -782,6 +787,7 @@
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
