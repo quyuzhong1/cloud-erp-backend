@@ -34,42 +34,22 @@ public interface FbaShipmentConverter {
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")
-    @Mapping(target = "receiveQty", source = "receiveQty")
     FbaShipmentDTO.ReceiveRecordView fbaShipmentReceiveEntityToView(FbaShipmentReceiveEntity entities);
 
     @Mapping(target = "shipmentStatus", source = "platformShipmentStatus")
-    @Mapping(target = "updateTime", source = "updateTime")
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);
 
     @Mappings({
-        @Mapping(target = "sourceId", source = "view.id"),
-        @Mapping(target = "sourceCode", source = "view.code"),
-        @Mapping(target = "shopId", source = "view.shopId"),
-        @Mapping(target = "shopName", source = "view.shopName"),
-        @Mapping(target = "countryId", source = "view.countryId"),
-        @Mapping(target = "countryName", source = "view.countryName"),
-        @Mapping(target = "deliveryWarehouseId", source = "view.deliveryWarehouseId"),
-        @Mapping(target = "destWarehouseId", source = "view.destWarehouseId"),
+        @Mapping(target = "sourceId", source = "id"),
+        @Mapping(target = "sourceCode", source = "code"),
     })
-    FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view, List<WarehouseEntity> warehouseEntities, List<BaseIdDTO.CodeDTO> accountingCompanyList);
+    FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
 
 
     @Mappings({
-        @Mapping(target = "mainId", source = "mainId"),
-/*        @Mapping(target = "asin", source = "asin"),
-        @Mapping(target = "mSku", source = "mSku"),
-        @Mapping(target = "fnSku", source = "fnSku"),
-        @Mapping(target = "skuNo", source = "skuNo"),
-        @Mapping(target = "productName", source = ""),
-        @Mapping(target = "stockSku", source = ""),
         @Mapping(target = "declareQty", source = "declareQty"),
-        @Mapping(target = "planQty", source = "planQty"),
+        @Mapping(target = "planQty", source = "deliveryQty"),
         @Mapping(target = "deliveryQty", source = "deliveryQty"),
-        @Mapping(target = "isCombo", source = "isCombo"),
-        @Mapping(target = "netWeight", source = ""),
-        @Mapping(target = "productSizeLength", source = ""),
-        @Mapping(target = "productSizeWidth", source = ""),
-        @Mapping(target = "productSizeHeight", source = "")*/
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 }
