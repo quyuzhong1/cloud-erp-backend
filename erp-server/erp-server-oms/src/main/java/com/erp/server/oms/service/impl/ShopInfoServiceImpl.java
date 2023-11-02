@@ -823,6 +823,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return list;
     }
 
+
+    public List<ShopInfoEntity> listShopByAmazon() {
+        List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
+        return list;
+    }
+
     @Override
     public List<String> accountList() {
         return lambdaQuery().select(ShopInfoEntity::getAccount).

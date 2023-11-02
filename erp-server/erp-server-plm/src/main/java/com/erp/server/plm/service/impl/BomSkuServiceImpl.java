@@ -8,11 +8,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
+import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
+import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private ProductBomHistoryService productBomHistoryService;
 
     /**
      * 保存bom 与sku 关系
@@ -245,5 +251,21 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public List<BomSkuEntity> listBomSkuByBomId(String bomId) {
         return this.lambdaQuery().eq(BomSkuEntity::getBomId,bomId).list();
+    }
+
+    @Override
+    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(ProductBomInfoDTO.skuBomVersionParams dto) {
+        List<BomSkuEntity> list = lambdaQuery().in(BomSkuEntity::getSkuNo, dto.getSkuNos()).list();
+        List<String> bomIds = list.stream().map(req -> req.getBomId()).distinct().collect(Collectors.toList());
+        List<ProductBomHistoryEntity> productBomHistoryEntities = productBomHistoryService.listByBomIds(bomIds);
+        List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = new ArrayList<>();
+        for (BomSkuEntity bomSkuEntity : list) {
+            ProductBomInfoDTO.skuBomVersion bomVersion = new ProductBomInfoDTO.skuBomVersion();
+            bomVersion.setSkuNo(bomSkuEntity.getSkuNo());
+            List<String> bomVersionList = productBomHistoryEntities.stream().filter(req -> req.getBomId().equals(bomSkuEntity.getBomId())).map(req -> req.getBomVersion()).collect(Collectors.toList());
+            bomVersion.setBomVersionList(bomVersionList);
+            skuBomVersionList.add(bomVersion);
+        }
+        return skuBomVersionList;
     }
 }

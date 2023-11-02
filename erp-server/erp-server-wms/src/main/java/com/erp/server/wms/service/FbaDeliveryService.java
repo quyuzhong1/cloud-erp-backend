@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -178,4 +179,14 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
     List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids);
+
+    /**
+     * 根据来源单号查询发货记录
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:06
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
+     **/
+    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+
 }

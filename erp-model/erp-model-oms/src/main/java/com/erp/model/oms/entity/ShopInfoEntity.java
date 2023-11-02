@@ -135,6 +135,17 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("is_gen_task")
     private Boolean isGenTask;
 
+    /**
+     * 店铺仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
+     * 店铺仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

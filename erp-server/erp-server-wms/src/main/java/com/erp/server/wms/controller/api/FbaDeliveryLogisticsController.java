@@ -40,7 +40,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBI发货单物流信息表新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单物流信息表新增")
     public ApiResult<String> add(@RequestBody @Validated FbaDeliveryLogisticsDTO.AddDTO dto) {
         return success(fbaDeliveryLogisticsService.add(dto));
     }
@@ -63,7 +63,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    @PostMapping("/ViewUpdateLogistics")
+    @PostMapping("/viewUpdateLogistics")
     public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> ViewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
         List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
         return success(result);
@@ -77,7 +77,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    @PostMapping("/SaveUpdateLogistics")
+    @PostMapping("/saveUpdateLogistics")
     public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> SaveUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
         List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
         return success(result);

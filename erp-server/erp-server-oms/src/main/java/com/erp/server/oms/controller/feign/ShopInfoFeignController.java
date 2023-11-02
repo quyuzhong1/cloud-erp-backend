@@ -54,4 +54,16 @@ public class ShopInfoFeignController extends BaseController {
     public ShopInfoEntity getShopInfoById(@RequestParam String id) {
         return shopInfoService.getById(id);
     }
+
+    /**
+     * 根据店铺id查询店铺信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 12:09
+     * @param ids
+     * @return com.erp.model.oms.entity.ShopInfoEntity
+     **/
+    @PostMapping("/listShopInfoByIds")
+    public List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids) {
+        return shopInfoService.listByIds(ids);
+    }
 }

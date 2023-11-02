@@ -99,8 +99,8 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ViewDTO>>
      **/
     @GetMapping("/view")
-    public ApiResult<List<FbaShipmentDTO.ViewDTO>> view(@RequestParam("id") String id) {
-        List<FbaShipmentDTO.ViewDTO> result = fbaShipmentService.view(id);
+    public ApiResult<FbaShipmentDTO.ViewDTO> view(@RequestParam("id") String id) {
+        FbaShipmentDTO.ViewDTO result = fbaShipmentService.view(id);
         return success(result);
     }
 

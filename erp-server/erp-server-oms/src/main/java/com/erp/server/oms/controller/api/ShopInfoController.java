@@ -287,4 +287,16 @@ public class ShopInfoController extends BaseController {
         Boolean result = shopInfoService.cancelAuthorize(dto);
         return result ? success() : failure();
     }
+
+    /**
+     * 查询亚马逊店铺信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:56
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    @PostMapping("/listShopByAmazon")
+    public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {
+        List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
+        return success(result);
+    }
 }

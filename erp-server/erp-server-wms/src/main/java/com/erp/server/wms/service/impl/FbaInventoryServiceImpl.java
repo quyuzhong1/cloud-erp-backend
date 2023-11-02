@@ -22,7 +22,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- * FBI库存 服务实现类
+ * FBA库存 服务实现类
  * </p>
  *
  * @author Luo_WG
@@ -51,14 +51,14 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         // 数据处理
         handleData(fbaInventoryEntity);
 
-        log.info("开始新增FBI库存");
+        log.info("开始新增FBA库存");
         boolean save = super.save(fbaInventoryEntity);
         if(!save) {
-            throw new ServiceException("FBI库存保存失败");
+            throw new ServiceException("FBA库存保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBI库存" , fbaInventoryEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA库存" , fbaInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, fbaInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -72,21 +72,21 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     @Override
     public Boolean update(FbaInventoryDTO.UpdateDTO updateDTO) {
         FbaInventoryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBI库存"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存"));
         FbaInventoryEntity fbaInventoryEntity =  BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
 
         // 数据处理
         handleData(fbaInventoryEntity);
-        log.info("编辑 开始修改FBI库存数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改FBA库存数据，id：【{}】", old.getId());
         boolean save = super.updateById(fbaInventoryEntity);
         if(!save) {
-            throw new ServiceException("FBI库存保存失败");
+            throw new ServiceException("FBA库存保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录FBI库存日志数据，id：【{}】", fbaInventoryEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaInventoryEntity.getId(), "FBI库存");
+            log.info("编辑 开始记录FBA库存日志数据，id：【{}】", fbaInventoryEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, fbaInventoryEntity, null, fbaInventoryEntity.getId(), msg);
         return Boolean.TRUE;
