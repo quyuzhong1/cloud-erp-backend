@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsChannelMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsChannelEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="name" property="name" />
+       <result column="code" property="code" />
+       <result column="effective_time" property="effectiveTime" />
+       <result column="effective_time_unit" property="effectiveTimeUnit" />
+       <result column="track_query_mode" property="trackQueryMode" />
+       <result column="paper_length" property="paperLength" />
+       <result column="paper_width" property="paperWidth" />
+       <result column="sorting_code" property="sortingCode" />
+       <result column="shipping_template_id" property="shippingTemplateId" />
+       <result column="fee_rule" property="feeRule" />
+       <result column="max_customs_amount" property="maxCustomsAmount" />
+       <result column="max_customs_currency" property="maxCustomsCurrency" />
+       <result column="min_customs_amount" property="minCustomsAmount" />
+       <result column="min_customs_currency" property="minCustomsCurrency" />
+       <result column="max_weight" property="maxWeight" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="tax_model" property="taxModel" />
+       <result column="is_ioss_prepay" property="isIossPrepay" />
+       <result column="is_api_sign" property="isApiSign" />
+       <result column="is_api_insurance" property="isApiInsurance" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, shipping_template_id, fee_rule, max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model, is_ioss_prepay, is_api_sign, is_api_insurance
+    </sql>
+
+
+</mapper>
