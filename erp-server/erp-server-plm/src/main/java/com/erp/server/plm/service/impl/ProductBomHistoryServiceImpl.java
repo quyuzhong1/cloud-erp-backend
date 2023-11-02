@@ -144,6 +144,12 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     }
 
     @Override
+    public List<ProductBomHistoryEntity> listByBomIds(List<String> bomIds) {
+        List<ProductBomHistoryEntity> list = lambdaQuery().in(ProductBomHistoryEntity::getBomId, bomIds).list();
+        return list;
+    }
+
+    @Override
     public List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto) {
         List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
