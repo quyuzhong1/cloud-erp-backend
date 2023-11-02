@@ -42,6 +42,7 @@ import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -1661,7 +1662,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             startDTO.setBusinessCode(obj.getCode());
             startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
             startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
+            //客户审核的时候流程发起人修改为销售员，如果没有销售员再使用当前登录人
+            if (StringUtils.isNotBlank(obj.getSellerId())) {
+                startDTO.setUserId(obj.getSellerId());
+            } else {
+                startDTO.setUserId(userInfo.getUid());
+            }
             startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
             resultList.add(startDTO);
         });
