@@ -50,7 +50,6 @@ public interface FbaShipmentConverter {
         @Mapping(target = "countryName", source = "view.countryName"),
         @Mapping(target = "deliveryWarehouseId", source = "view.deliveryWarehouseId"),
         @Mapping(target = "destWarehouseId", source = "view.destWarehouseId"),
-        @Mapping(target = "inventoryOrgId", source = "view.destWarehouseId")
     })
     FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view, List<WarehouseEntity> warehouseEntities, List<BaseIdDTO.CodeDTO> accountingCompanyList);
 
