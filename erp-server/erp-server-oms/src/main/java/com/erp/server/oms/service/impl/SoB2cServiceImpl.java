@@ -1356,8 +1356,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setDictLogisticsMethodName(logisticsMethodName);
             }
             //店铺
-            String shopName = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.setShopName(shopName);
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
+                data.setShopName(shopInfoEntity.getName());
+                data.setCountryName(shopInfoEntity.getCountryName());
+            }
 
             //单据状态
             data.setStatus(data.getBillStatus());
