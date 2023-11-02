@@ -2,13 +2,16 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -92,5 +95,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Override
     public List<ListingInfoDTO.ListDTO> listByType(String type) {
         return baseMapper.listByType(type);
+    }
+
+    @Override
+    public List<ListingInfoEntity> findList(ListingInfoParamDTO dto) {
+        return lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getPlatform()), ListingInfoEntity::getPlatform, dto.getPlatform())
+                .eq(!CollectionUtils.isEmpty(dto.getPlatformSkuNoList()), ListingInfoEntity::getPlatformSkuNo, dto.getPlatformSkuNoList())
+                .eq(null != dto.getMatchResult(), ListingInfoEntity::getMatchResult, dto.getMatchResult())
+                .list();
     }
 }

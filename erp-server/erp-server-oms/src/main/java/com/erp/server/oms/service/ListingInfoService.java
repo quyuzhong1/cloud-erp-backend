@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 
@@ -50,4 +51,12 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.ListingInfoDTO.ListDTO>
      */
     List<ListingInfoDTO.ListDTO> listByType(String type);
+
+    /**
+     * 通过条件查询ListingInfoEntity列表
+     *
+     * @author  Jim
+     * @date 2023/11/2
+     */
+    List<ListingInfoEntity> findList(ListingInfoParamDTO dto);
 }
