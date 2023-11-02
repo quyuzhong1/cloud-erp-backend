@@ -28,6 +28,7 @@
         <module>erp-server-wms</module>
         <module>erp-server-msg</module>
         <module>erp-server-oms</module>
+        <module>erp-server-tms</module>
     </modules>
     <dependencies>
         <dependency>
