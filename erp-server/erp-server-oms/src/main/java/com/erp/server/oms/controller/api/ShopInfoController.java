@@ -294,7 +294,7 @@ public class ShopInfoController extends BaseController {
      * @Date 2023/11/1 18:56
      * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
      **/
-    @PostMapping("/listShopByAmazon")
+    @GetMapping("/listShopByAmazon")
     public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {
         List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
         return success(result);
