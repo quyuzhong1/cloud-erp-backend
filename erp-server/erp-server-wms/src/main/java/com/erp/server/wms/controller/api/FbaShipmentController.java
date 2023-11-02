@@ -97,12 +97,12 @@ public class FbaShipmentController extends BaseController {
 
     /**
      * 查询收货记录
-     * @param dto
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ReceiveRecordView>>
      **/
     @GetMapping("/listReceiveRecord")
-    public ApiResult<List<FbaShipmentDTO.ReceiveRecordView>> listReceiveRecord(@RequestBody @Validated PagingDTO<FbaShipmentDTO.ReceiveRecordParam> dto) {
-        List<FbaShipmentDTO.ReceiveRecordView> result = fbaShipmentService.listReceiveRecord(dto);
+    public ApiResult<List<FbaShipmentDTO.ReceiveRecordView>> listReceiveRecord(@RequestParam(value = "id") String id) {
+        List<FbaShipmentDTO.ReceiveRecordView> result = fbaShipmentService.listReceiveRecord(id);
         return success(result);
     }
 

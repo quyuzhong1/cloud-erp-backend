@@ -4,11 +4,14 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * FBA货件实体映射工具
@@ -25,4 +28,7 @@ public interface FbaShipmentConverter {
 
     @Mapping(source = "id", target = "id")
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
+
+    List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(List<FbaShipmentReceiveEntity> entities);
+
 }

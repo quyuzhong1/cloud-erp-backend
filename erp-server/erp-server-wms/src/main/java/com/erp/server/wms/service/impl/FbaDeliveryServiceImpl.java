@@ -483,7 +483,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
         return baseMapper.listDeliveryRecordBySourceIds(ids);
     }
-
     /**
     * 分页查询、导出 数据处理
     */

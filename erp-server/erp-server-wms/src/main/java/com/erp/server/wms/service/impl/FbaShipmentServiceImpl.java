@@ -16,16 +16,14 @@ import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaPlatformShipmentStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
-import com.erp.server.wms.service.FbaShipmentDetailService;
-import com.erp.server.wms.service.FbaShipmentService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,6 +59,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Autowired
     private ShopInfoFeign shopInfoFeign;
+    @Autowired
+    private FbaShipmentReceiveService fbaShipmentReceiveService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -110,7 +110,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(PagingDTO<FbaShipmentDTO.ReceiveRecordParam> dto) {
+    public List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id) {
+        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(Arrays.asList(id));
+
         return null;
     }
 

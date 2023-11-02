@@ -50,10 +50,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     /**
      * 查询收货记录
-     * @param dto
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ReceiveRecordView>>
      **/
-    List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(PagingDTO<FbaShipmentDTO.ReceiveRecordParam> dto);
+    List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id);
 
     /**
      * 查询详情
