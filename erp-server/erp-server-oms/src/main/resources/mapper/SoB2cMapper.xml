@@ -308,6 +308,8 @@
         </where>
         group by
         sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
+        HAVING count(0) > 1
+        order by sb2c.dict_platform,sb2cr.name,sb2c.shop_id
     </select>
 
     <!-- 合并列表数量查询 -->
