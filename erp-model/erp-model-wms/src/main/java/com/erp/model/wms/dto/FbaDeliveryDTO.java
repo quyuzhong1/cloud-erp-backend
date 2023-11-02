@@ -536,8 +536,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
         /**
@@ -613,15 +611,11 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 500,message = "备注最大长度不能超过500位")
         private String remark;
 
         /**
         * 平台物流中心
         */
-        @NotBlank(message = "平台物流中心不能为空")
-        @Size(max = 64,message = "平台物流中心最大长度不能超过64位")
         private String fulfillmentCenter;
 
         /**
@@ -634,9 +628,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 库存组织名称
         */
-        @NotBlank(message = "库存组织名称不能为空")
-        @Size(max = 255,message = "库存组织名称最大长度不能超过255位")
         private String inventoryOrgName;
+
+        /**
+        * 产品信息
+        */
+        private List<FbaDeliveryDetailDTO.AddDTO> detailList;
 
 
     }

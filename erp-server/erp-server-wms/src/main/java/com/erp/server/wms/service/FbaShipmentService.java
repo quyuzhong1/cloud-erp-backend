@@ -50,10 +50,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     /**
      * 查询收货记录
-     * @param dto
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ReceiveRecordView>>
      **/
-    List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(PagingDTO<FbaShipmentDTO.ReceiveRecordParam> dto);
+    List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id);
 
     /**
      * 查询详情
@@ -84,4 +84,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return java.lang.Boolean
      **/
     Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
+
+    /**
+     * sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/2 11:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto);
 }

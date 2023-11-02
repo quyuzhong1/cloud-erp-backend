@@ -45,6 +45,19 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
+     * sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/2 11:19
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/skuMapping")
+    public ApiResult skuMapping(@RequestBody @Validated PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto) {
+        Boolean flag = fbaShipmentService.skuMapping(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
      * 拉取货件信息
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
@@ -73,23 +86,23 @@ public class FbaShipmentController extends BaseController {
      * 查询货件状态记录
      * @Author Luo_WG
      * @Date 2023/10/30 17:40
-     * @param code
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<FbaShipmentDTO.ShipmentStatusRecordDTO>>
      **/
     @GetMapping("/listShipmentStatusRecord")
-    public ApiResult<List<FbaShipmentDTO.ShipmentStatusRecordView>> listShipmentStatusRecord(@RequestParam(value = "code") String code) {
-        List<FbaShipmentDTO.ShipmentStatusRecordView> result = fbaShipmentService.listShipmentStatusRecord(code);
+    public ApiResult<List<FbaShipmentDTO.ShipmentStatusRecordView>> listShipmentStatusRecord(@RequestParam(value = "id") String id) {
+        List<FbaShipmentDTO.ShipmentStatusRecordView> result = fbaShipmentService.listShipmentStatusRecord(id);
         return success(result);
     }
 
     /**
      * 查询收货记录
-     * @param dto
+     * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.ReceiveRecordView>>
      **/
     @GetMapping("/listReceiveRecord")
-    public ApiResult<List<FbaShipmentDTO.ReceiveRecordView>> listReceiveRecord(@RequestBody @Validated PagingDTO<FbaShipmentDTO.ReceiveRecordParam> dto) {
-        List<FbaShipmentDTO.ReceiveRecordView> result = fbaShipmentService.listReceiveRecord(dto);
+    public ApiResult<List<FbaShipmentDTO.ReceiveRecordView>> listReceiveRecord(@RequestParam(value = "id") String id) {
+        List<FbaShipmentDTO.ReceiveRecordView> result = fbaShipmentService.listReceiveRecord(id);
         return success(result);
     }
 

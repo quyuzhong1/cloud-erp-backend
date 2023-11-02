@@ -751,6 +751,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String logisticsMethod;
         /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+        /**
          * 物流单号
          */
         private String logisticsCode;

@@ -361,7 +361,7 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method;
+        group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
         having count(distinct sb2c.id) > 1
     </select>
 

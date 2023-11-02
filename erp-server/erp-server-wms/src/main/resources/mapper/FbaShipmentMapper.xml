@@ -47,6 +47,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
         SELECT
             fs.id,
+            fsd.id AS detailId,
             fs.code,
             fs.shop_id,
             fs.shop_name,
@@ -156,7 +157,8 @@
             fs.code,
             fs.shop_id,
             fs.shop_name,
-            fs.shop_name,
+            fs.country_id,
+            fs.country_name,
             fsd.asin,
             fsd.m_sku,
             fsd.fn_sku,

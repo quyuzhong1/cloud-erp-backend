@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -481,9 +482,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
     @Override
     public List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return baseMapper.listDeliveryRecordBySourceIds(ids);
     }
-
     /**
     * 分页查询、导出 数据处理
     */

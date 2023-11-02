@@ -46,6 +46,7 @@ public enum SourceTypeEnum {
     WAREHOUSE("warehouse", "仓库","warehouse"),
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
+    FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
 
 
 

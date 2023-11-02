@@ -478,6 +478,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //明细信息
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(dto.getIds());
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
         //物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(dto.getIds());
         if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
@@ -500,6 +505,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             viewDTO.setWeight(soB2cLogisticsEntity.getWeight());
             viewDTO.setLogisticsCode(soB2cLogisticsEntity.getCode());
             viewDTO.setLogisticsMethod(soB2cLogisticsEntity.getDictLogisticsMethod());
+
+            //明细信息
+            String warehouseNames = soB2cDetailList.stream().filter(obj -> obj.getMainId().equals(soB2cEntity.getId())).map(SoB2cDetailEntity::getWarehouseName).distinct().collect(Collectors.joining(","));
+            viewDTO.setWarehouseNames(warehouseNames);
+            //物流方式
+            DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getDesc(), soB2cLogisticsEntity.getDictLogisticsMethod());
+            if (ObjectUtils.isEmpty(dictBasicEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+            }
+            viewDTO.setLogisticsMethodName(dictBasicEntity.getName());
             resultList.add(viewDTO);
         }
         return resultList;
@@ -547,7 +562,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateById(entity);
 
         //物流方式
-        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
+        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getType(), dto.getDictLogisticsMethod());
         if (ObjectUtils.isEmpty(dictBasicEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }

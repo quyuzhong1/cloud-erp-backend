@@ -612,7 +612,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } else {
             shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
         }
-
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         return this.listByIds(shopIdList);
     }
 

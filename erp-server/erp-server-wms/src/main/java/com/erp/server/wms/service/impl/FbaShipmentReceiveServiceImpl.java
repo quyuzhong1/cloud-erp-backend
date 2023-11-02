@@ -30,4 +30,8 @@ import com.common.core.enums.ApiError;
 @Service
 public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentReceiveMapper, FbaShipmentReceiveEntity> implements FbaShipmentReceiveService {
 
+    @Override
+    public List<FbaShipmentReceiveEntity> listByDetailIds(List<String> detailIds) {
+        return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).list();
+    }
 }
