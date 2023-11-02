@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -23,7 +24,7 @@ import java.util.List;
  * @Author Luo_WG
  * @Date 2023/10/31 18:55
  **/
-@Mapper
+@Mapper(uses = TypeConversionWorker.class)
 @Component
 public interface FbaShipmentConverter {
     FbaShipmentConverter INSTANCE = Mappers.getMapper(FbaShipmentConverter.class);
@@ -41,22 +42,22 @@ public interface FbaShipmentConverter {
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);
 
     @Mappings({
-        @Mapping(target = "sourceId", source = "id"),
-        @Mapping(target = "sourceCode", source = "code"),
-        @Mapping(target = "shopId", source = "shopId"),
-        @Mapping(target = "shopName", source = "shopName"),
-        @Mapping(target = "countryId", source = "countryId"),
-        @Mapping(target = "countryName", source = "countryName"),
-        @Mapping(target = "deliveryWarehouseId", source = "deliveryWarehouseId"),
-        @Mapping(target = "destWarehouseId", source = "destWarehouseId"),
-        @Mapping(target = "inventoryOrgId", source = "destWarehouseId")
+        @Mapping(target = "sourceId", source = "view.id"),
+        @Mapping(target = "sourceCode", source = "view.code"),
+        @Mapping(target = "shopId", source = "view.shopId"),
+        @Mapping(target = "shopName", source = "view.shopName"),
+        @Mapping(target = "countryId", source = "view.countryId"),
+        @Mapping(target = "countryName", source = "view.countryName"),
+        @Mapping(target = "deliveryWarehouseId", source = "view.deliveryWarehouseId"),
+        @Mapping(target = "destWarehouseId", source = "view.destWarehouseId"),
+        @Mapping(target = "inventoryOrgId", source = "view.destWarehouseId")
     })
     FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view, List<WarehouseEntity> warehouseEntities, List<BaseIdDTO.CodeDTO> accountingCompanyList);
 
 
     @Mappings({
         @Mapping(target = "mainId", source = "mainId"),
-        @Mapping(target = "asin", source = "asin"),
+/*        @Mapping(target = "asin", source = "asin"),
         @Mapping(target = "mSku", source = "mSku"),
         @Mapping(target = "fnSku", source = "fnSku"),
         @Mapping(target = "skuNo", source = "skuNo"),
@@ -69,7 +70,7 @@ public interface FbaShipmentConverter {
         @Mapping(target = "netWeight", source = ""),
         @Mapping(target = "productSizeLength", source = ""),
         @Mapping(target = "productSizeWidth", source = ""),
-        @Mapping(target = "productSizeHeight", source = "")
+        @Mapping(target = "productSizeHeight", source = "")*/
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 }
