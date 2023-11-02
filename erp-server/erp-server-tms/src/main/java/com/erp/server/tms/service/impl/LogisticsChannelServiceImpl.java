@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
@@ -65,7 +66,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         operateLogService.addModuleOperateLog(msg, null, logisticsChannelEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(logisticsChannelEntity.getId(), code);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
@@ -56,7 +57,7 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         operateLogService.addModuleOperateLog(msg, null, logisticsChannelBlacklistEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(logisticsChannelBlacklistEntity.getId(), logisticsChannelBlacklistEntity.getId());
     }
 
     /**

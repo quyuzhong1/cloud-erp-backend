@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,34 +40,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(DictBasicDTO.AddDTO addDTO) {
-        DictBasicEntity dictBasicEntity = new DictBasicEntity();
-        BeanMapperUtils.copy(addDTO, dictBasicEntity);
 
-        // 数据处理
-        handleData(dictBasicEntity);
-
-        log.info("开始新增字典单");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        dictBasicEntity.setCode(code);
-        boolean save = super.save(dictBasicEntity);
-        if(!save) {
-            throw new ServiceException("字典单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "字典单" , dictBasicEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dictBasicEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
-    }
 
     /**
     * 修改
@@ -93,6 +67,16 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictBasicEntity, null, dictBasicEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean saveOrUpdateDict(List<DictBasicDTO.AddOrUpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        return this.saveOrUpdateBatch(addList);
     }
 
 
