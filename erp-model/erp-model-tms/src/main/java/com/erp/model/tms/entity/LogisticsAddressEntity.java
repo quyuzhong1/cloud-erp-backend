@@ -64,18 +64,18 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     /**
     * 省
     */
-    @TableField("province")
-    private String province;
+    @TableField("province_id")
+    private String provinceId;
     /**
     * 城市
     */
-    @TableField("city")
-    private String city;
+    @TableField("city_id")
+    private String cityId;
     /**
     * 区
     */
-    @TableField("district")
-    private String district;
+    @TableField("district_id")
+    private String districtId;
     /**
     * 详细地址1
     */

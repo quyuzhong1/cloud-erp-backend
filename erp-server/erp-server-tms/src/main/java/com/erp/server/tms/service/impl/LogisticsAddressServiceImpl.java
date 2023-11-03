@@ -7,13 +7,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +47,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Autowired
     private CommonService commonService;
 
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -61,7 +70,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         String msg = StrUtil.format("用户【{}】新增【{}】", commonService.getUserInfo().getUserName(), "物流地址");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsAddressEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
 
         return new BaseResultDTO.AddDTO(logisticsAddressEntity.getId(), logisticsAddressEntity.getId());
     }
@@ -114,17 +123,47 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         LogisticsAddressDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData=baseMapper.paging(query, params);
-
-
-        return null;
+        IPage pageData = baseMapper.paging(query, params);
+        List<LogisticsAddressDTO.PagingViewDTO> list = pageData.getRecords();
+        fillData(list);
+        return new PagingVO<>(pageData);
     }
 
 
     /**
      * 新增修改处理数据
      */
-    private void handleData(LogisticsAddressEntity logisticsAddressEntity) {
+    private void handleData(LogisticsAddressEntity entity) {
         // TODO 验证数据 & 数据赋值
+        List<String> placeIdList = new ArrayList<>(3);
+        String cityId = entity.getCityId();
+        if (StringUtils.isNotBlank(cityId)) {
+            placeIdList.add(cityId);
+        }
+        //省
+        String provinceId = entity.getProvinceId();
+        if (StringUtils.isNotBlank(provinceId)) {
+            placeIdList.add(provinceId);
+        }
+
+        //区
+        String districtId = entity.getDistrictId();
+        if (StringUtils.isNotBlank(districtId)) {
+            placeIdList.add(districtId);
+        }
+      List<DictCityEntity>  cityList= CollectionUtils.isNotEmpty(placeIdList)?sysDictFeign.listByIdList(placeIdList):Collections.emptyList();
+
+    }
+
+
+    /**
+     * 填充分页数据
+     */
+    private void fillData(List<LogisticsAddressDTO.PagingViewDTO> list) {
+        for (LogisticsAddressDTO.PagingViewDTO item : list) {
+            LogisticsAddressTypeEnums typeEnums = item.getType();
+            item.setTypeName(typeEnums.getName());
+        }
+
     }
 }
