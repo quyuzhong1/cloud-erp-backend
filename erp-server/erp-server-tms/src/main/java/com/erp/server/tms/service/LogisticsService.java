@@ -17,6 +17,10 @@ import java.util.List;
  * @version: 1.0
  */
 public interface LogisticsService {
+    SoInfoEntity getSoInfo(String soId);
+    LogisticsAuthEntity getLogisticsAuthConfig(String authId);
+
+    ApiResult<String> createOrder(String soId, String authId);
     /**
      * 创建订单
      * @param soInfo 销售订单 收货人信息
@@ -30,64 +34,71 @@ public interface LogisticsService {
     /**
      * 确认订单
      *
-     * @param platformCode
+     * @param trackNumber
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult<String> confirmOrder(String platformCode);
+    ApiResult<String> confirmOrder(String trackNumber,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 取消订单
      *
-     * @param platformCode
+     * @param trackNumber
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult<String> cancelOrder(String platformCode);
+    ApiResult<String> cancelOrder(String trackNumber,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 拦截订单
      *
-     * @param platformCode
+     * @param trackNumber
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult<String> interceptOrder(String platformCode);
+    ApiResult<String> interceptOrder(String trackNumber,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 更新订单
      *
-     * @param platformCode
+     * @param trackNumber
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult<String> updateOrder(String platformCode);
+    ApiResult<String> updateOrder(String trackNumber,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 查询订单
      *
-     * @param platformCode
+     * @param trackNumbers
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult queryOrder(String platformCode);
+    ApiResult queryOrder(String trackNumbers,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
-     * 获取标签
+     * 获取标签(打印标签)
      *
-     * @param platformCode
+     * @param trackNumber
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult getLabelUrl(String platformCode);
+    ApiResult getLabelUrl(String trackNumber,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 轨迹查询
      *
-     * @param platformCode
+     * @param trackNumbers
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult getTrack(String platformCode);
+    ApiResult getTrack(String trackNumbers,LogisticsAuthEntity logisticsAuthEntity);
 
     /**
      * 渠道查询
      *
-     * @param platformCode
+     * @param logisticsAuthEntity
      * @return
      */
-    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(String platformCode);
+    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity logisticsAuthEntity);
 }

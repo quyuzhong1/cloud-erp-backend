@@ -8,10 +8,12 @@ import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.server.tms.service.LogisticsService;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.server.tms.service.LogisticsAuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -24,50 +26,68 @@ import java.util.List;
 @Slf4j
 @Component
 @PlatformType(PlatformDictEnum.SDF)
-public class DsfLogisticsServiceImpl implements LogisticsService {
+public class DsfLogisticsServiceImpl extends AbstractLogisticsService {
+
+    @Resource
+    private LogisticsAuthService logisticsAuthService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Override
+    public SoInfoEntity getSoInfo(String soId) {
+        return soInfoFeign.getSoInfoById(soId);
+    }
+
+    @Override
+    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
+        //自定义渠道配置信息 支持 物流：渠道 = 1：n
+        return logisticsAuthService.getById(authId);
+    }
 
     @Override
     public ApiResult<String> createOrder(SoInfoEntity soInfo, LogisticsAddressEntity addressEntity, ProductLogisticsEntity productLogisticsEntity, LogisticsAuthEntity logisticsAuthEntity) {
+
         return null;
     }
 
     @Override
-    public ApiResult<String> confirmOrder(String platformCode) {
+    public ApiResult<String> confirmOrder(String trackNumber, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult<String> cancelOrder(String platformCode) {
+    public ApiResult<String> cancelOrder(String trackNumber, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult<String> interceptOrder(String platformCode) {
+    public ApiResult<String> interceptOrder(String trackNumber, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult<String> updateOrder(String platformCode) {
+    public ApiResult<String> updateOrder(String trackNumber, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult queryOrder(String platformCode) {
+    public ApiResult queryOrder(String trackNumbers, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult getLabelUrl(String platformCode) {
+    public ApiResult getLabelUrl(String trackNumber, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult getTrack(String platformCode) {
+    public ApiResult getTrack(String trackNumbers, LogisticsAuthEntity logisticsAuthEntity) {
         return null;
     }
 
     @Override
-    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(String platformCode) {
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity logisticsAuthEntity) {
+        log.info("递四方获取物流渠道列表");
         return null;
     }
 }

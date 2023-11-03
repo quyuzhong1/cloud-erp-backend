@@ -1,23 +1,30 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.server.tms.handler.LogisticsHandler;
+import com.erp.server.tms.service.LogisticsSaleChannelService;
+import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.LogisticsSaleChannelService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 销售平台物流渠道表
@@ -33,6 +40,8 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
+    @Resource
+    private LogisticsHandler logisticsHandler;
 
     /**
     * 新增
@@ -66,6 +75,12 @@ public class LogisticsSaleChannelController extends BaseController {
         return success();
     }
 
-
+    @PostMapping("/test")
+    public ApiResult test() {
+        LogisticsService service = logisticsHandler.getHandler(PlatformDictEnum.SDF.getCode());
+        String authId = null;
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(service.getLogisticsAuthConfig(authId));
+        return success();
+    }
 
 }
