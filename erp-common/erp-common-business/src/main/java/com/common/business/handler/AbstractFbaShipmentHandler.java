@@ -44,7 +44,7 @@ public abstract class AbstractFbaShipmentHandler<T extends CleanBaseDTO, R exten
     /**
      * 下载详情数据
      */
-    public R downloadDetail(R dto, JSONObject extendObj) {
+    public T downloadDetail(T dto, JSONObject extendObj) {
         return dto;
     }
 

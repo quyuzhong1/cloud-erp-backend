@@ -44,7 +44,7 @@ public abstract class AbstractOrderHandler<T extends CleanBaseDTO, R extends Uni
     /**
      * 下载详情数据
      */
-    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto, JSONObject extendObj){
+    public T downloadDetail(T dto, JSONObject extendObj){
         return dto;
     }
 }

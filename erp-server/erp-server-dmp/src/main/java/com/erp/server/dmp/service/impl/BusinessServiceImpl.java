@@ -156,16 +156,18 @@ public class BusinessServiceImpl {
      * @param <R>      业务返回类型
      */
     @Transactional(rollbackFor = Exception.class)
-    public <T extends CleanBaseDTO, R extends UniqueDto> void pullDetailProcess(R dto, String category, String platform, String business) {
+    public <T extends CleanBaseDTO, R extends UniqueDto> void pullDetailProcess(T sourceDto,  R dto, String category, String platform, String business) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         String targetPlatform = handler.getTargetPlatform();
         String topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC;
         String tag = StrUtil.format("{}_{}", category, business) + "_tag";
 
+        Class<T> tClass = (Class<T>) sourceDto.getClass();
+        String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
         // 修改数据
         OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(dto.getUniqueId());
         MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformOrderDTO.class);
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
 
         // 异步推送到MQ
         String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, dto));
