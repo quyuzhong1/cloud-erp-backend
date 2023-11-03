@@ -566,22 +566,26 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
-            //查询sku映射表
-            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuMappingEntity)) {
-                resultList.add(listSkuDTO);
-                continue;
+            listSkuDTO.setDictPlatform(listSkuParamDTO.getDictPlatform());
+            //查询库存sku映射
+            SkuMappingEntity warehouseSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
+                //库存sku信息
+                ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(warehouseSkuMapping.getListingId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(warehouseListing)) {
+                    listSkuDTO.setWarehouseSkuNo(warehouseListing.getSkuNo());
+                    listSkuDTO.setWarehouseProductName(warehouseListing.getProductName());
+                }
             }
-            if (CollectionUtils.isEmpty(listingList)) {
-                resultList.add(listSkuDTO);
-                continue;
-            }
-            ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && RuleTypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
-                listSkuDTO.setWarehouseSkuNo(listingInfoEntity.getSkuNo());
-                listSkuDTO.setWarehouseProductName(listingInfoEntity.getProductName());
-                listSkuDTO.setPlatformSkuNo(listingInfoEntity.getPlatformSkuNo());
-                listSkuDTO.setPlatformProductName(listingInfoEntity.getPlatformProductName());
+            //查询平台sku信息
+            SkuMappingEntity platformSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && StringUtils.isEmpty( obj.getWarehouseId()) && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
+                //库存sku信息
+                ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(platformListing)) {
+                    listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
+                    listSkuDTO.setPlatformProductName(platformListing.getPlatformProductName());
+                }
             }
             resultList.add(listSkuDTO);
         }

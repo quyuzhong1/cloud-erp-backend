@@ -11,6 +11,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -31,6 +33,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -224,7 +227,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
 
         //SKU对照表信息
-        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId())).collect(Collectors.toList());
+        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId(),soB2cEntity.getDictPlatform())).collect(Collectors.toList());
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
@@ -268,12 +271,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
 
             //库存SKU
-            if (CollectionUtils.isNotEmpty(SkuMappingList)) {
-                SkuMappingDTO.ListSkuDTO listSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(listSkuDTO)) {
-                    detailEntity.setWarehouseSkuNo(listSkuDTO.getWarehouseSkuNo());
-                    detailEntity.setPlatformSkuNo(listSkuDTO.getPlatformSkuNo());
-                }
+            SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
+                detailEntity.setWarehouseSkuNo(warehouseListSkuDTO.getWarehouseSkuNo());
+            }
+            //平台SKU
+            SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
+                detailEntity.setSellerSkuNo(platformListSkuDTO.getSellerSkuNo());
+                detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
             }
         }
 

@@ -81,7 +81,7 @@ public class SoB2cDTO implements Serializable {
          /**
           * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
           */
-         private List<String> countryNameList;
+         private List<String> countryList;
          /**
           * 平台sku
           */
@@ -384,6 +384,12 @@ public class SoB2cDTO implements Serializable {
          * 销售单号
          */
         private String code;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
         /**
          * 审核状态
          */
@@ -598,7 +604,6 @@ public class SoB2cDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
