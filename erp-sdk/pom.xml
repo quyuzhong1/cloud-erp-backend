@@ -24,6 +24,10 @@
         <module>erp-sdk-third-kingdee</module>
         <module>erp-sdk-oms-shopify</module>
         <module>erp-sdk-tms-disifang</module>
+        <module>erp-sdk-tms-express</module>
+        <module>erp-sdk-tms-shopee-v2</module>
+        <module>erp-sdk-tms-ubi</module>
+        <module>erp-sdk-tms-track123</module>
     </modules>
 
     <dependencies>
