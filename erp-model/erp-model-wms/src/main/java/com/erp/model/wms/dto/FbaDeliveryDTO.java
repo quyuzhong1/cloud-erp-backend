@@ -7,6 +7,7 @@ import java.util.List;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
@@ -52,6 +53,7 @@ public class FbaDeliveryDTO implements Serializable {
      /**
      * 分页列表查询参数
      */
+     @EqualsAndHashCode(callSuper = true)
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
@@ -302,6 +304,7 @@ public class FbaDeliveryDTO implements Serializable {
     /**
     * 导出Excel
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
@@ -482,6 +485,7 @@ public class FbaDeliveryDTO implements Serializable {
     /**
     * 新增
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -504,6 +508,7 @@ public class FbaDeliveryDTO implements Serializable {
     /**
     * 修改
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {

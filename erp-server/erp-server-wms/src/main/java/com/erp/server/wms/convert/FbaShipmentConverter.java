@@ -29,8 +29,12 @@ import java.util.List;
 public interface FbaShipmentConverter {
     FbaShipmentConverter INSTANCE = Mappers.getMapper(FbaShipmentConverter.class);
 
+    @Mapping(target = "detailList", ignore = true)
     FbaShipmentDTO.ViewDTO fbaShipmentToViewDTO(FbaShipmentEntity shipmentEntity);
 
+    @Mapping(target = "productName", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "deliveryQty", ignore = true)
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")
@@ -40,16 +44,29 @@ public interface FbaShipmentConverter {
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);
 
     @Mappings({
-        @Mapping(target = "sourceId", source = "id"),
-        @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "attachNameList", defaultValue = ""),
+            @Mapping(target = "attachUrlList", defaultValue = ""),
+            @Mapping(target = "demandType", defaultValue = ""),
+            @Mapping(target = "detailList", defaultValue = ""),
+            @Mapping(target = "fulfillmentCenter", defaultValue = ""),
+            @Mapping(target = "inventoryOrgId", defaultValue = ""),
+            @Mapping(target = "remark", defaultValue = ""),
+            @Mapping(target = "sourceType", defaultValue = "")
     })
     FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
 
 
     @Mappings({
-        @Mapping(target = "declareQty", source = "declareQty"),
-        @Mapping(target = "planQty", source = "deliveryQty"),
-        @Mapping(target = "deliveryQty", source = "deliveryQty"),
+            @Mapping(target = "declareQty", source = "declareQty"),
+            @Mapping(target = "planQty", source = "deliveryQty"),
+            @Mapping(target = "deliveryQty", source = "deliveryQty"),
+            @Mapping(target = "netWeight", defaultValue = "0"),
+            @Mapping(target = "productSizeHeight", defaultValue = "0"),
+            @Mapping(target = "productSizeLength", defaultValue = "0"),
+            @Mapping(target = "productSizeWidth", defaultValue = "0"),
+            @Mapping(target = "stockSku", defaultValue = "")
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 }
