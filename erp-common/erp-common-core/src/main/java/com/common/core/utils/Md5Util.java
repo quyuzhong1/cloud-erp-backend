@@ -38,6 +38,27 @@ public class Md5Util {
         }
     }
 
+    /**
+     * 简单MD5
+     *
+     * @param str
+     * @return
+     */
+    public static String md5UpperCase(String str) {
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("md5");
+            byte[] array = md.digest(str.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte item : array) {
+                sb.append(Integer.toHexString((item & 0xFF) | 0x100), 1, 3);
+            }
+            return sb.toString().toUpperCase();
+        } catch (Exception e) {
+            throw new RuntimeException("MD5 algorithm not available", e);
+        }
+    }
+
     public static String getMd5(String plainText){
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

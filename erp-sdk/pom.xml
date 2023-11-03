@@ -28,6 +28,10 @@
         <module>erp-sdk-tms-shopee-v2</module>
         <module>erp-sdk-tms-ubi</module>
         <module>erp-sdk-tms-track123</module>
+        <module>erp-sdk-tms-yanwen</module>
+        <module>erp-sdk-tms-weishi</module>
+        <module>erp-sdk-tms-yuntu</module>
+        <module>erp-sdk-tms-tongyou</module>
     </modules>
 
     <dependencies>
