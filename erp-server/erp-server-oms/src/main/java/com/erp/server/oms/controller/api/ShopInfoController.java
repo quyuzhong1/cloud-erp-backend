@@ -95,7 +95,6 @@ public class ShopInfoController extends BaseController {
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
-
     /**
      * 获取店铺详情
      *
