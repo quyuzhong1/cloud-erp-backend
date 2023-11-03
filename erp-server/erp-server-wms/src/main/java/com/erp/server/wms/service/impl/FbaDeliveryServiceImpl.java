@@ -1,8 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -32,9 +31,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -154,8 +151,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<String> existStatusList = list.stream().map(FbaDeliveryDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new FbaDeliveryDTO.TabListDTO(status, 0));
-        }
+                list.add(new FbaDeliveryDTO.TabListDTO(status, 0));
+            }
         });
         list.add(new FbaDeliveryDTO.TabListDTO("all", list.stream().mapToInt(FbaDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
@@ -202,8 +199,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         // 记录操作日志
         log.info("提交 开始记录FBA发货单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -244,8 +240,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -259,8 +254,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.FBA_DELIVERY.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -291,8 +285,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -321,7 +314,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         // 删除日志数据
         log.info("删除 开始删除FBA发货单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除FBA发货单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getCode(), "删除FBA发货单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -343,8 +336,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -369,12 +361,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.FBA_DELIVERY.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -414,8 +404,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.FBA_DELIVERY.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(commonService.getUserInfo().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
