@@ -388,6 +388,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             } else {
                 updateEntityList.add(entity);
             }
+
+            //现阶段只有修改没有新增则必定会存在对应明细
+            String soDetailId = dbList.stream().filter(obj -> obj.getId().equals(item.getId())).map(SoOutstockDetailEntity::getSoDetailId).findFirst().orElse("");
+            entity.setSoDetailId(soDetailId);
             addOrUpdateList.add(entity);
             //附件集合
             List<String> attachmentUrlList = item.getAttachUrlList();
