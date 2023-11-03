@@ -605,6 +605,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String warehouseId;
 
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
     }
 
 
@@ -647,6 +651,16 @@ public class SkuMappingDTO implements Serializable {
         private String platformProductName;
 
         /**
+         * 卖家SKU
+         */
+        private String sellerSkuNo;
+
+        /**
+         * 卖家产品名称
+         */
+        private String sellerProductName;
+
+        /**
          * 建议售价（本位币）
          */
         private BigDecimal advicePrice;
@@ -668,6 +682,11 @@ public class SkuMappingDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 平台字典
+         */
+        private String dictPlatform;
     }
 
 
