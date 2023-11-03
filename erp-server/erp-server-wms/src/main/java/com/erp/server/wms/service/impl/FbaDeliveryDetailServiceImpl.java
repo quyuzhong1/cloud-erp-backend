@@ -112,8 +112,8 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     }
 
     @Override
-    public List<FbaDeliveryDetailEntity> listByMainId(String id) {
-        return lambdaQuery().eq(FbaDeliveryDetailEntity::getMainId, id).list();
+    public List<FbaDeliveryDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(FbaDeliveryDetailEntity::getMainId, mainId).list();
     }
 
     /**

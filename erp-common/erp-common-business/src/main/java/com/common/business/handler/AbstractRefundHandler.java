@@ -42,7 +42,7 @@ public abstract class AbstractRefundHandler<T extends CleanBaseDTO,R extends Uni
     /**
      * 下载详情数据
      */
-    public R downloadDetail(R dto, JSONObject extendObj) {
+    public T downloadDetail(T dto, JSONObject extendObj) {
         return dto;
     }
 }

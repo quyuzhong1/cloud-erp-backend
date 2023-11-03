@@ -163,6 +163,10 @@ public interface MongoTableNameContant {
      * 亚马逊报表表
      */
     String THIRD_SYSTEM_AMAZON_REPORT = "third_system_Amazon_report";
+    /**
+     * 亚马逊FBA货件表
+     */
+    String THIRD_SYSTEM_AMAZON_FBA_SHIPMENT = "third_system_Amazon_fba_shipment";
 
     /**
      * 根据任务 key 获取表名

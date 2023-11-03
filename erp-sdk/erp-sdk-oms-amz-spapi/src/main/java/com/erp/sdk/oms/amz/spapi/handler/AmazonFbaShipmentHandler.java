@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,8 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
             String marketplaceId = marketplaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
             List<String> shipmentIdList = null;
-            String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
+//            String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
+            String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(LocalDateTime.of(2023, 11, 1, 0, 0, 0)).toString();
             String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
             String nextToken = null;
             InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
@@ -82,10 +84,22 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
     public List<PlatformFbaShipmentDTO> convert(List<PlatformAmazonFbaShipmentDTO> sourceDataList) {
         // 亚马逊FBA货件转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return sourceDataList.stream()
-                // 组装
-                .map(SdkFbaShipmentConverter.INSTANCE::downloadDtoToSaveDto)
-                .collect(Collectors.toList());
+        List<PlatformFbaShipmentDTO> resultList = new LinkedList<>();
+        for (PlatformAmazonFbaShipmentDTO sourceDto : sourceDataList) {
+            PlatformFbaShipmentDTO newDto = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(sourceDto);
+            resultList.add(newDto);
+        }
+        return resultList;
+//        return sourceDataList.stream()
+//                // 组装
+//                .map(SdkFbaShipmentConverter.INSTANCE::downloadDtoToSaveDto)
+//                .collect(Collectors.toList());
+    }
+
+    public static void main(String[] args) {
+        String json = "{\"shipmentInfo\":{\"shipmentId\":\"FBA17FKD1MPZ\",\"shipmentName\":\"FBA STA (10/07/2023 07:09)-CMH2\",\"shipFromAddress\":{\"name\":\"LC108092（Ling）\",\"addressLine1\":\"14939 Summit Drive\",\"city\":\"Eastvale\",\"stateOrProvinceCode\":\"CA\",\"countryCode\":\"US\",\"postalCode\":\"92880\"},\"destinationFulfillmentCenterId\":\"CMH2\",\"shipmentStatus\":\"RECEIVING\",\"labelPrepType\":\"SELLER_LABEL\",\"boxContentsSource\":\"INTERACTIVE\"},\"shopId\":\"1720261566995107842\",\"shopName\":\"亚马逊测试店铺美国\",\"platformUpdateTime\":1698995263691,\"downloadStatus\":0,\"downloadTime\":\"\",\"detailList\":[]}";
+        PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(JSONUtil.toBean(json, PlatformAmazonFbaShipmentDTO.class));
+        System.out.println(JSONUtil.toJsonStr(shipmentDTO));
     }
 
     @Override
@@ -93,9 +107,19 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
         return PlatformDictEnum.AMAZON.getCode();
     }
 
+    /**
+     * 是否发送MQ
+     * true=发送
+     * false=不发送（有其他详情需要额外拉取）
+     */
+    public Boolean getIsSendMq() {
+        return Boolean.FALSE;
+    }
+
+
     @Override
-    public PlatformFbaShipmentDTO downloadDetail(PlatformFbaShipmentDTO dto, JSONObject extendObj) {
-        String shopId = extendObj.getString("shopId");
+    public PlatformAmazonFbaShipmentDTO downloadDetail(PlatformAmazonFbaShipmentDTO dto, JSONObject extendObj) {
+        String shopId = dto.getShopId();
         // 获取店铺信息
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfoEntity) {
@@ -105,13 +129,9 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
         try {
             // 查询FBA货件item
             FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum);
-            GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(dto.getFbaShipmentId(), marketPlaceEnum.getMarketplaceId());
+            GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(dto.getShipmentInfo().getShipmentId(), marketPlaceEnum.getMarketplaceId());
             InboundShipmentItemList itemData = response.getPayload().getItemData();
-
-            List<PlatformFbaShipmentReceiveDTO> receiveDTOList = itemData.stream()
-                    .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
-                    .collect(Collectors.toList());
-            dto.setReceiveDTOList(receiveDTOList);
+            dto.setDetailList(itemData);
         } catch (Exception e) {
             throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
         }

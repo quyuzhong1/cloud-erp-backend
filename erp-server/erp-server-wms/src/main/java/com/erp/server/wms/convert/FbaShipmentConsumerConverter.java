@@ -29,6 +29,9 @@ public interface FbaShipmentConsumerConverter {
     FbaShipmentConsumerConverter INSTANCE = Mappers.getMapper(FbaShipmentConsumerConverter.class);
 
 
+    @Mappings({
+            @Mapping(target = "deliveryToAddress", constant = ""),
+    })
     FbaShipmentEntity fbaShipmentToEntity(PlatformFbaShipmentDTO dto);
 
     @Mappings({

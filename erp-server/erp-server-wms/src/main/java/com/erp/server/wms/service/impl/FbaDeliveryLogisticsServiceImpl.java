@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.server.wms.mapper.FbaDeliveryLogisticsMapper;
@@ -92,6 +93,11 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             return Boolean.FALSE;
         }
         return lambdaUpdate().in(FbaDeliveryLogisticsEntity::getMainId,mainIds).remove();
+    }
+
+    @Override
+    public FbaDeliveryLogisticsEntity listByMainId(String mainId) {
+        return lambdaQuery().eq(FbaDeliveryLogisticsEntity::getMainId, mainId).last("LIMIT 1").one();
     }
 
     /**

@@ -29,6 +29,6 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
     /**
      * 下载详情数据
      */
-    R downloadDetail(R dto, JSONObject extendObj);
+    T downloadDetail(T dto, JSONObject extendObj);
 
 }

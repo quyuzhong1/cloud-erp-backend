@@ -18,10 +18,16 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
+import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
@@ -69,6 +75,9 @@ public class PullAmazonJob {
 
     @Resource
     private AmazonListingHandler amazonListingHandler;
+
+    @Resource
+    private AmazonFbaShipmentHandler amazonFbaShipmentHandler;
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -195,7 +204,7 @@ public class PullAmazonJob {
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformOrderDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformOrderDTO.class);
+        List<PlatformAmazonOrderDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
@@ -203,13 +212,15 @@ public class PullAmazonJob {
         orderEntityList.forEach(dto -> {
             try {
                 // 下载和处理详情
-                PlatformOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, null);
+                PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, null);
                 String category = PlatformCategoryEnum.OMS.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.ORDER.getCode();
-                newDto.setDownloadStatus(1);
+//                newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                businessService.pullDetailProcess(newDto, category, platform, business);
+                List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Arrays.asList(newDto));
+                // TODO
+                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
@@ -235,7 +246,7 @@ public class PullAmazonJob {
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformProductDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformProductDTO.class);
+        List<PlatformAmazonListingDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
@@ -249,13 +260,15 @@ public class PullAmazonJob {
                 JSONObject extendObj = new JSONObject();
                 extendObj.put("shopId", taskEntity.getShopId());
                 // 下载和处理详情
-                PlatformProductDTO newDto = amazonListingHandler.downloadDetail(dto, extendObj);
+                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, extendObj);
                 String category = PlatformCategoryEnum.OMS.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.PRODUCT.getCode();
-                newDto.setDownloadStatus(1);
+                List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
+                // TODO
+//                newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-                businessService.pullDetailProcess(newDto, category, platform, business);
+                businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail，uniqueId={}, error={}",
                         dto.getUniqueId(),
@@ -263,6 +276,55 @@ public class PullAmazonJob {
             }
         });
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束");
+        return ReturnT.SUCCESS;
+    }
+
+
+    /**
+     * 拉取亚马逊Fba货件详情任务
+     */
+    @XxlJob("amazonFbaShipmentDetailDownload")
+    public ReturnT<String> amazonFbaShipmentDetail() {
+        Integer size = 1000;
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务开始,size={}", size);
+        // 根据状态查询未下载数据
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
+        List<PlatformAmazonFbaShipmentDTO> entityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, PlatformAmazonFbaShipmentDTO.class);
+        if (CollectionUtil.isEmpty(entityList)) {
+            XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,无需要更新的信息");
+            return ReturnT.SUCCESS;
+        }
+        entityList.forEach(dto -> {
+            try {
+                // 下载和处理详情
+                PlatformAmazonFbaShipmentDTO newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
+                String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+                String platform = PlatformDictEnum.AMAZON.getCode();
+                String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
+                dto.setDownloadStatus(1);
+                dto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+
+                // 转换
+                PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
+                InboundShipmentItemList detailList = newDto.getDetailList();
+                List<PlatformFbaShipmentReceiveDTO> receiveDTOList = detailList.stream()
+                        .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
+                        .collect(Collectors.toList());
+                shipmentDTO.setReceiveDTOList(receiveDTOList);
+
+                businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
+            } catch (Exception e) {
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
+                        dto.getUniqueId(),
+                        e.getMessage());
+            }
+        });
+        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束");
         return ReturnT.SUCCESS;
     }
 }

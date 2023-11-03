@@ -24,7 +24,7 @@ import java.util.List;
  * @date 2023/11/2
  */
 @RestController
-@RequestMapping("/feign/listing")
+@RequestMapping("feign/listing")
 public class ListingInfoFeignController extends BaseController {
 
     @Resource
@@ -40,10 +40,9 @@ public class ListingInfoFeignController extends BaseController {
      * @author Jim
      * @date 2023/11/2
      */
-    @GetMapping("/list")
-    public ApiResult<List<ListingInfoEntity>> listByType(@RequestBody ListingInfoParamDTO dto) {
-        List<ListingInfoEntity> list = listingInfoService.findList(dto);
-        return success(list);
+    @PostMapping("/list")
+    public List<ListingInfoEntity> listByType(@RequestBody ListingInfoParamDTO dto) {
+        return listingInfoService.findList(dto);
     }
 
     /**

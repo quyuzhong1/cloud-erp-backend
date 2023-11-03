@@ -395,6 +395,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         entity,
                         listingInfoMap.get(e.getMSku())))
                 .collect(Collectors.toList());
+        newDetailEntityList.forEach(e-> e.setSkuNo(""));
         if (!fbaShipmentDetailService.saveBatch(newDetailEntityList)){
             throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity="+ JSONUtil.toJsonStr(newDetailEntityList));
         }
