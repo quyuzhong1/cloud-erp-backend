@@ -337,6 +337,11 @@ public class FbaShipmentDTO implements Serializable {
         private String mSku;
 
         /**
+         * 是否组合品 true 是
+         */
+        private Boolean isCombination;
+
+        /**
          * 收发差异：/wms/common/enumDropDown?type=DiffRule
          * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
          */
