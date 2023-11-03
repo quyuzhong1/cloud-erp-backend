@@ -32,5 +32,12 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
     */
     Boolean update(LogisticsAddressDTO.UpdateDTO dto);
 
-
+    /**
+     * 获取物流信息
+     * @author yl
+     * @date 2023-11-03 9:32
+     * @param id
+     * @return com.erp.model.tms.dto.LogisticsAddressDTO.ViewDTO
+     */
+    LogisticsAddressDTO.ViewDTO view(String id);
 }
