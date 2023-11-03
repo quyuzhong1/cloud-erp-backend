@@ -510,7 +510,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String warehouseNames = soB2cDetailList.stream().filter(obj -> obj.getMainId().equals(soB2cEntity.getId())).map(SoB2cDetailEntity::getWarehouseName).distinct().collect(Collectors.joining(","));
             viewDTO.setWarehouseNames(warehouseNames);
             //物流方式
-            DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getDesc(), soB2cLogisticsEntity.getDictLogisticsMethod());
+            DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getType(), soB2cLogisticsEntity.getDictLogisticsMethod());
             if (ObjectUtils.isEmpty(dictBasicEntity)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
             }
