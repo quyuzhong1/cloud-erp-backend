@@ -1,14 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -28,8 +27,8 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 渠道id(物流平台原始id)
     */
-    @TableField("channel_id")
-    private String channelId;
+    @TableField("platform_channel_id")
+    private String platformChannelId;
     /**
     * 渠道名称(默认中文)
     */
@@ -46,10 +45,10 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("code")
     private String code;
     /**
-    * 时效
+    * 失效时间
     */
-    @TableField("effective_time")
-    private LocalDateTime effectiveTime;
+    @TableField("expire_time")
+    private LocalDateTime expireTime;
     /**
     * 渠道状态0正常1.暂停2.已关闭（默认0）
     */
@@ -58,18 +57,18 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 是否可跟踪轨迹0是 1否（默认0）
     */
-    @TableField("track_status")
-    private Integer trackStatus;
+    @TableField("is_track")
+    private Boolean isTrack;
     /**
     * 渠道供应商名称
     */
-    @TableField("provider_name")
-    private String providerName;
+    @TableField("supplier_name")
+    private String supplierName;
     /**
     * 渠道供应商编码
     */
-    @TableField("provider_code")
-    private String providerCode;
+    @TableField("supplier_code")
+    private String supplierCode;
     /**
     * 发货方式
     */
@@ -78,42 +77,11 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 物流平台类型
     */
-    @TableField("sales_platform")
-    private String salesPlatform;
+    @TableField("logistics_platform")
+    private String logisticsPlatform;
     /**
     * 获取接口的原始数据
     */
     @TableField("source_data")
     private String sourceData;
-
-
-    public static final String CHANNEL_ID = "channel_id";
-
-    public static final String CN_NAME = "cn_name";
-
-    public static final String EN_NAME = "en_name";
-
-    public static final String CODE = "code";
-
-    public static final String EFFECTIVE_TIME = "effective_time";
-
-    public static final String CHANNEL_STATUS = "channel_status";
-
-    public static final String TRACK_STATUS = "track_status";
-
-    public static final String PROVIDER_NAME = "provider_name";
-
-    public static final String PROVIDER_CODE = "provider_code";
-
-    public static final String SHIPMENT_METHOD = "shipment_method";
-
-    public static final String SALES_PLATFORM = "sales_platform";
-
-    public static final String SOURCE_DATA = "source_data";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
-
 }
