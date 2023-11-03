@@ -4,12 +4,15 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaDeliveryDetailMapper;
 import com.erp.server.wms.service.FbaDeliveryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import feign.Feign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,10 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -99,6 +106,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     * 新增修改处理数据
     */
     private void handleData(FbaDeliveryDetailEntity fbaDeliveryDetailEntity) {
+
     // TODO 验证数据 & 数据赋值
     }
 }
