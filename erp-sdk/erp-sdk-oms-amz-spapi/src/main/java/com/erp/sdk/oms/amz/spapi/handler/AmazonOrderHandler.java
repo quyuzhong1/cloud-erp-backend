@@ -108,7 +108,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
-    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto, JSONObject extendObj) {
+    public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity){
             throw new ServiceException("未找到店铺详情:"+ dto.getShopId());
@@ -129,7 +129,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         List<PlatformOrderDetailDTO> detailDtoList = allOrderItems.stream()
                 .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
                 .collect(Collectors.toList());
-        dto.setDetails(detailDtoList);
+        // TODO
+//        dto.setDetails(detailDtoList);
         return dto;
     }
 

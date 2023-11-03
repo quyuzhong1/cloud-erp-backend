@@ -19,7 +19,7 @@ import java.util.List;
  * @author Jim
  * @since 2023-11-01
  **/
-@Mapper(componentModel = "spring")
+@Mapper
 @Component
 public interface SdkFbaShipmentConverter {
     SdkFbaShipmentConverter INSTANCE = Mappers.getMapper(SdkFbaShipmentConverter.class);
@@ -35,11 +35,9 @@ public interface SdkFbaShipmentConverter {
             @Mapping(target = "labelType", constant = "shipmentInfo.labelType"),
             @Mapping(target = "packType", constant = "?"),
             @Mapping(target = "deliveryFromAddress", expression = "java(dto.combineDeliveryFromAddress())"),
-            @Mapping(target = "fbaShipmentId", source = "shipmentInfo.shipmentId."),
-            @Mapping(target = "downloadStatus", constant = "1"),
-            @Mapping(target = "downloadTime"),
+            @Mapping(target = "fbaShipmentId", source = "shipmentInfo.shipmentId"),
             @Mapping(target = "countryName", source = ""),
-            @Mapping(target = "deliveryStatus", source = ""),
+            @Mapping(target = "deliveryStatus", constant = "unShipped"),
             @Mapping(target = "shipmentReceiveTime", source = ""),
             @Mapping(target = "receiveDTOList")
     })

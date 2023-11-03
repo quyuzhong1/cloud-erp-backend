@@ -115,7 +115,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     }
 
     @Override
-    public PlatformProductDTO downloadDetail(PlatformProductDTO dto, JSONObject extendObj) {
+    public PlatformAmazonListingDTO downloadDetail(PlatformAmazonListingDTO dto, JSONObject extendObj) {
         String shopId = extendObj.getString("shopId");
         // 获取店铺信息
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
@@ -131,7 +131,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         try {
             // 查询商品详情
             CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum);
-            String asin = dto.getPlatformProductNo();
+            String asin = dto.getReportEntity().getProductId();
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
@@ -154,10 +154,11 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         } catch (ApiException e) {
             throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
         }
-        // 产品规格信息
-        dto.setProductSpec(productSpec);
-        // 产品包装信息
-        dto.setProductPacking(packing);
+        // TODO
+//        // 产品规格信息
+//        dto.setProductSpec(productSpec);
+//        // 产品包装信息
+//        dto.setProductPacking(packing);
 
         return dto;
     }

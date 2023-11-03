@@ -3,6 +3,7 @@ package com.common.business.handler;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +27,10 @@ public class BusinessHandlerRegistry {
     public void init() {
         Map<String, IBusinessHandler> beans = context.getBeansOfType(IBusinessHandler.class);
         for (Object bean : beans.values()) {
-            PlatformCategoryType categoryAnnotation = bean.getClass().getAnnotation(PlatformCategoryType.class);
-            PlatformType platformAnnotation = bean.getClass().getAnnotation(PlatformType.class);
-            BusinessType businessAnnotation = bean.getClass().getAnnotation(BusinessType.class);
+            Class<?> actualClass = AopProxyUtils.ultimateTargetClass(bean);
+            PlatformCategoryType categoryAnnotation = actualClass.getAnnotation(PlatformCategoryType.class);
+            PlatformType platformAnnotation = actualClass.getAnnotation(PlatformType.class);
+            BusinessType businessAnnotation = actualClass.getAnnotation(BusinessType.class);
 
             if (categoryAnnotation != null && platformAnnotation != null && businessAnnotation != null) {
                 String key = categoryAnnotation.value().getCode() + "-" +

@@ -34,8 +34,8 @@ public interface ShopInfoFeign {
     /**
      * 通过ID查询店铺信息
      */
-    @GetMapping("/getShopInfoById")
-    public ShopInfoEntity getShopInfoById(@RequestParam String id);
+    @GetMapping("feign/shop/getShopInfoById")
+    ShopInfoEntity getShopInfoById(@RequestParam String id);
 
     /**
      * 根据店铺id查询店铺信息
