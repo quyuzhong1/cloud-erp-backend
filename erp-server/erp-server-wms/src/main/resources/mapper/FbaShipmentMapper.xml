@@ -67,7 +67,7 @@
             fsd.delivery_qty,
             fsd.delivery_qty,
             fsd.diff_qty,
-            fsd.is_combo
+            fsd.is_combination
         FROM fba_shipment fs
         INNER JOIN fba_shipment_detail fsd ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE fs.is_deleted = FALSE
@@ -127,10 +127,11 @@
             <if test="params.mSku != null and params.mSku != ''">
                 AND fsd.m_sku ILIKE concat('%',#{params.mSku},'%')
             </if>
-            <!--数据权限-->
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
+
+            <if test="params.isCombination != null">
+                and fsd.is_combination = #{params.isCombination}
             </if>
+
             <!--收发差异（大于0，小于0，等于0，不等于0）-->
             <if test="params.diffRule != null and params.diffRule != ''">
                 AND fsd.diff_qty ${params.diffRule} 0
@@ -146,6 +147,10 @@
                 DAY' ) > fs.shipment_receive_time
             </if>
 
+            <!--数据权限-->
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         </where>
     </select>
 

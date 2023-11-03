@@ -268,7 +268,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
                 //映射产品信息
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-                detailAdd.setProductName(skuVO.getSkuName());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
                 //拆分产品尺寸
                 String productSize = skuVO.getProductSize();
