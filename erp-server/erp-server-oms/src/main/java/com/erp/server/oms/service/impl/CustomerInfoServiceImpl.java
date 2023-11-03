@@ -942,7 +942,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
-            queryWrapper.last(permissionSql);
+            queryWrapper.last(permissionSql +" ORDER BY create_time DESC");
+        }else{
             queryWrapper.last(" ORDER BY create_time DESC");
         }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
