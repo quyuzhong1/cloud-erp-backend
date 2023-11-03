@@ -266,7 +266,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //添加推送任务
         DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
         taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getName());
+        taskFeignDTO.setSourceCode(entity.getCode());
         taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
