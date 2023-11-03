@@ -20,14 +20,14 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 
 /**
- * 物流地址表
+ * 物流地址
  *
  * @author Lambda
  * @since 2023-11-02
  */
 @Slf4j
 @RestController
-@LogSystemModule("物流地址表")
+@LogSystemModule("物流地址")
 @RequestMapping("/logisticsAddress")
 public class LogisticsAddressController extends BaseController {
 

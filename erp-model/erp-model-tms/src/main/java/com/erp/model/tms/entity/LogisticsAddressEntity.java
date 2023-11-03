@@ -72,8 +72,8 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     /**
     * 区
     */
-    @TableField("district ")
-    private String district ;
+    @TableField("district")
+    private String district;
     /**
     * 详细地址1
     */

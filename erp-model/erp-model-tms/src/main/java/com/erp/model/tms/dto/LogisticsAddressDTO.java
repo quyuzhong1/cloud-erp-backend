@@ -143,34 +143,29 @@ public class LogisticsAddressDTO implements Serializable {
         * 类型
         */
         @NotBlank(message = "类型不能为空")
-        @Size(max = 32,message = "类型最大长度不能超过32位")
         private String type;
 
         /**
         * 公司名
         */
-        @NotBlank(message = "公司名不能为空")
         @Size(max = 50,message = "公司名最大长度不能超过50位")
         private String companyName;
 
         /**
         * 联系人
         */
-        @NotBlank(message = "联系人不能为空")
         @Size(max = 50,message = "联系人最大长度不能超过50位")
         private String contact;
 
         /**
         * 邮箱
         */
-        @NotBlank(message = "邮箱不能为空")
         @Size(max = 50,message = "邮箱最大长度不能超过50位")
         private String email;
 
         /**
         * 电话
         */
-        @NotBlank(message = "电话不能为空")
         @Size(max = 20,message = "电话最大长度不能超过20位")
         private String telNumber;
 
@@ -178,48 +173,42 @@ public class LogisticsAddressDTO implements Serializable {
         * 国家
         */
         @NotBlank(message = "国家不能为空")
-        @Size(max = 30,message = "国家最大长度不能超过30位")
         private String country;
 
         /**
         * 省
         */
         @NotBlank(message = "省不能为空")
-        @Size(max = 100,message = "省最大长度不能超过100位")
         private String province;
 
         /**
         * 城市
         */
         @NotBlank(message = "城市不能为空")
-        @Size(max = 100,message = "城市最大长度不能超过100位")
         private String city;
 
         /**
         * 区
         */
         @NotBlank(message = "区不能为空")
-        @Size(max = 100,message = "区最大长度不能超过100位")
         private String district ;
 
         /**
         * 详细地址1
         */
         @NotBlank(message = "详细地址1不能为空")
-        @Size(max = 255,message = "详细地址1最大长度不能超过255位")
+        @Size(max = 255,message = "详细地址1最大长度不能超过250位")
         private String addressFirst;
 
         /**
         * 详细地址2
         */
-        @NotBlank(message = "详细地址2不能为空")
-        @Size(max = 255,message = "详细地址2最大长度不能超过255位")
+        @Size(max = 255,message = "详细地址2最大长度不能超过250位")
         private String addressSecond;
 
         /**
         * 邮编
         */
-        @NotBlank(message = "邮编不能为空")
         @Size(max = 20,message = "邮编最大长度不能超过20位")
         private String zipCode;
 
