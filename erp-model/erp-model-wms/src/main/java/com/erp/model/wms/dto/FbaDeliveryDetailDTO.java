@@ -188,11 +188,6 @@ public class FbaDeliveryDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 产品名称
-        */
-        private String productName;
-
-        /**
         * 库存sku
         */
         private String stockSku;
