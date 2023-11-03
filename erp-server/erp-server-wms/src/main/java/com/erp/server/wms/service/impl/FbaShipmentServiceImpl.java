@@ -149,11 +149,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public FbaShipmentDTO.ViewDTO view(String id) {
         FbaShipmentEntity entity = this.getById(id);
+
         //映射字段
         FbaShipmentDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentToViewDTO(entity);
 
         //根据主表id查询详情信息
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
+        List<String> skuNos = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        //根据sku获取产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
 
         //设置详情信息
         List<FbaShipmentDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
@@ -161,6 +165,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             //映射详情字段
             FbaShipmentDetailDTO.ViewDTO detailViewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentDetailToViewDTO(fbaShipmentDetailEntity);
+
+            //产品名称
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaShipmentDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailViewDTO.setProductName(skuVO.getSkuName());
 
             //组装详情信息
             detailViewList.add(detailViewDTO);
@@ -184,6 +192,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
 
+        //根据sku获取产品信息
+        List<String> skuNos = list.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
         //获取所有店铺id
         List<String> shopIds = list.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
 
@@ -192,7 +204,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         for (FbaShipmentDTO.GenerateDeliverView view : list) {
             //处理字段映射
-            generateDeliverViewFieldHandle(view, shopInfoEntities);
+            generateDeliverViewFieldHandle(view, shopInfoEntities, skuVOList);
         }
         return list;
     }
@@ -313,15 +325,21 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @Date 2023/11/1 15:19
      * @param view 货件信息
      * @param shopInfoEntities 店铺信息
+     * @param skuVOList 产品信息
      * @return com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView
      **/
-    private FbaShipmentDTO.GenerateDeliverView generateDeliverViewFieldHandle(FbaShipmentDTO.GenerateDeliverView view, List<ShopInfoEntity> shopInfoEntities) {
+    private FbaShipmentDTO.GenerateDeliverView generateDeliverViewFieldHandle(FbaShipmentDTO.GenerateDeliverView view,
+                                                                              List<ShopInfoEntity> shopInfoEntities,
+                                                                              List<SkuVO> skuVOList) {
         //设置店铺的仓位为目的仓
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> view.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
         view.setDestWarehouseId(shopInfoEntity.getWarehouseId());
         view.setDestWarehouseName(shopInfoEntity.getWarehouseName());
         //发货数量默认给申报数量
         view.setDeliveryQty(view.getDeclareQty());
+        //产品名称
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(new SkuVO());
+        view.setProductName(skuVO.getSkuName());
         return view;
     }
 
