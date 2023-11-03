@@ -113,7 +113,7 @@ public class DmpSyncTaskJob {
 
         // 查询DMP同步数据
         List<DmpPushTaskEntity> recordEntityList = dmpPushTaskService.lambdaQuery()
-                .in(DmpPushTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .in(DmpPushTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode(),SyncStatusEnum.IN_SYNC.getCode()))
                 .le(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
                 .orderByAsc(DmpPushTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))
