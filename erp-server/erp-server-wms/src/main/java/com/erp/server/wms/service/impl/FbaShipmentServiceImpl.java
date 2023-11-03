@@ -32,6 +32,7 @@ import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapping;
@@ -99,13 +100,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
             FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
             detailEntity.setSkuNo(dto.getSkuNo());
+            fbaShipmentDetailService.updateById(detailEntity);
         }
-        return null;
+        return flag;
     }
 
     @Override
@@ -258,6 +261,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 //拆分产品尺寸
                 String productSize = skuVO.getProductSize();
                 splitProductSize(detailAdd, productSize);
+                //库存sku
                 String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst()
                         .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
                 detailAdd.setStockSku(stockSku);
