@@ -1,4 +1,4 @@
-package com.erp.server.tms.service.impl.logistics;
+package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.PlatformType;
 import com.common.business.enums.PlatformDictEnum;
