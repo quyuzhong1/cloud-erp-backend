@@ -44,7 +44,6 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
         // 数据处理
         handleData(logisticsAddressEntity);
-
         log.info("开始新增物流地址单");
         boolean save = super.save(logisticsAddressEntity);
         if(!save) {
@@ -52,7 +51,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流地址单" , logisticsAddressEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】", commonService.getUserInfo().getUserName(), "物流地址");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsAddressEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
