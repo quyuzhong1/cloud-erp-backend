@@ -4,10 +4,12 @@ import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCityEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -47,6 +49,8 @@ public interface SysDictFeign {
     @PostMapping("feign/globalArea/listGlobalAreaByIds")
     List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
 
+    @PostMapping("/feign/dictBasic/getByType")
+    List<DictCityEntity> listByIdList(List<String> placeIdList);
     @PostMapping("/feign/dictBasic/getByType")
     List<DictCityEntity> listByIdList(List<String> placeIdList);
 }
