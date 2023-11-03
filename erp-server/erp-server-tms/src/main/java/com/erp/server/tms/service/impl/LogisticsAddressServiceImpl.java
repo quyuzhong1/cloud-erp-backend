@@ -16,9 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+
 import java.util.*;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 物流地址表 服务实现类
@@ -46,7 +49,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         handleData(logisticsAddressEntity);
         log.info("开始新增物流地址单");
         boolean save = super.save(logisticsAddressEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流地址单保存失败");
         }
 
@@ -60,37 +63,46 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsAddressDTO.UpdateDTO updateDTO) {
         LogisticsAddressEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址单"));
-        LogisticsAddressEntity logisticsAddressEntity =  BeanMapperUtils.map(LogisticsAddressEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址单"));
+        LogisticsAddressEntity logisticsAddressEntity = BeanMapperUtils.map(LogisticsAddressEntity.class, updateDTO);
 
         // 数据处理
         handleData(logisticsAddressEntity);
         log.info("编辑 开始修改物流地址单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsAddressEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流地址单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
+        log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsAddressEntity, null, logisticsAddressEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
+    @Override
+    public LogisticsAddressDTO.ViewDTO view(String id) {
+        LogisticsAddressEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址"));
+        LogisticsAddressDTO.ViewDTO view = new LogisticsAddressDTO.ViewDTO();
+        BeanMapper.copy(entity,view);
+        return view;
+    }
+
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(LogisticsAddressEntity logisticsAddressEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }
