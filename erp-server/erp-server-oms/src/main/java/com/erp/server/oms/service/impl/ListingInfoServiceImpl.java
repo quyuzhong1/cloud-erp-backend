@@ -1,12 +1,17 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.PagingDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -15,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,6 +35,8 @@ import java.util.List;
 @Service
 public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, ListingInfoEntity> implements ListingInfoService {
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 根据 sku 获取到listing 数据
@@ -110,6 +119,24 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+        ListingInfoEntity entity = lambdaQuery()
+                .eq(ListingInfoEntity::getPlatformSkuNo, dto.getMSku())
+                .last("LIMIT 1")
+                .one();
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
+
+        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+        listingInfoEntity.setPlatformSkuNo(dto.getMSku());
+
+
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
+
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
+        listingInfoEntity.setSkuNo(skuVO.getSkuNo());
+        listingInfoEntity.setProductName(skuVO.getSkuName());
+
         return null;
     }
 }

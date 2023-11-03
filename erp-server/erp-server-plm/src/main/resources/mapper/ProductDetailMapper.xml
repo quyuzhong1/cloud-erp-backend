@@ -787,7 +787,6 @@
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
-        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
