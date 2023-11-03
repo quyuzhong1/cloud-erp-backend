@@ -67,6 +67,7 @@
             sod.remark,
             sod.source_detail_id,
             so.approve_status,
+            sod.so_detail_id,
             so.so_id
         from so_outstock so
         inner join so_outstock_detail sod on sod.main_id = so.id and sod.is_deleted=FALSE
