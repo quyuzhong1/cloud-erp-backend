@@ -5,15 +5,14 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Will
@@ -69,6 +68,15 @@ public class BeanMapUtil {
             map.put(field.getName(), field.get(object));
         }
         return map;
+    }
+
+    public static <T> List<Map<String, Object>> beanToMapList(List<T> objects) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object object : objects) {
+            Map<String, Object> map = JSONObject.parseObject(JSONObject.toJSONString(object), new TypeReference<Map<String, Object>>(){});
+            result.add(map);
+        }
+        return result;
     }
 
     /**
