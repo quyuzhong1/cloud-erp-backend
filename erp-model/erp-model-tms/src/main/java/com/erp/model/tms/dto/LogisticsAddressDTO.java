@@ -325,19 +325,19 @@ public class LogisticsAddressDTO implements Serializable {
          * 省
          */
         @NotBlank(message = "省不能为空")
-        private String province;
+        private String provinceId;
 
         /**
          * 城市
          */
         @NotBlank(message = "城市不能为空")
-        private String city;
+        private String cityId;
 
         /**
          * 区
          */
         @NotBlank(message = "区不能为空")
-        private String district;
+        private String districtId;
 
         /**
          * 详细地址1
