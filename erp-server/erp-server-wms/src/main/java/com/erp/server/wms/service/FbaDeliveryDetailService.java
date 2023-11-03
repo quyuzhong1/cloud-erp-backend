@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -23,7 +24,7 @@ public interface FbaDeliveryDetailService extends SuperService<FbaDeliveryDetail
     * @param dto
     * @return
     */
-    String add(FbaDeliveryDetailDTO.AddDTO dto);
+    void add(FbaDeliveryDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -32,7 +33,16 @@ public interface FbaDeliveryDetailService extends SuperService<FbaDeliveryDetail
     * @param dto
     * @return
     */
-    Boolean update(FbaDeliveryDetailDTO.UpdateDTO dto);
+    void update(FbaDeliveryDTO.UpdateDTO dto, String mainId);
+
+    /**
+     * 根据主表id删除详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/3 15:25
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
 
     /**
      * 根据来源详情id查询发货详情
@@ -42,6 +52,15 @@ public interface FbaDeliveryDetailService extends SuperService<FbaDeliveryDetail
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
      **/
     List<FbaDeliveryDetailEntity> listBySourceDetailIds(List<String> detailIds);
+
+    /**
+     * 根据主表id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/3 14:02
+     * @param id
+     * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
+     **/
+    List<FbaDeliveryDetailEntity> listByMainId(String id);
 
 
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
@@ -52,6 +53,7 @@ public class FbaDeliveryDTO implements Serializable {
      /**
      * 分页列表查询参数
      */
+     @EqualsAndHashCode(callSuper = true)
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
@@ -302,6 +304,7 @@ public class FbaDeliveryDTO implements Serializable {
     /**
     * 导出Excel
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
@@ -482,6 +485,7 @@ public class FbaDeliveryDTO implements Serializable {
     /**
     * 新增
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -495,11 +499,21 @@ public class FbaDeliveryDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 物流信息
+         */
+        private FbaDeliveryLogisticsDTO.AddDTO logisticsObj;
+
+        /**
+         * 产品信息
+         */
+        private List<FbaDeliveryDetailDTO.AddDTO> detailList;
     }
 
     /**
     * 修改
     */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
@@ -520,6 +534,15 @@ public class FbaDeliveryDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 物流信息
+         */
+        private FbaDeliveryLogisticsDTO.UpdateDTO logisticsObj;
+
+        /**
+         * 产品信息
+         */
+        private List<FbaDeliveryDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -560,25 +583,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String shopId;
 
         /**
-        * 店铺名称
-        */
-        @NotBlank(message = "店铺名称不能为空")
-        @Size(max = 255,message = "店铺名称最大长度不能超过255位")
-        private String shopName;
-
-        /**
         * 国家二字码
         */
         @NotBlank(message = "国家二字码不能为空")
         @Size(max = 10,message = "国家二字码最大长度不能超过10位")
         private String countryId;
-
-        /**
-        * 国家名称
-        */
-        @NotBlank(message = "国家名称不能为空")
-        @Size(max = 64,message = "国家名称最大长度不能超过64位")
-        private String countryName;
 
         /**
         * 发货仓id
@@ -588,25 +597,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String deliveryWarehouseId;
 
         /**
-        * 发货仓名称
-        */
-        @NotBlank(message = "发货仓名称不能为空")
-        @Size(max = 255,message = "发货仓名称最大长度不能超过255位")
-        private String deliveryWarehouseName;
-
-        /**
         * 目的仓id
         */
         @NotBlank(message = "目的仓id不能为空")
         @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String destWarehouseId;
-
-        /**
-        * 目的仓名称
-        */
-        @NotBlank(message = "目的仓名称不能为空")
-        @Size(max = 255,message = "目的仓名称最大长度不能超过255位")
-        private String destWarehouseName;
 
         /**
         * 备注
@@ -624,17 +619,6 @@ public class FbaDeliveryDTO implements Serializable {
         @NotBlank(message = "库存组织id不能为空")
         @Size(max = 19,message = "库存组织id最大长度不能超过19位")
         private String inventoryOrgId;
-
-        /**
-        * 库存组织名称
-        */
-        private String inventoryOrgName;
-
-        /**
-        * 产品信息
-        */
-        private List<FbaDeliveryDetailDTO.AddDTO> detailList;
-
 
     }
 

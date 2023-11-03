@@ -214,7 +214,7 @@ public class FbaDeliveryDetailDTO implements Serializable {
         * 是否组合品
         */
         @NotNull(message = "是否组合品不能为空")
-        private Boolean isCombo;
+        private Boolean isCombination;
 
         /**
         * 单品净重

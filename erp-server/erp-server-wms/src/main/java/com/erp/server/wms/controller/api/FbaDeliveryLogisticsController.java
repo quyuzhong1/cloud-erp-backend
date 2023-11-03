@@ -35,28 +35,6 @@ public class FbaDeliveryLogisticsController extends BaseController {
     private FbaDeliveryLogisticsService fbaDeliveryLogisticsService;
 
     /**
-     * 新增
-     * @param dto
-     * @return ApiResult<String>
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单物流信息表新增")
-    public ApiResult<String> add(@RequestBody @Validated FbaDeliveryLogisticsDTO.AddDTO dto) {
-        return success(fbaDeliveryLogisticsService.add(dto));
-    }
-
-    /**
-     * 修改
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated FbaDeliveryLogisticsDTO.UpdateDTO dto) {
-        fbaDeliveryLogisticsService.update(dto);
-        return success();
-    }
-
-    /**
      * 更新物流信息列表查询
      * @Author Luo_WG
      * @Date 2023/10/30 18:35
