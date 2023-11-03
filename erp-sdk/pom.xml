@@ -23,6 +23,7 @@
         <module>erp-sdk-third-guanyi</module>
         <module>erp-sdk-third-kingdee</module>
         <module>erp-sdk-oms-shopify</module>
+        <module>erp-sdk-tms-disifang</module>
     </modules>
 
     <dependencies>
