@@ -1,11 +1,14 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -93,4 +96,18 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto);
+
+    /**
+     * @param entity
+     * @param listingInfoMap
+     * @param receiveDTOList
+     */
+    void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList);
+
+    /**
+     * 通过fbaShipmentId查询实体
+     * @author  Jim
+     * @date 2023/11/2
+     */
+    FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId);
 }

@@ -1,23 +1,17 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentStatusEntity;
+import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.mapper.FbaShipmentStatusMapper;
 import com.erp.server.wms.service.FbaShipmentStatusService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.FbaShipmentStatusDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 /**
  * <p>
  * FBA货件状态信息 服务实现类
@@ -30,4 +24,13 @@ import com.common.core.enums.ApiError;
 @Service
 public class FbaShipmentStatusServiceImpl extends SuperServiceImpl<FbaShipmentStatusMapper, FbaShipmentStatusEntity> implements FbaShipmentStatusService {
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveByFbaShipment(FbaShipmentEntity sourceEntity) {
+        // 映射来源
+        FbaShipmentStatusEntity entity = FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToStatusEntity(sourceEntity);
+        if (!this.save(entity)){
+            throw new ServiceException("[FbaShipmentStatusEntity] 保存失败：entity=" + JSONUtil.toJsonStr(entity));
+        }
+    }
 }

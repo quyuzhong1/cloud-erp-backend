@@ -14,12 +14,16 @@
 package com.erp.server.dmp.amz;
 
 
+import cn.hutool.json.JSONUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
@@ -31,6 +35,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -199,11 +204,12 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getPreorderInfoTest() throws ApiException {
-        String shipmentId = null;
-        String marketplaceId = null;
+        String shipmentId = "FBA17DZ9039Z";
+        String marketplaceId = AmazonMarketplaceEnum.US.getMarketplaceId();
         FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
         GetPreorderInfoResponse response = api.getPreorderInfo(shipmentId, marketplaceId);
-
+        System.out.println("预购订单日期");
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
     
@@ -236,15 +242,21 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getShipmentItemsTest() throws ApiException {
-        String queryType = "SHIPMENT";
+//        String queryType = "SHIPMENT";
+        String queryType = "DATE_RANGE";
         String marketplaceId = "ATVPDKIKX0DER";
-        OffsetDateTime lastUpdatedAfter = null;
-        OffsetDateTime lastUpdatedBefore = null;
-        String nextToken = "NextToken";
+//        String lastUpdatedAfter = null;
+//        String lastUpdatedBefore = null;
+//        String nextToken = "NextToken";
+        LocalDateTime startTime = LocalDateTime.of(2023, 10, 31, 0, 0, 0);
+        LocalDateTime now = LocalDateTime.now();
+        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+        String nextToken = null;
         FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
         GetShipmentItemsResponse response = api.getShipmentItems(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         System.out.println("货件详情:");
-        System.out.println(JSON.toJsonStr(response));
+        System.out.println(JSONUtil.toJsonStr(response));
     }
     
     /**
@@ -257,11 +269,12 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getShipmentItemsByShipmentIdTest() throws ApiException {
-        String shipmentId = null;
-        String marketplaceId = null;
+        String shipmentId = "FBA17DZ9039Z";
+        String marketplaceId = AmazonMarketplaceEnum.US.getMarketplaceId();
         FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
         GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketplaceId);
-
+        System.out.println("通过shipmentId查询货件详情");
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
     
@@ -276,19 +289,53 @@ public class FbaInboundApiTest {
     @Test
     public void getShipmentsTest() throws ApiException {
         FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
-
-        String queryType = "SHIPMENT";
+//        String queryType = "SHIPMENT";
+        String queryType = "DATE_RANGE";
+//        String queryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
         String marketplaceId = "ATVPDKIKX0DER";
-        List<String> shipmentStatusList = null;
+        List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
         List<String> shipmentIdList = null;
-        OffsetDateTime lastUpdatedAfter = null;
-        OffsetDateTime lastUpdatedBefore = null;
-        String nextToken = null;
+        LocalDateTime startTime = LocalDateTime.of(2023, 11, 1, 0, 0, 0);
+        LocalDateTime now = LocalDateTime.now();
+        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+//        String lastUpdatedAfter = null;
+//        String lastUpdatedBefore = null;
+//        String nextToken = null;
+        String nextToken = "AAAAAAAAAAC+Qqz8LL08LOj0DOtm6jc55wEAAAAAAACYz902f0AjXDETsiNeDKlnpPMySCR107y4nGltTWt+rnw87weJ+9zv9CLmPcRf4hiSSCfF52xQLGA/hq1Ab24WKhbU5aFl9/uDAn0QTs48jZe8s+FIX6N5ECslLH8+LPS2h0Xh2/YshZ5S1ZvpWkU/cnZ39ffkjZmgE1MoriD3v1nqQ6JfxzbJSzFQNo9JTFSSBSqStod7npOeaWnlDpR6Rsd+X3YGi9uj8wW8qENbl3MiK4gJh+qHZA6V2mtHJnv2A9571TphAls3oPBev5ubLRJPUhGyRH9V2g16Rzzi84eA7iQ/wn6kLnRKIstfIHvgN5aQEo/s+l0r6Az7IYs2jSjkjQIQ6c5OGS5tQoxVHGAJm3gP4ZxqP4vsZJBZbhizhpA8qEwtfHs0c8fqxUtHxqO0/bcEtBdkUSBR9eQF0twYQLaQyvAI5IRlSEw/Ecw0eSuMg7Ql6+ShhjVKP55JikOhl7LvNy9jtaTkjFvP28t2xeV0ujvUyVOsrzfjmiHDGDXhxq9gjuWTiSC68QI28+heqH5bsYHgyzdQa/zoe0MazcKIi62rpNWyF95kBh0zzBTSSLopvqCiezOpLjiyKqVKEOT0TsDZ715Zbe9JxcOnutb1PBxJFxBfoMjtk3ZmTJhGbNqa";
         GetShipmentsResponse response = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         System.out.println("货件信息");
         System.out.println(JSON.toJsonStr(response));
         // TODO: test validations
     }
+
+
+    /**
+     *
+     *
+     * Returns a list of inbound shipments based on criteria that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 2 | 30 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     *
+     * @throws ApiException
+     *          if the Api call fails
+     */
+    @Test
+    public void getAllShipmentsTest() throws ApiException {
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        String queryType = "DATE_RANGE";
+        String marketplaceId = "ATVPDKIKX0DER";
+        List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
+        List<String> shipmentIdList = null;
+        LocalDateTime startTime = LocalDateTime.of(2023, 10, 31, 0, 0, 0);
+        LocalDateTime now = LocalDateTime.now();
+        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
+        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
+        String nextToken = null;
+        InboundShipmentList response = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
+        System.out.println("所有货件信息");
+        System.out.println(JSON.toJsonStr(response));
+        // TODO: test validations
+    }
+    
     
     /**
      * 

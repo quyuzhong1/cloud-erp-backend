@@ -14,6 +14,9 @@
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 import java.util.Objects;
@@ -21,8 +24,9 @@ import java.util.Objects;
 /**
  * Information about the seller&#39;s inbound shipments. Returned by the listInboundShipments operation.
  */
-
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:38:48.493+08:00")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class InboundShipmentInfo {
   @SerializedName("ShipmentId")
   private String shipmentId = null;
