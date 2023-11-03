@@ -50,6 +50,11 @@ public class FbaDeliveryLogisticsEntity extends BaseEntity<FbaDeliveryLogisticsE
     */
     @TableField("delivery_time")
     private LocalDateTime deliveryTime;
+    /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
 
     public static final String MAIN_ID = "main_id";
 

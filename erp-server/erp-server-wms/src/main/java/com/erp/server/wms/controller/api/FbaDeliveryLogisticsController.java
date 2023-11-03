@@ -42,8 +42,8 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/viewUpdateLogistics")
-    public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> ViewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
-        List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
+    public ApiResult<List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView>> viewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
+        List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
         return success(result);
     }
 
@@ -52,13 +52,13 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * 更新物流信息列表查询
      * @Author Luo_WG
      * @Date 2023/10/30 18:35
-     * @param ids
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/saveUpdateLogistics")
-    public ApiResult<List<FbaDeliveryDTO.DeliveryLogisticsView>> SaveUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
-        List<FbaDeliveryDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
-        return success(result);
+    public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
+        Boolean flag = fbaDeliveryLogisticsService.saveUpdateLogistics(dto);
+        return flag ? success() : failure();
     }
 
 

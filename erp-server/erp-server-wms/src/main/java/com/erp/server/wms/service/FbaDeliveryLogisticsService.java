@@ -57,11 +57,20 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
     FbaDeliveryLogisticsEntity listByMainId(String mainId);
 
     /**
-     * 更新物流信息列表查询
+     *
      * @Author Luo_WG
      * @Date 2023/10/30 18:35
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    List<FbaDeliveryDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids);
+    List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids);
+
+    /**
+     * 更新物流信息列表保存
+     * @Author Luo_WG
+     * @Date 2023/11/3 16:27
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto);
 }

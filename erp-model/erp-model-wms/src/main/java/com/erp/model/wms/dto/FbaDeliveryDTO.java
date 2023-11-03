@@ -623,51 +623,6 @@ public class FbaDeliveryDTO implements Serializable {
     }
 
     /**
-     * 更新物流信息列表查询
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DeliveryLogisticsView {
-        /**
-         * 主键id
-         */
-        private String id;
-        /**
-         * 发货单id
-         */
-        private String mainId;
-        /**
-         * 发货单号
-         */
-        private String deliverCode;
-        /**
-         * 物流方式
-         */
-        private String logisticsMethod;
-        /**
-         * 物流方式
-         */
-        private String logisticsMethodName;
-        /**
-         * 物流渠道
-         */
-        private String logisticsChannel;
-        /**
-         * 物流渠道名称
-         */
-        private String logisticsChannelName;
-        /**
-         * 物流跟踪号
-         */
-        private List<String> trackingNoList;
-        /**
-         * 发货时间
-         */
-        private LocalDateTime deliverTime;
-
-    }
-
-    /**
      * 下推加工单列表查询
      */
     @Data
