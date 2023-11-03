@@ -30,6 +30,15 @@ public enum AmazonReportRecordTypeEnum {
     GET_MFN_PANEU_OFFER_STATUS("GET_MFN_PANEU_OFFER_STATUS","欧洲整合服务资格：自配送 ASIN"),
     GET_REFERRAL_FEE_PREVIEW_REPORT("GET_REFERRAL_FEE_PREVIEW_REPORT","销售佣金预览报告"),
 
+    // 亚马逊物流 (FBA) 报告类型值
+    // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
+    // 亚马逊物流库存报告
+    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档"),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告"),
+    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告"),
+
+
+
     ;
 
     /**

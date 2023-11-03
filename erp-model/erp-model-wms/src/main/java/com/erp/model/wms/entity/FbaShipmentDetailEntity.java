@@ -52,11 +52,6 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 产品名称
-    */
-    @TableField("product_name")
-    private String productName;
-    /**
     * 申报数量
     */
     @TableField("declare_qty")

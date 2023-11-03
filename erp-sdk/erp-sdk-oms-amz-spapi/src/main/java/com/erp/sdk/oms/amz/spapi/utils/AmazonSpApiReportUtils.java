@@ -2,6 +2,7 @@ package com.erp.sdk.oms.amz.spapi.utils;
 
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
+import com.erp.sdk.oms.amz.spapi.csv.FbaMyiAllInventoryCsvReportEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ListingCsvReportEntity;
 import com.erp.sdk.oms.amz.spapi.documents.DownloadHelper;
 import com.opencsv.CSVParser;
@@ -36,6 +37,16 @@ public class AmazonSpApiReportUtils {
         CSVReader reader = parseCSV(csvContent);
         // 转换bean
         return toBean(reader, ListingCsvReportEntity.class);
+    }
+
+    /**
+     * 下载并转换（亚马逊物流管理库存 - 已存档）
+     */
+    public static List<FbaMyiAllInventoryCsvReportEntity> downloadAndParseFbaAllInventory(String url) throws IOException {
+        String csvContent  = download(url);
+        CSVReader reader = parseCSV(csvContent);
+        // 转换bean
+        return toBean(reader, FbaMyiAllInventoryCsvReportEntity.class);
     }
 
 
@@ -109,8 +120,22 @@ public class AmazonSpApiReportUtils {
     }
 
     public static void main(String[] args) throws Exception{
-        String url = "https://d34o8swod1owfl.cloudfront.net/Report_47700__GET_MERCHANT_LISTINGS_ALL_DATA_.txt";
-        List<ListingCsvReportEntity> list = downloadAndParseListing(url);
-        System.out.println(JSONUtil.toJsonStr(list));
+//        String url = "https://d34o8swod1owfl.cloudfront.net/Report_47700__GET_MERCHANT_LISTINGS_ALL_DATA_.txt";
+//        List<ListingCsvReportEntity> list = downloadAndParseListing(url);
+//        System.out.println(JSONUtil.toJsonStr(list));
+        // 亚马逊物流管理库存 - 已存档
+//        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/2a2d3258-3b23-4f23-8eb6-c019f45bab25.amzn1.tortuga.4.na.T1507HA60E8SWN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T004815Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=c3e2ede4089507b180769c7d0459665988e9cf4f4f5730c01a1a2468094de64d";
+//        List<FbaMyiAllInventoryCsvReportEntity> list = downloadAndParseFbaAllInventory(url);
+//        System.out.println(JSONUtil.toJsonStr(list));
+
+        // 亚马逊物流管理库存状况报告
+
+
+        // 亚马逊物流预留库存报告
+        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/f36c2976-2253-451b-bb3d-e6e47a43ffca.amzn1.tortuga.4.na.TUE3ZIC1NB3GN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T014513Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=4d70013cd08b5ef7b76a2fa0fad6fd05667e4f2e5a99aeab70502d2cec59085c";
+        String cvsContent = download(url);
+        System.out.println(cvsContent);
+
+
     }
 }

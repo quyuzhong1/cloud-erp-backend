@@ -63,7 +63,6 @@
             fsd.fn_sku,
             fsd.m_sku,
             fsd.sku_no,
-            fsd.product_name,
             fsd.declare_qty,
             fsd.delivery_qty,
             fsd.delivery_qty,
@@ -163,7 +162,6 @@
             fsd.m_sku,
             fsd.fn_sku,
             fsd.sku_no,
-            fsd.product_name,
             fsd.declare_qty,
             fsd.is_combination
         FROM fba_shipment_detail fsd

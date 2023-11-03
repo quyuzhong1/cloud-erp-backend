@@ -156,13 +156,6 @@ public class FbaShipmentDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 产品名称
-        */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 500,message = "产品名称最大长度不能超过500位")
-        private String productName;
-
-        /**
         * 申报数量
         */
         @NotNull(message = "申报数量不能为空")
