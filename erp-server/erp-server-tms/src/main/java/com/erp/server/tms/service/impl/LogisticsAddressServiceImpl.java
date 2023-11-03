@@ -151,8 +151,20 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         if (StringUtils.isNotBlank(districtId)) {
             placeIdList.add(districtId);
         }
-      List<DictCityEntity>  cityList= CollectionUtils.isNotEmpty(placeIdList)?sysDictFeign.listByIdList(placeIdList):Collections.emptyList();
+        List<DictCityEntity> cityList = CollectionUtils.isNotEmpty(placeIdList) ? sysDictFeign.listByIdList(placeIdList) : Collections.emptyList();
+        String city = cityList.stream().filter(c -> c.getId().equals(cityId)).
+                map(DictCityEntity::getName).findFirst().orElse("");
+        entity.setCity(city);
 
+        String province = cityList.stream().filter(c -> c.getId().equals(provinceId)).
+                map(DictCityEntity::getName).findFirst().orElse("");
+        entity.setProvince(province);
+
+        String district = cityList.stream().filter(c -> c.getId().equals(districtId)).
+                map(DictCityEntity::getName).findFirst().orElse("");
+        entity.setDistrict(district);
+
+        entity.setCountry(CollectionUtils.isNotEmpty(cityList) ? cityList.get(0).getCountryName() : "");
     }
 
 

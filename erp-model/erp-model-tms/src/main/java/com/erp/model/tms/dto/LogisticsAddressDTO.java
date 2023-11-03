@@ -75,22 +75,22 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 国家
          */
-        private String country;
+        private String countryId;
 
         /**
          * 国家名称
          */
-        private String countryName;
+        private String country;
+
+        /**
+         * 省
+         */
+        private String provinceId;
 
         /**
          * 省
          */
         private String province;
-
-        /**
-         * 省
-         */
-        private String provinceName;
 
         /**
          * 城市
@@ -100,7 +100,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 城市
          */
-        private String cityName;
+        private String cityId;
 
         /**
          * 区
@@ -110,7 +110,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 区
          */
-        private String districtName;
+        private String districtId;
 
         /**
          * 详细地址1
@@ -207,7 +207,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 省
          */
-        private String provinceName;
+        private String provinceId;
 
         /**
          * 城市
@@ -217,7 +217,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 城市
          */
-        private String cityName;
+        private String cityId;
 
         /**
          * 区
@@ -227,7 +227,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 区
          */
-        private String districtName;
+        private String districtId;
 
 
         /**

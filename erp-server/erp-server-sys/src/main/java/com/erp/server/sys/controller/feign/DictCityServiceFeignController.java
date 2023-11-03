@@ -48,10 +48,8 @@ public class DictCityServiceFeignController {
 
     @PostMapping("/listByIdList")
     public List<DictCityEntity> listByIdList(@RequestBody List<String> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
-            return Collections.emptyList();
-        }
-        return dictCityService.listByIds(idList);
+
+        return dictCityService.listByIdList(idList);
 
     }
 

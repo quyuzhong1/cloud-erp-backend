@@ -56,11 +56,26 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     */
     @TableField("tel_number")
     private String telNumber;
+
+
+    /**
+     * 国家
+     */
+    @TableField("countryId")
+    private String countryId;
+
     /**
     * 国家
     */
     @TableField("country")
     private String country;
+
+    /**
+     * 省
+     */
+    @TableField("province")
+    private String province;
+
     /**
     * 省
     */
@@ -71,11 +86,23 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     */
     @TableField("city_id")
     private String cityId;
+
+    /**
+     * 城市
+     */
+    @TableField("city")
+    private String city;
     /**
     * 区
     */
     @TableField("district_id")
     private String districtId;
+
+    /**
+     * 区
+     */
+    @TableField("district")
+    private String district;
     /**
     * 详细地址1
     */
