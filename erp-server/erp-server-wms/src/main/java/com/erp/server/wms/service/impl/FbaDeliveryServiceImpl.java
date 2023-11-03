@@ -7,11 +7,13 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -391,15 +393,15 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
     @Override
     public FbaDeliveryDTO.ViewDTO view(String id) {
+        //发货单主信息
         FbaDeliveryEntity fbaDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到FBA发货单数据"));
         FbaDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FbaDeliveryDTO.ViewDTO.class, fbaDeliveryEntity);
-        // 数据填充处理
-        fillOne(data);
-
-        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByMainId(id);
+        //物流信息
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = fbaDeliveryLogisticsService.listByMainId(id);
-
-
+        //发货单详情
+        List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainId(id);
+        // 数据填充处理
+        fillOne(data, fbaDeliveryLogisticsEntity, detailEntityList);
         // TODO 查询明细数据（如果有的话）
         return data;
     }
@@ -424,11 +426,28 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(FbaDeliveryDTO.ViewDTO data) {
+
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2023/11/3 16:05
+     * @param data 返回的界面需要的查询列表数据（已映射主表信息）
+     * @param logisticsEntity 物流信息
+     * @param detailEntityList 产品详情信息
+     * @return void
+     **/
+    private void fillOne(FbaDeliveryDTO.ViewDTO data, FbaDeliveryLogisticsEntity logisticsEntity, List<FbaDeliveryDetailEntity> detailEntityList) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+
+        FbaDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FbaDeliveryLogisticsDTO.ViewDTO();
+        BeanMapper.copy(logisticsEntity, logisticsViewDTO);
+        logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsViewDTO.getLogisticsMethod()));
+
+//        data.setLogisticsView();
+
     }
 
     /**

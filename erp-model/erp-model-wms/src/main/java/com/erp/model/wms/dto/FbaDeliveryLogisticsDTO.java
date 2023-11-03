@@ -140,7 +140,93 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
          */
         private List<String> trackingNoList;
 
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
+    /**
+     * 更新物流信息列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryLogisticsView {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 发货单id
+         */
+        private String mainId;
+        /**
+         * 发货单号
+         */
+        private String deliverCode;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethodName;
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannel;
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+        /**
+         * 物流跟踪号
+         */
+        private List<String> trackingNoList;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliverTime;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
+     * 更新物流信息列表保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryLogisticsSave {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 物流方式
+         */
+        @NotBlank(message = "物流方式不能为空")
+        @Size(max = 64,message = "物流方式最大长度不能超过64位")
+        private String logisticsMethod;
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannel;
+
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliverTime;
+        /**
+         * 物流跟踪号
+         */
+        private List<String> trackingNoList;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

@@ -110,7 +110,12 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     }
 
     @Override
-    public List<FbaDeliveryDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids) {
+    public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
         return null;
     }
 }
