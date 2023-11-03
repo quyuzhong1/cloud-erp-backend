@@ -21,7 +21,7 @@
        <result column="country" property="country" />
        <result column="province" property="province" />
        <result column="city" property="city" />
-       <result column="district " property="district " />
+       <result column="district " property="district" />
        <result column="address_first" property="addressFirst" />
        <result column="address_second" property="addressSecond" />
        <result column="zip_code" property="zipCode" />
@@ -40,6 +40,47 @@
         is_deleted,
         name, type, company_name, contact, email, tel_number, country, province, city, district , address_first, address_second, zip_code
     </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsAddressDTO$PagingViewDTO">
+        SELECT
+        id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        name,
+        type,
+        company_name,
+        contact,
+        email,
+        tel_number,
+        country,
+        province,
+        city,
+        district,
+        address_first,
+        address_second,
+        zip_code
+        FROM logistics_address
+        WHERE is_deleted=FALSE
+        <if test="params.typeList!=null and params.typeList.size>0">
+            AND type IN
+             <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                 #{item}
+             </foreach>
+        </if>
+        <if test="params.address !=null and params.address!=''">
+             AND (
+                address_first ILIKE concat('%', #{params.address} ,'%')
+                 OR
+                address_second ILIKE concat('%', #{params.address} ,'%')
+            )
+        </if>
+
+    </select>
 
 
 </mapper>

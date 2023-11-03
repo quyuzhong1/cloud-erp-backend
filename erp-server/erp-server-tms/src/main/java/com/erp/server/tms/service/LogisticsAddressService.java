@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -40,4 +41,11 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @return com.erp.model.tms.dto.LogisticsAddressDTO.ViewDTO
      */
     LogisticsAddressDTO.ViewDTO view(String id);
+
+    /**
+     * 地址分页
+     * @param dto
+     * @return
+     */
+    PagingVO<LogisticsAddressDTO.PagingViewDTO> paging(PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto);
 }
