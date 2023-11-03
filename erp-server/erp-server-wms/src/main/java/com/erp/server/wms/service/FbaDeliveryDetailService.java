@@ -57,10 +57,10 @@ public interface FbaDeliveryDetailService extends SuperService<FbaDeliveryDetail
      * 根据主表id查询详情信息
      * @Author Luo_WG
      * @Date 2023/11/3 14:02
-     * @param id
+     * @param mainId
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
      **/
-    List<FbaDeliveryDetailEntity> listByMainId(String id);
+    List<FbaDeliveryDetailEntity> listByMainId(String mainId);
 
 
 }

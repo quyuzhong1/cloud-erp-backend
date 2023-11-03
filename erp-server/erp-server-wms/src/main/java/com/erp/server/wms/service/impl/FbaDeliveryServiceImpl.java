@@ -10,6 +10,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
@@ -396,6 +397,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         fillOne(data);
 
         List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByMainId(id);
+        FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = fbaDeliveryLogisticsService.listByMainId(id);
+
+
         // TODO 查询明细数据（如果有的话）
         return data;
     }

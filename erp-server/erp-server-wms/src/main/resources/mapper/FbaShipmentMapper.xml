@@ -153,6 +153,7 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+        ORDER BY fs.code, fs.create_time DESC
     </select>
 
     <select id="generateDeliverView" resultType="com.erp.model.wms.dto.FbaShipmentDTO$GenerateDeliverView">

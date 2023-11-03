@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -45,6 +46,15 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @return java.lang.Boolean
      **/
     Boolean removeByMainIds(List<String> mainIds);
+
+    /**
+     * 根据主表id查询物流信息
+     * @Author Luo_WG
+     * @Date 2023/11/3 14:02
+     * @param mainId
+     * @return com.erp.model.wms.entity.FbaDeliveryDetailEntity
+     **/
+    FbaDeliveryLogisticsEntity listByMainId(String mainId);
 
     /**
      * 更新物流信息列表查询
