@@ -28,8 +28,6 @@
         business_process_id,
         is_change,
         first_mass_product_date,
-        sync_kingdee_status,
-        sync_kingdee_time,
         version,
         is_deleted,
         sync_kingdee_id
@@ -108,12 +106,6 @@
             </if>
             <if test="firstMassProductDate != null">
                 first_mass_product_date = #{firstMassProductDate,jdbcType=DATE},
-            </if>
-            <if test="syncKingdeeStatus != null">
-                sync_kingdee_status = #{syncKingdeeStatus,jdbcType=CHAR},
-            </if>
-            <if test="syncKingdeeTime != null">
-                sync_kingdee_time = #{syncKingdeeTime,jdbcType=TIMESTAMP},
             </if>
             <if test="version != null">
                 version = #{version,jdbcType=INTEGER},
@@ -286,20 +278,6 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.firstMassProductDate != null">
                         when id = #{item.id,jdbcType=VARCHAR} then #{item.firstMassProductDate,jdbcType=DATE}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="sync_kingdee_status = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.syncKingdeeStatus != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.syncKingdeeStatus,jdbcType=CHAR}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="sync_kingdee_time = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.syncKingdeeTime != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.syncKingdeeTime,jdbcType=TIMESTAMP}
                     </if>
                 </foreach>
             </trim>
