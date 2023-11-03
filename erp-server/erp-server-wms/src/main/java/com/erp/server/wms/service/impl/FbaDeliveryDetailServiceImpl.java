@@ -2,8 +2,15 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
+import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaDeliveryDetailMapper;
@@ -14,6 +21,7 @@ import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import feign.Feign;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +29,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -46,25 +56,14 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(FbaDeliveryDetailDTO.AddDTO addDTO) {
-        FbaDeliveryDetailEntity fbaDeliveryDetailEntity = new FbaDeliveryDetailEntity();
-        BeanMapperUtils.copy(addDTO, fbaDeliveryDetailEntity);
-
-        // 数据处理
-        handleData(fbaDeliveryDetailEntity);
-
-        log.info("开始新增FBA发货单明细单");
-        boolean save = super.save(fbaDeliveryDetailEntity);
-        if(!save) {
-            throw new ServiceException("FBA发货单明细单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单明细单" , fbaDeliveryDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, fbaDeliveryDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-        return fbaDeliveryDetailEntity.getId();
+    public void add(FbaDeliveryDTO.AddDTO addDTO, String mainId) {
+        List<FbaDeliveryDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        //映射字段
+        List<FbaDeliveryDetailEntity> list = BeanMapperUtils.copyList(FbaDeliveryDetailEntity.class, detailList);
+        //处理明细数据
+        handleData(list, mainId, Boolean.FALSE);
+        //批量新增
+        this.saveBatch(list);
     }
 
     /**
@@ -72,26 +71,27 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(FbaDeliveryDetailDTO.UpdateDTO updateDTO) {
+    public void update(FbaDeliveryDTO.UpdateDTO updateDTO, String mainId) {
         FbaDeliveryDetailEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单明细单"));
-        FbaDeliveryDetailEntity fbaDeliveryDetailEntity =  BeanMapperUtils.map(FbaDeliveryDetailEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(fbaDeliveryDetailEntity);
-        log.info("编辑 开始修改FBA发货单明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(fbaDeliveryDetailEntity);
-        if(!save) {
-            throw new ServiceException("FBA发货单明细单保存失败");
+        List<FbaDeliveryDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
+        //原明细数据
+        List<FbaDeliveryDetailEntity> oldList = this.listByMainId(mainId);
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<FbaDeliveryDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.FBA_DELIVERY.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //映射字段
+        List<FbaDeliveryDetailEntity> list = BeanMapperUtils.copyList(FbaDeliveryDetailEntity.class, detailList);
+        //处理明细数据
+        handleData(list, mainId, Boolean.FALSE);
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录FBA发货单明细单日志数据，id：【{}】", fbaDeliveryDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaDeliveryDetailEntity.getId(), "FBA发货单明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, fbaDeliveryDetailEntity, null, fbaDeliveryDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        //新增或修改明细
+        this.saveOrUpdateBatch(list);
     }
 
     @Override
@@ -102,11 +102,52 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         return lambdaQuery().in(FbaDeliveryDetailEntity::getSourceDetailId, detailIds).list();
     }
 
+    @Override
+    public List<FbaDeliveryDetailEntity> listByMainId(String id) {
+        return lambdaQuery().eq(FbaDeliveryDetailEntity::getMainId, id).list();
+    }
+
     /**
     * 新增修改处理数据
     */
-    private void handleData(FbaDeliveryDetailEntity fbaDeliveryDetailEntity) {
+    private void handleData(List<FbaDeliveryDetailEntity> list, String mainId, Boolean isUpdate) {
+        //需要新增的数据
+        List<FbaDeliveryDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
-    // TODO 验证数据 & 数据赋值
+        //获取sku信息
+        List<String> skuNoList = list.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
+        //产品名称
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollectionUtils.isEmpty(skuVOList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : list) {
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            fbaDeliveryDetailEntity.setProductName(skuVO.getSkuName());
+            //校验是否是修改，如果是就新增修改日志
+            if (StringUtils.isNotBlank(fbaDeliveryDetailEntity.getId())) {
+                FbaDeliveryDetailEntity old = list.stream().filter(obj -> obj.getId().equals(fbaDeliveryDetailEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
+                }
+                operateLogService.addModuleOperateLogByObj(old,fbaDeliveryDetailEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.FBA_DELIVERY.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<FbaDeliveryDetailDTO.UpdateDTO> newList, List<FbaDeliveryDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(FbaDeliveryDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(FbaDeliveryDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 }

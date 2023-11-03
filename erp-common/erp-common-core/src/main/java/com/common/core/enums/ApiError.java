@@ -789,7 +789,7 @@ public enum ApiError implements Serializable {
     SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
-
+    ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到FBA发货单"),
 
 
 

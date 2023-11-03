@@ -6,13 +6,15 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
-import com.erp.server.wms.service.FbaDeliveryService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -63,6 +65,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
+    @Autowired
+    private WarehouseService warehouseService;
+    @Autowired
+    private FbaDeliveryDetailService fbaDeliveryDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -85,10 +93,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单" , fbaDeliveryEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, fbaDeliveryEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryEntity.getId(), "新增操作");
+        //新增详情信息
+        fbaDeliveryDetailService.add(addDTO, fbaDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
     }
 
@@ -113,13 +120,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if(!save) {
             throw new ServiceException("FBA发货单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        //修改明细数据
+        fbaDeliveryDetailService.update(updateDTO, fbaDeliveryEntity.getId());
         // 记录主单操作日志
-            log.info("编辑 开始记录FBA发货单日志数据，单号：【{}】", fbaDeliveryEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaDeliveryEntity.getCode(), "FBA发货单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, fbaDeliveryEntity, null, fbaDeliveryEntity.getId(), msg);
+        log.info("编辑 开始记录FBA发货单日志数据，单号：【{}】", fbaDeliveryEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaDeliveryEntity.getCode(), "FBA发货单");
+        operateLogService.addModuleOperateLogByObj(old, fbaDeliveryEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -516,7 +522,27 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     * 新增修改处理数据
     */
     private void handleData(FbaDeliveryEntity fbaDeliveryEntity) {
+        //根据仓库id查询仓库信息
+        List<String> warehouseIds = new ArrayList<>();
+        warehouseIds.add(fbaDeliveryEntity.getDeliveryWarehouseId());
+        warehouseIds.add(fbaDeliveryEntity.getDestWarehouseId());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
 
-    // TODO 验证数据 & 数据赋值
+        //根据仓库信息获取核算公司
+        List<String> orgIds = warehouseEntities.stream().map(req -> req.getOrgId()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
+
+        //设置仓库名称
+        String destWarehouseName = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDestWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        fbaDeliveryEntity.setDestWarehouseName(destWarehouseName);
+        WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
+        fbaDeliveryEntity.setDestWarehouseName(warehouseEntity.getName());
+
+        //设置库存组织
+        String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(warehouseEntity.getOrgId())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        fbaDeliveryEntity.setInventoryOrgId(warehouseEntity.getOrgId());
+        fbaDeliveryEntity.setInventoryOrgName(orgName);
     }
 }

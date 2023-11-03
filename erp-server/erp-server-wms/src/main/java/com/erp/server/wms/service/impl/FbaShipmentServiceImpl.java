@@ -250,16 +250,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
 
             //设置仓库名称
-            String destWarehouseName = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDestWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            addDTO.setDestWarehouseName(destWarehouseName);
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            addDTO.setDestWarehouseName(warehouseEntity.getName());
-
             //设置库存组织
             String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(warehouseEntity.getOrgId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
-            addDTO.setInventoryOrgName(orgName);
             //详情信息
             List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDTO.GenerateDeliverView generateDeliverView : shipmentList) {

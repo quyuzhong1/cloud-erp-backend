@@ -47,6 +47,7 @@ public enum ModuleTypeEnum {
     RULE_ORDER_APPROVAL("44", "订单审核规则"),
     RULE_DELIVERY_WAREHOUSE("45", "发货仓库规则"),
     RULE_LOGISTICS("46", "物流规则"),
+    FBA_DELIVERY("47", "FBA发货单"),
 
     ;
 
