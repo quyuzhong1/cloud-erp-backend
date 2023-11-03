@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.server.tms.mapper.ShippingTemplateCostSettingMapper;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
@@ -10,8 +11,6 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +64,7 @@ public class ShippingTemplateCostSettingServiceImpl extends SuperServiceImpl<Shi
         operateLogService.addModuleOperateLog(msg, null, shippingTemplateCostSettingEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(shippingTemplateCostSettingEntity.getId(), code);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,25 @@ public class LogisticsAddressController extends BaseController {
     @Autowired
     private LogisticsAddressService logisticsAddressService;
 
+
+    /**
+     * 分页列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsAddress:paging",
+            tableAlias = "ci"
+    )
+    public ApiResult<PagingVO<LogisticsAddressDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
+        PagingVO<LogisticsAddressDTO.PagingViewDTO> pagingVO = logisticsAddressService.paging(dto);
+        return success(pagingVO);
+
+    }
+
     /**
      * 新增
      *
@@ -57,6 +77,7 @@ public class LogisticsAddressController extends BaseController {
      * @date: 2023-11-02
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "物流地址表修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:update",

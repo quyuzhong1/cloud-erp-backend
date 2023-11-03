@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
 import com.erp.server.tms.service.ShippingTemplateService;
@@ -56,7 +57,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         operateLogService.addModuleOperateLog(msg, null, shippingTemplateEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(shippingTemplateEntity.getId(), shippingTemplateEntity.getId());
     }
 
     /**

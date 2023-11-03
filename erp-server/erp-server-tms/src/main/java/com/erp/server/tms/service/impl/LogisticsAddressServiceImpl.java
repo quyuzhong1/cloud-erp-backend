@@ -2,7 +2,11 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
@@ -94,8 +98,26 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         LogisticsAddressEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址"));
         LogisticsAddressDTO.ViewDTO view = new LogisticsAddressDTO.ViewDTO();
-        BeanMapper.copy(entity,view);
+        BeanMapper.copy(entity, view);
         return view;
+    }
+
+
+    /**
+     * 地址分页
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<LogisticsAddressDTO.PagingViewDTO> paging(PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
+        LogisticsAddressDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData=baseMapper.paging(query, params);
+
+
+        return null;
     }
 
 
