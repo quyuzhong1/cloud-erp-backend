@@ -943,8 +943,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
             queryWrapper.last(permissionSql);
+            queryWrapper.last(" ORDER BY create_time DESC");
         }
-        queryWrapper.orderByDesc(CustomerInfoEntity::getCreateTime);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
