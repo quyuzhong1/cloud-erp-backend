@@ -42,7 +42,6 @@ import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -869,13 +868,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count != customerList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        if (disabled) {
-            //客户是否有使用
-            Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
-            if (isUseCustomer) {
-                throw new ServiceException(ApiError.ERROR_92044);
-            }
-        }
         customerList.forEach(d -> d.setDisabled(disabled));
         //添加日志
         List<Pair<String, String>> pairList = customerList.stream().
@@ -950,10 +942,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
-        queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
         if (StringUtils.isNotBlank(permissionSql)) {
             queryWrapper.last(permissionSql);
         }
+        queryWrapper.orderByDesc(CustomerInfoEntity::getCreateTime);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
@@ -1409,8 +1401,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(customerNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).
-                in(CustomerInfoEntity::getName,customerNameList).list();
+        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
+                in(CustomerInfoEntity::getName, customerNameList).list();
     }
 
     @Override
