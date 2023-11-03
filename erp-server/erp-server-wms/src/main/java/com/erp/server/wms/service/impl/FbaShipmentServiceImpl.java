@@ -99,8 +99,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto) {
-
+    public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+        Boolean flag = omsListingInfoFeign.skuMapping(dto);
+        if (flag) {
+            FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
+            detailEntity.setSkuNo(dto.getSkuNo());
+        }
         return null;
     }
 
@@ -274,10 +278,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
         List<String> ids = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         List<String> detailIds = records.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
+        List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据来源详情id查询发货详情
         List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(ids);
         //根据详情id查询收货记录
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
+        //根据sku获取产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         for (FbaShipmentDTO.ListDTO record : records) {
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
@@ -290,6 +297,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             record.setReceiveQty(receiveQty);
             //在途数量 QuantityReceived-发货数量，不为0时显示红色
             record.setTransportQty(receiveQty - deliveryQty);
+            //产品名称
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
+            record.setProductName(skuVO.getSkuName());
         }
     }
 

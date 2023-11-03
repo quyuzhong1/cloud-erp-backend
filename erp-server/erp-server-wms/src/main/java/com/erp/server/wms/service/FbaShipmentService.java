@@ -95,7 +95,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean skuMapping(PagingDTO<FbaShipmentDTO.skuMappingParamDTO> dto);
+    Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
 
     /**
      * @param entity
