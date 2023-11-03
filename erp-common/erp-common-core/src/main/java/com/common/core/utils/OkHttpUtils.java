@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +47,28 @@ public class OkHttpUtils {
      */
     public static String doPostJson(String url, Map<String, Object> params, Map<String, String> headers) {
         Call call = createPostJsonCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post 请求 以json(List)
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doPostJson(String url, List<Map<String, Object>> params, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doPostList(String url, List<String> params, Map<String, String> headers) {
+        Call call = createPostListCall(url, params, headers);
         return execute(call);
     }
 
@@ -149,6 +173,27 @@ public class OkHttpUtils {
         return client.newCall(request);
     }
 
+    public static Call createPostJsonCall(String url, List<Map<String, Object>> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+
+    public static Call createPostListCall(String url, List<String> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
 
     private static FormBody createFormBody(Map<String, Object> params) {
         FormBody.Builder builder = new FormBody.Builder();
