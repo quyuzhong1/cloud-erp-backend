@@ -49,8 +49,7 @@ public interface SysDictFeign {
     @PostMapping("feign/globalArea/listGlobalAreaByIds")
     List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
 
-    @PostMapping("/feign/dictBasic/getByType")
-    List<DictCityEntity> listByIdList(List<String> placeIdList);
-    @PostMapping("/feign/dictBasic/getByType")
+
+    @PostMapping("/feign/city/listByIdList")
     List<DictCityEntity> listByIdList(List<String> placeIdList);
 }

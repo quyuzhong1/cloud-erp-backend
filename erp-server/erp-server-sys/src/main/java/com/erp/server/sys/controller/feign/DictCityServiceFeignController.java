@@ -4,13 +4,16 @@ import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.server.sys.service.DictCityService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * 省/市
+ *
  * @Author Luo_WG
  * @Date 2023/5/30 19:27
  **/
@@ -32,6 +35,7 @@ public class DictCityServiceFeignController {
 
     /**
      * 获取省份城市列表
+     *
      * @param countryCode
      * @return
      */
@@ -41,6 +45,15 @@ public class DictCityServiceFeignController {
         return list;
     }
 
+
+    @PostMapping("/listByIdList")
+    public List<DictCityEntity> listByIdList(@RequestBody List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Collections.emptyList();
+        }
+        return dictCityService.listByIds(idList);
+
+    }
 
 
 }
