@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -67,6 +68,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Autowired
     private WarehouseService warehouseService;
     @Autowired
+    private FbaDeliveryLogisticsService fbaDeliveryLogisticsService;
+    @Autowired
     private FbaDeliveryDetailService fbaDeliveryDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -91,6 +94,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单" , fbaDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryEntity.getId(), "新增操作");
+        //新增物流信息
+        fbaDeliveryLogisticsService.add(addDTO.getLogisticsObj(), fbaDeliveryEntity.getId(), code);
         //新增详情信息
         fbaDeliveryDetailService.add(addDTO, fbaDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
@@ -117,6 +122,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if(!save) {
             throw new ServiceException("FBA发货单保存失败");
         }
+        //新增物流信息
+        fbaDeliveryLogisticsService.update(updateDTO.getLogisticsObj(), fbaDeliveryEntity.getId());
         //修改明细数据
         fbaDeliveryDetailService.update(updateDTO, fbaDeliveryEntity.getId());
         // 记录主单操作日志
@@ -278,7 +285,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -294,7 +300,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -306,8 +311,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
+        // 删除物流信息
+        fbaDeliveryLogisticsService.removeByMainIds(Arrays.asList(id));
+        // 删除明细数据
+        fbaDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
         log.info("删除 开始删除FBA发货单主单数据，id：【{}】", id);
         super.removeById(id);
@@ -378,8 +385,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
         return Boolean.TRUE;
     }
 
@@ -389,6 +394,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         FbaDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FbaDeliveryDTO.ViewDTO.class, fbaDeliveryEntity);
         // 数据填充处理
         fillOne(data);
+
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByMainId(id);
         // TODO 查询明细数据（如果有的话）
         return data;
     }
@@ -417,6 +424,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
     }
 
     /**

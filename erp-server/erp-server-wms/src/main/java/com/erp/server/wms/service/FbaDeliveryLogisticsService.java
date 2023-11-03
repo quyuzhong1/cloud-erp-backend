@@ -18,13 +18,15 @@ import java.util.List;
 public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLogisticsEntity> {
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param dto
-    * @return
-    */
-    String add(FbaDeliveryLogisticsDTO.AddDTO dto);
+     * 新增
+     * @Author Luo_WG
+     * @Date 2023/11/3 15:32
+     * @param dto 新增参数
+     * @param mainId 主表id
+     * @param code 主单据编号
+     * @return java.lang.String
+     **/
+    String add(FbaDeliveryLogisticsDTO.AddDTO dto, String mainId, String code);
 
     /**
     * 修改
@@ -33,7 +35,16 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
     * @param dto
     * @return
     */
-    Boolean update(FbaDeliveryLogisticsDTO.UpdateDTO dto);
+    Boolean update(FbaDeliveryLogisticsDTO.UpdateDTO dto, String mainId);
+
+    /**
+     * 根据主键id删除物流信息
+     * @Author Luo_WG
+     * @Date 2023/11/3 15:20
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
 
     /**
      * 更新物流信息列表查询

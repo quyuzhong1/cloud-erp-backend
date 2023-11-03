@@ -36,6 +36,15 @@ public interface FbaDeliveryDetailService extends SuperService<FbaDeliveryDetail
     void update(FbaDeliveryDTO.UpdateDTO dto, String mainId);
 
     /**
+     * 根据主表id删除详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/3 15:25
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
+
+    /**
      * 根据来源详情id查询发货详情
      * @Author Luo_WG
      * @Date 2023/11/2 19:03

@@ -500,6 +500,11 @@ public class FbaDeliveryDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
+         * 物流信息
+         */
+        private FbaDeliveryLogisticsDTO.AddDTO logisticsObj;
+
+        /**
          * 产品信息
          */
         private List<FbaDeliveryDetailDTO.AddDTO> detailList;
@@ -528,6 +533,11 @@ public class FbaDeliveryDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 物流信息
+         */
+        private FbaDeliveryLogisticsDTO.UpdateDTO logisticsObj;
 
         /**
          * 产品信息

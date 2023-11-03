@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
+import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -92,6 +93,14 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
 
         //新增或修改明细
         this.saveOrUpdateBatch(list);
+    }
+
+    @Override
+    public Boolean removeByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(FbaDeliveryDetailEntity::getMainId,mainIds).remove();
     }
 
     @Override

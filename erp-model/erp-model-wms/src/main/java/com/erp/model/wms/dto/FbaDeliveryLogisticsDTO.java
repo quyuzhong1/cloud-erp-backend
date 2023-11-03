@@ -116,8 +116,6 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
         * 发货单号
         */
-        @NotBlank(message = "发货单号不能为空")
-        @Size(max = 64,message = "发货单号最大长度不能超过64位")
         private String deliveryCode;
 
         /**
@@ -130,8 +128,6 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
         * 物流渠道
         */
-        @NotBlank(message = "物流渠道不能为空")
-        @Size(max = 64,message = "物流渠道最大长度不能超过64位")
         private String logisticsChannel;
 
         /**
