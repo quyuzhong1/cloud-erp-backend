@@ -12,7 +12,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.server.tms.handler.LogisticsHandler;
+import com.erp.model.tms.vo.request.LogisticsQueryVO;
+import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class LogisticsSaleChannelController extends BaseController {
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
     @Resource
-    private LogisticsHandler logisticsHandler;
+    private LogisticsRegistry logisticsRegistry;
 
     /**
     * 新增
@@ -77,9 +78,9 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @PostMapping("/test")
     public ApiResult test() {
-        LogisticsService service = logisticsHandler.getHandler(PlatformDictEnum.SDF.getCode());
-        String authId = null;
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(service.getLogisticsAuthConfig(authId));
+        LogisticsService service = logisticsRegistry.getHandler(PlatformDictEnum.SDF.getCode());
+        LogisticsQueryVO logisticsQueryVO = new LogisticsQueryVO();
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(logisticsQueryVO);
         return success();
     }
 

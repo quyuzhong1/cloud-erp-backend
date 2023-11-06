@@ -1,4 +1,4 @@
-package com.sdk.tms.disifang.service.impl;
+package com.sdk.tms.disifang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.sdk.tms.disifang.constants.AmbientEnum;
@@ -21,7 +21,7 @@ import java.util.Collections;
  */
 @Slf4j
 @Component
-public class DsfShipperServiceImpl {
+public class DsfShipperService {
     static String host = "https://open.4px.com/router/api/service";
     //        static String host = "https://open-test.4px.com/router/api/service";
     static String method = "ds.xms.label.getlist";
@@ -104,7 +104,7 @@ public class DsfShipperServiceImpl {
 
 
     public static void main(String[] args) {
-        DsfShipperServiceImpl dsfShipperService = new DsfShipperServiceImpl();
+        DsfShipperService dsfShipperService = new DsfShipperService();
 //        String str = "app_key16081f05-e8fc-4250-b9c4-0660d1ecbb28" +
 //                "formatjson" +
 //                "methodds.xms.order.create" +

@@ -1,6 +1,7 @@
 package com.sdk.tms.disifang.model.order.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,6 +14,7 @@ import java.io.Serializable;
  * @version: 1.0
  */
 @Data
+@Builder
 public class OrderRequest implements Serializable {
     /**
      * 预约时间，格式为：yyyy-MM-dd

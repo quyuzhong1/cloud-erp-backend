@@ -16,7 +16,7 @@ import java.util.Map;
  * @author Cloud
  */
 @Service
-public class LogisticsHandler {
+public class LogisticsRegistry {
     private final Map<String, LogisticsService> handlers = new HashMap<>();
 
     @Resource
