@@ -161,6 +161,19 @@ public class FbaShipmentController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 下推发货单保存并提交
+     * @Author Luo_WG
+     * @Date 2023/10/31 14:35
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSaveAndSubmit")
+    public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
+        Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list);
+        return flag ? success() : failure();
+    }
+
 
     /**
      * 删除
