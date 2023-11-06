@@ -70,7 +70,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean finishShipment(BaseIdsDTO.IdsDTO ids);
+    Boolean finishShipment(List<String> ids);
 
     /**
      * 下推发货单列表查询
@@ -110,4 +110,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @date 2023/11/2
      */
     FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId);
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2023/11/6 10:37
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO delete(String id);
 }

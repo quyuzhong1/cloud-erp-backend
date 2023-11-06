@@ -2,14 +2,18 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -18,6 +22,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
@@ -195,7 +200,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public Boolean finishShipment(BaseIdsDTO.IdsDTO ids) {
+    public Boolean finishShipment(List<String> ids) {
         Boolean flag = lambdaUpdate()
                 .set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.IS_OVER.getCode())
                 .in(FbaShipmentEntity::getId, ids).update();
@@ -415,5 +420,26 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .eq(FbaShipmentEntity::getFbaShipmentId, fbaShipmentId)
                 .last("LIMIT 1")
                 .one();
+    }
+
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        FbaShipmentEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA货件单数据"));
+        // 只有未发货数据允许删除
+        if (!Objects.equals(FbaDeliveryStatusEnum.UN_SHIPPED, entity.getDeliveryStatus())) {
+            throw new ServiceException(ApiError.IS_DELIVERY_DELETE);
+        }
+
+        // 删除明细数据
+        fbaShipmentDetailService.removeByMainIds(Arrays.asList(id));
+        // 删除主单数据
+        log.info("删除 开始删除FBA货件单主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除FBA货件单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA货件单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "删除FBA货件单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 }

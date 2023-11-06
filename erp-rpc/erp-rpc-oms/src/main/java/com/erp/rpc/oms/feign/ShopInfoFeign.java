@@ -44,6 +44,6 @@ public interface ShopInfoFeign {
      * @param ids
      * @return com.erp.model.oms.entity.ShopInfoEntity
      **/
-    @PostMapping("/listShopInfoByIds")
+    @PostMapping("feign/shop/listShopInfoByIds")
     List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids);
 }
