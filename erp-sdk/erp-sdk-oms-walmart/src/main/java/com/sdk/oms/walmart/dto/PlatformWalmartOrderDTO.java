@@ -39,7 +39,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         this.orderBean = orderBean;
         this.walmartShopInfoDTO = walmartShopInfoDTO;
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        this.setPlatform(PlatformDictEnum.WALMART.getCode());
         this.setUniqueId(orderBean.getCustomerOrderId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());

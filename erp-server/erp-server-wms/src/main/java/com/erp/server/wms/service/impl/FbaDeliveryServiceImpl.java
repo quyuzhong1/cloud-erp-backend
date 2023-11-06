@@ -6,15 +6,14 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
 import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
-import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -82,6 +81,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -528,9 +529,55 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
     @Override
     public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids) {
-        List<FbaDeliveryDTO.GenerateMachineView> viewList = baseMapper.generateMachineView(ids);
-        for (FbaDeliveryDTO.GenerateMachineView generateMachineView : viewList) {
 
+
+
+        //只有组合SKU允许下推加工单
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByIds(ids);
+        Long count = entities.stream().filter(obj -> !obj.getIsCombination()).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
+        }
+
+        //单据为待审核状态
+        List<String> mainIds = entities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        Long aLong = entities.stream().filter(obj -> !obj.getIsCombination()).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
+        }
+
+        List<FbaDeliveryDTO.GenerateMachineView> viewList = baseMapper.generateMachineView(ids);
+
+        //查询产品sku信息
+        List<String> skuNos = viewList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        //查询仓位信息
+        List<String> warehouseIds = viewList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+
+        //查询sku对应的bom版本记录
+        List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
+
+        //查询历史子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuNos);
+
+        for (FbaDeliveryDTO.GenerateMachineView view : viewList) {
+            //根据sku编号设置产品名称
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(new SkuVO());
+            view.setProductName(skuVO.getSkuName());
+
+            //根据仓位编码设置仓位名称
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(view.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            view.setWarehouseLocationName(warehouseLocationEntity.getName());
+
+            //查询子件信息
+            List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
+
+            //获取到最新的版本
+            ProductBomInfoDTO.skuBomVersion bomVersion = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view)).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
+
+            view.setSonItemList(sonItemList);
         }
         return null;
     }
