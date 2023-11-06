@@ -119,4 +119,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO delete(String id);
+
+    /**
+     * 批量更新sku映射
+     * @Author Luo_WG
+     * @Date 2023/11/6 11:29
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO skuMappingBatch(String id);
 }

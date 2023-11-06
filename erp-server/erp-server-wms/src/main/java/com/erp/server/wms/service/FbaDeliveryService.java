@@ -160,7 +160,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
      **/
-    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(BaseIdsDTO.IdsDTO ids);
+    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids);
 
     /**
      * 下推加工单保存
@@ -178,7 +178,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
-    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids);
+    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<String> ids);
 
     /**
      * 根据来源单号查询发货记录

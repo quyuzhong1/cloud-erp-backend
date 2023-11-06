@@ -464,10 +464,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //查询已发货的货件信息
         List<String> sourceDetailIdList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
+
         //明细信息
         List<FbaDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
         for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : detailEntityList) {
             FbaDeliveryDetailDTO.ViewDTO detailVie = BeanMapperUtils.map(FbaDeliveryDetailDTO.ViewDTO.class, fbaDeliveryDetailEntity);
+
             //映射产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
             detailVie.setProductName(skuVO.getSkuName());
@@ -525,7 +527,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
-    public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(BaseIdsDTO.IdsDTO ids) {
+    public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids) {
+        List<FbaDeliveryDTO.GenerateMachineView> viewList = baseMapper.generateMachineView(ids);
         return null;
     }
 
@@ -535,7 +538,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
-    public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(BaseIdsDTO.IdsDTO ids) {
+    public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<String> ids) {
         return null;
     }
 

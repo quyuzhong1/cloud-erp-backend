@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -16,6 +17,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -441,5 +443,33 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA货件单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "删除FBA货件单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public BatchResultDTO skuMappingBatch(String id) {
+        FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(id);
+        if (ObjectUtil.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+        }
+        FbaShipmentEntity entity = this.getByFbaShipmentId(detailEntity.getMainId());
+        //根据平台sku查询对照表
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMSku()));
+        listingInfoParamDTO.setMatchResult(Boolean.TRUE);
+        List<ListingInfoEntity> list = omsListingInfoFeign.list(listingInfoParamDTO);
+
+        //校验对照表是否有对照关系
+        if (CollectionUtils.isEmpty(list)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "更新失败，无对照关系！");
+        } else {
+            ListingInfoEntity listingInfoEntity = list.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMSku())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(listingInfoEntity)) {
+                detailEntity.setSkuNo(listingInfoEntity.getSkuNo());
+                fbaShipmentDetailService.updateById(detailEntity);
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+            } else {
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}_{}", detailEntity.getMSku(), "更新失败，无对照关系！"));
+            }
+        }
     }
 }

@@ -97,4 +97,8 @@
         ORDER BY fd.code DESC
     </select>
 
+    <select id="generateMachineView" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$GenerateMachineView">
+
+    </select>
+
 </mapper>
