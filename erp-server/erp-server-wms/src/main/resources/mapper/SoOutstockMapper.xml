@@ -108,9 +108,9 @@
             DAY' ) > so.create_time
         </if>
         <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
-            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            AND so.bill_date >= #{params.actualDeliveryDateList[0]} and
             (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > so.actual_delivery_date
+            DAY' ) > so.bill_date
         </if>
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
             AND so.create_user_id IN
@@ -250,9 +250,9 @@
                     DAY' ) > so.create_time
                 </if>
                 <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
-                    AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+                    AND so.bill_date >= #{params.actualDeliveryDateList[0]} and
                     (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > so.actual_delivery_date
+                    DAY' ) > so.bill_date
                 </if>
                 <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
                     AND so.create_user_id IN
