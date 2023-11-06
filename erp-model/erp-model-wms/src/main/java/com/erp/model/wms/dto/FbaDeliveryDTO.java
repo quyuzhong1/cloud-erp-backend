@@ -583,11 +583,21 @@ public class FbaDeliveryDTO implements Serializable {
         private String shopId;
 
         /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
         * 国家二字码
         */
         @NotBlank(message = "国家二字码不能为空")
         @Size(max = 10,message = "国家二字码最大长度不能超过10位")
         private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
 
         /**
         * 发货仓id
@@ -597,11 +607,21 @@ public class FbaDeliveryDTO implements Serializable {
         private String deliveryWarehouseId;
 
         /**
+         * 发货仓名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
         * 目的仓id
         */
         @NotBlank(message = "目的仓id不能为空")
         @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String destWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String destWarehouseName;
 
         /**
         * 备注

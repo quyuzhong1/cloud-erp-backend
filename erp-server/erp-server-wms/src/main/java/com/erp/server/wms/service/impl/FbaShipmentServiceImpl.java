@@ -256,6 +256,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
+
+        //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
+        list.forEach(req -> {
+            if (StringUtils.isBlank(req.getSkuNo())) {
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMSku());
+            }
+        });
+
+        //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
+
         //校验货件单据是否存在
         List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
@@ -285,7 +295,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FbaDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
-
+            addDTO.setFulfillmentCenter("");
             //设置仓库名称
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());

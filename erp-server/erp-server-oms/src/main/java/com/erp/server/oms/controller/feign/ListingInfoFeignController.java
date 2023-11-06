@@ -53,7 +53,7 @@ public class ListingInfoFeignController extends BaseController {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
     @PostMapping("/listStockSkuNoByProductSkuNo")
-    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList) {
+    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@RequestBody List<String> productSkuNoList) {
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> list = skuMappingService.listStockSkuNoByProductSkuNo(productSkuNoList);
         return list;
     }

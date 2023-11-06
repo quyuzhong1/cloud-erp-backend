@@ -354,7 +354,7 @@
             sm.product_sku_id,
             sm.product_sku_no,
             li.sku_no AS warehouseSkuNo,
-            li.product_name AS warehouseProductName,
+            li.product_name AS warehouseProductName
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

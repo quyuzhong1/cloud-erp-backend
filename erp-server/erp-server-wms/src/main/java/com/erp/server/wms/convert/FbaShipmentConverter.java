@@ -53,7 +53,9 @@ public interface FbaShipmentConverter {
             @Mapping(target = "fulfillmentCenter", defaultValue = ""),
             @Mapping(target = "inventoryOrgId", defaultValue = ""),
             @Mapping(target = "remark", defaultValue = ""),
-            @Mapping(target = "sourceType", defaultValue = "")
+            @Mapping(target = "sourceType", defaultValue = ""),
+            @Mapping(target = "shopName", source = "shopName", defaultValue = ""),
+            @Mapping(target = "countryName", source = "countryName", defaultValue = "")
     })
     FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
 

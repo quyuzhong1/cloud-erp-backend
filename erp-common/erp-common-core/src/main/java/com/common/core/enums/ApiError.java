@@ -792,6 +792,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到FBA发货单"),
     IS_DELIVERY_DELETE(99097,"只有未发货的数据支持删除"),
     FBA_SHIPMENT_DETAIL_NOT_EXIST(99098,"货件详情不存在"),
+    NOT_MAPPER_SKU(99099,"【{}】没有匹配到SKU的货件不允许下推发货单"),
 
 
 
