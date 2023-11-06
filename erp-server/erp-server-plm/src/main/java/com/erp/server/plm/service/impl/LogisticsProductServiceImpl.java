@@ -6,7 +6,10 @@ package com.erp.server.plm.service.impl;/**
  * @Created by yl
  */
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.LogisticsProductService;
@@ -20,5 +23,9 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailMapper, ProductDetailEntity>  implements LogisticsProductService {
+public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailMapper,ProductDetailEntity >  implements LogisticsProductService {
+    @Override
+    public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
+        return null;
+    }
 }

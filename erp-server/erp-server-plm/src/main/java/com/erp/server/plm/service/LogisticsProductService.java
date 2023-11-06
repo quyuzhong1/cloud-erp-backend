@@ -6,7 +6,10 @@ package com.erp.server.plm.service;/**
  * @Created by yl
  */
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 
 /**
@@ -15,4 +18,11 @@ import com.erp.model.plm.entity.ProductDetailEntity;
  * @Date 2023-11-06 12:27
  */
 public interface LogisticsProductService  extends SuperService<ProductDetailEntity> {
+
+    /**
+     * 分页列表
+     * @param dto
+     * @return
+     */
+    PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto);
 }
