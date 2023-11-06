@@ -39,6 +39,7 @@ public class KingdeePoReceiveConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     private DmpPushTaskService dmpPushTaskService;
 
 
+    @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
     }

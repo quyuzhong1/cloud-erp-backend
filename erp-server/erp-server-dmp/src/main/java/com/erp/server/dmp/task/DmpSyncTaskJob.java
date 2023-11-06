@@ -129,7 +129,7 @@ public class DmpSyncTaskJob {
                 // 发送推送同步任务消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
                 SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                        dmpSyncMqDTO, recordEntity.getSourceId());
+                        dmpSyncMqDTO.getMqData(), recordEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }
