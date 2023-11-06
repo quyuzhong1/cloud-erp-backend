@@ -105,7 +105,7 @@
         fdd.delivery_warehouse_id AS warehouseId,
         fdd.delivery_warehouse_name AS warehouseName,
         fdd.warehouse_location,
-        fdd.delivery_qty
+        fdd.delivery_qty AS assembleQty
         FROM  fba_delivery fd
         INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
