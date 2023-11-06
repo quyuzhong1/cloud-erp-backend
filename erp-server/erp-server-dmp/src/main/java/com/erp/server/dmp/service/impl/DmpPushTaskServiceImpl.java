@@ -89,7 +89,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         String entityId = saveOrUpdateDmpSyncTask(entity);
         // 发送MQ消息
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entityId, dto.getMqData());
-        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), dmpSyncMqDTO.getMqData(), entity.getSourceId());
+        String mqData = dmpSyncMqDTO.getMqData();
+        JSONObject jsonObject = JSONUtil.parseObj(mqData);
+        jsonObject.set("dmpSyncTaskId",entityId);
+        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), JSONUtil.toJsonStr(jsonObject), entity.getSourceId());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -220,7 +223,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             try {
                 // 发送MQ消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPushTaskEntity.getId(), dmpPushTaskEntity.getMqData());
-                SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), dmpSyncMqDTO.getMqData(), dmpPushTaskEntity.getSourceId());
+                String mqData = dmpSyncMqDTO.getMqData();
+                JSONObject jsonObject = JSONUtil.parseObj(mqData);
+                jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
+                SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), JSONUtil.toJsonStr(jsonObject), dmpPushTaskEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }

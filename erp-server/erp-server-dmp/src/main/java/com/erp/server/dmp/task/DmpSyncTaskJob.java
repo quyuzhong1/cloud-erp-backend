@@ -128,8 +128,11 @@ public class DmpSyncTaskJob {
             try {
                 // 发送推送同步任务消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
+                String mqData = dmpSyncMqDTO.getMqData();
+                JSONObject jsonObject = JSONUtil.parseObj(mqData);
+                jsonObject.set("dmpSyncTaskId",recordEntity.getId());
                 SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                        dmpSyncMqDTO.getMqData(), recordEntity.getSourceId());
+                        JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }
