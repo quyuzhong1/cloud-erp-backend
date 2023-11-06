@@ -967,7 +967,7 @@
         ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
         WHERE pd.is_deleted=FALSE
         <if test="approveStatus!=null">
-            pd.status=#{approveStatus}
+            AND pd.status=#{approveStatus}
         </if>
         <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
             AND pi.category_id IN

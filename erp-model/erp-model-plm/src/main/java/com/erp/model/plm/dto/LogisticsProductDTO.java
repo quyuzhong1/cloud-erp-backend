@@ -137,7 +137,7 @@ public class LogisticsProductDTO {
         /**
          * 销售状态
          */
-        private String salesStatus;
+        private Integer salesStatus;
 
         /**
          * 销售状态名
@@ -162,7 +162,7 @@ public class LogisticsProductDTO {
         /**
          * 是否组合品
          */
-        private String isCombination;
+        private Boolean isCombination;
 
 
     }

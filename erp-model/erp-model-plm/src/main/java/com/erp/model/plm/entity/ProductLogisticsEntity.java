@@ -90,6 +90,65 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
     @TableField(value = "english_usage")
     private String englishUsage;
 
+
+    /**
+     * 报关申报价币种
+     */
+    @TableField(value = "declare_currency")
+    private String declareCurrency;
+
+    /**
+     * 报关申报价币种符号
+     */
+    @TableField(value = "declare_currency_symbol")
+    private String declareCurrencySymbol;
+
+
+    /**
+     * 目的国申报价
+     */
+    @TableField(value = "dest_declare_price")
+    private String destDeclarePrice;
+
+
+    /**
+     * 目的国币种
+     */
+    @TableField(value = "dest_currency")
+    private String destCurrency;
+
+
+    /**
+     * 目的国币种符号
+     */
+    @TableField(value = "dest_currency_symbol")
+    private String destCurrencySymbol;
+
+
+
+    /**
+     * 境内货源地
+     */
+    @TableField(value = "source_cargo")
+    private String sourceCargo;
+
+
+    /**
+     * 原产国
+     */
+    @TableField(value = "source_country")
+    private String sourceCountry;
+
+    /**
+     * 组合品申报类型
+     */
+    @TableField(value = "combination_declare_type")
+    private String combinationDeclareType;
+
+
+
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
