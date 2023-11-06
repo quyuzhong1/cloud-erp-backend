@@ -31,7 +31,7 @@ import java.util.List;
 @RestController
 @LogSystemModule("物流产品")
 @RequestMapping("logistics/product")
-public class LogisticsController extends BaseController {
+public class LogisticsProductController extends BaseController {
 
     @Resource
     private LogisticsProductService logisticsProductService;
