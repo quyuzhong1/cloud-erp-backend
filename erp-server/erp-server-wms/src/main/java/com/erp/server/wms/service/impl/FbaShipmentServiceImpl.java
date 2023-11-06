@@ -234,11 +234,30 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list) {
+        Boolean flag = this.generateDeliver(list, Boolean.FALSE);
+        return flag;
+    }
+
+    @Override
+    public Boolean generateDeliverSaveAndSubmit(List<FbaShipmentDTO.GenerateDeliverView> list) {
+        Boolean flag = this.generateDeliver(list, Boolean.TRUE);
+        return flag;
+    }
+
+    /**
+     * 下推发货单
+     * @Author Luo_WG
+     * @Date 2023/11/6 14:41
+     * @param list 下推列表数据
+     * @param isSubmit 是否需要提交
+     * @return java.lang.Boolean
+     **/
+    private Boolean generateDeliver(List<FbaShipmentDTO.GenerateDeliverView> list, Boolean isSubmit) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
         //校验货件单据是否存在
-        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getId).collect(Collectors.toList());
+        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
             throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
@@ -286,10 +305,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst()
                         .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
                 detailAdd.setStockSku(stockSku);
+                detailAdd.setWarehouseLocation(generateDeliverView.getWarehouseLocation());
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);
-            fbaDeliveryService.add(addDTO);
+            if (isSubmit) {
+                fbaDeliveryService.addAndSubmit(addDTO);
+            } else {
+                fbaDeliveryService.add(addDTO);
+            }
         }
         return Boolean.TRUE;
     }

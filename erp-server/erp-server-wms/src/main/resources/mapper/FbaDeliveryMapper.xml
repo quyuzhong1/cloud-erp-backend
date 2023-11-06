@@ -98,7 +98,26 @@
     </select>
 
     <select id="generateMachineView" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$GenerateMachineView">
-
+        SELECT
+        fdd.id,
+        fdd.main_id,
+        fdd.sku_no,
+        fdd.delivery_warehouse_id AS warehouseId,
+        fdd.delivery_warehouse_name AS warehouseName,
+        fdd.warehouse_location,
+        fdd.delivery_qty
+        FROM  fba_delivery fd
+        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND fd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY fd.code
+        ORDER BY fd.code DESC
     </select>
 
 </mapper>

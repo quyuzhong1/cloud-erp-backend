@@ -629,9 +629,13 @@ public class FbaDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class GenerateMachineView {
         /**
-         * 主键id
+         * 明细id
          */
         private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
         /**
          * 事务类型
          */
