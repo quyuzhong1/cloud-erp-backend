@@ -43,4 +43,12 @@ public interface FbaShipmentDetailService extends SuperService<FbaShipmentDetail
      **/
     List<FbaShipmentDetailEntity> listByMainIds(List<String> mainIds);
 
+    /**
+     * 根据主表id删除详情
+     * @Author Luo_WG
+     * @Date 2023/11/6 10:43
+     * @param mainIds
+     * @return void
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
 }

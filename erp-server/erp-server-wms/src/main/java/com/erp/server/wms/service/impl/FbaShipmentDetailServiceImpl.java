@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
@@ -9,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,5 +98,13 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     @Override
     public List<FbaShipmentDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(FbaShipmentDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public Boolean removeByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(FbaShipmentDetailEntity::getMainId,mainIds).remove();
     }
 }

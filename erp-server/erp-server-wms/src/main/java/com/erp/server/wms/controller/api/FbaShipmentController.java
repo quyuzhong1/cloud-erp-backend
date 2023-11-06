@@ -1,9 +1,18 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.wms.service.FbaDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +25,7 @@ import com.erp.server.wms.service.FbaShipmentService;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -123,7 +133,7 @@ public class FbaShipmentController extends BaseController {
      **/
     @PostMapping("/finishShipment")
     public ApiResult finishShipment(@RequestBody BaseIdsDTO.IdsDTO ids) {
-        Boolean flag = fbaShipmentService.finishShipment(ids);
+        Boolean flag = fbaShipmentService.finishShipment(ids.getIds());
         return flag ? success() : failure();
     }
 
@@ -152,4 +162,38 @@ public class FbaShipmentController extends BaseController {
     }
 
 
+    /**
+     * 删除
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaShipment:delete",
+            serviceClass = FbaDeliveryService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "FBA货件单删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = fbaShipmentService.delete(id);
+            }catch (Exception e){
+                log.error("FBA货件单删除失败",e);
+                FbaShipmentEntity entity = fbaShipmentService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "FBA货件单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return success(resultDTOS);
+    }
 }

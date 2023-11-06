@@ -93,11 +93,6 @@ public class FbaDeliveryDetailDTO implements Serializable {
         private Integer useDeliveryQty;
 
         /**
-        * 是否组合品
-        */
-        private Boolean isCombo;
-
-        /**
         * 单品净重
         */
         private BigDecimal netWeight;
