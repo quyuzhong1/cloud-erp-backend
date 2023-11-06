@@ -140,8 +140,12 @@ public class ShopeeOrderService {
         HashMap<String, Object> paramMap = getOrderCommonParam(orderRequest);
         //The set of order_sn. If there are multiple order_sn, you need to use English comma to connect them. limit [1,50]
         paramMap.put("order_sn_list", orderRequest.getOrderSns());
-        paramMap.put("response_optional_fields", "create_time,order_sn,order_status,pay_time,total_amount,currency," +
-                "actual_shipping_fee,shipping_carrier,note,buyer_user_id,buyer_username");
+        paramMap.put("response_optional_fields", "order_sn,region,currency,cod,total_amount,order_status,pending_terms," +
+                "shipping_carrier,payment_method,estimated_shipping_fee,message_to_seller,create_time,update_time,days_to_ship," +
+                "ship_by_date,buyer_user_id,buyer_username,recipient_address,actual_shipping_fee,goods_to_declare,note,note_update_time," +
+                "item_list,pay_time,dropshipper,dropshipper_phone,split_up,buyer_cancel_reason,cancel_by,cancel_reason,actual_shipping_fee_confirmed," +
+                "buyer_cpf_id,fulfillment_flag,pickup_done_time,package_list,invoice_data,checkout_shipping_carrier,reverse_shipping_fee," +
+                "order_chargeable_weight_gram,edt_from,edt_to,prescription_images,prescription_check_status");
         return ShopeeApiUtils.sendGet(orderRequest.getHost() + path, paramMap);
     }
 }
