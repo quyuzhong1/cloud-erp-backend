@@ -426,7 +426,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 出库日期
          */
-        private List<LocalDate> actualDeliveryDateList;
+        private List<LocalDate> billDateList;
 
         /**
          * 出库仓库

@@ -1657,7 +1657,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<LocalDate> dateList = new ArrayList<>();
                 dateList.add(startDate);
                 dateList.add(endDate);
-                pagingParamDTO.setActualDeliveryDateList(dateList);
+                pagingParamDTO.setBillDateList(dateList);
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
