@@ -609,6 +609,10 @@ public class FbaShipmentDTO implements Serializable {
          * 是否组合品 true 是
          */
         private Boolean isCombination;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
 
     }
 }

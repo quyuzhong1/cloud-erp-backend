@@ -238,7 +238,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return Boolean.FALSE;
         }
         //校验货件单据是否存在
-        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getId).collect(Collectors.toList());
+        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
         List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
         if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
             throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
@@ -286,6 +286,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst()
                         .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
                 detailAdd.setStockSku(stockSku);
+                detailAdd.setWarehouseLocation(generateDeliverView.getWarehouseLocation());
                 detailAddList.add(detailAdd);
             }
             addDTO.setDetailList(detailAddList);

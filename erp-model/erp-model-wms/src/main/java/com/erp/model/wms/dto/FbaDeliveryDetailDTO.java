@@ -230,6 +230,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
         * 产品尺寸（高）
         */
         private BigDecimal productSizeHeight;
+
+        /**
+        * 仓位
+        */
+        private String warehouseLocation;
     }
 
 

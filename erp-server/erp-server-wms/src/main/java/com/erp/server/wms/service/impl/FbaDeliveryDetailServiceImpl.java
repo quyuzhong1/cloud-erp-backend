@@ -133,6 +133,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
             fbaDeliveryDetailEntity.setProductName(skuVO.getSkuName());
+            fbaDeliveryDetailEntity.setWarehouseLocation(fbaDeliveryDetailEntity.getWarehouseLocation());
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(fbaDeliveryDetailEntity.getId())) {
                 FbaDeliveryDetailEntity old = list.stream().filter(obj -> obj.getId().equals(fbaDeliveryDetailEntity.getId())).findFirst().orElse(null);

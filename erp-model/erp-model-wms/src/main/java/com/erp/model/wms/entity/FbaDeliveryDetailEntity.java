@@ -114,6 +114,12 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 仓位
+     */
+    @TableField("warehouseLocation")
+    private String warehouseLocation;
+
 
     public static final String MAIN_ID = "main_id";
 
