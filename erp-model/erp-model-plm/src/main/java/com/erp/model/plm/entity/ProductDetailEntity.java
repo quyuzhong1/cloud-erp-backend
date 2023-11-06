@@ -18,7 +18,7 @@ import java.util.List;
 @TableName(value ="product_detail")
 @Data
 @NoArgsConstructor
-public class ProductDetailEntity extends BaseEntity implements Serializable {
+public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> implements Serializable {
     /**
      * 产品表id
      */

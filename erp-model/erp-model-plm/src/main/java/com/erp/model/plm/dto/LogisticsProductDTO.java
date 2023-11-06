@@ -29,6 +29,11 @@ public class LogisticsProductDTO {
     public static class PagingVO {
 
         /**
+         * sku id
+         */
+        private String id;
+
+        /**
          * 分类id
          */
         private String categoryId;
@@ -54,7 +59,7 @@ public class LogisticsProductDTO {
         /**
          * spu
          */
-        private String spu;
+        private String spuNo;
 
         /**
          * 产品名称
@@ -63,7 +68,7 @@ public class LogisticsProductDTO {
         /**
          * 中文报关名
          */
-        private String customsNameCn;
+        private String declareChineseName;
         /**
          * 产品属性
          */
@@ -73,52 +78,46 @@ public class LogisticsProductDTO {
         /**
          * 报关申报价
          */
-        private String customsPrice;
+        private BigDecimal declarePrice;
 
         /**
          * 报关申报价币种
          */
-        private String customsCurrency;
+        private String declareCurrency;
 
         /**
          * 报关申报价币种符号
          */
-        private String currencySymbol;
+        private String declareCurrencySymbol;
 
         /**
          * 目的国申报价
          */
-        private BigDecimal destCountryPrice;
+        private BigDecimal destDeclarePrice;
 
         /**
          * 目的国申报价币种
          */
-        private String destCountryCurrency;
+        private String destCurrency;
 
         /**
          * 目的国申报价币种符号
          */
-        private String destCountryCurrencySymbol;
+        private String destCurrencySymbol;
 
         /**
          * 申报要素
          */
-        private String customsElement;
+        private String declareElement;
 
-        /**
-         * 申报要素名
-         */
-        private String customsElementName;
+
 
         /**
          * 报关型号
          */
-        private String customsModel;
+        private String declareModel;
 
-        /**
-         * 报关型号名
-         */
-        private String customsModelName;
+
 
         /**
          * 原产国
@@ -128,7 +127,7 @@ public class LogisticsProductDTO {
         /**
          * sku 审核状态
          */
-        private String approveStatus;
+        private Integer approveStatus;
 
         /**
          * sku 审核状态名
@@ -156,6 +155,11 @@ public class LogisticsProductDTO {
         private String chargeName;
 
         /**
+         * 产品经理id
+         */
+        private String chargeId;
+
+        /**
          * 是否组合品
          */
         private String isCombination;
@@ -169,7 +173,7 @@ public class LogisticsProductDTO {
         /**
          * 分类id
          */
-        private  List<String> categoryIdLis;
+        private  List<String> categoryIdList;
 
         /**
          * skulist
@@ -185,7 +189,7 @@ public class LogisticsProductDTO {
         /**
          * 中文报关名
          */
-        private String customsNameCn;
+        private String declareNameCn;
 
         /**
          * 产品属性id
@@ -205,7 +209,7 @@ public class LogisticsProductDTO {
         /**
          * spu
          */
-        private String spu;
+        private String spuNo;
 
 
         /**

@@ -169,6 +169,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return List<ProductDetailEntity>
      */
     List<ProductDetailEntity> listByChargeId(@Param("chargeId") String chargeId);
+
+    /**
+     * 物流产品分页
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<LogisticsProductDTO.PagingVO> logisticsProductPaging(Page query,@Param("params") LogisticsProductDTO.PagingParamDTO params,@Param("approveStatus") Integer approveStatus);
 }
 
 
