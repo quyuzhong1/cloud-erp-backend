@@ -83,10 +83,10 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * 获取到销售出库明细 根据主表id
      * @author yl
      * @date 2023-05-23 9:28
-     * @param noticeSoOutstockIds
+     * @param mainIdList
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
      */
-    List<SoOutstockDetailEntity> listByMainIds(List<String> noticeSoOutstockIds);
+    List<SoOutstockDetailEntity> listByMainIds(List<String> mainIdList);
 
     /**
      * 根据销售订单详情id获取到对应的下推数量

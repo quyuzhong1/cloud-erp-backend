@@ -210,7 +210,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
             //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
+            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
 
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
@@ -479,8 +479,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //销售订单的id
-        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+
 
         //这个是销售出库单id
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
@@ -494,12 +493,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
 
-        //这个是所有的销售订单管理的发货通知单id
-        List<SoDeliveryNoticeEntity> allDeliveryNoticeList = soDeliveryNoticeService.listBySourceIdList(soIds);
-        List<String> allDeliveryNoticeIds = allDeliveryNoticeList.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
         //发货通知单详情
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(allDeliveryNoticeIds);
-        List<String> deliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -512,13 +506,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //更改打包日期 以及发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(allList);
+        List<String> soDetailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
 
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(deliveryNoticeDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
+        soDetailList = soDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //分组
-        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
+        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
             SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
@@ -555,8 +551,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //销售订单的id
-        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+        List<String> idList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         //发货通知单的
@@ -566,24 +561,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
-
-        //这个是所有的销售订单管理的发货通知单id
-        List<SoDeliveryNoticeEntity> allDeliveryNoticeList = soDeliveryNoticeService.listBySourceIdList(soIds);
-        List<String> allDeliveryNoticeIds = allDeliveryNoticeList.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
         //发货通知单详情
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(allDeliveryNoticeIds);
-        List<String> deliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
         for (SoDeliveryNoticeEntity item : noticeList) {
             item.setDeliveryStatus(Boolean.FALSE);
         }
         //更改发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
-
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(idList);
+        List<String> soDetailIdList=soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(deliveryNoticeDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //分组
-        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
+        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
             SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
@@ -1115,7 +1105,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
             //税率
-            BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
+            BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                     findFirst().map(SoDetailEntity::getTaxRate).orElse(BigDecimal.ZERO);
 
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
@@ -1764,7 +1754,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 BigDecimal price = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                         findFirst().map(SoInfoDTO.ListDTO::getPrice).orElse(BigDecimal.ZERO);
                 //税率
-                BigDecimal taxRate = soDetailList.stream().filter(s ->  s.getId().equals(soDetailId)).
+                BigDecimal taxRate = soDetailList.stream().filter(s -> s.getId().equals(soDetailId)).
                         findFirst().map(SoInfoDTO.ListDTO::getTaxRate).orElse(BigDecimal.ZERO);
 
                 //实发数量
@@ -1798,6 +1788,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE).
                 like(SoOutstockEntity::getTrackNo, trackNo).list();
     }
+
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
         params.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());

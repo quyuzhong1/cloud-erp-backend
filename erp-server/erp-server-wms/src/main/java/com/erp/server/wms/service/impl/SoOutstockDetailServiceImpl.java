@@ -495,11 +495,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailIds)) {
             return Collections.emptyList();
         }
-        //发货通知详情列表
-        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listByIds(detailIds);
-        List<String> noticeSourceDetailIdS = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        detailIds.addAll(noticeSourceDetailIdS);
-        List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(detailIds);
+
+        List<SoOutstockDetailEntity> list = this.listBySoDetailIds(detailIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
         for (SoOutstockDetailEntity item : list) {
             SoOutstockDetailDTO.DeliveryQtyDTO out = new SoOutstockDetailDTO.DeliveryQtyDTO();
@@ -512,10 +509,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //这个可能是发货通知的单
             String sourceDetailId = item.getSourceDetailId();
             out.setSourceDetailId(sourceDetailId);
-            //销售订单详情id
-            String soDetailId = noticeDetailSourceDetailList.stream().filter(n -> n.getId().equals(sourceDetailId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse(sourceDetailId);
-            out.setSoDetailId(soDetailId);
+
+            out.setSoDetailId(item.getSoDetailId());
             resultList.add(out);
         }
         return resultList;
