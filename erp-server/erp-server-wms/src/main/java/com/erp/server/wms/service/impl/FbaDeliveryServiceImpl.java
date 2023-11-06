@@ -5,8 +5,10 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
 import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
@@ -14,6 +16,8 @@ import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -74,6 +78,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private FbaDeliveryLogisticsService fbaDeliveryLogisticsService;
     @Autowired
     private FbaDeliveryDetailService fbaDeliveryDetailService;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -428,7 +436,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     /**
-     *
+     * 处理详情字段
      * @Author Luo_WG
      * @Date 2023/11/3 16:05
      * @param data 返回的界面需要的查询列表数据（已映射主表信息）
@@ -440,14 +448,39 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        //获取sku信息
+        List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+
+        //设置状态中文名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
 
+        //映射物流信息
         FbaDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FbaDeliveryLogisticsDTO.ViewDTO();
         BeanMapper.copy(logisticsEntity, logisticsViewDTO);
         logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsViewDTO.getLogisticsMethod()));
+        data.setLogisticsView(logisticsViewDTO);
 
-//        data.setLogisticsView();
+        //查询已发货的货件信息
+        List<String> sourceDetailIdList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
+        //明细信息
+        List<FbaDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
+        for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : detailEntityList) {
+            FbaDeliveryDetailDTO.ViewDTO detailVie = BeanMapperUtils.map(FbaDeliveryDetailDTO.ViewDTO.class, fbaDeliveryDetailEntity);
+            //映射产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+            detailVie.setProductName(skuVO.getSkuName());
 
+            //获取已出库数量（排除此单出库数量）
+            Integer useDeliveryQty = entities.stream()
+                    .filter(req -> req.getSourceDetailId().equals(fbaDeliveryDetailEntity.getSourceDetailId()) && !req.getId().equals(fbaDeliveryDetailEntity.getId()))
+                    .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
+                    .sum();
+            detailVie.setUseDeliveryQty(useDeliveryQty);
+            detailViews.add(detailVie);
+        }
+        data.setDetailList(detailViews);
     }
 
     /**

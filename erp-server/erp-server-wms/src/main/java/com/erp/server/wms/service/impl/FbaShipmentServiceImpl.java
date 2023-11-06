@@ -243,10 +243,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         warehouseIds.addAll(destWarehouseIds);
         List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
 
-        //根据仓库信息获取核算公司
-        List<String> orgIds = warehouseEntities.stream().map(req -> req.getOrgId()).distinct().collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-
         //获取sku信息
         List<String> skuNoList = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
@@ -266,9 +262,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             //设置仓库名称
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            //设置库存组织
-            String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(warehouseEntity.getOrgId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
             //详情信息
             List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
