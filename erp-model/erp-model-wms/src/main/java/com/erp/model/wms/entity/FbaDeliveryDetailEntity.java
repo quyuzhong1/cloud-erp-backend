@@ -117,7 +117,7 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     /**
      * 仓位
      */
-    @TableField("warehouseLocation")
+    @TableField("warehouse_location")
     private String warehouseLocation;
 
 
