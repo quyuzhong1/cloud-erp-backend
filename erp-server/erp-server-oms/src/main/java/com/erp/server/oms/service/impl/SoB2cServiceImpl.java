@@ -374,6 +374,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(SoB2cEntity::getInvalidRemark, remark)
+                .set(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.equals(soB2cInvalidTypeEnum),SoB2cEntity::getRemark,remark)
                 .set(SoB2cEntity::getInvalidType, soB2cInvalidTypeEnum.getCode())
                 .update();
 
@@ -852,7 +853,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //待配货或配货中允许取消
+        //待提交或审核不通过允许取消
         if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_CANCEL_MERGE, entity.getCode());
         }
@@ -964,10 +965,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (MathUtil.ONE >= splitList.size()) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SPLIT_SIZE);
         }
+        Integer flag = MathUtil.ONE;
         for (SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO : splitList) {
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
+            addDTO.setCode(StrUtil.format("{}_{}",entity.getCode(),flag));
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceCode(entity.getCode());
             addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
@@ -1017,11 +1020,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsAddDTO.setWeight(MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight()));
 
             addDTO.setLogisticsDTO(logisticsAddDTO);
-
+            addDTO.setRemark("被拆分订单");
             //新增拆分后订单
             String soB2cId = this.add(addDTO);
             //新增拆分订单关联关系
             soB2cRefService.add(SoB2cOptionTypeEnum.ENUM_SPLIT.getCode(), entity.getId(), soB2cId);
+            flag ++;
         }
         this.invalid(entity.getId(), StrUtil.format("B2C销售订单【{}】拆分作废"), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
 
@@ -1077,12 +1081,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //待配货或配货中允许取消拆分
+        //待提交或审核不通过允许取消拆分
         if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_CANCEL_SPLIT, entity.getCode());
         }
         //关联关系
-        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
         if (CollectionUtils.isEmpty(soB2cRefList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT, entity.getCode());
         }
@@ -1106,7 +1110,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         deleteById(targetIdList);
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
-        unInvalid(entity.getId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
     }
 
