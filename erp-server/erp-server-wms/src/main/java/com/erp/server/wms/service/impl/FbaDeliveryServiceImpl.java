@@ -529,7 +529,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Override
     public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids) {
         List<FbaDeliveryDTO.GenerateMachineView> viewList = baseMapper.generateMachineView(ids);
+        for (FbaDeliveryDTO.GenerateMachineView generateMachineView : viewList) {
 
+        }
         return null;
     }
 

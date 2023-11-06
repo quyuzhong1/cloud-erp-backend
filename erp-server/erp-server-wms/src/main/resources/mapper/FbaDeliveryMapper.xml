@@ -102,9 +102,8 @@
         fdd.id,
         fdd.main_id,
         fdd.sku_no,
-        fdd.delivery_warehouse_id,
-        fdd.delivery_warehouse_name,
-        fdd.warehouse_location,
+        fdd.delivery_warehouse_id AS warehouseId,
+        fdd.delivery_warehouse_name AS warehouseName,
         fdd.warehouse_location,
         fdd.delivery_qty
         FROM  fba_delivery fd
