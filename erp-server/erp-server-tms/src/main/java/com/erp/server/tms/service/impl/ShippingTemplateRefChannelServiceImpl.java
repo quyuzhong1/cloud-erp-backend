@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.server.tms.mapper.ShippingTemplateRefChannelMapper;
@@ -85,6 +86,14 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, shippingTemplateRefChannelEntity, null, shippingTemplateRefChannelEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<ShippingTemplateRefChannelDTO.ViewDTO> listByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listByMainIds(mainIdList);
     }
 
 

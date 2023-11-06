@@ -208,7 +208,7 @@ public class ShippingTemplateController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @LogViewService
-    @GetMapping("/updateChannel")
+    @PostMapping("/updateChannel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:shippingTemplate:updateChannel",

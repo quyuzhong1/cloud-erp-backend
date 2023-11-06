@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
 import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ShippingTemplateRefChannelMapper extends BaseMapper<ShippingTemplateRefChannelEntity> {
 
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/11/6 17:07
+     * @param mainIdList
+     * @return List<ViewDTO>
+     */
+    List<ShippingTemplateRefChannelDTO.ViewDTO> listByMainIds(@Param("mainIdList") List<String> mainIdList);
 }

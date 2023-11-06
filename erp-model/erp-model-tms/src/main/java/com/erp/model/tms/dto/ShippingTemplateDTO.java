@@ -1,6 +1,8 @@
 package com.erp.model.tms.dto;
 
 import java.time.LocalDate;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,7 @@ public class ShippingTemplateDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型
+         * 类型（启用true,停用false）
          */
         private String tabFlag;
 
@@ -47,7 +49,7 @@ public class ShippingTemplateDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
 
         /**
          * 模板名称
@@ -72,7 +74,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 创建人id集合
          */
-        private List<String> createByUserIdList;
+        private List<String> createUserIdList;
 
         /**
          * 创建时间
@@ -110,7 +112,7 @@ public class ShippingTemplateDTO implements Serializable {
          */
         private String  name;
         /**
-         * 模板类型
+         * 模板类型 （字典shippingTemplateType，country按国家/地区,region按国家/地区+分区,warehouse按仓库"）
          */
         private String type;
         /**

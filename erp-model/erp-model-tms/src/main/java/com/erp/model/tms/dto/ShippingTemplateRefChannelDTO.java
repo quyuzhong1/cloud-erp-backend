@@ -45,7 +45,10 @@ public class ShippingTemplateRefChannelDTO implements Serializable {
         */
         private String logisticsChannelId;
 
-
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
     }
 
     /**

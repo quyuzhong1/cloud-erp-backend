@@ -2,19 +2,24 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.model.tms.enums.ShippingTemplateTypeEnum;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
+import com.erp.server.tms.service.ShippingTemplateRefChannelService;
 import com.erp.server.tms.service.ShippingTemplateService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +29,13 @@ import com.erp.model.tms.dto.ShippingTemplateDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -48,16 +56,33 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Autowired
     private CommonService commonService;
 
+    @Resource
+    private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
+
 
     @Override
-    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
-        return null;
+    public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ShippingTemplateDTO.TabListDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
+        return dbList;
     }
 
     @Override
-    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
-        return null;
+    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> pagingDTO) {
+        ShippingTemplateDTO.PagingParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<ShippingTemplateDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
+        //清空明细数据
+        List<ShippingTemplateDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        doOpHandleShippingTemplate(records);
+        return new PagingVO(pageData);
     }
+
+
 
     @Override
     public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
@@ -94,10 +119,12 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return null;
     }
 
+
     @Override
-    public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
+    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
         return null;
     }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -153,7 +180,27 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
 
 
+    /**
+     * @description: 分页查询数据处理
+     * @author Will
+     * @date: 2023/11/6 16:43
+     * @param records
+     */
+    private void doOpHandleShippingTemplate (List<ShippingTemplateDTO.ListDTO> records) {
 
+        //渠道
+        List<String> idList = records.stream().map(ShippingTemplateDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(idList);
+
+        for (ShippingTemplateDTO.ListDTO listDTO : records) {
+            //模板类型名称
+            listDTO.setTypeName(ShippingTemplateTypeEnum.getName(listDTO.getType()));
+            //渠道名称
+            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).collect(Collectors.toList());
+            listDTO.setChannelNameList(channelNameList);
+        }
+
+    }
 
     /**
     * 新增修改处理数据

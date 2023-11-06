@@ -30,5 +30,25 @@
         main_id, logistics_channel_id
     </sql>
 
+    <!-- 根据主表ids查询 -->
+    <select id="listByMainIds" resultType="com.erp.model.tms.dto.ShippingTemplateRefChannelDTO$ViewDTO">
+        select
+               strc.id,
+               strc.main_id as mainId,
+               strc.logistics_channel_id as logisticsChannelId,
+               lc.name as logisticsChannelName
+        from shipping_template_ref_channel strc
+        inner join logistics_channel lc on lc.id = strc.logistics_channel_id and lc.is_deleted = false
+        <where>
+            strc.is_deleted = flase
+            <if test="mainIdList != null and mainIdList.size > 0">
+                and strc.main_id in
+                <foreach collection="mainIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 
 </mapper>
