@@ -33,7 +33,7 @@ public interface OmsListingInfoFeign {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
     @PostMapping("feign/listing/listStockSkuNoByProductSkuNo")
-    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList);
+    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@RequestBody List<String> productSkuNoList);
 
     /**
      * sku映射
