@@ -211,7 +211,7 @@ public class FbaShipmentController extends BaseController {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = fbaShipmentService.skuMappingBatch(id);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("FBA货件单更新sku映射失败",e);
                 FbaShipmentEntity entity = fbaShipmentService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
