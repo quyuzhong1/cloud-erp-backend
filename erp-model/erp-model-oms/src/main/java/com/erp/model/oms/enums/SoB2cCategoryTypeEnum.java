@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum SoB2cCategoryTypeEnum {
 
     ENUM_ADD("add",  "绑定分类"),
-    ENUM_DELETE("delete",  "重置分类"),
-    ENUM_UPDATE("update",  "解绑分类"),
+    ENUM_DELETE("delete",  "解绑分类"),
+    ENUM_UPDATE("update",  "重置分类"),
     ;
     /**
      * 类型
