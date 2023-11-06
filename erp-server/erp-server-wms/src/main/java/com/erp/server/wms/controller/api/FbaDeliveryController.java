@@ -383,12 +383,12 @@ public class FbaDeliveryController extends BaseController {
      * 下推加工单列表查询
      * @Author Luo_WG
      * @Date 2023/10/31 9:44
-     * @param ids
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
      **/
     @PostMapping("/generateMachineView")
-    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineView(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
-        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineView(ids);
+    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineView(dto.getIds());
         return success(result);
     }
 
@@ -435,12 +435,12 @@ public class FbaDeliveryController extends BaseController {
      * 打印子件明细查询
      * @Author Luo_WG
      * @Date 2023/10/31 10:12
-     * @param ids
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
     @PostMapping("/printSonItemDetail")
-    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
-        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(ids);
+    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(dto.getIds());
         return success(list);
     }
 }

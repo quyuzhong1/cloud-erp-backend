@@ -62,4 +62,13 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
     List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("ids") List<String> ids);
+
+    /**
+     * 下推加工单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/6 11:19
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>
+     **/
+    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids);
 }
