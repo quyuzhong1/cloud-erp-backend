@@ -30,6 +30,7 @@ public enum ApiError implements Serializable {
     /**
      * 通用错误
      */
+    ERROR_404_NOT_FIND(404, "接口路径不存在"),
     ERROR_405(405, "方法不被允许"),
     ERROR_500(500, "系统异常"),
     ERROR_600(600, "缺少参数"),
