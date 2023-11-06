@@ -5,8 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
 import com.erp.server.oms.service.ShopAuthService;
@@ -41,7 +41,6 @@ import static org.junit.Assert.assertEquals;
  * Shopify单元测试
  */
 @Slf4j
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerOmsApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
@@ -62,6 +61,29 @@ public class ErpServerOmsShopifyApplicationTests {
     private ShopAuthService shopAuthService;
     @Resource
     private ShopSdkServer shopSdkServer;
+
+    @Test
+    public void addLogField() {
+
+        //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
+        String classPath = String.valueOf(SoB2cLogisticsEntity.class);
+        List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
+                new CfgOperateLogFieldEntity().setField("code").setFieldName("物流单号").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("name").setFieldName("买家自选物流名称").setClassPath(classPath).setType(0).setEnumClass(""),
+               new CfgOperateLogFieldEntity().setField("dictLogisticsMethod").setFieldName("物流方式").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("deliveryTime").setFieldName("发货时间").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("estimatedShippingCost").setFieldName("预估运费").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("estimatedShippingCurrency").setFieldName("预估运费币别").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("actualShippingCost").setFieldName("实际运费").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("actualShippingCurrency").setFieldName("实际运费币别").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("weight").setFieldName("包装重量").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("accessoriesSkuNo").setFieldName("包装辅料sku编码").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("accessoriesQty").setFieldName("订单备注").setClassPath(classPath).setType(0).setEnumClass("")
+                );
+        logFieldService.saveBatch(logFields);
+        String ss=   QcBillStatusEnum.getByCode(QcBillStatusEnum.FINISH_QC.getCode()).getName();
+        System.out.println(ss);
+    }
 
 
     @Test

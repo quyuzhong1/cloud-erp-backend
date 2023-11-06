@@ -80,7 +80,7 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("receiver_name")
         private String receiverName;
     /**
-    * 收货人名称
+    * 收货人电话
     */
     @TableField("receiver_tel_number")
         private String receiverTelNumber;
