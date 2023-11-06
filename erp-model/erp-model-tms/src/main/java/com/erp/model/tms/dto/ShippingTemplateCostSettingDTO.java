@@ -82,20 +82,13 @@ public class ShippingTemplateCostSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 其他费用id
-        */
-        @NotBlank(message = "其他费用id不能为空")
-        @Size(max = 19,message = "其他费用id最大长度不能超过19位")
-        private String otherCostId;
 
         /**
-        * 名称
-        */
-        @NotBlank(message = "名称不能为空")
-        @Size(max = 32,message = "名称最大长度不能超过32位")
-        private String name;
-
+         * 编码
+         */
+        @NotBlank(message = "编码不能为空")
+        @Size(max = 32,message = "编码最大长度不能超过32位")
+        private String code;
 
     }
 

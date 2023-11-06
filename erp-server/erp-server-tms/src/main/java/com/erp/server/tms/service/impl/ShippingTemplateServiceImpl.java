@@ -3,7 +3,12 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
 import com.erp.server.tms.service.ShippingTemplateService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -16,9 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 运费模板 服务实现类
@@ -30,10 +41,63 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTemplateMapper, ShippingTemplateEntity> implements ShippingTemplateService {
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+
+    @Override
+    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public ShippingTemplateDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean updateChannel(ShippingTemplateDTO.ChannelParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO updateStatus(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        return null;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response,String billingMethod,String billingType) {
+
+    }
+
+    @Override
+    public Boolean importFile(String billingMethod, String billingType, MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -86,6 +150,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, null, shippingTemplateEntity.getId(), msg);
         return Boolean.TRUE;
     }
+
+
+
 
 
     /**

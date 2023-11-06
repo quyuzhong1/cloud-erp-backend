@@ -140,13 +140,6 @@ public class ShippingTemplateRuleDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 起始地
         */
         @NotBlank(message = "起始地不能为空")

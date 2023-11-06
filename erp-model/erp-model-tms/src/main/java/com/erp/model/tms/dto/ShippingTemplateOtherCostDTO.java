@@ -68,9 +68,14 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         private BigDecimal costSettingValue;
 
         /**
-        * 数值设置json
-        */
-        private String extendJson;
+         * 计算方式选值
+         */
+        private ShippingTemplateCostSettingDTO.ViewDTO viewDTO;
+
+        /**
+         * 数值设置json
+         */
+        private ExtendJsonDTO.CommonDTO extendJsonDto;
 
         /**
         * 备注
@@ -87,7 +92,10 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 计算方式选值
+         */
+        private ShippingTemplateCostSettingDTO.AddDTO settingDto;
     }
 
     /**
@@ -100,8 +108,12 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 计算方式选值
+         */
+        private ShippingTemplateCostSettingDTO.UpdateDTO settingDto;
 
     }
 
@@ -110,58 +122,43 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 费用编码
         */
-        @NotBlank(message = "费用编码不能为空")
         @Size(max = 32,message = "费用编码最大长度不能超过32位")
         private String dictCode;
 
         /**
         * 费用名称
         */
-        @NotBlank(message = "费用名称不能为空")
         @Size(max = 32,message = "费用名称最大长度不能超过32位")
         private String dictName;
 
         /**
         * 计算方式
         */
-        @NotBlank(message = "计算方式不能为空")
         @Size(max = 32,message = "计算方式最大长度不能超过32位")
         private String calculationMethod;
 
         /**
         * 计算方式单位
         */
-        @NotBlank(message = "计算方式单位不能为空")
         @Size(max = 32,message = "计算方式单位最大长度不能超过32位")
         private String calculationUnit;
 
         /**
         * 费用设置值
         */
-        @NotNull(message = "费用设置值不能为空")
         @Digits(integer = 12, fraction = 4, message = "费用设置值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal costSettingValue;
 
         /**
         * 数值设置json
         */
-        @NotBlank(message = "数值设置json不能为空")
-        @Size(max = 255,message = "数值设置json最大长度不能超过255位")
-        private String extendJson;
+        private ExtendJsonDTO.CommonDTO extendJsonDto;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
