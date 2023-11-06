@@ -741,7 +741,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (waitQty == 0) {
                 deliveryStatus = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
             } else {
-                if (!qty.equals(deliveryQty)) {
+                if (!qty.equals(waitQty)) {
                     deliveryStatus = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
                 }
             }
