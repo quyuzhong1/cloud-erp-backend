@@ -16,6 +16,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -280,6 +281,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
                 detailEntity.setSellerSkuNo(platformListSkuDTO.getSellerSkuNo());
                 detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
+            }
+
+            //操作日志
+            if (StringUtils.isNotBlank(detailEntity.getId())) {
+                SoB2cDetailEntity old = this.getById(detailEntity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98026);
+                }
+                operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.SO_B2C.getCode(),old.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
         }
 

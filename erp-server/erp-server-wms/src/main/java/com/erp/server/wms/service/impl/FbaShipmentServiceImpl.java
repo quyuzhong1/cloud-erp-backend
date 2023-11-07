@@ -211,8 +211,25 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids) {
+
         //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
+
+        //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
+        list.forEach(req -> {
+            if (StringUtils.isBlank(req.getSkuNo())) {
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMSku());
+            }
+        });
+
+        //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
+
+        //校验货件单据是否存在
+        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
+        List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
+        if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
+            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+        }
 
         //根据sku获取产品信息
         List<String> skuNos = list.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
@@ -256,23 +273,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-
-        //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
-        list.forEach(req -> {
-            if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMSku());
-            }
-        });
-
-        //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
-
-        //校验货件单据是否存在
-        List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
-        List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(shipmentIds);
-        if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
-            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
-        }
-
         //根据仓库id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
         List<String> destWarehouseIds = list.stream().map(req -> req.getDestWarehouseId()).distinct().collect(Collectors.toList());

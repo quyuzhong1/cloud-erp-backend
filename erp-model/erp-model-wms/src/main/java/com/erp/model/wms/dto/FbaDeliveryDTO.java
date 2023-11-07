@@ -715,11 +715,11 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * bom用量
          */
-        private String quantity;
+        private Integer quantity;
         /**
          * 子件数量
          */
-        private String sonQty;
+        private Integer sonQty;
         /**
          * 及时库存
          */
