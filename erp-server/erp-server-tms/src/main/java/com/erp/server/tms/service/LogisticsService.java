@@ -3,8 +3,7 @@ package com.erp.server.tms.service;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
 import java.util.List;
@@ -47,7 +46,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> cancelOrder(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO);
 
     /**
      * 拦截订单
@@ -55,7 +54,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> interceptOrder(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO);
 
     /**
      * 更新订单
@@ -79,7 +78,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult getLabelUrl(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO);
 
     /**
      * 轨迹查询
@@ -92,8 +91,7 @@ public interface LogisticsService {
     /**
      * 渠道查询
      *
-     * @param logisticsQueryVO
      * @return
      */
-    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity logisticsAuthEntity);
 }

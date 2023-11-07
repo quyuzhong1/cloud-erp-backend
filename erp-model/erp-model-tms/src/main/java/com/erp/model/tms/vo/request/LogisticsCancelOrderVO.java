@@ -10,5 +10,5 @@ public class LogisticsCancelOrderVO extends LogisticsQueryBaseVO implements Seri
     private Integer printRemark;
 
     //取消原因
-    private String note;
+    private String reason;
 }
