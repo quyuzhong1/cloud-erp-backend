@@ -1,5 +1,6 @@
 package com.erp.server.tms.handler;
 
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -16,7 +17,7 @@ import java.util.List;
  * @date 2023年11月03日
  * @version: 1.0
  */
-public abstract class AbstractLogisticsHandler implements LogisticsService {
+public abstract class AbstractLogisticsHandler extends BaseController implements LogisticsService {
     //对于一些公共方法可以进行封装
 
     /**

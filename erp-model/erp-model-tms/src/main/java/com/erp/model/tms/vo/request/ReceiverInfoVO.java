@@ -1,6 +1,8 @@
 package com.erp.model.tms.vo.request;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Builder;
+import lombok.Data;
 
 /**
  * @author zdy
@@ -9,6 +11,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
  * @date 2023年11月06日
  * @version: 1.0
  */
+@Data
+@Builder
 public class ReceiverInfoVO {
     /**
      * 名称
