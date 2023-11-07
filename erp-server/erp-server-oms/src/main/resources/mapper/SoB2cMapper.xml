@@ -180,38 +180,38 @@
             </if>
             <if test="params.labelList != null and params.labelList.size > 0">
                 <foreach collection="params.labelList" item="item">
-                    <if test="#{item} == 'frozen'">
+                    <if test="item == 'frozen'">
                         and (sb2c.label_json ~ 'RISK_CONTROL' or sb2c.label_json ~ 'IN_FROZEN' or sb2c.label_json ~
                         'Unfulfillable')
                     </if>
-                    <if test="#{item} == 'fba'">
+                    <if test="item == 'fba'">
                         and sb2c.label_json ~ 'AFN'
                     </if>
-                    <if test="#{item} == 'manual'">
+                    <if test="item == 'manual'">
                         and sb2c.source_type = 'selfAdd'
                     </if>
-                    <if test="#{item} == 'intercept'">
+                    <if test="item == 'intercept'">
                         and sb2c.is_intercept = true
                     </if>
-                    <if test="#{item} == 'split'">
+                    <if test="item == 'split'">
                         and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id)
                     </if>
-                    <if test="#{item} == 'merge'">
+                    <if test="item == 'merge'">
                         and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id )
                     </if>
-                    <if test="#{item} == 'aliexpressTaxed'">
+                    <if test="item== 'aliexpressTaxed'">
                         and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
                     </if>
-                    <if test="#{item} == 'cainiaoWarehouse'">
+                    <if test="item == 'cainiaoWarehouse'">
                         and sb2c.label_json ~ 'cainiaoInternationalWarehouse'
                     </if>
-                    <if test="#{item} == 'aliexpressAePlus'">
+                    <if test="item == 'aliexpressAePlus'">
                         and sb2c.label_json ~ 'AE_PLUS'
                     </if>
-                    <if test="#{item} == 'aliexpressUpExpress'">
+                    <if test="item == 'aliexpressUpExpress'">
                         and sb2c.label_json ~ 'HBA_UP_EXPRESS'
                     </if>
-                    <if test="#{item} == 'leadTenTime'">
+                    <if test="item == 'leadTenTime'">
                         and sb2c.label_json ~ 'leadTimeTag#10'
                     </if>
                 </foreach>
