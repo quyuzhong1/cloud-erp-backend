@@ -2,7 +2,6 @@ package com.erp.sdk.oms.amz.spapi.csv;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -13,7 +12,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ListingCsvReportEntity implements Serializable {
+public class ReportListingCsvEntity implements Serializable {
 
     @CsvBindByName(column = "item-name")
     private String itemName;

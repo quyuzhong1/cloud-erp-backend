@@ -86,7 +86,8 @@ public class ReportsApiTest {
     @Test
     public void cancelReportScheduleTest() throws ApiException {
         // 正式环境参数
-        String reportScheduleId = "50003019648";
+//        String reportScheduleId = "50003019648";
+        String reportScheduleId = "50004019668";
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         api.cancelReportSchedule(reportScheduleId);
 
@@ -133,10 +134,14 @@ public class ReportsApiTest {
     public void createReportScheduleTest() throws ApiException {
         CreateReportScheduleSpecification body = new CreateReportScheduleSpecification();
         // 正式环境参数
-        body.setReportType("GET_MERCHANT_LISTINGS_DATA");
-        body.setMarketplaceIds(Arrays.asList("A1AM78C64UM0Y8"));
-        body.setNextReportCreationTime("2023-10-18T03:00:00.000Z");
-        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT1H);
+//        body.setReportType("GET_MERCHANT_LISTINGS_DATA");
+//        body.setMarketplaceIds(Arrays.asList("A1AM78C64UM0Y8"));
+//        body.setNextReportCreationTime("2023-10-18T03:00:00.000Z");
+//        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT1H);
+        body.setReportType("GET_RESERVED_INVENTORY_DATA");
+        body.setMarketplaceIds(Arrays.asList("ATVPDKIKX0DER"));
+        body.setNextReportCreationTime("2023-11-07T01:00:00.000Z");
+        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT15M);
         // 沙箱参数
 //        body.setReportType("FEE_DISCOUNTS_REPORT");
 //        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT5M);
@@ -148,6 +153,7 @@ public class ReportsApiTest {
         System.out.println("创建自动更新报告");
         System.out.println(JSONUtil.toJsonStr(response));
         // {"reportScheduleId":"50002019648"}
+        // {"reportScheduleId":"50004019668"}
         // TODO: test validations
     }
 
@@ -163,15 +169,15 @@ public class ReportsApiTest {
         // 正式环境参数
 //        String reportId = "716008019646";
         // 亚马逊物流管理库存{"reportId":"724464019664"}
-//        String reportId = "724464019664";
+        String reportId = "724464019664";
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
 //        String reportId = "724480019664";
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
-        String reportId = "724489019664";
+//        String reportId = "724489019664";
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         Report response = api.getReport(reportId);
         System.out.println("获取报告");
-        System.out.println(JSONUtil.toJsonStr(response));
+        System.out.println(JSON.toJsonStr(response));
         // {"marketplaceIds":["ATVPDKIKX0DER"],"reportId":"724464019664","reportType":"GET_FBA_MYI_ALL_INVENTORY_DATA","dataStartTime":1698972068000,"dataEndTime":1698972068000,"createdTime":1698972068000,"processingStatus":"DONE","processingStartTime":1698972074000,"processingEndTime":1698972085000,"reportDocumentId":"amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650"}
 
         // {"marketplaceIds":["ATVPDKIKX0DER"],"reportId":"724480019664","reportType":"GET_FBA_INVENTORY_PLANNING_DATA","dataStartTime":1698974243000,"dataEndTime":1698974243000,"createdTime":1698974243000,"processingStatus":"DONE","processingStartTime":1698974250000,"processingEndTime":1698974262000,"reportDocumentId":"amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600"}
@@ -190,11 +196,11 @@ public class ReportsApiTest {
         // 正式环境参数
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.584baa05-f1b8-4d53-88fc-5c5b32051236.T2SXAUMO86QN6T.300";
         // 亚马逊物流管理库存
-//        String reportDocumentId = "amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650";
+        String reportDocumentId = "amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650";
         // 亚马逊物流管理库存状况报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600";
         // 亚马逊物流预留库存报告
-        String reportDocumentId = "amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681";
+//        String reportDocumentId = "amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681";
         // 沙箱环境参数
 //        String reportDocumentId = "0356cf79-b8b0-4226-b4b9-0ee058ea5760";
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
@@ -207,9 +213,12 @@ public class ReportsApiTest {
 
         // 亚马逊物流管理库存状况报告
         // {"reportDocumentId":"amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/a19570c6-30f3-4bf1-b21a-0e4c366cc9d8.amzn1.tortuga.4.na.T1SJJIE84P543J?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T013522Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=21578a95a6409a4408d23b517916174b67bac17feb3aafd7e1c3be180c83a8c1"}
+        // {"reportDocumentId":"amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/a19570c6-30f3-4bf1-b21a-0e4c366cc9d8.amzn1.tortuga.4.na.T1SJJIE84P543J?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T041213Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=f073b581da98440bde014d11814991861d8d5aeaed5abfcc7790cac93d5d9702"}
+        // {"reportDocumentId":"amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/a19570c6-30f3-4bf1-b21a-0e4c366cc9d8.amzn1.tortuga.4.na.T1SJJIE84P543J?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T042355Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=e2e046a268f65fef133d6f47477d1a108df4cb4c8420035ca81e89660335278c"}
 
         // 亚马逊物流预留库存报告
         // {"reportDocumentId":"amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/f36c2976-2253-451b-bb3d-e6e47a43ffca.amzn1.tortuga.4.na.TUE3ZIC1NB3GN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231103T014513Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231103%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=4d70013cd08b5ef7b76a2fa0fad6fd05667e4f2e5a99aeab70502d2cec59085c"}
+        // {"reportDocumentId":"amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/f36c2976-2253-451b-bb3d-e6e47a43ffca.amzn1.tortuga.4.na.TUE3ZIC1NB3GN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T035045Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=6917ebea79e4002c53e43a9fafee2e6889f462e25bbf3f9d7f93bffde5dba47d"}
 
 
         // TODO: test validations
@@ -257,18 +266,19 @@ public class ReportsApiTest {
      * @throws ApiException if the Api call fails
      */
     @Test
-    public void getReportsTest() throws ApiException {
-        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+    public void getReportsTest() throws Exception {
+//        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
+        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
-        Integer pageSize = null;
+        Integer pageSize = 100;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");
-        System.out.println(JSONUtil.toJsonStr(response));
         System.out.println(JSON.toJsonStr(response));
         // TODO: test validations
     }

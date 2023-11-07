@@ -51,4 +51,20 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @return Boolean
      */
     Boolean update(List<String> categoryIdList, String mainId);
+
+    /**
+     * 根据分类id 获取
+     * @param categoryIdList
+     * @return
+     */
+    List<SoB2cRefCategoryEntity>  listCategoryIdList(List<String> categoryIdList);
+
+    /**
+     * 根据分类id 删除
+     * @author yl
+     * @date 2023-11-07 11:51
+     * @param categoryIds
+     * @return void
+     */
+    void removeByCategoryIds(List<String> categoryIds);
 }

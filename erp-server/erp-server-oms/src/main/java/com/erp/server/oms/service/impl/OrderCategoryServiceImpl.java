@@ -20,6 +20,7 @@ import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,14 +55,36 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
     public Boolean add(OrderCategoryDTO.AddDTO dto) {
         OrderCategoryEntity entity = new OrderCategoryEntity();
         String id = IdWorker.getIdStr();
+        String groupName = dto.getGroupName();
+        checkGroupName(id, groupName);
         entity.setId(id);
-        entity.setGroupName(dto.getGroupName());
+        entity.setGroupName(groupName);
         entity.setRemark(dto.getRemark());
+        List<OrderCategoryDetailDTO.AddDTO> detailList = dto.getDetailList();
+        List<String> nameList = detailList.stream().map(OrderCategoryDetailDTO.AddDTO::getName).collect(Collectors.toList());
+        if (nameList.size() != nameList.stream().distinct().count()) {
+            throw new ServiceException("分类名存在重复");
+        }
+
         Boolean saveResult = this.save(entity);
         if (saveResult) {
             orderCategoryDetailService.addList(id, dto.getDetailList());
         }
         return saveResult;
+    }
+
+    /**
+     * 检查组名
+     *
+     * @param id
+     * @param groupName
+     */
+    private void checkGroupName(String id, String groupName) {
+        Integer count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), OrderCategoryEntity::getId, id).
+                eq(OrderCategoryEntity::getGroupName, groupName).count();
+        if (count > 0) {
+            throw new ServiceException("组别已存在");
+        }
     }
 
 
@@ -77,7 +100,14 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
     public Boolean updateCategory(OrderCategoryDTO.UpdateDTO dto) {
         OrderCategoryEntity entity = new OrderCategoryEntity();
         BeanMapper.copy(dto, entity);
-        orderCategoryDetailService.checkUpdate(dto.getDetailList());
+        checkGroupName(dto.getId(), dto.getGroupName());
+
+        List<OrderCategoryDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        List<String> nameList = detailList.stream().map(OrderCategoryDetailDTO.UpdateDTO::getName).collect(Collectors.toList());
+        if (nameList.size() != nameList.stream().distinct().count()) {
+            throw new ServiceException("分类名存在重复");
+        }
+        orderCategoryDetailService.checkUpdate(detailList);
         Boolean updateResult = this.updateById(entity);
         if (updateResult) {
             orderCategoryDetailService.updateDetail(dto.getId(), dto.getDetailList());

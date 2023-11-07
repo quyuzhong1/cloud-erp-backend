@@ -1,9 +1,17 @@
 package com.erp.sdk.oms.amz.spapi.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.core.exception.ServiceException;
+import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.stream.Stream;
 
 /**
  * 亚马逊SP-API中使用的报告类型
@@ -17,27 +25,25 @@ import lombok.Getter;
 public enum AmazonReportRecordTypeEnum {
     // 库存报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-inventory
-    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA","库存报告"),
-    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA","所有商品信息报告"),
-    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA","在售商品报告"),
-    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA","非在售商品报告"),
-    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT","表符分隔的库存模板文件在售商品报告"),
-    GET_MERCHANT_LISTINGS_DATA_LITE("GET_MERCHANT_LISTINGS_DATA_LITE","在售商品报告精简版（仅包含数量大于零的商品的 SKU、ASIN、价格和数量字段）"),
-    GET_MERCHANT_LISTINGS_DATA_LITER("GET_MERCHANT_LISTINGS_DATA_LITER","在售商品报告精简版（仅包含数量大于零的商品的 SKU 和数量字段。）"),
-    GET_MERCHANT_CANCELLED_LISTINGS_DATA("GET_MERCHANT_CANCELLED_LISTINGS_DATA","已取消商品报告"),
-    GET_MERCHANTS_LISTINGS_FYP_REPORT("GET_MERCHANTS_LISTINGS_FYP_REPORT","禁止显示商品报告"),
-    GET_PAN_EU_OFFER_STATUS("GET_PAN_EU_OFFER_STATUS","欧洲整合服务资格：亚马逊物流 ASIN"),
-    GET_MFN_PANEU_OFFER_STATUS("GET_MFN_PANEU_OFFER_STATUS","欧洲整合服务资格：自配送 ASIN"),
-    GET_REFERRAL_FEE_PREVIEW_REPORT("GET_REFERRAL_FEE_PREVIEW_REPORT","销售佣金预览报告"),
+    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA", "库存报告", false, "", null),
+    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, "", null),
+    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, "", null),
+    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA", "非在售商品报告", false, "", null),
+    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT", "表符分隔的库存模板文件在售商品报告", false, "", null),
+    GET_MERCHANT_LISTINGS_DATA_LITE("GET_MERCHANT_LISTINGS_DATA_LITE", "在售商品报告精简版（仅包含数量大于零的商品的 SKU、ASIN、价格和数量字段）", false, "", null),
+    GET_MERCHANT_LISTINGS_DATA_LITER("GET_MERCHANT_LISTINGS_DATA_LITER", "在售商品报告精简版（仅包含数量大于零的商品的 SKU 和数量字段。）", false, "", null),
+    GET_MERCHANT_CANCELLED_LISTINGS_DATA("GET_MERCHANT_CANCELLED_LISTINGS_DATA", "已取消商品报告", false, "", null),
+    GET_MERCHANTS_LISTINGS_FYP_REPORT("GET_MERCHANTS_LISTINGS_FYP_REPORT", "禁止显示商品报告", false, "", null),
+    GET_PAN_EU_OFFER_STATUS("GET_PAN_EU_OFFER_STATUS", "欧洲整合服务资格：亚马逊物流 ASIN", false, "", null),
+    GET_MFN_PANEU_OFFER_STATUS("GET_MFN_PANEU_OFFER_STATUS", "欧洲整合服务资格：自配送 ASIN", false, "", null),
+    GET_REFERRAL_FEE_PREVIEW_REPORT("GET_REFERRAL_FEE_PREVIEW_REPORT", "销售佣金预览报告", false, "", null),
 
     // 亚马逊物流 (FBA) 报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-fba
     // 亚马逊物流库存报告
-    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档"),
-    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告"),
-    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告"),
-
-
+    GET_FBA_MYI_ALL_INVENTORY_DATA("GET_FBA_MYI_ALL_INVENTORY_DATA", "亚马逊物流管理库存 - 已存档", true, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryMongoDTO.class),
+    GET_RESERVED_INVENTORY_DATA("GET_RESERVED_INVENTORY_DATA", "亚马逊物流预留库存报告", true, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedCsvEntity.class),
+    GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", true, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningMongoDTO.class),
 
     ;
 
@@ -53,5 +59,40 @@ public enum AmazonReportRecordTypeEnum {
      */
     private final String name;
 
+    /**
+     * 是否直接保存mongo? true = 是， false=否
+     */
+    private final boolean directSaveMongo;
 
+    /**
+     * mongo表名
+     */
+    private final String mongoTableName;
+
+    /**
+     * mongo表实体
+     */
+    private final Class<? extends ReportSuperMongoDTO> mongoDTOClass;
+
+
+    /**
+     * 通过reportType字符串查询枚举类型
+     */
+    public static AmazonReportRecordTypeEnum getByRecordType(String reportType) {
+        return Stream.of(AmazonReportRecordTypeEnum.values())
+                .filter(e -> e.getRecordType().equalsIgnoreCase(reportType))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("找不到对应报告类型：reportType=" + reportType))
+                ;
+    }
+
+    /**
+     * 获取和检查mongo
+     */
+    public Class<?> getAndCheckMongoDTOClass() {
+        if(null == this.getMongoDTOClass()){
+            throw new ServiceException("未找到对应mongo表实体, recordType=" + this.recordType);
+        }
+        return this.mongoDTOClass;
+    }
 }

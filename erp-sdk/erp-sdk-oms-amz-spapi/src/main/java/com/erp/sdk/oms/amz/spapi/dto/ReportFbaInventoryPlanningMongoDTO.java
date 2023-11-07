@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.csv;
+package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class FbaInventoryPlanningCsvReportEntity {
+public class ReportFbaInventoryPlanningMongoDTO extends ReportSuperMongoDTO {
     @CsvBindByName(column = "snapshot-date")
     private String snapshotDate;
 
@@ -230,5 +230,5 @@ public class FbaInventoryPlanningCsvReportEntity {
     @CsvBindByName(column = "estimated-ais-365-plus-days")
     private String estimatedAis365PlusDays;
 
-    // Getter and setter methods for each field
+
 }
