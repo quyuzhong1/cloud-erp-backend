@@ -25,4 +25,11 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return
      */
     PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto);
+
+    /**
+     * 物流产品详情
+     * @param id
+     * @return
+     */
+    LogisticsProductDTO.ViewDTO view(String id);
 }

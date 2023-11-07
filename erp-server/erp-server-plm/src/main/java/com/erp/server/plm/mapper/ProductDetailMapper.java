@@ -177,6 +177,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     IPage<LogisticsProductDTO.PagingVO> logisticsProductPaging(Page query,@Param("params") LogisticsProductDTO.PagingParamDTO params,@Param("approveStatus") Integer approveStatus);
+
+    /**
+     * 获取基础数据
+     * @author yl
+     * @date 2023-11-07 14:52
+     * @param skuId
+     * @return com.erp.model.plm.dto.LogisticsProductDTO.ProductBaseInfoDTO
+     */
+    LogisticsProductDTO.ProductBaseInfoDTO getProductBaseInfo(@Param("skuId") String skuId);
 }
 
 

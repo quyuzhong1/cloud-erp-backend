@@ -13,10 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.server.plm.service.LogisticsProductService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -46,6 +43,18 @@ public class LogisticsProductController extends BaseController {
     public ApiResult<PagingVO<LogisticsProductDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.PagingVO> pagingVO = logisticsProductService.paging(dto);
         return success(pagingVO);
+
+    }
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    @GetMapping("/view")
+    public ApiResult<LogisticsProductDTO.ViewDTO> view(@RequestParam(value = "id")  String id) {
+        LogisticsProductDTO.ViewDTO viewDTO = logisticsProductService.view(id);
+        return success(viewDTO);
 
     }
 }

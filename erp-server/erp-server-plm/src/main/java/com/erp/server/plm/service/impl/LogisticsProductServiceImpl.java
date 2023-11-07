@@ -12,9 +12,14 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -22,11 +27,14 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.LogisticsProductService;
+import com.erp.server.plm.service.ProductCustomsService;
+import com.erp.server.plm.service.ProductLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +54,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private BomSkuService bomSkuService;
 
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+
+    @Resource
+    private ProductCustomsService productCustomsService;
+
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -57,6 +71,31 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<LogisticsProductDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
+    }
+
+
+    @Override
+    public LogisticsProductDTO.ViewDTO view(String skuId) {
+        LogisticsProductDTO.ViewDTO result = new LogisticsProductDTO.ViewDTO();
+        LogisticsProductDTO.ProductBaseInfoDTO productBaseInfo = baseMapper.getProductBaseInfo(skuId);
+        Integer salesStatus = productBaseInfo.getSalesStatus();
+        String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
+        productBaseInfo.setSalesStatusName(salesStatusName);
+        result.setProductBaseInfo(productBaseInfo);
+        LogisticsProductDTO.DeclareInfoDTO declareInfo = new LogisticsProductDTO.DeclareInfoDTO();
+        ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
+        if (Objects.nonNull(productLogistics)) {
+            BeanMapper.copy(productLogistics, declareInfo);
+        }
+        result.setDeclareInfo(declareInfo);
+
+        List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
+        List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(productCustomsList)) {
+            BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+        }
+        result.setCustomsList(customsList);
+        return result;
     }
 
     /**

@@ -1037,7 +1037,6 @@
             AND pd.update_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > pd.update_time
         </if>
-
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -1045,6 +1044,39 @@
             </foreach>
         </if>
         pd.create_time DESC
+    </select>
+    <!--获取物流产品基础数据-->
+    <select id="getProductBaseInfo" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ProductBaseInfoDTO">
+         SELECT
+             pd.sku_no ,
+             pd.name AS productName,
+             pd.images_url,
+             pi.category_id,
+             pi.spu_no,
+             pi.charge_name,
+             pi.brand_name,
+             pi.property AS propertyName,
+             pi.materials,
+             pi.usage_desc,
+             ps.sale_state AS salesStatus,
+             pp.product_size,
+             pp.gross_weight,
+             pp.net_weight,
+             pp.product_size,
+             pc.actual_tax_cost,
+             pc.actual_no_tax_cost,
+             (SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
+        FROM product_detail pd
+        LEFT JOIN product_info pi
+        ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_pack pp
+        ON pp.sku_id=pd.id AND pp.is_deleted= FALSE
+        LEFT JOIN product_sale ps
+        ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
+        LEFT JOIN product_cost pc
+        ON pc.sku_id=pd.id AND pc.is_deleted= FALSE
+        WHERE pd.is_deleted=FALSE AND pd.id=#{skuId}
+
     </select>
 
 </mapper>

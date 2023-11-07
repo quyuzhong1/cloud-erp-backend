@@ -111,12 +111,10 @@ public class LogisticsProductDTO {
         private String declareElement;
 
 
-
         /**
          * 报关型号
          */
         private String declareModel;
-
 
 
         /**
@@ -169,11 +167,11 @@ public class LogisticsProductDTO {
 
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO  extends SortDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 分类id
          */
-        private  List<String> categoryIdList;
+        private List<String> categoryIdList;
 
         /**
          * skulist
@@ -199,12 +197,12 @@ public class LogisticsProductDTO {
         /**
          * 原产国
          */
-        private String  sourceCountry;
+        private String sourceCountry;
 
         /**
          * 产品经理
          */
-        private List<String>  productChargeIdList;
+        private List<String> productChargeIdList;
 
         /**
          * spu
@@ -238,7 +236,6 @@ public class LogisticsProductDTO {
         private List<LocalDateTime> updateTimeList;
 
 
-
     }
 
 
@@ -247,90 +244,52 @@ public class LogisticsProductDTO {
     public static class ViewDTO {
 
 
-
-        private ProductBaseInfoDTO  productBaseInfoDTO;
-
         /**
-         *  id
+         * 产品基本信息
          */
-        private String id;
+        private ProductBaseInfoDTO productBaseInfo;
 
 
         /**
-         * sku id
+         * 报关信息
          */
-        private String skuId;
-
+        private DeclareInfoDTO declareInfo;
 
 
         /**
-         * 中文报关名
+         * 目的国海关编码
          */
-        private String declareChineseName;
-        /**
-         * 产品属性
-         */
-        private String productPropertyName;
+        private List<ProductCustomsDTO.ViewDTO> customsList;
 
 
-        /**
-         * 报关申报价
-         */
-        private BigDecimal declarePrice;
+    }
 
-        /**
-         * 报关申报价币种
-         */
-        private String declareCurrency;
+
+    /**
+     * 产品基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductBaseInfoDTO {
 
         /**
-         * 报关申报价币种符号
+         * sku no
          */
-        private String declareCurrencySymbol;
-
-        /**
-         * 目的国申报价
-         */
-        private BigDecimal destDeclarePrice;
-
-        /**
-         * 目的国申报价币种
-         */
-        private String destCurrency;
-
-        /**
-         * 目的国申报价币种符号
-         */
-        private String destCurrencySymbol;
-
-        /**
-         * 申报要素
-         */
-        private String declareElement;
-
+        private String skuNo;
 
 
         /**
-         * 报关型号
+         * 产品图片
          */
-        private String declareModel;
+        private String imagesUrl;
 
 
+        private String categoryId;
 
         /**
-         * 原产国
+         * 分类名
          */
-        private String sourceCountry;
-
-        /**
-         * sku 审核状态
-         */
-        private Integer approveStatus;
-
-        /**
-         * sku 审核状态名
-         */
-        private String approveStatusName;
+        private String categoryName;
 
         /**
          * 销售状态
@@ -342,44 +301,6 @@ public class LogisticsProductDTO {
          */
         private String salesStatusName;
 
-        /**
-         * 品牌名
-         */
-        private String brandName;
-
-
-
-        /**
-         * 产品经理id
-         */
-        private String chargeId;
-
-        /**
-         * 是否组合品
-         */
-        private Boolean isCombination;
-
-
-    }
-
-
-    /**
-     * 产品基础信息
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ProductBaseInfoDTO{
-
-        /**
-         * 分类名
-         */
-        private String categoryName;
-
-
-        /**
-         * sku no
-         */
-        private String skuNo;
 
         /**
          * spu
@@ -395,6 +316,160 @@ public class LogisticsProductDTO {
          * 产品经理
          */
         private String chargeName;
+
+
+        /**
+         * 品牌名
+         */
+        private String brandName;
+
+        /**
+         * 产品属性
+         */
+        private String propertyName;
+
+        /**
+         * ENA 吗
+         */
+        private String ena;
+
+        /**
+         * 不含税成本
+         */
+        private BigDecimal actualNoTaxCost;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal actualTaxCost;
+
+
+        /**
+         * 产品尺寸
+         */
+        private String productSize;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+
+        /**
+         * 材质
+         */
+        private String materials;
+
+        /**
+         * 用途
+         */
+        private String usageDesc;
+
+    }
+
+    /**
+     * 报关信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeclareInfoDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+        /**
+         * 中文报关名
+         */
+        private String declareChineseName;
+
+        /**
+         * 英文报关名
+         */
+        private String declareEnglishName;
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+
+        /**
+         * 报关申报价
+         */
+        private BigDecimal declarePrice;
+
+        /**
+         * 报关申报价币种
+         */
+        private String declareCurrency;
+
+
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+
+        /**
+         * 中国海关编码
+         */
+        private String customsCode;
+
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal destDeclarePrice;
+
+        /**
+         * 目的国申报价币种
+         */
+        private String destCurrency;
+
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+
+
+        /**
+         * 征免
+         */
+        private String exemption;
+
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+
+
+        /**
+         * 组合品申报类型
+         * split 拆分
+         * combine 合并
+         */
+        private String combinationDeclareType;
+
 
     }
 }
