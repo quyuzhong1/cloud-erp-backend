@@ -10,11 +10,11 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
-import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
-import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.MachineTypeEnum;
+import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -45,6 +44,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -83,6 +83,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
     private WarehouseLocationService warehouseLocationService;
+    @Autowired
+    private MachineInfoService machineInfoService;
+    @Autowired
+    private InventoryService inventoryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -408,7 +412,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //物流信息
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = fbaDeliveryLogisticsService.listByMainId(id);
         //发货单详情
-        List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainId(id);
+        List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(id));
         // 数据填充处理
         fillOne(data, fbaDeliveryLogisticsEntity, detailEntityList);
         // TODO 查询明细数据（如果有的话）
@@ -529,40 +533,43 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
     @Override
     public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids) {
-
-
+        //只有单据为待审核状态允许下推加工单
+        List<FbaDeliveryEntity> fbaDeliveryEntities = this.listByIds(ids);
+        Long aLong = fbaDeliveryEntities.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        if (aLong > 0) {
+            throw new ServiceException(ApiError.WAIT_SUBMIT_GENERATE_MACHINE);
+        }
 
         //只有组合SKU允许下推加工单
-        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByIds(ids);
-        Long count = entities.stream().filter(obj -> !obj.getIsCombination()).count();
-        if (count > 0) {
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listByMainIds(ids);
+        List<FbaDeliveryDetailEntity> entityList = entities.stream().filter(req -> Boolean.TRUE.equals(req.getIsCombination())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
         }
 
-        //单据为待审核状态
-        List<String> mainIds = entities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        Long aLong = entities.stream().filter(obj -> !obj.getIsCombination()).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.COMBINATION_GENERATE_MACHINE);
+        //校验是否已经下推过加工单
+        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
+        List<MachineInfoEntity> collect = machineInfoEntityList.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(req.getInvalidStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            throw new ServiceException(ApiError.EXIST_GENERATE_MACHINE_INFO);
         }
 
+        //查询发货单信息
         List<FbaDeliveryDTO.GenerateMachineView> viewList = baseMapper.generateMachineView(ids);
-
         //查询产品sku信息
         List<String> skuNos = viewList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-
         //查询仓位信息
         List<String> warehouseIds = viewList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
-
         //查询sku对应的bom版本记录
         List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
-
         //查询历史子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuNos);
-
         for (FbaDeliveryDTO.GenerateMachineView view : viewList) {
+            //事务类型
+            view.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
+            view.setWorkTypeName(WorkTypeEnum.ASSEMBLE.getName());
             //根据sku编号设置产品名称
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(new SkuVO());
             view.setProductName(skuVO.getSkuName());
@@ -571,19 +578,49 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(view.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             view.setWarehouseLocationName(warehouseLocationEntity.getName());
 
-            //查询子件信息
+            //获取到最新的版本
+            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view)).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
+            List<Integer> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> Integer.valueOf(req)).collect(Collectors.toList());
+            Integer bomVersion = Collections.max(bomVersionList);
             List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 
-            //获取到最新的版本
-            ProductBomInfoDTO.skuBomVersion bomVersion = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view)).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
-
+            //查询最新版本的sku子件信息
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo()) && req.getBomVersion().equals(bomVersion)).collect(Collectors.toList());
+            for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
+                FbaDeliveryDTO.SonItem sonItem = new FbaDeliveryDTO.SonItem();
+                //bom用量
+                sonItem.setQuantity(bomDTO.getQuantity());
+                //子件数量 = 组装数量 * bom用量
+                sonItem.setSonQty(view.getAssembleQty() * bomDTO.getQuantity());
+                //子件sku
+                sonItem.setSonSkuNo(bomDTO.getSkuNo());
+                //及时库存
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(view.getWarehouseId(), bomDTO.getSkuNo(), view.getWarehouseLocation());
+                sonItem.setCurInventoryQty(usableInventoryTotal);
+                sonItemList.add(sonItem);
+            }
             view.setSonItemList(sonItemList);
         }
-        return null;
+        return viewList;
     }
 
     @Override
     public Boolean fbaDeliveryGenerateMachineSave(List<FbaDeliveryDTO.GenerateMachineView> list) {
+
+        //一个发货单多个组合产品，生成一个组装单
+        Map<String, List<FbaDeliveryDTO.GenerateMachineView>> map = list.stream().collect(Collectors.groupingBy(FbaDeliveryDTO.GenerateMachineView::getMainId));
+
+        for (Map.Entry<String, List<FbaDeliveryDTO.GenerateMachineView>> entry : map.entrySet()) {
+            List<FbaDeliveryDTO.GenerateMachineView> value = entry.getValue();
+            MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
+            addDTO.setBillDate(LocalDate.now());
+            //事务类型默认拆卸
+            addDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
+            addDTO.setWarehouseId(entry.getKey());
+            addDTO.setType(MachineTypeEnum.OUTSOURCING.getCode());
+            List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            
+        }
         return null;
     }
 

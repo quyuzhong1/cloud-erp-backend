@@ -794,7 +794,8 @@ public enum ApiError implements Serializable {
     FBA_SHIPMENT_DETAIL_NOT_EXIST(99098,"货件详情不存在"),
     NOT_MAPPER_SKU(99099,"【{}】没有匹配到SKU的货件不允许下推发货单"),
     COMBINATION_GENERATE_MACHINE(99100,"只有组合SKU允许下推加工单"),
-
+    WAIT_SUBMIT_GENERATE_MACHINE(99101,"只有单据为待审核状态允许下推加工单"),
+    EXIST_GENERATE_MACHINE_INFO(99102,"已下推加工单"),
 
 
 
