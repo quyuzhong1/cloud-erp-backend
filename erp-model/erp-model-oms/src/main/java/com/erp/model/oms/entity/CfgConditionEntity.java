@@ -75,6 +75,9 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
     @TableField("value")
     private String value;
 
+    @TableField("index")
+    private Integer index;
+
 
 
 

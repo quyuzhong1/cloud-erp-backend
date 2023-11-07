@@ -11,7 +11,7 @@ import com.common.core.constant.EnumMessage;
  */
 public enum BooleanEnum implements EnumMessage {
     TRUE(Boolean.TRUE,"是"),
-    FALSE(Boolean.FALSE,"是"),
+    FALSE(Boolean.FALSE,"否"),
     ;
 
     private Boolean code;

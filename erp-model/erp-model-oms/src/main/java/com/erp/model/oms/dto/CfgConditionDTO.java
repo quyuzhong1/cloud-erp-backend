@@ -144,6 +144,8 @@ public class CfgConditionDTO implements Serializable {
          */
         private String param;
 
+        private Integer index;
+
 
     }
 
