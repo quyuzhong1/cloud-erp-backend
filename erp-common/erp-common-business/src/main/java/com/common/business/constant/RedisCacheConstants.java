@@ -47,7 +47,7 @@ public interface RedisCacheConstants {
     String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
 
     /**
-     * 亚马逊报告文档URL:MarketplaceId
+     * 亚马逊报告文档URL:{文档类型}:MarketplaceId
      */
-    String REDIS_AMAZON_REPORT_DOCUMENT_URL = "amazon-report-document-{}";
+    String REDIS_AMAZON_REPORT_DOCUMENT_URL = "amazon-report-document-{}-{}";
 }

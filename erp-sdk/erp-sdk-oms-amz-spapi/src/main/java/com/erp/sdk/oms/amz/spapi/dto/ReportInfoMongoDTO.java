@@ -1,4 +1,4 @@
-package com.erp.model.dmp;
+package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Accessors(chain = true)
 @NoArgsConstructor
-public class AmazonReportMongoDTO {
+public class ReportInfoMongoDTO {
 
     @Panno(findType = PannoEnum.IN, field = "marketplaceIds")
     private List<String> marketplaceIds;
@@ -63,18 +63,18 @@ public class AmazonReportMongoDTO {
     @Panno(findType = PannoEnum.EQ, field = "reportCancelStatus")
     private Integer reportCancelStatus;
 
-    public AmazonReportMongoDTO(String reportId) {
+    public ReportInfoMongoDTO(String reportId) {
         this.reportId = reportId;
     }
 
-    public static AmazonReportMongoDTO getReportId(String reportId) {
-        AmazonReportMongoDTO reportMongoDTO = new AmazonReportMongoDTO();
+    public static ReportInfoMongoDTO getReportId(String reportId) {
+        ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
         reportMongoDTO.setReportId(reportId);
         return reportMongoDTO;
     }
 
-    public static AmazonReportMongoDTO getReportDocumentUrlStatus(Integer status) {
-        AmazonReportMongoDTO reportMongoDTO = new AmazonReportMongoDTO();
+    public static ReportInfoMongoDTO getReportDocumentUrlStatus(Integer status) {
+        ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
         reportMongoDTO.setReportDocumentUrlStatus(status);
         return reportMongoDTO;
     }

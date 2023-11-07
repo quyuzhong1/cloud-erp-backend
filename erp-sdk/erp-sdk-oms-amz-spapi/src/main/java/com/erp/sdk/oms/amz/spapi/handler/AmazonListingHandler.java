@@ -2,9 +2,6 @@ package com.erp.sdk.oms.amz.spapi.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -16,23 +13,20 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
-import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.csv.ListingCsvReportEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemAttributes;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensions;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensionsByMarketplace;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
-import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,9 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -76,16 +68,18 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
         // 亚马逊商品下载
         // 查询当前店铺是否有最新生成的报告文档url
-        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, marketplaceEnum.getMarketplaceId());
+        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL,
+                AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType(),
+                marketplaceEnum.getMarketplaceId());
         // 报表文档信息消费者
         String reportDocumentUrl = template.opsForValue().get(key);
-        if(ObjectUtils.isEmpty(reportDocumentUrl)) {
+        if (ObjectUtils.isEmpty(reportDocumentUrl)) {
             return Collections.emptyList();
         }
         List<PlatformAmazonListingDTO> resultList;
         try {
             // 下载报告信息
-            List<ListingCsvReportEntity> listingReoprtList = AmazonSpApiReportUtils.downloadAndParseListing(reportDocumentUrl);
+            List<ReportListingCsvEntity> listingReoprtList = AmazonSpApiReportUtils.downloadAndParseListing(reportDocumentUrl);
 
             // 返回下载源数据
             resultList = listingReoprtList.stream()

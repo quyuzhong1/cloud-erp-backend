@@ -27,15 +27,16 @@ public enum BusinessTypeEnum implements EnumMessage {
     AUTH("auth","授权", null),
     REFRESH_TOKEN("refresh_token","刷新token",null),
     FBA_SHIPMENT("fba_shipment","亚马逊FBA货件", SourceTypeEnum.FBA_SHIPMENT),
+    FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
     ;
 
     @JsonValue
     @EnumValue
-    private String code;
+    private final String code;
 
-    private String name;
+    private final String name;
 
-    private SourceTypeEnum sourceType;
+    private final SourceTypeEnum sourceType;
 
 
 

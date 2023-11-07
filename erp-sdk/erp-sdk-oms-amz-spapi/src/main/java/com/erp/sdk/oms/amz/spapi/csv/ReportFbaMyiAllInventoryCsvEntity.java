@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class FbaMyiAllInventoryCsvReportEntity {
+public class ReportFbaMyiAllInventoryCsvEntity {
     @CsvBindByName(column = "sku")
     private String sku;
 

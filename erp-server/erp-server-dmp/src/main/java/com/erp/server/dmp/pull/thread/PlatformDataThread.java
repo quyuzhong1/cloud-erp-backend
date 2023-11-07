@@ -10,13 +10,15 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.AmazonReportMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
@@ -109,7 +111,7 @@ public class PlatformDataThread {
      * 查询报告文档的URL并推送到redis
      */
     @Transactional(rollbackFor = Exception.class)
-    public void findUrlAndSend(String tableName, AmazonReportMongoDTO report) throws Exception{
+    public void findUrlAndSend(String tableName, ReportInfoMongoDTO report) throws Exception{
         if (StringUtils.isBlank(report.getReportDocumentUrl()) || 1 == report.getReportDocumentUrlStatus()) {
             return;
         }
@@ -121,17 +123,30 @@ public class PlatformDataThread {
                     report.getReportId());
             return;
         }
+        // 当前报告的类型
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(report.getReportType());
+
         //查询当前报表ID的文档链接
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
         ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
         report.setReportDocumentUrl(reportDocument.getUrl());
         report.setReportDocumentUrlStatus(1);
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(report), MapUtil.class);
-        AmazonReportMongoDTO updateDto = new AmazonReportMongoDTO(report.getReportId());
-        mongoService.updateMongoData(updateDto, mapUtil, tableName, AmazonReportMongoDTO.class);
-        // 添加到缓存
-        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, marketplaceEnum.getMarketplaceId());
-        template.opsForList().leftPush(key, report.getReportDocumentUrl());
+        ReportInfoMongoDTO updateDto = new ReportInfoMongoDTO(report.getReportId());
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, ReportInfoMongoDTO.class);
+
+        if(!recordTypeEnum.isDirectSaveMongo()){
+            // 添加到缓存
+            String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, report.getReportType(), marketplaceEnum.getMarketplaceId());
+            template.opsForList().leftPush(key, report.getReportDocumentUrl());
+        } else {
+            // 下载文档内容
+            List<?> downloadList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getAndCheckMongoDTOClass());
+            // 直接保存mongo
+            if(CollectionUtil.isNotEmpty(downloadList)){
+                mongoService.saveMongoDataMult(downloadList, recordTypeEnum.getMongoTableName());
+            }
+        }
     }
 
     /**
@@ -144,18 +159,18 @@ public class PlatformDataThread {
             return;
         }
         // 转换
-        List<AmazonReportMongoDTO> sourceList = reportList.stream()
+        List<ReportInfoMongoDTO> sourceList = reportList.stream()
                 .map(this::initAmazonReportMongoDTO)
                 // 只保存已完成的报表
                 .filter(e -> Report.ProcessingStatusEnum.DONE.getValue().equalsIgnoreCase(e.getProcessingStatus()))
                 .collect(Collectors.toList());
         // 新增报表
-        List<AmazonReportMongoDTO> insertList = new ArrayList<>();
+        List<ReportInfoMongoDTO> insertList = new ArrayList<>();
 
         String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT;
-        for (AmazonReportMongoDTO sourceReport : sourceList) {
-            AmazonReportMongoDTO reportMongoDTO = AmazonReportMongoDTO.getReportId(sourceReport.getReportId());
-            List<AmazonReportMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, tableName, AmazonReportMongoDTO.class);
+        for (ReportInfoMongoDTO sourceReport : sourceList) {
+            ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(sourceReport.getReportId());
+            List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, tableName, ReportInfoMongoDTO.class);
             if (CollectionUtil.isEmpty(mongoData)) {
                 insertList.add(sourceReport);
             }
@@ -168,8 +183,8 @@ public class PlatformDataThread {
     /**
      * 转换mongo的DTO
      */
-    private AmazonReportMongoDTO initAmazonReportMongoDTO(Report report) {
-        return new AmazonReportMongoDTO()
+    private ReportInfoMongoDTO initAmazonReportMongoDTO(Report report) {
+        return new ReportInfoMongoDTO()
                 .setMarketplaceIds(report.getMarketplaceIds())
                 .setReportId(report.getReportId())
                 .setReportType(report.getReportType())

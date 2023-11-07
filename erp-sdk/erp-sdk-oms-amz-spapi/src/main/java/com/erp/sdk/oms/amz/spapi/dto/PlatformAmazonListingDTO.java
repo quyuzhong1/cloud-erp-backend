@@ -4,7 +4,7 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ListingCsvReportEntity;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,11 +23,11 @@ import java.time.format.DateTimeFormatter;
 @NoArgsConstructor
 public class PlatformAmazonListingDTO extends CleanBaseDTO {
 
-    private ListingCsvReportEntity reportEntity;
+    private ReportListingCsvEntity reportEntity;
 
     private String shopId;
 
-    public PlatformAmazonListingDTO(ListingCsvReportEntity reportEntity, ShopInfoEntity shopInfoEntity) {
+    public PlatformAmazonListingDTO(ReportListingCsvEntity reportEntity, ShopInfoEntity shopInfoEntity) {
         this.reportEntity = reportEntity;
         this.shopId = shopInfoEntity.getId();
     }
@@ -37,7 +37,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      */
     public static PlatformProductDTO convertDTO(PlatformAmazonListingDTO dto) {
         // 原商品信息
-        ListingCsvReportEntity sourceEntity = dto.getReportEntity();
+        ReportListingCsvEntity sourceEntity = dto.getReportEntity();
 
         // 图片默认
         String imageUrl = sourceEntity.getImageUrl();

@@ -1,7 +1,8 @@
-package com.erp.sdk.oms.amz.spapi.csv;
+package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 
@@ -9,8 +10,9 @@ import lombok.NoArgsConstructor;
  * 亚马逊物流预留库存报告 实体
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ReservedCsvReportEntity {
+public class ReportReservedEntity extends ReportSuperMongoDTO {
     @CsvBindByName(column = "sku")
     private String sku;
 
