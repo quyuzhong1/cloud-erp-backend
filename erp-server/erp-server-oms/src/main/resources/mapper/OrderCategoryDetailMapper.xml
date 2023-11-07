@@ -17,4 +17,16 @@
         <result column="main_id" property="mainId" />
     </resultMap>
 
+
+    <select id="listOrderCategory" resultType="com.erp.model.oms.dto.OrderCategoryDetailDTO$ListDTO">
+        SELECT
+            ocd.id,
+            ocd.name,
+            oc.disabled
+        FROM  order_category_detail ocd
+        INNER JOIN order_category oc
+        ON oc.id=ocd.main_id and oc.is_deleted=FALSE
+        WHERE ocd.is_deleted=FALSE
+    </select>
+
 </mapper>

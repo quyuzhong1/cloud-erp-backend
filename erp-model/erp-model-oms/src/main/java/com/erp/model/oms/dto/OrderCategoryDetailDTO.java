@@ -46,4 +46,24 @@ public class OrderCategoryDetailDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        private String id;
+
+        /**
+         * 明细名
+         */
+        private String name;
+
+
+        private Boolean disabled;
+
+
+    }
+
+
+
 }

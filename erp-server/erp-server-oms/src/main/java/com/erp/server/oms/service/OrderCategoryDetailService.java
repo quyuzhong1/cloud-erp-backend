@@ -55,4 +55,11 @@ public interface OrderCategoryDetailService extends SuperService<OrderCategoryDe
      * @return java.util.List<com.erp.model.oms.entity.OrderCategoryDetailEntity>
      */
     List<OrderCategoryDetailEntity> listDbByMainId(String id);
+
+
+    /**
+     * 订单分类列表
+     * @return
+     */
+    List<OrderCategoryDetailDTO.ListDTO> listOrderCategory();
 }

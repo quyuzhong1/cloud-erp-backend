@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.OrderCategoryDTO;
+import com.erp.model.oms.dto.OrderCategoryDetailDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
@@ -57,8 +58,8 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<OrderCategoryDetailEntity>> list() {
-        List<OrderCategoryDetailEntity> list = orderCategoryDetailService.list();
+    public ApiResult<List<OrderCategoryDetailDTO.ListDTO>> list() {
+        List<OrderCategoryDetailDTO.ListDTO> list = orderCategoryDetailService.listOrderCategory();
         return success(list);
     }
 

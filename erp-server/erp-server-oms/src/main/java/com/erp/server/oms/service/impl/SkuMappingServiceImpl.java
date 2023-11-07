@@ -149,7 +149,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
         List<ListingInfoEntity> list = listingInfoService.list();
         if (platform.equals(type)) {
-            String key = DictBasicTypeEnum.PLATFORM.getType();
+            String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
             List<ShopInfoEntity> shopInfoList = shopInfoService.list();
             SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService);
@@ -692,6 +692,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingEntity> list = this.lambdaQuery().
+                ne(StringUtils.isNotBlank(id),SkuMappingEntity::getId,id).
                 eq(SkuMappingEntity::getWarehouseId, warehouseId).
                 eq(SkuMappingEntity::getProductSkuId, skuId).
                 eq(SkuMappingEntity::getType, RuleTypeEnum.WAREHOUSE).list();

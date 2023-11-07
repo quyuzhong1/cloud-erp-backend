@@ -66,7 +66,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
             return Boolean.TRUE;
         }
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = new ArrayList<>();
-        for (String categoryId: categoryIdList) {
+        for (String categoryId : categoryIdList) {
             SoB2cRefCategoryEntity categoryEntity = new SoB2cRefCategoryEntity();
             categoryEntity.setCategoryId(categoryId);
             categoryEntity.setSoB2cId(mainId);
@@ -79,8 +79,32 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         String oldValue = categoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
         String newValue = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
-        operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]",commonService.getUserInfo().getUserName(),soB2cEntity.getCode(),oldValue,newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(),"编辑操作");
+        operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
         return update;
+    }
+
+    @Override
+    public List<SoB2cRefCategoryEntity> listCategoryIdList(List<String> categoryIdList) {
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoB2cRefCategoryEntity::getCategoryId, categoryIdList).list();
+    }
+
+    /**
+     * 根据分类id 删除
+     *
+     * @param categoryIds
+     * @return void
+     * @author yl
+     * @date 2023-11-07 11:51
+     */
+    @Override
+    public void removeByCategoryIds(List<String> categoryIds) {
+        if (CollectionUtils.isEmpty(categoryIds)) {
+            return;
+        }
+        this.lambdaUpdate().in(SoB2cRefCategoryEntity::getCategoryId, categoryIds).remove();
     }
 
 
@@ -89,18 +113,18 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(SoB2cRefCategoryEntity::getSoB2cId,mainIds).list();
+        return lambdaQuery().in(SoB2cRefCategoryEntity::getSoB2cId, mainIds).list();
     }
 
     @Override
     public Boolean deleteByMainIds(List<String> mainIds) {
-        return lambdaUpdate().in(SoB2cRefCategoryEntity::getSoB2cId,mainIds).remove();
+        return lambdaUpdate().in(SoB2cRefCategoryEntity::getSoB2cId, mainIds).remove();
     }
 
     /**
      * 数据处理
      */
-    private void handleCategory (List<SoB2cRefCategoryEntity> soB2cRefCategoryList) {
+    private void handleCategory(List<SoB2cRefCategoryEntity> soB2cRefCategoryList) {
         if (CollectionUtils.isEmpty(soB2cRefCategoryList)) {
             return;
         }
