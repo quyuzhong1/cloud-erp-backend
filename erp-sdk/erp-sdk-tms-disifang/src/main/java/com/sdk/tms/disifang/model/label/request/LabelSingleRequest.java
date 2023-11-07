@@ -16,12 +16,12 @@ import java.util.List;
  */
 @Data
 @Builder
-public class LabelRequest implements Serializable {
+public class LabelSingleRequest implements Serializable {
     /**
      * 请求单号（支持4PX单号、客户单号和面单号）
      */
     @JSONField(name = "request_no")
-    private List<String> requestNo;
+    private String requestNo;
     /**
      * 物流产品代码
      */

@@ -8,14 +8,14 @@ import java.io.Serializable;
 
 /**
  * @author zdy
- * @ClassName PickupInfo
- * @description: TODO
+ * @ClassName PickUpInfo
+ * @description: 揽收地址信息
  * @date 2023年11月02日
  * @version: 1.0
  */
 @Data
 @Builder
-public class PickupInfo implements Serializable {
+public class PickUpInfo implements Serializable {
     /**
      *联系人名称
      * 是
