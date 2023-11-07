@@ -1408,7 +1408,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             labelDTO.setIsManual(data.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode()));
             if (CollectionUtils.isNotEmpty(soB2cRefList)) {
                 //合并
-                long mergeCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()) || obj.getSourceId().equals(data.getId()))
+                long mergeCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
                         && SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())
                         && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(data.getInvalidStatus())
                 ).count();
@@ -1416,7 +1416,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_MERGE.getCode());
                 }
                 //拆分
-                long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()) || obj.getSourceId().equals(data.getId()))
+                long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
                         && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())
                         && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(data.getInvalidStatus())
                 ).count();
