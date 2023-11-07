@@ -262,7 +262,6 @@ public class SupplierDTO implements Serializable {
         /**
          * 公司网址
          */
-
         private String companyWebsite;
 
 
@@ -345,6 +344,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 分类id
          */
+        @NotBlank(message = "供应商分类不能为空")
         private String categoryId;
 
         /**

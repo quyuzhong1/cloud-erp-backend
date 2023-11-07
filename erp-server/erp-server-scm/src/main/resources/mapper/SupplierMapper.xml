@@ -189,6 +189,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
+        create_time DESC
     </select>
     <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT

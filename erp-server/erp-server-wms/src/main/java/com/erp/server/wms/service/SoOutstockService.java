@@ -337,4 +337,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
      */
     List<SoOutstockEntity> listByTrackNo(String trackNo);
+    /**
+     * @description: 查询总数量
+     * @author Will
+     * @date: 2023/11/1 14:17
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
 }

@@ -95,6 +95,7 @@ public class ProcessDefinitionController extends BaseController {
     /**
      * 流程定义复制
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程定义复制:流程定义ID={id}")
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated ProcessDefinitionDTO.CopyDTO dto){
         // 复制流程定义

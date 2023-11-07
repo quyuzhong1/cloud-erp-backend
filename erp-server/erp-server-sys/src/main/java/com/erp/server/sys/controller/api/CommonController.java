@@ -1,8 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.google.common.collect.Maps;
@@ -23,6 +26,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
+@LogSystemModule("SYS通用")
 @RequestMapping("common")
 public class CommonController extends BaseController {
 
@@ -35,6 +39,7 @@ public class CommonController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping("/upload")
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
@@ -46,12 +51,13 @@ public class CommonController extends BaseController {
     }
 
     /**
-     * 删除 上传utl
+     * 删除上传utl
      *
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除上传:路径={url}")
     @PostMapping("/deleteUrl")
     public ApiResult deleteUrl(@RequestParam("url") String url) {
         if (StringUtils.isNotBlank(url)) {

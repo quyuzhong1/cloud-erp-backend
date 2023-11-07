@@ -46,6 +46,29 @@ public class SoOutstockDTO implements Serializable {
     }
 
     /**
+     * 数据合计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 实际数量
+         */
+        private Integer actualTotalQty;
+
+        /**
+         * 应发数量
+         */
+        private Integer planTotalQty;
+
+        /**
+         * 价税合计（CNY）
+         */
+        private BigDecimal totalTaxAmount;
+    }
+
+    /**
      * 分页数据
      */
     @Data
@@ -287,6 +310,16 @@ public class SoOutstockDTO implements Serializable {
         private BigDecimal price;
 
         /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
          * 销售单价（本位币）
          */
         private BigDecimal cnyPrice;
@@ -304,7 +337,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 价税合计（本位币）
          */
-        private BigDecimal cnyTaxAmount;
+        private BigDecimal allAmountLocalCurrency;
 
         /**
          * 币种
@@ -393,7 +426,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 出库日期
          */
-        private List<LocalDate> actualDeliveryDateList;
+        private List<LocalDate> billDateList;
 
         /**
          * 出库仓库
@@ -602,6 +635,13 @@ public class SoOutstockDTO implements Serializable {
 
         @NotBlank(message = "来源明细不能为空")
         private String sourceDetailId;
+
+        /**
+         * 销售订单明细id
+         */
+        @NotBlank(message = "销售订单明细不能为空")
+        private String soDetailId;
+
 
         @NotBlank(message = "sku不能为空")
         private String skuId;

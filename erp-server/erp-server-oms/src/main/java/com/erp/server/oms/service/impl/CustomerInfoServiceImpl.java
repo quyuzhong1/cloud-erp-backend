@@ -868,13 +868,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count != customerList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        if (disabled) {
-            //客户是否有使用
-            Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
-            if (isUseCustomer) {
-                throw new ServiceException(ApiError.ERROR_92044);
-            }
-        }
         customerList.forEach(d -> d.setDisabled(disabled));
         //添加日志
         List<Pair<String, String>> pairList = customerList.stream().
@@ -949,9 +942,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
-        queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
         if (StringUtils.isNotBlank(permissionSql)) {
-            queryWrapper.last(permissionSql);
+            queryWrapper.last(permissionSql +" ORDER BY create_time DESC");
+        }else{
+            queryWrapper.last(" ORDER BY create_time DESC");
         }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
@@ -1408,8 +1402,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(customerNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus,ApproveStatusEnum.APPROVE).
-                in(CustomerInfoEntity::getName,customerNameList).list();
+        return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
+                in(CustomerInfoEntity::getName, customerNameList).list();
     }
 
     @Override
@@ -1661,7 +1655,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             startDTO.setBusinessCode(obj.getCode());
             startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
             startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
+            //客户审核的时候流程发起人修改为销售员，如果没有销售员再使用当前登录人
+            if (StringUtils.isNotBlank(obj.getSellerId())) {
+                startDTO.setUserId(obj.getSellerId());
+            } else {
+                startDTO.setUserId(userInfo.getUid());
+            }
             startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
             resultList.add(startDTO);
         });

@@ -163,6 +163,7 @@ public class SysLoggingAspect {
         Object obj = null;
         try {
             log.debug("Sys Logging doAround.before");
+            log.warn("Sys Logging doAround.before");
             MethodSignature signature = (MethodSignature) joinPoint.getSignature();
             Method method = signature.getMethod();
             LogAction logAction = method.getAnnotation(LogAction.class);
@@ -231,9 +232,14 @@ public class SysLoggingAspect {
                 return "";
             }
             Object paramsObj = args[0];
+            // 文件上传处理
+            if (paramsObj instanceof MultipartFile[]){
+                return "";
+            }
             // 兼容接口product/plan/uploadImageUrl
-            if (paramsObj instanceof MultipartFile && "uploadImageUrl".equalsIgnoreCase(joinPoint.getSignature().getName())){
-                return logAction.desc().replace("{id}", args[1].toString());
+            if (paramsObj instanceof MultipartFile){
+                MultipartFile file = (MultipartFile) paramsObj;
+                return logAction.desc().replace("{name}", Objects.requireNonNull(file.getOriginalFilename()));
             }
             // 1:非数组请求参数处理
             if (!(paramsObj instanceof Collection)) {
@@ -294,7 +300,7 @@ public class SysLoggingAspect {
         if (logAction.value().checkIsBatchOperation(logAction.isBatchOperationStr())) {
             // 批量处理创建
             dtoList = constructBatchByIds(logAction, request, actionPath, requestParams, currentSysName, description);
-        } else if (0 != paramsArrays.length && (paramsArrays[0] instanceof Collection)) {
+        } else if (0 != paramsArrays.length && ((paramsArrays[0] instanceof Collection) || (paramsArrays[0] instanceof MultipartFile[])) ) {
             // 数组请求参数批量处理创建
             dtoList = constructBatchByParams(logAction, request, actionPath, requestParams, currentSysName, joinPoint);
         } else {
@@ -341,20 +347,37 @@ public class SysLoggingAspect {
                                                                        JoinPoint joinPoint
     ) {
         Object[] args = joinPoint.getArgs();
-        // 数组请求参数处理
-        return ((Collection<?>) args[0]).stream()
-                .map(e -> {
-                    Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
-                    // 将请求参数填充  {paramName1} {paramName2}
-                    String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
-                    // 初始化
-                    SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
-                    // 设置记录ID
-                    Object idObj = paramsMap.get(logAction.keyIdName());
-                    dto.setRecordId(null != idObj ? idObj.toString() : "");
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        if (args[0] instanceof Collection){
+            // 数组请求参数处理
+            return ((Collection<?>) args[0]).stream()
+                    .map(e -> {
+                        Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
+                        // 初始化
+                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        // 设置记录ID
+                        Object idObj = paramsMap.get(logAction.keyIdName());
+                        dto.setRecordId(null != idObj ? idObj.toString() : "");
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+        } else if (args[0] instanceof MultipartFile[]){
+            MultipartFile[] files = (MultipartFile[]) args[0];
+            // 数组请求参数处理
+            return Arrays.stream(files)
+                    .map(e -> {
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
+                        // 初始化
+                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            throw new ServiceException("未找到能解析的Collection");
+        }
+
+
     }
 
 
@@ -440,6 +463,10 @@ public class SysLoggingAspect {
         if (StringUtils.isBlank(idsKey)) {
             throw new ServiceException("未找到批量查询字段:" + idsKey);
         }
+        // 兼容非json参数
+        if (!JSONUtil.isTypeJSON(requestParams)){
+            return Collections.singletonList(requestParams);
+        }
         Object idsValueObj = new JSONObject(requestParams).get(idsKey);
         if (null == idsValueObj) {
             // 兼容旧单删除(单id删除)
@@ -450,8 +477,10 @@ public class SysLoggingAspect {
             String msg = StrUtil.format("未找到批量查询字段内容,key={}", idsKey);
             throw new ServiceException(msg);
         }
+        // 兼容非List
         if (!(idsValueObj instanceof List<?>)) {
-            throw new ServiceException("批量查询字段:" + idsKey);
+//            throw new ServiceException("批量查询字段:" + idsKey);
+            return Collections.singletonList(idsValueObj.toString());
         }
         List<String> idsResult = new LinkedList<>();
         for (Object o : (List<?>) idsValueObj) {
@@ -486,7 +515,10 @@ public class SysLoggingAspect {
      * @return 更新后的对象
      */
     private Object afterFindObj(ProceedingJoinPoint joinPoint, LogAction controllerLog, Object id) {
-        if (!LogActionEnum.UPDATE.equals(controllerLog.value())) {
+        if (!LogActionEnum.UPDATE.equals(controllerLog.value()) && !LogActionEnum.UPDATE_AND_SUBMIT.equals(controllerLog.value())) {
+            return null;
+        }
+        if (null == id){
             return null;
         }
         // 查询更新后的信息
@@ -500,6 +532,9 @@ public class SysLoggingAspect {
      */
     public Object beforeFindObj(JoinPoint joinPoint, LogAction controllerLog, Object id) {
         if (!controllerLog.value().hasCompare()) {
+            return null;
+        }
+        if (null == id){
             return null;
         }
         // 记录更新前后信息
@@ -613,6 +648,10 @@ public class SysLoggingAspect {
         if (!logAction.value().hasCompare()) {
             return "";
         }
+        if (null == original || null == updated){
+            throw new ServiceException("未找到对比请求详情前对象或请求详情后对象:请检查提交的keyIdName是否是id");
+        }
+
         // 查询需要记录修改的字段
         List<SysLogRecordFieldListDTO> fieldList = sysLogRecordFieldFeign.list(new SysLogRecordFieldDTO.ListDTO(Collections.singletonList(classPath)));
         if (CollectionUtils.isEmpty(fieldList)) {

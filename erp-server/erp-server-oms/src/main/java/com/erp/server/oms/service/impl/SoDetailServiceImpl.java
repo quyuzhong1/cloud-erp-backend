@@ -1465,6 +1465,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         LambdaUpdateWrapper<SoDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SoDetailEntity::getIsClose, Boolean.TRUE);
+        updateWrapper.set(SoDetailEntity::getDiscountAmount,BigDecimal.ZERO);
         updateWrapper.in(SoDetailEntity::getId, closeSoDetailIdList);
         this.update(updateWrapper);
 

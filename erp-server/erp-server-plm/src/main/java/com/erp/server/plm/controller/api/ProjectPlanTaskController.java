@@ -88,7 +88,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 取消排期
      */
-    @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期", keyIdName = "productId")
     @PostMapping("/cancel")
     public ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.cancelSchedule(dto);

@@ -10,6 +10,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -481,13 +483,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
 
         List<String> mainIds = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+
         //这个就是变更的详情
         List<SoChangeDetailEntity> soChangeDetailList = this.listDetailByMainIds(mainIds);
         if (CollectionUtils.isNotEmpty(soChangeDetailList)) {
             SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
             //终止
             SoChangeTypeEnum terminate = SoChangeTypeEnum.TERMINATE;
-
             //添加
             SoChangeTypeEnum addType = SoChangeTypeEnum.ADD;
 
@@ -534,34 +536,42 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 } else {
                     soDetail.setId(soDetailId);
                 }
-
                 saveOrUpdateList.add(soDetail);
             }
 
 
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
-                this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap);
-                List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
-                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-                // 供应商id集合
-                List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-                List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-                if (CollUtil.isNotEmpty(supplierIds)) {
-                    purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-                }
-                Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
-                for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
-                    // 金额信息加上折扣额计算
-                    String soId = soEntry.getKey();
-                    SoInfoEntity soInfoEntity = soInfoMap.get(soId);
-                    //SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
-                    for (SoDetailEntity item : saveOrUpdateList) {
-                        // 计算毛利成本
-                        soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
-                    }
-                }
+                soDetailService.saveOrUpdateBatch(saveOrUpdateList);
             }
-            soDetailService.saveOrUpdateBatch(saveOrUpdateList);
+            //销售订单详情
+            List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(soIds);
+            //去除关闭的就是终止的 不用分摊折扣额
+            soDetailList = soDetailList.stream().filter(s -> !s.getIsClose()).collect(Collectors.toList());
+            List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+            List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(supplierIds)) {
+                purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
+            }
+            for (SoInfoEntity soInfo : soInfoList) {
+                String soInfoId = soInfo.getId();
+                Boolean isTax = soInfo.getIsTax();
+                //总折扣额
+                BigDecimal discountAmount = soInfo.getDiscountAmount();
+                List<SoDetailEntity> handSoDetailList = soDetailList.stream().filter(s -> s.getMainId().equals(soInfoId)).collect(Collectors.toList());
+                // 金额折扣处理
+                SoUtils.handleDetailAmount(isTax, discountAmount, handSoDetailList);
+                LocalDate billDate = soInfo.getBillDate();
+                for (SoDetailEntity item : handSoDetailList) {
+                    // 计算毛利成本
+                    soDetailService.calCost(purchasePriceList, skuList, billDate, item, Boolean.FALSE);
+                }
+                soDetailService.updateBatchById(handSoDetailList);
+            }
+
+
+
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
         }
@@ -578,10 +588,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @author yl
      * @date 2023-10-16 16:05
      */
-    public void handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap) {
+    public List<SoDetailEntity> handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap, List<String> closeSoDetailIdList) {
         if (CollectionUtils.isEmpty(saveOrUpdateList)) {
-            return;
+            return Collections.emptyList();
         }
+        List<SoDetailEntity> newList = new ArrayList<>();
         //根据销售订单分组
         Map<String, List<SoDetailEntity>> map = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
         for (Map.Entry<String, List<SoDetailEntity>> item : map.entrySet()) {
@@ -590,17 +601,23 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (Objects.isNull(soInfo)) {
                 continue;
             }
-
             List<SoDetailEntity> soDetailList = item.getValue();
+            List<String> updateIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+            updateIdList.addAll(closeSoDetailIdList);
+            List<SoDetailEntity> soDbDetailList = soDetailService.listSoDetailByMainId(soId);
+            //表示只有只有未修改的
+            soDbDetailList = soDbDetailList.stream().filter(s -> !updateIdList.contains(s.getId())).collect(Collectors.toList());
             //是否含税
             Boolean isTax = soInfo.getIsTax();
             //折扣总额
             BigDecimal discountAmount = soInfo.getDiscountAmount();
+            soDetailList.addAll(soDbDetailList);
 
-            SoUtils.handleDetailAmount(isTax,discountAmount,soDetailList);
+            SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+            newList.addAll(soDetailList);
+
         }
-
-
+        return newList;
     }
 
     private List<SoChangeDetailEntity> listDetailByMainIds(List<String> mainIds) {

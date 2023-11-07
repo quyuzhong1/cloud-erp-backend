@@ -117,11 +117,11 @@ public class SysTaskVO implements Serializable {
 
     private List<DocsDTO> deliveryDocsList;
 
+    //   @NotBlank(message = "字段配置类型 不能为空")
+    //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
     /**
      * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
      */
-    //   @NotBlank(message = "字段配置类型 不能为空")
-    //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
     private String fieldConfigType;
 
 

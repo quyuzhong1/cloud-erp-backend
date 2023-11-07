@@ -81,6 +81,17 @@ public class ExportInventoryExcelDTO implements Serializable {
     @ExcelProperty(value = "待检库存", index = 10)
     private Integer waitqcQty;
 
+    /**
+     * 金蝶库存
+     */
+    @ExcelProperty(value = "金蝶库存", index = 11)
+    private String kingdeeQty;
+
+    /**
+     * 库存差异
+     */
+    @ExcelProperty(value = "库存差异", index = 12)
+    private String diffQty;
 
 
 }

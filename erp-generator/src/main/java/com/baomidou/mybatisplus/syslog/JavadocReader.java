@@ -54,11 +54,17 @@ public class JavadocReader {
         if (null == superclass) {
             return map;
         }
+        if ("com.common.core.entity.BaseEntity".equalsIgnoreCase(superclass.getName())){
+            return map;
+        }
+        if (" com.baomidou.mybatisplus.extension.activerecord.Model".equalsIgnoreCase(superclass.getName())){
+            return map;
+        }
         if ("java.lang.Object".equalsIgnoreCase(superclass.getName())) {
             return map;
         }
         String superJavaPath = parseJavaPath(superclass);
-        Map<String, String> superMap = readJavadoc("", superJavaPath, superclass);
+        Map<String, String> superMap = readJavadocWithSuperClass(detailKeyName, superJavaPath, superclass);
         map.putAll(superMap);
         return map;
     }
@@ -71,7 +77,7 @@ public class JavadocReader {
         ParameterizedType genericType = (ParameterizedType) field.getGenericType();
         Class<?> detailClass = (Class<?>) genericType.getActualTypeArguments()[0];
         String detailJavaClassPath = parseJavaPath(detailClass);
-        return readJavadoc(field.getName().concat("."), detailJavaClassPath, detailClass);
+        return readJavadocWithSuperClass(field.getName().concat("."), detailJavaClassPath, detailClass);
     }
 
     /**
@@ -138,7 +144,7 @@ public class JavadocReader {
                     if (javadocComment.isPresent()) {
                         JavadocDescription description = javadocComment.get().getDescription();
                         System.out.println("code=" + fieldName + ": " + description.toText().replace("\n", ""));
-                        map.put(fieldName, description.toText());
+                        map.put(detailKeyName.concat(fieldName), description.toText());
                     } else {
                         System.out.println("No Javadoc found for field: " + fieldName);
                     }

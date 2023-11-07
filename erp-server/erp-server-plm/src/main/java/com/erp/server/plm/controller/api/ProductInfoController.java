@@ -224,7 +224,7 @@ public class ProductInfoController extends BaseController {
     /**
      * 产品列表-更改对应数据
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "产品列表-更改对应数据")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品列表-更改对应数据", keyIdName = "productId")
     @PostMapping("/updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);

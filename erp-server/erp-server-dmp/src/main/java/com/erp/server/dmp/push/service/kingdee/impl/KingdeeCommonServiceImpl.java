@@ -239,9 +239,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
         //删除之前判断状态
-        this.updateApproved(apiUtils,platformEntity,map,type,KingdeeDocStatusEnum.REAPPROVE,Boolean.TRUE);
-        //删除
-        this.delete(apiUtils,platformEntity,map,type,number);
+        Boolean isDelete = this.updateApproved(apiUtils, platformEntity, map, type, KingdeeDocStatusEnum.REAPPROVE, Boolean.TRUE);
+        if (isDelete) {
+            //删除
+            this.delete(apiUtils,platformEntity,map,type,number);
+        }
     }
 
     @Override
@@ -664,7 +666,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             model = view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             if (isNeedError) {
-                return Boolean.TRUE;
+                return Boolean.FALSE;
             } else {
                 //操作失败
                 throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
