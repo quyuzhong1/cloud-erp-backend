@@ -77,7 +77,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单明细单"));
         List<FbaDeliveryDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         //原明细数据
-        List<FbaDeliveryDetailEntity> oldList = this.listByMainId(mainId);
+        List<FbaDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<FbaDeliveryDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -112,8 +112,8 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     }
 
     @Override
-    public List<FbaDeliveryDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(FbaDeliveryDetailEntity::getMainId, mainId).list();
+    public List<FbaDeliveryDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(FbaDeliveryDetailEntity::getMainId, mainIds).list();
     }
 
     /**
