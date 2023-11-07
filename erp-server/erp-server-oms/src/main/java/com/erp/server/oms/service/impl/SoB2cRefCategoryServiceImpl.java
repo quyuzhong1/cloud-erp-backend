@@ -1,17 +1,20 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cRefCategoryDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.SoB2cRefCategoryMapper;
-import com.erp.server.oms.service.OrderCategoryDetailService;
-import com.erp.server.oms.service.SoB2cRefCategoryService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -32,7 +35,16 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
 
     @Resource
     private OrderCategoryDetailService orderCategoryDetailService;
-    
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private SoB2cService soB2cService;
+
     @Override
     public Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId) {
         if (CollectionUtils.isEmpty(addList)) {
@@ -47,6 +59,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
 
     @Override
     public Boolean update(List<String> categoryIdList, String mainId) {
+        List<SoB2cRefCategoryEntity> categoryList = this.listByMainIds(Arrays.asList(mainId));
         //删除原有分类
         this.deleteByMainIds(Arrays.asList(mainId));
         if (CollectionUtils.isEmpty(categoryIdList)) {
@@ -61,7 +74,13 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         }
         //数据处理
         handleCategory(soB2cRefCategoryList);
-        return this.saveBatch(soB2cRefCategoryList);
+        boolean update = this.saveBatch(soB2cRefCategoryList);
+        //主表信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
+        String oldValue = categoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
+        String newValue = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
+        operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]",commonService.getUserInfo().getUserName(),soB2cEntity.getCode(),oldValue,newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(),"编辑操作");
+        return update;
     }
 
 
