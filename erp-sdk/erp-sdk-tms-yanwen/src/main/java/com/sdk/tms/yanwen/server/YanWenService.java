@@ -77,12 +77,12 @@ public class YanWenService {
     /**
      *  取消订单
      */
-    public YanWenResponse cancelOrder(@Valid YanWenCancelOrderRequest request){
+    public YanWenResponse<String> cancelOrder(@Valid YanWenCancelOrderRequest request){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CANCEL,paramsMap);
-        YanWenResponse yanWenResponseDTO;
+        YanWenResponse<String> yanWenResponseDTO;
         try {
-            yanWenResponseDTO =  JSONObject.parseObject(response,YanWenResponse.class);
+            yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
         }catch (JSONException e){
             yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
         }

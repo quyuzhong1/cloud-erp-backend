@@ -178,7 +178,7 @@ public class YanWenCreateWayBillRequest {
 
         //商品信息（支持 5 组）
         @Valid
-        @NotNull
+        @NotNull(message = "商品信息不能为空")
         private List<Product> productList;
 
         @Data

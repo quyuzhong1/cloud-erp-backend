@@ -1,27 +1,20 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.PlatformType;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsAuthService;
-//import com.sdk.tms.disifang.model.base.ResponseMsg;
-//import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.disifang.service.DsfShipperService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Objects;
 
 /**
  * @author zdy
@@ -76,7 +69,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult<String> cancelOrder(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 }

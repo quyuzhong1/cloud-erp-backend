@@ -11,6 +11,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
@@ -80,7 +81,7 @@ public class LogisticsSaleChannelController extends BaseController {
     public ApiResult test() {
         LogisticsService service = logisticsRegistry.getHandler(PlatformDictEnum.SDF.getCode());
         LogisticsQueryBaseVO logisticsQueryVO = new LogisticsQueryBaseVO();
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(logisticsQueryVO);
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(new LogisticsAuthEntity());
         return success();
     }
 
