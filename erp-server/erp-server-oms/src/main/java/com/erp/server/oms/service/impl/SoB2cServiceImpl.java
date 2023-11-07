@@ -463,7 +463,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             msg = "原分类：【{}】，更新分类：【{}】。";
         }
         if (SoB2cCategoryTypeEnum.ENUM_DELETE.equals(typeEnum)) {
-            deleteCategory(id);
+            deleteSelectCategory(id,categoryIdList);
             msg = "原分类：【{}】，删除分类。";
         }
         // 记录操作日志
@@ -1327,6 +1327,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private void deleteCategory(String mainId) {
         soB2cRefCategoryService.deleteByMainIds(Arrays.asList(mainId));
+    }
+
+    /**
+     * @param mainId
+     * @description: 删除选择分类
+     * @author Will
+     * @date: 2023/8/22 14:30
+     */
+    private void deleteSelectCategory(String mainId,List<String> categoryIdList) {
+        soB2cRefCategoryService.deleteByMainIdAndCategoryId(mainId,categoryIdList);
     }
 
     /**

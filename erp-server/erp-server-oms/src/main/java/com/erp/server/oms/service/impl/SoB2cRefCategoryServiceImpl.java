@@ -107,6 +107,14 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         this.lambdaUpdate().in(SoB2cRefCategoryEntity::getCategoryId, categoryIds).remove();
     }
 
+    @Override
+    public void deleteByMainIdAndCategoryId(String mainId, List<String> categoryIdList) {
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return ;
+        }
+        this.lambdaUpdate().eq(SoB2cRefCategoryEntity::getSoB2cId,mainId).in(SoB2cRefCategoryEntity::getCategoryId,categoryIdList).remove();
+    }
+
 
     @Override
     public List<SoB2cRefCategoryEntity> listByMainIds(List<String> mainIds) {
