@@ -14,21 +14,22 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
-public class LogisticsQueryVO implements Serializable {
+public class LogisticsQueryBaseVO implements Serializable {
     /**
      * 发货单号
      */
     private String deliveryNo;
     /**
-     * 运输单号
-     */
-    List<String> transportNoList;
-    /**
      * 运单号
+     */
+    String transportNo;
+    /**
+     * 跟踪号
      */
     List<String> trackNoList;
     /**
      * 授权信息
      */
     LogisticsAuthEntity logisticsAuthEntity;
+
 }

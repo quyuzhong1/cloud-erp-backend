@@ -1,16 +1,13 @@
 package com.erp.model.tms.vo.request;
 
 import com.erp.model.plm.entity.ProductLogisticsEntity;
-import lombok.Builder;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 
 @Data
-@Builder
 public class LogisticsProductVO extends ProductLogisticsEntity implements Serializable {
 
     //申报单价
@@ -24,4 +21,6 @@ public class LogisticsProductVO extends ProductLogisticsEntity implements Serial
 
     //商品链接
     private String url;
+
+
 }

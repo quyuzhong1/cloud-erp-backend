@@ -2,9 +2,9 @@ package com.erp.server.tms.handler;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.LogisticsService;
 
@@ -36,7 +36,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult<String> confirmOrder(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
@@ -46,7 +46,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult<String> cancelOrder(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
@@ -56,7 +56,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult<String> interceptOrder(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
@@ -76,7 +76,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult queryOrder(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
@@ -86,7 +86,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult getLabelUrl(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
@@ -96,17 +96,17 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult getTrack(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 
     /**
      * 渠道查询
      *
-     * @param logisticsQueryVO
+     * @param authEntity
      * @return
      */
-    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsQueryVO logisticsQueryVO) {
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity authEntity) {
         return ApiResult.error(-1, "功能未开放");
     }
 }

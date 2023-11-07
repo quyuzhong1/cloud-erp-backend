@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 public class ParceInfoVO {
 
     //是否带电 1:是 0:否
-    private Integer hasBattery;
+    private Boolean hasBattery;
 
     //币种代码传 USD,EUR,GBP,CNY,AUD,CAD;
     @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "币种代码有误")

@@ -4,7 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> confirmOrder(LogisticsQueryVO logisticsQueryVO);
+    ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 取消订单
@@ -47,7 +47,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> cancelOrder(LogisticsQueryVO logisticsQueryVO);
+    ApiResult<String> cancelOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 拦截订单
@@ -55,7 +55,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> interceptOrder(LogisticsQueryVO logisticsQueryVO);
+    ApiResult<String> interceptOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 更新订单
@@ -71,7 +71,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult queryOrder(LogisticsQueryVO logisticsQueryVO);
+    ApiResult queryOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 获取标签
@@ -79,7 +79,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult getLabelUrl(LogisticsQueryVO logisticsQueryVO);
+    ApiResult getLabelUrl(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 轨迹查询
@@ -87,7 +87,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult getTrack(LogisticsQueryVO logisticsQueryVO);
+    ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 渠道查询
@@ -95,5 +95,5 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsQueryVO logisticsQueryVO);
+    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsQueryBaseVO logisticsQueryVO);
 }

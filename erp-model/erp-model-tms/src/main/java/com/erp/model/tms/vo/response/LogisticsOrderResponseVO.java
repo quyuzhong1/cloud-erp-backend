@@ -1,5 +1,6 @@
 package com.erp.model.tms.vo.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -12,13 +13,14 @@ import java.io.Serializable;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
 public class LogisticsOrderResponseVO implements Serializable {
     /**
-     * 订单编号
+     * 运单号
      */
     String orderNo;
     /**
-     * 运单号
+     * 跟踪单号
      */
     String trackNo;
 }

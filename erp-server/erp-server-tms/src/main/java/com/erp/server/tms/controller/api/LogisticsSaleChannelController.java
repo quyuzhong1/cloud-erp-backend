@@ -12,7 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.LogisticsQueryVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
@@ -79,7 +79,7 @@ public class LogisticsSaleChannelController extends BaseController {
     @PostMapping("/test")
     public ApiResult test() {
         LogisticsService service = logisticsRegistry.getHandler(PlatformDictEnum.SDF.getCode());
-        LogisticsQueryVO logisticsQueryVO = new LogisticsQueryVO();
+        LogisticsQueryBaseVO logisticsQueryVO = new LogisticsQueryBaseVO();
         ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(logisticsQueryVO);
         return success();
     }

@@ -1,8 +1,7 @@
 package com.erp.model.tms.vo.request;
 
-import com.erp.model.plm.entity.ProductLogisticsEntity;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,7 +15,14 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
+@Builder
 public class LogisticsOrderVO implements Serializable {
+
+    //渠道id
+    private String channelId;
+
+    //订单来源
+    private String orderSource;
 
     /**
      * 预约时间，格式为：yyyy-MM-dd
@@ -29,17 +35,23 @@ public class LogisticsOrderVO implements Serializable {
     /**
      * 收货人信息
      */
-    ReceiverInfoVO receiverInfoVO;
+    private ReceiverInfoVO receiverInfoVO;
     /**
      * 发货人信息
      */
-    LogisticsAddressEntity addressEntity;
+    private SenderInfo senderInfo;
+
+    /**
+     * 包裹信息
+     */
+    private ParceInfoVO parceInfoVO;
+
     /**
      * 产品物流信息
      */
-    List<ProductLogisticsEntity> productLogisticsEntities;
+    private List<LogisticsProductVO> logisticsProductVOList;
     /**
      * 授权信息
      */
-    LogisticsAuthEntity logisticsAuthEntity;
+    private LogisticsAuthEntity logisticsAuthEntity;
 }
