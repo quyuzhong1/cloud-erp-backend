@@ -77,12 +77,12 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 来源单号
          */
-         private List<String> sourceCodeList;
+         private String sourceCode;
          /**
           * 备货类型:/wms/common/enumDropDown?type=FbaDemandType
           * 描述：demandPlatformWarehouse:备货平台仓  demandOverseasWarehouse:备货海外仓
           */
-         private String demandType;
+         private List<String> demandTypeList;
          /**
          * 店铺id
          */
@@ -148,12 +148,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 来源单号
          */
-        private List<String> sourceCodeList;
+        private String sourceCode;
 
         /**
          * 备货类型
          */
-        private List<String> demandTypeList;
+        private String demandType;
 
         /**
          * 备货类型名称
@@ -173,7 +173,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 作废状态名称
@@ -203,12 +203,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 发货仓id
          */
-        private String deleverWarehouseId;
+        private String deliveryWarehouseId;
 
         /**
          * 发货仓名称
          */
-        private String deleverWarehouseName;
+        private String deliveryWarehouseName;
 
         /**
          * 目的仓id
@@ -657,6 +657,10 @@ public class FbaDeliveryDTO implements Serializable {
          */
         private String mainId;
         /**
+         * 发货单号
+         */
+        private String code;
+        /**
          * 事务类型
          */
         private String workType;
@@ -695,7 +699,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * bom版本
          */
-        private Integer bomVersion;
+        private String bomVersion;
         /**
          * 子件信息
          */

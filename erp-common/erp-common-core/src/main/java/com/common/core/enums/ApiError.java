@@ -797,6 +797,8 @@ public enum ApiError implements Serializable {
     COMBINATION_GENERATE_MACHINE(99100,"只有组合SKU允许下推加工单"),
     WAIT_SUBMIT_GENERATE_MACHINE(99101,"只有单据为待审核状态允许下推加工单"),
     EXIST_GENERATE_MACHINE_INFO(99102,"已下推加工单"),
+    IS_GENERATE_MACHINE(99103,"发货单【{}】包含组合产品，请先下推加工单并且审核通过后重试"),
+    FBA_DELIVERY_INVENTORY_INSUFFICIENT(99104,"提示：SKU【】发货仓【】可用库存不足，无法审核发货单"),
 
 
 
