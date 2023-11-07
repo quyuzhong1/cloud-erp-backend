@@ -1,6 +1,9 @@
 package com.sdk.tms.track123.service;
 
+import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
+import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.response.TrackResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +29,7 @@ public class TrackShipperService {
     String token = "61be2f7d071441a483841be3b97e7373";
 
     public static void main(String[] args) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        getCourierList();
+//        getCourierList();
 
 //        String message = "Hello, World!";
 //        String secretKey = "mySecretKey";
@@ -38,29 +41,52 @@ public class TrackShipperService {
 //        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
 //            e.printStackTrace();
 //        }
+
+//        List<String> trackNos = new ArrayList<>();
+//        trackNos.add("304071414818");
+//        trackNos.add("620372231752");
+//
+//        TrackRequest orderRequest = TrackRequest.builder()
+//                .trackNos(trackNos)
+//                .createTimeStart("2021-08-01 00:00:00")
+//                .createTimeEnd("2021-09-28 00:00:00")
+//                .cursor("")
+//                .queryPageSize(100)
+//                .build();
     }
 
     /**
      * 获取快递物流商列表
      */
-    public static void getCourierList() throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+    public void getCourierList() throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         String token = "7fe88dd10c0747dab41653ac878d3d84";
         long timestamp = System.currentTimeMillis();
-        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
-        String signature = bytesToHex(hmacSha256Bytes);
+//        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
+//        String signature = bytesToHex(hmacSha256Bytes);
         String url = "https://api.track123.com/gateway/open-api/tk/v2/courier/list";
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", "61be2f7d071441a483841be3b97e7373");
-        headers.put("signature", signature);
+//        headers.put("signature", signature);
         headers.put("timestamp", String.valueOf(timestamp));
 
         String string = OkHttpUtils.doGet(url, new LinkedHashMap<>(), new LinkedHashMap<>());
         System.out.println(string);
     }
 
-    public void getTrack() {
-
+    public TrackResponse getTrack(String key, TrackRequest trackRequest) {
+        long timestamp = System.currentTimeMillis();
+//        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
+//        String signature = bytesToHex(hmacSha256Bytes);
+        String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("Content-Type", "application/json;charset=utf-8");
+//        headers.put("Track123-Api-Secret", "265ef29963a94be1bae6ad955bc9c400");
+        headers.put("Track123-Api-Secret", key);
+        headers.put("timestamp", String.valueOf(timestamp));
+        String result = OkHttpUtils.doPostJsonObject(url, trackRequest, headers);
+        System.out.println(result);
+        return JSONUtil.toBean(result, TrackResponse.class);
     }
 
 

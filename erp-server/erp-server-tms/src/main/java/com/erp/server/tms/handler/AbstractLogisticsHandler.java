@@ -27,7 +27,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -37,7 +37,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<String> confirmOrder(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -47,7 +47,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<String> cancelOrder(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -57,7 +57,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<String> interceptOrder(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -67,7 +67,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<String> updateOrder(LogisticsOrderVO logisticsOrderVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -77,7 +77,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult queryOrder(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -87,7 +87,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult getLabelUrl(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -97,7 +97,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult getTrack(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 
     /**
@@ -107,6 +107,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsQueryVO logisticsQueryVO) {
-        return null;
+        return ApiResult.error(-1, "功能未开放");
     }
 }

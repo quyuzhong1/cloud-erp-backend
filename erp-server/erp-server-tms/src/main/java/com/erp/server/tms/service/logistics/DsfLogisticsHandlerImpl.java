@@ -8,13 +8,14 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsAuthService;
-import com.sdk.tms.disifang.model.base.ResponseMsg;
-import com.sdk.tms.disifang.model.order.request.OrderRequest;
+//import com.sdk.tms.disifang.model.base.ResponseMsg;
+//import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.disifang.service.DsfShipperService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -50,18 +51,32 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         ApiResult apiResult = new ApiResult();
-        OrderRequest orderRequest = LogisticsOrderConverter.INSTANCE.orderRequestToDsf(logisticsOrderVO);
-//        OrderRequest orderRequest =OrderRequest.builder().build();
-        ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getLogisticsAuthEntity().getAccount(), logisticsOrderVO.getLogisticsAuthEntity().getPassword(), orderRequest);
-        if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-            apiResult.setMsg(responseMsg.getMsg());
-            apiResult.setCode(-1);
-        } else {
-            apiResult.setCode(200);
-            JSONObject parse = JSONUtil.parseObj(responseMsg.getData());
-            apiResult.setData(parse.get("collect_no"));
-            apiResult.setMsg(responseMsg.getMsg());
-        }
+//        OrderRequest orderRequest = LogisticsOrderConverter.INSTANCE.orderRequestToDsf(logisticsOrderVO);
+////        OrderRequest orderRequest =OrderRequest.builder().build();
+//        ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getLogisticsAuthEntity().getAccount(), logisticsOrderVO.getLogisticsAuthEntity().getPassword(), orderRequest);
+//        if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
+//            apiResult.setMsg(responseMsg.getMsg());
+//            apiResult.setCode(-1);
+//        } else {
+//            apiResult.setCode(200);
+//            JSONObject parse = JSONUtil.parseObj(responseMsg.getData());
+//            LogisticsOrderResponseVO vo = new LogisticsOrderResponseVO();
+//            vo.setOrderNo(logisticsOrderVO.getDeliveryNo());
+//            vo.setTrackNo((String) parse.getOrDefault("collect_no", null));
+//            apiResult.setData(vo);
+//            apiResult.setMsg(responseMsg.getMsg());
+//        }
         return apiResult;
+    }
+
+    /**
+     * 取消订单
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    @Override
+    public ApiResult<String> cancelOrder(LogisticsQueryVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
     }
 }
