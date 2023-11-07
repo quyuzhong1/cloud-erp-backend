@@ -240,4 +240,161 @@ public class LogisticsProductDTO {
 
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+
+        private ProductBaseInfoDTO  productBaseInfoDTO;
+
+        /**
+         *  id
+         */
+        private String id;
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+
+        /**
+         * 中文报关名
+         */
+        private String declareChineseName;
+        /**
+         * 产品属性
+         */
+        private String productPropertyName;
+
+
+        /**
+         * 报关申报价
+         */
+        private BigDecimal declarePrice;
+
+        /**
+         * 报关申报价币种
+         */
+        private String declareCurrency;
+
+        /**
+         * 报关申报价币种符号
+         */
+        private String declareCurrencySymbol;
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal destDeclarePrice;
+
+        /**
+         * 目的国申报价币种
+         */
+        private String destCurrency;
+
+        /**
+         * 目的国申报价币种符号
+         */
+        private String destCurrencySymbol;
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+
+
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+
+        /**
+         * sku 审核状态
+         */
+        private Integer approveStatus;
+
+        /**
+         * sku 审核状态名
+         */
+        private String approveStatusName;
+
+        /**
+         * 销售状态
+         */
+        private Integer salesStatus;
+
+        /**
+         * 销售状态名
+         */
+        private String salesStatusName;
+
+        /**
+         * 品牌名
+         */
+        private String brandName;
+
+
+
+        /**
+         * 产品经理id
+         */
+        private String chargeId;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
+
+    }
+
+
+    /**
+     * 产品基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductBaseInfoDTO{
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
+
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * spu
+         */
+        private String spuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 产品经理
+         */
+        private String chargeName;
+
+    }
 }
