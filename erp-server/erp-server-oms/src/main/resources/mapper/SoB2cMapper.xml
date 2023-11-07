@@ -194,10 +194,10 @@
                         and sb2c.is_intercept = true
                     </if>
                     <if test="#{item} == 'split'">
-                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id) and sb2c.invalid_status = false
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id)
                     </if>
                     <if test="#{item} == 'merge'">
-                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.source_id = sb2c.id ) and sb2c.invalid_status = false
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id )
                     </if>
                     <if test="#{item} == 'aliexpressTaxed'">
                         and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
