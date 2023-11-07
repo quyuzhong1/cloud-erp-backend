@@ -658,10 +658,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setCountryName(countryName);
             }
 
-            //发货状态
-            String deliveryStatus = item.getDeliveryStatus();
-            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
-            item.setDeliveryStatusName(deliveryStatusName);
+
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
@@ -738,6 +735,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
             }
+            //发货状态
+            String deliveryStatus = DeliveryStatusEnum.UN_SHIPPED.getCode();
+            //表示发货完毕
+            if (waitQty == 0) {
+                deliveryStatus = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
+            } else {
+                if (!qty.equals(waitQty)) {
+                    deliveryStatus = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
+                }
+            }
+            item.setDeliveryStatus(deliveryStatus);
+            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
+            item.setDeliveryStatusName(deliveryStatusName);
             //税率
             BigDecimal taxRate = item.getTaxRate();
 
@@ -3031,7 +3041,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isAdd = Boolean.FALSE;
-                    errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
+                    errorMsgList = errorMsgList.stream().distinct().collect(Collectors.toList());
                     item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(item);
                 }
@@ -3080,7 +3090,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                errorMsgList=errorMsgList.stream().distinct().collect(Collectors.toList());
+                errorMsgList = errorMsgList.stream().distinct().collect(Collectors.toList());
                 isAdd = Boolean.FALSE;
                 list.get(0).setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.addAll(list);
