@@ -136,7 +136,7 @@
             </if>
             <if test="params.categoryList != null and params.categoryList.size > 0">
                 and sb2c.id in (
-                    select category_id from so_b2c_ref_category  where is_deleted = false and id in
+                    select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id in
                     <foreach collection="params.categoryList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
@@ -194,12 +194,10 @@
                         and sb2c.is_intercept = true
                     </if>
                     <if test="#{item} == 'split'">
-                        and exists (select * from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and
-                        (sbf.source_id = sb2c.id or sbf.target_id = sb2c.id) )
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id) and sb2c.invalid_status = false
                     </if>
                     <if test="#{item} == 'merge'">
-                        and exists (select * from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and
-                        (sbf.source_id = sb2c.id or sbf.target_id = sb2c.id) )
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.source_id = sb2c.id ) and sb2c.invalid_status = false
                     </if>
                     <if test="#{item} == 'aliexpressTaxed'">
                         and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')

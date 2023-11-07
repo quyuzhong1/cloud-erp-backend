@@ -67,4 +67,12 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @return void
      */
     void removeByCategoryIds(List<String> categoryIds);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/11/7 15:43
+     * @param mainId
+     * @param categoryIdList
+     */
+    void deleteByMainIdAndCategoryId(String mainId, List<String> categoryIdList);
 }
