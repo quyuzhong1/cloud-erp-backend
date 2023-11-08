@@ -502,7 +502,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FbaDeliveryLogisticsDTO.AddDTO logisticsObj;
+        private FbaDeliveryLogisticsDTO.AddDTO logisticsView;
 
         /**
          * 产品信息
@@ -537,7 +537,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FbaDeliveryLogisticsDTO.UpdateDTO logisticsObj;
+        private FbaDeliveryLogisticsDTO.UpdateDTO logisticsView;
 
         /**
          * 产品信息

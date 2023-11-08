@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.wms.mapper.FbaDeliveryLogisticsMapper;
 import com.erp.server.wms.service.FbaDeliveryLogisticsService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
+
+import java.time.LocalDateTime;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -46,7 +49,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     public String add(FbaDeliveryLogisticsDTO.AddDTO dto, String mainId, String code) {
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = new FbaDeliveryLogisticsEntity();
         BeanMapperUtils.copy(dto, fbaDeliveryLogisticsEntity);
-
+        fbaDeliveryLogisticsEntity.setRemark(dto.getLogisticsRemark());
         // 数据处理
         handleData(fbaDeliveryLogisticsEntity, mainId, code);
 
@@ -71,7 +74,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         FbaDeliveryLogisticsEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单物流信息单"));
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity =  BeanMapperUtils.map(FbaDeliveryLogisticsEntity.class, updateDTO);
-
+        fbaDeliveryLogisticsEntity.setRemark(updateDTO.getLogisticsRemark());
         // 数据处理
         handleData(fbaDeliveryLogisticsEntity, mainId, old.getDeliveryCode());
         log.info("编辑 开始修改FBA发货单物流信息单数据，id：【{}】", old.getId());
@@ -100,6 +103,11 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         return lambdaQuery().eq(FbaDeliveryLogisticsEntity::getMainId, mainId).last("LIMIT 1").one();
     }
 
+    @Override
+    public List<FbaDeliveryLogisticsEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(FbaDeliveryLogisticsEntity::getMainId, mainIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -110,12 +118,23 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     }
 
     @Override
-    public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(BaseIdsDTO.IdsDTO ids) {
-        return null;
+    public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids) {
+        List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> viewList = new ArrayList<>();
+        List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = this.listByMainIds(ids);
+        for (FbaDeliveryLogisticsEntity logisticsEntity : fbaDeliveryLogisticsEntities) {
+            FbaDeliveryLogisticsDTO.DeliveryLogisticsView view = new FbaDeliveryLogisticsDTO.DeliveryLogisticsView();
+            BeanMapper.copy(logisticsEntity, view);
+            view.setLogisticsRemark(logisticsEntity.getRemark());
+            view.setLogisticsMethodName(LogisticsMethodEnum.getName(view.getLogisticsMethod()));
+            view.setLogisticsChannelName(LogisticsMethodEnum.getName(view.getLogisticsChannel()));
+            viewList.add(view);
+        }
+        return viewList;
     }
 
     @Override
     public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
-        return null;
+        List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FbaDeliveryLogisticsEntity.class);
+        return this.updateBatchById(fbaDeliveryLogisticsEntities);
     }
 }

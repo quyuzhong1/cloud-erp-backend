@@ -40,6 +40,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
         private String mainId;
 
         /**
+         * 图片地址
+         */
+        private String imageUrl;
+
+        /**
         * 平台sku
         */
         private String asin;
