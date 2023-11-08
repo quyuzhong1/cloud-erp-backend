@@ -196,6 +196,10 @@ public class CfgConditionDTO implements Serializable {
          */
         private String param;
 
+        private String searchKey;
+
+        private String remoteLabel;
+
 
     }
 
@@ -222,6 +226,9 @@ public class CfgConditionDTO implements Serializable {
          * 逻辑关系名
          */
         private String logicName;
+
+
+        
 
         @JsonInclude(value= JsonInclude.Include.NON_NULL)
         private List<TreeDTO> children;

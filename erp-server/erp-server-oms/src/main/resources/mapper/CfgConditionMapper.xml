@@ -58,9 +58,12 @@
             api_url,
             param,
             label,
-            value
+            value,
+            search_key,
+            remote_label
         FROM cfg_condition
         WHERE is_deleted=FALSE
+        ORDER BY index ASC
     </select>
 
 
