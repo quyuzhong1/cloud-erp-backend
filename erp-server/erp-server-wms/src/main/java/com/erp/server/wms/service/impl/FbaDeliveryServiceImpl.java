@@ -616,7 +616,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
             //映射产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-            detailVie.setSkuId(skuVO.getSkuId());
             detailVie.setProductName(skuVO.getSkuName());
             detailVie.setImageUrl(skuVO.getSkuImagesUrl());
             //获取已出库数量（排除此单出库数量）

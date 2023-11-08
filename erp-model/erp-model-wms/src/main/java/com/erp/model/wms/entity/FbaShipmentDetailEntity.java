@@ -71,11 +71,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
      */
     @TableField("receive_qty")
     private Integer receiveQty;
-    /**
-     * 仓位
-     */
-    @TableField("warehouse_location")
-    private String warehouseLocation;
+
     /**
      * 最新收货日期
      */
