@@ -56,6 +56,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        ORDER BY rdw.update_time DESC
     </select>
 
 

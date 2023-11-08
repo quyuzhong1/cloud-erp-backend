@@ -54,7 +54,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         DictBasicEntity dictBasicEntity =  BeanMapperUtils.map(DictBasicEntity.class, updateDTO);
 
         // 数据处理
-        handleData(dictBasicEntity);
+
         log.info("编辑 开始修改字典单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(dictBasicEntity);
         if(!save) {
@@ -139,9 +139,6 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
-    * 新增修改处理数据
-    */
-    private void handleData(DictBasicEntity dictBasicEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }
