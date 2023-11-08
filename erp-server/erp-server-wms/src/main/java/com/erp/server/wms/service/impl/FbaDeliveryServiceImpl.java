@@ -801,8 +801,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
             //普通加工单
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
+            //来源FBA发货单
+            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
+
             List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (FbaDeliveryDTO.GenerateMachineView view : value) {
+                addDTO.setSourceId(view.getMainId());
+                addDTO.setSourceCode(view.getCode());
                 addDTO.setWarehouseId(view.getWarehouseId());
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
