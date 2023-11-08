@@ -223,5 +223,5 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>
      **/
-    List<FbaDeliveryDTO.SonItem> SonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto);
+    List<FbaDeliveryDTO.SonItem> sonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto);
 }
