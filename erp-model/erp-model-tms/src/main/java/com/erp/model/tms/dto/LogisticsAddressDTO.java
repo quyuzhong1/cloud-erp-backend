@@ -73,7 +73,7 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
+         * 国家二子码
          */
         private String country;
 
@@ -85,32 +85,23 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 省
          */
-        private String province;
-
-        /**
-         * 省
-         */
         private String provinceName;
 
-        /**
-         * 城市
-         */
-        private String city;
+
 
         /**
          * 城市
          */
         private String cityName;
 
-        /**
-         * 区
-         */
-        private String district;
+
 
         /**
          * 区
          */
         private String districtName;
+
+
 
         /**
          * 详细地址1
@@ -190,7 +181,7 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
+         * 国家二字码
          */
         private String country;
 
@@ -202,17 +193,10 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 省
          */
-        private String province;
-
-        /**
-         * 省
-         */
         private String provinceName;
 
-        /**
-         * 城市
-         */
-        private String city;
+
+
 
         /**
          * 城市
@@ -222,12 +206,9 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 区
          */
-        private String district;
-
-        /**
-         * 区
-         */
         private String districtName;
+
+
 
 
         /**
@@ -316,7 +297,7 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
+         * 国家id
          */
         @NotBlank(message = "国家不能为空")
         private String country;
@@ -325,19 +306,18 @@ public class LogisticsAddressDTO implements Serializable {
          * 省
          */
         @NotBlank(message = "省不能为空")
-        private String provinceId;
+        private String provinceName;
 
         /**
          * 城市
          */
-        @NotBlank(message = "城市不能为空")
-        private String cityId;
+        private String cityName;
 
         /**
          * 区
          */
-        @NotBlank(message = "区不能为空")
-        private String districtId;
+
+        private String districtName;
 
         /**
          * 详细地址1

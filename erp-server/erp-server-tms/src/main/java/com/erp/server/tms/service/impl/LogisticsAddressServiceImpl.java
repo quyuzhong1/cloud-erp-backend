@@ -8,9 +8,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -49,7 +51,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
 
     @Autowired
-    private SysDictFeign sysDictFeign;
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -135,23 +137,11 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
      */
     private void handleData(LogisticsAddressEntity entity) {
         // TODO 验证数据 & 数据赋值
-        List<String> placeIdList = new ArrayList<>(3);
-        String cityId = entity.getCityId();
-        if (StringUtils.isNotBlank(cityId)) {
-            placeIdList.add(cityId);
+        String country = entity.getCountry();
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(country);
+        if(Objects.nonNull(countryEntity)){
+            entity.setCountryName(countryEntity.getNameCn());
         }
-        //省
-        String provinceId = entity.getProvinceId();
-        if (StringUtils.isNotBlank(provinceId)) {
-            placeIdList.add(provinceId);
-        }
-
-        //区
-        String districtId = entity.getDistrictId();
-        if (StringUtils.isNotBlank(districtId)) {
-            placeIdList.add(districtId);
-        }
-      List<DictCityEntity>  cityList= CollectionUtils.isNotEmpty(placeIdList)?sysDictFeign.listByIdList(placeIdList):Collections.emptyList();
 
     }
 

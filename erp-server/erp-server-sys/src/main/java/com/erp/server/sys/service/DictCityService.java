@@ -27,4 +27,11 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return java.util.List<com.erp.model.sys.dto.DictCityDTO.ListDTO>
      */
     List<DictCityDTO.ListDTO> listCity(String countryCode);
+
+    /**
+     * 获取省城市
+     * @param idList
+     * @return
+     */
+    List<DictCityEntity> listByIdList(List<String> idList);
 }

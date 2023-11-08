@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.tms.disifang.service.impl.DsfShipperServiceImpl
+   com.sdk.tms.disifang.service.DsfShipperService

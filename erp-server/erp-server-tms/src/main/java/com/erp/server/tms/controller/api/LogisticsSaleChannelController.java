@@ -23,7 +23,7 @@ import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
  * 销售平台物流渠道表
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
  */
 @Slf4j
 @RestController
@@ -37,7 +37,7 @@ public class LogisticsSaleChannelController extends BaseController {
     /**
     * 新增
     * @author zdy
-    * @date:  2023-11-03
+    * @date:  2023-11-08
     * @param dto
     * @return ApiResult<String>
     */
@@ -50,7 +50,7 @@ public class LogisticsSaleChannelController extends BaseController {
     /**
     * 修改
     * @author zdy
-    * @date:  2023-11-03
+    * @date:  2023-11-08
     * @param dto
     * @return ApiResult
     */

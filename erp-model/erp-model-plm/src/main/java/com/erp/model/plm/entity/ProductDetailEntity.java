@@ -18,7 +18,7 @@ import java.util.List;
 @TableName(value ="product_detail")
 @Data
 @NoArgsConstructor
-public class ProductDetailEntity extends BaseEntity implements Serializable {
+public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> implements Serializable {
     /**
      * 产品表id
      */
@@ -143,6 +143,8 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
      */
     @TableField("warehouse_location")
     private String warehouseLocation;
+
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

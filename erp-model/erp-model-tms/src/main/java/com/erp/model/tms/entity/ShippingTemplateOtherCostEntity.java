@@ -5,6 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
+import com.erp.model.tms.dto.ExtendJsonDTO;
+import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -65,6 +69,18 @@ public class ShippingTemplateOtherCostEntity extends BaseEntity<ShippingTemplate
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 辅助字段：计算方式选项
+     */
+    @TableField(exist = false)
+    private List<String> settingList;
+
+    /**
+     * 数值设置json
+     */
+    @TableField(exist = false)
+    private ExtendJsonDTO.CommonDTO extendJsonDto;
 
 
     public static final String MAIN_ID = "main_id";

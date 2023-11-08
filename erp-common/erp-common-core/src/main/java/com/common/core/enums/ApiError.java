@@ -149,7 +149,6 @@ public enum ApiError implements Serializable {
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
 
 
-
     /**
      * DMP服务错误
      * 80001开始
@@ -480,6 +479,11 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
 
+    /**
+     * TMS 错误
+     * 从96000 开始
+     */
+    CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
 
     /**
      * bi 错误
@@ -930,8 +934,22 @@ public enum ApiError implements Serializable {
 
 
 
-
-
+    /**
+     * TMS 错误
+     * 从94000 开始
+     */
+    ERROR_SHIPPING_TEMPLATE_NOT_EXIST(94000,"运费模板不存在"),
+    ERROR_SHIPPING_TO_COUNTRY_NOT_NUll(94001,"运费规则目的地不能为空"),
+    ERROR_SHIPPING_REGION_NOT_NULL(94002,"运费规则城市分区不能为空"),
+    ERROR_SHIPPING_CITY_NOT_NULL(94003,"运费规则城市不能为空"),
+    ERROR_SHIPPING_WAREHOUSE_NOT_NULL(94004,"运费规则仓库不能为空"),
+    ERROR_FIRST_WEIGHT_NOT_NULL(94005,"运费规则首重不能为空"),
+    ERROR_FIRST_WEIGHT_SHIPPING_COST_NOT_NULL(94006,"运费规则首重运费不能为空"),
+    ERROR_ADDITIONAL_UNIT_WEIGHT_NOT_NULL(94007,"运费规则续重单位重量不能为空"),
+    ERROR_ADDITIONAL_PRICE_NOT_NULL(94008,"运费规则续重单价不能为空"),
+    ERROR_SHIPPING_TEMPLATE_OTHER_COST(94009,"运费模板其他费用"),
+    ERROR_SHIPPING_TEMPLATE_DISABLED(94010,"运费模板被渠道引用不支持停用"),
+    ERROR_SHIPPING_TEMPLATE_DELETE(94011,"运费模板被渠道引用不支持删除"),
 
 
 

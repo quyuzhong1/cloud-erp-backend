@@ -1,11 +1,10 @@
 package com.erp.server.tms.service;
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
 import java.util.List;
 
@@ -18,76 +17,81 @@ import java.util.List;
  */
 public interface LogisticsService {
     /**
-     * 创建订单
-     * @param soInfo 销售订单 收货人信息
-     * @param addressEntity 发货人信息
-     * @param productLogisticsEntity 产品物流信息
+     * 获取授权信息
+     *
+     * @param authId
      * @return
      */
-    ApiResult<String> createOrder(SoInfoEntity soInfo, LogisticsAddressEntity addressEntity,
-                                  ProductLogisticsEntity productLogisticsEntity, LogisticsAuthEntity logisticsAuthEntity);
+    LogisticsAuthEntity getLogisticsAuthConfig(String authId);
+
+    /**
+     * 创建订单
+     *
+     * @param logisticsOrderVO
+     * @return
+     */
+    ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO);
 
     /**
      * 确认订单
      *
-     * @param platformCode
+     * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> confirmOrder(String platformCode);
+    ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 取消订单
      *
-     * @param platformCode
+     * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> cancelOrder(String platformCode);
+    ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO);
 
     /**
      * 拦截订单
      *
-     * @param platformCode
+     * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> interceptOrder(String platformCode);
+    ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO);
 
     /**
      * 更新订单
      *
-     * @param platformCode
+     * @param logisticsOrderVO
      * @return
      */
-    ApiResult<String> updateOrder(String platformCode);
+    ApiResult<String> updateOrder(LogisticsOrderVO logisticsOrderVO);
 
     /**
      * 查询订单
      *
-     * @param platformCode
+     * @param logisticsQueryVOList
      * @return
      */
-    ApiResult queryOrder(String platformCode);
+    ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 
     /**
      * 获取标签
      *
-     * @param platformCode
+     * @param logisticsQueryVO
      * @return
      */
-    ApiResult getLabelUrl(String platformCode);
+    ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO);
 
     /**
      * 轨迹查询
      *
-     * @param platformCode
+     * @param logisticsQueryVO
      * @return
      */
-    ApiResult getTrack(String platformCode);
+    ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO);
 
     /**
      * 渠道查询
      *
-     * @param platformCode
      * @return
      */
-    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(String platformCode);
+    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity logisticsAuthEntity);
 }
