@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
@@ -63,7 +64,7 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
-        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop");
+        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());
         if (CollectionUtils.isEmpty(shopeeShop.getData())) {
             return Collections.emptyList();
         }

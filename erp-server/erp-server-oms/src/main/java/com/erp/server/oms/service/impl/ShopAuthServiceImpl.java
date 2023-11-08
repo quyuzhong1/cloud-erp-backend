@@ -13,12 +13,15 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopAuthService;
+import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.ItemInfo;
@@ -55,6 +58,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     private CommonService commonService;
     @Resource
     private ShopeeAuthService shopeeAuthService;
+    private ShopInfoServiceImpl shopInfoService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -171,9 +175,17 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     }
 
+    /**
+     *
+     * @param type
+     * @param stauts 是否授权
+     * @return
+     */
     @Override
-    public List<ShopAuthEntity> getShopeeShopList(String type) {
-        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
+    public List<ShopAuthEntity> getShopeeShopList(String type, String stauts) {
+        //获取已授权店铺配置
+        return baseMapper.getShopeeShopList(type,stauts);
+//        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
     }
 
     @Override
@@ -232,20 +244,25 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
                 if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
                     List<ItemInfo> allProduct = new ArrayList<>();
                     shopAuthEntities.stream().forEach(shopAuthEntity -> {
-                        ProductRequest productRequest = ProductRequest.builder()
-                                .host(cfgAppClient.getUrl())
-                                .offset(0)
-                                .token(shopAuthEntity.getAccessToken())
-                                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                                .partnerId(Long.parseLong(cfgAppClient.getClientId()))
-                                .tmpPartnerKey(cfgAppClient.getClientSecret())
-                                .timeFrom(null)
-                                .timeTo(null)
-                                .build();
-                        List<ItemInfo> list = new ArrayList<>();
-                        shopeeProductService.getAllProduct(productRequest, list);
-                        if (CollectionUtils.isNotEmpty(list)) {
-                            allProduct.addAll(list);
+                        if (Objects.nonNull(shopAuthEntity.getShopId())) {
+                            ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopAuthEntity.getShopId());
+                            if (Objects.nonNull(shopInfoEntity) && shopInfoEntity.getAuthStatus().equalsIgnoreCase(AuthStatusEnum.ALREADY.getCode())) {
+                                ProductRequest productRequest = ProductRequest.builder()
+                                        .host(cfgAppClient.getUrl())
+                                        .offset(0)
+                                        .token(shopAuthEntity.getAccessToken())
+                                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                                        .tmpPartnerKey(cfgAppClient.getClientSecret())
+                                        .timeFrom(null)
+                                        .timeTo(null)
+                                        .build();
+                                List<ItemInfo> list = new ArrayList<>();
+                                shopeeProductService.getAllProduct(productRequest, list);
+                                if (CollectionUtils.isNotEmpty(list)) {
+                                    allProduct.addAll(list);
+                                }
+                            }
                         }
                     });
                     System.out.println("allProduct:" + allProduct.size());

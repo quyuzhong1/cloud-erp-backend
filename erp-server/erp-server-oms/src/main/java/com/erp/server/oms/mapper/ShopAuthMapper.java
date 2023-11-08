@@ -3,6 +3,9 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +18,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ShopAuthMapper extends BaseMapper<ShopAuthEntity> {
-
+    List<ShopAuthEntity> getShopeeShopList(@Param("type") String type,@Param("status") String status);
 }

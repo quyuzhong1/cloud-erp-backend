@@ -62,7 +62,7 @@ public class ShopeeAuthJob {
         if (Objects.isNull(cfgAppClient)) {
             return;
         }
-        List<ShopAuthEntity> shopeeShopList = shopAuthService.getShopeeShopList(AuthTypeEnum.SHOP.getCode());
+        List<ShopAuthEntity> shopeeShopList = shopAuthService.getShopeeShopList(AuthTypeEnum.SHOP.getCode(),AuthStatusEnum.ALREADY.getCode());
         if (CollectionUtils.isNotEmpty(shopeeShopList)) {
             shopeeShopList.forEach(shopAuthEntity -> {
                 //判断店铺是否授权
@@ -90,7 +90,7 @@ public class ShopeeAuthJob {
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
             });
         }
-        List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode());
+        List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode(),AuthStatusEnum.ALREADY.getCode());
         if (CollectionUtils.isNotEmpty(shopeeShopList1)){
             shopeeShopList1.forEach(shopAuthEntity -> {
                 AuthRequest authRequest = AuthRequest.builder()
