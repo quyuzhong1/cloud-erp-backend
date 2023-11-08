@@ -138,7 +138,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         FbaDeliveryEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单"));
         // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+        if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || old.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
         FbaDeliveryEntity fbaDeliveryEntity =  BeanMapperUtils.map(FbaDeliveryEntity.class, updateDTO);
@@ -268,7 +268,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         }
         FbaDeliveryEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //包含组合产品的发货单，必须有关联的下推的加工组装单且加工单审核通过，否则提示：发货单【发货单号】包含组合产品，请先下推加工单并且审核通过后重试
@@ -407,7 +407,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public BatchResultDTO delete(String id) {
         FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
         // 删除物流信息
@@ -921,7 +921,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     */
     private void validateSubmit(FbaDeliveryEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
