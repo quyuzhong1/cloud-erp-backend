@@ -366,7 +366,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
         // 待提交或审核不通过并且未作废允许作废
         if (SoB2cInvalidTypeEnum.ENUM_MANUAL.equals(soB2cInvalidTypeEnum)) {
-            if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
                 throw new ServiceException(ApiError.ERROR_98005);
             }
         }
@@ -724,7 +724,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         for (SoB2cEntity entity : list) {
-            if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_MERGE, entity.getCode());
             }
             if (entity.getIsNotMerge()) {
@@ -854,7 +854,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //待提交或审核不通过允许取消
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_CANCEL_MERGE, entity.getCode());
         }
         //关联数据
@@ -1082,7 +1082,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //待提交或审核不通过允许取消拆分
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_CANCEL_SPLIT, entity.getCode());
         }
         //关联关系
@@ -1809,7 +1809,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private void checkSplitData(String id, SoB2cEntity entity) {
 
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_STATE_NOT_SPLIT, entity.getCode());
         }
         //查询订单是否是合并订单或拆分子订单
