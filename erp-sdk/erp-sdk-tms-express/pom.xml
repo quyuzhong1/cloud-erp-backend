@@ -7,10 +7,9 @@
 		<groupId>com.cloud.erp</groupId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<groupId>com.sdk.tms.express</groupId>
+
 	<artifactId>erp-sdk-tms-express</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>zlt-sdk-tms-express</name>
+
 	<description>顺丰-丰桥物流平台对接SDK</description>
 	<properties>
 		<java.version>8</java.version>
@@ -46,21 +45,5 @@
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 
 </project>
