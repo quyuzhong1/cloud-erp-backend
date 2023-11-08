@@ -197,7 +197,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
         * 价格进制
         */
-        private String priceBinary;
+        private Integer priceBinary;
 
         /**
          * 价格进制名称
@@ -327,9 +327,9 @@ public class ShippingTemplateDTO implements Serializable {
         /**
         * 材积设置
         */
-        @NotBlank(message = "材积设置不能为空")
-        @Size(max = 64,message = "材积设置最大长度不能超过64位")
-        private String volumeSetting;
+        @NotNull(message = "材积设置不能为空")
+        @Size(max = 50,message = "材积设置最大长度不能超过50位")
+        private Integer volumeSetting;
 
         /**
         * 生效日期

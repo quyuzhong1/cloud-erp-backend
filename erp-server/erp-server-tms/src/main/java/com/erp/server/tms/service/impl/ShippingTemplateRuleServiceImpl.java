@@ -151,6 +151,14 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         }
         //按国家
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(entity.getType())) {
+
+            Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToCountry())));
+            for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
+                List<ShippingTemplateRuleEntity> value = entry.getValue();
+                if (value.size() > 1) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_EXIST,value.get(0).getFromCountry(),value.get(0).getToCountry());
+                }
+            }
             long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToCountry())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
@@ -158,6 +166,13 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         }
         //按分区
         if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
+            Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getRegion())));
+            for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
+                List<ShippingTemplateRuleEntity> value = entry.getValue();
+                if (value.size() > 1) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_REGION_EXIST,value.get(0).getFromCountry(),value.get(0).getRegion());
+                }
+            }
             long regionCount = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getRegion())).count();
             if (regionCount > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
@@ -169,6 +184,13 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         }
         //按仓库
         if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(entity.getType())) {
+            Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToWarehouseName())));
+            for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
+                List<ShippingTemplateRuleEntity> value = entry.getValue();
+                if (value.size() > 1) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_EXIST,value.get(0).getFromCountry(),value.get(0).getToWarehouseName());
+                }
+            }
             long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToWarehouseName())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
@@ -197,6 +219,8 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 throw new ServiceException(ApiError.ERROR_ADDITIONAL_PRICE_NOT_NULL);
             }
         }
+
+
     }
 
 
