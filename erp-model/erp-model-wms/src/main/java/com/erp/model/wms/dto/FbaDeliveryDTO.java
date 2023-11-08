@@ -139,6 +139,10 @@ public class FbaDeliveryDTO implements Serializable {
          * 主键Id
          */
         private String id;
+        /**
+         * 编号
+         */
+        private String code;
 
         /**
          * 来源单号
