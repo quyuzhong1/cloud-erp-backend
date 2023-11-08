@@ -99,7 +99,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             apiResult.setCode(200);
             OrderResponse orderResponse = JSONUtil.toBean(JSONUtil.parseObj(responseMsg.getData()), OrderResponse.class);
             apiResult.setData(LogisticsOrderResponseVO.builder()
-                    .refNo(orderResponse.getRef_no())
+                    .transportNo(orderResponse.getRef_no())
                     .trackNo(orderResponse.getTracking_no())
                     .transportNo(orderResponse.getDs_consignment_no())
                     .logisticsChannelNo(orderResponse.getLogistics_channel_no())
@@ -164,7 +164,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         } else {
             QueryOrderResponse queryOrderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(responseMsg.getData()), QueryOrderResponse.class);
             LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                    .refNo(queryOrderResponse.getConsignmentInfo().getRef_no())
+                    .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
                     .trackNo(queryOrderResponse.getConsignmentInfo().getTracking_no())
                     .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
                     .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())
@@ -186,7 +186,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
         LabelRequest labelRequest = LabelRequest.builder()
-                .requestNo(logisticsQueryVO.getRefNo())
+                .requestNo(logisticsQueryVO.getTransportNo())
                 .logisticsProductCode(logisticsQueryVO.getLogisticsChannelEntity().getCode())
                 .build();
         ResponseMsg responseMsg = dsfShipperService.getLabelList(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),

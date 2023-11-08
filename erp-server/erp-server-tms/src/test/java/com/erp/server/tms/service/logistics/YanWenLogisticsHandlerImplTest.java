@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,11 +38,11 @@ public class YanWenLogisticsHandlerImplTest {
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
-        senderInfo.setCity("newyork");
-        senderInfo.setCityId("1");
+//        senderInfo.setCity("newyork");
+//        senderInfo.setCityId("1");
         senderInfo.setCompanyName("componeny");
         senderInfo.setName("name");
-        senderInfo.setProvince("shenzhen");
+//        senderInfo.setProvince("shenzhen");
         senderInfo.setTelNumber("12345678");
         senderInfo.setEmail("321546");
         senderInfo.setCountry("China");
@@ -106,9 +107,9 @@ public class YanWenLogisticsHandlerImplTest {
     @Test
     public void queryOrder() {
         List<LogisticsQueryBaseVO> logisticsQueryVOList = Arrays.asList(LogisticsQueryBaseVO.builder()
-                        .deliveryNo("LR083592414CN")
+                        .deliveryNo(Collections.singletonList("LR083592414CN"))
                 .build(),LogisticsQueryBaseVO.builder()
-                        .deliveryNo("weiji1233211")
+                        .deliveryNo(Collections.singletonList("weiji1233211"))
                 .build());
         System.out.println(yanWenLogisticsHandler.queryOrder(logisticsQueryVOList));
     }

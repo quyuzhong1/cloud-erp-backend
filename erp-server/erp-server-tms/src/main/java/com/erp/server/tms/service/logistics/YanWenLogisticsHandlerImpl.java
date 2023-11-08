@@ -11,6 +11,7 @@ import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -67,8 +68,11 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
         }
-        return success(new LogisticsOrderResponseVO(yanWenResponse.getData().getWaybillNumber(),yanWenResponse.getData().getWaybillNumber(),
-                logisticsOrderVO.getDeliveryNo(),null,null));
+        return success(LogisticsOrderResponseVO.builder()
+                .transportNo(yanWenResponse.getData().getWaybillNumber())
+                .deliveryNo(yanWenResponse.getData().getOrderNumber())
+                .trackNo(yanWenResponse.getData().getWaybillNumber())
+                .build());
     }
 
     @Override
@@ -98,9 +102,14 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
+    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        return null;
+    }
+
+    @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList){
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
-                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()))
+                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()).get(0))
                 .build();
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
         if(!yanWenResponse.getSuccess()){
