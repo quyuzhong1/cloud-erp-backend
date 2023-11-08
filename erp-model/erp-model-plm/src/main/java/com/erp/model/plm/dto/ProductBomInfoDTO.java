@@ -15,14 +15,6 @@ public class ProductBomInfoDTO {
     @NoArgsConstructor
     public static class skuBomVersion {
         /**
-         * 父级skuId
-         */
-        private String parentSkuId;
-        /**
-         * 父级sku编码
-         */
-        private String parentSkuNo;
-        /**
          * sku编码
          */
         private String skuNo;
