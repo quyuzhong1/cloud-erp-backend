@@ -73,8 +73,6 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(FbaDeliveryDTO.UpdateDTO updateDTO, String mainId) {
-        FbaDeliveryDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单明细单"));
         List<FbaDeliveryDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         //原明细数据
         List<FbaDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
