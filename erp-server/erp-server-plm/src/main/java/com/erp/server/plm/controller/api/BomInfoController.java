@@ -402,8 +402,8 @@ public class BomInfoController extends BaseController {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
-        return bomSkuService.listBomVersionBySkuNos(dto.getSkuNos());
+    public ApiResult<List<ProductBomInfoDTO.skuBomVersion>> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
+        return success(bomSkuService.listBomVersionBySkuNos(dto.getSkuNos()));
     }
 }
 
