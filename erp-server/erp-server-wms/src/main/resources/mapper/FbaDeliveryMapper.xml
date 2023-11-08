@@ -242,8 +242,8 @@
         fdd.id,
         fdd.main_id,
         fdd.sku_no,
-        fdd.delivery_warehouse_id AS warehouseId,
-        fdd.delivery_warehouse_name AS warehouseName,
+        fd.delivery_warehouse_id AS warehouseId,
+        fd.delivery_warehouse_name AS warehouseName,
         fdd.warehouse_location,
         fdd.delivery_qty AS assembleQty
         FROM  fba_delivery fd
@@ -256,7 +256,6 @@
                 #{id}
             </foreach>
         </if>
-        GROUP BY fd.code
         ORDER BY fd.code DESC
     </select>
 

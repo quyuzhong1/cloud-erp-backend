@@ -8,6 +8,7 @@
         pbh.id as bomHistoryId,
         pbh.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
+        pbs.parent_sku_no as parentSkuNo,
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
