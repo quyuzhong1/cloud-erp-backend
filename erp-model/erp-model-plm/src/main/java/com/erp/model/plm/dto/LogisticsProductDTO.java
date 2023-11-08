@@ -120,6 +120,11 @@ public class LogisticsProductDTO {
          */
         private String declareModel;
 
+        /**
+         * 中国海关编码（报关HSCODE）
+         */
+        private String customsCode;
+
 
         /**
          * 原产国
@@ -165,6 +170,11 @@ public class LogisticsProductDTO {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
 
     }
@@ -515,5 +525,11 @@ public class LogisticsProductDTO {
         private String combinationDeclareType;
 
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO{
+        private List<String> ids;
     }
 }

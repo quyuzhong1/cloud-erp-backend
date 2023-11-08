@@ -941,6 +941,7 @@
             pd.sku_no AS skuNo,
             pd.name AS productName,
             pd.status AS approveStatus,
+            pd.create_time AS createTime,
             pi.category_id AS categoryId,
             pi.category AS categoryName,
             pi.spu_no AS spuNo,
@@ -957,6 +958,7 @@
             pl.declare_element AS declareElement,
             pl.declare_model AS declareModel,
             pl.source_country AS sourceCountry,
+            pl.customs_code AS customsCode,
             ps.sale_state AS salesStatus
         FROM product_detail pd
         LEFT JOIN product_info pi
@@ -1076,6 +1078,136 @@
         LEFT JOIN product_cost pc
         ON pc.sku_id=pd.id AND pc.is_deleted= FALSE
         WHERE pd.is_deleted=FALSE AND pd.id=#{skuId}
+
+    </select>
+
+    <!--导出-->
+    <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$PagingVO">
+        SELECT
+            pd.id,
+            pd.id AS skuId,
+            pd.sku_no AS skuNo,
+            pd.name AS productName,
+            pd.status AS approveStatus,
+            pd.create_time AS createTime,
+            pi.category_id AS categoryId,
+            pi.category AS categoryName,
+            pi.spu_no AS spuNo,
+            pi.property AS productPropertyName,
+            pi.brand_name AS brandName,
+            pi.charge_id AS chargeId,
+            pl.declare_chinese_name AS declareChineseName,
+            pl.declare_price AS declarePrice,
+            pl.declare_currency AS declareCurrency,
+            pl.declare_currency_symbol AS declareCurrencySymbol,
+            pl.dest_declare_price AS destDeclarePrice,
+            pl.dest_currency AS destCurrency,
+            pl.dest_currency_symbol AS destCurrencySymbol,
+            pl.declare_element AS declareElement,
+            pl.declare_model AS declareModel,
+            pl.source_country AS sourceCountry,
+            pl.customs_code AS customsCode,
+            ps.sale_state AS salesStatus
+        FROM product_detail pd
+        LEFT JOIN product_info pi
+        ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_logistics pl
+        ON pl.sku_id=pd.id AND pl.is_deleted= FALSE
+        LEFT JOIN product_sale ps
+        ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
+        WHERE pd.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND pd.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="approveStatus!=null">
+                    AND pd.status=#{approveStatus}
+                </if>
+                <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
+                    AND pi.category_id IN
+                    <foreach collection="params.categoryIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.skuNoList !=null and params.skuNoList.size>0">
+                    AND pd.sku_no IN
+                    <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--品名-->
+                <if test="params.productName!=null and params.productName!=''">
+                    AND pd.name ILIKE concat('%',#{params.productName},'%')
+                </if>
+                <!--中文报关名-->
+                <if test="params.declareNameCn!=null and params.declareNameCn!=''">
+                    AND pl.declare_chinese_name ILIKE concat('%',#{params.declareNameCn},'%')
+                </if>
+                <!--产品属性-->
+                <if test="params.productPropertyIdList!=null and params.productPropertyIdList.size>0">
+                    AND pi.property_id IN
+                    <foreach collection="params.productPropertyIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--原产国-->
+                <if test="params.sourceCountry!=null and params.sourceCountry!=''">
+                    AND pl.source_country ILIKE concat('%',#{params.sourceCountry},'%')
+                </if>
+                <!--spu no-->
+                <if test="params.spuNo!=null and params.spuNo!=''">
+                    AND pi.spu_no ILIKE concat('%',#{params.spuNo},'%')
+                </if>
+                <!--报关型号-->
+                <if test="params.declareModel!=null and params.declareModel!=''">
+                    AND pl.declare_model ILIKE concat('%',#{params.declareModel},'%')
+                </if>
+                <!--报关要素-->
+                <if test="params.declareElement!=null and params.declareElement!=''">
+                    AND pl.declare_element ILIKE concat('%',#{params.declareElement},'%')
+                </if>
+                <!--产品经理-->
+                <if test="params.productChargeIdList!=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="item" open="(" close=")" separator="AND">
+                        string_to_array(#{item},',') &amp;&amp; string_to_array(pi.charge_id,',')
+                    </foreach>
+                </if>
+
+                <!--销售状态-->
+                <if test="params.salesStatusList!=null and params.salesStatusList.size>0">
+                    AND ps.sale_state IN
+                    <foreach collection="params.salesStatusList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--创建时间-->
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND pd.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > pd.create_time
+                </if>
+                <!--更新时间-->
+                <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
+                    AND pd.update_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > pd.update_time
+                </if>
+            </otherwise>
+        </choose>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pd.create_time DESC
 
     </select>
 

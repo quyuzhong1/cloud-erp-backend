@@ -186,6 +186,16 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.LogisticsProductDTO.ProductBaseInfoDTO
      */
     LogisticsProductDTO.ProductBaseInfoDTO getProductBaseInfo(@Param("skuId") String skuId);
+
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-11-08 11:34
+     * @param dto
+     * @param approvalStatus
+     * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.PagingVO>
+     */
+    List<LogisticsProductDTO.PagingVO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
 }
 
 

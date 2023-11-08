@@ -6,6 +6,7 @@ package com.erp.server.plm.controller.api;/**
  * @Created by yl
  */
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -14,11 +15,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.server.plm.service.LogisticsProductService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -76,5 +80,30 @@ public class LogisticsProductController extends BaseController {
         Boolean updateResult = logisticsProductService.update(dto);
         return updateResult?success():failure();
 
+    }
+
+
+    /**
+     * 导出产品信息
+     * @param dto
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流产品信息")
+    @PostMapping("/export")
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = logisticsProductService.exportExcel(dto, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 导入产品信息
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入物流产品信息")
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = logisticsProductService.importExcel(excelFile, response);
+        return result ? success() : failure();
     }
 }

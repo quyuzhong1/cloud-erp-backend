@@ -6,8 +6,10 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -27,8 +29,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -128,6 +133,33 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         return logisticsResult && customsResult;
     }
 
+
+    @Override
+    public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
+        Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        List<LogisticsProductDTO.PagingVO> list = baseMapper.listExport(dto,approvalStatus);
+        fillPagingDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/productLogistics.xlsx";
+        String name = "物流产品列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售订单出库导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
     private List<String> handleCustoms(List<ProductCustomsEntity> productCustomsList) {
         if (CollectionUtils.isEmpty(productCustomsList)) {
             return Collections.emptyList();
@@ -207,10 +239,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             item.setApproveStatusName(approveStatusName);
             //产品经理
             String chargeId = item.getChargeId();
-            List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+            List<String> chargeIdList =StringUtils.isNotBlank(chargeId)? Arrays.asList(chargeId.split(",")):Collections.emptyList();
             String chargeName = userList.stream().filter(u -> chargeIdList.contains(u.getUserId())).
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
-            item.setCategoryName(chargeName);
+            item.setChargeName(chargeName);
             BomInfoEntity bomInfo = bomSkuList.stream().filter(b -> b.getParentSkuNo().equals(skuNo)).
                     findFirst().orElse(null);
             item.setIsCombination(Objects.nonNull(bomInfo));

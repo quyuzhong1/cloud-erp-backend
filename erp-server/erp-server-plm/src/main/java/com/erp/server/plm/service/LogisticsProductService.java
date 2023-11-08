@@ -11,6 +11,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @Description TODO
@@ -41,4 +44,24 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return java.lang.Boolean
      */
     Boolean update(LogisticsProductDTO.UpdateDTO dto);
+
+    /**
+     * 导出物流产品信息
+     * @author yl
+     * @date 2023-11-08 10:54
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 导入产品信息
+     * @author yl
+     * @date 2023-11-08 11:57
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }
