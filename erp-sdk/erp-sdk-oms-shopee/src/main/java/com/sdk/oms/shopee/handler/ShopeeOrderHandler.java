@@ -64,10 +64,10 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
-        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());
-        if (CollectionUtils.isEmpty(shopeeShop.getData())) {
-            return Collections.emptyList();
-        }
+//        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());
+//        if (CollectionUtils.isEmpty(shopeeShop.getData())) {
+//            return Collections.emptyList();
+//        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -78,31 +78,29 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
             return Collections.emptyList();
         }
         List<OrderDetail> orderDTOS = new ArrayList<>();
-        shopeeShop.getData().forEach(shopAuthEntity -> {
-            ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
-            if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
-                OrderRequest orderRequest = OrderRequest.builder()
-                        .offset(0)
-                        .timeFrom(timeFrom)
-                        .timeTo(timeTo)
-                        .tmpPartnerKey(cfgAppClient.getClientSecret())
-                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
-                        .token(shopAuthEntity.getAccessToken())
-                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                        .host(cfgAppClient.getUrl())
-                        .cursor("")
-                        .build();
-                List<OrderDetail> orderDetails = new ArrayList<>();
-                try {
-                    shopeeOrderService.getAllOrder(orderRequest,orderDetails);
-                }catch (Exception e){
-                    log.error("获取订单数据异常:{}", e.getMessage());
-                }
-                if (CollectionUtils.isNotEmpty(orderDetails)){
-                    orderDTOS.addAll(orderDetails);
-                }
+        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
+        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && shopeeShopById.getData().getType().equalsIgnoreCase("shopee_shop")) {
+            OrderRequest orderRequest = OrderRequest.builder()
+                    .offset(0)
+                    .timeFrom(timeFrom)
+                    .timeTo(timeTo)
+                    .tmpPartnerKey(cfgAppClient.getClientSecret())
+                    .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                    .token(shopeeShopById.getData().getAccessToken())
+                    .shopId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
+                    .host(cfgAppClient.getUrl())
+                    .cursor("")
+                    .build();
+            List<OrderDetail> orderDetails = new ArrayList<>();
+            try {
+                shopeeOrderService.getAllOrder(orderRequest, orderDetails);
+            } catch (Exception e) {
+                log.error("获取订单数据异常:{}", e.getMessage());
             }
-        });
+            if (CollectionUtils.isNotEmpty(orderDetails)) {
+                orderDTOS.addAll(orderDetails);
+            }
+        }
         // 返回下载源数据
         return orderDTOS.stream()
                 .map(e -> new PlatformShopeeOrderDTO(e, data))
@@ -112,7 +110,7 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformShopeeOrderDTO> sourceDataList) {
-        if (CollectionUtils.isEmpty(sourceDataList)){
+        if (CollectionUtils.isEmpty(sourceDataList)) {
             return Collections.emptyList();
         }
         //亚马逊订单转换为发送mq数据
