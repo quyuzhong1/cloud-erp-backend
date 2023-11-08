@@ -97,6 +97,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Autowired
     private FbaShipmentReceiveService fbaShipmentReceiveService;
+    @Autowired
+    private WmsAttachmentService wmsAttachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -586,6 +588,16 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()));
         logisticsViewDTO.setLogisticsRemark(logisticsEntity.getRemark());
         data.setLogisticsView(logisticsViewDTO);
+        //附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(data.getId()));
+        List<String> attachmentUrlList = attachmentList.stream().
+                map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
+                collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().
+                map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                collect(Collectors.toList());
+        data.setAttachUrlList(attachmentUrlList);
+        data.setAttachNameList(attachmentNameList);
 
         //查询已发货的货件信息
         List<String> sourceDetailIdList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSourceDetailId).collect(Collectors.toList());

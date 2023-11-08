@@ -634,8 +634,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 库存组织id
         */
-        @NotBlank(message = "库存组织id不能为空")
-        @Size(max = 19,message = "库存组织id最大长度不能超过19位")
         private String inventoryOrgId;
 
     }
