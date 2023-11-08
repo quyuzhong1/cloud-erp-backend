@@ -179,7 +179,12 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
         BeanMapper.copy(ruleOrderApproval, view);
         String categoryDetailId = ruleOrderApproval.getCategoryDetailId();
-        view.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
+        if(StringUtils.isNotBlank(categoryDetailId)){
+            view.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
+        }else{
+            view.setCategoryDetailIdList(Collections.emptyList());
+        }
+
         String operationType = ruleOrderApproval.getOperationType();
         List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
         view.setOperationTypeList(operationTypeList);
@@ -232,7 +237,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
      * @return
      */
     private List<RuleOrderApprovalEntity> listOrderByPriority() {
-        return this.lambdaQuery().eq(RuleOrderApprovalEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleOrderApprovalEntity::getPriority).list();
+        return this.lambdaQuery().eq(RuleOrderApprovalEntity::getDisabled, Boolean.FALSE).orderByAsc(RuleOrderApprovalEntity::getPriority).list();
     }
 
 

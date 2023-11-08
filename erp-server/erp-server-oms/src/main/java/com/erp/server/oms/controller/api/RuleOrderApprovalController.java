@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -19,6 +20,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+
+import java.util.List;
 
 /**
  * 订单规则
@@ -98,7 +101,7 @@ public class RuleOrderApprovalController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated RuleOrderApprovalDTO.UpdateDTO dto) {
         Boolean result = ruleOrderApprovalService.update(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -113,6 +116,12 @@ public class RuleOrderApprovalController extends BaseController {
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = ruleOrderApprovalService.updateStatus(dto);
         return result ? success() : failure();
+    }
+
+    @PostMapping("/test")
+    public ApiResult test(@RequestBody List<JSONObject> jsonObjectList) {
+        RuleOrderApprovalDTO.RuleMatchDTO ruleMatchDTO = ruleOrderApprovalService.getRuleOrderMatchResult(jsonObjectList);
+        return success(ruleMatchDTO);
     }
 
 
