@@ -149,7 +149,6 @@ public enum ApiError implements Serializable {
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
 
 
-
     /**
      * DMP服务错误
      * 80001开始
@@ -480,6 +479,11 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
 
+    /**
+     * TMS 错误
+     * 从96000 开始
+     */
+    CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
 
     /**
      * bi 错误
