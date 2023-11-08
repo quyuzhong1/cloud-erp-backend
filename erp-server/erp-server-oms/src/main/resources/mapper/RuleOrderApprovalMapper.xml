@@ -57,6 +57,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        ORDER BY roa.update_time DESC
     </select>
 
 
