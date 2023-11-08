@@ -15,6 +15,7 @@ import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
+import com.erp.server.wms.service.FbaInventoryReservedService;
 import com.erp.server.wms.service.FbaInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -51,6 +52,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private CommonService commonService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private FbaInventoryReservedService fbaInventoryReservedService;
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
@@ -156,5 +159,10 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id) {
+        return null;
     }
 }

@@ -446,7 +446,6 @@ public class FbaInventoryDTO implements Serializable {
          * 主键id
          */
         private String id;
-
         /**
          * 待调仓数量
          */

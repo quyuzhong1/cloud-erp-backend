@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -53,4 +54,13 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @return void
      **/
     void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response);
+
+    /**
+     * 查询预售名称
+     * @Author Luo_WG
+     * @Date 2023/11/8 18:26
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.InventoryReservedView>
+     **/
+    List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id);
 }

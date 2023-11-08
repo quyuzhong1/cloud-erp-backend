@@ -76,8 +76,16 @@ public class FbaInventoryController extends BaseController {
         fbaInventoryService.exportList(dto, response);
     }
 
- /*   @GetMapping("/listInventoryReserved")
-    public void listInventoryReserved(@RequestParam(value = "id") String id) {
-        fbaInventoryService.exportList(dto, response);
-    }*/
+    /**
+     * 查询预留明细
+     * @Author Luo_WG
+     * @Date 2023/11/8 18:26
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.InventoryReservedView>>
+     **/
+    @GetMapping("/listInventoryReserved")
+    public ApiResult<List<FbaInventoryDTO.InventoryReservedView>> listInventoryReserved(@RequestParam(value = "id") String id) {
+        List<FbaInventoryDTO.InventoryReservedView> result = fbaInventoryService.listInventoryReserved(id);
+        return success(result);
+    }
 }
