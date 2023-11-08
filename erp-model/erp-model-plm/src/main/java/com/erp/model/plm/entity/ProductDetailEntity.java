@@ -144,6 +144,8 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

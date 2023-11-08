@@ -64,7 +64,7 @@ public class CfgProductCategoryFieldController extends BaseController {
     }
 
 
-    @LogAction(value = LogActionEnum.DELETE, desc = "项目任务-任务详情-删除任务")
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品分类字段配置表删除")
     @PostMapping("/remove")
     public ApiResult remove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = cfgProductCategoryFieldService.removeByIds(dto.getIds());

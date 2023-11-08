@@ -1,27 +1,33 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.ProductCustomsEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +67,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private ProductDetailService productDetailService;
 
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -82,6 +91,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         Integer salesStatus = productBaseInfo.getSalesStatus();
         String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
         productBaseInfo.setSalesStatusName(salesStatusName);
+        String categoryId = productBaseInfo.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
+        List<BasicCategoryEntity> categoryList = basicCategoryService.listByIds(categoryIdList);
+        String categoryName = categoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("-"));
+        productBaseInfo.setCategoryName(categoryName);
         result.setProductBaseInfo(productBaseInfo);
         LogisticsProductDTO.DeclareInfoDTO declareInfo = new LogisticsProductDTO.DeclareInfoDTO();
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
@@ -89,6 +103,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BeanMapper.copy(productLogistics, declareInfo);
         }
         result.setDeclareInfo(declareInfo);
+
 
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
@@ -137,7 +152,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        List<LogisticsProductDTO.PagingVO> list = baseMapper.listExport(dto,approvalStatus);
+        List<LogisticsProductDTO.PagingVO> list = baseMapper.listExport(dto, approvalStatus);
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/productLogistics.xlsx";
@@ -157,15 +172,107 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        LogisticsProductExcelListener excelListenerUtil = new LogisticsProductExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入物流场频错误！{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<LogisticsProductExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<LogisticsProductExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<LogisticsProductExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //处理验证成功数据
+        handleImportSuccessList(successList, errorList);
+
+        if (errorList.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productLogisticsError.xlsx";
+            String name = "productLogistics";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    private void handleImportSuccessList(List<LogisticsProductExcelDTO> successList, List<LogisticsProductExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<String> currencyCodeList = successList.stream().map(LogisticsProductExcelDTO::getDeclareCurrency).distinct().collect(Collectors.toList());
+        List<String> destCurrencyList = successList.stream().map(LogisticsProductExcelDTO::getDestCurrency).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(destCurrencyList);
+        List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+
+        for (LogisticsProductExcelDTO item : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            String skuNo = item.getSkuNo();
+            String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
+                    map(SkuVO::getSkuId).orElse("");
+            if (StringUtils.isBlank(skuId)) {
+                errorMsgList.add("sku不存在");
+            }
+            //存在错误信息则
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(item);
+                continue;
+            }
+
+            //表示正确
+            ProductLogisticsEntity productLogistics = productLogisticsList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
+            productLogistics.setSkuId(skuId);
+
+            productLogistics.setDeclareChineseName(item.getDeclareChineseName());
+            productLogistics.setDeclareModel(item.getDeclareModel());
+            //报关申报价
+            String declarePriceStr = item.getDeclarePrice();
+            productLogistics.setDeclarePrice(new BigDecimal(declarePriceStr));
+            String declareCurrency = item.getDeclareCurrency();
+            productLogistics.setDeclareCurrency(declareCurrency);
+
+            String declareCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(declareCurrency)).findFirst().
+                    map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            productLogistics.setDeclareCurrencySymbol(declareCurrencySymbol);
+            String destCurrency = item.getDestCurrency();
+
+            String destCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(destCurrency)).findFirst().
+                    map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            productLogistics.setDestCurrencySymbol(destCurrencySymbol);
+
+            //报关申报价
+            String destDeclarePriceStr = item.getDestDeclarePrice();
+            productLogistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
+            productLogistics.setCustomsCode(item.getCustomsCode());
+            productLogistics.setDeclareElement(item.getDeclareElement());
+            productLogistics.setSourceCountry(item.getSourceCountry());
+            productLogisticsService.saveOrUpdate(productLogistics);
+        }
+
     }
 
     private List<String> handleCustoms(List<ProductCustomsEntity> productCustomsList) {
         if (CollectionUtils.isEmpty(productCustomsList)) {
             return Collections.emptyList();
         }
-        //国家
-        List<String> countryIdList = productCustomsList.stream().map(ProductCustomsEntity::getCountry).distinct().collect(Collectors.toList());
         //sku
         List<String> skuIdList = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listByIds(skuIdList);
@@ -239,7 +346,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             item.setApproveStatusName(approveStatusName);
             //产品经理
             String chargeId = item.getChargeId();
-            List<String> chargeIdList =StringUtils.isNotBlank(chargeId)? Arrays.asList(chargeId.split(",")):Collections.emptyList();
+            List<String> chargeIdList = StringUtils.isNotBlank(chargeId) ? Arrays.asList(chargeId.split(",")) : Collections.emptyList();
             String chargeName = userList.stream().filter(u -> chargeIdList.contains(u.getUserId())).
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setChargeName(chargeName);

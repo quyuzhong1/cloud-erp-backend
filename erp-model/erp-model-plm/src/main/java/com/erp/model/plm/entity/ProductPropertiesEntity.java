@@ -12,43 +12,40 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 产品分类字段配置表
+ * sku与配置字段关系表
  * </p>
  *
  * @author Lambda
- * @since 2023-11-06
+ * @since 2023-11-08
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_product_category_field")
-public class CfgProductCategoryFieldEntity extends BaseEntity<CfgProductCategoryFieldEntity> {
+@TableName("product_properties")
+public class ProductPropertiesEntity extends BaseEntity<ProductPropertiesEntity> {
 
     /**
-    * 分类id
+    * sku id
     */
-    @TableField("category_id")
-    private String categoryId;
-
-    @TableField("category_name")
-    private String categoryName;
+    @TableField("sku_id")
+    private String skuId;
+    /**
+    * 字段值
+    */
+    @TableField("field_value")
+    private String fieldValue;
     /**
     * 字段
     */
     @TableField("field_code")
     private String fieldCode;
-    /**
-    * 字段名
-    */
-    @TableField("field_name")
-    private String fieldName;
 
 
-    public static final String CATEGORY_ID = "category_id";
+    public static final String SKU_ID = "sku_id";
+
+    public static final String FIELD_VALUE = "field_value";
 
     public static final String FIELD_CODE = "field_code";
-
-    public static final String FIELD_NAME = "field_name";
 
     @Override
     public Serializable pkVal() {

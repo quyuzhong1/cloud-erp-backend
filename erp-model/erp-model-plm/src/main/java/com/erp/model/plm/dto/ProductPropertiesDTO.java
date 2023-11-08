@@ -10,15 +10,15 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * 产品分类字段配置表请求响应实体
+ * sku与配置字段关系表请求响应实体
  * </p>
  *
  * @author Lambda
- * @since 2023-11-06
+ * @since 2023-11-08
 */
 @Data
 @NoArgsConstructor
-public class CfgProductCategoryFieldDTO implements Serializable {
+public class ProductPropertiesDTO implements Serializable {
 
 
 
@@ -36,19 +36,19 @@ public class CfgProductCategoryFieldDTO implements Serializable {
         private String  id;
 
         /**
-        * 分类id
+        * sku id
         */
-        private String categoryId;
+        private String skuId;
+
+        /**
+        * 字段值
+        */
+        private String fieldValue;
 
         /**
         * 字段
         */
         private String fieldCode;
-
-        /**
-        * 字段名
-        */
-        private String fieldName;
 
 
     }
@@ -83,14 +83,18 @@ public class CfgProductCategoryFieldDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 分类id
+        * sku id
         */
-        @NotBlank(message = "分类id不能为空")
-        @Size(max = 19,message = "分类id最大长度不能超过19位")
-        private String categoryId;
+        @NotBlank(message = "sku id不能为空")
+        @Size(max = 19,message = "sku id最大长度不能超过19位")
+        private String skuId;
 
-        @Size(max = 30,message = "分类最大长度不能超过30位")
-        private String categoryName;
+        /**
+        * 字段值
+        */
+        @NotBlank(message = "字段值不能为空")
+        @Size(max = 30,message = "字段值最大长度不能超过30位")
+        private String fieldValue;
 
         /**
         * 字段
@@ -98,13 +102,6 @@ public class CfgProductCategoryFieldDTO implements Serializable {
         @NotBlank(message = "字段不能为空")
         @Size(max = 30,message = "字段最大长度不能超过30位")
         private String fieldCode;
-
-        /**
-        * 字段名
-        */
-        @NotBlank(message = "字段名不能为空")
-        @Size(max = 50,message = "字段名最大长度不能超过50位")
-        private String fieldName;
 
 
     }

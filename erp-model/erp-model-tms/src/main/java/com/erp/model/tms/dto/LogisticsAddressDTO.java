@@ -73,44 +73,35 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
-         */
-        private String countryId;
-
-        /**
-         * 国家名称
+         * 国家二子码
          */
         private String country;
 
         /**
-         * 省
+         * 国家名称
          */
-        private String provinceId;
+        private String countryName;
 
         /**
          * 省
          */
-        private String province;
+        private String provinceName;
+
+
 
         /**
          * 城市
          */
-        private String city;
+        private String cityName;
 
-        /**
-         * 城市
-         */
-        private String cityId;
+
 
         /**
          * 区
          */
-        private String district;
+        private String districtName;
 
-        /**
-         * 区
-         */
-        private String districtId;
+
 
         /**
          * 详细地址1
@@ -190,7 +181,7 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
+         * 国家二字码
          */
         private String country;
 
@@ -202,32 +193,22 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 省
          */
-        private String province;
+        private String provinceName;
 
-        /**
-         * 省
-         */
-        private String provinceId;
 
-        /**
-         * 城市
-         */
-        private String city;
+
 
         /**
          * 城市
          */
-        private String cityId;
+        private String cityName;
 
         /**
          * 区
          */
-        private String district;
+        private String districtName;
 
-        /**
-         * 区
-         */
-        private String districtId;
+
 
 
         /**
@@ -316,7 +297,7 @@ public class LogisticsAddressDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 国家
+         * 国家id
          */
         @NotBlank(message = "国家不能为空")
         private String country;
@@ -325,19 +306,18 @@ public class LogisticsAddressDTO implements Serializable {
          * 省
          */
         @NotBlank(message = "省不能为空")
-        private String provinceId;
+        private String provinceName;
 
         /**
          * 城市
          */
-        @NotBlank(message = "城市不能为空")
-        private String cityId;
+        private String cityName;
 
         /**
          * 区
          */
-        @NotBlank(message = "区不能为空")
-        private String districtId;
+
+        private String districtName;
 
         /**
          * 详细地址1

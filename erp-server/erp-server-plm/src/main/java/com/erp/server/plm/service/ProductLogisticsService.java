@@ -65,4 +65,13 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return ProductLogisticsEntity
      */
     ProductLogisticsEntity getBySkuId(String skuId);
+
+    /**
+     * 根据sku id 集合获取
+     * @author yl
+     * @date 2023-11-08 14:37
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductLogisticsEntity>
+     */
+    List<ProductLogisticsEntity> listBySkuIdList(List<String> skuIdList);
 }
