@@ -1,9 +1,11 @@
 package com.erp.server.oms.rocketmq;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +46,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private SoB2cService soB2cService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -56,6 +61,9 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         // 组合信息
         SoB2cEntity entity = new SoB2cEntity();
         BeanUtils.copyProperties(dto, entity);
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+        entity.setCode(code);
         if (!soB2cService.save(entity)){
             throw new ServiceException("soB2c订单保存失败");
         }
