@@ -49,7 +49,7 @@ public class FbaDeliveryLogisticsController extends BaseController {
 
 
     /**
-     * 更新物流信息列表查询
+     * 更新物流信息列表保存
      * @Author Luo_WG
      * @Date 2023/10/30 18:35
      * @param dto

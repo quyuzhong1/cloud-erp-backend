@@ -5,6 +5,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
 /**
  * <p>
  * FBI库存 服务类
@@ -41,4 +44,23 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.FbaInventoryDTO.ListDTO>>
      **/
     PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出excel
+     * @Author Luo_WG
+     * @Date 2023/11/8 17:54
+     * @param param
+     * @param response
+     * @return void
+     **/
+    void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response);
+
+    /**
+     * 查询预售名称
+     * @Author Luo_WG
+     * @Date 2023/11/8 18:26
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.InventoryReservedView>
+     **/
+    List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id);
 }

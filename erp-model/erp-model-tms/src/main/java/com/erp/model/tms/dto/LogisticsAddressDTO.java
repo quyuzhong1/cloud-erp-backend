@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -132,6 +133,12 @@ public class LogisticsAddressDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        private List<String> ids;
+    }
+
 
     /**
      * 详情
@@ -153,7 +160,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private LogisticsAddressTypeEnums type;
 
         /**
          * 类型
@@ -268,8 +275,8 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 类型
          */
-        @NotBlank(message = "类型不能为空")
-        private String type;
+        @NotNull(message = "类型不能为空")
+        private LogisticsAddressTypeEnums type;
 
         /**
          * 公司名

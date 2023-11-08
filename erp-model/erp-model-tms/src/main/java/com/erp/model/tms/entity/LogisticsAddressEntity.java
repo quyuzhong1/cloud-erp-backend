@@ -67,7 +67,7 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     /**
     * 国家
     */
-    @TableField("country")
+    @TableField("country_name")
     private String countryName;
 
 
@@ -122,11 +122,6 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
 
     public static final String COUNTRY = "country";
 
-    public static final String PROVINCE = "province";
-
-    public static final String CITY = "city";
-
-    public static final String DISTRICT  = "district ";
 
     public static final String ADDRESS_FIRST = "address_first";
 

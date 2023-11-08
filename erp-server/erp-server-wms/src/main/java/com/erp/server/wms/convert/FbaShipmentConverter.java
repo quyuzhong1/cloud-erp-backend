@@ -49,7 +49,6 @@ public interface FbaShipmentConverter {
             @Mapping(target = "attachUrlList", defaultValue = ""),
             @Mapping(target = "demandType", defaultValue = ""),
             @Mapping(target = "detailList", defaultValue = ""),
-            @Mapping(target = "fulfillmentCenter", defaultValue = ""),
             @Mapping(target = "inventoryOrgId", defaultValue = ""),
             @Mapping(target = "remark", defaultValue = ""),
             @Mapping(target = "sourceType", defaultValue = ""),

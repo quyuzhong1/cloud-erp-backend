@@ -1,7 +1,9 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.entity.LogisticsAddressEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +21,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 物流地址
@@ -51,9 +58,25 @@ public class LogisticsAddressController extends BaseController {
     public ApiResult<PagingVO<LogisticsAddressDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsAddressDTO.PagingViewDTO> pagingVO = logisticsAddressService.paging(dto);
         return success(pagingVO);
-
     }
 
+
+    /**
+     * 导出
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsAddress:paging",
+            tableAlias = "ci"
+    )
+    public ApiResult exportExcel(@RequestBody @Validated LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = logisticsAddressService.exportExcel(dto,response);
+        return result ? success() : failure();
+    }
     /**
      * 新增
      *
@@ -106,6 +129,38 @@ public class LogisticsAddressController extends BaseController {
         LogisticsAddressDTO.ViewDTO view = logisticsAddressService.view(id);
         return success(view);
     }
+
+    @GetMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsAddress:delete",
+            serviceClass = LogisticsAddressService.class,
+            keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for(String id:dto.getIds()){
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult=logisticsAddressService.delete(id);
+            }catch (Exception e){
+                log.error("物流地址删除失败{}",e);
+                LogisticsAddressEntity  entity=logisticsAddressService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "物流地址不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+    }
+
+
 
 
 }

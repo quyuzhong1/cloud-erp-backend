@@ -546,6 +546,10 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String code;
         /**
+         * 平台物流中心
+         */
+        private String fulfillmentCenter;
+        /**
          * 店铺id
          */
         private String shopId;

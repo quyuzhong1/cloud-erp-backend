@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
@@ -299,7 +300,7 @@ public class FbaInventoryDTO implements Serializable {
          *    self_delivery：卖家自配送
          *    amazon_delivery：亚马逊配送
          */
-        private String deliveryChannels;
+        private List<String> deliveryChannelsList;
         /**
          * 更新时间
          */
@@ -366,6 +367,11 @@ public class FbaInventoryDTO implements Serializable {
         private String deliveryChannels;
 
         /**
+         * 销售渠道名称
+         */
+        private String deliveryChannelsName;
+
+        /**
          * FBM可售
          */
         private String fbmFulfillableQty;
@@ -415,5 +421,42 @@ public class FbaInventoryDTO implements Serializable {
          */
         private LocalDateTime updateTime;
 
+    }
+
+    /**
+     * 导出Excel
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends FbaInventoryDTO.PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
+    /**
+     * 查询预留详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryReservedView {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 待调仓数量
+         */
+        private Integer reservedTransfersQty;
+        /**
+         * 调仓中数量
+         */
+        private Integer reservedProcessingQty;
+        /**
+         * 买家订单数量
+         */
+        private Integer reservedOrderQty;
     }
 }

@@ -53,6 +53,8 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "字典单"));
         DictBasicEntity dictBasicEntity =  BeanMapperUtils.map(DictBasicEntity.class, updateDTO);
 
+        // 数据处理
+
         log.info("编辑 开始修改字典单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(dictBasicEntity);
         if(!save) {
@@ -137,5 +139,6 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
+
     }
 }

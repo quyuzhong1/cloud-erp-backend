@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -21,4 +23,12 @@ import org.apache.ibatis.annotations.Param;
 public interface LogisticsAddressMapper extends BaseMapper<LogisticsAddressEntity> {
 
     IPage<LogisticsAddressDTO.PagingViewDTO> paging(Page query,@Param("params") LogisticsAddressDTO.PagingParamDTO params);
+
+    /**
+     * 查询导出数据
+     * @author yl
+     * @date 2023-11-08 17:42
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsAddressDTO.PagingViewDTO>
+     */
+    List<LogisticsAddressDTO.PagingViewDTO> listExport(@Param("params")LogisticsAddressDTO.ExportDTO dto);
 }

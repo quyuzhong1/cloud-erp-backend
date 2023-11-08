@@ -5,12 +5,18 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
@@ -28,10 +34,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 
+import java.io.IOException;
 import java.util.*;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -86,7 +95,6 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         LogisticsAddressEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址单"));
         LogisticsAddressEntity logisticsAddressEntity = BeanMapperUtils.map(LogisticsAddressEntity.class, updateDTO);
-
         // 数据处理
         handleData(logisticsAddressEntity);
         log.info("编辑 开始修改物流地址单数据，id：【{}】", old.getId());
@@ -94,12 +102,9 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         if (!save) {
             throw new ServiceException("物流地址单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
         log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsAddressEntity, null, logisticsAddressEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -110,6 +115,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流地址"));
         LogisticsAddressDTO.ViewDTO view = new LogisticsAddressDTO.ViewDTO();
         BeanMapper.copy(entity, view);
+        view.setTypeName(view.getType().getName());
         return view;
     }
 
@@ -129,6 +135,37 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         List<LogisticsAddressDTO.PagingViewDTO> list = pageData.getRecords();
         fillData(list);
         return new PagingVO<>(pageData);
+    }
+
+
+
+    @Override
+    public Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
+        List<LogisticsAddressDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        fillData(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/LogisticsAddress.xlsx";
+        String name = "物流地址列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销物流地址导出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        LogisticsAddressEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("物流地址"));
+
+        this.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
+
     }
 
 

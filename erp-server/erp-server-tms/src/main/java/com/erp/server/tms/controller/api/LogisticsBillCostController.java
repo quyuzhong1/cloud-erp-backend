@@ -19,6 +19,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 
+import javax.validation.Valid;
+
 /**
  * 自发货费用
  *

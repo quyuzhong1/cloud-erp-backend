@@ -65,7 +65,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         SoB2cEntity entity = new SoB2cEntity();
         BeanUtils.copyProperties(dto, entity);
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
         entity.setCode(code);
         if (!soB2cService.save(entity)){
             throw new ServiceException("soB2c订单保存失败");

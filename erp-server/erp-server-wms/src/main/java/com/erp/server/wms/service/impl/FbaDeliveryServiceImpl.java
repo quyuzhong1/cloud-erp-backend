@@ -50,6 +50,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.stream.Stream;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -282,10 +284,16 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 throw new ServiceException(ApiError.IS_GENERATE_MACHINE, entity.getCode());
             }
 
+            List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+            List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            //查询历史子件信息
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
             //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】可用库存不足，无法审核发货单
             for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : isCombinationList) {
                 //及时库存
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), fbaDeliveryDetailEntity.getSkuNo(), fbaDeliveryDetailEntity.getWarehouseLocation());
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), skuVO.getSkuId(), fbaDeliveryDetailEntity.getWarehouseLocation());
                 if (fbaDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                     throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, entity.getCode());
                 }
@@ -608,7 +616,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
             //映射产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-            detailVie.setSkuId(skuVO.getSkuId());
             detailVie.setProductName(skuVO.getSkuName());
             detailVie.setImageUrl(skuVO.getSkuImagesUrl());
             //获取已出库数量（排除此单出库数量）
@@ -731,7 +738,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 //子件sku
                 sonItem.setSonSkuNo(bomDTO.getSkuNo());
                 //及时库存
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(view.getWarehouseId(), bomDTO.getSkuNo(), view.getWarehouseLocation());
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(view.getWarehouseId(), bomDTO.getSkuId(), view.getWarehouseLocation());
                 sonItem.setCurInventoryQty(usableInventoryTotal);
                 sonItemList.add(sonItem);
             }
@@ -779,8 +786,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
      * @return java.util.List<java.lang.String>
      **/
     private List<String> fbaDeliveryGenerateMachine(List<FbaDeliveryDTO.GenerateMachineView> list) {
+        List<String> sonSkuNos = new ArrayList<>();
+        for (FbaDeliveryDTO.GenerateMachineView generateMachineView : list) {
+            List<String> collect = generateMachineView.getSonItemList().stream().map(obj -> obj.getSonSkuNo()).collect(Collectors.toList());
+            sonSkuNos.addAll(collect);
+        }
         //查询产品sku信息
         List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        skuNos.addAll(sonSkuNos);
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         //一个发货单多个组合产品，生成一个组装单
         Map<String, List<FbaDeliveryDTO.GenerateMachineView>> map = list.stream().collect(Collectors.groupingBy(FbaDeliveryDTO.GenerateMachineView::getMainId));
@@ -793,8 +806,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
             //普通加工单
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
+            //来源FBA发货单
+            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
+
             List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (FbaDeliveryDTO.GenerateMachineView view : value) {
+                addDTO.setSourceId(view.getMainId());
+                addDTO.setSourceCode(view.getCode());
                 addDTO.setWarehouseId(view.getWarehouseId());
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(null);
@@ -812,7 +830,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 for (FbaDeliveryDTO.SonItem sonItem : sonItemList) {
                     MachineSubComponentsDTO.AddDTO addSubComponentsDTO = new MachineSubComponentsDTO.AddDTO();
                     //产品信息
-                    SkuVO child = skuVOList.stream().filter(obj -> obj.getSkuId().equals(sonItem.getSonSkuNo())).findFirst().orElse(null);
+                    SkuVO child = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(sonItem.getSonSkuNo())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(child)) {
                         throw new ServiceException(ApiError.ERROR_95166);
                     }
@@ -985,7 +1003,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             //子件sku
             sonItem.setSonSkuNo(bomDTO.getSkuNo());
             //及时库存
-            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), bomDTO.getSkuNo(), detailEntity.getWarehouseLocation());
+            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), bomDTO.getSkuId(), detailEntity.getWarehouseLocation());
             sonItem.setCurInventoryQty(usableInventoryTotal);
             sonItemList.add(sonItem);
         }
