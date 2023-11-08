@@ -118,8 +118,8 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * 查询sku版本信息
      * @Author Luo_WG
      * @Date 2023/11/2 8:57
-     * @param dto
+     * @param skuNos
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
-    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(ProductBomInfoDTO.skuBomVersionParams dto);
+    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos);
 }

@@ -696,8 +696,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         //查询sku对应的bom版本记录
         List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
+
+        List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         //查询历史子件信息
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuNos);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         for (FbaDeliveryDTO.GenerateMachineView view : viewList) {
             //事务类型
             view.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
@@ -711,16 +713,17 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             view.setWarehouseLocationName(warehouseLocationEntity.getName());
 
             //获取到最新的版本
-            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view)).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
+            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
             List<Integer> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> Integer.valueOf(req)).collect(Collectors.toList());
             Integer bomVersion = Collections.max(bomVersionList);
             view.setBomVersion(String.valueOf(bomVersion));
             List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 
             //查询最新版本的sku子件信息
-            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo()) && req.getBomVersion().equals(bomVersion)).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo()) && req.getBomVersion().equals(String.valueOf(bomVersion))).collect(Collectors.toList());
             for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
                 FbaDeliveryDTO.SonItem sonItem = new FbaDeliveryDTO.SonItem();
+                sonItem.setId(view.getId());
                 //bom用量
                 sonItem.setQuantity(bomDTO.getQuantity());
                 //子件数量 = 组装数量 * bom用量

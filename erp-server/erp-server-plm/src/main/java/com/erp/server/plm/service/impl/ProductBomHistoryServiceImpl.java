@@ -145,6 +145,9 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
 
     @Override
     public List<ProductBomHistoryEntity> listByBomIds(List<String> bomIds) {
+        if (CollectionUtils.isEmpty(bomIds)) {
+            return Collections.emptyList();
+        }
         List<ProductBomHistoryEntity> list = lambdaQuery().in(ProductBomHistoryEntity::getBomId, bomIds).list();
         return list;
     }

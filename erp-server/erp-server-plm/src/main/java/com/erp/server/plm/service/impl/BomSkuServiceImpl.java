@@ -254,8 +254,8 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     }
 
     @Override
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(ProductBomInfoDTO.skuBomVersionParams dto) {
-        List<BomSkuEntity> list = lambdaQuery().in(BomSkuEntity::getSkuNo, dto.getSkuNos()).list();
+    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos) {
+        List<BomSkuEntity> list = lambdaQuery().in(BomSkuEntity::getParentSkuNo, skuNos).list();
         List<String> bomIds = list.stream().map(req -> req.getBomId()).distinct().collect(Collectors.toList());
         List<ProductBomHistoryEntity> productBomHistoryEntities = productBomHistoryService.listByBomIds(bomIds);
         List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = new ArrayList<>();
@@ -264,6 +264,8 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             bomVersion.setSkuNo(bomSkuEntity.getSkuNo());
             List<String> bomVersionList = productBomHistoryEntities.stream().filter(req -> req.getBomId().equals(bomSkuEntity.getBomId())).map(req -> req.getBomVersion()).collect(Collectors.toList());
             bomVersion.setBomVersionList(bomVersionList);
+            bomVersion.setParentSkuId(bomSkuEntity.getParentSkuId());
+            bomVersion.setParentSkuNo(bomSkuEntity.getParentSkuNo());
             skuBomVersionList.add(bomVersion);
         }
         return skuBomVersionList;
