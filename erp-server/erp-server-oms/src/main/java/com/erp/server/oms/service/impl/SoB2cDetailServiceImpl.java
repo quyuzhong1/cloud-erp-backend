@@ -34,10 +34,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -228,7 +225,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
 
         //SKU对照表信息
-        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId(),soB2cEntity.getDictPlatform())).collect(Collectors.toList());
+        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(skuList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuNo())).orElse(""), obj.getWarehouseId(),soB2cEntity.getDictPlatform())).collect(Collectors.toList());
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
