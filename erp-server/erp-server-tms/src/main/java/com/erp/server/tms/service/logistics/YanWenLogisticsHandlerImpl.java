@@ -62,7 +62,6 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
-        request.getParcelInfo().setProductList(LogisticsOrderConverter.INSTANCE.yanWenProductLists(logisticsOrderVO.getLogisticsProductVOList()));
         YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request);
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());

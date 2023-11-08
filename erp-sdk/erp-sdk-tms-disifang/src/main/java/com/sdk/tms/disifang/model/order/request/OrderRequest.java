@@ -3,6 +3,7 @@ package com.sdk.tms.disifang.model.order.request;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.sdk.tms.disifang.model.base.Address;
 import lombok.Data;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderRequest implements Serializable {
     /**
      * 4PX跟踪号（预分配号段的客户可传此值）

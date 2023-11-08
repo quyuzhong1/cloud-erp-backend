@@ -5,12 +5,11 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
+import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
-
-import java.util.List;
 
 /**
  * @author zdy
@@ -19,11 +18,10 @@ import java.util.List;
  * @date 2023年11月06日
  * @version: 1.0
  */
-@Mapper(uses = BooleanMapper.class)
+@Mapper(uses = BooleanMapper.class , builder = @Builder(disableBuilder = true))
 public interface LogisticsOrderConverter {
 
     LogisticsOrderConverter INSTANCE = Mappers.getMapper(LogisticsOrderConverter.class);
-
 
     OrderRequest orderRequestToDsf(LogisticsOrderVO logisticsOrderVO);
 
@@ -57,7 +55,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "parcelInfo.height",source = "parceInfoVO.height"),
             @Mapping(target = "parcelInfo.width",source = "parceInfoVO.width"),
             @Mapping(target = "parcelInfo.length",source = "parceInfoVO.length"),
-            @Mapping(target = "parcelInfo.ioss",source = "parceInfoVO.ioss")
+            @Mapping(target = "parcelInfo.ioss",source = "parceInfoVO.ioss"),
+            @Mapping(target = "parcelInfo.productList",source = "logisticsProductVOList")
     })
     YanWenCreateWayBillRequest orderRequestByYanWen(LogisticsOrderVO logisticsOrderVO);
 
@@ -70,5 +69,4 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "url",source = "url")
     @Mapping(target = "material",source = "englishMaterial")
     YanWenCreateWayBillRequest.ParcelInfo.Product yanWenProductMapping(LogisticsProductVO logisticsProductVO);
-    List<YanWenCreateWayBillRequest.ParcelInfo.Product> yanWenProductLists(List<LogisticsProductVO> logisticsProductVO);
 }
