@@ -32,4 +32,13 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return
      */
     LogisticsProductDTO.ViewDTO view(String id);
+
+    /**
+     * 编辑信息
+     * @author yl
+     * @date 2023-11-08 8:37
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean update(LogisticsProductDTO.UpdateDTO dto);
 }

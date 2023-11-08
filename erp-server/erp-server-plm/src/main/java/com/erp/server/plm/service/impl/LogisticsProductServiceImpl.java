@@ -1,10 +1,4 @@
-package com.erp.server.plm.service.impl;/**
- * @author Lambda
- * @Classname LogisticsProductServiceImpl
- * @Description TODO
- * @Date 2023-11-06 12:28
- * @Created by yl
- */
+package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,31 +7,30 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
-import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProductDetailMapper;
-import com.erp.server.plm.service.BomSkuService;
-import com.erp.server.plm.service.LogisticsProductService;
-import com.erp.server.plm.service.ProductCustomsService;
-import com.erp.server.plm.service.ProductLogisticsService;
+import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +52,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Resource
     private ProductCustomsService productCustomsService;
+
+    @Resource
+    private ProductDetailService productDetailService;
 
 
     @Override
@@ -92,10 +88,98 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(productCustomsList)) {
-            BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+            customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+            BigDecimal flag = MathUtil.BigDecimal_100;
+            for (ProductCustomsDTO.ViewDTO item : customsList) {
+                BigDecimal taxRate = item.getTaxRate();
+                taxRate = MathUtil.multiply(taxRate, flag);
+                item.setTaxRate(taxRate);
+            }
         }
         result.setCustomsList(customsList);
         return result;
+    }
+
+    /**
+     * 编辑信息
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-11-08 8:37
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean update(LogisticsProductDTO.UpdateDTO dto) {
+        //报关信息
+        LogisticsProductDTO.DeclareInfoDTO declareInfo = dto.getDeclareInfo();
+        ProductLogisticsEntity productLogistics = new ProductLogisticsEntity();
+        BeanMapper.copy(declareInfo, productLogistics);
+        handleProductLogistics(productLogistics);
+
+        List<ProductCustomsDTO.ViewDTO> customsList = dto.getCustomsList();
+        List<ProductCustomsEntity> productCustomsList = BeanMapper.copyList(customsList, ProductCustomsEntity.class);
+        List<String> deleteIdList = handleCustoms(productCustomsList);
+        Boolean logisticsResult = productLogisticsService.saveOrUpdate(productLogistics);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            productCustomsService.removeByIds(deleteIdList);
+        }
+        Boolean customsResult = productCustomsService.saveOrUpdateBatch(productCustomsList);
+        return logisticsResult && customsResult;
+    }
+
+    private List<String> handleCustoms(List<ProductCustomsEntity> productCustomsList) {
+        if (CollectionUtils.isEmpty(productCustomsList)) {
+            return Collections.emptyList();
+        }
+        //国家
+        List<String> countryIdList = productCustomsList.stream().map(ProductCustomsEntity::getCountry).distinct().collect(Collectors.toList());
+        //sku
+        List<String> skuIdList = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listByIds(skuIdList);
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        for (ProductCustomsEntity item : productCustomsList) {
+            String country = item.getCountry();
+            String countryName = countryList.stream().filter(c -> c.getId().equals(country)).map(DictCountryDTO.ListDTO::getNameCn).
+                    findFirst().orElse("");
+            item.setCountryName(countryName);
+            String skuNo = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).
+                    map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+            item.setSkuNo(skuNo);
+            BigDecimal taxRate = item.getTaxRate();
+            taxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            item.setTaxRate(taxRate);
+        }
+        List<String> updateIdList = productCustomsList.stream().filter(c -> StringUtils.isNotEmpty(c.getId())).
+                map(ProductCustomsEntity::getId).collect(Collectors.toList());
+        List<ProductCustomsEntity> dbList = productCustomsService.listBySkuId(productCustomsList.get(0).getSkuId());
+        return dbList.stream().filter(c -> !updateIdList.contains(c.getId())).map(ProductCustomsEntity::getId).collect(Collectors.toList());
+
+    }
+
+    /**
+     * 处理物流产品数据
+     *
+     * @param productLogistics
+     */
+    private void handleProductLogistics(ProductLogisticsEntity productLogistics) {
+        if (Objects.isNull(productLogistics)) {
+            return;
+        }
+        //报关币种
+        String declareCurrency = productLogistics.getDeclareCurrency();
+        //目的国币种
+        String destCurrency = productLogistics.getDestCurrency();
+
+        List<String> currencyCodeList = Arrays.asList(declareCurrency, destCurrency);
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        String declareCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(declareCurrency)).findFirst().
+                map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+        productLogistics.setDeclareCurrencySymbol(declareCurrencySymbol);
+
+        String destCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(destCurrency)).findFirst().
+                map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+        productLogistics.setDestCurrencySymbol(destCurrencySymbol);
     }
 
     /**

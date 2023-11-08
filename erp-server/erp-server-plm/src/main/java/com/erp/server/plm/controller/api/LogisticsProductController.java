@@ -8,9 +8,12 @@ package com.erp.server.plm.controller.api;/**
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.server.plm.service.LogisticsProductService;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +39,7 @@ public class LogisticsProductController extends BaseController {
 
     /**
      * 分页列表
+     *
      * @param dto
      * @return
      */
@@ -48,13 +52,29 @@ public class LogisticsProductController extends BaseController {
 
     /**
      * 详情
+     *
      * @param id
      * @return
      */
     @GetMapping("/view")
-    public ApiResult<LogisticsProductDTO.ViewDTO> view(@RequestParam(value = "id")  String id) {
+    @LogViewService
+    public ApiResult<LogisticsProductDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
         LogisticsProductDTO.ViewDTO viewDTO = logisticsProductService.view(id);
         return success(viewDTO);
+
+    }
+
+    /**
+     * 修改
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售出库单")
+    public ApiResult update(@RequestBody @Valid LogisticsProductDTO.UpdateDTO dto) {
+        Boolean updateResult = logisticsProductService.update(dto);
+        return updateResult?success():failure();
 
     }
 }

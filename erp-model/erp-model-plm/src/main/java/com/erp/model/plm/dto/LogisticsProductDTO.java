@@ -10,6 +10,10 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -264,6 +268,27 @@ public class LogisticsProductDTO {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+
+
+        /**
+         * 报关信息
+         */
+        @Valid
+        private DeclareInfoDTO declareInfo;
+
+
+        /**
+         * 目的国海关编码
+         */
+        private List<ProductCustomsDTO.ViewDTO> customsList;
+
+
+    }
+
 
     /**
      * 产品基础信息
@@ -387,22 +412,26 @@ public class LogisticsProductDTO {
         /**
          * sku id
          */
+        @NotBlank(message = "sku 不能为空")
         private String skuId;
 
 
         /**
          * 中文报关名
          */
+        @Size(max =50,message = "中文报关名最大100字符")
         private String declareChineseName;
 
         /**
          * 英文报关名
          */
+        @Size(max =50,message = "英文报关名最大100字符")
         private String declareEnglishName;
 
         /**
          * 报关型号
          */
+        @Size(max =50,message = "报关型号最大100字符")
         private String declareModel;
 
 
@@ -415,6 +444,12 @@ public class LogisticsProductDTO {
          * 报关申报价币种
          */
         private String declareCurrency;
+
+        /**
+         * 报关申报价币种符号
+         */
+        private String declareCurrencySymbol;
+
 
 
         /**
@@ -434,10 +469,17 @@ public class LogisticsProductDTO {
          */
         private BigDecimal destDeclarePrice;
 
+
         /**
          * 目的国申报价币种
          */
         private String destCurrency;
+
+        /**
+         * 目的国申报价币种符号
+         */
+        private String destCurrencySymbol;
+
 
 
         /**
@@ -449,6 +491,7 @@ public class LogisticsProductDTO {
         /**
          * 境内货源地
          */
+        @Size(max =50,message = "境内货源地最大50字符")
         private String sourceCargo;
 
 
@@ -460,6 +503,7 @@ public class LogisticsProductDTO {
         /**
          * 原产国
          */
+        @Size(max =50,message = "原产国最大50字符")
         private String sourceCountry;
 
 

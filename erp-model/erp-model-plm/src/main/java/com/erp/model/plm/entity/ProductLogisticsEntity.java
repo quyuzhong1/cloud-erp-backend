@@ -108,7 +108,7 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
      * 目的国申报价
      */
     @TableField(value = "dest_declare_price")
-    private String destDeclarePrice;
+    private BigDecimal destDeclarePrice;
 
 
     /**
@@ -124,7 +124,11 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
     @TableField(value = "dest_currency_symbol")
     private String destCurrencySymbol;
 
-
+    /**
+     * 征免
+     */
+    @TableField(value = "exemption")
+    private String exemption;
 
     /**
      * 境内货源地
