@@ -7,10 +7,9 @@
         <groupId>com.cloud.erp</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.sdk.tms.shopee</groupId>
+
     <artifactId>erp-sdk-tms-shopee-v2</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>erp-sdk-tms-shopee-v2</name>
+
     <description>虾皮物流平台对接</description>
     <properties>
         <java.version>8</java.version>
@@ -43,22 +42,5 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

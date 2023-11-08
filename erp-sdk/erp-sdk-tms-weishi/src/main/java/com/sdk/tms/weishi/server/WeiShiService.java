@@ -35,7 +35,6 @@ public class WeiShiService {
      *  创建订单
      */
     public WeiShiCreateOrder createOrder(@Valid WeiShiCreateOrderRequest request){
-        String json = JSONObject.toJSONString(request);
         String response = WeiShiUtils.sendPost(WeiShiConstants.METHOD_CREATE_ORDER,JSONObject.toJSONString(request));
         return JSONObject.parseObject(response,WeiShiCreateOrder.class);
     }

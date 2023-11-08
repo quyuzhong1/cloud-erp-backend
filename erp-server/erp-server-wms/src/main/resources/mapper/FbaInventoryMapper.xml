@@ -71,7 +71,7 @@
         WHERE fi.is_deleted = FALSE
         <!--仓库-->
         <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-            AND warehouse_id in
+            AND fi.warehouse_id in
             <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
                 #{warehouseId}
             </foreach>
@@ -88,6 +88,101 @@
         <if test="params.mSku != null and params.mSku != ''">
             AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
         </if>
+        <!--配送渠道-->
+        <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
+            AND fi.delivery_channels in
+            <foreach collection="params.deliveryChannelsList" item="deliveryChannels" open="(" close=")" separator=",">
+                #{deliveryChannels}
+            </foreach>
+        </if>
+        <!--修改时间-->
+        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
+            AND fi.update_time >= #{params.updateTimeList[0]} and
+            (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > fd.update_time
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fi.create_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.FbaInventoryDTO$ListDTO">
+        SELECT
+        fi.id,
+        fi.fba_shipment_id,
+        fi.warehouse_id,
+        fi.warehouse_name,
+        fi.asin,
+        fi.m_sku,
+        fi.fn_sku,
+        fi.sku_no,
+        fi.product_name,
+        fi.delivery_channels,
+        fi.fbm_fulfillable_qty,
+        fi.inbound_working_qty,
+        fi.inbound_shipped_qty,
+        fi.inbound_receiving_qty,
+        fi.fulfillable_qty,
+        fi.reserved_qty,
+        fi.researching_qty,
+        fi.unsellable_qty,
+        fi.inventory_age,
+        fi.update_time
+        FROM fba_inventory fi
+        WHERE fi.is_deleted = FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0 ">
+                AND id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <!--仓库-->
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                    AND fi.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                        #{warehouseId}
+                    </foreach>
+                </if>
+                <!--平台sku-->
+                <if test="params.asin != null and params.asin != ''">
+                    AND fi.asin ILIKE concat('%',#{params.asin},'%')
+                </if>
+                <!--fnSku-->
+                <if test="params.fnSku != null and params.fnSku != ''">
+                    AND fi.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+                </if>
+                <!--卖家sku-->
+                <if test="params.mSku != null and params.mSku != ''">
+                    AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+                </if>
+                <!--配送渠道-->
+                <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
+                    AND fi.delivery_channels in
+                    <foreach collection="params.deliveryChannelsList" item="deliveryChannels" open="(" close=")" separator=",">
+                        #{deliveryChannels}
+                    </foreach>
+                </if>
+                <!--修改时间-->
+                <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
+                    AND fi.update_time >= #{params.updateTimeList[0]} and
+                    (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > fd.update_time
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fi.create_time DESC
     </select>
 
 </mapper>

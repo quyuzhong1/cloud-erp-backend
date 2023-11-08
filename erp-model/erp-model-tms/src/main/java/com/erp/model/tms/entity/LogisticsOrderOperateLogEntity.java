@@ -37,13 +37,8 @@ public class LogisticsOrderOperateLogEntity extends BaseEntity<LogisticsOrderOpe
     /**
     * 销售订单Id
     */
-    @TableField("so_id")
-    private String soId;
-    /**
-    * 销售订单编码
-    */
-    @TableField("so_code")
-    private String soCode;
+    @TableField("source_id")
+    private String sourceId;
     /**
     * 物流平台类型
     */
@@ -55,17 +50,10 @@ public class LogisticsOrderOperateLogEntity extends BaseEntity<LogisticsOrderOpe
     @TableField("status")
     private String status;
     /**
-    * 操作类型
-    */
-    @TableField("operation")
-    private String operation;
-    /**
     * API请求参数
     */
     @TableField("request_param_json")
     private String requestParamJson;
-    @TableField("msg")
-    private String msg;
     /**
     * API响应参数
     */
@@ -77,19 +65,13 @@ public class LogisticsOrderOperateLogEntity extends BaseEntity<LogisticsOrderOpe
 
     public static final String AUTH_ID = "auth_id";
 
-    public static final String SO_ID = "so_id";
-
-    public static final String SO_CODE = "so_code";
+    public static final String SOURCE_ID = "source_id";
 
     public static final String LOGISTICS_PLATFORM = "logistics_platform";
 
     public static final String STATUS = "status";
 
-    public static final String OPERATION = "operation";
-
     public static final String REQUEST_PARAM_JSON = "request_param_json";
-
-    public static final String MSG = "msg";
 
     public static final String RESPONSE_PARAM_JSON = "response_param_json";
 

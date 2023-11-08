@@ -7,11 +7,8 @@
         <groupId>com.cloud.erp</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.sdk.tms.ubi</groupId>
     <artifactId>erp-sdk-tms-ubi</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <name>erp-sdk-tms-ubi</name>
-    <description>erp-sdk-tms-ubi</description>
+
     <properties>
         <java.version>8</java.version>
     </properties>
@@ -37,22 +34,5 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

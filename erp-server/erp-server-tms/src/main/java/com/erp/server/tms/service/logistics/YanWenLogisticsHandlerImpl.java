@@ -6,10 +6,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -50,10 +52,10 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity authEntity) {
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel();
         if(!yanWenResponse.getSuccess()){
-            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         List<LogisticsSaleChannelEntity> response = LogisticsChannelConverter.INSTANCE.channelConvertByYanWenList(yanWenResponse.getData());
         return success(response);
@@ -64,10 +66,10 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
         YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request);
         if(!yanWenResponse.getSuccess()){
-            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         return success(LogisticsOrderResponseVO.builder()
-                .orderNo(yanWenResponse.getData().getWaybillNumber())
+                .transportNo(yanWenResponse.getData().getWaybillNumber())
                 .deliveryNo(yanWenResponse.getData().getOrderNumber())
                 .trackNo(yanWenResponse.getData().getWaybillNumber())
                 .build());
@@ -76,12 +78,12 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-                .waybillNumber(labelVO.getTransportNo())
+                .waybillNumber(labelVO.getTransportNo().get(0))
                 .printRemark(labelVO.getPrintRemark())
                 .build();
         YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
         if(!labelResponse.getSuccess()){
-            return ApiResult.error(ApiError.ERROR_500.code,labelResponse.getMessage());
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,labelResponse.getMessage());
         }
         return success(labelResponse.getData().getBase64String());
     }
@@ -89,24 +91,29 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
         YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()
-                .waybillNumber(cancelOrderVO.getTransportNo())
+                .waybillNumber(cancelOrderVO.getTransportNo().get(0))
                 .note(cancelOrderVO.getReason())
                 .build();
         YanWenResponse<String> yanWenResponse =  yanWenService.cancelOrder(request);
         if(!yanWenResponse.getSuccess()){
-            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         return success();
     }
 
     @Override
+    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        return null;
+    }
+
+    @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList){
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
-                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()))
+                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()).get(0))
                 .build();
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
         if(!yanWenResponse.getSuccess()){
-            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         List<LogisticsOrderResponseVO> list = LogisticsOrderConverter.INSTANCE.orderQueryByYanWen(yanWenResponse.getData());
         return success(list);

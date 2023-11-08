@@ -1,9 +1,12 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
+import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -19,7 +22,7 @@ import java.util.List;
  * @date 2023年11月06日
  * @version: 1.0
  */
-@Mapper
+@Mapper(uses = {TypeConversionWorker.class,BooleanMapperWork.class})
 public interface LogisticsChannelConverter {
 
     LogisticsChannelConverter INSTANCE = Mappers.getMapper(LogisticsChannelConverter.class);
@@ -32,4 +35,27 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByYanWen(YanWenChannel yanWenChannelList);
     List<LogisticsSaleChannelEntity> channelConvertByYanWenList(List<YanWenChannel> yanWenChannelList);
+
+    @Mappings({
+            @Mapping(target = "code", source = "logistics_product_code"),
+            @Mapping(target = "cnName", source = "logistics_product_name_cn"),
+            @Mapping(target = "enName", source = "logistics_product_name_en"),
+            @Mapping(target = "isTrack", source = "order_track",qualifiedByName = "yOrNToBoolean"),
+            @Mapping(target = "logisticsPlatform", constant = "DSF"),
+//            @Mapping(target = "transport_mode", source = "shipmentMethod"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByDSF(ChanelInfo chanelInfo);
+    List<LogisticsSaleChannelEntity> channelConvertByDSFList(List<ChanelInfo> chanelInfos);
+
+    @Mappings({
+            @Mapping(target = "cnName", source = "cnName"),
+            @Mapping(target = "enName", source = "enName"),
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "isTrack", source = "trackStatus"),
+            @Mapping(target = "aging", source = "aging"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByWeiShi(WeiShiChannel data);
+    List<LogisticsSaleChannelEntity> channelConvertByWeiShi(List<WeiShiChannel> data);
 }

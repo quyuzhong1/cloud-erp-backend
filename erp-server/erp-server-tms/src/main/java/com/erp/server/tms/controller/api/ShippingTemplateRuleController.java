@@ -44,7 +44,8 @@ public class ShippingTemplateRuleController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "运费模板渠道关联表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ShippingTemplateRuleDTO.AddDTO dto) {
-        return success(shippingTemplateRuleService.add(dto));
+//        return success(shippingTemplateRuleService.add(dto));
+        return success();
     }
 
     /**
@@ -62,7 +63,7 @@ public class ShippingTemplateRuleController extends BaseController {
         serviceClass = ShippingTemplateRuleService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated ShippingTemplateRuleDTO.UpdateDTO dto) {
-        shippingTemplateRuleService.update(dto);
+//        shippingTemplateRuleService.update(dto);
         return success();
     }
 

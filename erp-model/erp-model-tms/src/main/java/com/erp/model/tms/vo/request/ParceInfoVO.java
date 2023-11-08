@@ -1,11 +1,10 @@
 package com.erp.model.tms.vo.request;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.core.anno.StateEnumValue;
 import lombok.Builder;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
@@ -42,4 +41,8 @@ public class ParceInfoVO {
 
     //IOSS 税号
     private String ioss;
+
+    //投保金额，默认RMB
+    private Float insuranceValue;
+
 }

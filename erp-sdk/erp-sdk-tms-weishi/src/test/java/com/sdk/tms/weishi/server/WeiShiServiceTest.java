@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,39 +29,41 @@ class WeiShiServiceTest {
     @Test
     void getAllChannel() {
         WeiShiResponse<List<WeiShiChannel>> channel= weiShiService.getAllChannel();
-        System.out.println(channel.getData());
+        System.out.println(channel);
     }
 
     @Test
     void createOrder() {
         WeiShiCreateOrderRequest weiShiCreateOrderRequest = WeiShiCreateOrderRequest.builder()
-                .referenceNo("TEST2019102800132")
+                .referenceNo("wj1234516779")
                 .shippingMethod("MX1001")
                 .countryCode("MX")
-                .orderWeight(1.2F)
+                .orderWeight(new BigDecimal("0.123"))
+                .orderPieces(12)
                 .consignee(WeiShiCreateOrderRequest.Consignee.builder()
                         .consigneeStreet("纽约")
-                        .consigneeName("mask")
+                        .consigneeName("mark")
                         .consigneePostcode("11510")
-                        .consigneeCity("MIGUEL ")
+                        .consigneeCity("shenz")
                         .consigneeMobile("123456789")
-                        .consigneeProvince("纽约")
+                        .consigneeProvince("state")
                         .build())
                 .shipper(WeiShiCreateOrderRequest.Shipper.builder()
                         .shipperCountrycode("CN")
-                        .shipperProvince("广东")
-                        .shipperCity("汕头")
-                        .shipperStreet("唯迹")
-                        .shipperPostcode("wj")
+                        .shipperProvince("shenzhen")
+                        .shipperCity("newyork")
+                        .shipperStreet("address")
+                        .shipperPostcode("515800")
                         .shipperName("亚瑟")
                         .shipperTelephone("321423135")
                         .shipperMobile("123456789")
                         .build())
                 .itemArr(Arrays.asList(WeiShiCreateOrderRequest.ItemArr.builder()
-                        .invoiceEnname("Shoes")
-                        .invoiceWeight(1.52F)
+                        .invoiceEnname("mta")
+//                        .invoiceCnname("物流")
+                        .invoiceWeight(new BigDecimal("1.999"))
                         .invoiceQuantity(10)
-                        .invoiceUnitcharge(1.53F)
+                        .invoiceUnitcharge(12.0F)
                         .build()))
                 .build();
         WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest);
@@ -70,7 +73,7 @@ class WeiShiServiceTest {
     @Test
     void getLabelUrl() {
         WeiShiGetLabelUrlRequest weiShiGetLabelUrlRequest = WeiShiGetLabelUrlRequest.builder()
-                .referenceNo("TEST2019102800132")
+                .referenceNo("WSHMX3123400544YQ")
                 .lableType("2")
                 .build()
                 ;

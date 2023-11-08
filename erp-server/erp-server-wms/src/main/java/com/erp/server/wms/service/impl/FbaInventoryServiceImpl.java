@@ -7,8 +7,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.enums.DeliveryChannelsEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
 import com.erp.server.wms.service.FbaInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -22,8 +27,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * FBA库存 服务实现类
@@ -39,6 +49,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
@@ -54,7 +66,15 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     }
 
     private void fillList(List<FbaInventoryDTO.ListDTO> records) {
-
+        List<String> skuNoList = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        for (FbaInventoryDTO.ListDTO record : records) {
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
+            record.setProductName(skuVO.getSkuName());
+            //销售渠道名称
+            record.setDeliveryChannelsName(DeliveryChannelsEnum.getName(record.getDeliveryChannels()));
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -114,5 +134,27 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     */
     private void handleData(FbaInventoryEntity fbaInventoryEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response) {
+        List<FbaInventoryDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/fbaInventory.xlsx";
+        String name = "FBA库存导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 }

@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -30,4 +32,13 @@ public interface FbaInventoryMapper extends BaseMapper<FbaInventoryEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaDeliveryDTO.ListDTO>
      **/
     IPage<FbaInventoryDTO.ListDTO> paging(Page query, @Param("params") FbaInventoryDTO.PagingParamDTO params);
+
+    /**
+     * 导出excel
+     * @Author Luo_WG
+     * @Date 2023/11/8 17:49
+     * @param param
+     * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.ListDTO>
+     **/
+    List<FbaInventoryDTO.ListDTO> listExport(@Param("params") FbaInventoryDTO.ExportDTO param);
 }

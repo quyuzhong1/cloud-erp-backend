@@ -260,7 +260,6 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         List<String> bomIds = list.stream().map(req -> req.getBomId()).distinct().collect(Collectors.toList());
         List<ProductBomHistoryEntity> productBomHistoryEntities = productBomHistoryService.listByBomIds(bomIds);
         List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = new ArrayList<>();
-        //一个发货单多个组合产品，生成一个组装单
         Map<String, List<BomSkuEntity>> map = list.stream().collect(Collectors.groupingBy(BomSkuEntity::getParentSkuNo));
         for (Map.Entry<String, List<BomSkuEntity>> stringListEntry : map.entrySet()) {
             ProductBomInfoDTO.skuBomVersion bomVersion = new ProductBomInfoDTO.skuBomVersion();

@@ -94,7 +94,7 @@ public class OrderRequest implements Serializable {
      * 能否提供商业发票（Y/N） Y：能提供商业发票(则系统不会生成形式发票)；N：不能提供商业发票(则系统会生成形式发票)； 默认为N；DHL产品必填，如产品代码A1/A5；
      */
     @JSONField(name = "is_commercial_invoice")
-    private boolean isCommercialInvoice;
+    private String isCommercialInvoice = "N";
     /**
      * 包裹件数（一个订单有多少件包裹，就填写多少件数，请如实填写包裹件数，否则DHL无法返回准确的子单号数和子单号标签；DHL产品必填，如产品代码A1/A5；）
      */
@@ -154,5 +154,5 @@ public class OrderRequest implements Serializable {
      *收件人信息
      */
     @JSONField(name = "recipient_info")
-    private Address recipient_info;
+    private Address recipientInfo;
 }

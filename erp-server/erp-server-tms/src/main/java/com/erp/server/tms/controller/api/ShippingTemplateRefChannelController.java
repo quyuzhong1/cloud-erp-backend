@@ -44,7 +44,8 @@ public class ShippingTemplateRefChannelController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "运费模板渠道关联表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ShippingTemplateRefChannelDTO.AddDTO dto) {
-        return success(shippingTemplateRefChannelService.add(dto));
+//        return success(shippingTemplateRefChannelService.add(dto));
+        return success();
     }
 
     /**
@@ -62,7 +63,7 @@ public class ShippingTemplateRefChannelController extends BaseController {
         serviceClass = ShippingTemplateRefChannelService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated ShippingTemplateRefChannelDTO.UpdateDTO dto) {
-        shippingTemplateRefChannelService.update(dto);
+//        shippingTemplateRefChannelService.update(dto);
         return success();
     }
 

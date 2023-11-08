@@ -50,6 +50,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.stream.Stream;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -779,8 +781,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
      * @return java.util.List<java.lang.String>
      **/
     private List<String> fbaDeliveryGenerateMachine(List<FbaDeliveryDTO.GenerateMachineView> list) {
+        List<String> sonSkuNos = new ArrayList<>();
+        for (FbaDeliveryDTO.GenerateMachineView generateMachineView : list) {
+            List<String> collect = generateMachineView.getSonItemList().stream().map(obj -> obj.getSonSkuNo()).collect(Collectors.toList());
+            sonSkuNos.addAll(collect);
+        }
         //查询产品sku信息
         List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        skuNos.addAll(sonSkuNos);
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         //一个发货单多个组合产品，生成一个组装单
         Map<String, List<FbaDeliveryDTO.GenerateMachineView>> map = list.stream().collect(Collectors.groupingBy(FbaDeliveryDTO.GenerateMachineView::getMainId));
@@ -812,7 +820,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 for (FbaDeliveryDTO.SonItem sonItem : sonItemList) {
                     MachineSubComponentsDTO.AddDTO addSubComponentsDTO = new MachineSubComponentsDTO.AddDTO();
                     //产品信息
-                    SkuVO child = skuVOList.stream().filter(obj -> obj.getSkuId().equals(sonItem.getSonSkuNo())).findFirst().orElse(null);
+                    SkuVO child = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(sonItem.getSonSkuNo())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(child)) {
                         throw new ServiceException(ApiError.ERROR_95166);
                     }

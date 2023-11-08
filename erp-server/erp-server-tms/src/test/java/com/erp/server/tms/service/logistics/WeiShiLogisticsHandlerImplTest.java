@@ -14,50 +14,47 @@ import javax.annotation.Resource;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
-public class YanWenLogisticsHandlerImplTest {
+public class WeiShiLogisticsHandlerImplTest {
 
     @Resource
-    private YanWenLogisticsHandlerImpl yanWenLogisticsHandler;
-
-
+    WeiShiLogisticsHandlerImpl weiShiLogisticsHandler;
 
     @Test
     public void getChannel() {
-        System.out.println(yanWenLogisticsHandler.getChannel(new ChanelQueryVO()));
+        System.out.println(weiShiLogisticsHandler.getChannel(new ChanelQueryVO()));
     }
 
+
     @Test
-    public void testCreateOrder() {
+    public void createOrder() {
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
-//        senderInfo.setCity("newyork");
-//        senderInfo.setCityId("1");
+        senderInfo.setCityName("newyork");
         senderInfo.setCompanyName("componeny");
         senderInfo.setName("name");
-//        senderInfo.setProvince("shenzhen");
+        senderInfo.setProvinceName("shenzhen");
         senderInfo.setTelNumber("12345678");
         senderInfo.setEmail("321546");
-        senderInfo.setCountry("China");
+        senderInfo.setCountry("CN");
         senderInfo.setZipCode("515800");
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
         logisticsProductVO.setEnglishUsage("materi");
         logisticsProductVO.setDeclareChineseName("物流");
         logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("12345"));
-        logisticsProductVO.setWeight(123456);
-        logisticsProductVO.setQuantity(1324);
+        logisticsProductVO.setPrice(new BigDecimal("12"));
+        logisticsProductVO.setWeight(1999);
+        logisticsProductVO.setQuantity(10);
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
+                .channelCode("MX1001")
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("wj12345167")
+                .deliveryNo("wj12345167749")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -65,8 +62,8 @@ public class YanWenLogisticsHandlerImplTest {
                         .name("mark")
                         .companyName("componey")
                         .contact("mark")
-                        .country("US")
-                        .zipCode("12201")
+                        .country("MX")
+                        .zipCode("11510")
                         .province("state")
                         .telNumber("123456789")
                         .build())
@@ -77,40 +74,16 @@ public class YanWenLogisticsHandlerImplTest {
                         .hasBattery(true)
                         .totalPrice(new BigDecimal("123"))
                         .totalQuantity(12)
+                        .totalWeight(1999)
                         .length(1)
                         .totalWeight(123)
                         .width(123)
-                        .ioss("123456")
                         .build())
                 .logisticsProductVOList(Arrays.asList(
-                                logisticsProductVO
-                        ))
+                        logisticsProductVO
+                ))
                 .build();
-        ApiResult<LogisticsOrderResponseVO> result = yanWenLogisticsHandler.createOrder(logisticsOrderVO);
+        ApiResult<LogisticsOrderResponseVO> result = weiShiLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(result);
-    }
-
-    @Test
-    public void getLabelUrl() {
-        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setTransportNo(Collections.singletonList("LR08531450CN"));
-        System.out.println(yanWenLogisticsHandler.getLabelUrl(logisticsQueryVO));
-    }
-
-    @Test
-    public void cancelOrder() {
-        LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
-        cancelOrderVO.setTransportNo(Collections.singletonList("LR085325186CN"));
-        System.out.println(yanWenLogisticsHandler.cancelOrder(cancelOrderVO));
-    }
-
-    @Test
-    public void queryOrder() {
-        List<LogisticsQueryBaseVO> logisticsQueryVOList = Arrays.asList(LogisticsQueryBaseVO.builder()
-                        .deliveryNo(Collections.singletonList("LR083592414CN"))
-                .build(),LogisticsQueryBaseVO.builder()
-                        .deliveryNo(Collections.singletonList("weiji1233211"))
-                .build());
-        System.out.println(yanWenLogisticsHandler.queryOrder(logisticsQueryVOList));
     }
 }
