@@ -271,6 +271,11 @@ public class ShopDTO implements Serializable {
          */
         private String domain;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
 
     }
 
@@ -362,7 +367,6 @@ public class ShopDTO implements Serializable {
          */
         private String authStatusName;
 
-
         /**
          * 授权时间
          */
@@ -378,7 +382,6 @@ public class ShopDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
-
         /**
          * 修改人
          */
@@ -388,6 +391,16 @@ public class ShopDTO implements Serializable {
          * 创建时间时间
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
 
 
     }
@@ -442,9 +455,9 @@ public class ShopDTO implements Serializable {
         private Boolean disabled;
     }
 
-        @Data
+    @Data
     @NoArgsConstructor
-    public static class UpdateDTO  {
+    public static class UpdateDTO {
 
         @NotBlank(message = "店铺表不能为空")
         private String id;
@@ -464,6 +477,11 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
     }
 

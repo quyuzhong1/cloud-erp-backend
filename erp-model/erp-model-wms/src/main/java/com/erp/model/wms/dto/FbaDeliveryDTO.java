@@ -614,8 +614,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 目的仓id
         */
-        @NotBlank(message = "目的仓id不能为空")
-        @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String destWarehouseId;
 
         /**
@@ -636,8 +634,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 库存组织id
         */
-        @NotBlank(message = "库存组织id不能为空")
-        @Size(max = 19,message = "库存组织id最大长度不能超过19位")
         private String inventoryOrgId;
 
     }
@@ -713,6 +709,10 @@ public class FbaDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class SonItem {
         /**
+         * 明细id
+         */
+        private String id;
+        /**
          * 子sku
          */
         private String sonSkuNo;
@@ -784,5 +784,22 @@ public class FbaDeliveryDTO implements Serializable {
          * 子件发货数量
          */
         private Integer sonDeliveryQty;
+    }
+
+    /**
+     * 根据版本获取子件详情信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SonItemDetailByVersion {
+        /**
+         * 主键id(取值：下推列表的id)
+         */
+        private String id;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 }
