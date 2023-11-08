@@ -667,7 +667,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids) {
         //只有单据为待审核状态允许下推加工单
         List<FbaDeliveryEntity> fbaDeliveryEntities = this.listByIds(ids);
-        Long aLong = fbaDeliveryEntities.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        Long aLong = fbaDeliveryEntities.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (aLong > 0) {
             throw new ServiceException(ApiError.WAIT_SUBMIT_GENERATE_MACHINE);
         }
