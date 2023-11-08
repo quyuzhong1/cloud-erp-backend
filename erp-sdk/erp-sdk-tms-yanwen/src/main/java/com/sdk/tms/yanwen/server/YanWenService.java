@@ -9,10 +9,8 @@ import com.sdk.tms.yanwen.constants.YanWenConstants;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
-import com.sdk.tms.yanwen.dto.response.YanWenChannel;
-import com.sdk.tms.yanwen.dto.response.YanWenCreateWayBill;
-import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
-import com.sdk.tms.yanwen.dto.response.YanWenResponse;
+import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
+import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.utils.YanWenUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -83,6 +81,22 @@ public class YanWenService {
         YanWenResponse<String> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
+        }catch (JSONException e){
+            yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
+        }
+
+        return yanWenResponseDTO;
+    }
+
+    /**
+     *  取消订单
+     */
+    public YanWenResponse<List<YanWenQueryOrder>> queryOrder(@Valid YanWenQueryOrderRequest request){
+        Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_QUERY,paramsMap);
+        YanWenResponse<List<YanWenQueryOrder>> yanWenResponseDTO;
+        try {
+            yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<List<YanWenQueryOrder>>>() {}.getType());
         }catch (JSONException e){
             yanWenResponseDTO = YanWenResponse.error(ApiError.ERROR_400.code.toString(),response);
         }

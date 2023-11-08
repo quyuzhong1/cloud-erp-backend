@@ -9,6 +9,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -17,16 +18,15 @@ import com.erp.server.tms.service.LogisticsAuthService;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
-import com.sdk.tms.yanwen.dto.response.YanWenChannel;
-import com.sdk.tms.yanwen.dto.response.YanWenCreateWayBill;
-import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
-import com.sdk.tms.yanwen.dto.response.YanWenResponse;
+import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
+import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.server.YanWenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -66,7 +66,11 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
         }
-        return success(new LogisticsOrderResponseVO(yanWenResponse.getData().getWaybillNumber(),yanWenResponse.getData().getWaybillNumber()));
+        return success(LogisticsOrderResponseVO.builder()
+                .orderNo(yanWenResponse.getData().getWaybillNumber())
+                .deliveryNo(yanWenResponse.getData().getOrderNumber())
+                .trackNo(yanWenResponse.getData().getWaybillNumber())
+                .build());
     }
 
     @Override
@@ -93,5 +97,18 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
         }
         return success();
+    }
+
+    @Override
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList){
+        YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
+                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()))
+                .build();
+        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
+        if(!yanWenResponse.getSuccess()){
+            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
+        }
+        List<LogisticsOrderResponseVO> list = LogisticsOrderConverter.INSTANCE.orderQueryByYanWen(yanWenResponse.getData());
+        return success(list);
     }
 }

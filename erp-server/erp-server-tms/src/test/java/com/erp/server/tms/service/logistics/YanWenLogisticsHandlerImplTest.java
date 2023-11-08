@@ -14,6 +14,7 @@ import javax.annotation.Resource;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -100,5 +101,15 @@ public class YanWenLogisticsHandlerImplTest {
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
         cancelOrderVO.setTransportNo("LR085325186CN");
         System.out.println(yanWenLogisticsHandler.cancelOrder(cancelOrderVO));
+    }
+
+    @Test
+    public void queryOrder() {
+        List<LogisticsQueryBaseVO> logisticsQueryVOList = Arrays.asList(LogisticsQueryBaseVO.builder()
+                        .deliveryNo("LR083592414CN")
+                .build(),LogisticsQueryBaseVO.builder()
+                        .deliveryNo("weiji1233211")
+                .build());
+        System.out.println(yanWenLogisticsHandler.queryOrder(logisticsQueryVOList));
     }
 }

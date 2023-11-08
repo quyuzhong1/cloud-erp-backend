@@ -3,13 +3,17 @@ package com.erp.server.tms.convert;
 import com.common.business.mapper.BooleanMapper;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
+import com.sdk.tms.yanwen.dto.response.YanWenQueryOrder;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
 
 /**
  * @author zdy
@@ -69,4 +73,11 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "url",source = "url")
     @Mapping(target = "material",source = "englishMaterial")
     YanWenCreateWayBillRequest.ParcelInfo.Product yanWenProductMapping(LogisticsProductVO logisticsProductVO);
+
+
+    @Mapping(target = "orderNo",source = "waybillNumber")
+    @Mapping(target = "deliveryNo",source = "orderNumber")
+    @Mapping(target = "trackNo",source = "waybillNumber")
+    LogisticsOrderResponseVO orderQueryByYanWen(YanWenQueryOrder yanWenQueryOrder);
+    List<LogisticsOrderResponseVO> orderQueryByYanWen(List<YanWenQueryOrder> list);
 }

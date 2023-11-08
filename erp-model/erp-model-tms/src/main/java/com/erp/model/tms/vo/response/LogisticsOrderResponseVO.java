@@ -1,7 +1,9 @@
 package com.erp.model.tms.vo.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -14,13 +16,20 @@ import java.io.Serializable;
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class LogisticsOrderResponseVO implements Serializable {
+
     /**
-     * 运单号
+     * 发货单号，erp传的
      */
-    String orderNo;
+    private String deliveryNo;
     /**
-     * 跟踪单号
+     * 运单号(物流平台返回)
      */
-    String trackNo;
+    private String orderNo;
+    /**
+     * 跟踪单号(物流平台返回)
+     */
+    private String trackNo;
 }

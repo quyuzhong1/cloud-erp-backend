@@ -4,6 +4,7 @@ import com.common.core.utils.FileUtil;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
+import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
 import com.sdk.tms.yanwen.dto.response.YanWenResponse;
 import jodd.util.Base64;
@@ -15,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
@@ -32,7 +34,7 @@ class YanWenServiceTest {
     @Test
     public void createWayBill() {
         YanWenCreateWayBillRequest yanWenCreateWayBillRequest = YanWenCreateWayBillRequest.builder()
-                .orderNumber("weiji123321")
+                .orderNumber("weiji1233211")
                 .channelId("155")
                 .orderSource("weijiERP")
                 .receiverInfo(YanWenCreateWayBillRequest.ReceiverInfo.builder()
@@ -79,5 +81,13 @@ class YanWenServiceTest {
                 .waybillNumber("LR083592414CN")
                 .build();
         System.out.println(yanWenService.cancelOrder(request));
+    }
+
+    @Test
+    public void queryOrder() {
+        YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
+                .listNumber(Arrays.asList("LR083592414CN","weiji1233211"))
+                .build();
+        System.out.println(yanWenService.queryOrder(request).getData());
     }
 }

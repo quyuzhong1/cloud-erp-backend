@@ -67,10 +67,10 @@ public interface LogisticsService {
     /**
      * 查询订单
      *
-     * @param logisticsQueryVO
+     * @param logisticsQueryVOList
      * @return
      */
-    ApiResult queryOrder(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 
     /**
      * 获取标签
