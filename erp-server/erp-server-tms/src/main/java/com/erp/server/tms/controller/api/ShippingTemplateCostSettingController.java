@@ -44,7 +44,8 @@ public class ShippingTemplateCostSettingController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "运费模板其他费用选值表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ShippingTemplateCostSettingDTO.AddDTO dto) {
-        return success(shippingTemplateCostSettingService.add(dto));
+//        return success(shippingTemplateCostSettingService.add(dto));
+        return success();
     }
 
     /**
@@ -62,7 +63,7 @@ public class ShippingTemplateCostSettingController extends BaseController {
         serviceClass = ShippingTemplateCostSettingService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated ShippingTemplateCostSettingDTO.UpdateDTO dto) {
-        shippingTemplateCostSettingService.update(dto);
+//        shippingTemplateCostSettingService.update(dto);
         return success();
     }
 
