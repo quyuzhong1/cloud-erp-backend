@@ -614,8 +614,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 目的仓id
         */
-        @NotBlank(message = "目的仓id不能为空")
-        @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String destWarehouseId;
 
         /**

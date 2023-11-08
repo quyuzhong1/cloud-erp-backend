@@ -81,6 +81,15 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(BaseIdsDTO.IdsDTO ids);
 
     /**
+     * 单个下推发货单获取详情
+     * @Author Luo_WG
+     * @Date 2023/11/8 9:19
+     * @param id
+     * @return com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO
+     **/
+    FbaDeliveryDTO.ViewDTO getDeliverView(String id);
+
+    /**
      * 下推发货单保存
      * @Author Luo_WG
      * @Date 2023/10/31 14:35
@@ -90,7 +99,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     Boolean generateDeliverSave(List<FbaShipmentDTO.GenerateDeliverView> list);
 
     /**
-     *
+     * 下推发货单保存并提交
      * @Author Luo_WG
      * @Date 2023/11/6 14:35
      * @param list
@@ -139,12 +148,4 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     BatchResultDTO skuMappingBatch(String id);
 
-    /**
-     * 单个下推发货单获取详情
-     * @Author Luo_WG
-     * @Date 2023/11/8 9:19
-     * @param id
-     * @return com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO
-     **/
-    FbaDeliveryDTO.ViewDTO getDeliverView(String id);
 }
