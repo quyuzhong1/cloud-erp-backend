@@ -34,7 +34,7 @@ public class FbaDeliveryEntity extends BaseEntity<FbaDeliveryEntity> {
     * 审核状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 审核时间
     */
