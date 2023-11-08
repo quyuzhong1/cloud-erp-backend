@@ -16,6 +16,8 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
+import io.seata.common.util.CollectionUtils;
+import jodd.util.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -70,14 +73,16 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         // 信息校验?
 
         // 订单明细
-        List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
-            SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
-            BeanUtils.copyProperties(d, detailEntity);
-            return detailEntity;
-        }).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(dto.getDetails())){
+            List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
+                SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
+                BeanUtils.copyProperties(d, detailEntity);
+                return detailEntity;
+            }).collect(Collectors.toList());
 
-        if (!soB2cDetailService.saveBatch(detailEntityList)){
-            throw new ServiceException("Shopify 订单明细批量保存失败");
+            if (!soB2cDetailService.saveBatch(detailEntityList)){
+                throw new ServiceException("Shopify 订单明细批量保存失败");
+            }
         }
         return ApiResult.success();
     }
