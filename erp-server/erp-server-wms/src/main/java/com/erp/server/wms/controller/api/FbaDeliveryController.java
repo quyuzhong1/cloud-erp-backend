@@ -446,9 +446,9 @@ public class FbaDeliveryController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>>
      **/
-    @PostMapping("/SonItemDetailByVersion")
-    public ApiResult<List<FbaDeliveryDTO.SonItem>> SonItemDetailByVersion(@RequestBody @Validated FbaDeliveryDTO.SonItemDetailByVersion dto) {
-        List<FbaDeliveryDTO.SonItem> result = fbaDeliveryService.SonItemDetailByVersion(dto);
+    @PostMapping("/sonItemDetailByVersion")
+    public ApiResult<List<FbaDeliveryDTO.SonItem>> sonItemDetailByVersion(@RequestBody @Validated FbaDeliveryDTO.SonItemDetailByVersion dto) {
+        List<FbaDeliveryDTO.SonItem> result = fbaDeliveryService.sonItemDetailByVersion(dto);
         return success(result);
     }
 }

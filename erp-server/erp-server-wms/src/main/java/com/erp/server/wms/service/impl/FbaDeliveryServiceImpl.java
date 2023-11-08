@@ -962,7 +962,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
 
     @Override
-    public List<FbaDeliveryDTO.SonItem> SonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto) {
+    public List<FbaDeliveryDTO.SonItem> sonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto) {
         FbaDeliveryDetailEntity detailEntity = fbaDeliveryDetailService.getById(dto.getId());
         FbaDeliveryEntity entity = this.getById(detailEntity.getMainId());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(detailEntity.getSkuNo()));
