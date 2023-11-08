@@ -1,15 +1,29 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.ShippingRegionCityDTO;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
+import com.erp.model.tms.enums.ShippingBillingMethodEnum;
+import com.erp.model.tms.enums.ShippingTemplateTypeEnum;
 import com.erp.server.tms.mapper.ShippingTemplateRuleMapper;
-import com.erp.server.tms.service.ShippingTemplateRuleService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +31,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -32,66 +48,184 @@ import com.common.core.enums.ApiError;
 public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTemplateRuleMapper, ShippingTemplateRuleEntity> implements ShippingTemplateRuleService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private ShippingTemplateService shippingTemplateService;
+
+    @Autowired
+    private ShippingRegionCityService shippingRegionCityService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(ShippingTemplateRuleDTO.AddDTO addDTO) {
-        ShippingTemplateRuleEntity shippingTemplateRuleEntity = new ShippingTemplateRuleEntity();
-        BeanMapperUtils.copy(addDTO, shippingTemplateRuleEntity);
-
-        // 数据处理
-        handleData(shippingTemplateRuleEntity);
-
-        log.info("开始新增运费模板渠道关联单");
-        boolean save = super.save(shippingTemplateRuleEntity);
-        if(!save) {
-            throw new ServiceException("运费模板渠道关联单保存失败");
+    public Boolean add(List<ShippingTemplateRuleDTO.AddDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Boolean.TRUE;
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "运费模板渠道关联单" , shippingTemplateRuleEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, shippingTemplateRuleEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(shippingTemplateRuleEntity.getId(), shippingTemplateRuleEntity.getId());
+        List<ShippingTemplateRuleEntity> list = BeanMapperUtils.copyList(ShippingTemplateRuleEntity.class, detailList);
+        //验证必填信息
+        checkPurchasePrice(list,mainId);
+        //数据格式化
+        handleData(list,mainId);
+        boolean save = this.saveBatch(list);
+        if(!save) {
+            throw new ServiceException("运费规则单保存失败");
+        }
+        //新增城市分区
+        addOrUpdateShippingRegionCity(list);
+        return Boolean.TRUE;
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ShippingTemplateRuleDTO.UpdateDTO updateDTO) {
-        ShippingTemplateRuleEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板渠道关联单"));
-        ShippingTemplateRuleEntity shippingTemplateRuleEntity =  BeanMapperUtils.map(ShippingTemplateRuleEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(shippingTemplateRuleEntity);
-        log.info("编辑 开始修改运费模板渠道关联单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(shippingTemplateRuleEntity);
-        if(!save) {
-            throw new ServiceException("运费模板渠道关联单保存失败");
+    public Boolean update(List<ShippingTemplateRuleDTO.UpdateDTO> detailList, String mainId) {
+        if (detailList == null) {
+            detailList = new ArrayList<>();
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录运费模板渠道关联单日志数据，id：【{}】", shippingTemplateRuleEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateRuleEntity.getId(), "运费模板渠道关联单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, shippingTemplateRuleEntity, null, shippingTemplateRuleEntity.getId(), msg);
+        List<ShippingTemplateRuleEntity> list = BeanMapperUtils.copyList(ShippingTemplateRuleEntity.class, detailList);
+        //验证必填信息
+        checkPurchasePrice(list,mainId);
+        //数据格式化
+        handleData(list,mainId);
+        //原明细数据
+        List<ShippingTemplateRuleEntity> oldList = this.listByMainId(mainId);
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<ShippingTemplateRuleEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getFromCountry())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个起始地区间【%s】", ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+        //新增或修改
+        this.saveOrUpdateBatch(list);
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<ShippingTemplateRuleEntity> listByMainId(String mainId) {
+      return   lambdaQuery().eq(ShippingTemplateRuleEntity::getMainId,mainId).list();
+    }
+
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<ShippingTemplateRuleEntity> newList, List<ShippingTemplateRuleEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(ShippingTemplateRuleEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(ShippingTemplateRuleEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * @description: 验证信息
+     * @author Will
+     * @date: 2023/11/7 12:21
+     * @param detailList
+     * @param mainId
+     */
+    private void checkPurchasePrice(List<ShippingTemplateRuleEntity> detailList,String mainId) {
+        ShippingTemplateEntity entity = shippingTemplateService.getById(mainId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
+        }
+        //按国家
+        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(entity.getType())) {
+            long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToCountry())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
+            }
+        }
+        //按分区
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
+            long regionCount = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getRegion())).count();
+            if (regionCount > 0) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
+            }
+            long cityCount = detailList.stream().filter(obj -> CollectionUtils.isEmpty(obj.getCityList())).count();
+            if (cityCount > 0) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_CITY_NOT_NULL);
+            }
+        }
+        //按仓库
+        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(entity.getType())) {
+            long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToWarehouseName())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
+            }
+        }
+        //首重+续重必填校验
+        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
+            //首重
+            long firstWeightCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getFirstWeight())).count();
+            if (firstWeightCount > 0) {
+                throw new ServiceException(ApiError.ERROR_FIRST_WEIGHT_NOT_NULL);
+            }
+            //首重运费
+            long firstWeightShippingCostCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getFirstWeightShippingCost())).count();
+            if (firstWeightShippingCostCount > 0) {
+                throw new ServiceException(ApiError.ERROR_FIRST_WEIGHT_SHIPPING_COST_NOT_NULL);
+            }
+            //续重单价重量
+            long additionalUnitWeightCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getAdditionalUnitWeight())).count();
+            if (additionalUnitWeightCount > 0) {
+                throw new ServiceException(ApiError.ERROR_ADDITIONAL_UNIT_WEIGHT_NOT_NULL);
+            }
+            //续重单价
+            long additionalPriceCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getAdditionalPrice())).count();
+            if (additionalPriceCount > 0) {
+                throw new ServiceException(ApiError.ERROR_ADDITIONAL_PRICE_NOT_NULL);
+            }
+        }
+    }
+
+
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(ShippingTemplateRuleEntity shippingTemplateRuleEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<ShippingTemplateRuleEntity> detailList,String mainId) {
+        for (ShippingTemplateRuleEntity ruleEntity : detailList) {
+            ruleEntity.setMainId(mainId);
+        }
+    }
+
+    /**
+     * @description: 新增分区城市
+     * @author Will
+     * @date: 2023/11/8 9:31
+     * @param list
+     */
+    private void addOrUpdateShippingRegionCity(List<ShippingTemplateRuleEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return ;
+        }
+        List<ShippingRegionCityDTO.AddDTO> addList = new ArrayList<>();
+        for (ShippingTemplateRuleEntity ruleEntity : list) {
+            if (CollectionUtils.isEmpty(ruleEntity.getCityList())) {
+                continue;
+            }
+            List<String> cityList = ruleEntity.getCityList().stream().distinct().collect(Collectors.toList());
+            for (String city : cityList) {
+                ShippingRegionCityDTO.AddDTO addDTO = new ShippingRegionCityDTO.AddDTO();
+                addDTO.setRegion(ruleEntity.getRegion());
+                addDTO.setShippingTemplateRuleId(ruleEntity.getId());
+                addDTO.setMainId(ruleEntity.getMainId());
+                addDTO.setCity(city);
+                addList.add(addDTO);
+            }
+        }
+        if (CollectionUtils.isEmpty(addList)) {
+            return;
+        }
+        shippingRegionCityService.add(addList);
     }
 }

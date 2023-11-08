@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -54,17 +56,17 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
     * 开始重量
     */
     @TableField("start_weight")
-    private Integer startWeight;
+    private BigDecimal startWeight;
     /**
     * 结束重量
     */
     @TableField("end_weight")
-    private Integer endWeight;
+    private BigDecimal endWeight;
     /**
     * 首重
     */
     @TableField("first_weight")
-    private Integer firstWeight;
+    private BigDecimal firstWeight;
     /**
     * 首重运费
     */
@@ -81,6 +83,11 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
     @TableField("additional_price")
     private BigDecimal additionalPrice;
     /**
+     * 运费单价
+     */
+    @TableField("shipping_price")
+    private BigDecimal shippingPrice;
+    /**
     * 挂号费
     */
     @TableField("registration_cost")
@@ -96,6 +103,11 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
     @TableField("min_cost")
     private BigDecimal minCost;
 
+    /**
+     * 城市
+     */
+    @TableField(exist = false)
+    private List<String> cityList;
 
     public static final String MAIN_ID = "main_id";
 

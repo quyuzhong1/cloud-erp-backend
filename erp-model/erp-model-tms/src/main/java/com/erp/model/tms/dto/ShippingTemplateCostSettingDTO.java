@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -50,7 +51,10 @@ public class ShippingTemplateCostSettingDTO implements Serializable {
         */
         private String name;
 
-
+        /**
+         * 计算方式
+         */
+        private String calculationMethod;
     }
 
     /**
@@ -86,10 +90,19 @@ public class ShippingTemplateCostSettingDTO implements Serializable {
         /**
          * 编码
          */
-        @NotBlank(message = "编码不能为空")
         @Size(max = 32,message = "编码最大长度不能超过32位")
         private String code;
 
+        /**
+         * 其他费用id
+         */
+        @NotBlank(message = "其他费用id不能为空")
+        private String otherCostId;
+
+        /**
+         * 计算方式
+         */
+        private String calculationMethod;
     }
 
 

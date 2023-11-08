@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -70,12 +71,17 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
          * 计算方式选值
          */
-        private ShippingTemplateCostSettingDTO.ViewDTO viewDTO;
+        private List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList;
+
+        /**
+         * 数值设置json实体
+         */
+        private ExtendJsonDTO.CommonDTO extendJsonDto;
 
         /**
          * 数值设置json
          */
-        private ExtendJsonDTO.CommonDTO extendJsonDto;
+        private String extendJson;;
 
         /**
         * 备注
@@ -95,7 +101,7 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
          * 计算方式选值
          */
-        private ShippingTemplateCostSettingDTO.AddDTO settingDto;
+        private List<String> settingList;
     }
 
     /**
@@ -113,7 +119,7 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
          * 计算方式选值
          */
-        private ShippingTemplateCostSettingDTO.UpdateDTO settingDto;
+        private List<String> settingList;
 
     }
 
@@ -126,12 +132,6 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         */
         @Size(max = 32,message = "费用编码最大长度不能超过32位")
         private String dictCode;
-
-        /**
-        * 费用名称
-        */
-        @Size(max = 32,message = "费用名称最大长度不能超过32位")
-        private String dictName;
 
         /**
         * 计算方式

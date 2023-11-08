@@ -29,23 +29,23 @@ public class ShippingTemplateCostSettingEntity extends BaseEntity<ShippingTempla
     */
     @TableField("other_cost_id")
     private String otherCostId;
+
+    /**
+     * 计算方式
+     */
+    @TableField("calculation_method")
+    private String calculationMethod;
+
     /**
     * 编码
     */
     @TableField("code")
     private String code;
-    /**
-    * 名称
-    */
-    @TableField("name")
-    private String name;
 
 
     public static final String OTHER_COST_ID = "other_cost_id";
 
     public static final String CODE = "code";
-
-    public static final String NAME = "name";
 
     @Override
     public Serializable pkVal() {

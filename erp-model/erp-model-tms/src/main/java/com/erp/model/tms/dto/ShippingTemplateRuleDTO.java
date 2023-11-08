@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -58,6 +59,11 @@ public class ShippingTemplateRuleDTO implements Serializable {
         private String region;
 
         /**
+         * 城市
+         */
+        private List<String> cityList;
+
+        /**
         * 目的仓库
         */
         private String toWarehouseName;
@@ -65,17 +71,17 @@ public class ShippingTemplateRuleDTO implements Serializable {
         /**
         * 开始重量
         */
-        private Integer startWeight;
+        private BigDecimal startWeight;
 
         /**
         * 结束重量
         */
-        private Integer endWeight;
+        private BigDecimal endWeight;
 
         /**
         * 首重
         */
-        private Integer firstWeight;
+        private BigDecimal firstWeight;
 
         /**
         * 首重运费
@@ -149,21 +155,23 @@ public class ShippingTemplateRuleDTO implements Serializable {
         /**
         * 目的地
         */
-        @NotBlank(message = "目的地不能为空")
         @Size(max = 32,message = "目的地最大长度不能超过32位")
         private String toCountry;
 
         /**
         * 分区
         */
-        @NotBlank(message = "分区不能为空")
         @Size(max = 64,message = "分区最大长度不能超过64位")
         private String region;
 
         /**
+         * 城市
+         */
+        private List<String> cityList;
+
+        /**
         * 目的仓库
         */
-        @NotBlank(message = "目的仓库不能为空")
         @Size(max = 64,message = "目的仓库最大长度不能超过64位")
         private String toWarehouseName;
 
@@ -171,40 +179,42 @@ public class ShippingTemplateRuleDTO implements Serializable {
         * 开始重量
         */
         @NotNull(message = "开始重量不能为空")
-        private Integer startWeight;
+        private BigDecimal startWeight;
 
         /**
         * 结束重量
         */
         @NotNull(message = "结束重量不能为空")
-        private Integer endWeight;
+        private BigDecimal endWeight;
 
         /**
         * 首重
         */
-        @NotNull(message = "首重不能为空")
-        private Integer firstWeight;
+        private BigDecimal firstWeight;
 
         /**
         * 首重运费
         */
-        @NotNull(message = "首重运费不能为空")
         @Digits(integer = 12, fraction = 4, message = "首重运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal firstWeightShippingCost;
 
         /**
         * 续重单位重量
         */
-        @NotNull(message = "续重单位重量不能为空")
         @Digits(integer = 12, fraction = 4, message = "续重单位重量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal additionalUnitWeight;
 
         /**
         * 续重单价
         */
-        @NotNull(message = "续重单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "续重单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal additionalPrice;
+
+        /**
+         * 运费单价
+         */
+        @Digits(integer = 12, fraction = 4, message = "运费单价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal shippingPrice;
 
         /**
         * 挂号费

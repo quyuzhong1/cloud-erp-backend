@@ -227,7 +227,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 其他费用
          */
-        private ShippingTemplateOtherCostDTO.ViewDTO otherCostDTO;
+        private List<ShippingTemplateOtherCostDTO.ViewDTO> otherCostList;
     }
 
     /**
@@ -246,7 +246,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 其他费用
          */
-        private ShippingTemplateOtherCostDTO.AddDTO otherCostDTO;
+        private List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList;
     }
 
     /**
@@ -271,7 +271,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 其他费用
          */
-        private ShippingTemplateOtherCostDTO.UpdateDTO otherCostDTO;
+        private List<ShippingTemplateOtherCostDTO.UpdateDTO> otherCostList;
 
     }
 

@@ -95,7 +95,7 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO updateStatus(String id);
+    BatchResultDTO updateStatus(String id,Boolean disabled);
     /**
      * @description: 删除
      * @author Will

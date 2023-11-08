@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 运费模板渠道关联表 服务类
@@ -15,22 +17,29 @@ import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 public interface ShippingTemplateRuleService extends SuperService<ShippingTemplateRuleEntity> {
 
     /**
-    * 新增
-    * @author Will
-    * @date: 2023-11-03
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(ShippingTemplateRuleDTO.AddDTO dto);
+     * @description: 新增
+     * @author Will
+     * @date: 2023/11/7 10:47
+     * @param detailList
+     * @param mainId
+     */
+    Boolean add(List<ShippingTemplateRuleDTO.AddDTO> detailList, String mainId);
 
     /**
-    * 修改
-    * @author Will
-    * @date: 2023-11-03
-    * @param dto
-    * @return
-    */
-    Boolean update(ShippingTemplateRuleDTO.UpdateDTO dto);
+     * @description:修改
+     * @author Will
+     * @date: 2023/11/7 10:47
+     * @param detailList
+     * @param mainId
+     */
+    Boolean update(List<ShippingTemplateRuleDTO.UpdateDTO> detailList, String mainId);
 
-
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/11/8 9:36
+     * @param mainId
+     * @return List<ShippingTemplateRuleEntity>
+     */
+     List<ShippingTemplateRuleEntity> listByMainId(String mainId);
 }

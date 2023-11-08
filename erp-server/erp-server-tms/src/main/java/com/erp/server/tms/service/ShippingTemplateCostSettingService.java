@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 运费模板其他费用选值表 服务类
@@ -18,19 +20,16 @@ public interface ShippingTemplateCostSettingService extends SuperService<Shippin
     * 新增
     * @author Will
     * @date: 2023-11-03
-    * @param dto
+    * @param addList
     * @return
     */
-    BaseResultDTO.AddDTO add(ShippingTemplateCostSettingDTO.AddDTO dto);
-
+    Boolean add(List<ShippingTemplateCostSettingDTO.AddDTO> addList,List<String> otherCostIdList );
     /**
-    * 修改
-    * @author Will
-    * @date: 2023-11-03
-    * @param dto
-    * @return
-    */
-    Boolean update(ShippingTemplateCostSettingDTO.UpdateDTO dto);
-
-
+     * @description: 根据其他费用id查询
+     * @author Will
+     * @date: 2023/11/8 11:50
+     * @param otherCostIdList
+     * @return List<ShippingTemplateCostSettingEntity>
+     */
+    List<ShippingTemplateCostSettingEntity> listByOtherCostIds(List<String> otherCostIdList);
 }

@@ -238,7 +238,7 @@ public class ShippingTemplateController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = shippingTemplateService.updateStatus(id);
+                submit = shippingTemplateService.updateStatus(id,dto.getDisabled());
             }catch (Exception e){
                 log.error("运费模板 停用/启用失败",e);
                 ShippingTemplateEntity entity = shippingTemplateService.getById(id);
