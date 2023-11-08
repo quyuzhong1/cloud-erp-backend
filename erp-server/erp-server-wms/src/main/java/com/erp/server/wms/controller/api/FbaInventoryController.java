@@ -21,6 +21,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -49,10 +50,34 @@ public class FbaInventoryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:fbaInventory:paging",
-            tableAlias = ""
+            tableAlias = "fi"
     )
     public ApiResult<PagingVO<FbaInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaInventoryDTO.PagingParamDTO> dto) {
         PagingVO<FbaInventoryDTO.ListDTO> list = fbaInventoryService.paging(dto);
         return success(list);
     }
+
+    /**
+     * 导出Excel数据
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaInventory:export",
+            tableAlias = "fi"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "FBA库存导出Excel数据")
+    public void exportList(@RequestBody @Validated FbaInventoryDTO.ExportDTO dto, HttpServletResponse response) {
+        fbaInventoryService.exportList(dto, response);
+    }
+
+ /*   @GetMapping("/listInventoryReserved")
+    public void listInventoryReserved(@RequestParam(value = "id") String id) {
+        fbaInventoryService.exportList(dto, response);
+    }*/
 }
