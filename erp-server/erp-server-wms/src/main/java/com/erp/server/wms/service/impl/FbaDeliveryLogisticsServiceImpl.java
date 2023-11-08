@@ -134,7 +134,13 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
 
     @Override
     public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
-        List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FbaDeliveryLogisticsEntity.class);
-        return this.updateBatchById(fbaDeliveryLogisticsEntities);
+        List<FbaDeliveryLogisticsEntity> list = new ArrayList<>();
+        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
+            FbaDeliveryLogisticsEntity entity = new FbaDeliveryLogisticsEntity();
+            BeanMapper.copy(deliveryLogisticsSave, entity);
+            entity.setRemark(deliveryLogisticsSave.getLogisticsRemark());
+            list.add(entity);
+        }
+        return this.updateBatchById(list);
     }
 }
