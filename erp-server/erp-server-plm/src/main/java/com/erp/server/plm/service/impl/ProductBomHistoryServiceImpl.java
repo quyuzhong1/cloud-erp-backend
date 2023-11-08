@@ -148,7 +148,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
         if (CollectionUtils.isEmpty(bomIds)) {
             return Collections.emptyList();
         }
-        List<ProductBomHistoryEntity> list = lambdaQuery().in(ProductBomHistoryEntity::getBomId, bomIds).list();
+        List<ProductBomHistoryEntity> list = lambdaQuery().in(ProductBomHistoryEntity::getBomId, bomIds).orderByDesc(ProductBomHistoryEntity::getBomVersion).list();
         return list;
     }
 
