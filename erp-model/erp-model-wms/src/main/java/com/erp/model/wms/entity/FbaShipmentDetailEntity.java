@@ -47,6 +47,11 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("fn_sku")
     private String fnSku;
     /**
+    * ERP的SKUId
+    */
+    @TableField("sku_id")
+    private String skuId;
+    /**
     * ERP的SKU
     */
     @TableField("sku_no")

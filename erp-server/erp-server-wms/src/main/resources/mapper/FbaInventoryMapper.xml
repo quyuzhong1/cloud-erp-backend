@@ -47,34 +47,47 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.FbaInventoryDTO$ListDTO">
         SELECT
-        id
-        fba_shipment_id AS sourceCode
-
-
-        name
-        asin
-        m_sku
-        fn_sku
-        sku_no
-        product_name
-        delivery_channels
-        fbm_fulfillable_qty
-        inbound_working_qty
-        inbound_shipped_qty
-        inbound_receiving_qty
-        fulfillable_qty
-        reserved_qty
-        researching_qty
-        unsellable_qty
-        inventory_age
- create_time
-        update_time
-        create_user_name
-        create_user_id
-        update_user_name
-        update_user_id
-        version
-        is_deleted
-        FROM fba_inventory
+        fi.id,
+        fi.fba_shipment_id,
+        fi.warehouse_id,
+        fi.warehouse_name,
+        fi.asin,
+        fi.m_sku,
+        fi.fn_sku,
+        fi.sku_no,
+        fi.product_name,
+        fi.delivery_channels,
+        fi.fbm_fulfillable_qty,
+        fi.inbound_working_qty,
+        fi.inbound_shipped_qty,
+        fi.inbound_receiving_qty,
+        fi.fulfillable_qty,
+        fi.reserved_qty,
+        fi.researching_qty,
+        fi.unsellable_qty,
+        fi.inventory_age,
+        fi.update_time
+        FROM fba_inventory fi
+        WHERE fi.is_deleted = FALSE
+        <!--仓库-->
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            AND warehouse_id in
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <!--平台sku-->
+        <if test="params.asin != null and params.asin != ''">
+            AND fi.asin ILIKE concat('%',#{params.asin},'%')
+        </if>
+        <!--fnSku-->
+        <if test="params.fnSku != null and params.fnSku != ''">
+            AND fi.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+        </if>
+        <!--卖家sku-->
+        <if test="params.mSku != null and params.mSku != ''">
+            AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+        </if>
     </select>
+
 </mapper>

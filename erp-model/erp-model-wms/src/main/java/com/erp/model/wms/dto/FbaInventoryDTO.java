@@ -74,8 +74,10 @@ public class FbaInventoryDTO implements Serializable {
         private String productName;
 
         /**
-        * 配送渠道
-        */
+         * 配送渠道：/wms/common/enumDropDown?type=DeliveryChannels
+         *    self_delivery：卖家自配送
+         *    amazon_delivery：亚马逊配送
+         */
         private String deliveryChannels;
 
         /**
@@ -277,9 +279,9 @@ public class FbaInventoryDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 仓库名称
+         * 仓库id
          */
-        private String name;
+        private List<String> warehouseIdList;
         /**
          * 平台sku
          */
@@ -293,7 +295,9 @@ public class FbaInventoryDTO implements Serializable {
          */
         private String fnSku;
         /**
-         * 配送渠道
+         * 配送渠道：/wms/common/enumDropDown?type=DeliveryChannels
+         *    self_delivery：卖家自配送
+         *    amazon_delivery：亚马逊配送
          */
         private String deliveryChannels;
         /**
@@ -317,12 +321,17 @@ public class FbaInventoryDTO implements Serializable {
         /**
          * 平台唯一编号
          */
-        private String platformCode;
+        private String fbaShipmentId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
         /**
          * 仓库名称
          */
-        private String name;
+        private String warehouseName;
 
         /**
          * 平台sku
@@ -350,7 +359,9 @@ public class FbaInventoryDTO implements Serializable {
         private String productName;
 
         /**
-         * 配送渠道
+         * 配送渠道：/wms/common/enumDropDown?type=DeliveryChannels
+         *    self_delivery：卖家自配送
+         *    amazon_delivery：亚马逊配送
          */
         private String deliveryChannels;
 
