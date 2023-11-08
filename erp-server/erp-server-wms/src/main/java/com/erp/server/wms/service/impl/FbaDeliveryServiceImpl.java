@@ -942,9 +942,32 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         fbaDeliveryEntity.setInventoryOrgName(orgName);
     }
 
-    @Override
-    public List<FbaDeliveryDTO.GenerateMachineView> generateMachineSonItemDetailView(List<FbaDeliveryDTO.GenerateMachineView> list) {
 
-        return null;
+    @Override
+    public List<FbaDeliveryDTO.SonItem> SonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto) {
+        FbaDeliveryDetailEntity detailEntity = fbaDeliveryDetailService.getById(dto.getId());
+        FbaDeliveryEntity entity = this.getById(detailEntity.getMainId());
+
+        List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
+        //查询历史子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(detailEntity.getSkuNo()));
+        //查询最新版本的sku子件信息
+        List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(detailEntity.getSkuNo()) && req.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
+
+        for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
+            FbaDeliveryDTO.SonItem sonItem = new FbaDeliveryDTO.SonItem();
+            sonItem.setId(dto.getId());
+            //bom用量
+            sonItem.setQuantity(bomDTO.getQuantity());
+            //子件数量 = 组装数量 * bom用量
+            sonItem.setSonQty(detailEntity.getDeliveryQty() * bomDTO.getQuantity());
+            //子件sku
+            sonItem.setSonSkuNo(bomDTO.getSkuNo());
+            //及时库存
+            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), bomDTO.getSkuNo(), detailEntity.getWarehouseLocation());
+            sonItem.setCurInventoryQty(usableInventoryTotal);
+            sonItemList.add(sonItem);
+        }
+        return sonItemList;
     }
 }

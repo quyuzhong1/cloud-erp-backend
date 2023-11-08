@@ -713,6 +713,10 @@ public class FbaDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class SonItem {
         /**
+         * 明细id
+         */
+        private String id;
+        /**
          * 子sku
          */
         private String sonSkuNo;
@@ -784,5 +788,22 @@ public class FbaDeliveryDTO implements Serializable {
          * 子件发货数量
          */
         private Integer sonDeliveryQty;
+    }
+
+    /**
+     * 根据版本获取子件详情信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SonItemDetailByVersion {
+        /**
+         * 主键id(取值：下推列表的id)
+         */
+        private String id;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 }

@@ -440,15 +440,15 @@ public class FbaDeliveryController extends BaseController {
     }
 
     /**
-     * 根据版本号获取明细信息
+     * 根据版本号重新获取下推加工单的子件详情
      * @Author Luo_WG
-     * @Date 2023/11/8 9:03
-     * @param list
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>>
+     * @Date 2023/11/8 11:18
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>>
      **/
-    @PostMapping("/generateMachineDetailView")
-    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineSonItemDetailView(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
-        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineSonItemDetailView(list);
+    @PostMapping("/SonItemDetailByVersion")
+    public ApiResult<List<FbaDeliveryDTO.SonItem>> SonItemDetailByVersion(@RequestBody @Validated FbaDeliveryDTO.SonItemDetailByVersion dto) {
+        List<FbaDeliveryDTO.SonItem> result = fbaDeliveryService.SonItemDetailByVersion(dto);
         return success(result);
     }
 }
