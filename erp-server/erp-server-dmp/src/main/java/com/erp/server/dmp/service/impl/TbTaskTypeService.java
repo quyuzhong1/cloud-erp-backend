@@ -97,11 +97,11 @@ public class TbTaskTypeService {
      **/
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void addTask(ShopInfoEntity entity) {
+    public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务
-        platformApiTaskService.createPlatformTask(new PlatformTaskDTO.AddDTO(entity.getId(),entity.getDictPlatform()));
+        platformApiTaskService.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
         // 添加完成后，修改店铺生成任务状态
-        Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(entity.getId(), Boolean.TRUE));
+        Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(shopInfo.getId(), Boolean.TRUE));
     }
 
 

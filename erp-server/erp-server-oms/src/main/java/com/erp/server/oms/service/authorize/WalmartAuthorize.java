@@ -109,7 +109,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
                 addDTO.setClientSecret(dto.getClientSecret());
                 appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
                 // 授权后添加任务
-                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
             } else {
                 CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
                 updateDTO.setId(appClientId);
@@ -179,7 +179,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         if (result) {
             shopAuthService.removeByShopId(shopId);
             // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

@@ -140,7 +140,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
             shopAuthService.saveOrUpdate(shopAuth);
             boolean result = shopInfoService.updateById(shopInfo);
             // 授权后添加任务
-            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.TRUE);
             shopInfoService.updateShopInfoById(shopInfo);
             // 添加到缓存redis
@@ -178,7 +178,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         if (result) {
             shopAuthService.removeByShopId(shopId);
             // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }
