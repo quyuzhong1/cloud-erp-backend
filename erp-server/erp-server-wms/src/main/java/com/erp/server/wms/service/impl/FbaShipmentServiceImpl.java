@@ -506,4 +506,102 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         }
     }
+
+    @Override
+    public FbaDeliveryDTO.ViewDTO getDeliverView(String id) {
+        FbaShipmentEntity entity = this.getById(id);
+        //根据店铺id查询店铺信息
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Arrays.asList(entity.getShopId()));
+        //设置店铺的仓位为目的仓
+        ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> entity.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
+
+        //映射主信息字段
+        FbaDeliveryDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentEntityToFbaDeliveryViewDTO(entity);
+        viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+        viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
+        viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+        viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
+
+        //查询产品信息
+        List<String> skuNoList = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        //获取库存sku信息
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+
+        //根据sku查询拥有的子sku
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuNoList);
+
+        //查询已发货的货件信息
+        List<String> sourceDetailIdList = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
+        List<FbaDeliveryDetailDTO.ViewDTO> detailList = new ArrayList<>();
+        for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
+            //映射详情字段
+            FbaDeliveryDetailDTO.ViewDTO detailDto = FbaShipmentConverter.INSTANCE.fbaShipmentDetailEntityToDeliveryDetailViewDTO(detailEntity);
+            //设置产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailDto.setProductName(skuVO.getSkuName());
+            detailDto.setNetWeight(skuVO.getNetWeight());
+            //已发货数量
+            Integer useDeliveryQty = entities.stream().filter(req -> req.getSourceDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
+            detailDto.setUseDeliveryQty(useDeliveryQty);
+            //拆分产品尺寸
+            splitProductSizeView(detailDto, skuVO.getProductSize());
+            //库存sku
+            String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+            detailDto.setStockSku(stockSku);
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                detailEntity.setIsCombination(Boolean.TRUE);
+            } else {
+                detailEntity.setIsCombination(Boolean.FALSE);
+            }
+            detailList.add(detailDto);
+        }
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
+    }
+
+
+    /**
+     * 拆分产品尺寸长宽高存入数据集
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:28
+     * @param detailAdd 数据集
+     * @param productSize 需要拆分的尺寸
+     * @return void
+     **/
+    private void splitProductSizeView(FbaDeliveryDetailDTO.ViewDTO detailAdd, String productSize) {
+        if (StringUtils.isNotBlank(productSize)) {
+            String[] productSizes = productSize.split("X");
+            //长
+            if (productSizes.length > 0) {
+                if (StringUtils.isNotBlank(productSizes[0])) {
+                    detailAdd.setProductSizeLength(new BigDecimal(productSizes[0]));
+                } else {
+                    detailAdd.setProductSizeLength(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+            //宽
+            if (productSizes.length > 1) {
+                if (StringUtils.isNotBlank(productSizes[1])) {
+                    detailAdd.setProductSizeWidth(new BigDecimal(productSizes[1]));
+                } else {
+                    detailAdd.setProductSizeWidth(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+            //高
+            if (productSizes.length > 2) {
+                if (StringUtils.isNotBlank(productSizes[2])) {
+                    detailAdd.setProductSizeHeight(new BigDecimal(productSizes[2]));
+                } else {
+                    detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
+                }
+            }
+        }
+    }
 }

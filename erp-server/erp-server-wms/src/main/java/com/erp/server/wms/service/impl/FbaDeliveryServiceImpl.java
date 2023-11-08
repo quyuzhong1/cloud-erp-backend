@@ -1,14 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -20,6 +18,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -90,6 +89,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private MachineInfoService machineInfoService;
     @Autowired
     private InventoryService inventoryService;
+    @Autowired
+    private TransferOutService transferOutService;
+    @Autowired
+    private FbaShipmentService fbaShipmentService;
+    @Autowired
+    private FbaShipmentDetailService fbaShipmentDetailService;
+    @Autowired
+    private FbaShipmentReceiveService fbaShipmentReceiveService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -283,15 +290,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             }
         }
 
-        /*
-        * 审核通过生成分步式调出单：
-              审核通过发货单，系统自动创建分步式调出单，并自动审核扣减库存，每个发货单对应一个调出单
-              库存调拨方向：发货仓->目的仓
-              在途归属：调入方
-              调出单备注：发货单【发货单号】审核通过自动创建
-        * */
-
-
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -301,10 +299,30 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
-    private void generateTransferOut(FbaDeliveryEntity entity, List<FbaDeliveryDetailEntity> detailEntityList) {
-        TransferOutDTO.AddDTO addDTO = new TransferOutDTO.AddDTO();
-
-
+    private String generateTransferOut(FbaDeliveryEntity entity, List<FbaDeliveryDetailEntity> detailEntityList) {
+        //获取sku信息
+        List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        TransferOutDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaDeliveryEntityToTransferOutAdd(entity);
+        //默认类型：组织内调拨
+        addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        //默认来源类型：FBA货件
+        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        //默认调出日期：当前日期
+        addDTO.setBillDate(LocalDate.now());
+        //默认调拨方向：普通
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
+        List<TransferOutDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+        for (FbaDeliveryDetailEntity detailEntity : detailEntityList) {
+            //映射产品信息
+            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+            detailAddDto.setSkuId(skuVO.getSkuId());
+            detailAddDtoList.add(detailAddDto);
+        }
+        addDTO.setDetailList(detailAddDtoList);
+        return transferOutService.add(addDTO);
     }
 
     /**
@@ -343,7 +361,31 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //已经有签收数量的发货单不允许反审核
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
+        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
+        if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
+        }
 
+        //查找发货单下推的分步式调出单自动反审并删除
+        List<TransferOutEntity> transferOutEntities = transferOutService.listBySourceIds(Arrays.asList(id));
+        //分步式调出单已审核先反审核
+        List<String> approveTransferOutIds = transferOutEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
+            transferOutService.disApprove(approveTransferOutIds);
+        }
+        //分步式调出单审核中先撤销
+        List<String> approveIngTransferOutIds = transferOutEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(approveIngTransferOutIds)) {
+            transferOutService.cancel(approveIngTransferOutIds);
+        }
+        //分步式调出单删除
+        List<String> deletedTransferOutIds = transferOutEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deletedTransferOutIds)) {
+            transferOutService.delete(deletedTransferOutIds);
+        }
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), entity.getId(), "反审核操作");
@@ -440,6 +482,29 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+
+        /*
+        * 审核通过生成分步式调出单：
+              审核通过发货单，系统自动创建分步式调出单，并自动审核扣减库存，每个发货单对应一个调出单
+              库存调拨方向：发货仓->目的仓
+              在途归属：调入方
+              调出单备注：发货单【发货单号】审核通过自动创建
+        * */
+        if (ApproveType.PASS.equals(dto.getType())) {
+            List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            String transferOutId = generateTransferOut(entity, detailEntityList);
+            if (StringUtils.isNotBlank(transferOutId)) {
+                //提交
+                transferOutService.submit(Arrays.asList(transferOutId));
+                //审核
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+                baseApproveParamDTO.setType(ApproveType.PASS);
+                transferOutService.approve(baseApproveParamDTO);
+            } else {
+                throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
+            }
+        }
         return Boolean.TRUE;
     }
 
@@ -739,8 +804,36 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
-    public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<String> ids) {
-        return null;
+    public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<FbaDeliveryDTO.GenerateMachineView> list) {
+        List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        //查询历史子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuNos);
+        //查询产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<FbaDeliveryDTO.PrintSonItem> printSonItemList = new ArrayList<>();
+        for (FbaDeliveryDTO.GenerateMachineView view : list) {
+            FbaDeliveryDTO.PrintSonItem printSonItem = new FbaDeliveryDTO.PrintSonItem();
+            printSonItem.setId(view.getMainId());
+            printSonItem.setCode(view.getCode());
+            printSonItem.setSkuNo(view.getSkuNo());
+            printSonItem.setDeliveryQty(view.getAssembleQty());
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+            printSonItem.setProductName(skuVO.getSkuName());
+            //查询最新版本的sku子件信息
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo()) && req.getBomVersion().equals(view.getBomVersion())).collect(Collectors.toList());
+            List<FbaDeliveryDTO.PrintSonItemDetail> sonItemList = new ArrayList<>();
+            for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
+                FbaDeliveryDTO.PrintSonItemDetail printSonItemDetail = new FbaDeliveryDTO.PrintSonItemDetail();
+                printSonItemDetail.setQuantity(bomDTO.getQuantity());
+                printSonItemDetail.setSonDeliveryQty(view.getAssembleQty() * bomDTO.getQuantity());
+                printSonItemDetail.setSonSkuNo(bomDTO.getSkuNo());
+                printSonItemDetail.setSonProductName(bomDTO.getSkuName());
+                sonItemList.add(printSonItemDetail);
+            }
+            printSonItem.setSonItemList(sonItemList);
+            printSonItemList.add(printSonItem);
+        }
+        return printSonItemList;
     }
 
     @Override
@@ -750,6 +843,15 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         }
         return baseMapper.listDeliveryRecordBySourceIds(ids);
     }
+
+    @Override
+    public List<FbaDeliveryEntity> listBySourceIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaDeliveryEntity::getId, ids).list();
+    }
+
     /**
     * 分页查询、导出 数据处理
     */
@@ -821,5 +923,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         fbaDeliveryEntity.setInventoryOrgId(warehouseEntity.getOrgId());
         fbaDeliveryEntity.setInventoryOrgName(orgName);
+    }
+
+    @Override
+    public List<FbaDeliveryDTO.GenerateMachineView> generateMachineSonItemDetailView(List<FbaDeliveryDTO.GenerateMachineView> list) {
+
+        return null;
     }
 }

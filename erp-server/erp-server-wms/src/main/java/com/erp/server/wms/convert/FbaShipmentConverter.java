@@ -13,10 +13,7 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -74,19 +71,35 @@ public interface FbaShipmentConverter {
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 
-/*    @Mappings({
-
+    @Mappings({
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
-            @Mapping(target = "type", source = ""),
-            @Mapping(target = "billDate", source = ""),
-            @Mapping(target = "detailList", source = ""),
-            @Mapping(target = "inWarehouseId", source = ""),
-            @Mapping(target = "outWarehouseId", source = ""),
-            @Mapping(target = "transferDirection", source = ""),
-            @Mapping(target = "type", source = ""),
-            @Mapping(target = "warehouseKeeperId", source = "")
+            @Mapping(target = "outWarehouseId", source = "deliveryWarehouseId"),
+            @Mapping(target = "inWarehouseId", source = "destWarehouseId"),
     })
-    TransferOutDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaDeliveryEntity entity);*/
-}
+    TransferOutDTO.AddDTO fbaDeliveryEntityToTransferOutAdd(FbaDeliveryEntity entity);
 
+    @Mappings({
+            @Mapping(target = "outWarehouseLocation", source = "warehouseLocation"),
+            @Mapping(target = "qty", source = "deliveryQty"),
+            @Mapping(target = "sourceDetailId", source = "id")
+    })
+    TransferOutDetailDTO.AddDTO fbaDeliveryDetailEntityToTransferOutDetailAdd(FbaDeliveryDetailEntity detailEntity);
+
+
+    @Mappings({
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "shopId", source = "shopId"),
+            @Mapping(target = "shopName", source = "shopName"),
+            @Mapping(target = "countryId", source = "countryId"),
+            @Mapping(target = "countryName", source = "countryName")
+    })
+    FbaDeliveryDTO.ViewDTO fbaShipmentEntityToFbaDeliveryViewDTO(FbaShipmentEntity entity);
+
+    @Mappings({
+            @Mapping(target = "planQty", source = "declareQty"),
+            @Mapping(target = "deliveryQty", source = "declareQty"),
+    })
+    FbaDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
+}

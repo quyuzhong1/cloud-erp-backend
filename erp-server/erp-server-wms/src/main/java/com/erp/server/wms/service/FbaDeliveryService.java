@@ -193,10 +193,10 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * 打印子件明细查询
      * @Author Luo_WG
      * @Date 2023/10/31 10:12
-     * @param ids
+     * @param list
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
-    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<String> ids);
+    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<FbaDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 根据来源单号查询发货记录
@@ -206,4 +206,22 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
     List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+
+    /**
+     * 根据来源单号查询发货信息
+     * @Author Luo_WG
+     * @Date 2023/11/8 10:00
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryEntity>
+     **/
+    List<FbaDeliveryEntity> listBySourceIds(List<String> ids);
+
+    /**
+     * 根据版本号获取明细信息
+     * @Author Luo_WG
+     * @Date 2023/11/8 9:03
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>>
+     **/
+    List<FbaDeliveryDTO.GenerateMachineView> generateMachineSonItemDetailView(List<FbaDeliveryDTO.GenerateMachineView> list);
 }

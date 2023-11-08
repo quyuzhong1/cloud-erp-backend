@@ -75,11 +75,6 @@ public class FbaDeliveryController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:paging",
-            tableAlias = ""
-    )
     public ApiResult<List<FbaDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(fbaDeliveryService.tabList(dto));
     }
@@ -95,7 +90,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:paging",
-            tableAlias = ""
+            tableAlias = "fd"
     )
     public ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaDeliveryDTO.PagingParamDTO> dto) {
         return success(fbaDeliveryService.paging(dto));
@@ -164,7 +159,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -200,7 +195,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(approveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -235,7 +230,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(disApproveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -270,7 +265,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
     /**
     * 作废
@@ -304,7 +299,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(invalidResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -339,7 +334,7 @@ public class FbaDeliveryController extends BaseController {
             }
             resultDTOS.add(cancelResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -372,7 +367,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:export",
-            tableAlias = ""
+            tableAlias = "fd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出Excel数据")
     public void exportList(@RequestBody @Validated FbaDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
@@ -439,8 +434,22 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
     @PostMapping("/printSonItemDetail")
-    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(dto.getIds());
+    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> dto) {
+        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(dto);
         return success(list);
     }
+
+/*
+    *//**
+     * 根据版本号获取明细信息
+     * @Author Luo_WG
+     * @Date 2023/11/8 9:03
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>>
+     **//*
+    @PostMapping("/generateMachineDetailView")
+    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineSonItemDetailView(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
+        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineSonItemDetailView(list);
+        return success(result);
+    }*/
 }
