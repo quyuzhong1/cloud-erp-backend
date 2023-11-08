@@ -32,4 +32,11 @@ public interface ShippingTemplateCostSettingService extends SuperService<Shippin
      * @return List<ShippingTemplateCostSettingEntity>
      */
     List<ShippingTemplateCostSettingEntity> listByOtherCostIds(List<String> otherCostIdList);
+    /**
+     * @description: 根据其他费用ids删除
+     * @author Will
+     * @date: 2023/11/8 14:27
+     * @param otherCostIdList
+     */
+    void deleteByOtherCostIds(List<String> otherCostIdList);
 }

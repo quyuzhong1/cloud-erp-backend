@@ -57,6 +57,11 @@ public class ShippingRegionCityServiceImpl extends SuperServiceImpl<ShippingRegi
         return lambdaQuery().eq(ShippingRegionCityEntity::getShippingTemplateRuleId,shippingTemplateRuleId).list();
     }
 
+    @Override
+    public void deleteByRuleIdList(List<String> ruleIdList) {
+        lambdaUpdate().in(ShippingRegionCityEntity::getShippingTemplateRuleId,ruleIdList).remove();
+    }
+
     /**
      * @description: 根据主表id删除
      * @author Will

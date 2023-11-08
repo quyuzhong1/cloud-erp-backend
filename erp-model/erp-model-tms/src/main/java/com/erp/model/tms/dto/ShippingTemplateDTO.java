@@ -131,10 +131,20 @@ public class ShippingTemplateDTO implements Serializable {
          * 应用渠道
          */
         private List<String> channelNameList;
+
+        /**
+         * 应用渠道字符串
+         */
+        private String channelNames;
+
         /**
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * 是否禁用名称
+         */
+        private String disabledName;
         /**
          * 创建人
          */

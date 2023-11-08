@@ -139,8 +139,8 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载运费模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "billingType") String billingType) {
-        shippingTemplateService.downloadTemplate(response,billingMethod,billingType);
+    public ApiResult downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "type") String type) {
+        shippingTemplateService.downloadTemplate(response,billingMethod,type);
         return success();
     }
 
@@ -149,15 +149,15 @@ public class ShippingTemplateController extends BaseController {
      * @author Will
      * @date: 2023/11/6 15:33
      * @param billingMethod
-     * @param billingType
+     * @param type
      * @param excelFile
      * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运费模板")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "billingType") String billingType,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = shippingTemplateService.importFile(billingMethod,billingType,excelFile, response);
+    public ApiResult exportWarehouse(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = shippingTemplateService.importFile(billingMethod,type,excelFile, response);
         return result ? success() : failure();
     }
 

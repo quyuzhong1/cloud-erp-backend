@@ -20,19 +20,10 @@ public interface ShippingTemplateRefChannelService extends SuperService<Shipping
     * 新增
     * @author Will
     * @date: 2023-11-03
-    * @param dto
+    * @param addList
     * @return
     */
-    BaseResultDTO.AddDTO add(ShippingTemplateRefChannelDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author Will
-    * @date: 2023-11-03
-    * @param dto
-    * @return
-    */
-    Boolean update(ShippingTemplateRefChannelDTO.UpdateDTO dto);
+    Boolean add(List<ShippingTemplateRefChannelDTO.AddDTO> addList,String mainId);
 
     /**
      * @description: 根据主表ids查询

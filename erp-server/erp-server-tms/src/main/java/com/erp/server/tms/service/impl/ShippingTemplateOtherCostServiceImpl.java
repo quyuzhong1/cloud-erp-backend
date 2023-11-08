@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -101,6 +102,19 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Override
     public List<ShippingTemplateOtherCostEntity> listByMainId(String mainId) {
         return  lambdaQuery().eq(ShippingTemplateOtherCostEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    public void deleteByMainId(String mainId) {
+        List<ShippingTemplateOtherCostEntity> list = this.listByMainId(mainId);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //删除计算设置
+        List<String> ids = list.stream().map(ShippingTemplateOtherCostEntity::getId).collect(Collectors.toList());
+        shippingTemplateCostSettingService.deleteByOtherCostIds(ids);
+        //删除其他费用数据
+        this.removeByIds(ids);
     }
 
     /**

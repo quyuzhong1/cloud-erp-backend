@@ -72,6 +72,11 @@ public class ShippingTemplateCostSettingServiceImpl extends SuperServiceImpl<Shi
         return lambdaQuery().in(ShippingTemplateCostSettingEntity::getOtherCostId,otherCostIdList).list();
     }
 
+    @Override
+    public void deleteByOtherCostIds(List<String> otherCostIdList) {
+        lambdaUpdate().in(ShippingTemplateCostSettingEntity::getOtherCostId,otherCostIdList).remove();
+    }
+
     /**
     * 新增修改处理数据
     */

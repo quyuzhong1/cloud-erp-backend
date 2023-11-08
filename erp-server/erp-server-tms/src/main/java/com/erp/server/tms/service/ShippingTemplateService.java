@@ -110,16 +110,16 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @date: 2023/11/6 15:34
      * @param response
      */
-    void downloadTemplate(HttpServletResponse response,String billingMethod,String billingType);
+    void downloadTemplate(HttpServletResponse response,String billingMethod,String type);
     /**
      * @description: 导入模板
      * @author Will
      * @date: 2023/11/6 15:35
      * @param billingMethod
-     * @param billingType
+     * @param type
      * @param excelFile
      * @param response
      * @return Boolean
      */
-    Boolean importFile(String billingMethod, String billingType, MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(String billingMethod, String type, MultipartFile excelFile, HttpServletResponse response);
 }

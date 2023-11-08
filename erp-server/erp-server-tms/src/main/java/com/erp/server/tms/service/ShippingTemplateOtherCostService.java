@@ -44,4 +44,11 @@ public interface ShippingTemplateOtherCostService extends SuperService<ShippingT
      * @return List<ShippingTemplateOtherCostEntity>
      */
     List<ShippingTemplateOtherCostEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据主表id删除
+     * @author Will
+     * @date: 2023/11/8 14:18
+     * @param mainId
+     */
+    void deleteByMainId(String mainId);
 }

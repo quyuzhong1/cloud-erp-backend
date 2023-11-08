@@ -39,4 +39,12 @@ public interface ShippingTemplateMapper extends BaseMapper<ShippingTemplateEntit
      * @return List<TabDTO>
      */
     List<ShippingTemplateDTO.TabListDTO> tabList(@Param("permissionSql")String permissionSql);
+    /**
+     * @description: 查询导出数据
+     * @author Will
+     * @date: 2023/11/8 15:53
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<ShippingTemplateDTO.ListDTO> listByExportExcel(@Param("params") ShippingTemplateDTO.ExportExcelParamDTO params);
 }

@@ -113,6 +113,19 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
       return   lambdaQuery().eq(ShippingTemplateRuleEntity::getMainId,mainId).list();
     }
 
+    @Override
+    public void deleteByMainId(String mainId) {
+        List<ShippingTemplateRuleEntity> list = listByMainId(mainId);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //删除分区城市数据
+        List<String> ids = list.stream().map(ShippingTemplateRuleEntity::getId).collect(Collectors.toList());
+        shippingRegionCityService.deleteByRuleIdList(ids);
+        //删除分区信息
+        this.removeByIds(ids);
+    }
+
 
     /**
      * 查询需要删除的数据

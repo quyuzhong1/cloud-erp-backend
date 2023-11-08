@@ -32,4 +32,11 @@ public interface ShippingRegionCityService extends SuperService<ShippingRegionCi
      * @return List<ShippingRegionCityEntity>
      */
     List<ShippingRegionCityEntity> listByRuleId(String shippingTemplateRuleId);
+    /**
+     * @description: 根据运费规则删除
+     * @author Will
+     * @date: 2023/11/8 14:15
+     * @param ruleIdList
+     */
+    void deleteByRuleIdList(List<String> ruleIdList);
 }

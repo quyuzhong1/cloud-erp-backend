@@ -42,4 +42,11 @@ public interface ShippingTemplateRuleService extends SuperService<ShippingTempla
      * @return List<ShippingTemplateRuleEntity>
      */
      List<ShippingTemplateRuleEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据主表id删除
+     * @author Will
+     * @date: 2023/11/8 14:09
+     * @param mainId
+     */
+    void deleteByMainId(String mainId);
 }
