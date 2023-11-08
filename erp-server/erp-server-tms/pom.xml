@@ -1,43 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <parent>
-        <artifactId>cloud-erp</artifactId>
         <groupId>com.cloud.erp</groupId>
+        <artifactId>erp-server</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>erp-model</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>erp-model-auth</module>
-        <module>erp-model-admin</module>
-        <module>erp-model-sys</module>
-        <module>erp-model-merchant</module>
-        <module>erp-model-workflow</module>
-        <module>erp-model-plm</module>
-        <module>erp-model-bi</module>
-        <module>erp-model-dmp</module>
-        <module>erp-model-scm</module>
-        <module>erp-model-wms</module>
-        <module>erp-model-msg</module>
-        <module>erp-model-oms</module>
-        <module>erp-model-tms</module>
-    </modules>
+    <groupId>com.erp.server</groupId>
+    <artifactId>erp-server-tms</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>erp-server-tms</name>
+    <description>物流系统</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.4</version>
+            <scope>runtime</scope>
         </dependency>
+
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-business</artifactId>
+            <artifactId>erp-common-message</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>${alibaba.druid.verison}</version>
+        </dependency>
+
+
     </dependencies>
+
 
     <profiles>
         <profile>
@@ -78,5 +84,15 @@
             <url>${repository.url}</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <build>
+        <finalName>${project.name}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
