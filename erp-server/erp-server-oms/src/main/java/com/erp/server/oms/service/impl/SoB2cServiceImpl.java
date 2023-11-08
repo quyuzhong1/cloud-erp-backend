@@ -1837,8 +1837,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private Boolean approveRule(String id,List<SoB2cDetailEntity> detailList) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        JSONObject  json = JSONUtil.parseObj(entity);
         //匹配审核规则
-        List<JSONObject> jsonList = detailList.stream().map(obj -> JSONUtil.parseObj(obj)).collect(Collectors.toList());
+        List<JSONObject> jsonList = new ArrayList<>();
+        for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
+            JSONObject jsonObject = JSONUtil.parseObj(soB2cDetailEntity);
+            for (Map.Entry<String, Object> entry : json.entrySet()) {
+                jsonObject.set(entry.getKey(),entry.getValue());
+            }
+            jsonList.add(jsonObject);
+        }
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonList);
         //审核规则是否通过
         Boolean approveSuccess = ObjectUtils.isEmpty(ruleOrderMatchResult) ? Boolean.FALSE : Boolean.TRUE;

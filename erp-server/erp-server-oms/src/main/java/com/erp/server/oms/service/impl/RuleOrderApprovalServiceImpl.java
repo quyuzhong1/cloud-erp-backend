@@ -237,7 +237,10 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
      * @return
      */
     private List<RuleOrderApprovalEntity> listOrderByPriority() {
-        return this.lambdaQuery().eq(RuleOrderApprovalEntity::getDisabled, Boolean.FALSE).orderByAsc(RuleOrderApprovalEntity::getPriority).list();
+        return this.lambdaQuery().eq(RuleOrderApprovalEntity::getDisabled, Boolean.FALSE).
+                orderByAsc(RuleOrderApprovalEntity::getPriority).
+                orderByDesc(RuleOrderApprovalEntity::getUpdateTime).
+                list();
     }
 
 

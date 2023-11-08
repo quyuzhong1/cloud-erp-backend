@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 物流地址表 服务类
@@ -48,4 +50,23 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @return
      */
     PagingVO<LogisticsAddressDTO.PagingViewDTO> paging(PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto);
+
+    
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-11-08 17:39
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 删除物流地址
+     * @author yl
+     * @date 2023-11-08 18:45
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO delete(String id);
 }
