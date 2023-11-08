@@ -838,10 +838,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Override
     public List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<FbaDeliveryDTO.GenerateMachineView> list) {
         List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        //查询历史子件信息
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuNos);
         //查询产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        //查询历史子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
         List<FbaDeliveryDTO.PrintSonItem> printSonItemList = new ArrayList<>();
         for (FbaDeliveryDTO.GenerateMachineView view : list) {
             FbaDeliveryDTO.PrintSonItem printSonItem = new FbaDeliveryDTO.PrintSonItem();
@@ -962,10 +965,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public List<FbaDeliveryDTO.SonItem> SonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto) {
         FbaDeliveryDetailEntity detailEntity = fbaDeliveryDetailService.getById(dto.getId());
         FbaDeliveryEntity entity = this.getById(detailEntity.getMainId());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(detailEntity.getSkuNo()));
 
+        //根据单据id查询审核流程
+        List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
         //查询历史子件信息
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(detailEntity.getSkuNo()));
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         //查询最新版本的sku子件信息
         List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(detailEntity.getSkuNo()) && req.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
 
