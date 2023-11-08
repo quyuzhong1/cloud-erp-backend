@@ -1,9 +1,13 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
 import com.erp.server.wms.service.FbaInventoryService;
@@ -37,8 +41,20 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private CommonService commonService;
 
     @Override
-    public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<FbaInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<FbaInventoryDTO.ListDTO> records) {
+
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
