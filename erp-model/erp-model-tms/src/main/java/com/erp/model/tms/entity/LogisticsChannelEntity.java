@@ -1,0 +1,182 @@
+package com.erp.model.tms.entity;
+
+import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 物流渠道表
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-11-02
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("logistics_channel")
+public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
+
+    /**
+    * 主表id
+    */
+    @TableField("main_id")
+    private String mainId;
+    /**
+    * 渠道名称
+    */
+    @TableField("name")
+    private String name;
+    /**
+    * 渠道代码
+    */
+    @TableField("code")
+    private String code;
+    /**
+    * 时效
+    */
+    @TableField("effective_time")
+    private Integer effectiveTime;
+    /**
+    * 时效单位
+    */
+    @TableField("effective_time_unit")
+    private String effectiveTimeUnit;
+    /**
+    * 物流轨迹查询方式
+    */
+    @TableField("track_query_mode")
+    private String trackQueryMode;
+    /**
+    * 纸张长
+    */
+    @TableField("paper_length")
+    private Integer paperLength;
+    /**
+    * 纸张宽
+    */
+    @TableField("paper_width")
+    private Integer paperWidth;
+    /**
+    * 分拣码
+    */
+    @TableField("sorting_code")
+    private String sortingCode;
+    /**
+    * 运费模板id
+    */
+    @TableField("shipping_template_id")
+    private String shippingTemplateId;
+    /**
+    * 费用规则
+    */
+    @TableField("fee_rule")
+    private String feeRule;
+    /**
+    * 最高报关金额
+    */
+    @TableField("max_customs_amount")
+    private BigDecimal maxCustomsAmount;
+    /**
+    * 最高报关币别
+    */
+    @TableField("max_customs_currency")
+    private String maxCustomsCurrency;
+    /**
+    * 最低报关金额
+    */
+    @TableField("min_customs_amount")
+    private BigDecimal minCustomsAmount;
+    /**
+    * 最低报关币种
+    */
+    @TableField("min_customs_currency")
+    private String minCustomsCurrency;
+    /**
+    * 重量上限
+    */
+    @TableField("max_weight")
+    private BigDecimal maxWeight;
+    /**
+    * 重量单位
+    */
+    @TableField("weight_unit")
+    private String weightUnit;
+    /**
+    * 税费模式
+    */
+    @TableField("tax_model")
+    private String taxModel;
+    /**
+    * 是否ioss 预交
+    */
+    @TableField("is_ioss_prepay")
+    private Boolean isIossPrepay;
+    /**
+    * 是否签名服务
+    */
+    @TableField("is_api_sign")
+    private Boolean isApiSign;
+    /**
+    * 是否保险
+    */
+    @TableField("is_api_insurance")
+    private Boolean isApiInsurance;
+
+
+    public static final String MAIN_ID = "main_id";
+
+    public static final String NAME = "name";
+
+    public static final String CODE = "code";
+
+    public static final String EFFECTIVE_TIME = "effective_time";
+
+    public static final String EFFECTIVE_TIME_UNIT = "effective_time_unit";
+
+    public static final String TRACK_QUERY_MODE = "track_query_mode";
+
+    public static final String PAPER_LENGTH = "paper_length";
+
+    public static final String PAPER_WIDTH = "paper_width";
+
+    public static final String SORTING_CODE = "sorting_code";
+
+    public static final String SHIPPING_TEMPLATE_ID = "shipping_template_id";
+
+    public static final String FEE_RULE = "fee_rule";
+
+    public static final String MAX_CUSTOMS_AMOUNT = "max_customs_amount";
+
+    public static final String MAX_CUSTOMS_CURRENCY = "max_customs_currency";
+
+    public static final String MIN_CUSTOMS_AMOUNT = "min_customs_amount";
+
+    public static final String MIN_CUSTOMS_CURRENCY = "min_customs_currency";
+
+    public static final String MAX_WEIGHT = "max_weight";
+
+    public static final String WEIGHT_UNIT = "weight_unit";
+
+    public static final String TAX_MODEL = "tax_model";
+
+    public static final String IS_IOSS_PREPAY = "is_ioss_prepay";
+
+    public static final String IS_API_SIGN = "is_api_sign";
+
+    public static final String IS_API_INSURANCE = "is_api_insurance";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}
