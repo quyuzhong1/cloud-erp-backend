@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,9 +55,11 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
     @Override
     public List<PlatformShopeeListingDTO> download(JobTaskDTO data) {
         LocalDateTime lastTime = data.getLastTime();
-        System.out.println("lastTime:" + lastTime);
+        long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
+        log.info("lastTime:{},timeFrom:{}", lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
-        System.out.println("nextTime:" + nextTime);
+        long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
+        log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
         ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop");
@@ -90,8 +93,8 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                         .tmpPartnerKey(cfgAppClient.getClientSecret())
 //                        .timeFrom(null)
-                        .timeFrom((long) lastTime.getSecond())
-                        .timeTo((long) nextTime.getSecond())
+                        .timeFrom(timeFrom)
+                        .timeTo(timeTo)
 //                        .timeTo(null)
                         .build();
                 List<ItemInfo> list = new ArrayList<>();
