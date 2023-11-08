@@ -58,6 +58,7 @@ public enum BusinessNoTypeEnum {
     CODE_CUSTC(48, "custc","客户","CUSTC"),
     CODE_FBAS(49, "fbas","FBA货件","FBAS"),
     CODE_FHD(50, "fhd","FBA发货单","FHD"),
+    CODE_XSDD(50, "xsdd","b2c销售订单(平台)","XSDD"),
 
     ;
 
