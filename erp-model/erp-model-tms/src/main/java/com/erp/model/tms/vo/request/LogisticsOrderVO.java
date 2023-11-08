@@ -23,6 +23,9 @@ public class LogisticsOrderVO implements Serializable {
     //渠道id
     private String channelId;
 
+    //渠道code
+    private String channelCode;
+
     //订单来源
     private String orderSource;
 
@@ -30,6 +33,9 @@ public class LogisticsOrderVO implements Serializable {
      * 预约时间，格式为：yyyy-MM-dd
      */
     private String reserveTime;
+
+    //备注
+    private String remark;
     /**
      * 发货单号
      */

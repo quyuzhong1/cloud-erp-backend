@@ -1,15 +1,17 @@
 package com.sdk.tms.weishi.dto.response;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
  * @author liuruipeng
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@ToString
+@ToString(callSuper = true)
 public class WeiShiCreateOrder extends WeiShiResponse<Object>{
 
     private String agentNumber;
