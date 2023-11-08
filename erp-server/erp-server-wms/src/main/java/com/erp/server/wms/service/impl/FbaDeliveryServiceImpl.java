@@ -455,7 +455,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public BatchResultDTO cancelProcess(String id) {
         FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
