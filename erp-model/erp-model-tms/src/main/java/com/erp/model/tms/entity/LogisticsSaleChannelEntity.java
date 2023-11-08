@@ -1,13 +1,14 @@
 package com.erp.model.tms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-
-import java.time.LocalDateTime;
+import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -45,7 +46,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("code")
     private String code;
     /**
-    * 失效时间
+    * 时效
     */
     @TableField("expire_time")
     private LocalDateTime expireTime;
@@ -54,11 +55,6 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     */
     @TableField("channel_status")
     private Integer channelStatus;
-    /**
-    * 是否可跟踪轨迹0是 1否（默认0）
-    */
-    @TableField("is_track")
-    private Boolean isTrack;
     /**
     * 渠道供应商名称
     */
@@ -84,4 +80,47 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     */
     @TableField("source_data")
     private String sourceData;
+    /**
+    * 是否可跟踪轨迹0是 1否（默认0）
+    */
+    @TableField("is_track")
+    private Boolean isTrack;
+    /**
+    * 快递时效
+    */
+    @TableField("aging")
+    private String aging;
+
+
+    public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";
+
+    public static final String CN_NAME = "cn_name";
+
+    public static final String EN_NAME = "en_name";
+
+    public static final String CODE = "code";
+
+    public static final String EXPIRE_TIME = "expire_time";
+
+    public static final String CHANNEL_STATUS = "channel_status";
+
+    public static final String SUPPLIER_NAME = "supplier_name";
+
+    public static final String SUPPLIER_CODE = "supplier_code";
+
+    public static final String SHIPMENT_METHOD = "shipment_method";
+
+    public static final String LOGISTICS_PLATFORM = "logistics_platform";
+
+    public static final String SOURCE_DATA = "source_data";
+
+    public static final String IS_TRACK = "is_track";
+
+    public static final String AGING = "aging";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
 }

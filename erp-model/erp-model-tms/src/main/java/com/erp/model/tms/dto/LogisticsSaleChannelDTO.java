@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
 */
 @Data
 @NoArgsConstructor
@@ -39,7 +39,7 @@ public class LogisticsSaleChannelDTO implements Serializable {
         /**
         * 渠道id(物流平台原始id)
         */
-        private String channelId;
+        private String platformChannelId;
 
         /**
         * 渠道名称(默认中文)
@@ -59,7 +59,7 @@ public class LogisticsSaleChannelDTO implements Serializable {
         /**
         * 时效
         */
-        private LocalDateTime effectiveTime;
+        private LocalDateTime expireTime;
 
         /**
         * 渠道状态0正常1.暂停2.已关闭（默认0）
@@ -67,19 +67,14 @@ public class LogisticsSaleChannelDTO implements Serializable {
         private Integer channelStatus;
 
         /**
-        * 是否可跟踪轨迹0是 1否（默认0）
-        */
-        private Integer trackStatus;
-
-        /**
         * 渠道供应商名称
         */
-        private String providerName;
+        private String supplierName;
 
         /**
         * 渠道供应商编码
         */
-        private String providerCode;
+        private String supplierCode;
 
         /**
         * 发货方式
@@ -89,12 +84,22 @@ public class LogisticsSaleChannelDTO implements Serializable {
         /**
         * 物流平台类型
         */
-        private String salesPlatform;
+        private String logisticsPlatform;
 
         /**
         * 获取接口的原始数据
         */
         private String sourceData;
+
+        /**
+        * 是否可跟踪轨迹0是 1否（默认0）
+        */
+        private Boolean isTrack;
+
+        /**
+        * 快递时效
+        */
+        private String aging;
 
 
     }
@@ -133,7 +138,7 @@ public class LogisticsSaleChannelDTO implements Serializable {
         */
         @NotBlank(message = "渠道id(物流平台原始id)不能为空")
         @Size(max = 32,message = "渠道id(物流平台原始id)最大长度不能超过32位")
-        private String channelId;
+        private String platformChannelId;
 
         /**
         * 渠道名称(默认中文)
@@ -150,7 +155,7 @@ public class LogisticsSaleChannelDTO implements Serializable {
         /**
         * 时效
         */
-        private LocalDateTime effectiveTime;
+        private LocalDateTime expireTime;
 
         /**
         * 渠道状态0正常1.暂停2.已关闭（默认0）
@@ -159,20 +164,14 @@ public class LogisticsSaleChannelDTO implements Serializable {
         private Integer channelStatus;
 
         /**
-        * 是否可跟踪轨迹0是 1否（默认0）
-        */
-        @NotNull(message = "是否可跟踪轨迹0是 1否（默认0）不能为空")
-        private Integer trackStatus;
-
-        /**
         * 渠道供应商名称
         */
-        private String providerName;
+        private String supplierName;
 
         /**
         * 渠道供应商编码
         */
-        private String providerCode;
+        private String supplierCode;
 
         /**
         * 发货方式
@@ -184,12 +183,22 @@ public class LogisticsSaleChannelDTO implements Serializable {
         */
         @NotBlank(message = "物流平台类型不能为空")
         @Size(max = 50,message = "物流平台类型最大长度不能超过50位")
-        private String salesPlatform;
+        private String logisticsPlatform;
 
         /**
         * 获取接口的原始数据
         */
         private String sourceData;
+
+        /**
+        * 是否可跟踪轨迹0是 1否（默认0）
+        */
+        private Boolean isTrack;
+
+        /**
+        * 快递时效
+        */
+        private String aging;
 
 
     }

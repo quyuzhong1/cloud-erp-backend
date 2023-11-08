@@ -2,32 +2,32 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.server.tms.mapper.LogisticsSaleChannelMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.CommonService;
+import com.common.core.exception.ServiceException;
+import com.common.business.config.DocNoGenHelper;
+import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.util.ObjectUtil;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
+import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * 销售平台物流渠道表 服务实现类
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
  */
 @Slf4j
 @Service
