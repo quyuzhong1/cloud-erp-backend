@@ -4,6 +4,7 @@ import com.common.business.mapper.BooleanMapper;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
+import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
@@ -56,31 +57,7 @@ public interface LogisticsOrderConverter {
 //            @Mapping(target = "recipientInfo.street", source = "addressEntity.name"),
             @Mapping(target = "sender.street", source = "senderInfo.addressFirst"),
     })
-    OrderRequest orderRequestToDsf(LogisticsOrderVO logisticsOrderVO);
-
-    /**
-     * 产品申报信息
-     *
-     * @param logisticsProductVO
-     * @return
-     */
-    @Mappings({
-            @Mapping(target = "declare_product_code", source = "declareModel"),
-            @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
-            @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
-            @Mapping(target = "declare_product_code_qty", source = "quantity"),
-            //出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
-            @Mapping(target = "declare_unit_price_export", source = "declareCurrency"),
-            //USD
-            @Mapping(target = "currency_export", source = "declareCurrencySymbol"),
-            @Mapping(target = "declare_unit_price_import", source = "destCurrency"),
-            @Mapping(target = "currency_import", source = "destCurrencySymbol"),
-            @Mapping(target = "brand_export", source = "channelId"),
-            @Mapping(target = "brand_import", source = "channelId"),
-            @Mapping(target = "currency_import", source = "channelId"),
-            @Mapping(target = "currency_import", source = "channelId"),
-    })
-    DeclareProductInfo dsfProductMapping(LogisticsProductVO logisticsProductVO);
+    OrderCollectRequest orderRequestToDsf(LogisticsOrderVO logisticsOrderVO);
 
     @Mappings({
             @Mapping(target = "channelId", source = "channelId"),
