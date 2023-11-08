@@ -73,6 +73,11 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
+        * 备注
+        */
+        private String logisticsRemark;
+
+        /**
          * 物流跟踪号
          */
         private List<String> trackingNoList;
@@ -141,7 +146,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 备注
          */
-        private String remark;
+        private String logisticsRemark;
     }
 
 
@@ -190,7 +195,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 备注
          */
-        private String remark;
+        private String logisticsRemark;
     }
 
     /**
@@ -225,6 +230,6 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 备注
          */
-        private String remark;
+        private String logisticsRemark;
     }
 }

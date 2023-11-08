@@ -439,17 +439,16 @@ public class FbaDeliveryController extends BaseController {
         return success(list);
     }
 
-/*
-    *//**
+    /**
      * 根据版本号获取明细信息
      * @Author Luo_WG
      * @Date 2023/11/8 9:03
      * @param list
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>>
-     **//*
+     **/
     @PostMapping("/generateMachineDetailView")
     public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineSonItemDetailView(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
         List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineSonItemDetailView(list);
         return success(result);
-    }*/
+    }
 }

@@ -38,12 +38,12 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * 更新物流信息列表查询
      * @Author Luo_WG
      * @Date 2023/10/30 18:35
-     * @param ids
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/viewUpdateLogistics")
-    public ApiResult<List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView>> viewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO ids) {
-        List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(ids);
+    public ApiResult<List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView>> viewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(dto.getIds());
         return success(result);
     }
 

@@ -121,7 +121,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单" , fbaDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryEntity.getId(), "新增操作");
         //新增物流信息
-        fbaDeliveryLogisticsService.add(addDTO.getLogisticsObj(), fbaDeliveryEntity.getId(), code);
+        fbaDeliveryLogisticsService.add(addDTO.getLogisticsView(), fbaDeliveryEntity.getId(), code);
         //新增详情信息
         fbaDeliveryDetailService.add(addDTO, fbaDeliveryEntity.getId());
         return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
@@ -149,7 +149,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             throw new ServiceException("FBA发货单保存失败");
         }
         //新增物流信息
-        fbaDeliveryLogisticsService.update(updateDTO.getLogisticsObj(), fbaDeliveryEntity.getId());
+        fbaDeliveryLogisticsService.update(updateDTO.getLogisticsView(), fbaDeliveryEntity.getId());
         //修改明细数据
         fbaDeliveryDetailService.update(updateDTO, fbaDeliveryEntity.getId());
         // 记录主单操作日志
@@ -561,13 +561,30 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
+        //根据仓库信息获取核算公司
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getInventoryOrgId()));
+
+        //来源类型名称
+        data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
         //设置状态中文名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        //审核状态名称
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        //备货类型名称
+        data.setDemandTypeName(FbaDemandTypeEnum.getName(data.getDemandType()));
+        //作废状态名称
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        //库存组织名称
+        String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(data.getInventoryOrgId())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        data.setInventoryOrgName(orgName);
 
         //映射物流信息
         FbaDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FbaDeliveryLogisticsDTO.ViewDTO();
         BeanMapper.copy(logisticsEntity, logisticsViewDTO);
-        logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsViewDTO.getLogisticsMethod()));
+        //物流方式名称
+        logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()));
+        logisticsViewDTO.setLogisticsRemark(logisticsEntity.getRemark());
         data.setLogisticsView(logisticsViewDTO);
 
         //查询已发货的货件信息
@@ -582,7 +599,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             //映射产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
             detailVie.setProductName(skuVO.getSkuName());
-
+            detailVie.setImageUrl(skuVO.getSkuImagesUrl());
             //获取已出库数量（排除此单出库数量）
             Integer useDeliveryQty = entities.stream()
                     .filter(req -> req.getSourceDetailId().equals(fbaDeliveryDetailEntity.getSourceDetailId()) && !req.getId().equals(fbaDeliveryDetailEntity.getId()))
