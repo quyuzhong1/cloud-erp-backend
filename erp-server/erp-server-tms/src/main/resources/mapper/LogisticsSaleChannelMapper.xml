@@ -12,18 +12,19 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="channel_id" property="channelId" />
+       <result column="platform_channel_id" property="platformChannelId" />
        <result column="cn_name" property="cnName" />
        <result column="en_name" property="enName" />
        <result column="code" property="code" />
-       <result column="effective_time" property="effectiveTime" />
+       <result column="expire_time" property="expireTime" />
        <result column="channel_status" property="channelStatus" />
-       <result column="track_status" property="trackStatus" />
-       <result column="provider_name" property="providerName" />
-       <result column="provider_code" property="providerCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="supplier_code" property="supplierCode" />
        <result column="shipment_method" property="shipmentMethod" />
-       <result column="sales_platform" property="salesPlatform" />
+       <result column="logistics_platform" property="logisticsPlatform" />
        <result column="source_data" property="sourceData" />
+       <result column="is_track" property="isTrack" />
+       <result column="aging" property="aging" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -37,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-        channel_id, cn_name, en_name, code, effective_time, channel_status, track_status, provider_name, provider_code, shipment_method, sales_platform, source_data
+        platform_channel_id, cn_name, en_name, code, expire_time, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging
     </sql>
 
 

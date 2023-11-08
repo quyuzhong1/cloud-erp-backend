@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
  */
 @Mapper
 public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChannelEntity> {

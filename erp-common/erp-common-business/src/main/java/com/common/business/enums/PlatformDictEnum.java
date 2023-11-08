@@ -34,6 +34,10 @@ public enum PlatformDictEnum implements EnumMessage {
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "42"),
     UBI("UBI", "UBI", "UBI物流平台", "43"),
     TRACK123("TRACK123", "track123", "track123物流平台", "44"),
+    YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", "45"),
+    WEI_SHI("WeiShi", "深圳前海纬狮物流网络科技有限公司", "深圳前海纬狮物流网络科技有限公司", "46"),
+    YUN_TU("YunTu", "云途(新)", "云途(新)", "47"),
+    TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "48"),
         ;
 
 

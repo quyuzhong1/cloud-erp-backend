@@ -127,9 +127,9 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 新增明细（如果有明细的话）
 
         <#if fieldMap["code"]??>
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(${entity?uncap_first}.getId(), code);
         <#else >
-        return new BaseResultDTO.AddDTO(fbaDeliveryEntity.getId(), fbaDeliveryEntity.getId());
+        return new BaseResultDTO.AddDTO(${entity?uncap_first}.getId(), ${entity?uncap_first}.getId());
         </#if>
     }
 

@@ -10,14 +10,14 @@ import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
  */
 public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleChannelEntity> {
 
     /**
     * 新增
     * @author zdy
-    * @date: 2023-11-03
+    * @date: 2023-11-08
     * @param dto
     * @return
     */
@@ -26,7 +26,7 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     /**
     * 修改
     * @author zdy
-    * @date: 2023-11-03
+    * @date: 2023-11-08
     * @param dto
     * @return
     */

@@ -101,6 +101,9 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
     @TableField("code")
     private String code;
 
+    @TableField(exist = false)
+    private String countryName;
+
 
     public static final String NAME = "name";
 

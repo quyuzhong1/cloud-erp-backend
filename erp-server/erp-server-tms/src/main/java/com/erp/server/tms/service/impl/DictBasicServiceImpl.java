@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.server.tms.mapper.DictBasicMapper;
 import com.erp.server.tms.service.DictBasicService;
@@ -81,6 +82,63 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
     /**
+     * 根据key 获取字典数据
+     *
+     * @param key
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author yl
+     * @date 2023-03-17 14:16
+     */
+    @Override
+    public List<DictBasicDTO.ViewDTO> getByKey(String key) {
+        List<DictBasicEntity> list = listByKey(key);
+        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
+        return resultList;
+    }
+
+
+    /**
+     * 根据key list 获取对应数据
+     *
+     * @param keyList
+     * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
+     * @author yl
+     * @date 2023-03-20 14:24
+     */
+    @Override
+    public List<DictBasicEntity> getByKeyList(List<String> keyList) {
+        if (CollectionUtils.isEmpty(keyList)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DictBasicEntity::getType, keyList);
+        return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 根据类型和值获取到对应信息
+     *
+     * @param type
+     * @param value
+     * @return com.erp.model.oms.entity.DictBasicEntity
+     * @author yl
+     * @date 2023-06-28 16:25
+     */
+    @Override
+    public DictBasicEntity getByTypeAndValue(String type, String value) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        queryWrapper.eq(DictBasicEntity::getCode, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
+
+    private List<DictBasicEntity> listByKey(String key) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, key);
+        return this.list(queryWrapper);
     * 新增修改处理数据
     */
     private void handleData(DictBasicEntity dictBasicEntity) {

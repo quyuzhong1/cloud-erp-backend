@@ -52,4 +52,50 @@ public class ProductCustomsDTO {
      * 获取地址：plm/common/enumDropDown?type=CustomsType
      */
     private String type;
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO{
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 国家
+         */
+        private String country;
+
+        /**
+         * 国家
+         */
+        private String countryName;
+
+        /**
+         * 海关编码
+         */
+        private String customsCode;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+    }
+
 }

@@ -10,6 +10,7 @@ import com.erp.server.sys.service.DictCityService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,6 +61,14 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
                 }).collect(Collectors.toList());
 
         return treeList;
+    }
+
+    @Override
+    public List<DictCityEntity> listByIdList(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByIdList(idList);
     }
 
 

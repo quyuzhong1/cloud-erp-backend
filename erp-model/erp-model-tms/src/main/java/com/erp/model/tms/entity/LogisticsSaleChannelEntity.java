@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author zdy
- * @since 2023-11-03
+ * @since 2023-11-08
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,8 +28,8 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 渠道id(物流平台原始id)
     */
-    @TableField("channel_id")
-    private String channelId;
+    @TableField("platform_channel_id")
+    private String platformChannelId;
     /**
     * 渠道名称(默认中文)
     */
@@ -48,28 +48,23 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 时效
     */
-    @TableField("effective_time")
-    private LocalDateTime effectiveTime;
+    @TableField("expire_time")
+    private LocalDateTime expireTime;
     /**
     * 渠道状态0正常1.暂停2.已关闭（默认0）
     */
     @TableField("channel_status")
     private Integer channelStatus;
     /**
-    * 是否可跟踪轨迹0是 1否（默认0）
-    */
-    @TableField("track_status")
-    private Integer trackStatus;
-    /**
     * 渠道供应商名称
     */
-    @TableField("provider_name")
-    private String providerName;
+    @TableField("supplier_name")
+    private String supplierName;
     /**
     * 渠道供应商编码
     */
-    @TableField("provider_code")
-    private String providerCode;
+    @TableField("supplier_code")
+    private String supplierCode;
     /**
     * 发货方式
     */
@@ -78,16 +73,26 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     /**
     * 物流平台类型
     */
-    @TableField("sales_platform")
-    private String salesPlatform;
+    @TableField("logistics_platform")
+    private String logisticsPlatform;
     /**
     * 获取接口的原始数据
     */
     @TableField("source_data")
     private String sourceData;
+    /**
+    * 是否可跟踪轨迹0是 1否（默认0）
+    */
+    @TableField("is_track")
+    private Boolean isTrack;
+    /**
+    * 快递时效
+    */
+    @TableField("aging")
+    private String aging;
 
 
-    public static final String CHANNEL_ID = "channel_id";
+    public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";
 
     public static final String CN_NAME = "cn_name";
 
@@ -95,21 +100,23 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
 
     public static final String CODE = "code";
 
-    public static final String EFFECTIVE_TIME = "effective_time";
+    public static final String EXPIRE_TIME = "expire_time";
 
     public static final String CHANNEL_STATUS = "channel_status";
 
-    public static final String TRACK_STATUS = "track_status";
+    public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String PROVIDER_NAME = "provider_name";
-
-    public static final String PROVIDER_CODE = "provider_code";
+    public static final String SUPPLIER_CODE = "supplier_code";
 
     public static final String SHIPMENT_METHOD = "shipment_method";
 
-    public static final String SALES_PLATFORM = "sales_platform";
+    public static final String LOGISTICS_PLATFORM = "logistics_platform";
 
     public static final String SOURCE_DATA = "source_data";
+
+    public static final String IS_TRACK = "is_track";
+
+    public static final String AGING = "aging";
 
     @Override
     public Serializable pkVal() {

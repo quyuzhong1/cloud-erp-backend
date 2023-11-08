@@ -56,26 +56,41 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     */
     @TableField("tel_number")
     private String telNumber;
+
+
+    /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
     /**
     * 国家
     */
     @TableField("country")
-    private String country;
+    private String countryName;
+
+
+
     /**
     * 省
     */
-    @TableField("province_id")
-    private String provinceId;
+    @TableField("province_name")
+    private String provinceName;
     /**
     * 城市
     */
-    @TableField("city_id")
-    private String cityId;
+    @TableField("city_name")
+    private String cityName;
+
+
     /**
     * 区
     */
-    @TableField("district_id")
-    private String districtId;
+    @TableField("district_name")
+    private String districtName;
+
+
     /**
     * 详细地址1
     */

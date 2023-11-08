@@ -96,7 +96,7 @@ public class HttpClientUtils {
     }
 
     public static String getAddress(AmbientEnum ambient) {
-        String urlProfiels = AmbientEnum.SANDBOX_ADDRESS.equals(ambient) ? "http://open.sandbox.4px.com" : "http://open.4px.com";
+        String urlProfiels = AmbientEnum.TEST_ADDRESS.equals(ambient) ? "http://open-test.4px.com" : "http://open.4px.com";
         return urlProfiels;
     }
 }
