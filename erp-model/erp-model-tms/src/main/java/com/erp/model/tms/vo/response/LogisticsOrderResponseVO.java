@@ -19,17 +19,24 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Builder
 public class LogisticsOrderResponseVO implements Serializable {
-
+    /**
+     * 运单号
+     */
+    String transportNo;
+    /**
+     * 跟踪单号
+     */
+    String trackNo;
     /**
      * 发货单号，erp传的
      */
-    private String deliveryNo;
+    String deliveryNo;
     /**
-     * 运单号(物流平台返回)
+     * 物流渠道号码
      */
-    private String orderNo;
+    String logisticsChannelNo;
     /**
-     * 跟踪单号(物流平台返回)
+     *ODA标识(偏远地址：Y 非偏远地址：N)
      */
-    private String trackNo;
+    String odaResultSign;
 }

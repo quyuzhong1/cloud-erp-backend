@@ -21,7 +21,7 @@ public class ChanelRequest implements Serializable {
      * 是
      */
     @JSONField(name = "transport_mode")
-    private String transport_mode;
+    private String transport_mode = "1";
     /**
      * 起运地-国家二字码。此查询条件暂不可用
      */

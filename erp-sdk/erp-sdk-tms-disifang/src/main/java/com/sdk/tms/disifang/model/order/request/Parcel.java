@@ -21,7 +21,7 @@ public class Parcel implements Serializable {
      * 是
      */
     @JSONField(name = "weight")
-    private BigDecimal weight;
+    private Integer weight;
     /**
      *包裹长（cm）
      */

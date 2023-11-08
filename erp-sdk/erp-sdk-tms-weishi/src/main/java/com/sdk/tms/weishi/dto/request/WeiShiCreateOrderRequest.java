@@ -1,11 +1,14 @@
 package com.sdk.tms.weishi.dto.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -13,6 +16,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class WeiShiCreateOrderRequest {
 
     //客户参考号
@@ -33,9 +38,9 @@ public class WeiShiCreateOrderRequest {
     //订单重量，单位KG
     @JSONField(name = "order_weight")
     @NotNull(message = "订单重量不能为空")
-    private Float orderWeight;
+    private Number orderWeight;
 
-    //订单重量，单位KG
+    //外包装件数,默认1
     @JSONField(name = "order_pieces")
     private Integer orderPieces;
 
@@ -54,6 +59,8 @@ public class WeiShiCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Consignee {
 
         //收件人公司名
@@ -126,6 +133,8 @@ public class WeiShiCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Shipper {
 
         //发件人公司名
@@ -196,6 +205,8 @@ public class WeiShiCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ItemArr {
         //海关申报品名
         @JSONField(name = "invoice_enname")
@@ -209,7 +220,7 @@ public class WeiShiCreateOrderRequest {
         //单个产品申报重量，单位KG, 精确到三位小数。
         @JSONField(name = "invoice_weight")
         @NotNull(message = "申报重量不能为空")
-        private Float invoiceWeight;
+        private Number invoiceWeight;
 
         //数量
         @JSONField(name = "invoice_quantity")
@@ -245,6 +256,5 @@ public class WeiShiCreateOrderRequest {
         @JSONField(name = "sku")
         private String sku;
 
-        private String state;
     }
 }

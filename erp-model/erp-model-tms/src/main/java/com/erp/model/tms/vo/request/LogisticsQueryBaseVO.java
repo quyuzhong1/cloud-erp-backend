@@ -24,18 +24,21 @@ public class LogisticsQueryBaseVO implements Serializable {
     /**
      * 发货单号
      */
-    private String deliveryNo;
+    List<String> deliveryNo;
     /**
      * 运单号
      */
-    private String transportNo;
+    List<String> transportNo;
     /**
      * 跟踪号
      */
-    private List<String> trackNoList;
+    List<String> trackNoList;
     /**
      * 授权信息
      */
-    private LogisticsAuthEntity logisticsAuthEntity;
-
+    LogisticsAuthEntity logisticsAuthEntity;
+    /**
+     * 订单状态
+     */
+    String orderStatus;
 }
