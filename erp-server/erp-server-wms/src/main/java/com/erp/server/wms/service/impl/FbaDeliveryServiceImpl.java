@@ -713,7 +713,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             view.setWarehouseLocationName(warehouseLocationEntity.getName());
 
             //获取到最新的版本
-            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
+            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
             List<Integer> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> Integer.valueOf(req)).collect(Collectors.toList());
             Integer bomVersion = Collections.max(bomVersionList);
             view.setBomVersion(String.valueOf(bomVersion));
