@@ -2,6 +2,7 @@ package com.sdk.tms.disifang.model.order.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.sdk.tms.disifang.model.base.Address;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,6 +16,7 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
+@Builder
 public class OrderCancelRequest implements Serializable {
     /**
      * 请求单号

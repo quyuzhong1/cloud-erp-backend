@@ -19,4 +19,5 @@ public class BooleanMapper {
                 1 : 0
         );
     }
+
 }

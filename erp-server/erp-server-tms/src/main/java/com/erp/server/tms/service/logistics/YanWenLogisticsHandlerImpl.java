@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -50,7 +51,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity authEntity) {
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel();
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
@@ -66,17 +67,14 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
         }
-        return success(LogisticsOrderResponseVO.builder()
-                .orderNo(yanWenResponse.getData().getWaybillNumber())
-                .deliveryNo(yanWenResponse.getData().getOrderNumber())
-                .trackNo(yanWenResponse.getData().getWaybillNumber())
-                .build());
+        return success(new LogisticsOrderResponseVO(yanWenResponse.getData().getWaybillNumber(),yanWenResponse.getData().getWaybillNumber(),
+                logisticsOrderVO.getDeliveryNo(),null,null));
     }
 
     @Override
     public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-                .waybillNumber(labelVO.getTransportNo())
+                .waybillNumber(labelVO.getTransportNo().get(0))
                 .printRemark(labelVO.getPrintRemark())
                 .build();
         YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
@@ -89,7 +87,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
         YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()
-                .waybillNumber(cancelOrderVO.getTransportNo())
+                .waybillNumber(cancelOrderVO.getTransportNo().get(0))
                 .note(cancelOrderVO.getReason())
                 .build();
         YanWenResponse<String> yanWenResponse =  yanWenService.cancelOrder(request);

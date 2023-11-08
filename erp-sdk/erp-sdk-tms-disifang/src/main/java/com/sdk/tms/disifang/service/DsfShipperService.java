@@ -8,6 +8,7 @@ import com.sdk.tms.disifang.model.label.request.LabelRequest;
 import com.sdk.tms.disifang.model.label.request.LabelSingleRequest;
 import com.sdk.tms.disifang.model.order.request.OrderCancelRequest;
 import com.sdk.tms.disifang.model.order.request.OrderCollectRequest;
+import com.sdk.tms.disifang.model.order.request.OrderQueryRequest;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.disifang.model.product.request.ChanelRequest;
 import com.sdk.tms.disifang.utils.ApiHttpClientUtils;
@@ -60,11 +61,10 @@ public class DsfShipperService {
      *
      * @param appKey
      * @param appSecret
-     * @param ambientEnum
      * @param labelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getLabelList(String appKey, String appSecret, AmbientEnum ambientEnum, LabelRequest labelRequest) {
+    public ResponseMsg getLabelList(String appKey, String appSecret,  LabelRequest labelRequest) {
         String method = "ds.xms.label.getlist";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -85,11 +85,10 @@ public class DsfShipperService {
      *
      * @param appKey
      * @param appSecret
-     * @param ambientEnum
      * @param chanelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getChanelList(String appKey, String appSecret, AmbientEnum ambientEnum, ChanelRequest chanelRequest) {
+    public ResponseMsg getChanelList(String appKey, String appSecret, ChanelRequest chanelRequest) {
         String method = "ds.xms.logistics_product.getlist";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -110,11 +109,10 @@ public class DsfShipperService {
      *
      * @param appKey
      * @param appSecret
-     * @param ambientEnum
      * @param orderRequest
      * @return ResponseMsg
      */
-    public ResponseMsg createOrder(String appKey, String appSecret, AmbientEnum ambientEnum, OrderRequest orderRequest) {
+    public ResponseMsg createOrder(String appKey, String appSecret, OrderRequest orderRequest) {
         String method = "ds.xms.order.create";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -124,7 +122,7 @@ public class DsfShipperService {
                 .appSecret(appSecret)
                 .method(method)
                 .build();
-        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderRequest), ambientEnum);
+        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
@@ -136,11 +134,10 @@ public class DsfShipperService {
      *
      * @param appKey
      * @param appSecret
-     * @param ambientEnum
      * @param orderCancelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg cancelOrder(String appKey, String appSecret, AmbientEnum ambientEnum, OrderCancelRequest orderCancelRequest) {
+    public ResponseMsg cancelOrder(String appKey, String appSecret, OrderCancelRequest orderCancelRequest) {
         String method = "ds.xms.order.cancel";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -150,7 +147,7 @@ public class DsfShipperService {
                 .appSecret(appSecret)
                 .method(method)
                 .build();
-        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCancelRequest), ambientEnum);
+        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCancelRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
@@ -162,10 +159,10 @@ public class DsfShipperService {
      *
      * @param appKey
      * @param appSecret
-     * @param orderCancelRequest
+     * @param orderQueryRequest
      * @return ResponseMsg
      */
-    public ResponseMsg queryOrder(String appKey, String appSecret, AmbientEnum ambientEnum, OrderCancelRequest orderCancelRequest) {
+    public ResponseMsg queryOrder(String appKey, String appSecret, OrderQueryRequest orderQueryRequest) {
         String method = "ds.xms.order.get";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -175,7 +172,7 @@ public class DsfShipperService {
                 .appSecret(appSecret)
                 .method(method)
                 .build();
-        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCancelRequest), ambientEnum);
+        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderQueryRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}

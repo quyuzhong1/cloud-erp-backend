@@ -67,6 +67,13 @@ public interface LogisticsService {
     /**
      * 查询订单
      *
+     * @param logisticsQueryVO
+     * @return
+     */
+    ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO);
+    /**
+     * 查询订单
+     *
      * @param logisticsQueryVOList
      * @return
      */
@@ -79,7 +86,13 @@ public interface LogisticsService {
      * @return
      */
     ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO);
-
+    /**
+     * 批量获取标签
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO);
     /**
      * 轨迹查询
      *
@@ -93,5 +106,5 @@ public interface LogisticsService {
      *
      * @return
      */
-    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity logisticsAuthEntity);
+    ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO);
 }

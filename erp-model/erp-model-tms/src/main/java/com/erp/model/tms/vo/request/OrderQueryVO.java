@@ -1,0 +1,35 @@
+package com.erp.model.tms.vo.request;
+
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * @author zdy
+ * @ClassName OrderQueryVO
+ * @description: TODO
+ * @date 2023年11月08日
+ * @version: 1.0
+ */
+@Data
+public class OrderQueryVO implements Serializable {
+    /**
+     * 客户单号(业务单号如出库单号)
+     */
+    String refNo;
+    /**
+     * 运单号
+     */
+    String transportNo;
+    /**
+     * 跟踪号
+     */
+    String trackNoList;
+    /**
+     * 授权信息
+     */
+    LogisticsAuthEntity logisticsAuthEntity;
+
+}

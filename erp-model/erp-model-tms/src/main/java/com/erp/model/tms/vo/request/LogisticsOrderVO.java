@@ -1,10 +1,12 @@
 package com.erp.model.tms.vo.request;
 
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -54,4 +56,12 @@ public class LogisticsOrderVO implements Serializable {
      * 授权信息
      */
     private LogisticsAuthEntity logisticsAuthEntity;
+    /**
+     * 渠道信息
+     */
+    private LogisticsChannelEntity logisticsChannelEntity;
+    /**
+     * 保险信息
+     */
+
 }

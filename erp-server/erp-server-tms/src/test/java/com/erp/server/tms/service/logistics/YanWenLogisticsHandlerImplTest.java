@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,7 +29,7 @@ public class YanWenLogisticsHandlerImplTest {
 
     @Test
     public void getChannel() {
-        System.out.println(yanWenLogisticsHandler.getChannel(new LogisticsAuthEntity()));
+        System.out.println(yanWenLogisticsHandler.getChannel(new ChanelQueryVO()));
     }
 
     @Test
@@ -92,14 +92,14 @@ public class YanWenLogisticsHandlerImplTest {
     @Test
     public void getLabelUrl() {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setTransportNo("LR08531450CN");
+        logisticsQueryVO.setTransportNo(Collections.singletonList("LR08531450CN"));
         System.out.println(yanWenLogisticsHandler.getLabelUrl(logisticsQueryVO));
     }
 
     @Test
     public void cancelOrder() {
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
-        cancelOrderVO.setTransportNo("LR085325186CN");
+        cancelOrderVO.setTransportNo(Collections.singletonList("LR085325186CN"));
         System.out.println(yanWenLogisticsHandler.cancelOrder(cancelOrderVO));
     }
 

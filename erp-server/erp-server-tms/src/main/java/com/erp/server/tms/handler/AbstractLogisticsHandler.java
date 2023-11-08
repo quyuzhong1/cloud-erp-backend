@@ -91,6 +91,15 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     }
 
     /**
+     * 获取标签
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    public ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+    /**
      * 轨迹查询
      *
      * @param logisticsQueryVO
@@ -103,10 +112,10 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     /**
      * 渠道查询
      *
-     * @param authEntity
+     * @param chanelQueryVO
      * @return
      */
-    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(LogisticsAuthEntity authEntity) {
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 }
