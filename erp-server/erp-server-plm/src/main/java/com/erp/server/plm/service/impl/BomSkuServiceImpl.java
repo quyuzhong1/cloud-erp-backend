@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
@@ -259,16 +260,18 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         List<String> bomIds = list.stream().map(req -> req.getBomId()).distinct().collect(Collectors.toList());
         List<ProductBomHistoryEntity> productBomHistoryEntities = productBomHistoryService.listByBomIds(bomIds);
         List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = new ArrayList<>();
-        for (BomSkuEntity bomSkuEntity : list) {
+        //一个发货单多个组合产品，生成一个组装单
+        Map<String, List<BomSkuEntity>> map = list.stream().collect(Collectors.groupingBy(BomSkuEntity::getParentSkuNo));
+        for (Map.Entry<String, List<BomSkuEntity>> stringListEntry : map.entrySet()) {
             ProductBomInfoDTO.skuBomVersion bomVersion = new ProductBomInfoDTO.skuBomVersion();
-            bomVersion.setSkuNo(bomSkuEntity.getSkuNo());
-            List<String> bomVersionList = productBomHistoryEntities.stream().filter(req -> req.getBomId().equals(bomSkuEntity.getBomId())).map(req -> req.getBomVersion()).collect(Collectors.toList());
+            bomVersion.setSkuNo(stringListEntry.getKey());
+            List<String> bomVersionList = productBomHistoryEntities.stream().map(req -> req.getBomVersion()).collect(Collectors.toList());
             Collections.reverse(bomVersionList);
             bomVersion.setBomVersionList(bomVersionList);
-            bomVersion.setParentSkuId(bomSkuEntity.getParentSkuId());
-            bomVersion.setParentSkuNo(bomSkuEntity.getParentSkuNo());
             skuBomVersionList.add(bomVersion);
+
         }
+
         return skuBomVersionList;
     }
 }
