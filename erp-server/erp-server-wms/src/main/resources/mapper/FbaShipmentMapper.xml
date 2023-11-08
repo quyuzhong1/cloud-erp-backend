@@ -167,6 +167,7 @@
             fsd.id,
             fsd.main_id,
             fs.code,
+            fs.fulfillment_center,
             fs.shop_id,
             fs.shop_name,
             fs.country_id,
