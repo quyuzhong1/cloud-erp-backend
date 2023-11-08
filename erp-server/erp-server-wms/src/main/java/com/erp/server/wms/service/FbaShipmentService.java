@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -137,4 +138,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO skuMappingBatch(String id);
+
+    /**
+     * 单个下推发货单获取详情
+     * @Author Luo_WG
+     * @Date 2023/11/8 9:19
+     * @param id
+     * @return com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO
+     **/
+    FbaDeliveryDTO.ViewDTO getDeliverView(String id);
 }

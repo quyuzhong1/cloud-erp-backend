@@ -27,7 +27,7 @@ public interface ShopeeFeign {
      * @return
      */
     @GetMapping("/feign/shopee/getShopeeShopList")
-    ApiResult<List<ShopAuthEntity>> getShopeeShopList(@RequestParam(value = "type") String type);
+    ApiResult<List<ShopAuthEntity>> getShopeeShopList(@RequestParam(value = "type") String type,@RequestParam(value = "status") String status);
 
     /**
      * 获取商铺详情

@@ -22,9 +22,6 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class FbaDeliveryDetailDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -116,6 +113,16 @@ public class FbaDeliveryDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
     }
 
     /**

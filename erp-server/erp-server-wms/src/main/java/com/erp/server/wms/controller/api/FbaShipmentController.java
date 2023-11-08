@@ -10,6 +10,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.server.wms.service.FbaDeliveryService;
@@ -162,6 +163,19 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
+     * 单个下推发货单获取详情
+     * @Author Luo_WG
+     * @Date 2023/11/8 9:17
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO>
+     **/
+    @GetMapping("/getDeliverView")
+    public ApiResult<FbaDeliveryDTO.ViewDTO> getDeliverView(@RequestParam("id") String id) {
+        FbaDeliveryDTO.ViewDTO view = fbaShipmentService.getDeliverView(id);
+        return success(view);
+    }
+
+    /**
      * 下推发货单保存并提交
      * @Author Luo_WG
      * @Date 2023/10/31 14:35
@@ -207,7 +221,7 @@ public class FbaShipmentController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -236,6 +250,6 @@ public class FbaShipmentController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

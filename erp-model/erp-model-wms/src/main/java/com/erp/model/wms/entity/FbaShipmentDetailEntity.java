@@ -72,6 +72,11 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("receive_qty")
     private Integer receiveQty;
     /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+    /**
      * 最新收货日期
      */
     @TableField("receive_date")
@@ -81,8 +86,6 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     public static final String MAIN_ID = "main_id";
 
     public static final String ASIN = "asin";
-
-    public static final String M_SKU = "m_sku";
 
     public static final String FN_SKU = "fn_sku";
 

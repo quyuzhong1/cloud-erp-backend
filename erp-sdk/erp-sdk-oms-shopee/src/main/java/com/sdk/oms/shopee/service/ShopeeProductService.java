@@ -78,6 +78,9 @@ public class ShopeeProductService {
             return;
         }
         JSONArray jsonArray = (JSONArray) response.get("item");
+        if (Objects.isNull(jsonArray)){
+            return;
+        }
         //目录列表
         List<Item> items = JSONObject.parseArray(jsonArray.toJSONString(), Item.class);
         //获取item明细

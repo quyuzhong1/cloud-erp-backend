@@ -283,7 +283,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
 
         /**
          * 审核人
@@ -298,7 +298,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 审核时间
          */
-        private String approveTime;
+        private LocalDateTime approveTime;
     }
 
     /**
@@ -779,7 +779,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * bom用量
          */
-        private String quantity;
+        private Integer quantity;
         /**
          * 子件发货数量
          */

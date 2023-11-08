@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,12 +57,14 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
     @Override
     public List<PlatformShopeeOrderDTO> download(JobTaskDTO data) {
         LocalDateTime lastTime = data.getLastTime();
-        System.out.println("lastTime:" + lastTime);
+        long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
+        log.info("lastTime:{},timeFrom:{}", lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
-        System.out.println("nextTime:" + nextTime);
+        long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
+        log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
-        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop");
+        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());
         if (CollectionUtils.isEmpty(shopeeShop.getData())) {
             return Collections.emptyList();
         }
@@ -79,8 +83,8 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
             if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
                 OrderRequest orderRequest = OrderRequest.builder()
                         .offset(0)
-                        .timeFrom((long) lastTime.getSecond())
-                        .timeTo((long) nextTime.getSecond())
+                        .timeFrom(timeFrom)
+                        .timeTo(timeTo)
                         .tmpPartnerKey(cfgAppClient.getClientSecret())
                         .partnerId(Long.parseLong(cfgAppClient.getClientId()))
                         .token(shopAuthEntity.getAccessToken())

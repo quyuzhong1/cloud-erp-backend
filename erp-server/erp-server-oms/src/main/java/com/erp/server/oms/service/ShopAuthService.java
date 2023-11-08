@@ -60,7 +60,7 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      */
     String getShopeeCodeUrl(ShopAuthorizeDTO dto);
 
-    List<ShopAuthEntity> getShopeeShopList(String type);
+    List<ShopAuthEntity> getShopeeShopList(String type, String stauts);
 
     ShopAuthEntity getShopeeShopById(String shopeeId);
 
