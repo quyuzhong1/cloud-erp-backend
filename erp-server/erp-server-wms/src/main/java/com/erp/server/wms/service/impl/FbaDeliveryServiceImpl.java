@@ -284,10 +284,16 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 throw new ServiceException(ApiError.IS_GENERATE_MACHINE, entity.getCode());
             }
 
+            List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+            List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            //查询历史子件信息
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
             //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】可用库存不足，无法审核发货单
             for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : isCombinationList) {
                 //及时库存
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), fbaDeliveryDetailEntity.getSkuNo(), fbaDeliveryDetailEntity.getWarehouseLocation());
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), skuVO.getSkuId(), fbaDeliveryDetailEntity.getWarehouseLocation());
                 if (fbaDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
                     throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, entity.getCode());
                 }
@@ -610,7 +616,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
             //映射产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-            detailVie.setSkuId(skuVO.getSkuId());
             detailVie.setProductName(skuVO.getSkuName());
             detailVie.setImageUrl(skuVO.getSkuImagesUrl());
             //获取已出库数量（排除此单出库数量）
@@ -733,7 +738,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 //子件sku
                 sonItem.setSonSkuNo(bomDTO.getSkuNo());
                 //及时库存
-                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(view.getWarehouseId(), bomDTO.getSkuNo(), view.getWarehouseLocation());
+                Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(view.getWarehouseId(), bomDTO.getSkuId(), view.getWarehouseLocation());
                 sonItem.setCurInventoryQty(usableInventoryTotal);
                 sonItemList.add(sonItem);
             }
@@ -998,7 +1003,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             //子件sku
             sonItem.setSonSkuNo(bomDTO.getSkuNo());
             //及时库存
-            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), bomDTO.getSkuNo(), detailEntity.getWarehouseLocation());
+            Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), bomDTO.getSkuId(), detailEntity.getWarehouseLocation());
             sonItem.setCurInventoryQty(usableInventoryTotal);
             sonItemList.add(sonItem);
         }

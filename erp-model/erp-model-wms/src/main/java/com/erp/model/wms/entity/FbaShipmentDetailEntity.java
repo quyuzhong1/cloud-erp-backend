@@ -47,11 +47,6 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("fn_sku")
     private String fnSku;
     /**
-    * ERP的SKUId
-    */
-    @TableField("sku_id")
-    private String skuId;
-    /**
     * ERP的SKU
     */
     @TableField("sku_no")
@@ -76,11 +71,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
      */
     @TableField("receive_qty")
     private Integer receiveQty;
-    /**
-     * 仓位
-     */
-    @TableField("warehouse_location")
-    private String warehouseLocation;
+
     /**
      * 最新收货日期
      */
