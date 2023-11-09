@@ -9,6 +9,7 @@ import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
+import com.sdk.tms.weishi.dto.response.WeiShiGetTrackNumber;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenQueryOrder;
 import org.mapstruct.Builder;
@@ -174,4 +175,12 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "sku", source = "skuId")
     })
     WeiShiCreateOrderRequest.ItemArr orderRequestByWeiShi(LogisticsProductVO logisticsProductVO);
+
+    @Mappings({
+            @Mapping(target = "deliveryNo", source = "orderNumber"),
+            @Mapping(target = "transportNo", source = "wayBillNumber"),
+            @Mapping(target = "trackNo", source = "trackingNumber")
+    })
+    LogisticsOrderResponseVO trackInfoConvertByWeiShi(WeiShiGetTrackNumber data);
+    List<LogisticsOrderResponseVO> trackInfoConvertByWeiShi(List<WeiShiGetTrackNumber> data);
 }
