@@ -27,6 +27,14 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
     List<DictCountryDTO.ListDTO> listCountry();
 
     /**
+     * @description: 根据参数查询国家
+     * @author Will
+     * @date: 2023/11/9 9:53
+     * @return List<ListDTO>
+     */
+    List<DictCountryDTO.ListDTO> listCountryByParam(DictCountryDTO.ListParamDTO dto);
+
+    /**
      * 初始化国家列表
      */
     void initRegionList(String country);
@@ -48,4 +56,12 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return java.util.List<com.erp.model.sys.dto.DictCountryDTO.CascadeDTO>
      */
     List<DictCountryDTO.CascadeDTO> areaCountryListByType(String type);
+    /**
+     * @description: 查询国家区域
+     * @author Will
+     * @date: 2023/11/9 9:37
+     * @param dto
+     * @return List<ListRegionDTO>
+     */
+    List<DictCountryDTO.ListRegionDTO> listAreaCountry(DictCountryDTO.ListParamDTO dto);
 }
