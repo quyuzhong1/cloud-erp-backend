@@ -81,4 +81,17 @@ public class DictCountryController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 根据参数查询国家数据
+     * @author Will
+     * @date: 2023/11/9 15:03
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/listCountryByParam")
+    public ApiResult<List<DictCountryDTO.ListDTO>> listCountryByParam(@RequestBody @Validated DictCountryDTO.ListParamDTO dto) {
+        List<DictCountryDTO.ListDTO> list = dictCountryService.listCountryByParam(dto);
+        return success(list);
+    }
+
 }

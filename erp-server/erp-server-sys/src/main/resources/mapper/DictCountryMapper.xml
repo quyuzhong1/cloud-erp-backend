@@ -40,6 +40,12 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
           and (dc.id ILIKE concat('%',#{params.searchKeyword}::text,'%')  or dc.name_cn ILIKE concat('%',#{params.searchKeyword}::text,'%')  or dc.name_en ILIKE concat('%',#{params.searchKeyword}::text,'%'))
         </if>
+        <if test="params.nameCnList != null and params.nameCnList.size > 0">
+            and dc.name_cn in
+            <foreach collection="params.nameCnList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         ORDER BY dc.index DESC
     </select>
 </mapper>

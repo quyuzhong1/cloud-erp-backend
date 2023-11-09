@@ -59,6 +59,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -213,10 +214,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         //运费规则
         List<ShippingTemplateRuleEntity> ruleList = shippingTemplateRuleService.listByMainId(id);
         List<ShippingTemplateRuleDTO.ViewDTO> detailList = BeanMapperUtils.copyList(ShippingTemplateRuleDTO.ViewDTO.class, ruleList);
-        //判断是否分区类型
-        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
-            handleRegionCity(detailList);
-        }
+        //格式化运费规则数据
+        handleRuleView(detailList,entity);
         viewDTO.setDetailList(detailList);
 
         //其他费用
@@ -579,14 +578,28 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      * @date: 2023/11/8 11:44
      * @param detailList
      */
-    private void handleRegionCity (List<ShippingTemplateRuleDTO.ViewDTO> detailList) {
+    private void handleRuleView (List<ShippingTemplateRuleDTO.ViewDTO> detailList,ShippingTemplateEntity entity) {
+        //国家谢谢
+        List<String> countryIdList = detailList.stream().flatMap(obj -> Stream.of(obj.getToCountry(), obj.getFromCountry()))
+                .distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(countryIdList);
+
         for (ShippingTemplateRuleDTO.ViewDTO viewDTO :detailList) {
-            List<ShippingRegionCityEntity> list = shippingRegionCityService.listByRuleId(viewDTO.getId());
-            if (CollectionUtils.isEmpty(list)) {
-                continue;
+            //起始地
+            String fromCountryName = currencyList.stream().filter(obj -> obj.getId().equals(viewDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setFromCountryName(fromCountryName);
+            //目的地
+            String toCountryName = currencyList.stream().filter(obj -> obj.getId().equals(viewDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setToCountryName(toCountryName);
+
+            if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
+                List<ShippingRegionCityEntity> list = shippingRegionCityService.listByRuleId(viewDTO.getId());
+                if (CollectionUtils.isEmpty(list)) {
+                    continue;
+                }
+                List<String> cityList = list.stream().map(ShippingRegionCityEntity::getCity).collect(Collectors.toList());
+                viewDTO.setCityList(cityList);
             }
-            List<String> cityList = list.stream().map(ShippingRegionCityEntity::getCity).collect(Collectors.toList());
-            viewDTO.setCityList(cityList);
         }
 
     }

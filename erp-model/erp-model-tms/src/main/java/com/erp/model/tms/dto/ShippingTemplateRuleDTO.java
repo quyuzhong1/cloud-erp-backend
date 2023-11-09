@@ -49,9 +49,19 @@ public class ShippingTemplateRuleDTO implements Serializable {
         private String fromCountry;
 
         /**
+         * 起始地名称
+         */
+        private String fromCountryName;
+
+        /**
         * 目的地
         */
         private String toCountry;
+
+        /**
+         * 目的地名称
+         */
+        private String toCountryName;
 
         /**
         * 分区
