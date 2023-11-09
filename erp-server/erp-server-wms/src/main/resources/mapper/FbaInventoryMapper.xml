@@ -101,6 +101,12 @@
             (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > fd.update_time
         </if>
+
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory != null">
+
+        </if>
+
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
