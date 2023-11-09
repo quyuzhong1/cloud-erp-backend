@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -225,9 +226,9 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
             labelSpecs.forEach(labelResponse -> {
                 responses.add(LogisticsPrintLabelResponse.builder()
-                        .transportNo(labelResponse.getOrderId())
+                        .transportNoList(Collections.singletonList(labelResponse.getOrderId()))
                         .base64(labelResponse.getLabelContent())
-                        .trackNo(labelResponse.getTrackingNo())
+                        .trackNoList(Collections.singletonList(labelResponse.getTrackingNo()))
                         .build());
             });
             return success(responses);

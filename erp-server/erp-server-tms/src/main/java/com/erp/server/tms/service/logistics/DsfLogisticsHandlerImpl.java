@@ -239,7 +239,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             //TODO 结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
-            responses.add(LogisticsPrintLabelResponse.builder().base64((String) responseMsg.getData()).build());
+            responses.add(LogisticsPrintLabelResponse.builder().deliveryNoList(logisticsQueryVO.getTransportNo()).base64((String) responseMsg.getData()).build());
             return success(responses);
         }
     }
