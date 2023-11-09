@@ -102,15 +102,8 @@ public class LogisticsSupplierDTO implements Serializable {
         * 供应商id
         */
         @NotBlank(message = "供应商id不能为空")
-        @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
 
-        /**
-        * 名称
-        */
-        @NotBlank(message = "名称不能为空")
-        @Size(max = 50,message = "名称最大长度不能超过50位")
-        private String supplierName;
 
         /**
         * 类型
@@ -132,11 +125,7 @@ public class LogisticsSupplierDTO implements Serializable {
         @Size(max = 30,message = "授权状态最大长度不能超过30位")
         private String authStatus;
 
-        /**
-        * 授权时间
-        */
-        @NotNull(message = "授权时间不能为空")
-        private LocalDateTime authTime;
+
 
 
     }

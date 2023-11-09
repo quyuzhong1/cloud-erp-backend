@@ -27,7 +27,7 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
  */
 @Slf4j
 @RestController
-@LogSystemModule("物流渠道表")
+@LogSystemModule("物流渠道")
 @RequestMapping("/logisticsChannel")
 public class LogisticsChannelController extends BaseController {
 
