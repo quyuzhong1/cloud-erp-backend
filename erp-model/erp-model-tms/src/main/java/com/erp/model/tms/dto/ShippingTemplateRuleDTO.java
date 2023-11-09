@@ -250,5 +250,33 @@ public class ShippingTemplateRuleDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewParamDTO {
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 起始地
+         */
+        private String fromCountry;
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
+        /**
+         * 分区
+         */
+        private String region;
+
+        /**
+         * 目的仓库
+         */
+        private String toWarehouseName;
+    }
 
 }

@@ -200,10 +200,106 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Override
     public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
-        ShippingTemplateEntity old = super.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        ShippingTemplateEntity entity = super.getById(dto.getId());
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        ShippingTemplateTypeEnum typeEnum = ShippingTemplateTypeEnum.getEnumByCode(entity.getType());
+        switch (typeEnum) {
+            case ENUM_COUNTRY:
+                //按国家
+                return calculationByCountry(dto,entity);
+            case ENUM_REGION:
+                //按分区
+                return calculationByRegion(dto,entity);
+            case ENUM_WAREHOUSE:
+                //按仓库
+                return calculationByWarehouse(dto,entity);
+            default:
+                return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * 按国家计算
+     */
+    private BigDecimal calculationByCountry (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getToCountry())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToCountry());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
+    }
+
+    /**
+     * 按分区计算
+     */
+    private BigDecimal calculationByRegion (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getRegion())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToCountry());
+        viewParamDTO.setRegion(dto.getRegion());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
+    }
+
+    /**
+     * 按仓库计算
+     */
+    private BigDecimal calculationByWarehouse (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getToWarehouseName())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToWarehouseName());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
+    }
+
+    /**
+     * 计算最终运费
+     */
+    private BigDecimal calculationFinalShippingCost(ShippingTemplateEntity entity,ShippingTemplateRuleEntity shippingTemplateRule,BigDecimal weight) {
+        /**
+         *  最终运费 = 运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
+         *  运费【首重+续重】=首重费用+（收费重量-首重）/续重单位重量*单价【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
+         *  运费【重量段】=对应重量段的价格*收费重量【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
+         */
+        //运费
+        BigDecimal shippingCost = BigDecimal.ZERO;
+        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
+            //首重费用
+            BigDecimal firstWeightShippingCost = shippingTemplateRule.getFirstWeightShippingCost();
+            //续重费用
+            BigDecimal additionalWeightShippingCost = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight())
+                    .multiply(shippingTemplateRule.getAdditionalPrice());
+
+        }
+
+
         return BigDecimal.ZERO;
     }
+
 
     @Override
     public ShippingTemplateDTO.ViewDTO view(String id) {
