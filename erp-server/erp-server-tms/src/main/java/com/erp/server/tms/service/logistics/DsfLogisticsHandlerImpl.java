@@ -145,19 +145,35 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 查询订单(批量)
      *
-     * @param logisticsQueryVOList
+     * @param logisticsQueryVO
      * @return
      */
     @Override
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        List<LogisticsOrderResponseVO> responseVOS = new ArrayList<>();
-        logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
-            ApiResult<LogisticsOrderResponseVO> responseMsg = this.queryOrder(logisticsQueryBaseVO);
-            if (responseMsg.isSuccess()) {
-                responseVOS.add(responseMsg.getData());
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVO) {
+        List<LogisticsOrderResponseVO> list = new ArrayList<>();
+        logisticsQueryVO.getTransportNo().forEach(transportNo -> {
+            OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
+                    .request_no(transportNo)
+                    .build();
+            ResponseMsg responseMsg = dsfShipperService.queryOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), orderQueryRequest);
+            //失败
+            if (!StringUtils.isBlank(responseMsg.getResult()) && Objects.equals("1", responseMsg.getResult())) {
+                QueryOrderResponse queryOrderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(responseMsg.getData()), QueryOrderResponse.class);
+                LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                        .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
+                        .trackNo(queryOrderResponse.getConsignmentInfo().getTracking_no())
+                        .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
+                        .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())
+                        .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
+                        .build();
+                logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                        logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
+                list.add(orderResponseVO);
             }
         });
-        return success(responseVOS);
+        return success(list);
     }
 
     /**
