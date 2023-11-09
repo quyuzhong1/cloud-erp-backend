@@ -94,6 +94,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setMatchResult(true);
             listingInfoMap = omsListingInfoFeign.list(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoEntity::getSkuNo, Function.identity()));

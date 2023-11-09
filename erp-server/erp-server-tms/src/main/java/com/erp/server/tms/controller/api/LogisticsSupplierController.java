@@ -25,7 +25,7 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import java.util.List;
 
 /**
- * 物理商
+ * 物流商管理
  *
  * @author Lambda
  * @since 2023-11-02

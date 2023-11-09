@@ -1,7 +1,9 @@
 package com.sdk.tms.ubi.model.order.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class UbiOrder implements Serializable {
     private static final long serialVersionUID = 2801814838883246461L;
     //客户端的订单唯一标识
@@ -55,7 +59,7 @@ public class UbiOrder implements Serializable {
     private String invoiceCurrency;
     //枚举值：Y/N
     //默认值：N
-    private Boolean pickUp;
+    private boolean pickUp;
     //不需要签名（置放于收货人门口）
     private Boolean authorityToLeave;
     //

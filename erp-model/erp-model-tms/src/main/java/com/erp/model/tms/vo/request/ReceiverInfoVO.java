@@ -59,13 +59,16 @@ public class ReceiverInfoVO {
      */
     @TableField("district")
     private String district;
+
+    // 街道详细地址
+    private String  streetAddress;
     /**
-     * 详细地址1
+     * 国家+城市+详细地址
      */
     @TableField("address_first")
     private String addressFirst;
     /**
-     * 详细地址2
+     * 国家+城市+详细地址 2
      */
     @TableField("address_second")
     private String addressSecond;

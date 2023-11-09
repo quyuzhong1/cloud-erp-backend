@@ -20,7 +20,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 
 /**
- * 物流授权表
+ * 物流商管理
  *
  * @author Lambda
  * @since 2023-11-02

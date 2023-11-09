@@ -12,6 +12,9 @@ import com.sdk.tms.ubi.constant.UbiConstants;
 import com.sdk.tms.ubi.model.BaseResult;
 import com.sdk.tms.ubi.model.catalog.response.Label;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
+import com.sdk.tms.ubi.model.label.LabelRequest;
+import com.sdk.tms.ubi.model.label.LabelResponse;
+import com.sdk.tms.ubi.model.order.request.HoldRequest;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.OrderResponse;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
@@ -39,7 +42,8 @@ public class UbiShipperService {
     static String key = "N1S3O3OlKKRDRfcfYFONqg";
 
     public static void main(String[] args) {
-        List<ServiceCataLog> serviceCataLogList = getServiceCatalog();
+        UbiShipperService ubiShipperService = new UbiShipperService();
+        List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(token, key);
         System.out.println("列表数:" + serviceCataLogList.size());
     }
 
@@ -49,16 +53,40 @@ public class UbiShipperService {
      * @param ubiOrder
      * @return
      */
-    public static OrderResponse createOrder(UbiOrder ubiOrder) {
+    public OrderResponse createOrder(UbiOrder ubiOrder) {
         String url = host + PathConstants.POST_CREATE_ORDERS_URL;
-        System.out.println(url);
+        log.info("创建订单url：{}", url);
         Map<String, Object> params = BeanUtil.beanToMap(ubiOrder);
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJson(url, params, headers);
-        System.out.println(res);
+        log.info("创建订单：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toBean(JSON.toJSONString(result.getData()), OrderResponse.class);
+        } else {
+            throw new ServiceException(result.getErrors());
+        }
+    }
+
+    /**
+     * 打印标签
+     * 产生和打印标签，按照请求顺序返回结果。
+     * <p>
+     * orderIds、masterIds 两个字段值，如果同时填写了默认取值OrderIds内容；
+     * 通过字段值Merged支持去合并PDF格式的面单，其它格式不支持合并；
+     *
+     * @param labelRequest
+     * @param token
+     * @param key
+     */
+    public List<LabelResponse> getLabels(String token, String key, LabelRequest labelRequest) {
+        String url = host + PathConstants.POST_LABELS_URL;
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
+        String res = OkHttpUtils.doPostJsonObject(url, labelRequest, headers);
+        log.info("打印标签：{}", res);
+        BaseResult result = JSONUtil.toBean(res, BaseResult.class);
+        if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
+            return JSONUtil.toList((JSONArray) result.getData(), LabelResponse.class);
         } else {
             throw new ServiceException(result.getErrors());
         }
@@ -74,7 +102,7 @@ public class UbiShipperService {
      */
     public static List<Label> getLabelSpecs(String referenceNo, String orderId, String trackingNo) {
         String url = host + PathConstants.POST_LABEL_SPECS_URL;
-        System.out.println(url);
+        log.info("获取标签url：{}", url);
         Map<String, Object> params = new LinkedHashMap<>();
         if (StrUtil.isNotBlank(referenceNo)) {
             params.put("referenceNo", referenceNo);
@@ -87,7 +115,7 @@ public class UbiShipperService {
         }
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJson(url, params, headers);
-        System.out.println(res);
+        log.info("获取标签：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toList((JSONArray) result.getData(), Label.class);
@@ -101,15 +129,17 @@ public class UbiShipperService {
      * URL支持用客户端订单号(referenceNo)或服务端订单号(orderId)来进行删除，如果为一票多件订单需要同时删除，
      * 则将客户端订单号(referenceNo)或服务端订单号(orderId)传值主单对应的值
      *
+     * @param token
+     * @param key
      * @param code
      */
-    public static OrderResponse deleteShipperOrder(String code) {
+    public OrderResponse deleteShipperOrder(String token, String key, String code) {
         String url = host + StrUtil.format(PathConstants.DELETE_LABEL_SPECS_URL, code);
-        System.out.println(url);
-        java.util.Map<String, Object> params = new LinkedHashMap<>();
-        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.GET_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPost(url, params, headers);
-        System.out.println(res);
+        log.info("单件删除 url：{}", url);
+        Map<String, Object> params = new LinkedHashMap<>();
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.DELETE_REQUEST_METHOD, url, token, key);
+        String res = OkHttpUtils.doDelete(url, params, headers);
+        log.info("单件删除：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toBean(JSON.toJSONString(result.getData()), OrderResponse.class);
@@ -119,15 +149,37 @@ public class UbiShipperService {
     }
 
     /**
+     * 扣货接口
+     * @param token
+     * @param key
+     * @param holdRequest
+     * @return
+     */
+    public List<OrderResponse> interceptOrder(String token, String key, HoldRequest holdRequest) {
+        String url = host + PathConstants.POST_INTERCEPT_ORDER_URL;
+        log.info("单件删除 url：{}", url);
+        java.util.Map<String, Object> params = new LinkedHashMap<>();
+        Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
+        String res = OkHttpUtils.doPostJsonObject(url, holdRequest, headers);
+        log.info("单件删除：{}", res);
+        BaseResult result = JSONUtil.toBean(res, BaseResult.class);
+        if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
+            return JSONUtil.toList((JSONArray) result.getData(), OrderResponse.class);
+        } else {
+            throw new ServiceException(result.getErrors());
+        }
+    }
+
+    /**
      * 获取开通的服务
      */
-    public static List<ServiceCataLog> getServiceCatalog() {
+    public List<ServiceCataLog> getServiceCatalog(String token, String key) {
         String url = host + PathConstants.GET_SERVICE_CATALOG_URL;
-        System.out.println(url);
+        log.info("获取开通的服务url：{}", url);
         java.util.Map<String, Object> params = new LinkedHashMap<>();
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.GET_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doGet(url, params, headers);
-        System.out.println(res);
+        log.info("获取开通的服务：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toList((JSONArray) result.getData(), ServiceCataLog.class);
@@ -140,23 +192,15 @@ public class UbiShipperService {
      * 获取跟踪号
      * 客户使用 参考号 查询跟踪号，最多获取300条记录
      *
-     * @param referenceNo
-     * @param orderId
+     * @param token
+     * @param key
+     * @param numbers
      */
-    public static List<TrackBase> getTrackNumber(String referenceNo, String orderId) {
+    public List<TrackBase> getTrackNumber(String token, String key,List<String> numbers) {
         String url = host + PathConstants.POST_TRACK_NUMBER_URL;
-        System.out.println(url);
-        Map<String, Object> params = new LinkedHashMap<>();
-        if (StrUtil.isNotBlank(referenceNo)) {
-            params.put("referenceNo", referenceNo);
-        } else if (StrUtil.isNotBlank(orderId)) {
-            params.put("orderId", orderId);
-        } else {
-            throw new ServiceException("参数不能为空");
-        }
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJson(url, params, headers);
-        System.out.println(res);
+        String res = OkHttpUtils.doPostJsonObject(url, numbers, headers);
+        log.info("获取跟踪号：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
             return JSONUtil.toList((JSONArray) result.getData(), TrackBase.class);

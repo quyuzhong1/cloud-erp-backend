@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -539,5 +541,24 @@ public class FbaInventoryDTO implements Serializable {
          * 买家订单数量
          */
         private Integer reservedOrderQty;
+    }
+
+    /**
+     * 所有批量新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllBatchSaveDTO {
+
+        /**
+         * FBA库存主信息
+         */
+        private List<FbaInventoryEntity> fbaInventoryEntityList;
+
+        /**
+         * 预留信息列表
+         */
+        private List<FbaInventoryReservedEntity> fbaInventoryReservedEntityList;
     }
 }

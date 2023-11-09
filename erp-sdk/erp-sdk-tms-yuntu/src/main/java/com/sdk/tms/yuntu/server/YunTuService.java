@@ -50,7 +50,6 @@ public class YunTuService {
      *  标签打印
      */
     public YunTuResponse<List<YunTuPrintLabel>> getPrintLabel(@Valid YunTuPrintLabelRequest request){
-
         String response = YunTuUtils.sendPostList(YunTuConstants.METHOD_PRINT_LABEL,request.getOrderNumbers());
         return JSONObject.parseObject(response,new TypeReference<YunTuResponse<List<YunTuPrintLabel>>>() {}.getType());
     }

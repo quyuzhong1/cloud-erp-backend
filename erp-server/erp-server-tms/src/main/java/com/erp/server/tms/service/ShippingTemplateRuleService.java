@@ -49,4 +49,12 @@ public interface ShippingTemplateRuleService extends SuperService<ShippingTempla
      * @param mainId
     */
     void deleteByMainId(String mainId);
+    /**
+     * @description: 按传入参数查询
+     * @author Will
+     * @date: 2023/11/9 15:53
+     * @param viewParamDTO
+     * @return ShippingTemplateRuleEntity
+     */
+    ShippingTemplateRuleEntity getShippingTemplateRule(ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO);
 }

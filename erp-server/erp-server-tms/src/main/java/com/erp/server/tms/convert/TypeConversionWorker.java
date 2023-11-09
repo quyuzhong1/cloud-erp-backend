@@ -54,4 +54,24 @@ public class TypeConversionWorker {
             return false;
         }
     }
+    /**
+     * 递四方费用模式转换
+     *
+     * @param obj
+     * @return
+     */
+    @Named("gTokg")
+    public Double gTokg(Object obj) {
+        if (Objects.isNull(obj)) {
+            return null;
+        }
+        if (obj instanceof Integer){
+            return (Double)obj/1000;
+        }else if (obj instanceof Double){
+            Double d = (Double) obj;
+            return d/1000;
+        }else {
+            return Double.valueOf(0);
+        }
+    }
 }

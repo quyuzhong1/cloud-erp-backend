@@ -9,6 +9,7 @@ public enum BusinessTypeEnums implements EnumMessage {
     CREATE_ORDER("createOrder", "创建订单"),
     CONFIRM_ORDER("confirmOrder", "确认订单"),
     UPDATE_ORDER("updateOrder", "更新订单"),
+    INTERCEPT_ORDER("interceptOrder", "拦截订单"),
     QUERY_ORDER("queryOrder", "查询订单"),
     GET_LABEL("getLabel", "获取标签"),
     GET_LABEL_LIST("getLabelList", "批量获取标签"),

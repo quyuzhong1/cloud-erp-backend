@@ -22,14 +22,14 @@ public class YunTuServiceTest {
     @Test
     public void getAllChannel() {
         YunTuResponse<List<YunTuChannel>> response = yunTuService.getAllChannel();
-        System.out.println(response.getData());
+        System.out.println(response);
     }
 
     @Test
     public void createOrder() {
         YunTuCreateOrderRequest request = YunTuCreateOrderRequest.builder()
-                .customerOrderNumber("G2G20190402123441")
-                .shippingMethodCode("TESTZY001")
+                .customerOrderNumber("WEIJI2023110901006")
+                .shippingMethodCode("THPHR")
                 .iossCode("IOSS0690112210251452600")
                 .height(1)
                 .length(1)
@@ -92,14 +92,13 @@ public class YunTuServiceTest {
                 .build();
         YunTuResponse<List<YunTuCreateOrder>> response = yunTuService.createOrder(Arrays.asList(request));
         System.out.println(response);
-        System.out.println(response.getData());
     }
 
 
     @Test
     public void getTrackingNumber() {
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
-                .customerOrderNumber("G2G20190402123441")
+                .customerOrderNumber("WEIJI2023110901001")
                 .build();
         YunTuResponse<List<YunTuTrackingNumber>> response = yunTuService.getTrackingNumber(request);
         System.out.println(response);
@@ -108,7 +107,7 @@ public class YunTuServiceTest {
     @Test
     public void getPrintLabel() {
         YunTuPrintLabelRequest request = YunTuPrintLabelRequest.builder()
-                .orderNumbers(Arrays.asList("G2G20190402123441"))
+                .orderNumbers(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006"))
                 .build();
         YunTuResponse<List<YunTuPrintLabel>> response = yunTuService.getPrintLabel(request);
         System.out.println(response);
@@ -118,7 +117,7 @@ public class YunTuServiceTest {
     public void interceptOrder() {
         YunTuInterceptOrderRequest request = YunTuInterceptOrderRequest.builder()
                 .orderType(2)
-                .orderNumber("G2G20190402123441")
+                .orderNumber("WEIJI2023110901001")
                 .remark("客户要求拦截")
                 .build();
         YunTuResponse<YunTuInterceptOrder> response = yunTuService.interceptOrder(request);
@@ -129,7 +128,7 @@ public class YunTuServiceTest {
     public void cancelOrder() {
         YunTuCancelOrderRequest request = YunTuCancelOrderRequest.builder()
                 .orderType(2)
-                .orderNumber("G2G20190402123441")
+                .orderNumber("WEIJI2023110901001")
                 .build();
         YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request);
         System.out.println(response);

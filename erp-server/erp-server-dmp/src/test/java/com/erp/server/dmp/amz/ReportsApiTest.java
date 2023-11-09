@@ -30,9 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
-import javax.annotation.Resource;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -122,7 +119,10 @@ public class ReportsApiTest {
         // 亚马逊库存库龄报告{"reportId":"724476019664"} 不存在
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
+        // 亚马逊物流管理库存状况报告{"reportId":"727590019669"}
+        // 亚马逊物流管理库存状况报告{"reportId":"727635019669"}
         // TODO: test validations
+        // Listing {"reportId":"727614019669"}
     }
 
     /**
@@ -169,7 +169,8 @@ public class ReportsApiTest {
         // 正式环境参数
 //        String reportId = "716008019646";
         // 亚马逊物流管理库存{"reportId":"724464019664"}
-        String reportId = "724464019664";
+//        String reportId = "724464019664";
+        String reportId = "727635019669";
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
 //        String reportId = "724480019664";
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
@@ -183,6 +184,8 @@ public class ReportsApiTest {
         // {"marketplaceIds":["ATVPDKIKX0DER"],"reportId":"724480019664","reportType":"GET_FBA_INVENTORY_PLANNING_DATA","dataStartTime":1698974243000,"dataEndTime":1698974243000,"createdTime":1698974243000,"processingStatus":"DONE","processingStartTime":1698974250000,"processingEndTime":1698974262000,"reportDocumentId":"amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600"}
 
         // {"marketplaceIds":["ATVPDKIKX0DER"],"reportId":"724489019664","reportType":"GET_RESERVED_INVENTORY_DATA","dataStartTime":1698975699000,"dataEndTime":1698975699000,"createdTime":1698975699000,"processingStatus":"DONE","processingStartTime":1698975706000,"processingEndTime":1698975719000,"reportDocumentId":"amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681"}
+
+        // {"marketplaceIds":["ATVPDKIKX0DER"],"reportId":"727635019669","reportType":"GET_RESERVED_INVENTORY_DATA","dataStartTime":"2023-11-08T08:29:26Z","dataEndTime":"2023-11-08T08:29:26Z","createdTime":"2023-11-08T08:29:26Z","processingStatus":"DONE","processingStartTime":"2023-11-08T08:29:33Z","processingEndTime":"2023-11-08T08:29:44Z","reportDocumentId":"amzn1.spdoc.1.4.na.18f1e850-6241-49b5-b63a-06454c34636b.T28BAFXFYWABBZ.2681"}
         // TODO: test validations
     }
 

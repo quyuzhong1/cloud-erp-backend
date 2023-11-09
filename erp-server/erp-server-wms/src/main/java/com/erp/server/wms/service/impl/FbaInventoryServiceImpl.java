@@ -35,6 +35,10 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -76,7 +80,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO);
         return summaryNumber;
     }
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -181,6 +184,16 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             //销售渠道名称
             record.setDeliveryChannelsName(DeliveryChannelsEnum.getName(record.getDeliveryChannels()));
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList) {
+        boolean result = this.saveBatch(inventoryEntityList);
+        if (!result){
+            throw new ServiceException("【FbaInventoryEntity】批量保存失败");
+        }
+        return true;
     }
 
 }

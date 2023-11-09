@@ -1,0 +1,30 @@
+package com.erp.server.dmp.service;
+import com.erp.model.dmp.entity.ReportScheduleEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.dmp.dto.ReportScheduleDTO;
+
+/**
+ * <p>
+ * 亚马逊报告计划表 服务类
+ * </p>
+ *
+ * @author Jim
+ * @since 2023-11-08
+ */
+public interface ReportScheduleService extends SuperService<ReportScheduleEntity> {
+
+    /**
+    * reportScheduleId是否存在
+    * @author Jim
+    * @date: 2023-11-08
+    */
+    boolean existByReportScheduleId(String reportScheduleId);
+
+    /**
+     * 通过reportScheduleId查询实体
+     * @author Jim
+     * @date: 2023-11-08
+     */
+    ReportScheduleEntity getByReportScheduleId(String reportScheduleId);
+}

@@ -73,10 +73,4 @@ public class ReportInfoMongoDTO {
         return reportMongoDTO;
     }
 
-    public static ReportInfoMongoDTO getReportDocumentUrlStatus(Integer status) {
-        ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
-        reportMongoDTO.setReportDocumentUrlStatus(status);
-        return reportMongoDTO;
-    }
-
 }

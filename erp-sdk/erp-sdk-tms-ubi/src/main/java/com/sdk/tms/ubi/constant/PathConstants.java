@@ -29,4 +29,6 @@ public interface PathConstants {
     String GET_SERVICE_CATALOG_URL = "/services/shipper/service-catalog";
     //获取跟踪号
     String POST_TRACK_NUMBER_URL = "/services/shipper/trackingNumbers";
+    //发货人扣留订单/释放扣留。interceptOrder
+    String POST_INTERCEPT_ORDER_URL = "/services/shipper/hold";
 }

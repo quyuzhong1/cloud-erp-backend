@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.common.business.dto.base.SortDTO;
@@ -396,12 +397,12 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 重量
          */
-        private String weight;
+        private BigDecimal weight;
 
         /**
          * 目的区域
          */
-        private String toArea;
+        private String region;
 
         /**
          * 目的仓库

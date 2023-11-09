@@ -126,6 +126,18 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         this.removeByIds(ids);
     }
 
+    @Override
+    public ShippingTemplateRuleEntity getShippingTemplateRule(ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO) {
+        return lambdaQuery()
+                .eq(StringUtils.isEmpty(viewParamDTO.getFromCountry()),ShippingTemplateRuleEntity::getFromCountry,viewParamDTO.getFromCountry())
+                .eq(StringUtils.isEmpty(viewParamDTO.getToCountry()),ShippingTemplateRuleEntity::getToCountry,viewParamDTO.getToCountry())
+                .eq(StringUtils.isEmpty(viewParamDTO.getRegion()),ShippingTemplateRuleEntity::getRegion,viewParamDTO.getRegion())
+                .eq(StringUtils.isEmpty(viewParamDTO.getToWarehouseName()),ShippingTemplateRuleEntity::getToWarehouseName,viewParamDTO.getToWarehouseName())
+                .eq(StringUtils.isEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
+                .last("limit 1")
+                .one();
+    }
+
 
     /**
      * 查询需要删除的数据

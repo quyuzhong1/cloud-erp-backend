@@ -17,6 +17,7 @@ public class TrackBase implements Serializable {
     private String errors;
     private String warnings;
     private String orderId;
+    private String referenceNo;
     private Integer relabelStatus;
     private String trackingNo;
     private String lastMileCarrier;

@@ -91,6 +91,17 @@
             (#{params.update_time[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > ls.update_time
         </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ls.create_time DESC
 
     </select>
 

@@ -13,6 +13,7 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -76,7 +77,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) {
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
                 .waybillNumber(labelVO.getTransportNo().get(0))
                 .printRemark(labelVO.getPrintRemark())
@@ -85,7 +86,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if(!labelResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,labelResponse.getMessage());
         }
-        return success(labelResponse.getData().getBase64String());
+        return success();
     }
 
     @Override

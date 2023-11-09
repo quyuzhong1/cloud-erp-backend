@@ -24,4 +24,11 @@ public class LogisticsProductVO extends ProductLogisticsEntity implements Serial
 
     //是否带电
     private boolean isElectric;
+
+    //备注
+    private String remark;
+
+    //配货信息
+    private String distributionInfo;
+
 }

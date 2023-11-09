@@ -20,7 +20,6 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.easyship.Item;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import org.junit.runner.RunWith;
@@ -31,7 +30,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

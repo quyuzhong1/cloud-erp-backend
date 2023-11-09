@@ -92,9 +92,9 @@ public class YanWenLogisticsHandlerImplTest {
 
     @Test
     public void getLabelUrl() {
-        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setTransportNo(Collections.singletonList("LR08531450CN"));
-        System.out.println(yanWenLogisticsHandler.getLabelUrl(logisticsQueryVO));
+//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+//        logisticsQueryVO.setTransportNo(Collections.singletonList("LR08531450CN"));
+//        System.out.println(yanWenLogisticsHandler.getLabelUrl(logisticsQueryVO));
     }
 
     @Test

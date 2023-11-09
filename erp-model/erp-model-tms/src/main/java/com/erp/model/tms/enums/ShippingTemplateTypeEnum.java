@@ -44,11 +44,24 @@ public enum ShippingTemplateTypeEnum implements EnumMessage {
         return this.name;
     }
 
+
+    public static ShippingTemplateTypeEnum getEnumByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (ShippingTemplateTypeEnum typeEnums : ShippingTemplateTypeEnum.values()) {
+            if (code.equals(typeEnums.getCode())) {
+                return typeEnums;
+            }
+        }
+        return null;
+    }
+
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnums typeEnums : LogisticsAddressTypeEnums.values()) {
+        for (ShippingTemplateTypeEnum typeEnums : ShippingTemplateTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

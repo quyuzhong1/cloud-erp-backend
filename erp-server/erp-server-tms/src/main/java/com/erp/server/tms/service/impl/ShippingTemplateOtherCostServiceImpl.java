@@ -2,24 +2,18 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.ShippingRegionCityDTO;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
-import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -175,7 +169,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
         for (ShippingTemplateOtherCostEntity entity : list) {
             ShippingTemplateOtherCostEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_OTHER_COST);
+                throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
             }
             //操作日志
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),mainId,"",String.format("【%s】",old.getDictName()));
