@@ -115,6 +115,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ShippingCalculationService shippingCalculationService;
 
     @Override
     public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -217,89 +219,6 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 return BigDecimal.ZERO;
         }
     }
-
-    /**
-     * 按国家计算
-     */
-    private BigDecimal calculationByCountry (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
-        if (StringUtils.isEmpty(dto.getToCountry())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
-        }
-        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-        viewParamDTO.setMainId(entity.getId());
-        viewParamDTO.setFromCountry(dto.getFromCountry());
-        viewParamDTO.setToCountry(dto.getToCountry());
-        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
-        }
-        //计算最终运费
-        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
-    }
-
-    /**
-     * 按分区计算
-     */
-    private BigDecimal calculationByRegion (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
-        if (StringUtils.isEmpty(dto.getRegion())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
-        }
-        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-        viewParamDTO.setMainId(entity.getId());
-        viewParamDTO.setFromCountry(dto.getFromCountry());
-        viewParamDTO.setToCountry(dto.getToCountry());
-        viewParamDTO.setRegion(dto.getRegion());
-        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
-        }
-        //计算最终运费
-        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
-    }
-
-    /**
-     * 按仓库计算
-     */
-    private BigDecimal calculationByWarehouse (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
-        if (StringUtils.isEmpty(dto.getToWarehouseName())) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
-        }
-        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
-        viewParamDTO.setMainId(entity.getId());
-        viewParamDTO.setFromCountry(dto.getFromCountry());
-        viewParamDTO.setToCountry(dto.getToWarehouseName());
-        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
-        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
-        }
-        //计算最终运费
-        return calculationFinalShippingCost(entity,shippingTemplateRule,dto.getWeight());
-    }
-
-    /**
-     * 计算最终运费
-     */
-    private BigDecimal calculationFinalShippingCost(ShippingTemplateEntity entity,ShippingTemplateRuleEntity shippingTemplateRule,BigDecimal weight) {
-        /**
-         *  最终运费 = 运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
-         *  运费【首重+续重】=首重费用+（收费重量-首重）/续重单位重量*单价【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
-         *  运费【重量段】=对应重量段的价格*收费重量【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
-         */
-        //运费
-        BigDecimal shippingCost = BigDecimal.ZERO;
-        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
-            //首重费用
-            BigDecimal firstWeightShippingCost = shippingTemplateRule.getFirstWeightShippingCost();
-            //续重费用
-            BigDecimal additionalWeightShippingCost = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight())
-                    .multiply(shippingTemplateRule.getAdditionalPrice());
-
-        }
-
-
-        return BigDecimal.ZERO;
-    }
-
 
     @Override
     public ShippingTemplateDTO.ViewDTO view(String id) {
@@ -575,73 +494,6 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
     }
 
-    private List<ShippingTemplateOtherCostDTO.AddDTO> addShippingTemplateOtherCost (ShippingTemplateExcelDTO excelValueDTO) {
-        List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList = new ArrayList<>();
-        ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
-        for (ShippingCostNameEnum shippingCostNameEnum : values) {
-            ShippingTemplateOtherCostDTO.AddDTO addDTO = new ShippingTemplateOtherCostDTO.AddDTO();
-            addDTO.setDictCode(shippingCostNameEnum.getCode());
-            addDTO.setCalculationMethod(shippingCostNameEnum.getType());
-            JSONObject jsonObject = JSONUtil.parseObj(excelValueDTO);
-            addDTO.setCostSettingValue(ObjectUtil.isEmpty(jsonObject.get(shippingCostNameEnum.getCode())) ? null : new BigDecimal(jsonObject.get(shippingCostNameEnum.getCode()).toString()));
-            addDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
-            otherCostList.add(addDTO);
-        }
-        return otherCostList;
-    }
-
-    private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO
-            ,List<ShippingTemplateEntity> shippingTemplateList,List<ShippingTemplateCityExcelDTO> citySuccessList) {
-        List<String> errorMsgList = new ArrayList<>();
-
-        long count = shippingTemplateList.stream().filter(obj -> obj.getName().equals(addDTO.getName())).count();
-        if (count > 0) {
-            errorMsgList.add("已存在相同模板");
-        }
-
-        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
-            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
-                errorMsgList.add("目的地不能为空");
-            }
-        }
-        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
-            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
-                errorMsgList.add("目的地不能为空");
-            }
-            if (ObjectUtil.isEmpty(addDTO.getRegion())) {
-                errorMsgList.add("城市分区不能为空");
-            }
-            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(addDTO.getToCountry()) && obj.getRegion().equals(addDTO.getRegion())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(cityExcelList)) {
-                errorMsgList.add("未找到城市分区下城市信息");
-            }
-        }
-        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
-            if (ObjectUtil.isEmpty(addDTO.getToWarehouseName())) {
-                errorMsgList.add("目的仓不能为空");
-            }
-        }
-        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
-            if (ObjectUtil.isEmpty(addDTO.getFirstWeight())) {
-                errorMsgList.add("首重不能为空");
-            }
-            if (ObjectUtil.isEmpty(addDTO.getFirstWeightShippingCost())) {
-                errorMsgList.add("首重运费不能为空");
-            }
-            if (ObjectUtil.isEmpty(addDTO.getAdditionalUnitWeight())) {
-                errorMsgList.add("续重单位重量不能为空");
-            }
-            if (ObjectUtil.isEmpty(addDTO.getAdditionalPrice())) {
-                errorMsgList.add("续重单价不能为空");
-            }
-        }
-        if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
-            if (ObjectUtil.isEmpty(addDTO.getShippingPrice())) {
-                errorMsgList.add("运费单价不能为空");
-            }
-        }
-        return errorMsgList;
-    }
 
     @Override
     public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO params, HttpServletResponse response) {
@@ -901,6 +753,143 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         throw new ServiceException(ApiError.ERROR_95131);
     }
+
+    /**
+     *  导入格式化其他费用信息
+     */
+    private List<ShippingTemplateOtherCostDTO.AddDTO> addShippingTemplateOtherCost (ShippingTemplateExcelDTO excelValueDTO) {
+        List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList = new ArrayList<>();
+        ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
+        for (ShippingCostNameEnum shippingCostNameEnum : values) {
+            ShippingTemplateOtherCostDTO.AddDTO addDTO = new ShippingTemplateOtherCostDTO.AddDTO();
+            addDTO.setDictCode(shippingCostNameEnum.getCode());
+            addDTO.setCalculationMethod(shippingCostNameEnum.getType());
+            JSONObject jsonObject = JSONUtil.parseObj(excelValueDTO);
+            addDTO.setCostSettingValue(ObjectUtil.isEmpty(jsonObject.get(shippingCostNameEnum.getCode())) ? null : new BigDecimal(jsonObject.get(shippingCostNameEnum.getCode()).toString()));
+            addDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
+            otherCostList.add(addDTO);
+        }
+        return otherCostList;
+    }
+
+    /**
+     * 导入验证数据
+     */
+    private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO
+            ,List<ShippingTemplateEntity> shippingTemplateList,List<ShippingTemplateCityExcelDTO> citySuccessList) {
+        List<String> errorMsgList = new ArrayList<>();
+
+        long count = shippingTemplateList.stream().filter(obj -> obj.getName().equals(addDTO.getName())).count();
+        if (count > 0) {
+            errorMsgList.add("已存在相同模板");
+        }
+
+        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
+                errorMsgList.add("目的地不能为空");
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
+                errorMsgList.add("目的地不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getRegion())) {
+                errorMsgList.add("城市分区不能为空");
+            }
+            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(addDTO.getToCountry()) && obj.getRegion().equals(addDTO.getRegion())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cityExcelList)) {
+                errorMsgList.add("未找到城市分区下城市信息");
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToWarehouseName())) {
+                errorMsgList.add("目的仓不能为空");
+            }
+        }
+        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+            if (ObjectUtil.isEmpty(addDTO.getFirstWeight())) {
+                errorMsgList.add("首重不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getFirstWeightShippingCost())) {
+                errorMsgList.add("首重运费不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getAdditionalUnitWeight())) {
+                errorMsgList.add("续重单位重量不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getAdditionalPrice())) {
+                errorMsgList.add("续重单价不能为空");
+            }
+        }
+        if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+            if (ObjectUtil.isEmpty(addDTO.getShippingPrice())) {
+                errorMsgList.add("运费单价不能为空");
+            }
+        }
+        return errorMsgList;
+    }
+
+
+    /**
+     * 按国家计算
+     */
+    private BigDecimal calculationByCountry (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getToCountry())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToCountry());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        return shippingCalculationDTO.getTotalShippingCost();
+    }
+
+    /**
+     * 按分区计算
+     */
+    private BigDecimal calculationByRegion (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getRegion())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToCountry());
+        viewParamDTO.setRegion(dto.getRegion());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        return shippingCalculationDTO.getTotalShippingCost();
+    }
+
+    /**
+     * 按仓库计算
+     */
+    private BigDecimal calculationByWarehouse (ShippingTemplateDTO.TrialCalculationParamDTO dto,ShippingTemplateEntity entity) {
+        if (StringUtils.isEmpty(dto.getToWarehouseName())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
+        }
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setMainId(entity.getId());
+        viewParamDTO.setFromCountry(dto.getFromCountry());
+        viewParamDTO.setToCountry(dto.getToWarehouseName());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isEmpty(shippingTemplateRule)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+        }
+        //计算最终运费
+        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        return shippingCalculationDTO.getTotalShippingCost();
+    }
+
 
 
     /**
