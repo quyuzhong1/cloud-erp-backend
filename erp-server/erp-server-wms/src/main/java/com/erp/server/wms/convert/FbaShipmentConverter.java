@@ -88,6 +88,7 @@ public interface FbaShipmentConverter {
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
+            @Mapping(target = "code", ignore = true),
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
             @Mapping(target = "shopId", source = "shopId"),
