@@ -87,6 +87,8 @@ public interface FbaShipmentConverter {
 
 
     @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "code", ignore = true),
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
             @Mapping(target = "shopId", source = "shopId"),
@@ -97,6 +99,8 @@ public interface FbaShipmentConverter {
     FbaDeliveryDTO.ViewDTO fbaShipmentEntityToFbaDeliveryViewDTO(FbaShipmentEntity entity);
 
     @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "mainId", ignore = true),
             @Mapping(target = "planQty", source = "declareQty"),
             @Mapping(target = "deliveryQty", source = "declareQty"),
     })

@@ -333,7 +333,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 审核状态
         */
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
 
         /**
         * 审核状态名称

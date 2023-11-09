@@ -70,6 +70,9 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
         return ApiResult.error(-1, "功能未开放");
     }
 
+    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
     /**
      * 查询订单(批量)
      *
