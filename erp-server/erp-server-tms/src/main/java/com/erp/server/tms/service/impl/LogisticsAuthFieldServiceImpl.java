@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.server.tms.mapper.LogisticsAuthFieldMapper;
 import com.erp.server.tms.service.LogisticsAuthFieldService;

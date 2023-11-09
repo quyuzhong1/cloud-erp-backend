@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -80,7 +81,7 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @PostMapping("/test")
     public ApiResult test() {
-        LogisticsService service = logisticsRegistry.getHandler(PlatformDictEnum.SDF.getCode());
+        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.SDF.getCode());
         LogisticsQueryBaseVO logisticsQueryVO = new LogisticsQueryBaseVO();
         ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(new ChanelQueryVO());
         return success();

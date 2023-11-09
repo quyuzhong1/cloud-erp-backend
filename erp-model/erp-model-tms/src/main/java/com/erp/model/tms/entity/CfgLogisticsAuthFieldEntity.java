@@ -27,8 +27,8 @@ public class CfgLogisticsAuthFieldEntity extends BaseEntity<CfgLogisticsAuthFiel
     /**
     * 物流平台
     */
-    @TableField("ogistics_platform")
-    private String ogisticsPlatform;
+    @TableField("logistics_platform")
+    private String logisticsPlatform;
     /**
     * 字段
     */
@@ -42,8 +42,8 @@ public class CfgLogisticsAuthFieldEntity extends BaseEntity<CfgLogisticsAuthFiel
     /**
     * 物流平台名
     */
-    @TableField("ogistics_platform_name")
-    private String ogisticsPlatformName;
+    @TableField("logistics_platform_name")
+    private String logisticsPlatformName;
 
 
     public static final String OGISTICS_PLATFORM = "ogistics_platform";

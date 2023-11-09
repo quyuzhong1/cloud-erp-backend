@@ -92,7 +92,7 @@ public class CfgLogisticsAuthFieldDTO implements Serializable {
         */
         @NotBlank(message = "物流平台不能为空")
         @Size(max = 19,message = "物流平台最大长度不能超过19位")
-        private String ogisticsPlatform;
+        private String logisticsPlatform;
 
         /**
         * 字段
@@ -113,7 +113,7 @@ public class CfgLogisticsAuthFieldDTO implements Serializable {
         */
         @NotBlank(message = "物流平台名不能为空")
         @Size(max = 50,message = "物流平台名最大长度不能超过50位")
-        private String ogisticsPlatformName;
+        private String logisticsPlatformName;
 
 
     }
