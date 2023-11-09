@@ -96,7 +96,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
-    public Boolean logisticsBillBatchAdd(List<LogisticsBillDTO.AddDTO> addDTOList) {
+    public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
+
         return null;
     }
 }
