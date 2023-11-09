@@ -308,4 +308,28 @@ public class ShippingTemplateController extends BaseController {
         List<ShippingTemplateOtherCostDTO.ViewDTO> list = shippingTemplateService.viewOtherCost();
         return success(list);
     }
+
+    /**
+     * 仓库名称下拉
+     * @author Will
+     * @date: 2023/11/9 11:20
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @GetMapping("/listWarehouseName")
+    public ApiResult<List<String>> listWarehouseName() {
+        List<String> list = shippingTemplateService.listWarehouseName();
+        return success(list);
+    }
+
+    /**
+     * 分区名称下拉
+     * @author Will
+     * @date: 2023/11/9 11:20
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @GetMapping("/listRegionName")
+    public ApiResult<List<String>> listRegionName() {
+        List<String> list = shippingTemplateService.listRegionName();
+        return success(list);
+    }
 }

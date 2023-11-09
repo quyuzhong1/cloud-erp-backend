@@ -154,6 +154,19 @@ public class ShippingTemplateDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
 
