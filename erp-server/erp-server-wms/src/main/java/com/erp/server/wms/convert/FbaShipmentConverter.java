@@ -45,15 +45,10 @@ public interface FbaShipmentConverter {
     @Mappings({
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
-            @Mapping(target = "attachNameList", defaultValue = ""),
-            @Mapping(target = "attachUrlList", defaultValue = ""),
-            @Mapping(target = "demandType", defaultValue = ""),
-            @Mapping(target = "detailList", defaultValue = ""),
-            @Mapping(target = "inventoryOrgId", defaultValue = ""),
-            @Mapping(target = "remark", defaultValue = ""),
-            @Mapping(target = "sourceType", defaultValue = ""),
-            @Mapping(target = "shopName", source = "shopName", defaultValue = ""),
-            @Mapping(target = "countryName", source = "countryName", defaultValue = "")
+            @Mapping(target = "demandType", constant = ""),
+            @Mapping(target = "inventoryOrgId", constant = ""),
+            @Mapping(target = "remark", constant = ""),
+            @Mapping(target = "sourceType", constant = ""),
     })
     FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
 
@@ -62,11 +57,11 @@ public interface FbaShipmentConverter {
             @Mapping(target = "declareQty", source = "declareQty"),
             @Mapping(target = "planQty", source = "deliveryQty"),
             @Mapping(target = "deliveryQty", source = "deliveryQty"),
-            @Mapping(target = "netWeight", defaultValue = "0"),
-            @Mapping(target = "productSizeHeight", defaultValue = "0"),
-            @Mapping(target = "productSizeLength", defaultValue = "0"),
-            @Mapping(target = "productSizeWidth", defaultValue = "0"),
-            @Mapping(target = "stockSku", defaultValue = "")
+            @Mapping(target = "netWeight", constant = "0"),
+            @Mapping(target = "productSizeHeight", constant = "0"),
+            @Mapping(target = "productSizeLength", constant = "0"),
+            @Mapping(target = "productSizeWidth", constant = "0"),
+            @Mapping(target = "stockSku", constant = "")
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 
