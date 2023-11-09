@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
  * 配送渠道
  */
 public enum DeliveryChannelsEnum implements EnumMessage {
-    SELF_DELIVERY("self_delivery","卖家自配送"),
-    AMAZON_DELIVERY("amazon_delivery","亚马逊配送"),
+    SELF_DELIVERY("selfDelivery","卖家自配送"),
+    AMAZON_DELIVERY("amazonDelivery","亚马逊配送"),
     ;
 
     ;
