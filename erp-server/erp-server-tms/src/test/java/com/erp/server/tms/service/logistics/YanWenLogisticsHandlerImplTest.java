@@ -57,7 +57,7 @@ public class YanWenLogisticsHandlerImplTest {
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("wj12345167")
+                .deliveryNo("wj12345168")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -92,9 +92,9 @@ public class YanWenLogisticsHandlerImplTest {
 
     @Test
     public void getLabelUrl() {
-//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-//        logisticsQueryVO.setTransportNo(Collections.singletonList("LR08531450CN"));
-//        System.out.println(yanWenLogisticsHandler.getLabelUrl(logisticsQueryVO));
+        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+        logisticsQueryVO.setDeliveryNo(Arrays.asList("LR085325053CN"));
+        System.out.println(yanWenLogisticsHandler.getLabelList(logisticsQueryVO));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class YanWenLogisticsHandlerImplTest {
     @Test
     public void queryOrder() {
         LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
-        logisticsQueryBaseVO.setDeliveryNo(Collections.singletonList("weiji1233211"));
+        logisticsQueryBaseVO.setDeliveryNo(Collections.singletonList("wj12345167"));
         System.out.println(yanWenLogisticsHandler.queryOrderList(logisticsQueryBaseVO));
     }
 }
