@@ -108,6 +108,11 @@ public class DictCountryDTO implements Serializable {
          * 区域编码
          */
         private String regionCode;
+
+        /**
+         * 国家中文名称
+         */
+        private List<String> nameCnList;
     }
 
     @Data
