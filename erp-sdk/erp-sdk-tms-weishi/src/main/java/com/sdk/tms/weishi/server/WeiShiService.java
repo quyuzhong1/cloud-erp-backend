@@ -3,14 +3,8 @@ package com.sdk.tms.weishi.server;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.sdk.tms.weishi.constants.WeiShiConstants;
-import com.sdk.tms.weishi.dto.request.WeiShiCancelOrderRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiGetLabelUrlRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiInterceptOrderRequest;
-import com.sdk.tms.weishi.dto.response.WeiShiChannel;
-import com.sdk.tms.weishi.dto.response.WeiShiCreateOrder;
-import com.sdk.tms.weishi.dto.response.WeiShiGetLabelUrl;
-import com.sdk.tms.weishi.dto.response.WeiShiResponse;
+import com.sdk.tms.weishi.dto.request.*;
+import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.utils.WeiShiUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -50,16 +44,24 @@ public class WeiShiService {
     /**
      * 拦截订单
      */
-    public WeiShiResponse interceptOrder(@Valid WeiShiInterceptOrderRequest request){
+    public WeiShiResponse<String> interceptOrder(@Valid WeiShiInterceptOrderRequest request){
         String response = WeiShiUtils.sendPost(WeiShiConstants.METHOD_INTERCEPT_ORDER,JSONObject.toJSONString(request));
-        return JSONObject.parseObject(response,WeiShiResponse.class);
+        return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<String>>() {}.getType());
     }
 
     /**
-     * 拦截订单
+     * 取消订单
      */
-    public WeiShiResponse cancelOrder(@Valid WeiShiCancelOrderRequest request){
+    public WeiShiResponse<String> cancelOrder(@Valid WeiShiCancelOrderRequest request){
         String response = WeiShiUtils.sendPost(WeiShiConstants.METHOD_ORDER_CANCEL,JSONObject.toJSONString(request));
-        return JSONObject.parseObject(response,WeiShiResponse.class);
+        return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<String>>() {}.getType());
+    }
+
+    /**
+     * 查询跟踪号
+     */
+    public WeiShiResponse<List<WeiShiGetTrackNumber>> getTrackNumber(@Valid WeiShiGetTrackNumberRequest request){
+        String response = WeiShiUtils.sendPost(WeiShiConstants.METHOD_GET_TRACK_NUMBER,JSONObject.toJSONString(request));
+        return JSONObject.parseObject(response,new TypeReference<WeiShiResponse<List<WeiShiGetTrackNumber>>>() {}.getType());
     }
 }
