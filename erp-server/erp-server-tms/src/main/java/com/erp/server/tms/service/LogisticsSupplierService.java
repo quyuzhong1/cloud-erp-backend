@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物理商表 服务类
@@ -33,4 +35,11 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     Boolean update(LogisticsSupplierDTO.UpdateDTO dto);
 
 
+    /**
+     * 获取tab页数量统计
+     * @author yl
+     * @date 2023-11-09 11:02
+     * @param dto
+     */
+    List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

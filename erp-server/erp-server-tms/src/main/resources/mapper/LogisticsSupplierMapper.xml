@@ -33,6 +33,18 @@
         is_deleted,
         supplier_id, supplier_name, type, disabled, auth_status, auth_time
     </sql>
+    <!--tab 页数据统计-->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$TabListDTO">
+        SELECT
+         COUNT(id) AS count,
+         type
+        FROM logistics_supplier
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+       GROUP BY type
+
+    </select>
 
 
 </mapper>

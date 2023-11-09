@@ -305,6 +305,10 @@ public class FbaInventoryDTO implements Serializable {
          * 更新时间
          */
         private List<String> updateTimeList;
+        /**
+         * 是否显示0库存
+         */
+        private Boolean isShowZeroInventory;
     }
 
     /**

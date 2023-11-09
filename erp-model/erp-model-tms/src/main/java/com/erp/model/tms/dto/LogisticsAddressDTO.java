@@ -274,6 +274,7 @@ public class LogisticsAddressDTO implements Serializable {
 
         /**
          * 类型
+         * http://172.16.100.11:3002/project/128/interface/api/25522
          */
         @NotNull(message = "类型不能为空")
         private LogisticsAddressTypeEnums type;
