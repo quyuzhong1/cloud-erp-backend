@@ -143,6 +143,23 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     /**
+     * 查询订单(批量)
+     *
+     * @param logisticsQueryVOList
+     * @return
+     */
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        List<LogisticsOrderResponseVO> responseVOS = new ArrayList<>();
+        logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
+            ApiResult<LogisticsOrderResponseVO> responseMsg = this.queryOrder(logisticsQueryBaseVO);
+            if (responseMsg.isSuccess()) {
+                responseVOS.add(responseMsg.getData());
+            }
+        });
+        return success(responseVOS);
+    }
+
+    /**
      * 查询订单
      *
      * @param logisticsQueryVO
@@ -180,6 +197,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 获取标签
      * request_no 请求单号（支持4PX单号、客户单号和面单号
+     *
      * @param logisticsQueryVO
      * @return
      */
@@ -226,7 +244,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
-            List<ChanelInfo> chanelInfos =  JSONUtil.toList(JSONUtil.toJsonStr(responseMsg.getData()), ChanelInfo.class);
+            List<ChanelInfo> chanelInfos = JSONUtil.toList(JSONUtil.toJsonStr(responseMsg.getData()), ChanelInfo.class);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getLogisticsAuthEntity().getId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
