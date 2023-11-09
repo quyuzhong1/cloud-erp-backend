@@ -17,6 +17,10 @@ public class YunTuPrintLabel {
     //打印标签地址
     private String url;
 
+    private String base64;
+
+    //客户单号
+    private String orderNumber;
     //跟踪号
     private List<OrderInfo> orderInfos;
 

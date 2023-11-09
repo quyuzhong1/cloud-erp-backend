@@ -1,7 +1,9 @@
 package com.sdk.tms.yuntu.dto.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -14,6 +16,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class YunTuCreateOrderRequest {
 
     //客户订单号,不能重复
@@ -69,7 +73,7 @@ public class YunTuCreateOrderRequest {
 
     //预估包裹总重量，单位 kg,最多 3 位小数
     @NotNull(message = "预估包裹总重量不能为空")
-    private BigDecimal weight;
+    private Number weight;
 
     //申 报 类 型 , 用 于 打 印 CN22 ，1-Gift,2-Sameple,3-Documents,4-Others, 默认 4-Other
     private Integer applicationType;
@@ -102,6 +106,8 @@ public class YunTuCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Receiver {
 
         //收件人所在国家，填写国际通用标准 2 位简码，可通过国家查询服务查询
@@ -160,6 +166,8 @@ public class YunTuCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Sender {
 
         //发件人所在国家，填写国际通用标准 2 位简码，可通过国家查询服务查询
@@ -197,6 +205,8 @@ public class YunTuCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Parcels {
 
         //包裹申报名称(英文)必填
@@ -207,7 +217,7 @@ public class YunTuCreateOrderRequest {
         private String cName;
 
         //海关编码
-        private BigDecimal hsCode;
+        private String hsCode;
 
         //申报数量
         @NotNull(message = "申报数量不能为空")
@@ -219,7 +229,7 @@ public class YunTuCreateOrderRequest {
 
         //申报重量(单重)，单位 kg
         @NotNull(message = "申报重量不能为空")
-        private BigDecimal unitWeight;
+        private Number unitWeight;
 
         //订单备注，用于打印配货单
         private String remark;
@@ -253,6 +263,8 @@ public class YunTuCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ChildOrders {
 
         //箱子编号，FBA 订单必填
@@ -276,6 +288,8 @@ public class YunTuCreateOrderRequest {
 
         @Data
         @Builder
+        @AllArgsConstructor
+        @NoArgsConstructor
         public static class ChildDetails {
 
             //用于填写商品 SKU，FBA 订单必填
@@ -292,6 +306,8 @@ public class YunTuCreateOrderRequest {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class OrderExtra {
 
         //额外服务代码:G0代表关税预付；10代表报关件；V1代表云途预缴IOSS附加服务费（走欧盟税改IOSS流程的订单， IossCode或OrderExtra必须二者填一）

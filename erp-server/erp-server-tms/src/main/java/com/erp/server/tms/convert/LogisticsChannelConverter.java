@@ -2,13 +2,11 @@ package com.erp.server.tms.convert;
 
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
-import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
-import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
+import com.sdk.tms.yuntu.dto.response.YunTuChannel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -71,4 +69,15 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByUBI(ServiceCataLog serviceCataLog);
     List<LogisticsSaleChannelEntity> channelConvertByUBIList(List<ServiceCataLog> serviceCataLogList);
+
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "CName"),
+            @Mapping(target = "enName", source = "EName"),
+            @Mapping(target = "isTrack", source = "hasTrackingNumber"),
+            @Mapping(target = "aging", source = "displayName"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByYunTu(YunTuChannel data);
+    List<LogisticsSaleChannelEntity> channelConvertByYunTu(List<YunTuChannel> data);
 }

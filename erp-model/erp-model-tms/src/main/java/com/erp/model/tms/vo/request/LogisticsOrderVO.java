@@ -5,8 +5,8 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,8 +34,15 @@ public class LogisticsOrderVO implements Serializable {
      */
     private String reserveTime;
 
+    //是否退回,包裹无人签收时是否退回，1-退回，0-不退回，默认 0
+    private Boolean returnOption;
+
     //备注
     private String remark;
+
+    //税号
+    private String iossCode;
+
     /**
      * 发货单号
      */
@@ -66,8 +73,6 @@ public class LogisticsOrderVO implements Serializable {
      * 渠道信息
      */
     private LogisticsChannelEntity logisticsChannelEntity;
-    /**
-     * 保险信息
-     */
+
 
 }

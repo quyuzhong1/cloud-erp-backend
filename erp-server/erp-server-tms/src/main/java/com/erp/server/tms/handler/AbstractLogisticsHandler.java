@@ -7,6 +7,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.service.LogisticsService;
 
 import java.io.IOException;
@@ -91,15 +92,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
-    /**
-     * 获取标签
-     *
-     * @param logisticsQueryVO
-     * @return
-     */
-    public ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO) throws IOException {
-        return ApiResult.error(-1, "功能未开放");
-    }
 
     /**
      * 获取标签
@@ -107,7 +99,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException {
         return ApiResult.error(-1, "功能未开放");
     }
     /**

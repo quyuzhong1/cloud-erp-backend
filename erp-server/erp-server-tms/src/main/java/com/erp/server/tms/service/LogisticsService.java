@@ -6,6 +6,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -77,19 +78,12 @@ public interface LogisticsService {
     ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList);
 
     /**
-     * 获取标签
-     *
-     * @param logisticsQueryVO
-     * @return
-     */
-    ApiResult<String> getLabelUrl(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
-    /**
      * 批量获取标签
      *
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<List<String>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
+    ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
     /**
      * 轨迹查询
      *

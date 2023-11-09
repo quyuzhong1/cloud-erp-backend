@@ -92,10 +92,10 @@ public class WeiShiLogisticsHandlerImplTest {
 
     @Test
     public void getLabelUrl() throws IOException {
-        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setTransportNo(Collections.singletonList("WSHMX3133453788YQ"));
-        String base64 = weiShiLogisticsHandler.getLabelUrl(logisticsQueryVO).getData();
-        System.out.println(base64);
+//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+//        logisticsQueryVO.setTransportNo(Collections.singletonList("WSHMX3133453788YQ"));
+//        String base64 = weiShiLogisticsHandler.getLabelUrl(logisticsQueryVO).getData();
+//        System.out.println(base64);
     }
 
     @Test

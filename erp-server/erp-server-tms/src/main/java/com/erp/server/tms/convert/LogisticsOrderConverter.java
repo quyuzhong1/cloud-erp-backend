@@ -14,6 +14,7 @@ import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
 import com.sdk.tms.weishi.dto.response.WeiShiGetTrackNumber;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenQueryOrder;
+import com.sdk.tms.yuntu.dto.request.YunTuCreateOrderRequest;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -236,4 +237,61 @@ public interface LogisticsOrderConverter {
     })
     LogisticsOrderResponseVO trackInfoConvertByWeiShi(WeiShiGetTrackNumber data);
     List<LogisticsOrderResponseVO> trackInfoConvertByWeiShi(List<WeiShiGetTrackNumber> data);
+
+
+    @Mappings({
+            @Mapping(target = "customerOrderNumber" ,source = "deliveryNo"),
+            @Mapping(target = "shippingMethodCode" ,source = "channelCode"),
+            @Mapping(target = "length" ,source = "parceInfoVO.length"),
+            @Mapping(target = "width" ,source = "parceInfoVO.width"),
+            @Mapping(target = "height" ,source = "parceInfoVO.height"),
+            @Mapping(target = "weight" ,source = "parceInfoVO.totalWeight" ,qualifiedByName = "divideByOneThousandWithThreeDecimal"),
+            @Mapping(target = "packageCount" ,source = "parceInfoVO.totalQuantity"),
+            @Mapping(target = "sourceCode" ,source = "orderSource"),
+            @Mapping(target = "returnOption" ,source = "returnOption"),
+            @Mapping(target = "iossCode" ,source = "iossCode"),
+            @Mapping(target = "coverage" ,source = "parceInfoVO.insuranceValue"),
+            @Mapping(target = "receiver.countryCode",source = "receiverInfoVO.country"),
+            @Mapping(target = "receiver.firstName",source = "receiverInfoVO.name"),
+            @Mapping(target = "receiver.lastName",source = "receiverInfoVO.name"),
+            @Mapping(target = "receiver.company",source = "receiverInfoVO.companyName"),
+            @Mapping(target = "receiver.street",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "receiver.streetAddress1",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "receiver.streetAddress2",source = "receiverInfoVO.addressSecond"),
+            @Mapping(target = "receiver.city",source = "receiverInfoVO.city"),
+            @Mapping(target = "receiver.state",source = "receiverInfoVO.province"),
+            @Mapping(target = "receiver.zip",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "receiver.phone",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "receiver.email",source = "receiverInfoVO.email"),
+            @Mapping(target = "receiver.mobileNumber",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "receiver.houseNumber",source = "receiverInfoVO.streetAddress"),
+            @Mapping(target = "sender.countryCode",source = "senderInfo.country"),
+            @Mapping(target = "sender.lastName",source = "senderInfo.name"),
+            @Mapping(target = "sender.company",source = "senderInfo.companyName"),
+            @Mapping(target = "sender.street",source = "senderInfo.addressFirst"),
+            @Mapping(target = "sender.state",source = "senderInfo.provinceName"),
+            @Mapping(target = "sender.city",source = "senderInfo.cityName"),
+            @Mapping(target = "sender.zip",source = "senderInfo.zipCode"),
+            @Mapping(target = "sender.phone",source = "senderInfo.telNumber"),
+            @Mapping(target = "parcels",source = "logisticsProductVOList")
+    })
+    YunTuCreateOrderRequest orderRequestByYunTu(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "EName" ,source = "declareEnglishName"),
+            @Mapping(target = "CName" ,source = "declareChineseName"),
+            @Mapping(target = "hsCode" ,source = "customsCode"),
+            @Mapping(target = "quantity" ,source = "quantity"),
+            @Mapping(target = "unitPrice" ,source = "price"),
+            @Mapping(target = "unitWeight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
+            @Mapping(target = "remark" ,source = "remark"),
+            @Mapping(target = "productUrl" ,source = "url"),
+            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "invoiceRemark" ,source = "distributionInfo"),
+            @Mapping(target = "currencyCode" ,source = "declareCurrency"),
+            @Mapping(target = "invoicePart" ,source = "englishMaterial"),
+            @Mapping(target = "invoiceUsage" ,source = "englishUsage")
+    })
+    YunTuCreateOrderRequest.Parcels orderRequestByYunTu(LogisticsProductVO productVO);
+
 }
