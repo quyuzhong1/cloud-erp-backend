@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
@@ -50,6 +51,10 @@ public class JmsAmazonSqsConsumer {
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.info("接收到亚马逊SQS通知:{}", textMessage.getText());
+        if (BusinessCommonConstants.hasProfile("dev")){
+            // TODO 开发环境暂时过滤
+            return ;
+        }
         // TODO 已存mongo忽略
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(new JSONObject(textMessage.getText()).getStr("notificationType"))) {
