@@ -1,14 +1,17 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
+import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -18,48 +21,56 @@ import com.common.business.enums.ApproveStatusEnum;
  *
  * @author Jim
  * @since 2023-11-08
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("report_schedule")
 public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
 
     /**
-    * 报告计划ID
-    */
+     * 报告计划ID
+     */
     @TableField("report_schedule_id")
     private String reportScheduleId;
     /**
-    * 市场IDS
-    */
+     * 市场IDS
+     */
     @TableField("marketplace_ids")
     private String marketplaceIds;
     /**
-    * OMS店铺ID
-    */
+     * OMS店铺ID
+     */
     @TableField("shop_id")
     private String shopId;
     /**
-    * 报告生成间隔时间
-    */
+     * 报告生成间隔时间
+     */
     @TableField("period")
     private String period;
     /**
-    * 首次创建下次创建报告的时间
-    */
+     * 首次创建下次创建报告的时间
+     */
     @TableField("first_next_report_creation_time")
     private LocalDateTime firstNextReportCreationTime;
     /**
-    * 报告类型
-    */
+     * 报告类型
+     */
     @TableField("report_type")
     private String reportType;
     /**
-    * 订阅状态:订阅状态:not=未订阅,wait=待订阅,already=已订阅
-    */
+     * 订阅状态:not=未订阅,wait=待订阅,already=已订阅
+     * {@link com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum}
+     */
     @TableField("subscribed_status")
     private String subscribedStatus;
+    /**
+     * 取消状态:none=无(无需取消), wait=待取消, already=已取消(店铺取消授权)
+     * {@link com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum}
+     */
+    @TableField("cancel_status")
+    private String cancelStatus;
 
 
     public static final String REPORT_SCHEDULE_ID = "report_schedule_id";
@@ -76,4 +87,19 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
 
     public static final String DISABLED = "disabled";
 
+    /**
+     * 初始化
+     * CreateReportScheduleSpecification
+     */
+    public ReportScheduleEntity(String reportType, String marketplaceId, String shopId) {
+        this.reportScheduleId = "";
+        this.marketplaceIds = marketplaceId;
+        this.shopId = shopId;
+        // CreateReportScheduleSpecification.PeriodEnum
+        this.period = "PT15M";
+        this.firstNextReportCreationTime = LocalDateTime.of(1970,1,1,0,0,0);
+        this.reportType = reportType;
+        this.subscribedStatus = ReportScheduleSubscribedStatusEnum.WAIT.getCode();
+        this.cancelStatus = ReportScheduleCancelStatusEnum.NONE.getCode();
+    }
 }

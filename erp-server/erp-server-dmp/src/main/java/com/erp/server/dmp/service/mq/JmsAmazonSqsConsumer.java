@@ -50,7 +50,7 @@ public class JmsAmazonSqsConsumer {
     @JmsListener(destination = "erpNotifications", containerFactory = "jmsListenerContainerFactory")
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
-        log.info("接收到亚马逊SQS通知:{}", textMessage.getText());
+        log.debug("接收到亚马逊SQS通知:{}", textMessage.getText());
         if (BusinessCommonConstants.hasProfile("dev")){
             // TODO 开发环境暂时过滤
             return ;
