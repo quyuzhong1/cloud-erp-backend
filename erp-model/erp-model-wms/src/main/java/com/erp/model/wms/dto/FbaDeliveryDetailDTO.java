@@ -155,7 +155,6 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -167,36 +166,26 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 平台sku
         */
-        @NotBlank(message = "平台sku不能为空")
-        @Size(max = 64,message = "平台sku最大长度不能超过64位")
         private String asin;
 
         /**
         * 卖家sku
         */
-        @NotBlank(message = "卖家sku不能为空")
-        @Size(max = 64,message = "卖家sku最大长度不能超过64位")
         private String mSku;
 
         /**
         * FNSKU
         */
-        @NotBlank(message = "FNSKU不能为空")
-        @Size(max = 64,message = "FNSKU最大长度不能超过64位")
         private String fnSku;
 
         /**
         * ERP的SKU
         */
-        @NotBlank(message = "ERP的SKU不能为空")
-        @Size(max = 64,message = "ERP的SKU最大长度不能超过64位")
         private String skuNo;
 
         /**
@@ -207,25 +196,21 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * 申报数量
         */
-        @NotNull(message = "申报数量不能为空")
         private Integer declareQty;
 
         /**
         * 应发数量
         */
-        @NotNull(message = "应发数量不能为空")
         private Integer planQty;
 
         /**
         * 实发数量
         */
-        @NotNull(message = "实发数量不能为空")
         private Integer deliveryQty;
 
         /**
         * 是否组合品
         */
-        @NotNull(message = "是否组合品不能为空")
         private Boolean isCombination;
 
         /**
