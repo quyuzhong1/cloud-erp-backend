@@ -102,14 +102,9 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
-        return null;
-    }
-
-    @Override
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList){
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList){
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
-                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()).get(0))
+                .listNumber(logisticsQueryVOList.getDeliveryNo())
                 .build();
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
         if(!yanWenResponse.getSuccess()){

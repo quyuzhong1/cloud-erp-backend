@@ -585,7 +585,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //来源类型名称
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
         //设置状态中文名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus().getStatus()));
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //备货类型名称
         data.setDemandTypeName(FbaDemandTypeEnum.getName(data.getDemandType()));
         //作废状态名称

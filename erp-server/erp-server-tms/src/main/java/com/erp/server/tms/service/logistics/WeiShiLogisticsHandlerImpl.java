@@ -4,6 +4,7 @@ import com.common.business.annotation.PlatformType;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
@@ -14,9 +15,9 @@ import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
-import com.sdk.tms.weishi.dto.response.WeiShiChannel;
-import com.sdk.tms.weishi.dto.response.WeiShiCreateOrder;
-import com.sdk.tms.weishi.dto.response.WeiShiResponse;
+import com.sdk.tms.weishi.dto.request.WeiShiGetLabelUrlRequest;
+import com.sdk.tms.weishi.dto.request.WeiShiGetTrackNumberRequest;
+import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.server.WeiShiService;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
@@ -28,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,36 +78,37 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trackNo(weiShiResponse.getOrderCode())
                 .build());
     }
-    //    @Override
-//    public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) {
-//        YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-//                .waybillNumber(labelVO.getTransportNo())
-//                .printRemark(labelVO.getPrintRemark())
-//                .build();
-//        YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
-//        if(!labelResponse.getSuccess()){
-//            return ApiResult.error(ApiError.ERROR_500.code,labelResponse.getMessage());
-//        }
-//        return success(labelResponse.getData().getBase64String());
-//    }
+
+
     @Override
-    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
-        return null;
+    public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) throws IOException {
+        WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
+                .referenceNo(labelVO.getTransportNo().get(0))
+                .build();
+        WeiShiGetLabelUrl labelResponse = weiShiService.getLabelUrl(request);
+        if(isFailure(labelResponse.getAsk())){
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,labelResponse.getError().getErrMessage());
+        }
+        String base64 = FileUtil.convertPdfUrlToBase64(labelResponse.getUrl());
+        return success(base64);
     }
-//
-//    @Override
-//    public ApiResult<String> getLabelUrl(LogisticsGetLabelVO labelVO) {
-//        YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-//                .waybillNumber(labelVO.getTransportNo())
-//                .printRemark(labelVO.getPrintRemark())
-//                .build();
-//        YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
-//        if(!labelResponse.getSuccess()){
-//            return ApiResult.error(ApiError.ERROR_500.code,labelResponse.getMessage());
-//        }
-//        return success(labelResponse.getData().getBase64String());
-//    }
-//
+
+    /**
+     * 查询订单(批量)
+     *
+     * @param logisticsQueryVOList
+     * @return
+     */
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList) {
+        WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
+                .referenceNoList(logisticsQueryVOList.getDeliveryNo())
+                .build()
+                ;
+        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+
 //    @Override
 //    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
 //        YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()

@@ -260,10 +260,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //映射主信息字段
         FbaDeliveryDTO.ViewDTO viewDTO = FbaShipmentConverter.INSTANCE.fbaShipmentEntityToFbaDeliveryViewDTO(entity);
         viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        viewDTO.setSourceTypeName(SourceTypeEnum.FBA_SHIPMENT.getName());
         viewDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
         viewDTO.setDemandTypeName(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getName());
         viewDTO.setDestWarehouseId(shopInfoEntity.getWarehouseId());
         viewDTO.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        viewDTO.setApproveStatusName(ApproveStatusEnum.WAIT_SUBMIT.getName());
+
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
 
         //查询产品信息
@@ -304,6 +308,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             } else {
                 detailEntity.setIsCombination(Boolean.FALSE);
             }
+            //来源详情id
+            detailDto.setSourceDetailId(detailEntity.getId());
             detailList.add(detailDto);
         }
         viewDTO.setDetailList(detailList);

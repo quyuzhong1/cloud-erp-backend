@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -12,8 +13,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -54,7 +57,7 @@ public class WeiShiLogisticsHandlerImplTest {
                 .channelCode("MX1001")
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("wj12345167749")
+                .deliveryNo("wj12345167710")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -85,5 +88,13 @@ public class WeiShiLogisticsHandlerImplTest {
                 .build();
         ApiResult<LogisticsOrderResponseVO> result = weiShiLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(result);
+    }
+
+    @Test
+    public void getLabelUrl() throws IOException {
+        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+        logisticsQueryVO.setTransportNo(Collections.singletonList("WSHMX3133453788YQ"));
+        String base64 = weiShiLogisticsHandler.getLabelUrl(logisticsQueryVO).getData();
+        System.out.println(base64);
     }
 }
