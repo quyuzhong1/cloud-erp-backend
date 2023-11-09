@@ -19,15 +19,15 @@ public class LogisticsPrintLabelResponse implements Serializable {
     /**
      * 运单号
      */
-    private List<String> transportNo;
+    private String transportNo;
     /**
      * 跟踪单号
      */
-    private List<String> trackNo;
+    private String trackNo;
     /**
      * 发货单号
      */
-    private List<String> deliveryNo;
+    private String deliveryNo;
     /**
      * 文件base64编码
      */
