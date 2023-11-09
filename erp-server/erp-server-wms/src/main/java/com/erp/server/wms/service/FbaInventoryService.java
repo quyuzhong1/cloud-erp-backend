@@ -73,4 +73,12 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
      **/
     FbaInventoryDTO.SummaryNumber summaryNumber(FbaInventoryDTO.PagingParamDTO dto);
+
+    /**
+     * 批量保存FBA库存信息和预留明细
+     *
+     * @Author Jim
+     * @Date 2023-11-08
+     **/
+    Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList);
 }
