@@ -3,8 +3,15 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.enums.DictBasicTypeEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
@@ -16,9 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+
 import java.util.*;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 物理商表 服务实现类
@@ -35,6 +45,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -45,53 +63,74 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         // 数据处理
         handleData(logisticsSupplierEntity);
 
-        log.info("开始新增物理商单");
         boolean save = super.save(logisticsSupplierEntity);
-        if(!save) {
-            throw new ServiceException("物理商单保存失败");
+        if (!save) {
+            throw new ServiceException("物理商保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单" , logisticsSupplierEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, logisticsSupplierEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsSupplierDTO.UpdateDTO updateDTO) {
         LogisticsSupplierEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物理商单"));
-        LogisticsSupplierEntity logisticsSupplierEntity =  BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物理商单"));
+        LogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
 
         // 数据处理
         handleData(logisticsSupplierEntity);
         log.info("编辑 开始修改物理商单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsSupplierEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物理商单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录物理商单日志数据，id：【{}】", logisticsSupplierEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, null, logisticsSupplierEntity.getId(), msg);
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<LogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
+        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_SUPPLIER.getType());
+        List<LogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
+        for (DictBasicDTO.ViewDTO item : typeList) {
+            LogisticsSupplierDTO.TabListDTO tab = new LogisticsSupplierDTO.TabListDTO();
+            String type = item.getCode();
+            tab.setType(type);
+            tab.setTypeName(item.getName());
+            Integer count = list.stream().filter(l -> l.getType().equals(type)).
+                    map(LogisticsSupplierDTO.TabListDTO::getCount).findFirst().orElse(0);
+            tab.setCount(count);
+            resultList.add(tab);
+
+        }
+        return resultList;
     }
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(LogisticsSupplierEntity logisticsSupplierEntity) {
-    // TODO 验证数据 & 数据赋值
+        String logisticsSupplier = "物流供应商";
+        String supplierId = logisticsSupplierEntity.getSupplierId();
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException("供应商不存在");
+        }
+        //供应商分类名
+        String supplierCategoryName = supplier.getCategoryName();
+        if (!logisticsSupplier.equals(supplierCategoryName)) {
+            throw new ServiceException("供应商分类不为物流供应商");
+        }
+        logisticsSupplierEntity.setSupplierName(supplier.getName());
+
     }
 }

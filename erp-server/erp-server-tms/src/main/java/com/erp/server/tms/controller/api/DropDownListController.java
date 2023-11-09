@@ -38,7 +38,7 @@ public class DropDownListController extends BaseController {
      * vote 票
      * priceBinary  计费方式
      * shippingTemplateType  运费模板类型
-     * LogisticsSupplierType 物流商类型
+     * logisticsSupplierType 物流商类型
      *
      * @return
      */

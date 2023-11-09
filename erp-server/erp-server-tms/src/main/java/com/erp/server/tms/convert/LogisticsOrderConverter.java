@@ -5,7 +5,6 @@ import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
-import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
