@@ -424,6 +424,53 @@ public class FbaInventoryDTO implements Serializable {
     }
 
     /**
+     * 列表汇总数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SummaryNumber {
+        /**
+         * FBM可售
+         */
+        private String fbmFulfillableQty;
+
+        /**
+         * 计划入库数量
+         */
+        private Integer inboundWorkingQty;
+
+        /**
+         * 已发货数量
+         */
+        private Integer inboundShippedQty;
+
+        /**
+         * 入库中数量
+         */
+        private Integer inboundReceivingQty;
+
+        /**
+         * FBI可售
+         */
+        private Integer fulfillableQty;
+
+        /**
+         * 预留
+         */
+        private Integer reservedQty;
+
+        /**
+         * 调查中数量
+         */
+        private Integer researchingQty;
+
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
+    }
+
+    /**
      * 导出Excel
      */
     @EqualsAndHashCode(callSuper = true)
