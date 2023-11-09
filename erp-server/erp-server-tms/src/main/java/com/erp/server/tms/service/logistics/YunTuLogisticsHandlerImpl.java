@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -91,7 +92,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<YunTuPrintLabel> yunTuPrintLabels = yunTuResponse.getData();
         for(YunTuPrintLabel yunTuPrintLabel : yunTuPrintLabels){
             yunTuPrintLabel.setBase64(FileUtil.convertPdfUrlToBase64(yunTuPrintLabel.getUrl()));
-            yunTuPrintLabel.setOrderNumber(yunTuPrintLabel.getOrderInfos().get(0).getCustomerOrderNumber());
+            yunTuPrintLabel.setOrderNumberList(yunTuPrintLabel.getOrderInfos().stream().map(YunTuPrintLabel.OrderInfo:: getCustomerOrderNumber).collect(Collectors.toList()));
         }
         List<LogisticsPrintLabelResponse> responses = LogisticsLabelConverter.INSTANCE.labelConvertByYuTu(yunTuPrintLabels);
         return success(responses);

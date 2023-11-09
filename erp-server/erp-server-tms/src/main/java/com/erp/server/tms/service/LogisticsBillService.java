@@ -41,5 +41,5 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param addDTOList
      * @return java.lang.Boolean
      **/
-    Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList);
+    Boolean logisticsBillBatchSave(List<LogisticsBillDTO.UpdateDTO> addDTOList);
 }

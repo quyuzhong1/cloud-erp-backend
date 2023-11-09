@@ -26,7 +26,7 @@ public interface LogisticsLabelConverter {
     LogisticsLabelConverter INSTANCE = Mappers.getMapper(LogisticsLabelConverter.class);
 
     @Mappings({
-            @Mapping(target = "deliveryNo", source = "orderNumber"),
+            @Mapping(target = "deliveryNoList", source = "orderNumberList"),
             @Mapping(target = "base64", source = "base64")
     })
     LogisticsPrintLabelResponse labelConvertByYuTu(YunTuPrintLabel yunTuPrintLabel);

@@ -112,7 +112,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
+        * 发货单id
         */
         private String mainId;
 
@@ -208,6 +208,10 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 发货单id
+         */
+        private String mainId;
         /**
          * 物流方式
          */
