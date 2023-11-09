@@ -47,4 +47,5 @@ public interface ShippingTemplateMapper extends BaseMapper<ShippingTemplateEntit
      * @return List<ListDTO>
      */
     List<ShippingTemplateDTO.ListDTO> listByExportExcel(@Param("params") ShippingTemplateDTO.ExportExcelParamDTO params);
+
 }

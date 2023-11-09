@@ -130,4 +130,18 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @return List<ViewDTO>
      */
     List<ShippingTemplateOtherCostDTO.ViewDTO> viewOtherCost();
+    /**
+     * @description: 仓库名称
+     * @author Will
+     * @date: 2023/11/9 11:24
+     * @return List<String>
+     */
+    List<String> listWarehouseName();
+    /**
+     * @description: 分区名称
+     * @author Will
+     * @date: 2023/11/9 11:25
+     * @return List<String>
+     */
+    List<String> listRegionName();
 }

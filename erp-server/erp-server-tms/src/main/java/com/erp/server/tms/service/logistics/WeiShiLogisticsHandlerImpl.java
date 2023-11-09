@@ -12,27 +12,20 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
+import com.erp.server.tms.convert.LogisticsOrderConverterImpl;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsAuthService;
-import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiGetLabelUrlRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiGetTrackNumberRequest;
+import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.server.WeiShiService;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
-import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
-import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
-import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
-import com.sdk.tms.yanwen.dto.response.*;
-import com.sdk.tms.yanwen.server.YanWenService;
+import com.sdk.tms.yanwen.dto.response.YanWenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -104,39 +97,36 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .referenceNoList(logisticsQueryVOList.getDeliveryNo())
                 .build()
                 ;
-        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
-        return ApiResult.error(-1, "功能未开放");
+        WeiShiResponse<List<WeiShiGetTrackNumber>> weiShiresponse = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
+        if(isFailure(weiShiresponse.getAsk())){
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+        }
+        List<LogisticsOrderResponseVO> response = LogisticsOrderConverterImpl.INSTANCE.trackInfoConvertByWeiShi(weiShiresponse.getData());
+        return success(response);
     }
 
+    @Override
+    public ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+        WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
+                .referenceNo(logisticsQueryVO.getDeliveryNo().get(0))
+                .build();
+        WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
+        if(isFailure(weiShiresponse.getAsk())){
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+        }
+        return success(weiShiresponse.getData());
+    }
 
-//    @Override
-//    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
-//        YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()
-//                .waybillNumber(cancelOrderVO.getTransportNo())
-//                .note(cancelOrderVO.getReason())
-//                .build();
-//        YanWenResponse<String> yanWenResponse =  yanWenService.cancelOrder(request);
-//        if(!yanWenResponse.getSuccess()){
-//            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
-//        }
-//        return success();
-//    }
-//
-//    @Override
-//    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList){
-//        YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
-//                .listNumber(logisticsQueryVOList.stream().map(LogisticsQueryBaseVO :: getDeliveryNo).collect(Collectors.toList()))
-//                .build();
-//        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
-//        if(!yanWenResponse.getSuccess()){
-//            return ApiResult.error(ApiError.ERROR_500.code,yanWenResponse.getMessage());
-//        }
-//        List<LogisticsOrderResponseVO> list = LogisticsOrderConverter.INSTANCE.orderQueryByYanWen(yanWenResponse.getData());
-//        return success(list);
-//    }
-
-    private Boolean isSuccess(String ask){
-        return TmsConstant.SUCCESS.equals(ask);
+    @Override
+    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
+        WeiShiCancelOrderRequest weiShiInterceptOrderRequest = WeiShiCancelOrderRequest.builder()
+                .referenceNo(cancelOrderVO.getDeliveryNo().get(0))
+                .build();
+        WeiShiResponse<String> weiShiresponse = weiShiService.cancelOrder(weiShiInterceptOrderRequest);
+        if(isFailure(weiShiresponse.getAsk())){
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+        }
+        return success(weiShiresponse.getData());
     }
     private Boolean isFailure(String ask){
         return !TmsConstant.SUCCESS.equals(ask);

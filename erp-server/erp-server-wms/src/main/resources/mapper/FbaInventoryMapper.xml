@@ -101,6 +101,23 @@
             (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > fd.update_time
         </if>
+
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory != null">
+            AND fi.fbm_fulfillable_qty > 0
+            AND fi.inbound_working_qty > 0
+            AND fi.inbound_shipped_qty > 0
+            AND fi.inbound_receiving_qty > 0
+            AND fi.fulfillable_qty > 0
+            AND fi.reserved_qty > 0
+            AND fi.researching_qty > 0
+            AND fi.unsellable_qty > 0
+        </if>
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -176,6 +193,10 @@
                 </if>
             </otherwise>
         </choose>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -183,6 +204,56 @@
             </foreach>
         </if>
         fi.create_time DESC
+    </select>
+
+    <select id="summaryNumber" resultType="com.erp.model.wms.dto.FbaInventoryDTO$SummaryNumber">
+        SELECT
+        SUM(fi.fbm_fulfillable_qty) AS fbmFulfillableQty,
+        SUM(fi.inbound_working_qty) AS inboundWorkingQty,
+        SUM(fi.inbound_shipped_qty) AS inboundShippedQty,
+        SUM(fi.inbound_receiving_qty) AS inboundReceivingQty,
+        SUM(fi.fulfillable_qty) AS fulfillableQty,
+        SUM(fi.reserved_qty) AS reservedQty,
+        SUM(fi.researching_qty) AS researchingQty,
+        SUM(fi.unsellable_qty) AS unsellableQty
+        FROM fba_inventory fi
+        WHERE fi.is_deleted = FALSE
+        <!--仓库-->
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            AND fi.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <!--平台sku-->
+        <if test="params.asin != null and params.asin != ''">
+            AND fi.asin ILIKE concat('%',#{params.asin},'%')
+        </if>
+        <!--fnSku-->
+        <if test="params.fnSku != null and params.fnSku != ''">
+            AND fi.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+        </if>
+        <!--卖家sku-->
+        <if test="params.mSku != null and params.mSku != ''">
+            AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+        </if>
+        <!--配送渠道-->
+        <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
+            AND fi.delivery_channels in
+            <foreach collection="params.deliveryChannelsList" item="deliveryChannels" open="(" close=")" separator=",">
+                #{deliveryChannels}
+            </foreach>
+        </if>
+        <!--修改时间-->
+        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
+            AND fi.update_time >= #{params.updateTimeList[0]} and
+            (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > fd.update_time
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
 </mapper>

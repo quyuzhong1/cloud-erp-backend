@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @Date 2023-11-03 10:54
  * @Created by yl
  */
-public enum LogisticsTypeEnums implements EnumMessage {
+public enum LogisticsSupplierTypeEnums implements EnumMessage {
     SELF_DELIVER("selfDeliver","自发货物流"),
     FIRST_CARRIER("firstCarrier","头程物流"),
     OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓物流"),
@@ -31,7 +31,7 @@ public enum LogisticsTypeEnums implements EnumMessage {
      */
     private String name;
 
-    LogisticsTypeEnums(String code, String name){
+    LogisticsSupplierTypeEnums(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -50,7 +50,7 @@ public enum LogisticsTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsTypeEnums typeEnums : LogisticsTypeEnums.values()) {
+        for (LogisticsSupplierTypeEnums typeEnums : LogisticsSupplierTypeEnums.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

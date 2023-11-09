@@ -167,7 +167,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 发货单号
          */
-        private String deliverCode;
+        private String deliveryCode;
         /**
          * 物流方式
          */
@@ -191,7 +191,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 发货时间
          */
-        private LocalDateTime deliverTime;
+        private LocalDateTime deliveryTime;
         /**
          * 备注
          */

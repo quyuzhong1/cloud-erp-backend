@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.erp.model.tms.dto.ShippingTemplateDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
+import java.util.List;
+
 /**
  * 物理商
  *
@@ -33,6 +36,23 @@ public class LogisticsSupplierController extends BaseController {
 
     @Autowired
     private LogisticsSupplierService logisticsSupplierService;
+
+
+
+
+    /**
+     * tab 列表
+     * @author yl
+     * @date 2023-11-09 10:54
+     * @param dto
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<LogisticsSupplierDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<LogisticsSupplierDTO.TabListDTO> tabList = logisticsSupplierService.tabList(dto);
+        return success(tabList);
+    }
+
+
 
     /**
     * 新增

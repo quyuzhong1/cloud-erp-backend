@@ -42,5 +42,23 @@
         main_id, from_country, to_country, region, to_warehouse_name, start_weight, end_weight, first_weight, first_weight_shipping_cost, additional_unit_weight, additional_price, registration_cost, operating_cost, min_cost
     </sql>
 
+    <select id="listWarehouseName" resultType="java.lang.String">
+        select
+            str.to_warehouse_name
+        from shipping_template_rule str
+        <where>
+            str.is_deleted = false
+        </where>
+        group by str.to_warehouse_name
+    </select>
 
+    <select id="listRegionName" resultType="java.lang.String">
+        select
+            str.region
+        from shipping_template_rule str
+        <where>
+            str.is_deleted = false
+        </where>
+        group by str.region
+    </select>
 </mapper>

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -25,13 +26,19 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
 import com.erp.server.tms.listener.ShippingTemplateExcelListener;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
+import com.erp.server.tms.mapper.ShippingTemplateRuleMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -87,6 +94,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     private ShippingTemplateRuleService shippingTemplateRuleService;
 
     @Resource
+    private ShippingTemplateRuleMapper shippingTemplateRuleMapper;
+
+    @Resource
     private ShippingTemplateOtherCostService shippingTemplateOtherCostService;
 
     @Resource
@@ -100,6 +110,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Resource
     private LogisticsChannelService logisticsChannelService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     @Override
     public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -185,7 +199,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Override
     public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
-        return null;
+        ShippingTemplateEntity old = super.getById(dto.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        return BigDecimal.ZERO;
     }
 
     @Override
@@ -313,16 +329,20 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Override
     public Boolean importFile(String billingMethod, String type, MultipartFile excelFile, HttpServletResponse response) {
-
-        ShippingTemplateExcelListener excelListenerUtil = new ShippingTemplateExcelListener();
-        try {
-            EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
-        } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
+        List<Pair<Integer,List<?>>> pairList = new ArrayList<>();
+        //获取第一页数据
+        ShippingTemplateExcelListener excelListenerUtil = listenerFirstSheet(excelFile);
+        //获取第二页数据
+        ShippingTemplateCityExcelListener cityExcelListenerUtil = listenerSecondSheet(type, excelFile);
+        List<ShippingTemplateCityExcelDTO> cityErrorList = new ArrayList<>();
+        List<ShippingTemplateCityExcelDTO> citySuccessList = new ArrayList<>();
+        if (ObjectUtil.isNotEmpty(cityExcelListenerUtil)) {
+            List<ShippingTemplateCityExcelDTO> excelDateList = cityExcelListenerUtil.getExcelDateList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+            cityErrorList = cityExcelListenerUtil.getErrorList();
+            citySuccessList = cityExcelListenerUtil.getSuccessList();
         }
         List<ShippingTemplateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
@@ -332,9 +352,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         List<ShippingTemplateExcelDTO> successList = excelListenerUtil.getSuccessList();
         //处理验证成功数据
-        handleImportSuccessList(billingMethod,type,successList, errorList);
+        handleImportSuccessList(billingMethod,type,successList, errorList,cityErrorList,citySuccessList);
         //根据传入参数获取模板地址
         String excelPath =  getExportErrorExcelPath(billingMethod,type);
+
+        pairList.add(new Pair<>(0,errorList));
 
         if (successList.size() > 0) {
             StringBuffer sb = new StringBuffer();
@@ -352,6 +374,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return Boolean.TRUE;
     }
 
+
     @Override
     public List<ShippingTemplateOtherCostDTO.ViewDTO> viewOtherCost() {
 
@@ -368,6 +391,16 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return list;
     }
 
+    @Override
+    public List<String> listWarehouseName() {
+        return  shippingTemplateRuleMapper.listWarehouseName();
+    }
+
+    @Override
+    public List<String> listRegionName() {
+        return  shippingTemplateRuleMapper.listRegionName();
+    }
+
     /**
      * @description: 导入数据处理
      * @author Will
@@ -378,7 +411,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      * @param errorList
 
      */
-    private void handleImportSuccessList (String billingMethod, String type,List<ShippingTemplateExcelDTO> successList,List<ShippingTemplateExcelDTO > errorList) {
+    private void handleImportSuccessList (String billingMethod, String type,List<ShippingTemplateExcelDTO> successList,List<ShippingTemplateExcelDTO > errorList
+            ,List<ShippingTemplateCityExcelDTO> cityErrorList,List<ShippingTemplateCityExcelDTO> citySuccessList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -405,7 +439,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             Boolean isError = Boolean.FALSE;
             for (ShippingTemplateExcelDTO excelDTO : value) {
                 //验证数据
-                List<String> errorMsgList = checkImportData(billingMethod, type, excelDTO, shippingTemplateList);
+                List<String> errorMsgList = checkImportData(billingMethod, type, excelDTO, shippingTemplateList,citySuccessList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isError = Boolean.TRUE;
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -415,6 +449,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 ruleAddDTO.setFromCountry(excelDTO.getFromCountry());
                 ruleAddDTO.setToCountry(excelDTO.getToCountry());
                 ruleAddDTO.setRegion(excelDTO.getRegion());
+                List<String> cityList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(ruleAddDTO.getToCountry()) && obj.getRegion().equals(ruleAddDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(cityList)) {
+                    ruleAddDTO.setCityList(cityList);
+                }
                 ruleAddDTO.setToWarehouseName(excelDTO.getToWarehouseName());
                 ruleAddDTO.setStartWeight(new BigDecimal(excelDTO.getStartWeight()));
                 ruleAddDTO.setEndWeight(new BigDecimal(excelDTO.getEndWeight()));
@@ -457,7 +495,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return otherCostList;
     }
 
-    private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO,List<ShippingTemplateEntity> shippingTemplateList) {
+    private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO
+            ,List<ShippingTemplateEntity> shippingTemplateList,List<ShippingTemplateCityExcelDTO> citySuccessList) {
         List<String> errorMsgList = new ArrayList<>();
 
         long count = shippingTemplateList.stream().filter(obj -> obj.getName().equals(addDTO.getName())).count();
@@ -476,6 +515,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             }
             if (ObjectUtil.isEmpty(addDTO.getRegion())) {
                 errorMsgList.add("城市分区不能为空");
+            }
+            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(addDTO.getToCountry()) && obj.getRegion().equals(addDTO.getRegion())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cityExcelList)) {
+                errorMsgList.add("未找到城市分区下城市信息");
             }
         }
         if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
@@ -617,6 +660,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         List<String> idList = records.stream().map(ShippingTemplateDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(idList);
 
+        List<String> currencyList = records.stream().map(ShippingTemplateDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
+
+
         for (ShippingTemplateDTO.ListDTO listDTO : records) {
             //模板类型名称
             listDTO.setTypeName(ShippingTemplateTypeEnum.getName(listDTO.getType()));
@@ -626,8 +673,51 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             listDTO.setChannelNames(StrUtil.join(",",channelNameList));
             //是否禁用
             listDTO.setDisabledName(listDTO.getDisabled() ? "停用" : "启用");
+            //币别符号
+            String currencySymbol = currencyViewList.stream().filter(obj -> obj.getId().equals(listDTO.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
         }
     }
+
+    /**
+     * sheet0监听
+     */
+    private ShippingTemplateExcelListener listenerFirstSheet (MultipartFile excelFile) {
+
+        ShippingTemplateExcelListener excelListenerUtil = new ShippingTemplateExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ShippingTemplateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return excelListenerUtil;
+    }
+    /**
+     * sheet1监听
+     */
+    private ShippingTemplateCityExcelListener listenerSecondSheet (String type,MultipartFile excelFile) {
+        if (!ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
+            return null;
+        }
+        ShippingTemplateCityExcelListener cityExcelListenerUtil = new ShippingTemplateCityExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ShippingTemplateCityExcelDTO.class, cityExcelListenerUtil).sheet(1).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return cityExcelListenerUtil;
+    }
+
+
+
 
     /**
      * @description: 导入模板名称
