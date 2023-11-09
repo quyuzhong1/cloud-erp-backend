@@ -20,6 +20,10 @@ import java.util.List;
 public abstract class AbstractLogisticsHandler extends BaseController implements LogisticsService {
     //对于一些公共方法可以进行封装
 
+    @Override
+    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
+        return null;
+    }
     /**
      * 创建订单
      *
