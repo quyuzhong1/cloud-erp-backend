@@ -5,13 +5,13 @@ import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
-import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.ubi.model.order.request.OrderItem;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
 import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
+import com.sdk.tms.weishi.dto.response.WeiShiGetTrackNumber;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenQueryOrder;
 import org.mapstruct.Builder;
@@ -228,4 +228,12 @@ public interface LogisticsOrderConverter {
     List<LogisticsOrderResponseVO> ordersQueryByUBI( List<TrackBase> trackNumber);
 
 
+
+    @Mappings({
+            @Mapping(target = "deliveryNo", source = "orderNumber"),
+            @Mapping(target = "transportNo", source = "wayBillNumber"),
+            @Mapping(target = "trackNo", source = "trackingNumber")
+    })
+    LogisticsOrderResponseVO trackInfoConvertByWeiShi(WeiShiGetTrackNumber data);
+    List<LogisticsOrderResponseVO> trackInfoConvertByWeiShi(List<WeiShiGetTrackNumber> data);
 }

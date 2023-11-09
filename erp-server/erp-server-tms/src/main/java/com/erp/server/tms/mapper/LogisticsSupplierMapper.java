@@ -1,8 +1,14 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +22,18 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEntity> {
 
+    /**
+     * 获取到tab页数据
+     * @param permissionSql
+     * @return
+     */
+    List<LogisticsSupplierDTO.TabListDTO> tabList(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 分页获取
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<LogisticsSupplierDTO.PagingViewDTO> paging(Page query, @Param("params")LogisticsSupplierDTO.PagingParamDTO params);
 }

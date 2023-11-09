@@ -169,11 +169,21 @@ public interface MongoTableNameContant {
      */
     String THIRD_SYSTEM_AMAZON_FBA_SHIPMENT = "third_system_Amazon_fba_shipment";
 
-
     /**
      * 亚马逊物流管理库存状况报告
      */
     String REPORT_AMAZON_FBA_INVENTORY_PLANNING = "report_amazon_fba_inventory_planning";
+
+
+    /**
+     * 亚马逊报表表
+     */
+    String REPORT_AMAZON_INFO = "report_amazon_info";
+
+    /**
+     * 亚马逊商品报告表
+     */
+    String REPORT_AMAZON_LISTING = "report_amazon_listing";
 
     /**
      * 亚马逊物流管理库存-已存档
@@ -184,6 +194,11 @@ public interface MongoTableNameContant {
      * 亚马逊物流预留库存报告
      */
     String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
+
+    /**
+     * 亚马逊库存组合主记录表
+     */
+    String REPORT_AMAZON_COMBINE_INVENTORY = "report_amazon_combine_inventory";
 
     /**
      * 根据任务 key 获取表名

@@ -94,7 +94,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 发货仓id
          */
-         private List<String> deleverWarehouseIdList;
+         private List<String> deliveryWarehouseIdList;
          /**
          * 目的仓id
          */

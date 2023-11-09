@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -62,5 +63,22 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.InventoryReservedView>
      **/
-    List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id);
+    FbaInventoryDTO.InventoryReservedView listInventoryReserved(String id);
+
+    /**
+     * 列表汇总数量
+     * @Author Luo_WG
+     * @Date 2023/11/9 11:42
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
+     **/
+    FbaInventoryDTO.SummaryNumber summaryNumber(FbaInventoryDTO.PagingParamDTO dto);
+
+    /**
+     * 批量保存FBA库存信息和预留明细
+     *
+     * @Author Jim
+     * @Date 2023-11-08
+     **/
+    Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList);
 }

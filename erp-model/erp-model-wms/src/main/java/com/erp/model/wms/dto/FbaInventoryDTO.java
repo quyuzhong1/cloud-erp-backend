@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -305,6 +307,10 @@ public class FbaInventoryDTO implements Serializable {
          * 更新时间
          */
         private List<String> updateTimeList;
+        /**
+         * 是否显示0库存
+         */
+        private Boolean isShowZeroInventory;
     }
 
     /**
@@ -412,15 +418,92 @@ public class FbaInventoryDTO implements Serializable {
         private Integer unsellableQty;
 
         /**
-         * 库龄
+         * 库龄 0-30 天的可售商品数量
          */
-        private String inventoryAge;
+        private Integer inventoryAge0To30Days;
+
+        /**
+         * 库龄 31-60 天的可售商品数量
+         */
+        private Integer inventoryAge31To60Days;
+
+        /**
+         * 库龄 61-90 天的可售商品数量
+         */
+        private Integer inventoryAge61To90Days;
+
+        /**
+         * 库龄 91-180 天的可售商品数量
+         */
+        private Integer inventoryAge91To180Days;
+
+        /**
+         * 库龄 181-270 天的可售商品数量
+         */
+        private Integer inventoryAge181To270Days;
+
+        /**
+         * 库龄 271-365 天的可售商品数量
+         */
+        private Integer inventoryAge271To365Days;
+
+        /**
+         * 库龄 365 天以上的可售商品数量
+         */
+        private Integer inventoryAge365PlusDays;
 
         /**
          * 更新时间
          */
         private LocalDateTime updateTime;
 
+    }
+
+    /**
+     * 列表汇总数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SummaryNumber {
+        /**
+         * FBM可售
+         */
+        private String fbmFulfillableQty;
+
+        /**
+         * 计划入库数量
+         */
+        private Integer inboundWorkingQty;
+
+        /**
+         * 已发货数量
+         */
+        private Integer inboundShippedQty;
+
+        /**
+         * 入库中数量
+         */
+        private Integer inboundReceivingQty;
+
+        /**
+         * FBI可售
+         */
+        private Integer fulfillableQty;
+
+        /**
+         * 预留
+         */
+        private Integer reservedQty;
+
+        /**
+         * 调查中数量
+         */
+        private Integer researchingQty;
+
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
     }
 
     /**
@@ -458,5 +541,24 @@ public class FbaInventoryDTO implements Serializable {
          * 买家订单数量
          */
         private Integer reservedOrderQty;
+    }
+
+    /**
+     * 所有批量新增
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllBatchSaveDTO {
+
+        /**
+         * FBA库存主信息
+         */
+        private List<FbaInventoryEntity> fbaInventoryEntityList;
+
+        /**
+         * 预留信息列表
+         */
+        private List<FbaInventoryReservedEntity> fbaInventoryReservedEntityList;
     }
 }

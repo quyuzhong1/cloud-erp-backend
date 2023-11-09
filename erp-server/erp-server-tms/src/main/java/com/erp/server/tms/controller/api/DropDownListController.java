@@ -36,9 +36,11 @@ public class DropDownListController extends BaseController {
      * fuelSurchargeRate 燃油附加费率
      * side 边长
      * vote 票
-     * priceBinary  计费方式
+     * shippingBillingMethod  计费方式
+     * priceBinary  价格进制
+     * weightUnit  重量单位
      * shippingTemplateType  运费模板类型
-     * LogisticsSupplierType 物流商类型
+     * logisticsSupplierType 物流商类型
      *
      * @return
      */

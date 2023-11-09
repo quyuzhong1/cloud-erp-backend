@@ -6,13 +6,12 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.*;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -20,9 +19,6 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonFbaShipmentHandler;
@@ -33,16 +29,16 @@ import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.PlatformApiTaskService;
+import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -52,7 +48,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -87,7 +82,7 @@ public class PullAmazonJob {
     private ShopInfoFeign shopInfoFeign;
 
     @Resource
-    private RedisTemplate<String, String> redisTemplate;
+    private ReportHandleService reportHandleService;
 
 
     /**
@@ -142,7 +137,7 @@ public class PullAmazonJob {
                 Integer pageSize = null;
                 String createdUntil = null;
                 String nextToken = null;
-                ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
+                ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
                 ReportList allReports = reportsApi.getAllReports(reportTypes, processingStatuses, marketplaceIds, pageSize, finalCreatedSince, createdUntil, nextToken);
                 platformDataThread.checkAndSaveMongo(allReports, marketplaceEnum.getMarketplaceId());
             } catch (Exception e) {
@@ -159,43 +154,43 @@ public class PullAmazonJob {
     }
 
 
-    /**
-     * 亚马逊获取报表文档链接(亚马逊报表文档信息生产者)
-     */
-    @XxlJob("amazonReportDocumentJob")
-    public ReturnT<String> amazonReportDocumentJob() {
-        Integer size = 1000;
-        String jobParamStr = XxlJobHelper.getJobParam();
-        if (StrUtil.isNotBlank(jobParamStr)) {
-            JSONObject jobParam = JSON.parseObject(jobParamStr);
-            size = jobParam.getInteger("size");
-        }
-        // 根据报告ID和状态获取reportDocumentId
-        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务开始 size={}", size);
-        String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT;
-        // 根据状态查询未下载数据
-        ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportDocumentUrlStatus(0);
-        List<ReportInfoMongoDTO> reportList = mongoService.findMongoData(reportMongoDTO, 1, size, tableName, ReportInfoMongoDTO.class);
-        if (CollectionUtil.isEmpty(reportList)) {
-            XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束,无需要更新的信息");
-            return ReturnT.SUCCESS;
-        }
-        reportList.forEach(report -> {
-            try {
-                platformDataThread.findUrlAndSend(tableName, report);
-            } catch (Exception e) {
-                String errorMsg = JSONUtil.toJsonStr(e);
-                XxlJobHelper.log("[亚马逊获取报表文档链接] 拉取亚马逊报表失败：reportId={}, error={}",
-                        report.getReportId(),
-                        errorMsg
-                );
-                throw new ServiceException("亚马逊获取报表文档链接:error=" + errorMsg);
-            }
-
-        });
-        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束");
-        return ReturnT.SUCCESS;
-    }
+//    /**
+//     * 亚马逊获取报表文档链接(亚马逊报表文档信息生产者)
+//     */
+//    @XxlJob("amazonReportDocumentJob")
+//    public ReturnT<String> amazonReportDocumentJob() {
+//        Integer size = 1000;
+//        String jobParamStr = XxlJobHelper.getJobParam();
+//        if (StrUtil.isNotBlank(jobParamStr)) {
+//            JSONObject jobParam = JSON.parseObject(jobParamStr);
+//            size = jobParam.getInteger("size");
+//        }
+//        // 根据报告ID和状态获取reportDocumentId
+//        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务开始 size={}", size);
+//        String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT;
+//        // 根据状态查询未下载数据
+//        ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportDocumentUrlStatus(0);
+//        List<ReportInfoMongoDTO> reportList = mongoService.findMongoData(reportMongoDTO, 1, size, tableName, ReportInfoMongoDTO.class);
+//        if (CollectionUtil.isEmpty(reportList)) {
+//            XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束,无需要更新的信息");
+//            return ReturnT.SUCCESS;
+//        }
+//        reportList.forEach(report -> {
+//            try {
+//                platformDataThread.findUrlAndSend(tableName, report);
+//            } catch (Exception e) {
+//                String errorMsg = JSONUtil.toJsonStr(e);
+//                XxlJobHelper.log("[亚马逊获取报表文档链接] 拉取亚马逊报表失败：reportId={}, error={}",
+//                        report.getReportId(),
+//                        errorMsg
+//                );
+//                throw new ServiceException("亚马逊获取报表文档链接:error=" + errorMsg);
+//            }
+//
+//        });
+//        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束");
+//        return ReturnT.SUCCESS;
+//    }
 
     /**
      * 拉取亚马逊订单详情任务
@@ -336,44 +331,49 @@ public class PullAmazonJob {
     }
 
     /**
-     * 亚马逊获取库存信息任务
+     * 亚马逊组合库存信息任务
      */
-    @XxlJob("amazonFbaInventoryJob")
+    @XxlJob("amazonFbaInventoryCombineJob")
     public ReturnT<String> amazonFbaInventoryJob() {
-        Integer size = 1000;
+        Integer size = 1;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
         }
         // 根据报告ID和状态获取reportDocumentId
-        XxlJobHelper.log("[亚马逊获取库存信息任务] 任务开始 size={}", size);
+        XxlJobHelper.log("[亚马逊组合库存信息任务] 任务开始 size={}", size);
         // 查询所有店铺是否有最新生成的报告文档url
 
-        Stream.of(AmazonMarketplaceEnum.values()).forEach(marketplaceEnum -> {
-            String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL,
-                    AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType(),
-                    marketplaceEnum.getMarketplaceId());
-            String reportDocumentUrl = redisTemplate.opsForValue().get(key);
-            if (ObjectUtils.isEmpty(reportDocumentUrl)) {
-                XxlJobHelper.log("[亚马逊获取库存信息任务] 任务结束,无需要更新的信息：marketplaceId={}", marketplaceEnum.getMarketplaceId());
-            }
-        });
+        ReportInventoryCombineMongoDTO queryCombineInventoryDTO = ReportInventoryCombineMongoDTO.unCombineStatus();
+        List<ReportInventoryCombineMongoDTO> mongoData = mongoService.findMongoData(queryCombineInventoryDTO, 0, size, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
+        if (CollectionUtils.isEmpty(mongoData)){
+            XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,无需要组合的库存主记录");
+            return ReturnT.SUCCESS;
+        }
+        // 库存组合数据记录
+        ReportInventoryCombineMongoDTO combineInventoryDTO = mongoData.stream().findFirst().orElseThrow(() -> new ServiceException("库存主记录不存在"));
+        // 查询库存数据
+        // 库存管理数据
+        ReportFbaMyiAllInventoryMongoDTO queryMyiAllInventoryMongoDTO = ReportFbaMyiAllInventoryMongoDTO.queryReportId(combineInventoryDTO.getMyiAllInventoryReportId());
+        List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList = mongoService.findMongoData(queryMyiAllInventoryMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryMongoDTO.class);
+        if (CollectionUtils.isEmpty(fbaMyiAllInventoryMongoDTOList)){
+            XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,库存管理数据为空异常,ReportCombineInventoryMongoDTO={}", JSONUtil.toJsonStr(fbaMyiAllInventoryMongoDTOList));
+            return ReturnT.FAIL;
+        }
 
-//        reportList.forEach(report -> {
-//            try {
-//                platformDataThread.findUrlAndSend(tableName, report);
-//            } catch (Exception e) {
-//                String errorMsg = JSONUtil.toJsonStr(e);
-//                XxlJobHelper.log("[亚马逊获取库存信息任务] 拉取亚马逊报表失败：reportId={}, error={}",
-//                        report.getReportId(),
-//                        errorMsg
-//                );
-//                throw new ServiceException("亚马逊获取库存信息任务:error=" + errorMsg);
-//            }
-//
-//        });
-        XxlJobHelper.log("[亚马逊获取库存信息任务] 任务结束");
+        // 库存预留数据
+        ReportReservedMongoDTO queryReservedMongoDTO = ReportReservedMongoDTO.queryReportId(combineInventoryDTO.getReservedReportId());
+        List<ReportReservedMongoDTO> reportReservedMongoDTOList = mongoService.findMongoData(queryReservedMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedMongoDTO.class);
+
+        // 库存状况数据
+        ReportFbaInventoryPlanningMongoDTO queryPlanningMongoDTO = ReportFbaInventoryPlanningMongoDTO.queryReportId(combineInventoryDTO.getInventoryPlanningReportId());
+        List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList = mongoService.findMongoData(queryPlanningMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningMongoDTO.class);
+
+        // 合并处理
+        reportHandleService.combineInventory(combineInventoryDTO,fbaMyiAllInventoryMongoDTOList, reportReservedMongoDTOList, planningMongoDTOList);
+
+        XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束");
         return ReturnT.SUCCESS;
     }
 }

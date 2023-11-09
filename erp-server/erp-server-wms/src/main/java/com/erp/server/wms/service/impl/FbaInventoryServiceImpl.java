@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -11,6 +12,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
@@ -33,6 +35,10 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,8 +59,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private CommonService commonService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-    @Autowired
-    private FbaInventoryReservedService fbaInventoryReservedService;
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
@@ -69,18 +73,13 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         return new PagingVO(pageData);
     }
 
-    private void fillList(List<FbaInventoryDTO.ListDTO> records) {
-        List<String> skuNoList = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
-        for (FbaInventoryDTO.ListDTO record : records) {
-            //产品信息
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
-            record.setProductName(skuVO.getSkuName());
-            //销售渠道名称
-            record.setDeliveryChannelsName(DeliveryChannelsEnum.getName(record.getDeliveryChannels()));
-        }
-    }
 
+    @Override
+    public FbaInventoryDTO.SummaryNumber summaryNumber(FbaInventoryDTO.PagingParamDTO pagingParamDTO) {
+        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO);
+        return summaryNumber;
+    }
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -163,9 +162,38 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     }
 
     @Override
-    public List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id) {
-        List<FbaInventoryReservedEntity> fbaInventoryReservedEntities = fbaInventoryReservedService.listByMainId(id);
-        List<FbaInventoryDTO.InventoryReservedView> inventoryReservedViews = BeanMapper.copyList(fbaInventoryReservedEntities, FbaInventoryDTO.InventoryReservedView.class);
-        return inventoryReservedViews;
+    public FbaInventoryDTO.InventoryReservedView listInventoryReserved(String id) {
+        FbaInventoryEntity entity = lambdaQuery()
+                .select(FbaInventoryEntity::getId, FbaInventoryEntity::getReservedTransfersQty, FbaInventoryEntity::getReservedProcessingQty, FbaInventoryEntity::getReservedOrderQty)
+                .eq(FbaInventoryEntity::getId, id)
+                .last("LIMIT 1")
+                .one();
+        FbaInventoryDTO.InventoryReservedView view = new FbaInventoryDTO.InventoryReservedView();
+        BeanMapper.copy(entity, view);
+        return view;
     }
+
+
+    private void fillList(List<FbaInventoryDTO.ListDTO> records) {
+        List<String> skuNoList = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        for (FbaInventoryDTO.ListDTO record : records) {
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
+            record.setProductName(skuVO.getSkuName());
+            //销售渠道名称
+            record.setDeliveryChannelsName(DeliveryChannelsEnum.getName(record.getDeliveryChannels()));
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList) {
+        boolean result = this.saveBatch(inventoryEntityList);
+        if (!result){
+            throw new ServiceException("【FbaInventoryEntity】批量保存失败");
+        }
+        return true;
+    }
+
 }

@@ -1,35 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.FbaInventoryMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaInventoryEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="platform_code" property="fbaShipmentId" />
-       <result column="name" property="name" />
-       <result column="asin" property="asin" />
-       <result column="m_sku" property="mSku" />
-       <result column="fn_sku" property="fnSku" />
-       <result column="sku_no" property="skuNo" />
-       <result column="product_name" property="productName" />
-       <result column="delivery_channels" property="deliveryChannels" />
-       <result column="fbm_fulfillable_qty" property="fbmFulfillableQty" />
-       <result column="inbound_working_qty" property="inboundWorkingQty" />
-       <result column="inbound_shipped_qty" property="inboundShippedQty" />
-       <result column="inbound_receiving_qty" property="inboundReceivingQty" />
-       <result column="fulfillable_qty" property="fulfillableQty" />
-       <result column="reserved_qty" property="reservedQty" />
-       <result column="researching_qty" property="researchingQty" />
-       <result column="unsellable_qty" property="unsellableQty" />
-       <result column="inventory_age" property="inventoryAge" />
-    </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
@@ -45,6 +16,7 @@
         platform_code, name, asin, m_sku, fn_sku, sku_no, product_name, delivery_channels, fbm_fulfillable_qty, inbound_working_qty, inbound_shipped_qty, inbound_receiving_qty, fulfillable_qty, reserved_qty, researching_qty, unsellable_qty, inventory_age
     </sql>
 
+    <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaInventoryDTO$ListDTO">
         SELECT
         fi.id,
@@ -65,7 +37,13 @@
         fi.reserved_qty,
         fi.researching_qty,
         fi.unsellable_qty,
-        fi.inventory_age,
+        fi.inventory_age_0_to_30_days,
+        fi.inventory_age_31_to_60_days,
+        fi.inventory_age_61_to_90_days,
+        fi.inventory_age_91_to_180_days,
+        fi.inventory_age_181_to_270_days,
+        fi.inventory_age_271_to_365_days,
+        fi.inventory_age_365_plus_days,
         fi.update_time
         FROM fba_inventory fi
         WHERE fi.is_deleted = FALSE
@@ -101,6 +79,23 @@
             (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > fd.update_time
         </if>
+
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory != null">
+            AND fi.fbm_fulfillable_qty > 0
+            AND fi.inbound_working_qty > 0
+            AND fi.inbound_shipped_qty > 0
+            AND fi.inbound_receiving_qty > 0
+            AND fi.fulfillable_qty > 0
+            AND fi.reserved_qty > 0
+            AND fi.researching_qty > 0
+            AND fi.unsellable_qty > 0
+        </if>
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -110,6 +105,7 @@
         fi.create_time DESC
     </select>
 
+    <!--导出excel-->
     <select id="listExport" resultType="com.erp.model.wms.dto.FbaInventoryDTO$ListDTO">
         SELECT
         fi.id,
@@ -130,7 +126,13 @@
         fi.reserved_qty,
         fi.researching_qty,
         fi.unsellable_qty,
-        fi.inventory_age,
+        fi.inventory_age_0_to_30_days,
+        fi.inventory_age_31_to_60_days,
+        fi.inventory_age_61_to_90_days,
+        fi.inventory_age_91_to_180_days,
+        fi.inventory_age_181_to_270_days,
+        fi.inventory_age_271_to_365_days,
+        fi.inventory_age_365_plus_days,
         fi.update_time
         FROM fba_inventory fi
         WHERE fi.is_deleted = FALSE
@@ -176,6 +178,10 @@
                 </if>
             </otherwise>
         </choose>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -183,6 +189,57 @@
             </foreach>
         </if>
         fi.create_time DESC
+    </select>
+
+    <!--列表汇总数量-->
+    <select id="summaryNumber" resultType="com.erp.model.wms.dto.FbaInventoryDTO$SummaryNumber">
+        SELECT
+        SUM(fi.fbm_fulfillable_qty) AS fbmFulfillableQty,
+        SUM(fi.inbound_working_qty) AS inboundWorkingQty,
+        SUM(fi.inbound_shipped_qty) AS inboundShippedQty,
+        SUM(fi.inbound_receiving_qty) AS inboundReceivingQty,
+        SUM(fi.fulfillable_qty) AS fulfillableQty,
+        SUM(fi.reserved_qty) AS reservedQty,
+        SUM(fi.researching_qty) AS researchingQty,
+        SUM(fi.unsellable_qty) AS unsellableQty
+        FROM fba_inventory fi
+        WHERE fi.is_deleted = FALSE
+        <!--仓库-->
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            AND fi.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <!--平台sku-->
+        <if test="params.asin != null and params.asin != ''">
+            AND fi.asin ILIKE concat('%',#{params.asin},'%')
+        </if>
+        <!--fnSku-->
+        <if test="params.fnSku != null and params.fnSku != ''">
+            AND fi.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+        </if>
+        <!--卖家sku-->
+        <if test="params.mSku != null and params.mSku != ''">
+            AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+        </if>
+        <!--配送渠道-->
+        <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
+            AND fi.delivery_channels in
+            <foreach collection="params.deliveryChannelsList" item="deliveryChannels" open="(" close=")" separator=",">
+                #{deliveryChannels}
+            </foreach>
+        </if>
+        <!--修改时间-->
+        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
+            AND fi.update_time >= #{params.updateTimeList[0]} and
+            (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > fd.update_time
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
 </mapper>

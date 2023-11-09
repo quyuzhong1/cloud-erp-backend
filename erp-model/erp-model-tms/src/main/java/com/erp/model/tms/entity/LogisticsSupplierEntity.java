@@ -5,6 +5,8 @@ import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnums;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -39,7 +41,7 @@ public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity>
     * 类型
     */
     @TableField("type")
-    private String type;
+    private LogisticsSupplierTypeEnums type;
     /**
     * 是否禁用 true 禁用
     */

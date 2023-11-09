@@ -4,10 +4,12 @@ import com.common.core.utils.UUID;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.ScopeConstants;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import cn.hutool.core.util.StrUtil;
 
 /**
  * 亚马逊SP-API配置工具类
@@ -54,6 +56,11 @@ public class AmazonSpApiConfigUtils {
      */
     public static String lwaEndpoint;
 
+    /**
+     * SQS队列地址
+     */
+    public static String sqsEndpoint;
+
     @Value("${openApi.amazon.accessKeyId:}")
     public void setAccessKeyId(String accessKeyId) {
         AmazonSpApiConfigUtils.accessKeyId = accessKeyId;
@@ -89,6 +96,11 @@ public class AmazonSpApiConfigUtils {
         AmazonSpApiConfigUtils.lwaEndpoint = lwaEndpoint;
     }
 
+    @Value("${openApi.amazon.sqsEndpoint:}")
+    public void setSqsEndpoint(String sqsEndpoint) {
+        AmazonSpApiConfigUtils.sqsEndpoint = sqsEndpoint;
+    }
+
 //    public AmazonSpApiConfigUtil AmazonSpApiConfigUtil(AwsMarketplaceEnum marketplaceEnum) {
 //        this.accessKeyId = "AKIA2GGRLY3YDWBPAAZ6";
 //        this.secretKey = "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";
@@ -118,6 +130,31 @@ public class AmazonSpApiConfigUtils {
     }
 
     /**
+     * 构建免授权
+     * <a href="https://developer-docs.amazon.com/sp-api/docs/connecting-to-the-selling-partner-api-using-a-generated-java-sdk">来源</a>
+     * 免授权操作
+     * 操作名称	HTTP 方法和路径
+     * createDestination	POST /notifications/v1/destinations
+     * deleteDestination	DELETE /notifications/v1/destinations/{destinationId}
+     * deleteSubscriptionById	DELETE /notifications/v2/subscriptions/{notificationType}/{subscriptionId}
+     * getDestination	GET /notifications/v1/destinations/{destinationId}
+     * getDestinations	GET /notifications/v1/destinations
+     * getSubscriptionById	GET /notifications/v1/subscriptions/{notificationType}/{subscriptionId}
+     * getAuthorizationCode	GET /authorization/v1/authorizationCode
+     */
+    public static LWAAuthorizationCredentials buildLWAAuthorizationScopeCredentials() {
+        return LWAAuthorizationCredentials.builder()
+                //查看开发者信息的时候可看到LWA的客户端编码
+                .clientId(AmazonSpApiConfigUtils.clientId)
+                //查看开发者信息的时候可看到LWA的客户端秘钥
+                .clientSecret(AmazonSpApiConfigUtils.clientSecret)
+                .withScopes(ScopeConstants.SCOPE_NOTIFICATIONS_API, ScopeConstants.SCOPE_MIGRATION_API)
+                //"https://api.amazon.com/auth/o2/token"
+                .endpoint(AmazonSpApiConfigUtils.lwaEndpoint)
+                .build();
+    }
+
+    /**
      * 构建AWSAuthenticationCredentialsProvider
      */
     public static AWSAuthenticationCredentialsProvider buildAWSAuthenticationCredentialsProvider() {
@@ -143,6 +180,13 @@ public class AmazonSpApiConfigUtils {
                 //"https://api.amazon.com/auth/o2/token"
                 .endpoint(AmazonSpApiConfigUtils.lwaEndpoint)
                 .build();
+    }
+
+    /**
+     * 从sqsEndpoint解析出地区,如: us-west-1
+     */
+    public static String parseRegionBySqsEndpoint() {
+        return StrUtil.subBetween(AmazonSpApiConfigUtils.sqsEndpoint, "sqs.", ".amazonaws.com");
     }
 
 

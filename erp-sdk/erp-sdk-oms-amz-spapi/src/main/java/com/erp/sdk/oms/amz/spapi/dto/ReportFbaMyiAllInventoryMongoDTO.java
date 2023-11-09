@@ -1,5 +1,7 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,67 +15,85 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ReportFbaMyiAllInventoryMongoDTO extends ReportSuperMongoDTO {
-    @CsvBindByName(column = "sku")
+    @Panno(findType = PannoEnum.EQ, field = "sku")
     private String sku;
 
-    @CsvBindByName(column = "fnsku")
+    @Panno(findType = PannoEnum.EQ, field = "fnsku")
     private String fnsku;
 
-    @CsvBindByName(column = "asin")
+    @Panno(findType = PannoEnum.EQ, field = "asin")
     private String asin;
 
-    @CsvBindByName(column = "product-name")
+    @Panno(findType = PannoEnum.EQ, field = "product-name")
     private String productName;
 
-    @CsvBindByName(column = "condition")
+    @Panno(findType = PannoEnum.EQ, field = "condition")
     private String condition;
 
-    @CsvBindByName(column = "your-price")
+    @Panno(findType = PannoEnum.EQ, field = "your-price")
     private String yourPrice;
 
-    @CsvBindByName(column = "mfn-listing-exists")
+    @Panno(findType = PannoEnum.EQ, field = "mfn-listing-exists")
     private String mfnListingExists;
 
-    @CsvBindByName(column = "mfn-fulfillable-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "mfn-fulfillable-quantity")
     private String mfnFulfillableQuantity;
 
-    @CsvBindByName(column = "afn-listing-exists")
+    @Panno(findType = PannoEnum.EQ, field = "afn-listing-exists")
     private String afnListingExists;
 
-    @CsvBindByName(column = "afn-warehouse-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-warehouse-quantity")
     private String afnWarehouseQuantity;
 
-    @CsvBindByName(column = "afn-fulfillable-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-fulfillable-quantity")
     private String afnFulfillableQuantity;
 
-    @CsvBindByName(column = "afn-unsellable-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-unsellable-quantity")
     private String afnUnsellableQuantity;
 
-    @CsvBindByName(column = "afn-reserved-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-reserved-quantity")
     private String afnReservedQuantity;
 
-    @CsvBindByName(column = "afn-total-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-total-quantity")
     private String afnTotalQuantity;
 
-    @CsvBindByName(column = "per-unit-volume")
+    @Panno(findType = PannoEnum.EQ, field = "per-unit-volume")
     private String perUnitVolume;
 
-    @CsvBindByName(column = "afn-inbound-working-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-inbound-working-quantity")
     private String afnInboundWorkingQuantity;
 
-    @CsvBindByName(column = "afn-inbound-shipped-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-inbound-shipped-quantity")
     private String afnInboundShippedQuantity;
 
-    @CsvBindByName(column = "afn-inbound-receiving-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-inbound-receiving-quantity")
     private String afnInboundReceivingQuantity;
 
-    @CsvBindByName(column = "afn-researching-quantity")
+    @Panno(findType = PannoEnum.EQ, field = "afn-researching-quantity")
     private String afnResearchingQuantity;
 
-    @CsvBindByName(column = "afn-reserved-future-supply")
+    @Panno(findType = PannoEnum.EQ, field = "afn-reserved-future-supply")
     private String afnReservedFutureSupply;
 
-    @CsvBindByName(column = "afn-future-supply-buyable")
+    @Panno(findType = PannoEnum.EQ, field = "afn-future-supply-buyable")
     private String afnFutureSupplyBuyable;
 
+    public static ReportFbaMyiAllInventoryMongoDTO queryReportId(String myiAllInventoryReportId) {
+        ReportFbaMyiAllInventoryMongoDTO mongoDTO = new ReportFbaMyiAllInventoryMongoDTO();
+        mongoDTO.setReportId(myiAllInventoryReportId);
+        return mongoDTO;
+    }
+
+    /**
+     * 配送渠道：mfn-listing-exists=true为卖家自配送；afn-listing-exists=true为亚马逊配送
+     */
+    public String switchDeliveryChannels(){
+        if (Boolean.TRUE.toString().equalsIgnoreCase(this.mfnListingExists)){
+            return "卖家自配送";
+        }
+        if (Boolean.TRUE.toString().equalsIgnoreCase(this.afnListingExists)){
+            return "亚马逊配送";
+        }
+        return "";
+    }
 }

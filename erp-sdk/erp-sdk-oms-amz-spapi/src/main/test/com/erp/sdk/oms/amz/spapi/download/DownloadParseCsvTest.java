@@ -19,8 +19,7 @@ import com.erp.sdk.oms.amz.spapi.csv.ReportFbaMyiAllInventoryCsvEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportReservedCsvEntity;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.opencsv.CSVReader;
-import org.junit.Ignore;
-import org.junit.Test;
+
 
 import java.util.List;
 
@@ -28,10 +27,9 @@ import java.util.List;
 /**
  * API tests for DownloadParseCsv
  */
-@Ignore
 public class DownloadParseCsvTest {
 
-    @Test
+
     public void fbaMyiAllInventoryCsvReportEntityDownload() throws Exception{
         // 亚马逊物流管理库存-已存档
         String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/2a2d3258-3b23-4f23-8eb6-c019f45bab25.amzn1.tortuga.4.na.T1507HA60E8SWN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T042816Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=47e64f25844ced3f414824af5b517964ebb4192c740db62bdae6107501248f20";
@@ -41,7 +39,6 @@ public class DownloadParseCsvTest {
         System.out.println("-------------");
     }
 
-    @Test
     public void fbaMyiAllInventoryCsvReportEntityParse() throws Exception{
         String cvsResult= "sku\tfnsku\tasin\tproduct-name\tcondition\tyour-price\tmfn-listing-exists\tmfn-fulfillable-quantity\tafn-listing-exists\tafn-warehouse-quantity\tafn-fulfillable-quantity\tafn-unsellable-quantity\tafn-reserved-quantity\tafn-total-quantity\tper-unit-volume\tafn-inbound-working-quantity\tafn-inbound-shipped-quantity\tafn-inbound-receiving-quantity\tafn-researching-quantity\tafn-reserved-future-supply\tafn-future-supply-buyable\n" +
                 "1601+2120+1781-US7\tX002LHIMI3\tB08DLP5FF1\tMini Tripod for iPhone, Phone Tripod with Mount Adapter & Remote Shutter, Extendable Small Selfie Stick Tabletop Tripod for Mobile Phones iPhone 11 Camera Projector Webcam DSLR Gopro\tNew\t23.99\tNo\t\tYes\t0\t0\t0\t0\t0\t0.03\t0\t0\t0\t0\t0\t0\n" +
@@ -133,7 +130,7 @@ public class DownloadParseCsvTest {
         System.out.println(JSON.toJsonStr(bean));
     }
 
-    @Test
+
     public void fbaInventoryPlanningCsvReport() throws Exception{
         // 亚马逊物流预留库存报告
 //        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/a19570c6-30f3-4bf1-b21a-0e4c366cc9d8.amzn1.tortuga.4.na.T1SJJIE84P543J?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T042355Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=e2e046a268f65fef133d6f47477d1a108df4cb4c8420035ca81e89660335278c";
@@ -170,7 +167,7 @@ public class DownloadParseCsvTest {
         System.out.println(JSON.toJsonStr(bean));
     }
 
-    @Test
+
     public void reservedCsvReportEntity() throws Exception{
         // 亚马逊物流预留库存报告
 //        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/f36c2976-2253-451b-bb3d-e6e47a43ffca.amzn1.tortuga.4.na.TUE3ZIC1NB3GN?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231106T035045Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RAETTDXOQT%2F20231106%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=6917ebea79e4002c53e43a9fafee2e6889f462e25bbf3f9d7f93bffde5dba47d";

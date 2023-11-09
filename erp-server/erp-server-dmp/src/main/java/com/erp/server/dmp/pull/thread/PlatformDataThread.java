@@ -127,7 +127,7 @@ public class PlatformDataThread {
         AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(report.getReportType());
 
         //查询当前报表ID的文档链接
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
         ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
         report.setReportDocumentUrl(reportDocument.getUrl());
         report.setReportDocumentUrlStatus(1);

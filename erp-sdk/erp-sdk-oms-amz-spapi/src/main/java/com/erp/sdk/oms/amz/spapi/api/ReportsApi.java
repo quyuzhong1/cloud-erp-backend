@@ -15,9 +15,8 @@ package com.erp.sdk.oms.amz.spapi.api;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.GetOrderItemsResponse;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Getter
 public class ReportsApi {
@@ -1285,8 +1283,8 @@ public class ReportsApi {
     /**
      * 初始化Api
      */
-    public static ReportsApi initApi(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+    public static ReportsApi initApi(AmazonEndpointsEnum endpointsEnum) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
         LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
         AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         ReportsApi reportsApi = new ReportsApi.Builder()
@@ -1297,7 +1295,7 @@ public class ReportsApi {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(endpointsEnum.getEndpointsByProfile())
                 .build();
         if (null == reportsApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");

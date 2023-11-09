@@ -6,18 +6,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 物流类型枚举
  * @author Lambda
- * @Classname LogisticsAddressEnums
+ * @Classname LogisticsAuthStatusEnums
  * @Description TODO
- * @Date 2023-11-03 10:54
+ * @Date 2023-11-09 14:46
  * @Created by yl
  */
-public enum LogisticsTypeEnums implements EnumMessage {
-    SELF_DELIVER("selfDeliver","自发货物流"),
-    FIRST_CARRIER("firstCarrier","头程物流"),
-    OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓物流"),
-    CUSTOM("custom","自定义物流")
+public enum LogisticsAuthStatusEnums implements EnumMessage {
+
+    ALREADY("already", "已授权"),
+    NOT("not", "未授权"),
+    CANCEL("cancel","取消授权")
     ;
 
     /**
@@ -31,28 +30,29 @@ public enum LogisticsTypeEnums implements EnumMessage {
      */
     private String name;
 
-    LogisticsTypeEnums(String code, String name){
+
+    LogisticsAuthStatusEnums(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
     @Override
     public String getCode() {
-        return this.code;
+        return code;
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return name;
     }
 
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsTypeEnums typeEnums : LogisticsTypeEnums.values()) {
-            if (code.equals(typeEnums.getCode())) {
-                return typeEnums.getName();
+        for (LogisticsAuthStatusEnums statusEnum : LogisticsAuthStatusEnums.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
             }
         }
         return "";
