@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -18,19 +20,35 @@ public interface ShippingTemplateOtherCostService extends SuperService<ShippingT
     * 新增
     * @author Will
     * @date: 2023-11-03
-    * @param dto
+    * @param otherCostList
+    * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(ShippingTemplateOtherCostDTO.AddDTO dto);
+    Boolean add(List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList, String mainId);
 
     /**
     * 修改
     * @author Will
     * @date: 2023-11-03
-    * @param dto
+    * @param otherCostList
+    * @param mainId
     * @return
     */
-    Boolean update(ShippingTemplateOtherCostDTO.UpdateDTO dto);
+    Boolean update(List<ShippingTemplateOtherCostDTO.UpdateDTO> otherCostList, String mainId);
 
-
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/11/8 10:55
+     * @param mainId
+     * @return List<ShippingTemplateOtherCostEntity>
+     */
+    List<ShippingTemplateOtherCostEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据主表id删除
+     * @author Will
+     * @date: 2023/11/8 14:18
+     * @param mainId
+     */
+    void deleteByMainId(String mainId);
 }

@@ -15,8 +15,8 @@ public class YanWenResponse<T> implements Serializable {
     private String message;
     private T data;
 
-    public static YanWenResponse error(String code,String error) {
-        YanWenResponse apiResult = new YanWenResponse();
+    public static <T> YanWenResponse<T> error(String code,String error) {
+        YanWenResponse<T> apiResult = new YanWenResponse<>();
         apiResult.setSuccess(Boolean.FALSE);
         apiResult.setCode(code);
         apiResult.setMessage(error);

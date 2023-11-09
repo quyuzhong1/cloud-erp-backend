@@ -26,17 +26,135 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        name, billing_method, currency, weight_unit, price_binary, volume_setting, effective_date, expire_date, disabled, type
+        st.id,
+        st.create_user_id as createUserId,
+        st.create_user_name as createUserName,
+        st.create_time as createTime,
+        st.update_user_id as updateUserId,
+        st.update_user_name as updateUserName,
+        st.update_time as updateTime,
+        st.version,
+        st.is_deleted as isDeleted,
+        st.name,
+        st.billing_method as billingMethod,
+        st.currency,
+        st.weight_unit as weightUnit,
+        st.price_binary as priceBinary,
+        st.volume_setting as volumeSetting,
+        st.effective_date as effectiveDate,
+        st.expire_date as expireDate,
+        st.disabled,
+        st.type
     </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$ListDTO">
+        select
+               <include refid="Base_Column_List"/>
+        from
+        shipping_template st
+        <where>
+            st.is_deleted = false
+            <if test="params.name != null and params.name != ''">
+                st.name ilike concat('%',#{params.name},'%')
+            </if>
+            <if test="params.disabled != null">
+                st.disabled = #{params.disabled}
+            </if>
+            <if test="params.effectiveDateList != null and params.effectiveDateList.size != ''">
+                and st.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > st.effective_date
+            </if>
+            <if test="params.expireDateList != null and params.expireDateList.size != ''">
+                and st.expire_date >= #{params.expireDateList[0]} and (#{params.expireDateList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > st.expire_date
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+                and st.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size != ''">
+                and st.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > st.create_time
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        st.id desc
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$TabListDTO">
+        select
+            disabled as tabFlag,
+            count(id) as count
+        from shipping_template st
+        where st.is_deleted = false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by disabled
+    </select>
+
+    <select id="listByExportExcel" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        shipping_template st
+        <where>
+            st.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and st.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.name != null and params.name != ''">
+                    st.name ilike concat('%',#{params.name},'%')
+                </if>
+                <if test="params.disabled != null">
+                    st.disabled = #{params.disabled}
+                </if>
+                <if test="params.effectiveDateList != null and params.effectiveDateList.size != ''">
+                    and st.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > st.effective_date
+                </if>
+                <if test="params.expireDateList != null and params.expireDateList.size != ''">
+                    and st.expire_date >= #{params.expireDateList[0]} and (#{params.expireDateList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > st.expire_date
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+                    and st.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size != ''">
+                    and st.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > st.create_time
+                </if>
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        st.id desc
+    </select>
 
 
 </mapper>

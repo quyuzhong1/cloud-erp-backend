@@ -2,8 +2,7 @@ package com.sdk.tms.yanwen.dto.request;
 
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -18,6 +17,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class YanWenCreateWayBillRequest {
 
     //渠道id
@@ -49,6 +50,8 @@ public class YanWenCreateWayBillRequest {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReceiverInfo {
 
         //收件人姓名
@@ -98,6 +101,8 @@ public class YanWenCreateWayBillRequest {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SenderInfo {
 
         //发件人姓名
@@ -141,6 +146,8 @@ public class YanWenCreateWayBillRequest {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ParcelInfo {
 
         //是否带电 1:是 0:否
@@ -178,11 +185,13 @@ public class YanWenCreateWayBillRequest {
 
         //商品信息（支持 5 组）
         @Valid
-        @NotNull
+        @NotNull(message = "商品信息不能为空")
         private List<Product> productList;
 
         @Data
         @Builder
+        @NoArgsConstructor
+        @AllArgsConstructor
         public static class Product {
 
             //中文品名

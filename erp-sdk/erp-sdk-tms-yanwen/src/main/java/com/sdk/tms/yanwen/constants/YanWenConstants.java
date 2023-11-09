@@ -11,5 +11,6 @@ public class YanWenConstants {
     public static final String METHOD_ORDER_CREATE = "express.order.create";
     public static final String METHOD_ORDER_LABEL_GET = "express.order.label.get";
     public static final String METHOD_ORDER_CANCEL= "express.order.cancel";
+    public static final String METHOD_ORDER_QUERY= "express.order.getlist";
 
 }
