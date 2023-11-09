@@ -108,6 +108,6 @@ public class YanWenLogisticsHandlerImplTest {
     public void queryOrder() {
         LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
         logisticsQueryBaseVO.setDeliveryNo(Collections.singletonList("weiji1233211"));
-        System.out.println(yanWenLogisticsHandler.queryOrder(logisticsQueryBaseVO));
+        System.out.println(yanWenLogisticsHandler.queryOrderList(logisticsQueryBaseVO));
     }
 }
