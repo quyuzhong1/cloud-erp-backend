@@ -10,6 +10,7 @@ import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -203,33 +204,40 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsQueryVO
      * @return
      */
-//    @Override
-//    public ApiResult<List<String>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
-//        LabelRequest labelRequest = LabelRequest.builder()
-//                .orderIds(logisticsQueryVO.getDeliveryNo())
-//                //TODO 根据传参决定打印单大小
-//                .labelType("0")
-//                .packinglist(false)
-//                .merged(true)
-//                .labelFormat("JPG")
-//                .dpi("300")
-//                .build();
-//        try {
-//            List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
-//                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), labelRequest);
-//
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.UBI.getCode(),
-//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
-//            List<String> collect = labelSpecs.stream().map(LabelResponse::getLabelContent).collect(Collectors.toList());
-//            return success(collect);
-//        } catch (Exception e) {
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.UBI.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
-//            return failure(e.getMessage());
-//        }
-//    }
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+        LabelRequest labelRequest = LabelRequest.builder()
+                .orderIds(logisticsQueryVO.getDeliveryNo())
+                //TODO 根据传参决定打印单大小
+                .labelType("0")
+                .packinglist(false)
+                .merged(true)
+                .labelFormat("JPG")
+                .dpi("300")
+                .build();
+        try {
+            List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), labelRequest);
+
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.UBI.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
+            List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
+            labelSpecs.forEach(labelResponse -> {
+                responses.add(LogisticsPrintLabelResponse.builder()
+                        .transportNo(labelResponse.getOrderId())
+                        .base64(labelResponse.getLabelContent())
+                        .trackNo(labelResponse.getTrackingNo())
+                        .build());
+            });
+            return success(responses);
+        } catch (Exception e) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.UBI.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
+        }
+    }
 
     /**
      * 轨迹查询

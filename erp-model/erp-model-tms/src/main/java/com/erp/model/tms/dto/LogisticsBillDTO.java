@@ -126,6 +126,11 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 物流明细信息
+         */
+        @NotNull(message = "物流明细信息不能为空")
+        private List<LogisticsBillDetailDTO.UpdateDTO> detailList;
     }
 
     @Data

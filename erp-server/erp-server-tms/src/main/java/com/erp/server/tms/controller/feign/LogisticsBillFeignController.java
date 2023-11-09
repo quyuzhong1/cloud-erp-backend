@@ -28,7 +28,7 @@ public class LogisticsBillFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/logisticsBillBatchSave")
-    public Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.AddDTO> addDTOList) {
+    public Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.UpdateDTO> addDTOList) {
         Boolean flag = logisticsBillService.logisticsBillBatchSave(addDTOList);
         return flag;
     }

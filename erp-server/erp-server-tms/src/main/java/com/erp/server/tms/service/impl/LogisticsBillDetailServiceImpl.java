@@ -2,14 +2,22 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +25,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -38,26 +48,13 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(LogisticsBillDetailDTO.AddDTO addDTO) {
-        LogisticsBillDetailEntity logisticsBillDetailEntity = new LogisticsBillDetailEntity();
-        BeanMapperUtils.copy(addDTO, logisticsBillDetailEntity);
+    public Boolean add(LogisticsBillDTO.AddDTO addDTO, String mainId) {
+        List<LogisticsBillDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), LogisticsBillDetailEntity.class);
 
-        // 数据处理
-        handleData(logisticsBillDetailEntity);
-
-        log.info("开始新增物流单明细单");
-        boolean save = super.save(logisticsBillDetailEntity);
-        if(!save) {
-            throw new ServiceException("物流单明细单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流单明细单" , logisticsBillDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, logisticsBillDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(logisticsBillDetailEntity.getId(), logisticsBillDetailEntity.getId());
+        //处理明细数据
+        handleData(list, mainId, Boolean.FALSE);
+        //批量新增
+        return this.saveBatch(list);
     }
 
     /**
@@ -65,33 +62,48 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsBillDetailDTO.UpdateDTO updateDTO) {
-        LogisticsBillDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流单明细单"));
-        LogisticsBillDetailEntity logisticsBillDetailEntity =  BeanMapperUtils.map(LogisticsBillDetailEntity.class, updateDTO);
+    public Boolean update(LogisticsBillDTO.UpdateDTO updateDTO, String mainId) {
+        List<LogisticsBillDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
+        //原明细数据
+        List<LogisticsBillDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<LogisticsBillDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getTrackNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个运输单【%s】", ModuleTypeEnum.LOGISTICS_BILL.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
+        List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
 
         // 数据处理
-        handleData(logisticsBillDetailEntity);
-        log.info("编辑 开始修改物流单明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(logisticsBillDetailEntity);
-        if(!save) {
-            throw new ServiceException("物流单明细单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        handleData(list, mainId, Boolean.TRUE);
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录物流单明细单日志数据，id：【{}】", logisticsBillDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillDetailEntity.getId(), "物流单明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsBillDetailEntity, null, logisticsBillDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        //新增或修改明细
+        return this.saveOrUpdateBatch(list);
+    }
+
+    public List<LogisticsBillDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(LogisticsBillDetailEntity::getMainId, mainIds).list();
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(LogisticsBillDetailEntity logisticsBillDetailEntity) {
+    private void handleData(List<LogisticsBillDetailEntity> logisticsBillDetailEntityList, String mainId, Boolean isUpdate) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List< LogisticsBillDetailDTO.UpdateDTO> newList, List< LogisticsBillDetailEntity > oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(LogisticsBillDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(LogisticsBillDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 }

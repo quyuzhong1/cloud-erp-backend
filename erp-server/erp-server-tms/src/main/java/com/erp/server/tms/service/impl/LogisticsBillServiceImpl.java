@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
@@ -34,6 +35,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -56,7 +59,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, logisticsBillEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
-
+        logisticsBillDetailService.add(addDTO, logisticsBillEntity.getId());
         return new BaseResultDTO.AddDTO(logisticsBillEntity.getId(), logisticsBillEntity.getId());
     }
 
@@ -74,14 +77,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         handleData(logisticsBillEntity);
         log.info("编辑 开始修改物流单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsBillEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        logisticsBillDetailService.update(updateDTO, logisticsBillEntity.getId());
         // 记录主单操作日志
-            log.info("编辑 开始记录物流单日志数据，id：【{}】", logisticsBillEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillEntity.getId(), "物流单");
+        log.info("编辑 开始记录物流单日志数据，id：【{}】", logisticsBillEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillEntity.getId(), "物流单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
         return Boolean.TRUE;
@@ -96,7 +99,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
-    public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
+    public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.UpdateDTO> addDTOList) {
         List<LogisticsBillEntity> logisticsBillEntities = BeanMapper.copyList(addDTOList, LogisticsBillEntity.class);
         boolean flag = this.saveBatch(logisticsBillEntities);
         return flag;

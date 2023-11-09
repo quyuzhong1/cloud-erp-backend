@@ -50,6 +50,7 @@ public enum ModuleTypeEnum {
     FBA_DELIVERY("47", "FBA发货单"),
     FBA_SHIPMENT("48", "FBA货件单"),
     LOGISTICS_SUPPLIER("49", "物流商"),
+    LOGISTICS_BILL("50", "物流单"),
 
     SHIPPING_TEMPLATE("43", "运费模板"),
     ;
