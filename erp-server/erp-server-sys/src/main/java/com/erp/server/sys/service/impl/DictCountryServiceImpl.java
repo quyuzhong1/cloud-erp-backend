@@ -12,9 +12,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.server.sys.mapper.DictCountryMapper;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
+import com.erp.server.sys.service.DictGlobalAreaService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,9 +42,18 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Resource
     private DictCityService dictCityService;
 
+    @Resource
+    private DictGlobalAreaService dictGlobalAreaService;
+
     @Override
     public List<DictCountryDTO.ListDTO> listCountry() {
         List<DictCountryDTO.ListDTO> list = baseMapper.listCountry();
+        return list;
+    }
+
+    @Override
+    public List<DictCountryDTO.ListDTO> listCountryByParam(DictCountryDTO.ListParamDTO dto) {
+        List<DictCountryDTO.ListDTO> list = baseMapper.listCountryByParam(dto);
         return list;
     }
 
@@ -142,6 +153,32 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             resultList.add(cascade);
         }
 
+        return resultList;
+    }
+
+
+
+    @Override
+    public List<DictCountryDTO.ListRegionDTO> listAreaCountry(DictCountryDTO.ListParamDTO dto) {
+        //区域数据
+        List<DictGlobalAreaEntity> list = dictGlobalAreaService.lambdaQuery()
+                .eq(DictGlobalAreaEntity::getRegionCode, dto.getRegionCode()).list();
+        //国家数据
+        List<DictCountryDTO.ListDTO> countryList = this.listCountryByParam(dto);
+        List<DictCountryDTO.ListRegionDTO> resultList = new ArrayList<>();
+        DictCountryDTO.ListRegionDTO allList = new DictCountryDTO.ListRegionDTO();
+        allList.setRegionCode("");
+        allList.setRegionName("全部");
+        allList.setList(countryList);
+        resultList.add(allList);
+        for (DictGlobalAreaEntity areaEntity : list) {
+            DictCountryDTO.ListRegionDTO listRegionDTO = new DictCountryDTO.ListRegionDTO();
+            listRegionDTO.setRegionCode(areaEntity.getRegionCode());
+            listRegionDTO.setRegionName(areaEntity.getRegionName());
+            List<DictCountryDTO.ListDTO> detailList = countryList.stream().filter(obj -> obj.getRegionCode().equals(areaEntity.getRegionCode())).collect(Collectors.toList());
+            listRegionDTO.setList(detailList);
+            resultList.add(listRegionDTO);
+        }
         return resultList;
     }
 

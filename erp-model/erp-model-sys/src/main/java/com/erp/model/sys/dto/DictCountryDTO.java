@@ -94,4 +94,39 @@ public class DictCountryDTO implements Serializable {
         private String dictCountryName;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO{
+
+        /**
+         * 搜索关键字
+         */
+        private String searchKeyword;
+
+        /**
+         * 区域编码
+         */
+        private String regionCode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListRegionDTO{
+
+        /**
+         * 区域编码
+         */
+        private String regionCode;
+
+        /**
+         * 区域名称
+         */
+        private String regionName;
+
+        /**
+         * 国家
+         */
+        private List<ListDTO> list;
+    }
 }
