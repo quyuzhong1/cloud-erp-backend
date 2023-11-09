@@ -4,6 +4,7 @@ import com.common.business.annotation.PlatformType;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
@@ -28,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,15 +82,22 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) {
-        YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
-                .waybillNumber(labelVO.getTransportNo().get(0))
-                .printRemark(labelVO.getPrintRemark())
-                .build();
-        YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
-        if(!labelResponse.getSuccess()){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,labelResponse.getMessage());
+        List<LogisticsPrintLabelResponse> result = new ArrayList<>();
+        for(String transportNo : labelVO.getTransportNo()){
+            YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
+                    .waybillNumber(transportNo)
+                    .printRemark(labelVO.getPrintRemark())
+                    .build();
+            YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
+            if(!labelResponse.getSuccess()){
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,transportNo+labelResponse.getMessage());
+            }
+            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            response.setBase64(labelResponse.getData().getBase64String());
+            response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
+            result.add(response);
         }
-        return success();
+        return success(result);
     }
 
     @Override
