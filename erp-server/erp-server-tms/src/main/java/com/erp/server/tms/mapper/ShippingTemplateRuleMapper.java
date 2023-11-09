@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -15,5 +17,18 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ShippingTemplateRuleMapper extends BaseMapper<ShippingTemplateRuleEntity> {
-
+    /**
+     * @description: 仓库
+     * @author Will
+     * @date: 2023/11/9 11:36
+     * @return List<String>
+     */
+    List<String> listWarehouseName();
+    /**
+     * @description:分区
+     * @author Will
+     * @date: 2023/11/9 11:36
+     * @return List<String>
+     */
+    List<String> listRegionName();
 }
