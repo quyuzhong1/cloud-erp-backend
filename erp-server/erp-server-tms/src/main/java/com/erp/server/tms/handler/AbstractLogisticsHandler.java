@@ -5,6 +5,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.LogisticsService;
 
@@ -61,7 +62,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    public ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 

@@ -5,6 +5,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
+import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
@@ -58,4 +59,16 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByWeiShi(WeiShiChannel data);
     List<LogisticsSaleChannelEntity> channelConvertByWeiShi(List<WeiShiChannel> data);
+
+    @Mappings({
+            @Mapping(target = "code", source = "serviceCode"),
+            @Mapping(target = "cnName", source = "serviceName"),
+            @Mapping(target = "enName", source = "nativeName"),
+            @Mapping(target = "supplierName", source = "serviceProvider"),
+            @Mapping(target = "supplierCode", source = "serviceProviderCode"),
+            @Mapping(target = "logisticsPlatform", constant = "UBI"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByUBI(ServiceCataLog serviceCataLog);
+    List<LogisticsSaleChannelEntity> channelConvertByUBIList(List<ServiceCataLog> serviceCataLogList);
 }

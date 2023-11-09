@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 
 import java.io.IOException;
@@ -55,7 +56,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO);
+    ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO);
 
     /**
      * 更新订单
@@ -81,14 +82,14 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult getLabelUrl(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
+    ApiResult<String> getLabelUrl(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
     /**
      * 批量获取标签
      *
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO);
+    ApiResult<List<String>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
     /**
      * 轨迹查询
      *

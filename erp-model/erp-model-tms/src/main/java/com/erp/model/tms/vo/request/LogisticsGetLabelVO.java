@@ -10,6 +10,8 @@ import java.io.Serializable;
 public class LogisticsGetLabelVO extends LogisticsQueryBaseVO implements Serializable {
     //打印拣货单
     private Integer printRemark;
+    //
+    private String labelType;
     /**
      * 物流产品代码 递四方必填
      */

@@ -85,6 +85,17 @@ public class OkHttpUtils {
     }
 
     /**
+     * 获取post
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doDelete(String url, Map<String, Object> params, Map<String, String> headers) {
+        Call call = createDeleteCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
      * 获取get 请求
      *
      * @param
@@ -217,7 +228,16 @@ public class OkHttpUtils {
                 .build();
         return client.newCall(request);
     }
-
+    public static Call createDeleteCall(String url, Map<String, Object> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .delete(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
     private static FormBody createFormBody(Map<String, Object> params) {
         FormBody.Builder builder = new FormBody.Builder();
         if (params != null && params.size() > 0) {

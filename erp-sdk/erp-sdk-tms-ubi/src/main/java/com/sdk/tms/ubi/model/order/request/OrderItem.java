@@ -1,7 +1,9 @@
 package com.sdk.tms.ubi.model.order.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -14,6 +16,8 @@ import java.io.Serializable;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class OrderItem implements Serializable {
     private static final long serialVersionUID = 2801814838883246461L;
     //Item编号
