@@ -222,7 +222,7 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
          * 发货时间
          */
-        private LocalDateTime deliverTime;
+        private LocalDateTime deliveryTime;
         /**
          * 物流跟踪号
          */
