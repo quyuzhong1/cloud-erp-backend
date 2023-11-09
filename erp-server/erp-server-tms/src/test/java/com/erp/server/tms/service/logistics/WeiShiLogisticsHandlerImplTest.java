@@ -5,6 +5,7 @@ import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.ErpServerTmsApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -57,7 +59,7 @@ public class WeiShiLogisticsHandlerImplTest {
                 .channelCode("MX1001")
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("wj12345167710")
+                .deliveryNo("wj12345167720")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -92,10 +94,10 @@ public class WeiShiLogisticsHandlerImplTest {
 
     @Test
     public void getLabelUrl() throws IOException {
-//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-//        logisticsQueryVO.setTransportNo(Collections.singletonList("WSHMX3133453788YQ"));
-//        String base64 = weiShiLogisticsHandler.getLabelUrl(logisticsQueryVO).getData();
-//        System.out.println(base64);
+        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+        logisticsQueryVO.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711"));
+        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(logisticsQueryVO);
+        System.out.println(result);
     }
 
     @Test
