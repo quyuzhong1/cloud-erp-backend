@@ -65,11 +65,11 @@ public class FbaInventoryController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
      **/
-    @PostMapping("/paging")
+    @PostMapping("/summaryNumber")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:initStock:paging",
-            tableAlias = "ism"
+            menuCode = "wms:fbaInventory:paging",
+            tableAlias = "fi"
     )
     public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated FbaInventoryDTO.PagingParamDTO dto) {
         FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(dto);
