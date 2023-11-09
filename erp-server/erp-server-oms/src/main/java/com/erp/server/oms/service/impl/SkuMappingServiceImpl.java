@@ -568,7 +568,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
             listSkuDTO.setDictPlatform(listSkuParamDTO.getDictPlatform());
             //查询库存sku映射
-            SkuMappingEntity warehouseSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
+            SkuMappingEntity warehouseSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
                 //库存sku信息
                 ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(warehouseSkuMapping.getListingId())).findFirst().orElse(null);
@@ -578,11 +578,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 }
             }
             //查询平台sku信息
-            SkuMappingEntity platformSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId()) && StringUtils.isEmpty( obj.getWarehouseId()) && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())).findFirst().orElse(null);
+            SkuMappingEntity platformSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) && StringUtils.isEmpty( obj.getWarehouseId()) && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
                 //库存sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(platformListing)) {
+                    listSkuDTO.setSellerSkuNo(platformListing.getSkuNo());
+                    listSkuDTO.setSellerProductName(platformListing.getProductName());
                     listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
                     listSkuDTO.setPlatformProductName(platformListing.getPlatformProductName());
                 }
