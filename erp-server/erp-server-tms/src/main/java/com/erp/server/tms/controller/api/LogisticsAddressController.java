@@ -112,7 +112,7 @@ public class LogisticsAddressController extends BaseController {
     }
 
     /**
-     * 修改
+     * 详情
      *
      * @param id
      * @return ApiResult
@@ -130,7 +130,13 @@ public class LogisticsAddressController extends BaseController {
         return success(view);
     }
 
-    @GetMapping("/delete")
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:delete",

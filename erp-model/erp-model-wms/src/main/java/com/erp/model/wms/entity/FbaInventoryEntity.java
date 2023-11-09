@@ -28,11 +28,6 @@ import com.common.business.enums.ApproveStatusEnum;
 public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
 
     /**
-     * 第三方唯一编码
-     */
-    @TableField("fba_shipment_id")
-    private String fbaShipmentId;
-    /**
     * 仓库名称
     */
     @TableField("name")
@@ -137,12 +132,24 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
      */
     @TableField("data_end_time")
     private String dataEndTime;
-    
+
     /**
-     * 库龄 0-90 天的可售商品数量
+     * 库龄 0-30 天的可售商品数量
      */
-    @TableField("inventory_age_0_to_90_days")
-    private Integer inventoryAge0To90Days;
+    @TableField("inventory_age_0_to_30_days")
+    private String inventoryAge0To30Days;
+
+    /**
+     * 库龄 31-60 天的可售商品数量
+     */
+    @TableField("inventory_age_31_to_60_days")
+    private String inventoryAge31To60Days;
+
+    /**
+     * 库龄 61-90 天的可售商品数量
+     */
+    @TableField("inventory_age_61_to_90_days")
+    private Integer inventoryAge61To90Days;
 
     /**
      * 库龄 91-180 天的可售商品数量

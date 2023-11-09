@@ -2,13 +2,20 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.DictBasicTypeEnum;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnums;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnums;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.DictBasicService;
@@ -47,7 +54,6 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
-
 
 
     @Autowired
@@ -112,6 +118,36 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<LogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto) {
+        LogisticsSupplierDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<LogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
+        fillPagingData(list);
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 填充分页数据
+     *
+     * @param list
+     */
+    private void fillPagingData(List<LogisticsSupplierDTO.PagingViewDTO> list) {
+        for (LogisticsSupplierDTO.PagingViewDTO item : list) {
+            LogisticsSupplierTypeEnums type = item.getType();
+            item.setTypeName(type.getName());
+            Boolean disabled = item.getDisabled();
+            String disabledName = Objects.isNull(disabled) && !disabled ? "启用" : "禁用";
+            item.setDisabledName(disabledName);
+            String authStatus = item.getAuthStatus();
+            String authStatusName = LogisticsAuthStatusEnums.getName(authStatus);
+            item.setAuthStatusName(authStatusName);
+
+        }
     }
 
 
