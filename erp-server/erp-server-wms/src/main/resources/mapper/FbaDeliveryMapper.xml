@@ -119,7 +119,7 @@
         </if>
         <!--发货仓-->
         <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            AND fd.delever_warehouse_id in
+            AND fd.delivery_warehouse_id in
             <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
                 #{deliveryWarehouseId}
             </foreach>
