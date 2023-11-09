@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsBillMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsBillEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sales_platform" property="salesPlatform" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="outstock_id" property="outstockId" />
+       <result column="outstock_code" property="outstockCode" />
+       <result column="channel_id" property="channelId" />
+       <result column="order_time" property="orderTime" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="transport_no" property="transportNo" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        sales_platform, shop_id, shop_name, source_type, source_id, source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
+    </sql>
+
+
+</mapper>
