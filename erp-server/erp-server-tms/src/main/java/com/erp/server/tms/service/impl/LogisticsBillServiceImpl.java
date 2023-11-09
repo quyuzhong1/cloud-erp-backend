@@ -94,4 +94,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private void handleData(LogisticsBillEntity logisticsBillEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public Boolean logisticsBillBatchAdd(List<LogisticsBillDTO.AddDTO> addDTOList) {
+        return null;
+    }
 }

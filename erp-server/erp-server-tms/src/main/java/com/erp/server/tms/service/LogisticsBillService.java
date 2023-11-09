@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流单 服务类
@@ -32,5 +34,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     */
     Boolean update(LogisticsBillDTO.UpdateDTO dto);
 
-
+    /**
+     * 新增物流单
+     * @Author Luo_WG
+     * @Date 2023/11/9 18:04
+     * @param addDTOList
+     * @return java.lang.Boolean
+     **/
+    Boolean logisticsBillBatchAdd(List<LogisticsBillDTO.AddDTO> addDTOList);
 }

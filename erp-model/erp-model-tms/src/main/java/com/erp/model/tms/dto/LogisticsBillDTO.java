@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -105,8 +106,11 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 物流明细信息
+         */
+        @NotNull(message = "物流明细信息不能为空")
+        private List<LogisticsBillDetailDTO.AddDTO> detailList;
     }
 
     /**
