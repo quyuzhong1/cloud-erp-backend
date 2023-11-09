@@ -950,6 +950,10 @@ public enum ApiError implements Serializable {
     ERROR_SHIPPING_TEMPLATE_OTHER_COST(94009,"运费模板其他费用"),
     ERROR_SHIPPING_TEMPLATE_DISABLED(94010,"运费模板被渠道引用不支持停用"),
     ERROR_SHIPPING_TEMPLATE_DELETE(94011,"运费模板被渠道引用不支持删除"),
+    ERROR_SHIPPING_TEMPLATE_EXIST(94012,"运费模板已存在"),
+    ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_EXIST(94013,"已存在起始国【{}】、目的国【{}】运费规则"),
+    ERROR_SHIPPING_TEMPLATE_RULE_REGION_EXIST(94014,"已存在起始国【{}】、目的国【{}】、城市分区【{}】运费规则"),
+    ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_EXIST(94015,"已存在起始国【{}】、目的仓库【{}】运费规则"),
 
 
 

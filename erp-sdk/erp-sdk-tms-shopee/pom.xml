@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>erp-sdk-tms-shopee-v2</artifactId>
+    <artifactId>erp-sdk-tms-shopee</artifactId>
 
     <description>虾皮物流平台对接</description>
     <properties>

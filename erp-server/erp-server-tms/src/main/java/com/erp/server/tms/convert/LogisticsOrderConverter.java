@@ -37,24 +37,23 @@ public interface LogisticsOrderConverter {
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
             //TODO 渠道产品代码
-//            @Mapping(target = "logisticsServiceInfo.logisticsProductCode", source = "skuNo"),
+            @Mapping(target = "logisticsServiceInfo.logisticsProductCode", source = "logisticsChannelEntity.code"),
             //收货人
             @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.name"),
             @Mapping(target = "recipientInfo.phone", source = "receiverInfoVO.telNumber"),
             @Mapping(target = "recipientInfo.country", source = "receiverInfoVO.country"),
-//            @Mapping(target = "recipientInfo.province", source = "receiverInfoVO.province"),
+            @Mapping(target = "recipientInfo.state", source = "receiverInfoVO.province"),
             @Mapping(target = "recipientInfo.city", source = "receiverInfoVO.city"),
             @Mapping(target = "recipientInfo.district", source = "receiverInfoVO.district"),
-//            @Mapping(target = "recipientInfo.street", source = "addressEntity.name"),
             @Mapping(target = "recipientInfo.street", source = "receiverInfoVO.addressFirst"),
+//            @Mapping(target = "recipientInfo.house_number", source = "receiverInfoVO.addressFirst"),
             //发货人
             @Mapping(target = "sender.first_name", source = "senderInfo.name"),
             @Mapping(target = "sender.phone", source = "senderInfo.telNumber"),
             @Mapping(target = "sender.country", source = "senderInfo.country"),
-//            @Mapping(target = "sender.province", source = "senderInfo.province"),
-//            @Mapping(target = "sender.city", source = "senderInfo.city"),
-//            @Mapping(target = "sender.district", source = "senderInfo.district"),
-//            @Mapping(target = "recipientInfo.street", source = "addressEntity.name"),
+            @Mapping(target = "sender.state", source = "senderInfo.provinceName"),
+            @Mapping(target = "sender.city", source = "senderInfo.cityName"),
+            @Mapping(target = "sender.district", source = "senderInfo.districtName"),
             @Mapping(target = "sender.street", source = "senderInfo.addressFirst"),
     })
     OrderRequest orderRequestToDsf(LogisticsOrderVO logisticsOrderVO);
@@ -65,22 +64,18 @@ public interface LogisticsOrderConverter {
      * @param logisticsProductVO
      * @return
      */
-//    @Mappings({
-//            @Mapping(target = "declare_product_code", source = "declareModel"),
-//            @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
-//            @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
-//            @Mapping(target = "declare_product_code_qty", source = "quantity"),
-//            //出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
-//            @Mapping(target = "declare_unit_price_export", source = "declareCurrency"),
-//            //USD
-//            @Mapping(target = "currency_export", source = "declareCurrencySymbol"),
-//            @Mapping(target = "declare_unit_price_import", source = "destCurrency"),
-//            @Mapping(target = "currency_import", source = "destCurrencySymbol"),
-//            @Mapping(target = "brand_export", source = "channelId"),
-//            @Mapping(target = "brand_import", source = "channelId"),
-//            @Mapping(target = "currency_import", source = "channelId"),
-//            @Mapping(target = "currency_import", source = "channelId"),
-//    })
+    @Mappings({
+            @Mapping(target = "declare_product_code", source = "declareModel"),
+            @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),
+            @Mapping(target = "declare_product_name_en", source = "declareEnglishName"),
+            @Mapping(target = "declare_product_code_qty", source = "quantity"),
+            //出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
+            @Mapping(target = "declare_unit_price_export", source = "declareCurrency"),
+            //USD
+            @Mapping(target = "currency_export", source = "declareCurrencySymbol"),
+            @Mapping(target = "declare_unit_price_import", source = "destCurrency"),
+            @Mapping(target = "currency_import", source = "destCurrencySymbol")
+    })
     DeclareProductInfo dsfProductMapping(LogisticsProductVO logisticsProductVO);
 
     @Mappings({

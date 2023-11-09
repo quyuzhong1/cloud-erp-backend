@@ -112,6 +112,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     private static PlatformApiTaskEntity getPlatformApiTaskEntity(PlatformTaskDTO.AddDTO dto, PlatformApiEntity task) {
         PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
         entity.setShopId(dto.getShopId());
+        entity.setShopName(dto.getShopName());
         entity.setDictPlatform(dto.getDictPlatform());
         entity.setApiCode(task.getApiCode());
         entity.setApiName(task.getApiName());

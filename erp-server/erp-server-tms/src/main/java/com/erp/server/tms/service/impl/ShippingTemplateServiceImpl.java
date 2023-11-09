@@ -1,24 +1,67 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
+import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.*;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.server.tms.listener.ShippingTemplateExcelListener;
 import com.erp.server.tms.mapper.ShippingTemplateMapper;
-import com.erp.server.tms.service.ShippingTemplateService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 运费模板 服务实现类
@@ -30,10 +73,56 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTemplateMapper, ShippingTemplateEntity> implements ShippingTemplateService {
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+    @Resource
+    private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
+
+    @Resource
+    private ShippingTemplateRuleService shippingTemplateRuleService;
+
+    @Resource
+    private ShippingTemplateOtherCostService shippingTemplateOtherCostService;
+
+    @Resource
+    private ShippingRegionCityService shippingRegionCityService;
+
+    @Resource
+    private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+
+    @Override
+    public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ShippingTemplateDTO.TabListDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
+        return dbList;
+    }
+
+    @Override
+    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> pagingDTO) {
+        ShippingTemplateDTO.PagingParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<ShippingTemplateDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
+        //清空明细数据
+        List<ShippingTemplateDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        doOpHandleShippingTemplate(records);
+        return new PagingVO(pageData);
+    }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -51,18 +140,21 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             throw new ServiceException("运费模板保存失败");
         }
 
+        //新增运费规则
+        shippingTemplateRuleService.add(addDTO.getDetailList(),shippingTemplateEntity.getId());
+        //新增其他费用
+        shippingTemplateOtherCostService.add(addDTO.getOtherCostList(),shippingTemplateEntity.getId());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "运费模板" , shippingTemplateEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, shippingTemplateEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(shippingTemplateEntity.getId(), shippingTemplateEntity.getId());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(ShippingTemplateDTO.UpdateDTO updateDTO) {
@@ -77,14 +169,522 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         if(!save) {
             throw new ServiceException("运费模板保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //修改运费规则
+        shippingTemplateRuleService.update(updateDTO.getDetailList(),shippingTemplateEntity.getId());
+        //修改其他费用
+        shippingTemplateOtherCostService.update(updateDTO.getOtherCostList(),shippingTemplateEntity.getId());
 
         // 记录主单操作日志
-            log.info("编辑 开始记录运费模板日志数据，id：【{}】", shippingTemplateEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateEntity.getId(), "运费模板");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, null, shippingTemplateEntity.getId(), msg);
+        log.info("编辑 开始记录运费模板日志数据，id：【{}】", shippingTemplateEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateEntity.getId(), "运费模板");
+
+        operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+
+    @Override
+    public BigDecimal trialCalculation(ShippingTemplateDTO.TrialCalculationParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public ShippingTemplateDTO.ViewDTO view(String id) {
+        ShippingTemplateEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        ShippingTemplateDTO.ViewDTO viewDTO = BeanMapperUtils.map(ShippingTemplateDTO.ViewDTO.class, entity);
+
+        //运费规则
+        List<ShippingTemplateRuleEntity> ruleList = shippingTemplateRuleService.listByMainId(id);
+        List<ShippingTemplateRuleDTO.ViewDTO> detailList = BeanMapperUtils.copyList(ShippingTemplateRuleDTO.ViewDTO.class, ruleList);
+        //判断是否分区类型
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
+            handleRegionCity(detailList);
+        }
+        viewDTO.setDetailList(detailList);
+
+        //其他费用
+        List<ShippingTemplateOtherCostEntity> costList = shippingTemplateOtherCostService.listByMainId(id);
+        List<ShippingTemplateOtherCostDTO.ViewDTO> otherCostList = BeanMapperUtils.copyList(ShippingTemplateOtherCostDTO.ViewDTO.class, costList);
+        handleOtherCost(otherCostList);
+        viewDTO.setOtherCostList(otherCostList);
+        return viewDTO;
+    }
+
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateChannel(ShippingTemplateDTO.ChannelParamDTO dto) {
+        ShippingTemplateEntity entity = super.getById(dto.getId());
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+        List<ShippingTemplateRefChannelDTO.AddDTO> addList = new ArrayList<>();
+        for (String logisticsChannelId : dto.getLogisticsChannelIdList()) {
+            ShippingTemplateRefChannelDTO.AddDTO addDTO = new ShippingTemplateRefChannelDTO.AddDTO();
+            addDTO.setMainId(dto.getId());
+            addDTO.setLogisticsChannelId(logisticsChannelId);
+            addList.add(addDTO);
+        }
+        //添加渠道关联关系
+        shippingTemplateRefChannelService.add(addList,dto.getId());
+
+        //渠道信息
+        String channelNames = "";
+        if (CollectionUtils.isNotEmpty(dto.getLogisticsChannelIdList())) {
+            List<LogisticsChannelEntity> channelList = logisticsChannelService.listByIds(dto.getLogisticsChannelIdList());
+            channelNames = channelList.stream().map(LogisticsChannelEntity::getName).collect(Collectors.joining(","));
+        }
+        //添加日志
+        String msg = StrUtil.format("用户【{}】应用渠道【{}】", commonService.getUserInfo().getUserName(),  channelNames);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "应用渠道操作");
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateStatus(String id,Boolean disabled) {
+        ShippingTemplateEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+
+        List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(refList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DISABLED);
+        }
+
+        lambdaUpdate().eq(ShippingTemplateEntity::getId, id)
+                .set(ShippingTemplateEntity::getDisabled, disabled)
+                .update();
+
+        // 启用/停用日志数据
+        log.info("启用/停用 开始启用/停用运费模板单日志数据，id集合：【{}】", id);
+        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getName(), "启用/停用");
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        ShippingTemplateEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "运费模板"));
+
+        List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(refList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DELETE);
+        }
+
+        //删除规则
+        shippingTemplateRuleService.deleteByMainId(id);
+        //删除其他费用
+        shippingTemplateOtherCostService.deleteByMainId(id);
+        // 删除主单数据
+        removeById(id);
+        // 删除日志数据
+        log.info("删除 开始删除运费模板单日志数据，id集合：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getName(), "删除运费模板单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response,String billingMethod,String type) {
+        String path = getTemplatePath( billingMethod,  type);
+
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+
+
+    @Override
+    public Boolean importFile(String billingMethod, String type, MultipartFile excelFile, HttpServletResponse response) {
+
+        ShippingTemplateExcelListener excelListenerUtil = new ShippingTemplateExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<ShippingTemplateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ShippingTemplateExcelDTO > errorList = excelListenerUtil.getErrorList();
+
+        List<ShippingTemplateExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //处理验证成功数据
+        handleImportSuccessList(billingMethod,type,successList, errorList);
+        //根据传入参数获取模板地址
+        String excelPath =  getExportErrorExcelPath(billingMethod,type);
+
+        if (successList.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String name = "ShippingTemplateError";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 导入数据处理
+     * @author Will
+     * @date: 2023/11/8 18:19
+     * @param billingMethod
+     * @param type
+     * @param successList
+     * @param errorList
+
+     */
+    private void handleImportSuccessList (String billingMethod, String type,List<ShippingTemplateExcelDTO> successList,List<ShippingTemplateExcelDTO > errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //根据模板名称查询是否存在相同模板
+        List<String> nameList = successList.stream().map(ShippingTemplateExcelDTO::getName).distinct().collect(Collectors.toList());
+        List<ShippingTemplateEntity> shippingTemplateList = listByNames(nameList);
+
+        Map<String, List<ShippingTemplateExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(ShippingTemplateExcelDTO::getName));
+
+        for (Map.Entry<String, List<ShippingTemplateExcelDTO>> entry :  map.entrySet()) {
+            List<ShippingTemplateExcelDTO> value = entry.getValue();
+            ShippingTemplateExcelDTO excelValueDTO = value.get(0);
+            ShippingTemplateDTO.AddDTO addDTO = new ShippingTemplateDTO.AddDTO();
+            addDTO.setBillingMethod(billingMethod);
+            addDTO.setType(type);
+            addDTO.setName(excelValueDTO.getName());
+            addDTO.setCurrency(excelValueDTO.getCurrency());
+            addDTO.setEffectiveDate(LocalDateUtil.stringToLocalDateTime(excelValueDTO.getEffectiveDate()).toLocalDate());
+            addDTO.setExpireDate(LocalDateUtil.stringToLocalDateTime(excelValueDTO.getExpireDate()).toLocalDate());
+            addDTO.setVolumeSetting(Integer.valueOf(excelValueDTO.getVolumeSetting()));
+            addDTO.setPriceBinary(PriceBinaryEnum.getCode(excelValueDTO.getPriceBinary()));
+            addDTO.setWeightUnit(excelValueDTO.getWeightUnit());
+            List<ShippingTemplateRuleDTO.AddDTO> detailList = new ArrayList<>();
+            Boolean isError = Boolean.FALSE;
+            for (ShippingTemplateExcelDTO excelDTO : value) {
+                //验证数据
+                List<String> errorMsgList = checkImportData(billingMethod, type, excelDTO, shippingTemplateList);
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isError = Boolean.TRUE;
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    break;
+                }
+                ShippingTemplateRuleDTO.AddDTO ruleAddDTO = new ShippingTemplateRuleDTO.AddDTO();
+                ruleAddDTO.setFromCountry(excelDTO.getFromCountry());
+                ruleAddDTO.setToCountry(excelDTO.getToCountry());
+                ruleAddDTO.setRegion(excelDTO.getRegion());
+                ruleAddDTO.setToWarehouseName(excelDTO.getToWarehouseName());
+                ruleAddDTO.setStartWeight(new BigDecimal(excelDTO.getStartWeight()));
+                ruleAddDTO.setEndWeight(new BigDecimal(excelDTO.getEndWeight()));
+                ruleAddDTO.setFirstWeight(ObjectUtil.isEmpty(excelDTO.getFirstWeight()) ? null : new BigDecimal(excelDTO.getFirstWeight()));
+                ruleAddDTO.setFirstWeight(ObjectUtil.isEmpty(excelDTO.getFirstWeight()) ? null : new BigDecimal(excelDTO.getFirstWeight()));
+                ruleAddDTO.setFirstWeightShippingCost(ObjectUtil.isEmpty(excelDTO.getFirstWeightShippingCost()) ? null : new BigDecimal(excelDTO.getFirstWeightShippingCost()));
+                ruleAddDTO.setAdditionalUnitWeight(ObjectUtil.isEmpty(excelDTO.getAdditionalUnitWeight()) ? null : new BigDecimal(excelDTO.getAdditionalUnitWeight()));
+                ruleAddDTO.setAdditionalPrice(ObjectUtil.isEmpty(excelDTO.getAdditionalPrice()) ? null : new BigDecimal(excelDTO.getAdditionalPrice()));
+                ruleAddDTO.setShippingPrice(ObjectUtil.isEmpty(excelDTO.getShippingPrice()) ? null : new BigDecimal(excelDTO.getShippingPrice()));
+                ruleAddDTO.setRegistrationCost(ObjectUtil.isEmpty(excelDTO.getRegistrationCost()) ? null : new BigDecimal(excelDTO.getRegistrationCost()));
+                ruleAddDTO.setOperatingCost(ObjectUtil.isEmpty(excelDTO.getOperatingCost()) ? null : new BigDecimal(excelDTO.getOperatingCost()));
+                ruleAddDTO.setMinCost(ObjectUtil.isEmpty(excelDTO.getMinCost()) ? null : new BigDecimal(excelDTO.getMinCost()));
+                detailList.add(ruleAddDTO);
+            }
+            //更新错误数据
+            if (isError) {
+                errorList.addAll(value);
+                continue;
+            }
+            addDTO.setDetailList(detailList);
+            //其他费用
+            List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList = addShippingTemplateOtherCost(excelValueDTO);
+            addDTO.setOtherCostList(otherCostList);
+            this.add(addDTO);
+        }
+    }
+
+    private List<ShippingTemplateOtherCostDTO.AddDTO> addShippingTemplateOtherCost (ShippingTemplateExcelDTO excelValueDTO) {
+        List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList = new ArrayList<>();
+        ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
+        for (ShippingCostNameEnum shippingCostNameEnum : values) {
+            ShippingTemplateOtherCostDTO.AddDTO addDTO = new ShippingTemplateOtherCostDTO.AddDTO();
+            addDTO.setDictCode(shippingCostNameEnum.getCode());
+            addDTO.setCalculationMethod(shippingCostNameEnum.getType());
+            JSONObject jsonObject = JSONUtil.parseObj(excelValueDTO);
+            addDTO.setCostSettingValue(ObjectUtil.isEmpty(jsonObject.get(shippingCostNameEnum.getCode())) ? null : new BigDecimal(jsonObject.get(shippingCostNameEnum.getCode()).toString()));
+            addDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
+            otherCostList.add(addDTO);
+        }
+        return otherCostList;
+    }
+
+    private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO,List<ShippingTemplateEntity> shippingTemplateList) {
+        List<String> errorMsgList = new ArrayList<>();
+
+        long count = shippingTemplateList.stream().filter(obj -> obj.getName().equals(addDTO.getName())).count();
+        if (count > 0) {
+            errorMsgList.add("已存在相同模板");
+        }
+
+        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
+                errorMsgList.add("目的地不能为空");
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
+                errorMsgList.add("目的地不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getRegion())) {
+                errorMsgList.add("城市分区不能为空");
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
+            if (ObjectUtil.isEmpty(addDTO.getToWarehouseName())) {
+                errorMsgList.add("目的仓不能为空");
+            }
+        }
+        if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+            if (ObjectUtil.isEmpty(addDTO.getFirstWeight())) {
+                errorMsgList.add("首重不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getFirstWeightShippingCost())) {
+                errorMsgList.add("首重运费不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getAdditionalUnitWeight())) {
+                errorMsgList.add("续重单位重量不能为空");
+            }
+            if (ObjectUtil.isEmpty(addDTO.getAdditionalPrice())) {
+                errorMsgList.add("续重单价不能为空");
+            }
+        }
+        if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+            if (ObjectUtil.isEmpty(addDTO.getShippingPrice())) {
+                errorMsgList.add("运费单价不能为空");
+            }
+        }
+        return errorMsgList;
+    }
+
+    @Override
+    public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO params, HttpServletResponse response) {
+        List<ShippingTemplateDTO.ListDTO> resultList = this.baseMapper.listByExportExcel(params);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //数据赋值处理
+        doOpHandleShippingTemplate(resultList);
+        String name = "运费模板列表";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/shippingTemplate.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("运费模板列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+
+
+    /**
+     * @description: 处理分区城市
+     * @author Will
+     * @date: 2023/11/8 11:44
+     * @param detailList
+     */
+    private void handleRegionCity (List<ShippingTemplateRuleDTO.ViewDTO> detailList) {
+        for (ShippingTemplateRuleDTO.ViewDTO viewDTO :detailList) {
+            List<ShippingRegionCityEntity> list = shippingRegionCityService.listByRuleId(viewDTO.getId());
+            if (CollectionUtils.isEmpty(list)) {
+                continue;
+            }
+            List<String> cityList = list.stream().map(ShippingRegionCityEntity::getCity).collect(Collectors.toList());
+            viewDTO.setCityList(cityList);
+        }
+
+    }
+
+    /**
+     * @description: 处理其他费用
+     * @author Will
+     * @date: 2023/11/8 12:08
+     * @param otherCostList
+     */
+    private void handleOtherCost(List<ShippingTemplateOtherCostDTO.ViewDTO> otherCostList) {
+        //计算方式
+        List<String> otherCostIdList = otherCostList.stream().map(ShippingTemplateOtherCostDTO.ViewDTO::getId).collect(Collectors.toList());
+        List<ShippingTemplateCostSettingEntity> list = shippingTemplateCostSettingService.listByOtherCostIds(otherCostIdList);
+
+        for (ShippingTemplateOtherCostDTO.ViewDTO viewDTO : otherCostList) {
+
+            List<ShippingTemplateCostSettingEntity> costSettingEntityList = list.stream().filter(obj -> obj.getOtherCostId().equals(viewDTO.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(costSettingEntityList)) {
+                List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = BeanMapperUtils.copyList(ShippingTemplateCostSettingDTO.ViewDTO.class, costSettingEntityList);
+                //计算方式字典
+                List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(viewDTO.getCalculationMethod());
+                for (ShippingTemplateCostSettingDTO.ViewDTO costSettingDTO : costSettingList) {
+                    String name = dictList.stream().filter(obj -> obj.getCode().equals(costSettingDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    costSettingDTO.setName(name);
+                }
+                viewDTO.setCostSettingList(costSettingList);
+            }
+            //数值设置
+            if (StringUtils.isNotBlank(viewDTO.getExtendJson())) {
+                ExtendJsonDTO.CommonDTO jsonDTO = JSONUtil.toBean(viewDTO.getExtendJson(), ExtendJsonDTO.CommonDTO.class);
+                viewDTO.setExtendJsonDto(jsonDTO);
+            }
+        }
+    }
+
+    /**
+     * @description: 根据名称集合查询
+     * @author Will
+     * @date: 2023/11/8 18:37
+     * @param nameList
+     * @return List<ShippingTemplateEntity>
+     */
+    private List<ShippingTemplateEntity> listByNames (List<String> nameList) {
+        if (CollectionUtils.isEmpty(nameList)) {
+            return Collections.EMPTY_LIST;
+        }
+       return lambdaQuery().in(ShippingTemplateEntity::getName,nameList).list();
+    }
+
+    /**
+     * @description: 根据名称查询
+     * @author Will
+     * @date: 2023/11/8 18:37
+     * @param name
+     * @return List<ShippingTemplateEntity>
+     */
+    private ShippingTemplateEntity listByName (String name) {
+        return lambdaQuery().eq(ShippingTemplateEntity::getName,name).one();
+    }
+
+    /**
+     * @description: 分页查询数据处理
+     * @author Will
+     * @date: 2023/11/6 16:43
+     * @param records
+     */
+    private void doOpHandleShippingTemplate (List<ShippingTemplateDTO.ListDTO> records) {
+
+        //渠道
+        List<String> idList = records.stream().map(ShippingTemplateDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(idList);
+
+        for (ShippingTemplateDTO.ListDTO listDTO : records) {
+            //模板类型名称
+            listDTO.setTypeName(ShippingTemplateTypeEnum.getName(listDTO.getType()));
+            //渠道名称
+            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).collect(Collectors.toList());
+            listDTO.setChannelNameList(channelNameList);
+            listDTO.setChannelNames(StrUtil.join(",",channelNameList));
+            //是否禁用
+            listDTO.setDisabledName(listDTO.getDisabled() ? "停用" : "启用");
+        }
+    }
+
+    /**
+     * @description: 导入模板名称
+     * @author Will
+     * @date: 2023/11/8 15:06
+     * @param billingMethod
+     * @param type
+     * @return String
+     */
+    private String getExportErrorExcelPath (String billingMethod,String type) {
+
+        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_country1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_country2.xlsx";
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_region1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_region2.xlsx";
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_warehouse1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplateError_warehouse2.xlsx";
+            }
+        }
+        throw new ServiceException(ApiError.ERROR_95131);
+    }
+
+    /**
+     * @description: 导入模板名称
+     * @author Will
+     * @date: 2023/11/8 15:06
+     * @param billingMethod
+     * @param type
+     * @return String
+     */
+    private String getTemplatePath (String billingMethod,String type) {
+
+        if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_country1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_country2.xlsx";
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_region1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_region2.xlsx";
+            }
+        }
+        if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_warehouse1.xlsx";
+            }
+            if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
+                return "classpath:excel/shippingTemplate_warehouse2.xlsx";
+            }
+        }
+        throw new ServiceException(ApiError.ERROR_95131);
     }
 
 
@@ -92,6 +692,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     * 新增修改处理数据
     */
     private void handleData(ShippingTemplateEntity shippingTemplateEntity) {
-    // TODO 验证数据 & 数据赋值
+
+        ShippingTemplateEntity entity = this.listByName(shippingTemplateEntity.getName());
+        if (ObjectUtil.isNotEmpty(entity) && !StrUtil.equals(entity.getId(),shippingTemplateEntity.getId())) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_EXIST);
+        }
     }
+
 }

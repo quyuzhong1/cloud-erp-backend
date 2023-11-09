@@ -63,10 +63,6 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
-        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop",AuthStatusEnum.ALREADY.getCode());
-        if (CollectionUtils.isEmpty(shopeeShop.getData())) {
-            return Collections.emptyList();
-        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -77,36 +73,29 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
             return Collections.emptyList();
         }
         List<ItemInfo> itemInfos = new ArrayList<>();
-        shopeeShop.getData().forEach(shopAuthEntity -> {
-            ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(shopAuthEntity.getShopId());
-            if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())) {
-                ShopAuthEntity shop = shopeeShopById.getData();
 
-//                long timest = System.currentTimeMillis() / 1000L;
-//                Long time_from = timest - (3600 * 24 * 14);
-//                Long time_to = timest;
-
-                ProductRequest productRequest = ProductRequest.builder()
-                        .host(cfgAppClient.getUrl())
-                        .offset(0)
-                        .token(shop.getAccessToken())
-                        .shopId(Long.parseLong(shop.getShopeeId()))
-                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
-                        .tmpPartnerKey(cfgAppClient.getClientSecret())
-                        .timeFrom(timeFrom)
-                        .timeTo(timeTo)
-                        .build();
-                List<ItemInfo> list = new ArrayList<>();
-                try {
-                    shopeeProductService.getAllProduct(productRequest, list);
-                }catch (Exception e){
-                    log.error("获取产品数据异常:{}", e.getMessage());
-                }
-                if (CollectionUtils.isNotEmpty(list)) {
-                    itemInfos.addAll(list);
-                }
+        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
+        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && shopeeShopById.getData().getType().equalsIgnoreCase("shopee_shop")) {
+            ProductRequest productRequest = ProductRequest.builder()
+                    .host(cfgAppClient.getUrl())
+                    .offset(0)
+                    .token(shopeeShopById.getData().getAccessToken())
+                    .shopId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
+                    .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                    .tmpPartnerKey(cfgAppClient.getClientSecret())
+                    .timeFrom(timeFrom)
+                    .timeTo(timeTo)
+                    .build();
+            List<ItemInfo> list = new ArrayList<>();
+            try {
+                shopeeProductService.getAllProduct(productRequest, list);
+            } catch (Exception e) {
+                log.error("获取产品数据异常:{}", e.getMessage());
             }
-        });
+            if (CollectionUtils.isNotEmpty(list)) {
+                itemInfos.addAll(list);
+            }
+        }
         // 返回下载源数据
         return itemInfos.stream()
                 .map(e -> new PlatformShopeeListingDTO(e, data))
@@ -116,7 +105,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformShopeeListingDTO> sourceDataList) {
-        if (CollectionUtils.isEmpty(sourceDataList)){
+        if (CollectionUtils.isEmpty(sourceDataList)) {
             return Collections.emptyList();
         }
         return sourceDataList.stream()

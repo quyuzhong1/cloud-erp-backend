@@ -26,6 +26,8 @@ public class PlatformTaskDTO {
          */
         @NotEmpty(message = "店铺id不能为空")
         private String shopId;
+
+        private String shopName;
         /**
          * 平台编码
          */
