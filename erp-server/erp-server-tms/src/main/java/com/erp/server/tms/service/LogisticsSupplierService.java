@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -42,4 +43,13 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @param dto
      */
     List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 物流商分页列表
+     * @author yl
+     * @date 2023-11-09 14:07
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.tms.dto.LogisticsSupplierDTO.PagingViewDTO>
+     */
+    PagingVO<LogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto);
 }
