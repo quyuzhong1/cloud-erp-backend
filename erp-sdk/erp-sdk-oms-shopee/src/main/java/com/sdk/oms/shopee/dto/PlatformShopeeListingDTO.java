@@ -63,12 +63,21 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
             }
         }
         PlatformProductDTO productDTO = new PlatformProductDTO()
+                // 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")
-                .setPlatformProductNo(itemInfo.getItemSku())
+                // 平台spu no
+                .setPlatformProductNo(String.valueOf(itemInfo.getId()))
+                // 平台sku no
+                .setPlatformSkuNo(itemInfo.getItemSku())
+                // 平台产品名称
                 .setPlatformProductName(itemInfo.getName())
+                //产品包装信息
                 .setProductPacking(processDimension(itemInfo.getDimension()))
+                //产品规格信息
                 .setProductSpec(String.valueOf(itemInfo.getCategoryId()))
+                // 产品图片 url
                 .setProductImageUrl(imageUrl)
+                //平台最后修改时间
                 .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
 
         return productDTO;

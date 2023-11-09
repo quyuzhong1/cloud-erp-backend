@@ -115,11 +115,16 @@ public class ShopeeOrderService {
         //create_time, update_time.
         paramMap.put("time_range_field", "create_time");
         //15天内
+//        Long time_from = timestamp - (3600 * 24 * 14);
+//        Long time_to = timestamp;
+
         if (Objects.nonNull(orderRequest.getTimeFrom())) {
             paramMap.put("time_from", orderRequest.getTimeFrom());
+//            paramMap.put("time_from", time_from);
         }
         if (Objects.nonNull(orderRequest.getTimeTo())) {
             paramMap.put("time_to", orderRequest.getTimeTo());
+//            paramMap.put("time_to", time_to);
         }
         paramMap.put("timestamp", timestamp);
         //1-100
