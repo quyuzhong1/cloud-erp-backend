@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -21,7 +22,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsBillDetailDTO.AddDTO dto);
+    Boolean add(LogisticsBillDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -30,7 +31,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     * @param dto
     * @return
     */
-    Boolean update(LogisticsBillDetailDTO.UpdateDTO dto);
+    Boolean update(LogisticsBillDTO.UpdateDTO dto, String mainId);
 
 
 }

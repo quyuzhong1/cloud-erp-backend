@@ -18,5 +18,5 @@ public interface LogisticsBillFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/logisticsBill/logisticsBillBatchSave")
-    Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.AddDTO> addDTOList);
+    Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.UpdateDTO> addDTOList);
 }

@@ -3,15 +3,21 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
+import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.mapper.FbaDeliveryLogisticsMapper;
 import com.erp.server.wms.service.FbaDeliveryLogisticsService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.FbaDeliveryService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
@@ -25,8 +31,15 @@ import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 /**
  * <p>
  * FBA发货单物流信息表 服务实现类
@@ -42,6 +55,10 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private FbaDeliveryService fbaDeliveryService;
+    @Autowired
+    private LogisticsBillFeign logisticsBillFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -50,10 +67,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = new FbaDeliveryLogisticsEntity();
         BeanMapperUtils.copy(dto, fbaDeliveryLogisticsEntity);
         fbaDeliveryLogisticsEntity.setRemark(dto.getLogisticsRemark());
-
-        List<String> trackingNoList = dto.getTrackingNoList();
-
-
 
         // 数据处理
         handleData(fbaDeliveryLogisticsEntity, mainId, code);
@@ -125,6 +138,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     @Override
     public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids) {
         List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> viewList = new ArrayList<>();
+
         List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = this.listByMainIds(ids);
         for (FbaDeliveryLogisticsEntity logisticsEntity : fbaDeliveryLogisticsEntities) {
             FbaDeliveryLogisticsDTO.DeliveryLogisticsView view = new FbaDeliveryLogisticsDTO.DeliveryLogisticsView();
@@ -140,6 +154,33 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     @Override
     public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
         List<FbaDeliveryLogisticsEntity> list = new ArrayList<>();
+        List<String> mainIds = dto.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listByIds(mainIds);
+        List<LogisticsBillDTO.UpdateDTO> updateDTOList = new ArrayList<>();
+        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
+            FbaDeliveryEntity fbaDeliveryEntity = fbaDeliveryEntities.stream().filter(req -> req.getId().equals(deliveryLogisticsSave.getMainId())).findFirst().orElse(new FbaDeliveryEntity());
+            LogisticsBillDTO.UpdateDTO updateDTO = new LogisticsBillDTO.UpdateDTO();
+            updateDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
+            updateDTO.setShopId(fbaDeliveryEntity.getShopId());
+            updateDTO.setShopName(fbaDeliveryEntity.getShopName());
+            updateDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
+            updateDTO.setSourceId(fbaDeliveryEntity.getSourceId());
+            updateDTO.setSourceCode(fbaDeliveryEntity.getCode());
+            updateDTO.setOutstockId("");
+            updateDTO.setOutstockCode("");
+            updateDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel());
+            updateDTO.setOrderTime(null);
+            updateDTO.setDeliveryTime(null);
+            List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
+
+            for (String transportNo : trackingNoList) {
+
+            }
+
+        }
+
+
+        logisticsBillFeign.logisticsBillBatchSave(updateDTOList);
         for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
             FbaDeliveryLogisticsEntity entity = new FbaDeliveryLogisticsEntity();
             BeanMapper.copy(deliveryLogisticsSave, entity);
