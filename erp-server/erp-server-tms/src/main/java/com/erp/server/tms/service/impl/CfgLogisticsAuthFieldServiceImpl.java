@@ -16,9 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.CfgLogisticsAuthFieldDTO;
+
 import java.util.*;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 物流商授权字段配置表 服务实现类
@@ -30,10 +33,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class CfgLogisticsAuthFieldServiceImpl extends SuperServiceImpl<CfgLogisticsAuthFieldMapper, CfgLogisticsAuthFieldEntity> implements CfgLogisticsAuthFieldService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -44,7 +44,7 @@ public class CfgLogisticsAuthFieldServiceImpl extends SuperServiceImpl<CfgLogist
         // 数据处理
         handleData(cfgLogisticsAuthFieldEntity);
         boolean save = super.save(cfgLogisticsAuthFieldEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流商授权字段配置单保存失败");
         }
 
@@ -52,29 +52,37 @@ public class CfgLogisticsAuthFieldServiceImpl extends SuperServiceImpl<CfgLogist
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgLogisticsAuthFieldDTO.UpdateDTO updateDTO) {
         CfgLogisticsAuthFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流商授权字段配置单"));
-        CfgLogisticsAuthFieldEntity cfgLogisticsAuthFieldEntity =  BeanMapperUtils.map(CfgLogisticsAuthFieldEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商授权字段配置单"));
+        CfgLogisticsAuthFieldEntity cfgLogisticsAuthFieldEntity = BeanMapperUtils.map(CfgLogisticsAuthFieldEntity.class, updateDTO);
 
         // 数据处理
         handleData(cfgLogisticsAuthFieldEntity);
         boolean save = super.updateById(cfgLogisticsAuthFieldEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流商授权字段配置单保存失败");
         }
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<CfgLogisticsAuthFieldDTO.ListDTO> listByLogisticsPlatform(String platform) {
+        List<CfgLogisticsAuthFieldEntity> list = this.lambdaQuery().
+                eq(CfgLogisticsAuthFieldEntity::getLogisticsPlatform, platform).list();
+        List<CfgLogisticsAuthFieldDTO.ListDTO> resultList = BeanMapperUtils.copyList(CfgLogisticsAuthFieldDTO.ListDTO.class,list);
+        return resultList;
+    }
+
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(CfgLogisticsAuthFieldEntity cfgLogisticsAuthFieldEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

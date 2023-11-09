@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.CfgLogisticsAuthFieldDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流商授权字段配置表 服务类
@@ -32,5 +34,12 @@ public interface CfgLogisticsAuthFieldService extends SuperService<CfgLogisticsA
     */
     Boolean update(CfgLogisticsAuthFieldDTO.UpdateDTO dto);
 
-
+    /***
+     * 根据平台查询对应字段
+     * @author yl
+     * @date 2023-11-09 18:12
+     * @param platform
+     * @return java.util.List<com.erp.model.tms.dto.CfgLogisticsAuthFieldDTO.ListDTO>
+     */
+    List<CfgLogisticsAuthFieldDTO.ListDTO> listByLogisticsPlatform(String platform);
 }
