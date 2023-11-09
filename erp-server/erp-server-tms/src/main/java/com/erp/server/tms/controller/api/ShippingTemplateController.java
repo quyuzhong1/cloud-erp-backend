@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInfoDTO;
@@ -289,4 +290,22 @@ public class ShippingTemplateController extends BaseController {
         return success(resultDTOS);
     }
 
+
+    /**
+     * 查询其他费用数据
+     * @author Will
+     * @date: 2023/11/9 9:27
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @LogViewService
+    @GetMapping("/viewOtherCost")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:shippingTemplate:viewOtherCost",
+            serviceClass = ShippingTemplateService.class,
+            keyIdName = "id")
+    public ApiResult<List<ShippingTemplateOtherCostDTO.ViewDTO>> viewOtherCost() {
+        List<ShippingTemplateOtherCostDTO.ViewDTO> list = shippingTemplateService.viewOtherCost();
+        return success(list);
+    }
 }

@@ -175,7 +175,7 @@ public class ShippingTemplateDTO implements Serializable {
         private String name;
 
         /**
-        * 计费方式
+        * 计费方式 （字典 shippingBillingMethod）
         */
         private String billingMethod;
 
@@ -195,7 +195,7 @@ public class ShippingTemplateDTO implements Serializable {
         private String weightUnit;
 
         /**
-        * 价格进制
+        * 价格进制（字典 priceBinary）
         */
         private Integer priceBinary;
 
