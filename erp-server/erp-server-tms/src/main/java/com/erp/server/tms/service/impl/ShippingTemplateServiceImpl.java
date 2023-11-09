@@ -352,6 +352,22 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<ShippingTemplateOtherCostDTO.ViewDTO> viewOtherCost() {
+
+        ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
+        List<ShippingTemplateOtherCostDTO.ViewDTO> list = new ArrayList<>();
+        for (ShippingCostNameEnum shippingCostNameEnum : values) {
+            ShippingTemplateOtherCostDTO.ViewDTO viewDTO = new ShippingTemplateOtherCostDTO.ViewDTO();
+            viewDTO.setDictCode(shippingCostNameEnum.getCode());
+            viewDTO.setDictName(shippingCostNameEnum.getName());
+            viewDTO.setCalculationMethod(shippingCostNameEnum.getType());
+            viewDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
+            list.add(viewDTO);
+        }
+        return list;
+    }
+
     /**
      * @description: 导入数据处理
      * @author Will

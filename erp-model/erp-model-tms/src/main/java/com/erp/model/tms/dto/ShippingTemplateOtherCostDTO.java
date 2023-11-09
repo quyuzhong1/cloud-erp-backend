@@ -54,7 +54,7 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         private String dictName;
 
         /**
-        * 计算方式
+        * 计算方式 （字典 discountRate折扣费率,fuelSurchargeRate燃油附加费率,side边长,vote票）
         */
         private String calculationMethod;
 
