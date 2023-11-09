@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import java.time.LocalDateTime;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnums;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -44,6 +46,98 @@ public class LogisticsSupplierDTO implements Serializable {
          * 数量
          */
         private Integer count;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 物流商
+         */
+        private String name;
+        /**
+         * 授权状态集合
+         */
+        private List<String> authStatusList;
+
+        /**
+         * 启用状态集合
+         */
+        private List<Boolean> disabledList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDateTime>  createTimeList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDateTime>  updateTimeList;
+
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 类型
+         */
+        private LogisticsSupplierTypeEnums type;
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
+        /**
+         * 禁用状态 false 未禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 启用状态名
+         */
+        private String disabledName;
+
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 授权状态名
+         */
+        private String authStatusName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 最新授权时间
+         */
+        private LocalDateTime  authTime;
+
+
+
+
+
+
 
     }
 

@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +49,32 @@ public class LogisticsSupplierController extends BaseController {
      * @param dto
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsSupplier:paging",
+            tableAlias = "ci"
+    )
     public ApiResult<List<LogisticsSupplierDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<LogisticsSupplierDTO.TabListDTO> tabList = logisticsSupplierService.tabList(dto);
         return success(tabList);
     }
 
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsSupplier:paging",
+            tableAlias = "ls"
+    )
+    public ApiResult<PagingVO<LogisticsSupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto) {
+        PagingVO<LogisticsSupplierDTO.PagingViewDTO> pagingVO = logisticsSupplierService.paging(dto);
+        return success(pagingVO);
+    }
 
 
     /**
