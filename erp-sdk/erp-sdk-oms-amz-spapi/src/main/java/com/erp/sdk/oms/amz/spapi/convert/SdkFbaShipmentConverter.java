@@ -36,10 +36,10 @@ public interface SdkFbaShipmentConverter {
             @Mapping(target = "packType", constant = "?"),
             @Mapping(target = "deliveryFromAddress", expression = "java(dto.combineDeliveryFromAddress())"),
             @Mapping(target = "fbaShipmentId", source = "shipmentInfo.shipmentId"),
-            @Mapping(target = "countryName", source = ""),
+//            @Mapping(target = "countryName", source = ""),
             @Mapping(target = "deliveryStatus", constant = "unShipped"),
-            @Mapping(target = "shipmentReceiveTime", source = ""),
-            @Mapping(target = "receiveDTOList")
+//            @Mapping(target = "shipmentReceiveTime", source = ""),
+//            @Mapping(target = "receiveDTOList")
     })
     PlatformFbaShipmentDTO downloadDtoToSaveDto(PlatformAmazonFbaShipmentDTO dto);
 
