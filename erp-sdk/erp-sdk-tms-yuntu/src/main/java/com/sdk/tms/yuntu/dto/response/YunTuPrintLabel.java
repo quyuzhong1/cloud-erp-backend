@@ -20,7 +20,7 @@ public class YunTuPrintLabel {
     private String base64;
 
     //客户单号
-    private String orderNumber;
+    private List<String> orderNumberList;
     //跟踪号
     private List<OrderInfo> orderInfos;
 
