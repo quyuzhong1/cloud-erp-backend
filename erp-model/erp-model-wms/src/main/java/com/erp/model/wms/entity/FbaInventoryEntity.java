@@ -1,9 +1,12 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.anno.Panno;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -104,11 +107,67 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
     */
     @TableField("unsellable_qty")
     private Integer unsellableQty;
+
     /**
-    * 库龄
-    */
-    @TableField("inventory_age")
-    private String inventoryAge;
+     * 待调仓数量
+     */
+    @TableField("reserved_transfers_qty")
+    private Integer reservedTransfersQty;
+
+    /**
+     * 调仓中数量
+     */
+    @TableField("reserved_processing_qty")
+    private Integer reservedProcessingQty;
+
+    /**
+     * 买家订单数量
+     */
+    @TableField("reserved_order_qty")
+    private Integer reservedOrderQty;
+
+    /**
+     * 数据开始时间
+     */
+    @TableField("data_start_time")
+    private String dataStartTime;
+
+    /**
+     * 数据结束时间
+     */
+    @TableField("data_end_time")
+    private String dataEndTime;
+    
+    /**
+     * 库龄 0-90 天的可售商品数量
+     */
+    @TableField("inventory_age_0_to_90_days")
+    private Integer inventoryAge0To90Days;
+
+    /**
+     * 库龄 91-180 天的可售商品数量
+     */
+    @TableField("inventory_age_91_to_180_days")
+    private String inventoryAge91To180Days;
+
+    /**
+     * 库龄 181-270 天的可售商品数量
+     */
+    @TableField("inventory_age_181_to_270_days")
+    private Integer inventoryAge181To270Days;
+
+    /**
+     * 库龄 271-365 天的可售商品数量
+     */
+    @TableField("inventory_age_271_to_365_days")
+    private Integer inventoryAge271To365Days;
+
+    /**
+     * 库龄 365 天以上的可售商品数量
+     */
+    @TableField("inventory_age_365_plus_days")
+    private Integer inventoryAge365PlusDays;
+
 
 
     public static final String PLATFORM_CODE = "platform_code";
