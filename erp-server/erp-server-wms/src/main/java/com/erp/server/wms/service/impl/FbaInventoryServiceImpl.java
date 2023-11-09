@@ -12,6 +12,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
@@ -163,7 +164,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public List<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(String id) {
-
-        return null;
+        List<FbaInventoryReservedEntity> fbaInventoryReservedEntities = fbaInventoryReservedService.listByMainId(id);
+        List<FbaInventoryDTO.InventoryReservedView> inventoryReservedViews = BeanMapper.copyList(fbaInventoryReservedEntities, FbaInventoryDTO.InventoryReservedView.class);
+        return inventoryReservedViews;
     }
 }

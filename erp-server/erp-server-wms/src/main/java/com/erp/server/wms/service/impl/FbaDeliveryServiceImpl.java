@@ -12,8 +12,12 @@ import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -101,6 +105,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
+    @Autowired
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -502,8 +508,34 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         * */
         if (ApproveType.PASS.equals(dto.getType())) {
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+/*            List<InOutStockDTO> inOutStockList = new ArrayList<>();
+            List<String> skuNoList = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+            for (FbaDeliveryDetailEntity addDTO : detailEntityList) {
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(addDTO.getSkuNo())).findFirst().orElse(new SkuVO());
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
+                inOutStockDTO.setSourceId(entity.getId());
+                inOutStockDTO.setSourceCode(entity.getCode());
+                inOutStockDTO.setSourceDetailId(addDTO.getId());
+                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setSkuId(skuVO.getSkuId());
+                inOutStockDTO.setSkuNo(addDTO.getSkuNo());
+                inOutStockDTO.setQty(addDTO.getDeliveryQty());
+                inOutStockDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+                inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
+                inOutStockList.add(inOutStockDTO);
+            }
+            //添加冻结库存
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            inventoryInOutStockDTO.setParamList(inOutStockList);
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);*/
+
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
+
                 //提交
                 transferOutService.submit(Arrays.asList(transferOutId));
                 //审核
