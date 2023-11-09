@@ -20,7 +20,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
 /**
- * 物理商表
+ * 物理商
  *
  * @author Lambda
  * @since 2023-11-02

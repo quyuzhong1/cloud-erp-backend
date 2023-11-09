@@ -54,7 +54,7 @@ public class ShippingTemplateEntity extends BaseEntity<ShippingTemplateEntity> {
     * 材积设置
     */
     @TableField("volume_setting")
-    private String volumeSetting;
+    private Integer volumeSetting;
     /**
     * 生效日期
     */

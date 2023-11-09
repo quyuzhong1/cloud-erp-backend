@@ -12,8 +12,12 @@ import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -101,6 +105,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
+    @Autowired
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -502,8 +508,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         * */
         if (ApproveType.PASS.equals(dto.getType())) {
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
+
                 //提交
                 transferOutService.submit(Arrays.asList(transferOutId));
                 //审核

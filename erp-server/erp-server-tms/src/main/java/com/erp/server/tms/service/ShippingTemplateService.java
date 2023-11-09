@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -122,4 +123,11 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @return Boolean
      */
     Boolean importFile(String billingMethod, String type, MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 查询其他费用
+     * @author Will
+     * @date: 2023/11/9 9:27
+     * @return List<ViewDTO>
+     */
+    List<ShippingTemplateOtherCostDTO.ViewDTO> viewOtherCost();
 }

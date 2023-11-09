@@ -10,13 +10,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.DictNodeDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.service.DictCountryService;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -67,4 +66,19 @@ public class DictCountryController extends BaseController {
         List<DictCountryDTO.CascadeDTO> list = dictCountryService.areaCountryListByType(type);
         return success(list);
     }
+
+
+    /**
+     * 查询国家区域数据
+     * @author Will
+     * @date: 2023/11/9 9:36
+     * @param dto
+     * @return ApiResult<List<ListRegionDTO>>
+     */
+    @PostMapping("/listAreaCountry")
+    public ApiResult<List<DictCountryDTO.ListRegionDTO>> listAreaCountry(@RequestBody @Validated DictCountryDTO.ListParamDTO dto) {
+        List<DictCountryDTO.ListRegionDTO> list = dictCountryService.listAreaCountry(dto);
+        return success(list);
+    }
+
 }
