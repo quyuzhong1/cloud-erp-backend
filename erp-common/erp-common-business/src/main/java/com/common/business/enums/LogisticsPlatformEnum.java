@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Created by yl
  */
 public enum LogisticsPlatformEnum implements EnumMessage {
-
+    SHOPEE("Shopee", "Shopee", "虾皮", "003"),
     //物流平台
     SDF("SDF", "递四方", "递四方(新)", "41"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "42"),
