@@ -416,9 +416,19 @@ public class FbaInventoryDTO implements Serializable {
         private Integer unsellableQty;
 
         /**
-         * 库龄 0-90 天的可售商品数量
+         * 库龄 0-30 天的可售商品数量
          */
-        private Integer inventoryAge0To90Days;
+        private Integer inventoryAge0To30Days;
+
+        /**
+         * 库龄 31-60 天的可售商品数量
+         */
+        private Integer inventoryAge31To60Days;
+
+        /**
+         * 库龄 61-90 天的可售商品数量
+         */
+        private Integer inventoryAge61To90Days;
 
         /**
          * 库龄 91-180 天的可售商品数量

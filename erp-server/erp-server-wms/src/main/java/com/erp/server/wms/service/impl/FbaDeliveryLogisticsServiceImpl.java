@@ -50,6 +50,9 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity = new FbaDeliveryLogisticsEntity();
         BeanMapperUtils.copy(dto, fbaDeliveryLogisticsEntity);
         fbaDeliveryLogisticsEntity.setRemark(dto.getLogisticsRemark());
+
+        List<String> trackingNoList = dto.getTrackingNoList();
+
         // 数据处理
         handleData(fbaDeliveryLogisticsEntity, mainId, code);
 
