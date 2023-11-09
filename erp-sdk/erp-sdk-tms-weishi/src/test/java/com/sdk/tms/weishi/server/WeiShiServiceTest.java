@@ -1,14 +1,8 @@
 package com.sdk.tms.weishi.server;
 
 
-import com.sdk.tms.weishi.dto.request.WeiShiCancelOrderRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiCreateOrderRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiGetLabelUrlRequest;
-import com.sdk.tms.weishi.dto.request.WeiShiInterceptOrderRequest;
-import com.sdk.tms.weishi.dto.response.WeiShiChannel;
-import com.sdk.tms.weishi.dto.response.WeiShiCreateOrder;
-import com.sdk.tms.weishi.dto.response.WeiShiGetLabelUrl;
-import com.sdk.tms.weishi.dto.response.WeiShiResponse;
+import com.sdk.tms.weishi.dto.request.*;
+import com.sdk.tms.weishi.dto.response.*;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -98,6 +92,16 @@ class WeiShiServiceTest {
                 .build()
                 ;
         WeiShiResponse response = weiShiService.cancelOrder(weiShiCancelOrderRequest);
+        System.out.println(response);
+    }
+
+    @Test
+    void getTrackNumber() {
+        WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
+                .referenceNoList(Arrays.asList("wj12345167710"))
+                .build()
+                ;
+        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
         System.out.println(response);
     }
 }
