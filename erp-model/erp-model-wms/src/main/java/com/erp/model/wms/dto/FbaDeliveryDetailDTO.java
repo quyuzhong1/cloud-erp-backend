@@ -60,6 +60,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
         private String fnSku;
 
         /**
+        * ERP的SKUId
+        */
+        private String skuId;
+
+        /**
         * ERP的SKU
         */
         private String skuNo;

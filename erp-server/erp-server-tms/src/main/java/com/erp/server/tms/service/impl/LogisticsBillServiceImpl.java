@@ -97,7 +97,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Override
     public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
-
-        return null;
+        List<LogisticsBillEntity> logisticsBillEntities = BeanMapper.copyList(addDTOList, LogisticsBillEntity.class);
+        boolean flag = this.saveBatch(logisticsBillEntities);
+        return flag;
     }
 }
