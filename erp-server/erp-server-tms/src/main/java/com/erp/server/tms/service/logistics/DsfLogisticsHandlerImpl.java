@@ -148,6 +148,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsQueryVOList
      * @return
      */
+    @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
         List<LogisticsOrderResponseVO> responseVOS = new ArrayList<>();
         logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {

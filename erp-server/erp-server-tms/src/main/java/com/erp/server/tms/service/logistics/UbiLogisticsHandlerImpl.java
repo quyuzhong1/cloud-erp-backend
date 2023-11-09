@@ -1,0 +1,121 @@
+package com.erp.server.tms.service.logistics;
+
+import com.common.business.annotation.PlatformType;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+/**
+ * @author zdy
+ * @ClassName UbiLogisticsHandlerImpl
+ * @description: TODO
+ * @date 2023年11月09日
+ * @version: 1.0
+ */
+@Slf4j
+@Component
+@PlatformType(PlatformDictEnum.UBI)
+public class UbiLogisticsHandlerImpl  extends AbstractLogisticsHandler {
+
+    /**
+     * 创建订单
+     *
+     * @param logisticsOrderVO
+     * @return
+     */
+    @Override
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 确认订单
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    public ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 取消订单
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    @Override
+    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 拦截订单
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    public ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 更新订单
+     *
+     * @param logisticsOrderVO
+     * @return
+     */
+    public ApiResult<String> updateOrder(LogisticsOrderVO logisticsOrderVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+    /**
+     * 查询订单(批量)
+     *
+     * @param logisticsQueryVOList
+     * @return
+     */
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrder(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 获取标签批量
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    public ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+    /**
+     * 轨迹查询
+     *
+     * @param logisticsQueryVO
+     * @return
+     */
+    public ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 渠道查询
+     *
+     * @param chanelQueryVO
+     * @return
+     */
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+}
