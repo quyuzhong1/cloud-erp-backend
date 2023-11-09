@@ -104,7 +104,14 @@
 
         <!--是否显示0库存-->
         <if test="params.isShowZeroInventory != null">
-
+            AND fi.fbm_fulfillable_qty > 0
+            AND fi.inbound_working_qty > 0
+            AND fi.inbound_shipped_qty > 0
+            AND fi.inbound_receiving_qty > 0
+            AND fi.fulfillable_qty > 0
+            AND fi.reserved_qty > 0
+            AND fi.researching_qty > 0
+            AND fi.unsellable_qty > 0
         </if>
 
         <!--数据权限-->
