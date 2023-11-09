@@ -508,30 +508,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         * */
         if (ApproveType.PASS.equals(dto.getType())) {
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
-/*            List<InOutStockDTO> inOutStockList = new ArrayList<>();
-            List<String> skuNoList = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
-            for (FbaDeliveryDetailEntity addDTO : detailEntityList) {
-                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(addDTO.getSkuNo())).findFirst().orElse(new SkuVO());
-                InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
-                inOutStockDTO.setSourceId(entity.getId());
-                inOutStockDTO.setSourceCode(entity.getCode());
-                inOutStockDTO.setSourceDetailId(addDTO.getId());
-                inOutStockDTO.setBillDate(LocalDate.now());
-                inOutStockDTO.setSkuId(skuVO.getSkuId());
-                inOutStockDTO.setSkuNo(addDTO.getSkuNo());
-                inOutStockDTO.setQty(addDTO.getDeliveryQty());
-                inOutStockDTO.setWarehouseId(entity.getDeliveryWarehouseId());
-                inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
-                inOutStockList.add(inOutStockDTO);
-            }
-            //添加冻结库存
-            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-            inventoryInOutStockDTO.setParamList(inOutStockList);
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
-            //更新库存
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);*/
 
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
