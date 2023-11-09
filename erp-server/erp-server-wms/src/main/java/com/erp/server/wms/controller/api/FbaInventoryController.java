@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -58,6 +59,24 @@ public class FbaInventoryController extends BaseController {
     }
 
     /**
+     * 列表汇总数量
+     * @Author Luo_WG
+     * @Date 2023/11/9 11:42
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
+     **/
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:paging",
+            tableAlias = "ism"
+    )
+    public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated FbaInventoryDTO.PagingParamDTO dto) {
+        FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(dto);
+        return success(result);
+    }
+
+    /**
      * 导出Excel数据
      * @author Luo_WG
      * @date:  2023-10-30
@@ -84,8 +103,8 @@ public class FbaInventoryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.InventoryReservedView>>
      **/
     @GetMapping("/listInventoryReserved")
-    public ApiResult<List<FbaInventoryDTO.InventoryReservedView>> listInventoryReserved(@RequestParam(value = "id") String id) {
-        List<FbaInventoryDTO.InventoryReservedView> result = fbaInventoryService.listInventoryReserved(id);
+    public ApiResult<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(@RequestParam(value = "id") String id) {
+        FbaInventoryDTO.InventoryReservedView result = fbaInventoryService.listInventoryReserved(id);
         return success(result);
     }
 }

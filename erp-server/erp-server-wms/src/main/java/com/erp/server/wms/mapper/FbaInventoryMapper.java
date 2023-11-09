@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -41,4 +42,13 @@ public interface FbaInventoryMapper extends BaseMapper<FbaInventoryEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaInventoryDTO.ListDTO>
      **/
     List<FbaInventoryDTO.ListDTO> listExport(@Param("params") FbaInventoryDTO.ExportDTO param);
+
+    /**
+     * 列表汇总数量
+     * @Author Luo_WG
+     * @Date 2023/11/9 11:44
+     * @param params
+     * @return com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber
+     **/
+    FbaInventoryDTO.SummaryNumber summaryNumber(@Param("params") FbaInventoryDTO.PagingParamDTO params);
 }

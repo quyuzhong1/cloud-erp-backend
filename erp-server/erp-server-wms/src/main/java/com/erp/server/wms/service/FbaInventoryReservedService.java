@@ -24,5 +24,5 @@ public interface FbaInventoryReservedService extends SuperService<FbaInventoryRe
      * @param main
      * @return java.util.List<com.erp.model.wms.entity.FbaInventoryReservedEntity>
      **/
-    List<FbaInventoryReservedEntity> listByMainId(String main);
+    FbaInventoryReservedEntity getByMainId(String main);
 }

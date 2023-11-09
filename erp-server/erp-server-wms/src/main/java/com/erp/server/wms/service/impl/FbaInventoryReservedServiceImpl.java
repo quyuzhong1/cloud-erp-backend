@@ -23,7 +23,7 @@ import java.util.List;
 public class FbaInventoryReservedServiceImpl extends SuperServiceImpl<FbaInventoryReservedMapper, FbaInventoryReservedEntity> implements FbaInventoryReservedService {
 
     @Override
-    public List<FbaInventoryReservedEntity> listByMainId(String main) {
-        return lambdaQuery().eq(FbaInventoryReservedEntity::getMainId, main).list();
+    public FbaInventoryReservedEntity getByMainId(String main) {
+        return lambdaQuery().eq(FbaInventoryReservedEntity::getMainId, main).last("LIMIT 1").one();
     }
 }
