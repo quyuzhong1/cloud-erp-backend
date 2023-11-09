@@ -11,6 +11,7 @@ import com.erp.model.tms.enums.BusinessTypeEnums;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -219,7 +220,8 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
+        List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
         LabelRequest labelRequest = LabelRequest.builder()
                 .requestNo(logisticsQueryVO.getTransportNo())
                 .logisticsProductCode(logisticsQueryVO.getLogisticsChannelEntity().getCode())
@@ -237,7 +239,8 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             //TODO 结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
-            return success(responseMsg.getData());
+            responses.add(LogisticsPrintLabelResponse.builder().base64((String) responseMsg.getData()).build());
+            return success(responses);
         }
     }
 

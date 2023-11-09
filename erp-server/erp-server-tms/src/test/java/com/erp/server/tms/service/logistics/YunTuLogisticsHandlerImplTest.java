@@ -90,7 +90,7 @@ public class YunTuLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO labelVO = new LogisticsGetLabelVO();
-        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901005"));
+        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006"));
         ApiResult<List<LogisticsPrintLabelResponse>> result = yunTuLogisticsHandler.getLabelList(labelVO);
         System.out.println(result);
     }

@@ -18,11 +18,16 @@ import com.erp.server.tms.service.LogisticsAuthService;
 import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.server.WeiShiService;
+import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
+import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
+import com.sdk.tms.yanwen.dto.response.YanWenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -73,15 +78,21 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) throws IOException {
-        WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
-                .referenceNo(labelVO.getTransportNo().get(0))
-                .build();
-        WeiShiGetLabelUrl labelResponse = weiShiService.getLabelUrl(request);
-        if(isFailure(labelResponse.getAsk())){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,labelResponse.getError().getErrMessage());
+        List<LogisticsPrintLabelResponse> result = new ArrayList<>();
+        for(String deliveryNo : labelVO.getDeliveryNo()){
+            WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
+                    .referenceNo(deliveryNo)
+                    .build();
+            WeiShiGetLabelUrl weiShiGetLabelUrlResponse = weiShiService.getLabelUrl(request);
+            if(isFailure(weiShiGetLabelUrlResponse.getAsk())){
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,deliveryNo+weiShiGetLabelUrlResponse.getError().getErrMessage());
+            }
+            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            response.setBase64(FileUtil.convertPdfUrlToBase64(weiShiGetLabelUrlResponse.getUrl()));
+            response.setDeliveryNoList(Collections.singletonList(deliveryNo));
+            result.add(response);
         }
-        String base64 = FileUtil.convertPdfUrlToBase64(labelResponse.getUrl());
-        return success();
+        return success(result);
     }
 
     /**
