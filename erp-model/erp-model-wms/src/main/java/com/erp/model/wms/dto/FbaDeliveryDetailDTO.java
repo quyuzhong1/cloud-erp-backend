@@ -128,6 +128,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 来源详情id
+         */
+        private String sourceDetailId;
     }
 
     /**
@@ -247,6 +252,11 @@ public class FbaDeliveryDetailDTO implements Serializable {
         * 仓位
         */
         private String warehouseLocation;
+
+        /**
+        * 来源详情Id
+        */
+        private String sourceDetailId;
     }
 
 
