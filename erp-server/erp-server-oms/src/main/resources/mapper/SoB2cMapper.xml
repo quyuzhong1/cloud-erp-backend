@@ -332,7 +332,6 @@
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
             sbr.target_id = sb2c.id))
-            and 1 = (select count(DISTINCT sbd.warehouse_id) from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code ilike concat('%',#{params.code},'%')
             </if>
