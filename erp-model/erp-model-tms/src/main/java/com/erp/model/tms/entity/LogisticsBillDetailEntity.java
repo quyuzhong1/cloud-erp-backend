@@ -1,0 +1,55 @@
+package com.erp.model.tms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 物流单明细表
+ * </p>
+ *
+ * @author lambda
+ * @since 2023-11-09
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("logistics_bill_detail")
+public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEntity> {
+
+    /**
+    * 物流单id
+    */
+    @TableField("main_id")
+    private String mainId;
+    /**
+    * 运输状态
+    */
+    @TableField("track_status")
+    private String trackStatus;
+    /**
+    * 运单号
+    */
+    @TableField("track_no")
+    private String trackNo;
+
+
+    public static final String MAIN_ID = "main_id";
+
+    public static final String TRACK_STATUS = "track_status";
+
+    public static final String TRACK_NO = "track_no";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}
