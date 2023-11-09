@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -54,8 +55,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private CommonService commonService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-    @Autowired
-    private FbaInventoryReservedService fbaInventoryReservedService;
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
@@ -161,9 +160,13 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public FbaInventoryDTO.InventoryReservedView listInventoryReserved(String id) {
-        FbaInventoryReservedEntity fbaInventoryReservedEntity = fbaInventoryReservedService.getByMainId(id);
+        FbaInventoryEntity entity = lambdaQuery()
+                .select(FbaInventoryEntity::getId, FbaInventoryEntity::getReservedTransfersQty, FbaInventoryEntity::getReservedProcessingQty, FbaInventoryEntity::getReservedOrderQty)
+                .eq(FbaInventoryEntity::getId, id)
+                .last("LIMIT 1")
+                .one();
         FbaInventoryDTO.InventoryReservedView view = new FbaInventoryDTO.InventoryReservedView();
-        BeanMapper.copy(fbaInventoryReservedEntity, view);
+        BeanMapper.copy(entity, view);
         return view;
     }
 

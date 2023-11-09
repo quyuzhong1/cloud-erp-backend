@@ -3,16 +3,14 @@ package com.erp.model.tms.dto;
 import java.time.LocalDate;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -341,7 +339,8 @@ public class ShippingTemplateDTO implements Serializable {
         * 材积设置
         */
         @NotNull(message = "材积设置不能为空")
-        @Size(max = 50,message = "材积设置最大长度不能超过50位")
+        @DecimalMax(value = "999999999", message = "材积设置最大值")
+        @DecimalMin(value = "1", message = "材积设置最小值不能为0")
         private Integer volumeSetting;
 
         /**
