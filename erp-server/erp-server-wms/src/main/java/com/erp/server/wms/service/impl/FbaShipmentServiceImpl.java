@@ -15,7 +15,9 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -421,6 +423,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> ids = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         List<String> detailIds = records.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        //根据来源id查询发货单
+        List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
         List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(ids);
         //根据详情id查询收货记录
@@ -428,6 +432,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         for (FbaShipmentDTO.ListDTO record : records) {
+            List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryEntities.stream().filter(req -> req.getSourceId().equals(record.getId())).sorted(Comparator.comparing(FbaDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                record.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
+            }
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
