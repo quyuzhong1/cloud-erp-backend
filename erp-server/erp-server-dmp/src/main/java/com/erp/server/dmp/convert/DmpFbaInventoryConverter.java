@@ -50,7 +50,7 @@ public interface DmpFbaInventoryConverter {
             @Mapping(target = "dataEndTime", source = "combineInventoryDTO.dataEndTime"),
             // 库存报告管理信息
             @Mapping(target = "asin", source = "inventoryMongoDTO.asin"),
-            @Mapping(target = "MSku", source = "inventoryMongoDTO.sku"),
+            @Mapping(target = "msku", source = "inventoryMongoDTO.sku"),
             @Mapping(target = "fnSku", source = "inventoryMongoDTO.fnsku"),
             @Mapping(target = "deliveryChannels", expression = "java(inventoryMongoDTO.switchDeliveryChannels())"),
             @Mapping(target = "fbmFulfillableQty", source = "inventoryMongoDTO.mfnFulfillableQuantity"),
