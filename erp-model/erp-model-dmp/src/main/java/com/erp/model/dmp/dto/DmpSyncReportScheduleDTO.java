@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -57,7 +58,7 @@ public class DmpSyncReportScheduleDTO {
     /**
      * 店铺仓库id
      */
-    @NotBlank(message = "国家名不能为空")
+    @NotBlank(message = "店铺仓库id不能为空")
     private String warehouseId;
 
     /**
