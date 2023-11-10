@@ -86,7 +86,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         }
         // 校验国家唯一
         boolean existSameCountry = shopInfoService.checkExist(shopInfo.getDictCountryCode(), shopInfo.getDictPlatform(), AuthStatusEnum.ALREADY.getCode());
-        if (!existSameCountry) {
+        if (existSameCountry) {
             throw new ServiceException(ApiError.ERROR_COUNTRY_COUNT_SHOP_EXIST, shopInfo.getCountryName());
         }
 
@@ -103,6 +103,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 添加报告计划
         DmpSyncReportScheduleDTO dmpDTO = new DmpSyncReportScheduleDTO();
         BeanUtils.copyProperties(shopInfo, dmpDTO);
+        dmpDTO.setShopId(shopInfo.getId());
         dmpReportFeign.addReportSchedule(dmpDTO);
 
         return Boolean.TRUE;
