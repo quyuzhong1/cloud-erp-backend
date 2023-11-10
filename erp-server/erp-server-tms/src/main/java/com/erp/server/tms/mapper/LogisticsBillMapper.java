@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
 
+    /**
+     * 根据来源id查询物流信息及跟踪号
+     * @Author Luo_WG
+     * @Date 2023/11/10 9:08
+     * @param sourceIdList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     **/
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@Param("sourceIdList") List<String> sourceIdList);
 }

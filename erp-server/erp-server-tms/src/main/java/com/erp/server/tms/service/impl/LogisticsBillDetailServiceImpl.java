@@ -84,8 +84,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return this.saveOrUpdateBatch(list);
     }
 
+    @Override
     public List<LogisticsBillDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(LogisticsBillDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public Boolean removeByMainIds(List<String> mainIds) {
+        return lambdaUpdate().in(LogisticsBillDetailEntity::getMainId, mainIds).remove();
     }
 
 

@@ -1,8 +1,11 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.LogisticsBillDetailService;
@@ -11,6 +14,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +22,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.validation.constraints.NotNull;
+
 /**
  * <p>
  * 物流单 服务实现类
@@ -90,6 +99,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
+    }
+
 
     /**
     * 新增修改处理数据
@@ -99,9 +113,37 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
-    public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.UpdateDTO> addDTOList) {
-        List<LogisticsBillEntity> logisticsBillEntities = BeanMapper.copyList(addDTOList, LogisticsBillEntity.class);
-        boolean flag = this.saveBatch(logisticsBillEntities);
-        return flag;
+    public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
+        List<String> sourceIds = addDTOList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> billEntityList = this.listBySourceIds(sourceIds);
+        for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
+            LogisticsBillEntity saveEntity = new LogisticsBillEntity();
+            BeanMapper.copy(addDTO, saveEntity);
+            LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
+                saveEntity.setId(logisticsBillEntity.getId());
+            }
+            this.saveOrUpdate(saveEntity);
+            logisticsBillDetailService.removeById(saveEntity.getId());
+            List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+            List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
+            for (LogisticsBillDetailDTO.AddDTO dto : detailList) {
+                LogisticsBillDetailEntity saveDetailEntity = new LogisticsBillDetailEntity();
+                saveDetailEntity.setMainId(saveEntity.getId());
+                saveDetailEntity.setTrackNo(dto.getTrackNo());
+                saveDetailEntity.setTrackStatus(dto.getTrackStatus());
+                detailEntityList.add(saveDetailEntity);
+            }
+            logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillVoBySourceIds(sourceIdList);
     }
 }

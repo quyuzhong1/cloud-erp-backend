@@ -18,5 +18,16 @@ public interface LogisticsBillFeign {
      * @return java.lang.Boolean
      **/
     @PostMapping("feign/logisticsBill/logisticsBillBatchSave")
-    Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.UpdateDTO> addDTOList);
+    Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.AddDTO> addDTOList);
+
+
+    /**
+     * 根据来源id查询物流信息及跟踪号
+     * @Author Luo_WG
+     * @Date 2023/11/10 9:06
+     * @param sourceIdList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     **/
+    @PostMapping("feign/logisticsBill/listLogisticsBillVoBySourceIds")
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList);
 }

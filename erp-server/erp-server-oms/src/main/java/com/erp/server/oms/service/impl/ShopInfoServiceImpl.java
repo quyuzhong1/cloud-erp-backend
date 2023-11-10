@@ -848,4 +848,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
     }
 
+    @Override
+    public boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus) {
+        Integer count = lambdaQuery()
+                .eq(StringUtils.isNotBlank(dictCountryCode), ShopInfoEntity::getDictCountryCode, dictCountryCode)
+                .eq(StringUtils.isNotBlank(dictPlatform), ShopInfoEntity::getDictPlatform, dictPlatform)
+                .eq(StringUtils.isNotBlank(authStatus), ShopInfoEntity::getAuthStatus, authStatus)
+                .count();
+        return count > 0;
+    }
+
 }

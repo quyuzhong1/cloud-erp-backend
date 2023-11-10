@@ -18,104 +18,105 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LogisticsProductExcelDTO {
 
-    @ColumnWidth(20)
-    @ExcelProperty(value = "产品分类", index = 0)
-    @FieldValid(fieldName = "产品分类", isNotBlank = true )
-    private String  categoryName;
+
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "SKU", index = 1)
+    @ExcelProperty(value = "SKU", index = 0)
     @FieldValid(fieldName = "SKU", isNotBlank = true )
     private String skuNo;
 
 
-    @ColumnWidth(20)
-    @ExcelProperty(value = "SPU(型号)", index = 2)
-    @FieldValid(fieldName = "SPU(型号)")
-    private String spuNo;
-
-
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "品名", index = 3)
-    @FieldValid(fieldName = "品名")
-    private String productName;
-
-    @ColumnWidth(30)
-    @ExcelProperty(value = "中文报关名", index = 4)
+    @ExcelProperty(value = "中文报关名", index = 1)
     @FieldValid(fieldName = "中文报关名")
     private String declareChineseName;
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品属性", index = 5)
-    @FieldValid(fieldName = "产品属性")
-    private String productPropertyName;
+    @ExcelProperty(value = "英文报关名", index = 2)
+    @FieldValid(fieldName = "英文报关名")
+    private String declareEnglishName;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "报关型号", index = 6)
+    @ExcelProperty(value = "报关型号", index = 3)
     @FieldValid(fieldName = "报关型号")
     private String declareModel;
 
 
+
+
     @ColumnWidth(30)
-    @ExcelProperty(value = "报关申报价", index = 7)
+    @ExcelProperty(value = "报关申报价", index = 4)
     @FieldValid(fieldName = "报关申报价",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String declarePrice;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "报关申报价币种", index = 8)
-    @FieldValid(fieldName = "报关申报价币种")
-    private String declareCurrency;
+    @ExcelProperty(value = "报关单位", index = 5)
+    @FieldValid(fieldName = "报关单位")
+    private String declareUnit;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "目的国申报价", index = 9)
-    @FieldValid(fieldName = "目的国申报价",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
-    private String destDeclarePrice;
-
-    @ColumnWidth(30)
-    @ExcelProperty(value = "目的国申报价币种", index = 10)
-    @FieldValid(fieldName = "目的国申报价币种")
-    private String destCurrency;
-
-    @ColumnWidth(30)
-    @ExcelProperty(value = "报关HSCODE", index = 11)
-    @FieldValid(fieldName = "报关HSCODE")
+    @ExcelProperty(value = "中国海关编码", index = 6)
+    @FieldValid(fieldName = "中国海关编码")
     private String customsCode;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "申报要素", index = 12)
+    @ExcelProperty(value = "目的国申报价", index = 7)
+    @FieldValid(fieldName = "目的国申报价",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    private String destDeclarePrice;
+
+
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "申报要素", index = 8)
     @FieldValid(fieldName = "申报要素")
     private String declareElement;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "原产国", index = 13)
+    @ExcelProperty(value = "境内货源地", index = 9)
+    @FieldValid(fieldName = "境内货源地")
+    private String sourceCargo;
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "征免", index = 10)
+    @FieldValid(fieldName = "征免")
+    private String exemption;
+
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "原产国", index = 11)
     @FieldValid(fieldName = "原产国")
     private String sourceCountry;
 
-    @ColumnWidth(30)
-    @ExcelProperty(value = "sku状态", index = 14)
-    @FieldValid(fieldName = "sku状态")
-    private String approveStatusName;
-
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "品牌", index = 15)
-    @FieldValid(fieldName = "品牌")
-    private String brandName;
+    @ExcelProperty(value = "组合品申报", index = 11)
+    @FieldValid(fieldName = "组合品申报")
+    private String combinationDeclareType;
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品经理", index = 16)
-    @FieldValid(fieldName = "产品经理")
-    private String chargeName;
+    @ExcelProperty(value = "国家", index = 12)
+    @FieldValid(fieldName = "国家")
+    private String country;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 17)
-    @FieldValid(fieldName = "创建时间")
-    private String createTime;
+    @ExcelProperty(value = "目的国海关编码", index = 13)
+    @FieldValid(fieldName = "目的国海关编码")
+    private String destCustomsCode;
+
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "错误信息", index = 18)
+    @ExcelProperty(value = "税率", index = 14)
+    @FieldValid(fieldName = "税率" ,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    private String taxRate;
+
+
+
+
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "错误信息", index = 15)
     private String errorMsg;
 }
