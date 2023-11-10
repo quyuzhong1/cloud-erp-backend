@@ -942,6 +942,7 @@
             pd.name AS productName,
             pd.status AS approveStatus,
             pd.create_time AS createTime,
+            pd.update_time AS updateTime,
             pi.category_id AS categoryId,
             pi.category AS categoryName,
             pi.spu_no AS spuNo,

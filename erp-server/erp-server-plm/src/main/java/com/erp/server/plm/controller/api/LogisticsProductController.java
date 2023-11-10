@@ -64,7 +64,7 @@ public class LogisticsProductController extends BaseController {
     }
 
     /**
-     * 分页列表
+     * tab页
      *
      * @param dto
      * @return
