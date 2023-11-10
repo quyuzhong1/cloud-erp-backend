@@ -1237,6 +1237,8 @@
             resultType="com.erp.model.plm.dto.LogisticsProductDTO$UpdatePagingDTO">
          SELECT
              pd.sku_no AS skuNo,
+             pd.id AS skuId,
+             pd.id AS id,
              pd.name AS productName,
              pi.spu_no AS spuNo,
              sl.operation AS operate,
@@ -1265,6 +1267,10 @@
         <!--spu no-->
         <if test="params.spuNo!=null and params.spuNo!=''">
             AND pi.spu_no ILIKE concat('%',#{params.spuNo},'%')
+        </if>
+        <!--操作项-->
+        <if test="params.operate!=null and params.operate!=''">
+            AND sl.operation ILIKE concat('%',#{params.operate},'%')
         </if>
         <!--品名-->
         <if test="params.productName!=null and params.productName!=''">

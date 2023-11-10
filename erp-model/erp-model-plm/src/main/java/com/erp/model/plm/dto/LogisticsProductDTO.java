@@ -216,6 +216,11 @@ public class LogisticsProductDTO {
         private String productName;
 
         /**
+         *  操作项
+         */
+        private String operate;
+
+        /**
          *  操作内容
          */
         private String operateContent;
@@ -236,6 +241,10 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class UpdatePagingDTO {
 
+
+        private String id;
+
+        private String skuId;
 
         private String  skuNo;
 
