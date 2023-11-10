@@ -7,19 +7,14 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
-import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
-import com.erp.model.wms.entity.TransferApplicationDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.mapper.FbaDeliveryLogisticsMapper;
-import com.erp.server.wms.service.FbaDeliveryLogisticsService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.FbaDeliveryService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -59,6 +54,8 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     private FbaDeliveryService fbaDeliveryService;
     @Autowired
     private LogisticsBillFeign logisticsBillFeign;
+    @Autowired
+    private FbaShipmentService fbaShipmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -151,42 +148,59 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         return viewList;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
         List<FbaDeliveryLogisticsEntity> list = new ArrayList<>();
+        //查询发货单信息
         List<String> mainIds = dto.stream().map(req -> req.getMainId()).collect(Collectors.toList());
         List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listByIds(mainIds);
-        List<LogisticsBillDTO.UpdateDTO> updateDTOList = new ArrayList<>();
-        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
-            FbaDeliveryEntity fbaDeliveryEntity = fbaDeliveryEntities.stream().filter(req -> req.getId().equals(deliveryLogisticsSave.getMainId())).findFirst().orElse(new FbaDeliveryEntity());
-            LogisticsBillDTO.UpdateDTO updateDTO = new LogisticsBillDTO.UpdateDTO();
-            updateDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
-            updateDTO.setShopId(fbaDeliveryEntity.getShopId());
-            updateDTO.setShopName(fbaDeliveryEntity.getShopName());
-            updateDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
-            updateDTO.setSourceId(fbaDeliveryEntity.getSourceId());
-            updateDTO.setSourceCode(fbaDeliveryEntity.getCode());
-            updateDTO.setOutstockId("");
-            updateDTO.setOutstockCode("");
-            updateDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel());
-            updateDTO.setOrderTime(null);
-            updateDTO.setDeliveryTime(null);
-            List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
 
-            for (String transportNo : trackingNoList) {
+        //查询FBA货件信息
+        List<String> shipmentIds = fbaDeliveryEntities.stream().map(req -> req.getSourceId()).collect(Collectors.toList());
+        List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(shipmentIds);
 
-            }
-
-        }
-
-
-        logisticsBillFeign.logisticsBillBatchSave(updateDTOList);
+        //更新FBA物流信息
         for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
             FbaDeliveryLogisticsEntity entity = new FbaDeliveryLogisticsEntity();
             BeanMapper.copy(deliveryLogisticsSave, entity);
             entity.setRemark(deliveryLogisticsSave.getLogisticsRemark());
             list.add(entity);
         }
-        return this.updateBatchById(list);
+        boolean flag = this.updateBatchById(list);
+
+        //更新物流单信息
+        List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
+        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
+            FbaDeliveryEntity fbaDeliveryEntity = fbaDeliveryEntities.stream().filter(req -> req.getId().equals(deliveryLogisticsSave.getMainId())).findFirst().orElse(new FbaDeliveryEntity());
+            LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
+            addDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
+            addDTO.setShopId(fbaDeliveryEntity.getShopId());
+            addDTO.setShopName(fbaDeliveryEntity.getShopName());
+            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
+            addDTO.setSourceId(fbaDeliveryEntity.getSourceId());
+            addDTO.setSourceCode(fbaDeliveryEntity.getCode());
+            addDTO.setOutstockId("");
+            addDTO.setOutstockCode("");
+            addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel());
+            addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime());
+            addDTO.setTransportNo(fbaDeliveryEntity.getCode());
+            List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
+            FbaShipmentEntity entity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getSourceId())).findFirst().orElse(new FbaShipmentEntity());
+            addDTO.setOrderTime(entity.getShipmentCreateTime());
+            List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (String trackingNo : trackingNoList) {
+                LogisticsBillDetailDTO.AddDTO detailDto = new LogisticsBillDetailDTO.AddDTO();
+                detailDto.setMainId("");
+                detailDto.setTrackNo("");
+                detailDto.setTrackNo(trackingNo);
+                detailList.add(detailDto);
+            }
+            addDTO.setDetailList(detailList);
+            addDTOList.add(addDTO);
+        }
+        logisticsBillFeign.logisticsBillBatchSave(addDTOList);
+        return flag;
     }
 }

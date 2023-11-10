@@ -104,9 +104,9 @@ public class FbaDeliveryController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
-        fbaDeliveryService.addAndSubmit(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO addDTO = fbaDeliveryService.addAndSubmit(dto);
+        return success(addDTO);
     }
 
     /**

@@ -249,11 +249,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
         // 新增
         BaseResultDTO.AddDTO resultAdd = this.add(dto);
         // 提交
         this.submit(resultAdd.getId());
+        return resultAdd;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -978,7 +979,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         String destWarehouseName = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDestWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         fbaDeliveryEntity.setDestWarehouseName(destWarehouseName);
         WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
-        fbaDeliveryEntity.setDestWarehouseName(warehouseEntity.getName());
+        fbaDeliveryEntity.setDeliveryWarehouseName(warehouseEntity.getName());
 
         //设置库存组织
         String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(warehouseEntity.getOrgId())).findFirst().

@@ -28,8 +28,21 @@ public class LogisticsBillFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/logisticsBillBatchSave")
-    public Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.UpdateDTO> addDTOList) {
+    public Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.AddDTO> addDTOList) {
         Boolean flag = logisticsBillService.logisticsBillBatchSave(addDTOList);
+        return flag;
+    }
+
+    /**
+     * 根据来源id查询物流信息及跟踪号
+     * @Author Luo_WG
+     * @Date 2023/11/10 9:06
+     * @param sourceIdList
+     * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     **/
+    @PostMapping("/listLogisticsBillVoBySourceIds")
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList) {
+        List<LogisticsBillDTO.LogisticsBillVo> flag = logisticsBillService.listLogisticsBillVoBySourceIds(sourceIdList);
         return flag;
     }
 }
