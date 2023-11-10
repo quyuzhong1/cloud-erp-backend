@@ -1,15 +1,14 @@
 package com.sdk.oms.shopee.dto.order.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.sdk.oms.shopee.dto.base.AddressBase;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 @Data
-@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class RecipientAddress extends AddressBase {
+public class RecipientAddress implements Serializable {
 
     public static final long serialVersionUID = 1L;
 
