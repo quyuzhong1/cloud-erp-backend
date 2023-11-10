@@ -2,8 +2,8 @@ package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
-import com.common.business.annotation.PlatformType;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.annotation.LogisticsPlatformType;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -41,7 +41,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@PlatformType(PlatformDictEnum.SDF)
+@LogisticsPlatformType(LogisticsPlatformEnum.SDF)
 public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
@@ -94,7 +94,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             apiResult.setMsg(responseMsg.getMsg());
             apiResult.setCode(-1);
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
-                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
         } else {
             apiResult.setCode(200);
@@ -108,7 +108,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .build());
             apiResult.setMsg(responseMsg.getMsg());
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
-                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
         }
 
@@ -132,12 +132,12 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //失败
         if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             return success(responseMsg.getMsg());
         }
@@ -169,7 +169,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
                         .build();
                 logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                        logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                        logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
                 list.add(orderResponseVO);
             }
@@ -193,7 +193,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //失败
         if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
@@ -206,7 +206,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
                     .build();
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             return success(orderResponseVO);
         }
@@ -231,12 +231,12 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //失败
         if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
+                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
             //TODO 结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
             responses.add(LogisticsPrintLabelResponse.builder().deliveryNoList(logisticsQueryVO.getTransportNo()).base64((String) responseMsg.getData()).build());
@@ -260,13 +260,13 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //失败
         if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getLogisticsAuthEntity().getId(),
-                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
             List<ChanelInfo> chanelInfos = JSONUtil.toList(JSONUtil.toJsonStr(responseMsg.getData()), ChanelInfo.class);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getLogisticsAuthEntity().getId(),
-                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), PlatformDictEnum.SDF.getCode(),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SDF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
             return success(LogisticsChannelConverter.INSTANCE.channelConvertByDSFList(chanelInfos));
         }

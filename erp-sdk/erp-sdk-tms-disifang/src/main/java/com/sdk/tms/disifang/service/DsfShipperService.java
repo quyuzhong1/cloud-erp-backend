@@ -232,6 +232,11 @@ public class DsfShipperService {
 
     public static void main(String[] args) {
         DsfShipperService dsfShipperService = new DsfShipperService();
+        String token = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
+        String key = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
+        ChanelRequest chanelRequest = ChanelRequest.builder().transport_mode("1").build();
+        ResponseMsg chanelList = dsfShipperService.getChanelList(appKey, appSecret, chanelRequest);
+        System.out.println(chanelList);
 //        String str = "app_key16081f05-e8fc-4250-b9c4-0660d1ecbb28" +
 //                "formatjson" +
 //                "methodds.xms.order.create" +

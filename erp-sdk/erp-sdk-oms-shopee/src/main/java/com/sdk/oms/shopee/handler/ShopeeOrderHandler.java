@@ -58,10 +58,14 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
     public List<PlatformShopeeOrderDTO> download(JobTaskDTO data) {
         LocalDateTime lastTime = data.getLastTime();
         long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
-        log.info("lastTime:{},timeFrom:{}", lastTime, timeFrom);
+        log.info("shopId:{},lastTime:{},timeFrom:{}",data.getShopId(), lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
+        if (lastTime.compareTo(nextTime) == 0){
+            //nextTime +1天
+            nextTime = lastTime.plusDays(1);
+        }
         long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
-        log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
+        log.info("shopId:{},nextTime:{},timeTo:{}",data.getShopId(), nextTime, timeTo);
         //获取主店铺token
         //根据主店铺获取子店铺token
 //        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());

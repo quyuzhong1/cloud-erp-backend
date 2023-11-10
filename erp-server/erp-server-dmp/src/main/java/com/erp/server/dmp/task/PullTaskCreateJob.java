@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.service.DmpOrderInfoService;
 import com.erp.server.dmp.service.DmpRefundInfoService;
@@ -75,7 +76,10 @@ public class PullTaskCreateJob {
             XxlJobHelper.log("addShopTask 店铺列表为空");
             return ReturnT.SUCCESS;
         }
-        List<ShopInfoEntity> shopInfoList = data.stream().filter(info -> !info.getDisabled() || !info.getIsGenTask()).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = data.stream()
+                // 非禁用状态/未生成调度任务/已授权
+                .filter(info -> !info.getDisabled() && !info.getIsGenTask() && AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(info.getAuthStatus()))
+                .collect(Collectors.toList());
         if(CollectionUtil.isEmpty(shopInfoList)){
             XxlJobHelper.log("addShopTask 需要添加任务的店铺为空");
             return ReturnT.SUCCESS;
