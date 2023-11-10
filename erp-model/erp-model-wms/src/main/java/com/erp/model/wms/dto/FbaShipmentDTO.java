@@ -275,7 +275,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 卖家sku
          */
-        private String mSku;
+        private String msku;
     }
 
     /**
@@ -424,7 +424,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 卖家sku
          */
-        private String mSku;
+        private String msku;
         /**
          * sku编号
          */
@@ -588,7 +588,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 卖家sku
          */
-        private String mSku;
+        private String msku;
         /**
          * fnSku
          */
