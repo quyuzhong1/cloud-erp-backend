@@ -191,7 +191,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fd.create_time DESC, fd.code
+        fd.create_time DESC, fd.code, fdd.id
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -349,7 +349,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fd.code, fd.create_time DESC
+        fd.create_time DESC, fd.code, fdd.id
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$TabListDTO">
         SELECT
