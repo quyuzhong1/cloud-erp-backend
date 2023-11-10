@@ -1,20 +1,20 @@
-package com.erp.model.tms.enums;
+package com.erp.model.plm.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum BusinessTypeEnums implements EnumMessage {
-    CREATE_ORDER("createOrder", "创建订单"),
-    CONFIRM_ORDER("confirmOrder", "确认订单"),
-    UPDATE_ORDER("updateOrder", "更新订单"),
-    INTERCEPT_ORDER("interceptOrder", "拦截订单"),
-    QUERY_ORDER("queryOrder", "查询订单"),
-    GET_LABEL("getLabel", "获取标签"),
-    GET_LABEL_LIST("getLabelList", "批量获取标签"),
-    GET_CHANEL_LIST("getChanelList", "批量渠道列表"),
-    CANCEL_ORDER("cancelOrder", "取消订单")
+/**
+ * @author Lambda
+ * @Classname CombinationDeclareTypeEnums
+ * @Description TODO
+ * @Date 2023-11-10 10:12
+ * @Created by yl
+ */
+public enum CombinationDeclareTypeEnums implements EnumMessage {
+    SPLIT("split", "拆分申报"),
+    COMBINE("combine", "组合申报"),
     ;
 
     /**
@@ -28,7 +28,7 @@ public enum BusinessTypeEnums implements EnumMessage {
      */
     private String name;
 
-    BusinessTypeEnums(String code, String name) {
+    CombinationDeclareTypeEnums(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,11 +47,25 @@ public enum BusinessTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BusinessTypeEnums typeEnums : BusinessTypeEnums.values()) {
+        for (CombinationDeclareTypeEnums typeEnums : CombinationDeclareTypeEnums.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }
         }
         return "";
     }
+
+
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (CombinationDeclareTypeEnums typeEnums : CombinationDeclareTypeEnums.values()) {
+            if (name.equals(typeEnums.getName())) {
+                return typeEnums.getCode();
+            }
+        }
+        return "";
+    }
+
 }

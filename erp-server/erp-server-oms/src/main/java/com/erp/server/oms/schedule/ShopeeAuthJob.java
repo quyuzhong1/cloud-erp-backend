@@ -62,16 +62,16 @@ public class ShopeeAuthJob {
         if (Objects.isNull(cfgAppClient)) {
             return;
         }
-        List<ShopAuthEntity> shopeeShopList = shopAuthService.getShopeeShopList(AuthTypeEnum.SHOP.getCode(),AuthStatusEnum.ALREADY.getCode());
+        List<ShopAuthEntity> shopeeShopList = shopAuthService.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode());
         if (CollectionUtils.isNotEmpty(shopeeShopList)) {
-            shopeeShopList.forEach(shopAuthEntity -> {
+            for (ShopAuthEntity shopAuthEntity : shopeeShopList) {
                 //判断店铺是否授权
-                if (Objects.isNull(shopAuthEntity.getShopId())){
-                    return;
+                if (Objects.isNull(shopAuthEntity.getShopId())) {
+                    continue;
                 }
                 ShopInfoEntity shopInfo = shopInfoService.getById(shopAuthEntity.getShopId());
-                if (Objects.isNull(shopInfo) || !AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
-                    return;
+                if (Objects.isNull(shopInfo) || !AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())) {
+                    continue;
                 }
                 AuthRequest authRequest = AuthRequest.builder()
                         .host(cfgAppClient.getUrl())
@@ -81,18 +81,26 @@ public class ShopeeAuthJob {
                         .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                         .build();
                 ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
-                if (Objects.isNull(shopeeResponse) || StringUtils.isNotEmpty(shopeeResponse.getError())){
+                if (Objects.isNull(shopeeResponse) || StringUtils.isNotEmpty(shopeeResponse.getError())) {
                     shopInfo.setAuthStatus(AuthStatusEnum.NOT.getCode());
                     shopInfoService.saveOrUpdate(shopInfo);
                     log.error("授权异常：{}", shopeeResponse);
-                    return;
+                    continue;
                 }
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
-            });
+            }
         }
-        List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode(),AuthStatusEnum.ALREADY.getCode());
-        if (CollectionUtils.isNotEmpty(shopeeShopList1)){
-            shopeeShopList1.forEach(shopAuthEntity -> {
+        List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode(), AuthStatusEnum.ALREADY.getCode());
+        if (CollectionUtils.isNotEmpty(shopeeShopList1)) {
+            for (ShopAuthEntity  shopAuthEntity:shopeeShopList1) {
+                //判断店铺是否授权
+                if (Objects.isNull(shopAuthEntity.getShopId())) {
+                    continue;
+                }
+                ShopInfoEntity shopInfo = shopInfoService.getById(shopAuthEntity.getShopId());
+                if (Objects.isNull(shopInfo) || !AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())) {
+                    continue;
+                }
                 AuthRequest authRequest = AuthRequest.builder()
                         .host(cfgAppClient.getUrl())
                         .refreshToken(shopAuthEntity.getRefreshToken())
@@ -101,8 +109,14 @@ public class ShopeeAuthJob {
                         .merchantId(Long.parseLong(shopAuthEntity.getShopeeId()))
                         .build();
                 ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(authRequest);
+                if (Objects.isNull(shopeeResponse) || StringUtils.isNotEmpty(shopeeResponse.getError())) {
+                    shopInfo.setAuthStatus(AuthStatusEnum.NOT.getCode());
+                    shopInfoService.saveOrUpdate(shopInfo);
+                    log.error("授权异常：{}", shopeeResponse);
+                    continue;
+                }
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
-            });
+            }
         }
     }
 }
