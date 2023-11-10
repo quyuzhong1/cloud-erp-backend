@@ -70,7 +70,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return
      */
-     void addAndSubmit(FbaDeliveryDTO.AddDTO dto);
+     BaseResultDTO.AddDTO addAndSubmit(FbaDeliveryDTO.AddDTO dto);
 
      /**
      * 修改并提交审核

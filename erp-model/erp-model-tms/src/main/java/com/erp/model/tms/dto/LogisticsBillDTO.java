@@ -222,5 +222,44 @@ public class LogisticsBillDTO implements Serializable {
 
     }
 
+    /**
+     * 查询物流信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsBillVo {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+        /**
+         * 运输状态
+         */
+        private String trackStatus;
+        /**
+         * 跟踪单号
+         */
+        private String trackNo;
+    }
 
 }

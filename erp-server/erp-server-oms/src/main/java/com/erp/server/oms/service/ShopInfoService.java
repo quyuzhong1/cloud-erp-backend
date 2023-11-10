@@ -173,4 +173,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
      **/
     List<ShopInfoEntity> listShopByAmazon();
+
+    /**
+     * 根据条件查询是否存在店铺
+     *
+     * @author Jim
+     * @since 2023-11-09
+     */
+    boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus);
 }

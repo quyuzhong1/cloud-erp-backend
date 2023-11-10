@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
@@ -11,6 +13,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -22,6 +25,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -107,6 +111,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private WmsAttachmentService wmsAttachmentService;
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
+    @Autowired
+    private LogisticsBillFeign logisticsBillFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -114,7 +120,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     public BaseResultDTO.AddDTO add(FbaDeliveryDTO.AddDTO addDTO) {
         FbaDeliveryEntity fbaDeliveryEntity = new FbaDeliveryEntity();
         BeanMapperUtils.copy(addDTO, fbaDeliveryEntity);
-
+        String idStr = IdWorker.getIdStr();
+        fbaDeliveryEntity.setId(idStr);
         // 数据处理
         handleData(fbaDeliveryEntity);
 
@@ -126,6 +133,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if(!save) {
             throw new ServiceException("FBA发货单保存失败");
         }
+
+        //保存附件
+        Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
+        TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
+        String type = tableName.value();
+        wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, idStr);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单" , fbaDeliveryEntity.getCode());
@@ -158,6 +171,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if(!save) {
             throw new ServiceException("FBA发货单保存失败");
         }
+
+        //保存附件
+        Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
+        TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
+        String type = tableName.value();
+        wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
+
         //新增物流信息
         fbaDeliveryLogisticsService.update(updateDTO.getLogisticsView(), fbaDeliveryEntity.getId());
         //修改明细数据
@@ -249,11 +269,12 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(FbaDeliveryDTO.AddDTO dto) {
         // 新增
         BaseResultDTO.AddDTO resultAdd = this.add(dto);
         // 提交
         this.submit(resultAdd.getId());
+        return resultAdd;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -582,6 +603,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //根据仓库信息获取核算公司
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getInventoryOrgId()));
 
+        //根据id查询物流单信息
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillFeign.listLogisticsBillVoBySourceIds(Arrays.asList(data.getId()));
+
         //来源类型名称
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
         //设置状态中文名称
@@ -601,6 +625,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //物流方式名称
         logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()));
         logisticsViewDTO.setLogisticsRemark(logisticsEntity.getRemark());
+        List<String> trackNoList = logisticsBillVos.stream().filter(req -> req.getSourceId().equals(data.getId())).map(req -> req.getTrackNo()).collect(Collectors.toList());
+        logisticsViewDTO.setTrackingNoList(trackNoList);
         data.setLogisticsView(logisticsViewDTO);
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(data.getId()));
@@ -978,13 +1004,15 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         String destWarehouseName = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDestWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         fbaDeliveryEntity.setDestWarehouseName(destWarehouseName);
         WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
-        fbaDeliveryEntity.setDestWarehouseName(warehouseEntity.getName());
+        fbaDeliveryEntity.setDeliveryWarehouseName(warehouseEntity.getName());
 
         //设置库存组织
         String orgName = accountingCompanyList.stream().filter(d -> d.getId().equals(warehouseEntity.getOrgId())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         fbaDeliveryEntity.setInventoryOrgId(warehouseEntity.getOrgId());
         fbaDeliveryEntity.setInventoryOrgName(orgName);
+
+
     }
 
 

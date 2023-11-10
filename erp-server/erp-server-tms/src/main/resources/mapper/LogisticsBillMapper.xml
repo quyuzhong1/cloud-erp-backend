@@ -40,5 +40,24 @@
         sales_platform, shop_id, shop_name, source_type, source_id, source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
     </sql>
 
-
+    <select id="listLogisticsBillVoBySourceIds" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
+        SELECT
+            lb.shop_id,
+            lb.shop_name,
+            lb.source_type,
+            lb.source_id,
+            lb.source_code,
+            lb.transport_no,
+            lbd.track_status,
+            lbd.track_no
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted = FALSE
+        WHERE lb.is_deleted = FALSE
+        <if test="sourceIdList != null and sourceIdList.size > 0">
+            AND lb.source_id IN
+            <foreach collection="sourceIdList" item="sourceId" open="(" close=")" separator=",">
+                #{sourceId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

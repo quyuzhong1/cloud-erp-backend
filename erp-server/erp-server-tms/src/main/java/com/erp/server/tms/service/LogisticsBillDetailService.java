@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流单明细表 服务类
@@ -33,5 +35,21 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     */
     Boolean update(LogisticsBillDTO.UpdateDTO dto, String mainId);
 
+    /**
+     * 根据主表id查询详情
+     * @Author Luo_WG
+     * @Date 2023/11/9 19:52
+     * @param mainIds
+     * @return java.util.List<com.erp.model.tms.entity.LogisticsBillDetailEntity>
+     **/
+    List<LogisticsBillDetailEntity> listByMainIds(List<String> mainIds);
 
+    /**
+     * 根据主表id删除详情
+     * @Author Luo_WG
+     * @Date 2023/11/9 19:52
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
 }
