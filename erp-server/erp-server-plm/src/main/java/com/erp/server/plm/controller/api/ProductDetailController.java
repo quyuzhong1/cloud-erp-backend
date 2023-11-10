@@ -1181,7 +1181,7 @@ ProductDetailController extends BaseController {
         List<ProductWarehouseLocationExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productWarehouseLocation.xlsx";
+            String excelPath = "excel/productWarehouseLocationError.xlsx";
             String name = "productWarehouseLocation";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);
@@ -1195,5 +1195,37 @@ ProductDetailController extends BaseController {
             return failure();
         }
         return success();
+    }
+
+    /**
+     * 下载导入模板
+     *
+     * @param request  request
+     * @param response response
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
+    @GetMapping("/importProductWarehouseLocationTemplate")
+    public void importTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/productWarehouseLocationTemplate.xlsx";
+        String excelName = "template.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
