@@ -15,6 +15,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -343,12 +344,12 @@ public class LogisticsProductDTO {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
         /**
          * 更新时间
          */
-        private List<LocalDateTime> updateTimeList;
+        private List<LocalDate> updateTimeList;
 
 
     }
