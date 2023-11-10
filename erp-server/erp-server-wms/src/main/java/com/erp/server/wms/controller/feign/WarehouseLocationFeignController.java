@@ -50,4 +50,16 @@ public class WarehouseLocationFeignController extends BaseController {
     public List<WarehouseLocationEntity> listByWarehouseIds(@RequestBody List<String> warehouseIds) {
         return warehouseLocationService.listByWarehouseIds(warehouseIds);
     }
+
+    /**
+     * 查询所有仓位
+     * @Author Luo_WG
+     * @Date 2023/9/4 17:38
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseLocationEntity>
+     **/
+    @PostMapping("/list")
+    public List<WarehouseLocationEntity> list() {
+        return warehouseLocationService.list();
+    }
+
 }
