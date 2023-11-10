@@ -41,6 +41,15 @@ public interface WarehouseLocationFeign {
      **/
     @PostMapping("/listByWarehouseIds")
     List<WarehouseLocationEntity> listByWarehouseIds(@RequestBody List<String> warehouseIds);
+
+    /**
+     * 查询所有仓位
+     * @Author Luo_WG
+     * @Date 2023/9/4 17:38
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseLocationEntity>
+     **/
+    @PostMapping("/list")
+    List<WarehouseLocationEntity> list();
 }
 
 
