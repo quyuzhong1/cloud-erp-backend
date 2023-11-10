@@ -32,5 +32,12 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
     */
     Boolean update(LogisticsAuthDTO.UpdateDTO dto);
 
-
+    /**
+     * 获取到授权详情
+     * @author yl
+     * @date 2023-11-10 17:50
+     * @param id
+     * @return
+     */
+    LogisticsAuthDTO.ViewDTO view(String id);
 }

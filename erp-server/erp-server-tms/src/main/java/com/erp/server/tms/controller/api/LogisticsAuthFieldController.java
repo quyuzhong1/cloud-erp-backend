@@ -35,18 +35,7 @@ public class LogisticsAuthFieldController extends BaseController {
     @Resource
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
-    /**
-    * 新增
-    * @author lambda
-    * @date:  2023-11-09
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流授权字段值表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthFieldDTO.AddDTO dto) {
-        return success(logisticsAuthFieldService.add(dto));
-    }
+
 
     /**
     * 修改
