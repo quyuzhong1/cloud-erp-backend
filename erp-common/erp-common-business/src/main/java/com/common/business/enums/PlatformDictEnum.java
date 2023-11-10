@@ -30,7 +30,7 @@ public enum PlatformDictEnum implements EnumMessage {
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
     //物流平台
-    SDF("SDF", "递四方", "递四方(新)", "41"),
+    DSF("DSF", "递四方", "递四方(新)", "41"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "42"),
     UBI("UBI", "UBI", "UBI物流平台", "43"),
     TRACK123("TRACK123", "track123", "track123物流平台", "44"),
