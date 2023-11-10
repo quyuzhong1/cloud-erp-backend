@@ -24,15 +24,13 @@ import java.util.stream.Collectors;
  **/
 public class ProductWarehouseLocationListener extends AnalysisEventListener<ProductWarehouseLocationExcelDTO> {
     private List<ProductDetailEntity> productDetailEntityList;
-    private List<WarehouseLocationEntity> warehouseLocationList;
     private ProductDetailService productDetailService;
 
     private List<ProductWarehouseLocationExcelDTO> dataList = new ArrayList<>();
 
     private List<ProductWarehouseLocationExcelDTO> list;
-    public ProductWarehouseLocationListener(List<ProductDetailEntity> productDetailEntityList, List<WarehouseLocationEntity> warehouseLocationList, ProductDetailService productDetailService) {
+    public ProductWarehouseLocationListener(List<ProductDetailEntity> productDetailEntityList, ProductDetailService productDetailService) {
         this.productDetailEntityList = productDetailEntityList;
-        this.warehouseLocationList = warehouseLocationList;
         this.productDetailService = productDetailService;
         this.list = new ArrayList<>();
     }
@@ -59,10 +57,6 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
             errorMsgList.add("sku编号不存在或未审核通过！");
         }
 
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationList.stream().filter(req -> req.getCode().equals(dto.getWarehouseLocation())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(warehouseLocationEntityList)) {
-            errorMsgList.add("仓位在ERP中不存在！");
-        }
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
