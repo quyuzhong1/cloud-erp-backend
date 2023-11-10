@@ -141,6 +141,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     @Override
     public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids) {
         List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> viewList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillFeign.listLogisticsBillVoBySourceIds(ids);
 
         List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = this.listByMainIds(ids);
         for (FbaDeliveryLogisticsEntity logisticsEntity : fbaDeliveryLogisticsEntities) {
@@ -149,6 +150,8 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             view.setLogisticsRemark(logisticsEntity.getRemark());
             view.setLogisticsMethodName(LogisticsMethodEnum.getName(view.getLogisticsMethod()));
             view.setLogisticsChannelName(LogisticsMethodEnum.getName(view.getLogisticsChannel()));
+            List<String> trackNoList = logisticsBillVos.stream().filter(req -> req.getSourceId().equals(logisticsEntity.getMainId())).map(req -> req.getTrackNo()).collect(Collectors.toList());
+            view.setTrackingNoList(trackNoList);
             viewList.add(view);
         }
         return viewList;
@@ -181,17 +184,17 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
             FbaDeliveryEntity fbaDeliveryEntity = fbaDeliveryEntities.stream().filter(req -> req.getId().equals(deliveryLogisticsSave.getMainId())).findFirst().orElse(new FbaDeliveryEntity());
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
-            addDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
             addDTO.setShopId(fbaDeliveryEntity.getShopId());
             addDTO.setShopName(fbaDeliveryEntity.getShopName());
-            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
-            addDTO.setSourceId(fbaDeliveryEntity.getSourceId());
+            addDTO.setSourceId(fbaDeliveryEntity.getId());
             addDTO.setSourceCode(fbaDeliveryEntity.getCode());
+            addDTO.setTransportNo(fbaDeliveryEntity.getCode());
+            addDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
+            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
             addDTO.setOutstockId("");
             addDTO.setOutstockCode("");
             addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel());
             addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime());
-            addDTO.setTransportNo(fbaDeliveryEntity.getCode());
             List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
             FbaShipmentEntity entity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getSourceId())).findFirst().orElse(new FbaShipmentEntity());
             addDTO.setOrderTime(entity.getShipmentCreateTime());

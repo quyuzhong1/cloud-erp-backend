@@ -131,7 +131,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 LogisticsBillDetailEntity saveDetailEntity = new LogisticsBillDetailEntity();
                 saveDetailEntity.setMainId(saveEntity.getId());
                 saveDetailEntity.setTrackNo(dto.getTrackNo());
-                saveDetailEntity.setTrackStatus(dto.getTrackStatus());
+                saveDetailEntity.setTrackStatus(dto.getTrackStatus() == null ? "" : dto.getTrackStatus());
                 detailEntityList.add(saveDetailEntity);
             }
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
