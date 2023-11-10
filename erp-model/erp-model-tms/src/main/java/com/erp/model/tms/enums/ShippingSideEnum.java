@@ -5,16 +5,18 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum BusinessTypeEnums implements EnumMessage {
-    CREATE_ORDER("createOrder", "创建订单"),
-    CONFIRM_ORDER("confirmOrder", "确认订单"),
-    UPDATE_ORDER("updateOrder", "更新订单"),
-    INTERCEPT_ORDER("interceptOrder", "拦截订单"),
-    QUERY_ORDER("queryOrder", "查询订单"),
-    GET_LABEL("getLabel", "获取标签"),
-    GET_LABEL_LIST("getLabelList", "批量获取标签"),
-    GET_CHANEL_LIST("getChanelList", "批量渠道列表"),
-    CANCEL_ORDER("cancelOrder", "取消订单")
+/**
+ * @author Will
+ * @version 1.0
+ * @description: 边长枚举
+ * @date 2023/11/10 11:35
+ */
+public enum ShippingSideEnum implements EnumMessage {
+
+    LONGEST_EDGE("longestEdge","最长边"),
+    MINOR_EDGE("minorEdge","次长边"),
+    EDGEL_SUM("edgelSum","三边和"),
+    ANY_EDGE("anyEdge","任意一边")
     ;
 
     /**
@@ -28,7 +30,7 @@ public enum BusinessTypeEnums implements EnumMessage {
      */
     private String name;
 
-    BusinessTypeEnums(String code, String name) {
+    ShippingSideEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -47,7 +49,7 @@ public enum BusinessTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BusinessTypeEnums typeEnums : BusinessTypeEnums.values()) {
+        for (LogisticsAddressTypeEnums typeEnums : LogisticsAddressTypeEnums.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

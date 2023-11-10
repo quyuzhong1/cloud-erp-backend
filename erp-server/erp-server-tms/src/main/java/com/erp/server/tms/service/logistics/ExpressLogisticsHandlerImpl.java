@@ -42,6 +42,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     ExpressShipperService expressShipperService;
     @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+
     /**
      * 创建订单
      *
@@ -51,57 +52,65 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         return ApiResult.error(-1, "功能未开放");
     }
+
     /**
      * 确认订单
      *
-     * @param logisticsQueryVO
+     * @param logisticsQueryBaseVOS
      * @return
      */
-    public ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO) {
-        //支持单个取消
-        OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
-                .orderId(logisticsQueryVO.getDeliveryNo().get(0))
-                .dealType(1)
-                .build();
-        boolean success;
-        String msg = null;
-        BaseResult baseResult = null;
-        //只支持单个订单取消
-        try {
-            baseResult = expressShipperService.updateOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
-                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), orderUpdateRequest);
-            //转换实体
-            if (baseResult.isSuccess()) {
-                OrderUpdateResponse orderUpdateResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderUpdateResponse.class);
-                if (2 == orderUpdateResponse.getResStatus()){
-                    success = true;
-                }else if (1 == orderUpdateResponse.getResStatus()){
-                    success = true;
-                    msg = "客户订单号与顺丰运单不匹配";
-                }else {
-                    success = true;
-                    msg = "未知异常";
-                }
-            } else {
-                success = false;
-                msg = baseResult.getErrorMsg();
-            }
-        } catch (Exception e) {
-            success = false;
-            msg = e.getMessage();
-        }
-        if (success){
-            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
-            return success(msg);
-        }else {
-            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(msg));
-            return failure(msg);
-        }
+    @Override
+    public ApiResult<String> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
 
+
+        logisticsQueryBaseVOS.forEach(logisticsQueryVO -> {
+            //支持单个取消
+            OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
+                    .orderId(logisticsQueryVO.getDeliveryNo())
+                    .dealType(1)
+                    .build();
+            //只支持单个订单取消
+            boolean success;
+            String msg = null;
+            BaseResult baseResult = null;
+            try {
+                baseResult = expressShipperService.updateOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
+                        logisticsQueryVO.getLogisticsAuthEntity().getPassword(), orderUpdateRequest);
+                //转换实体
+                if (baseResult.isSuccess()) {
+                    OrderUpdateResponse orderUpdateResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderUpdateResponse.class);
+                    if (2 == orderUpdateResponse.getResStatus()) {
+                        success = true;
+                    } else if (1 == orderUpdateResponse.getResStatus()) {
+                        success = true;
+                        msg = "客户订单号与顺丰运单不匹配";
+                    } else {
+                        success = true;
+                        msg = "未知异常";
+                    }
+                } else {
+                    success = false;
+                    msg = baseResult.getErrorMsg();
+                }
+            } catch (Exception e) {
+                success = false;
+                msg = e.getMessage();
+            }
+
+        });
+
+//        if (success) {
+//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+//                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
+//            return success(msg);
+//        } else {
+//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+//                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(msg));
+//            return failure(msg);
+//        }
+        return null;
     }
 
     /**
@@ -113,10 +122,10 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO) {
         //支持单个取消
         OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
-                .orderId(logisticsQueryVO.getDeliveryNo().get(0))
+                .orderId(logisticsQueryVO.getDeliveryNo())
                 .dealType(2)
                 .build();
-        boolean success;
+        boolean success = false;
         String msg = null;
         BaseResult baseResult = null;
         //只支持单个订单取消
@@ -126,12 +135,12 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             //转换实体
             if (baseResult.isSuccess()) {
                 OrderUpdateResponse orderUpdateResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderUpdateResponse.class);
-                if (2 == orderUpdateResponse.getResStatus()){
+                if (2 == orderUpdateResponse.getResStatus()) {
                     success = true;
-                }else if (1 == orderUpdateResponse.getResStatus()){
+                } else if (1 == orderUpdateResponse.getResStatus()) {
                     success = true;
                     msg = "客户订单号与顺丰运单不匹配";
-                }else {
+                } else {
                     success = true;
                     msg = "未知异常";
                 }
@@ -143,14 +152,14 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             success = false;
             msg = e.getMessage();
         }
-        if (success){
+        if (success) {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             return success(msg);
-        }else {
+        } else {
             logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(msg));
             return failure(msg);
         }
@@ -163,20 +172,38 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList){
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
         return ApiResult.error(-1, "功能未开放");
     }
 
-    @Override
     public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
+        boolean success = false;
+        String msg = null;
+        BaseResult baseResult = null;
+        LogisticsOrderResponseVO logisticsOrderResponseVO = null;
         OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder().build();
         try {
-            BaseResult baseResult = expressShipperService.queryOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
+            baseResult = expressShipperService.queryOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
                     logisticsQueryVO.getLogisticsAuthEntity().getPassword(), orderQueryRequest);
+            if (baseResult.isSuccess()) {
+
+            } else {
+
+            }
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
-        return ApiResult.error(-1, "功能未开放");
+        if (success) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
+            return success(logisticsOrderResponseVO);
+        } else {
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryVO.getTransportNo(), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(msg));
+            return failure(msg);
+        }
     }
 
     /**

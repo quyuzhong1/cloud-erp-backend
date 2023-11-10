@@ -795,6 +795,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shopInfoEntity = shopInfo;
                 shopInfoEntity.setId(null);
                 shopInfoEntity.setName(shopeeId);
+                shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             } else {
                 String name = shopeeId;
                 shopInfoEntity.setName(name);

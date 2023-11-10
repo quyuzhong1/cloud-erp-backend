@@ -40,8 +40,11 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
     private OrderDetail orderDetail;
 
+    private String shopId;
+
     public PlatformShopeeOrderDTO(OrderDetail orderDetail, JobTaskDTO dto) {
         this.orderDetail = orderDetail;
+        this.shopId = dto.getShopId();
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
         this.setUniqueId(orderDetail.getOrdersn());
@@ -55,6 +58,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformShopeeOrderDTO dto) {
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         OrderDetail orderDetail = dto.getOrderDetail();
+        String shopId = dto.getShopId();
 
         Long createTime = orderDetail.getCreateTime();
         Instant instant = Instant.ofEpochSecond(createTime);
@@ -67,7 +71,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
         // 店铺ID
-        orderDTO.setShopId(null);
+        orderDTO.setShopId(shopId);
 
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
@@ -155,7 +159,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         //明细
         orderDTO.setDetails(parseDetailDto(orderDetail));
 
-        return new PlatformOrderDTO();
+        return orderDTO;
     }
 
     /**

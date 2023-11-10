@@ -1,19 +1,19 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
-import com.common.business.annotation.PlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.constant.TmsConstant;
+import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -75,21 +76,24 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build());
     }
 
-
     @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) throws IOException {
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> labelVO) throws IOException {
         List<LogisticsPrintLabelResponse> result = new ArrayList<>();
-        for(String deliveryNo : labelVO.getDeliveryNo()){
+        for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
             WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
-                    .referenceNo(deliveryNo)
+                    .referenceNo(logisticsGetLabelVO.getDeliveryNo())
                     .build();
             WeiShiGetLabelUrl weiShiGetLabelUrlResponse = weiShiService.getLabelUrl(request);
-            if(isFailure(weiShiGetLabelUrlResponse.getAsk())){
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,deliveryNo+weiShiGetLabelUrlResponse.getError().getErrMessage());
-            }
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
-            response.setBase64(FileUtil.convertPdfUrlToBase64(weiShiGetLabelUrlResponse.getUrl()));
-            response.setDeliveryNoList(Collections.singletonList(deliveryNo));
+            response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+            response.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
+            response.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
+            if(isFailure(weiShiGetLabelUrlResponse.getAsk())){
+                response.failure(getName(),logisticsGetLabelVO.getDeliveryNo(),weiShiGetLabelUrlResponse.getMessage());
+            }else{
+                response.setBase64(FileUtil.convertPdfUrlToBase64(weiShiGetLabelUrlResponse.getUrl()));
+                response.success();
+            }
             result.add(response);
         }
         return success(result);
@@ -101,9 +105,10 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsQueryVOList
      * @return
      */
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList) {
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList());
         WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
-                .referenceNoList(logisticsQueryVOList.getDeliveryNo())
+                .referenceNoList(deliveryList)
                 .build()
                 ;
         WeiShiResponse<List<WeiShiGetTrackNumber>> weiShiresponse = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
@@ -115,21 +120,19 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+    public ApiResult<List<InterceptResponseVO>> interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVO) {
         List<InterceptResponseVO> result = new ArrayList<>();
-        //客户单号
-        List<String> deliveryNoList = logisticsQueryVO.getDeliveryNo();
         boolean isSuccess = true;
-        for(String deliveryNo : deliveryNoList){
+        for(LogisticsInterceptOrderVO interceptOrderVO : logisticsQueryVO){
             WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
-                    .referenceNo(deliveryNo)
+                    //客户单号
+                    .referenceNo(interceptOrderVO.getDeliveryNo())
                     .build();
             WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
-            InterceptResponseVO interceptResponseVO = new InterceptResponseVO();
-            interceptResponseVO.setDeliveryNo(deliveryNo);
+            InterceptResponseVO interceptResponseVO = LogisticsOperationOrderConverter.INSTANCE.interceptOrderCovert(interceptOrderVO);
             if(isFailure(weiShiresponse.getAsk())){
                 isSuccess = false;
-                interceptResponseVO.failure(LogisticsPlatformEnum.WEI_SHI.getName(),deliveryNo,weiShiresponse.getError().getErrMessage());
+                interceptResponseVO.failure(getName(),interceptOrderVO.getDeliveryNo(),weiShiresponse.getError().getErrMessage());
             }else{
                 interceptResponseVO.success();
             }
@@ -139,17 +142,28 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
-        WeiShiCancelOrderRequest weiShiInterceptOrderRequest = WeiShiCancelOrderRequest.builder()
-                .referenceNo(cancelOrderVO.getDeliveryNo().get(0))
-                .build();
-        WeiShiResponse<String> weiShiresponse = weiShiService.cancelOrder(weiShiInterceptOrderRequest);
-        if(isFailure(weiShiresponse.getAsk())){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> cancelOrderVOList)  {
+        List<CancelResponseVO> result = new ArrayList<>();
+        boolean isSuccess = true;
+        for(LogisticsCancelOrderVO cancelOrderVO : cancelOrderVOList){
+            WeiShiCancelOrderRequest request = WeiShiCancelOrderRequest.builder()
+                    .referenceNo(cancelOrderVO.getDeliveryNo())
+                    .build();
+            WeiShiResponse<String> weiShiResponse = weiShiService.cancelOrder(request);
+            CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
+            if(isFailure(weiShiResponse.getAsk())){
+                isSuccess = false;
+                cancelResponseVO.failure(getName(),cancelOrderVO.getDeliveryNo(),weiShiResponse.getMessage());
+            }else{
+                cancelResponseVO.success();
+            }
+            result.add(cancelResponseVO);
         }
-        return success(weiShiresponse.getData());
+        return isSuccess?success(result):failure(result);
     }
     private Boolean isFailure(String ask){
         return !TmsConstant.SUCCESS.equals(ask);
     }
+
+    private String getName(){return LogisticsPlatformEnum.WEI_SHI.getName();};
 }

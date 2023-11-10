@@ -93,21 +93,22 @@ public class YanWenLogisticsHandlerImplTest {
     @Test
     public void getLabelUrl() {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setDeliveryNo(Arrays.asList("LR085325053CN"));
-        System.out.println(yanWenLogisticsHandler.getLabelList(logisticsQueryVO));
+        logisticsQueryVO.setTransportNo("LR085325053CN");
+        System.out.println(yanWenLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO)));
     }
 
     @Test
     public void cancelOrder() {
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
-        cancelOrderVO.setTransportNo(Collections.singletonList("LR085325186CN"));
-        System.out.println(yanWenLogisticsHandler.cancelOrder(cancelOrderVO));
+        cancelOrderVO.setTransportNo("LR085933164CN");
+        cancelOrderVO.setDeliveryNo("WJ085933164CN");
+        System.out.println(yanWenLogisticsHandler.cancelOrder(Arrays.asList(cancelOrderVO)));
     }
 
     @Test
     public void queryOrder() {
         LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
-        logisticsQueryBaseVO.setDeliveryNo(Collections.singletonList("wj12345167"));
-        System.out.println(yanWenLogisticsHandler.queryOrderList(logisticsQueryBaseVO));
+        logisticsQueryBaseVO.setDeliveryNo("wj12345168");
+        System.out.println(yanWenLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryBaseVO)));
     }
 }

@@ -1,8 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.FileUtil;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
@@ -13,14 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
@@ -59,7 +53,7 @@ public class WeiShiLogisticsHandlerImplTest {
                 .channelCode("MX1001")
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("wj12345167720")
+                .deliveryNo("wj12345167721")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -95,29 +89,39 @@ public class WeiShiLogisticsHandlerImplTest {
     @Test
     public void getLabelUrl() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711"));
-        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(logisticsQueryVO);
+        logisticsQueryVO.setDeliveryNo("wj12345167721");
+        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
+        logisticsQueryVO2.setDeliveryNo("wj12345167720");
+        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO,logisticsQueryVO2));
         System.out.println(result);
     }
 
     @Test
     public void queryOrderList() {
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.queryOrderList(logisticsQueryVOList));
+        logisticsQueryVOList.setDeliveryNo("wj12345167721");
+        LogisticsQueryBaseVO logisticsQueryVOList2 = new LogisticsQueryBaseVO();
+        logisticsQueryVOList2.setDeliveryNo("wj12345167720");
+        System.out.println(weiShiLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryVOList2,logisticsQueryVOList)));
     }
 
     @Test
     public void interceptOrder() {
         LogisticsInterceptOrderVO logisticsQueryVOList = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711","wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.interceptOrder(logisticsQueryVOList));
+        logisticsQueryVOList.setDeliveryNo("wj12345167721");
+        logisticsQueryVOList.setTransportNo("wj1234516772");
+        logisticsQueryVOList.setTrackNo("wj123451677");
+        LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
+        logisticsQueryVOList2.setDeliveryNo("wj12345167720");
+        System.out.println(weiShiLogisticsHandler.interceptOrder(Arrays.asList(logisticsQueryVOList,logisticsQueryVOList2)));
     }
 
     @Test
     public void cancelOrder() {
         LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.cancelOrder(logisticsQueryVOList));
+        logisticsQueryVOList.setDeliveryNo("wj12345167721");
+        logisticsQueryVOList.setTransportNo("wj1234516772");
+        logisticsQueryVOList.setTrackNo("wj123451677");
+        System.out.println(weiShiLogisticsHandler.cancelOrder(Arrays.asList(logisticsQueryVOList)));
     }
 }

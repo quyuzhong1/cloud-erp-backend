@@ -117,11 +117,20 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
 
     /**
-     * @param entity
-     * @param listingInfoMap
-     * @param receiveDTOList
-     */
-    void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList);
+     * FBA货件相关保存
+     *
+     * @author Jim
+     * @date 2023/11/10
+     **/
+    void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
+
+    /**
+     * FBA货件相关更新
+     *
+     * @author Jim
+     * @date 2023/11/10
+     **/
+    void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
 
     /**
      * 通过fbaShipmentId查询实体
