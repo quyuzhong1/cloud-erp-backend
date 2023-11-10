@@ -60,7 +60,7 @@ public class ExpressShipperService {
 //                .cargoDetails(cargoDetailList)
 //                .contactInfoList(contactInfoList)
 //                .build();
-//        BaseResult result = createOrder(CALL_URL_BOX, CLIENT_CODE, CHECK_WORD, orderRequest);
+//        BaseResult result = expressShipperService.createOrder(CLIENT_CODE, CHECK_WORD, orderRequest);
 //
 //        if (result.isSuccess()) {
 //            OrderResponse response = JSONUtil.toBean(result.getMsgData(), OrderResponse.class);
@@ -68,19 +68,27 @@ public class ExpressShipperService {
 //        } else {
 //            System.out.println(result);
 //        }
-
-        OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
-                .orderId("QIAO-20200618-00524")
-                .dealType(1) //客户订单操作标识：1：确认2：取消
+        //确认订单
+//        OrderUpdateRequest orderUpdateRequest = OrderUpdateRequest.builder()
+//                .orderId("QIAO-20200618-00524")
+//                .dealType(1) //客户订单操作标识：1：确认2：取消
+//                .build();
+//
+//        BaseResult result = expressShipperService.updateOrder(CLIENT_CODE, CHECK_WORD, orderUpdateRequest);
+//        if (result.isSuccess()) {
+//            OrderUpdateResponse response = JSONUtil.toBean(result.getMsgData(), OrderUpdateResponse.class);
+//            System.out.println(response);
+//        } else {
+//            System.out.println(result);
+//        }
+        //查询顶顶那
+        OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
+                .orderId("QIAO-20200618-00524")//waybillNo=SF7444473356235
+                .searchType(1)
+                .language("zh-CN")
                 .build();
-
-        BaseResult result = expressShipperService.updateOrder(CLIENT_CODE, CHECK_WORD, orderUpdateRequest);
-        if (result.isSuccess()) {
-            OrderUpdateResponse response = JSONUtil.toBean(result.getMsgData(), OrderUpdateResponse.class);
-            System.out.println(response);
-        } else {
-            System.out.println(result);
-        }
+        BaseResult baseResult = expressShipperService.queryOrder(CLIENT_CODE, CHECK_WORD, orderQueryRequest);
+        System.out.println(baseResult);
     }
 
     /**

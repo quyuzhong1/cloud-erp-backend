@@ -3,6 +3,7 @@ package com.erp.model.tms.vo.response;
 import lombok.*;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author zdy
@@ -40,4 +41,13 @@ public class LogisticsOrderResponseVO extends LogisticsBaseResponseVO implements
     String odaResultSign;
 
     String remark;
+
+    /**
+     * 是否存在 1对多订单情况
+     */
+    boolean more;
+    /**
+     * 兼容一对多情况 一个订单存在多个运单号 主单和子单
+     */
+    List<LogisticsOrderResponseVO> logisticsOrderResponseVOS;
 }
