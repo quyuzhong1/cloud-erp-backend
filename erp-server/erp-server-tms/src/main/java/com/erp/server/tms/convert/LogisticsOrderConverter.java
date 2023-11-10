@@ -15,6 +15,7 @@ import com.sdk.tms.weishi.dto.response.WeiShiGetTrackNumber;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenQueryOrder;
 import com.sdk.tms.yuntu.dto.request.YunTuCreateOrderRequest;
+import com.sdk.tms.yuntu.dto.response.YunTuTrackingNumber;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -294,4 +295,13 @@ public interface LogisticsOrderConverter {
     })
     YunTuCreateOrderRequest.Parcels orderRequestByYunTu(LogisticsProductVO productVO);
 
+    @Mappings({
+            @Mapping(target = "transportNo" ,source = "customerOrderNumber"),
+            @Mapping(target = "trackNo" ,source = "trackingNumber"),
+            @Mapping(target = "deliveryNo" ,source = "wayBillNumber"),
+            @Mapping(target = "code" ,constant = "200"),
+            @Mapping(target = "message" ,constant = "调用成功")
+    })
+    LogisticsOrderResponseVO orderQueryByYunTu(YunTuTrackingNumber data);
+    List<LogisticsOrderResponseVO> orderQueryByYunTu(List<YunTuTrackingNumber> data);
 }

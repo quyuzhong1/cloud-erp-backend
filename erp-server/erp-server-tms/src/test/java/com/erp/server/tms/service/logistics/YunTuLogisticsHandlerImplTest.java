@@ -2,6 +2,8 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.ErpServerTmsApplication;
@@ -87,11 +89,35 @@ public class YunTuLogisticsHandlerImplTest {
     }
 
 
-    @Test
-    public void getLabelList() throws IOException {
-        LogisticsGetLabelVO labelVO = new LogisticsGetLabelVO();
-        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006"));
-        ApiResult<List<LogisticsPrintLabelResponse>> result = yunTuLogisticsHandler.getLabelList(labelVO);
-        System.out.println(result);
-    }
+//    @Test
+//    public void getLabelList() throws IOException {
+//        LogisticsGetLabelVO labelVO = new LogisticsGetLabelVO();
+//        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006","WEIJI2023110901009"));
+//        ApiResult<List<LogisticsPrintLabelResponse>> result = yunTuLogisticsHandler.getLabelList(labelVO);
+//        System.out.println(result);
+//    }
+//
+//    @Test
+//    public void queryOrderListTest() throws IOException {
+//        LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
+//        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006"));
+//        ApiResult<List<LogisticsOrderResponseVO>> apiResult = yunTuLogisticsHandler.queryOrderList(labelVO);
+//        System.out.println(apiResult);
+//    }
+//
+//    @Test
+//    public void interceptOrder() throws IOException {
+//        LogisticsInterceptOrderVO labelVO = new LogisticsInterceptOrderVO();
+//        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006","WEIJI2023110901009"));
+//        ApiResult<List<InterceptResponseVO>> apiResult = yunTuLogisticsHandler.interceptOrder(labelVO);
+//        System.out.println(apiResult);
+//    }
+//
+//    @Test
+//    public void cancelOrder() throws IOException {
+//        LogisticsCancelOrderVO labelVO = new LogisticsCancelOrderVO();
+//        labelVO.setDeliveryNo(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003"));
+//        ApiResult<List<CancelResponseVO>> apiResult = yunTuLogisticsHandler.cancelOrder(labelVO);
+//        System.out.println(apiResult);
+//    }
 }

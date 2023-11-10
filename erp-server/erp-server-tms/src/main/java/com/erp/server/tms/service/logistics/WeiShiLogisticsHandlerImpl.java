@@ -74,81 +74,81 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trackNo(weiShiResponse.getOrderCode())
                 .build());
     }
+//
+//
+//    @Override
+//    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) throws IOException {
+//        List<LogisticsPrintLabelResponse> result = new ArrayList<>();
+//        for(String deliveryNo : labelVO.getDeliveryNo()){
+//            WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
+//                    .referenceNo(deliveryNo)
+//                    .build();
+//            WeiShiGetLabelUrl weiShiGetLabelUrlResponse = weiShiService.getLabelUrl(request);
+//            if(isFailure(weiShiGetLabelUrlResponse.getAsk())){
+//                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,deliveryNo+weiShiGetLabelUrlResponse.getError().getErrMessage());
+//            }
+//            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+//            response.setBase64(FileUtil.convertPdfUrlToBase64(weiShiGetLabelUrlResponse.getUrl()));
+//            response.setDeliveryNoList(Collections.singletonList(deliveryNo));
+//            result.add(response);
+//        }
+//        return success(result);
+//    }
 
+//    /**
+//     * 查询订单(批量)
+//     *
+//     * @param logisticsQueryVOList
+//     * @return
+//     */
+//    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList) {
+//        WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
+//                .referenceNoList(logisticsQueryVOList.getDeliveryNo())
+//                .build()
+//                ;
+//        WeiShiResponse<List<WeiShiGetTrackNumber>> weiShiresponse = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
+//        if(isFailure(weiShiresponse.getAsk())){
+//            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+//        }
+//        List<LogisticsOrderResponseVO> response = LogisticsOrderConverter.INSTANCE.trackInfoConvertByWeiShi(weiShiresponse.getData());
+//        return success(response);
+//    }
 
-    @Override
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO labelVO) throws IOException {
-        List<LogisticsPrintLabelResponse> result = new ArrayList<>();
-        for(String deliveryNo : labelVO.getDeliveryNo()){
-            WeiShiGetLabelUrlRequest request = WeiShiGetLabelUrlRequest.builder()
-                    .referenceNo(deliveryNo)
-                    .build();
-            WeiShiGetLabelUrl weiShiGetLabelUrlResponse = weiShiService.getLabelUrl(request);
-            if(isFailure(weiShiGetLabelUrlResponse.getAsk())){
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,deliveryNo+weiShiGetLabelUrlResponse.getError().getErrMessage());
-            }
-            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
-            response.setBase64(FileUtil.convertPdfUrlToBase64(weiShiGetLabelUrlResponse.getUrl()));
-            response.setDeliveryNoList(Collections.singletonList(deliveryNo));
-            result.add(response);
-        }
-        return success(result);
-    }
+//    @Override
+//    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+//        List<InterceptResponseVO> result = new ArrayList<>();
+//        //客户单号
+//        List<String> deliveryNoList = logisticsQueryVO.getDeliveryNo();
+//        boolean isSuccess = true;
+//        for(String deliveryNo : deliveryNoList){
+//            WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
+//                    .referenceNo(deliveryNo)
+//                    .build();
+//            WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
+//            InterceptResponseVO interceptResponseVO = new InterceptResponseVO();
+//            interceptResponseVO.setDeliveryNo(deliveryNo);
+//            if(isFailure(weiShiresponse.getAsk())){
+//                isSuccess = false;
+//                interceptResponseVO.failure(LogisticsPlatformEnum.WEI_SHI.getName(),deliveryNo,weiShiresponse.getError().getErrMessage());
+//            }else{
+//                interceptResponseVO.success();
+//            }
+//            result.add(interceptResponseVO);
+//        }
+//        return isSuccess?success(result):failure(result);
+//    }
 
-    /**
-     * 查询订单(批量)
-     *
-     * @param logisticsQueryVOList
-     * @return
-     */
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList) {
-        WeiShiGetTrackNumberRequest weiShiCancelOrderRequest = WeiShiGetTrackNumberRequest.builder()
-                .referenceNoList(logisticsQueryVOList.getDeliveryNo())
-                .build()
-                ;
-        WeiShiResponse<List<WeiShiGetTrackNumber>> weiShiresponse = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
-        if(isFailure(weiShiresponse.getAsk())){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
-        }
-        List<LogisticsOrderResponseVO> response = LogisticsOrderConverter.INSTANCE.trackInfoConvertByWeiShi(weiShiresponse.getData());
-        return success(response);
-    }
-
-    @Override
-    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
-        List<InterceptResponseVO> result = new ArrayList<>();
-        //客户单号
-        List<String> deliveryNoList = logisticsQueryVO.getDeliveryNo();
-        boolean isSuccess = true;
-        for(String deliveryNo : deliveryNoList){
-            WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
-                    .referenceNo(deliveryNo)
-                    .build();
-            WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
-            InterceptResponseVO interceptResponseVO = new InterceptResponseVO();
-            interceptResponseVO.setDeliveryNo(deliveryNo);
-            if(isFailure(weiShiresponse.getAsk())){
-                isSuccess = false;
-                interceptResponseVO.failure(LogisticsPlatformEnum.WEI_SHI.getName(),deliveryNo,weiShiresponse.getError().getErrMessage());
-            }else{
-                interceptResponseVO.success();
-            }
-            result.add(interceptResponseVO);
-        }
-        return isSuccess?success(result):failure(result);
-    }
-
-    @Override
-    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
-        WeiShiCancelOrderRequest weiShiInterceptOrderRequest = WeiShiCancelOrderRequest.builder()
-                .referenceNo(cancelOrderVO.getDeliveryNo().get(0))
-                .build();
-        WeiShiResponse<String> weiShiresponse = weiShiService.cancelOrder(weiShiInterceptOrderRequest);
-        if(isFailure(weiShiresponse.getAsk())){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
-        }
-        return success(weiShiresponse.getData());
-    }
+//    @Override
+//    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {
+//        WeiShiCancelOrderRequest weiShiInterceptOrderRequest = WeiShiCancelOrderRequest.builder()
+//                .referenceNo(cancelOrderVO.getDeliveryNo().get(0))
+//                .build();
+//        WeiShiResponse<String> weiShiresponse = weiShiService.cancelOrder(weiShiInterceptOrderRequest);
+//        if(isFailure(weiShiresponse.getAsk())){
+//            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
+//        }
+//        return success(weiShiresponse.getData());
+//    }
     private Boolean isFailure(String ask){
         return !TmsConstant.SUCCESS.equals(ask);
     }

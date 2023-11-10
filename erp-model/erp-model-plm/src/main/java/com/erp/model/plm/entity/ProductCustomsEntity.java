@@ -52,7 +52,7 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     /**
     * 国家
     */
-    @TableField(exist = false)
+    @TableField("country_name")
     private String countryName;
 
     /**

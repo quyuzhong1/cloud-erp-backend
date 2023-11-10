@@ -195,7 +195,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param approvalStatus
      * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.PagingVO>
      */
-    List<LogisticsProductDTO.PagingVO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
+    List<LogisticsProductDTO.ExportInfoDTO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
 }
 
 

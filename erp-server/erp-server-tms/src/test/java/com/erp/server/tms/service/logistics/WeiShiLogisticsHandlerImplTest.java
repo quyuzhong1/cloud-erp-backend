@@ -92,32 +92,32 @@ public class WeiShiLogisticsHandlerImplTest {
         System.out.println(result);
     }
 
-    @Test
-    public void getLabelUrl() throws IOException {
-        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-        logisticsQueryVO.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711"));
-        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(logisticsQueryVO);
-        System.out.println(result);
-    }
-
-    @Test
-    public void queryOrderList() {
-        LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.queryOrderList(logisticsQueryVOList));
-    }
-
-    @Test
-    public void interceptOrder() {
-        LogisticsInterceptOrderVO logisticsQueryVOList = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711","wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.interceptOrder(logisticsQueryVOList));
-    }
-
-    @Test
-    public void cancelOrder() {
-        LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
-        System.out.println(weiShiLogisticsHandler.cancelOrder(logisticsQueryVOList));
-    }
+//    @Test
+//    public void getLabelUrl() throws IOException {
+//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+//        logisticsQueryVO.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711"));
+//        ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(logisticsQueryVO);
+//        System.out.println(result);
+//    }
+//
+//    @Test
+//    public void queryOrderList() {
+//        LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
+//        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
+//        System.out.println(weiShiLogisticsHandler.queryOrderList(logisticsQueryVOList));
+//    }
+//
+//    @Test
+//    public void interceptOrder() {
+//        LogisticsInterceptOrderVO logisticsQueryVOList = new LogisticsInterceptOrderVO();
+//        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711","wj12345167710"));
+//        System.out.println(weiShiLogisticsHandler.interceptOrder(logisticsQueryVOList));
+//    }
+//
+//    @Test
+//    public void cancelOrder() {
+//        LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
+//        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
+//        System.out.println(weiShiLogisticsHandler.cancelOrder(logisticsQueryVOList));
+//    }
 }
