@@ -6,17 +6,14 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -87,7 +84,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
 
         // 卖家SKU列表
-        List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getMSku).distinct().collect(Collectors.toList());
+        List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
         // 查询SKU绑定的信息
         Map<String, ListingInfoEntity> listingInfoMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(sellerSkuList)){
@@ -103,15 +100,15 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
         entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
-        // 新增或更新主表
+        // 新增或更新
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
         if (null == oldEntity){
             // 新增
-            fbaShipmentService.checkAndSaveAll(entity, listingInfoMap, receiveDTOList);
+            fbaShipmentService.checkAndSaveAll(entity, listingInfoMap, receiveDTOList, dto.getDetailList());
         } else {
-            // TODO 修改
+            // 修改
+            fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoMap, receiveDTOList, dto.getDetailList());
         }
-
 
         return ApiResult.success();
     }
