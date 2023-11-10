@@ -91,24 +91,24 @@ public class LogisticsProductExcelDTO {
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "组合品申报", index = 11)
-    @FieldValid(fieldName = "组合品申报")
+    @ExcelProperty(value = "组合品申报", index = 12)
+    @FieldValid(fieldName = "组合品申报",isNotBlank = true)
     private String combinationDeclareType;
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "国家", index = 12)
+    @ExcelProperty(value = "国家", index = 13)
     @FieldValid(fieldName = "国家")
     private String country;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "目的国海关编码", index = 13)
+    @ExcelProperty(value = "目的国海关编码", index = 14)
     @FieldValid(fieldName = "目的国海关编码")
     private String destCustomsCode;
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "税率", index = 14)
+    @ExcelProperty(value = "税率", index = 15)
     @FieldValid(fieldName = "税率" ,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String taxRate;
 
@@ -117,6 +117,6 @@ public class LogisticsProductExcelDTO {
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "错误信息", index = 15)
+    @ExcelProperty(value = "错误信息", index = 16)
     private String errorMsg;
 }
