@@ -17,5 +17,8 @@ public class BaseResult implements Serializable {
     private boolean success;
     private String errorCode;
     private String errorMsg;
+    private String errorMessage;
+    private String requestId;
+    private Object obj;
     private JSONObject msgData;
 }
