@@ -6,6 +6,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ReportScheduleDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 亚马逊报告计划表 服务类
@@ -47,4 +49,12 @@ public interface ReportScheduleService extends SuperService<ReportScheduleEntity
      * @date: 2023-11-08
      */
     Boolean cancelReportSchedule(DmpSyncReportScheduleDTO dto);
+
+    /**
+     * 检查和请求所有计划任务
+     *
+     * @author Jim
+     * @date: 2023-11-10
+     */
+    List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus);
 }

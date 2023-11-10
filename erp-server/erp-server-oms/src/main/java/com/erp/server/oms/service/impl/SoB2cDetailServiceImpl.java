@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -31,7 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -172,6 +175,35 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             entity.setWarehouseOrgName(codeDTO.getName());
         }
         return this.updateBatchById(detailList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+        // 订单明细
+        List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
+        if(CollectionUtils.isEmpty(dto.getDetails())){
+            if (!CollectionUtils.isEmpty(oldDetailEntityList)){
+                if(!this.deleteByMainIds(Collections.singletonList(mainEntity.getId()))){
+                    throw new ServiceException("[SoB2cDetailEntity] 批量删除失败");
+                }
+            }
+            return;
+        }
+        if (CollectionUtils.isEmpty(oldDetailEntityList)){
+            List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
+                SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
+                BeanUtils.copyProperties(d, detailEntity);
+                detailEntity.setMainId(mainEntity.getId());//增加主表id
+                return detailEntity;
+            }).collect(Collectors.toList());
+
+            if (!this.saveBatch(detailEntityList)){
+                throw new ServiceException("Shopify 订单明细批量保存失败");
+            }
+            return;
+        }
+        // TODO 更新操作
     }
 
 

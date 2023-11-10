@@ -82,4 +82,9 @@ public class ReportScheduleServiceImpl extends SuperServiceImpl<ReportScheduleMa
         }
         return true;
     }
+
+    @Override
+    public List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus) {
+        return null;
+    }
 }

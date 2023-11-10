@@ -11,6 +11,9 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.ReportScheduleEntity;
+import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
@@ -30,6 +33,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.ReportHandleService;
+import com.erp.server.dmp.service.ReportScheduleService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -84,6 +88,8 @@ public class PullAmazonJob {
     @Resource
     private ReportHandleService reportHandleService;
 
+    @Resource
+    private ReportScheduleService reportScheduleService;
 
     /**
      * 拉取亚马逊任务
@@ -386,4 +392,41 @@ public class PullAmazonJob {
         XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束");
         return ReturnT.SUCCESS;
     }
+
+    /**
+     * 亚马逊获取报表计划请求任务
+     */
+    @XxlJob("amazonReportScheduleJob")
+    public ReturnT<String> amazonReportScheduleJob() {
+        Integer size = 1000;
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        // 根据报告ID和状态获取reportDocumentId
+        XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务开始 size={}", size);
+        // 根据状态查询未请求的数据
+        List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.findList(ReportScheduleSubscribedStatusEnum.WAIT.getCode(), ReportScheduleCancelStatusEnum.NONE.getCode());
+//        if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
+//            XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束,无需要更新的信息");
+//            return ReturnT.SUCCESS;
+//        }
+//        reportList.forEach(report -> {
+//            try {
+//                platformDataThread.findUrlAndSend(tableName, report);
+//            } catch (Exception e) {
+//                String errorMsg = JSONUtil.toJsonStr(e);
+//                XxlJobHelper.log("[亚马逊获取报表计划请求任务] 拉取亚马逊报表失败：reportId={}, error={}",
+//                        report.getReportId(),
+//                        errorMsg
+//                );
+//                throw new ServiceException("亚马逊获取报表计划请求任务:error=" + errorMsg);
+//            }
+//
+//        });
+        XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束");
+        return ReturnT.SUCCESS;
+    }
+
 }

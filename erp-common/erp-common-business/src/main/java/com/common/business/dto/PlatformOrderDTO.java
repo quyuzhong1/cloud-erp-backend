@@ -179,11 +179,6 @@ public class PlatformOrderDTO extends UniqueDto {
     private String syncOperate;
 
     /**
-     * 订单明细
-     */
-    private List<PlatformOrderDetailDTO> details;
-
-    /**
      * 数据下载状态
      * 0 详情数据需要更新
      * 1 详情数据已更新
@@ -194,4 +189,24 @@ public class PlatformOrderDTO extends UniqueDto {
      * 数据下载时间
      */
     private String downloadTime;
+
+    /**
+     * 订单明细
+     */
+    private List<PlatformOrderDetailDTO> details;
+
+    /**
+     * 订单财务信息
+     */
+    private List<PlatformOrderFinanceDTO> financesList;
+
+    /**
+     * 订单物流信息
+     */
+    private List<PlatformOrderLogisticsDTO> logisticsList;
+
+    /**
+     * 订单买家信息
+     */
+    private List<PlatformOrderReceiverDTO> receiverList;
 }
