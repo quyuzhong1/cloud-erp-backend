@@ -86,7 +86,7 @@
         WHERE fd.is_deleted = FALSE
         <!--状态-->
         <if test="params.tabFlag != null and params.tabFlag != ''">
-            AND fd.approve_status ILIKE concat('%',#{params.tabFlag},'%')
+            AND fd.approve_status = #{params.tabFlag}
         </if>
         <!--单据编号-->
         <if test="params.code != null and params.code != ''">
@@ -242,7 +242,7 @@
 
                 <!--状态-->
                 <if test="params.tabFlag != null and params.tabFlag != ''">
-                    AND fd.approve_status ILIKE concat('%',#{params.tabFlag},'%')
+                    AND fd.approve_status = #{params.tabFlag}
                 </if>
                 <!--单据编号-->
                 <if test="params.code != null and params.code != ''">
