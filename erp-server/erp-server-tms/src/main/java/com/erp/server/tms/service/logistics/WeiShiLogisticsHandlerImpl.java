@@ -1,13 +1,16 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
+import com.common.business.annotation.PlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.constant.TmsConstant;
@@ -18,9 +21,6 @@ import com.erp.server.tms.service.LogisticsAuthService;
 import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.server.WeiShiService;
-import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
-import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
-import com.sdk.tms.yanwen.dto.response.YanWenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -114,17 +114,29 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return success(response);
     }
 
-//    @Override
-//    public ApiResult<String> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
-//        WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
-//                .referenceNo(logisticsQueryVO.getDeliveryNo().get(0))
-//                .build();
-//        WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
-//        if(isFailure(weiShiresponse.getAsk())){
-//            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,weiShiresponse.getError().getErrMessage());
-//        }
-//        return success(weiShiresponse.getData());
-//    }
+    @Override
+    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
+        List<InterceptResponseVO> result = new ArrayList<>();
+        //客户单号
+        List<String> deliveryNoList = logisticsQueryVO.getDeliveryNo();
+        boolean isSuccess = true;
+        for(String deliveryNo : deliveryNoList){
+            WeiShiInterceptOrderRequest weiShiInterceptOrderRequest = WeiShiInterceptOrderRequest.builder()
+                    .referenceNo(deliveryNo)
+                    .build();
+            WeiShiResponse<String> weiShiresponse = weiShiService.interceptOrder(weiShiInterceptOrderRequest);
+            InterceptResponseVO interceptResponseVO = new InterceptResponseVO();
+            interceptResponseVO.setDeliveryNo(deliveryNo);
+            if(isFailure(weiShiresponse.getAsk())){
+                isSuccess = false;
+                interceptResponseVO.failure(LogisticsPlatformEnum.WEI_SHI.getName(),deliveryNo,weiShiresponse.getError().getErrMessage());
+            }else{
+                interceptResponseVO.success();
+            }
+            result.add(interceptResponseVO);
+        }
+        return isSuccess?success(result):failure(result);
+    }
 
     @Override
     public ApiResult<String> cancelOrder(LogisticsCancelOrderVO cancelOrderVO) {

@@ -957,6 +957,7 @@ public enum ApiError implements Serializable {
     ERROR_SHIPPING_TEMPLATE_RULE_REGION_EXIST(94014,"已存在起始国【{}】、目的国【{}】、城市分区【{}】运费规则"),
     ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_EXIST(94015,"已存在起始国【{}】、目的仓库【{}】运费规则"),
     ERROR_SHIPPING_RULE_NOT_EXIST(94016,"未找到运费规则"),
+    ERROR_SHIPPING_WEIGHT_NOT_INTERVAL(94017,"重量【{}】不在开始重量【{}】和结束重量【{}】之间"),
 
 
 

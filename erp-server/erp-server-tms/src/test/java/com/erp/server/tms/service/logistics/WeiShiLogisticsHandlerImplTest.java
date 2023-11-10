@@ -110,7 +110,7 @@ public class WeiShiLogisticsHandlerImplTest {
     @Test
     public void interceptOrder() {
         LogisticsInterceptOrderVO logisticsQueryVOList = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167710"));
+        logisticsQueryVOList.setDeliveryNo(Arrays.asList("wj12345167720","wj12345167711","wj12345167710"));
         System.out.println(weiShiLogisticsHandler.interceptOrder(logisticsQueryVOList));
     }
 

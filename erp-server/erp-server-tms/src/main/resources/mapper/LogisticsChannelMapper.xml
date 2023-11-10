@@ -49,5 +49,13 @@
         main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, shipping_template_id, fee_rule, max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model, is_ioss_prepay, is_api_sign, is_api_insurance
     </sql>
 
+    <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
+        select
+            lc.code,
+            lc.name,
+            lc.disabled
+        from logistics_channel lc where lc.is_deleted = false
+    </select>
+
 
 </mapper>
