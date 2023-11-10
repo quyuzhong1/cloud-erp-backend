@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class LogisticsPrintLabelResponse implements Serializable {
+public class LogisticsPrintLabelResponse extends LogisticsBaseResponseVO implements Serializable {
     /**
      * 运单号
      */

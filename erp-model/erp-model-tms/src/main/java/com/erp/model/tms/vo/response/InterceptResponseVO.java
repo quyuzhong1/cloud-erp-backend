@@ -1,9 +1,6 @@
 package com.erp.model.tms.vo.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -18,7 +15,8 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterceptResponseVO implements Serializable {
+@ToString(callSuper = true)
+public class InterceptResponseVO extends LogisticsBaseResponseVO implements Serializable {
     /**
      * 运单号
      */
@@ -31,8 +29,5 @@ public class InterceptResponseVO implements Serializable {
      * 发货单号，erp传的
      */
     String deliveryNo;
-    //成功 Success
-    String status;
-    //失败原因
-    String errors;
+
 }

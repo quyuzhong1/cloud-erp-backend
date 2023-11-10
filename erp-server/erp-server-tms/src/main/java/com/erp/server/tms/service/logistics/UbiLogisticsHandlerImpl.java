@@ -158,8 +158,8 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (CollectionUtils.isNotEmpty(orderResponses)) {
                 orderResponses.stream().forEach(orderResponse -> {
                     responseVOS.add(InterceptResponseVO.builder()
-                            .errors(orderResponse.getErrors())
-                            .status(orderResponse.getStatus())
+//                            .errors(orderResponse.getErrors())
+//                            .status(orderResponse.getStatus())
                             .deliveryNo(orderResponse.getOrderId())
                             .build());
                 });

@@ -18,7 +18,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class LogisticsOrderResponseVO implements Serializable {
+public class LogisticsOrderResponseVO extends LogisticsBaseResponseVO implements Serializable {
     /**
      * 运单号
      */
