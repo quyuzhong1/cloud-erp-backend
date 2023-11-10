@@ -79,7 +79,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 .setProductImageUrl(imageUrl)
                 //平台最后修改时间
                 .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
-
+        productDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
         return productDTO;
     }
 
