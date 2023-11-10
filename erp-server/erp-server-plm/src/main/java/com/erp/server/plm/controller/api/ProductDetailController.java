@@ -115,10 +115,6 @@ ProductDetailController extends BaseController {
     @Resource
     private ProductCustomsService productCustomsService;
 
-    @Resource
-    private WarehouseLocationFeign warehouseLocationFeign;
-
-
     /**
      * 临时接口-添加产品国外海关编码
      *
@@ -1167,8 +1163,7 @@ ProductDetailController extends BaseController {
     //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importProductWarehouseLocationFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         List<ProductDetailEntity> productDetailEntityList = productDetailService.list();
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationFeign.list();
-        ProductWarehouseLocationListener excelListenerUtil = new ProductWarehouseLocationListener(productDetailEntityList, warehouseLocationList, productDetailService);
+        ProductWarehouseLocationListener excelListenerUtil = new ProductWarehouseLocationListener(productDetailEntityList, productDetailService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
