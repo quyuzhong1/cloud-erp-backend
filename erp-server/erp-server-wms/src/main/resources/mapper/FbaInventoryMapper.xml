@@ -13,7 +13,7 @@
         update_user_id,
         version,
         is_deleted,
-        platform_code, name, asin, m_sku, fn_sku, sku_no, product_name, delivery_channels, fbm_fulfillable_qty, inbound_working_qty, inbound_shipped_qty, inbound_receiving_qty, fulfillable_qty, reserved_qty, researching_qty, unsellable_qty, inventory_age
+        platform_code, name, asin, msku, fn_sku, sku_no, product_name, delivery_channels, fbm_fulfillable_qty, inbound_working_qty, inbound_shipped_qty, inbound_receiving_qty, fulfillable_qty, reserved_qty, researching_qty, unsellable_qty, inventory_age
     </sql>
 
     <!--分页查询-->
@@ -24,7 +24,7 @@
         fi.warehouse_id,
         fi.warehouse_name,
         fi.asin,
-        fi.m_sku,
+        fi.msku,
         fi.fn_sku,
         fi.sku_no,
         fi.product_name,
@@ -64,7 +64,7 @@
         </if>
         <!--卖家sku-->
         <if test="params.mSku != null and params.mSku != ''">
-            AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+            AND fi.msku ILIKE concat('%',#{params.mSku},'%')
         </if>
         <!--配送渠道-->
         <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
@@ -113,7 +113,7 @@
         fi.warehouse_id,
         fi.warehouse_name,
         fi.asin,
-        fi.m_sku,
+        fi.msku,
         fi.fn_sku,
         fi.sku_no,
         fi.product_name,
@@ -161,7 +161,7 @@
                 </if>
                 <!--卖家sku-->
                 <if test="params.mSku != null and params.mSku != ''">
-                    AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+                    AND fi.msku ILIKE concat('%',#{params.mSku},'%')
                 </if>
                 <!--配送渠道-->
                 <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
@@ -221,7 +221,7 @@
         </if>
         <!--卖家sku-->
         <if test="params.mSku != null and params.mSku != ''">
-            AND fi.m_sku ILIKE concat('%',#{params.mSku},'%')
+            AND fi.msku ILIKE concat('%',#{params.mSku},'%')
         </if>
         <!--配送渠道-->
         <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">

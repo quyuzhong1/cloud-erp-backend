@@ -122,7 +122,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 卖家sku
          */
-         private String mSku;
+         private String msku;
          /**
          * 创建时间
          */
@@ -237,7 +237,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 卖家sku
          */
-        private String mSku;
+        private String msku;
 
         /**
          * FNSKU
