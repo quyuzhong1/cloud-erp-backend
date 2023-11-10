@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -54,6 +55,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
+import org.springframework.beans.BeanUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -2277,4 +2279,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         }
     }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto) {
+        SoB2cEntity oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
+        if (null == oldEntity){
+            // 组合信息
+            SoB2cEntity entity = new SoB2cEntity();
+            BeanUtils.copyProperties(dto, entity);
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
+            entity.setCode(code);
+            if (!this.save(entity)){
+                throw new ServiceException("soB2c订单保存失败");
+            }
+            return entity;
+        } else {
+            SoB2cEntity entity = new SoB2cEntity();
+            BeanUtils.copyProperties(dto, entity);
+            if (!oldEntity.toString().equals(entity.toString())){
+                // TODO
+                entity.setId(oldEntity.getId());
+                this.updateById(entity);
+            }
+            return oldEntity;
+        }
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform) {
+        return lambdaQuery()
+                .eq(SoB2cEntity::getPlatformCode, platformCode)
+                .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .last("LIMIT 1")
+                .one();
+    }
+
 }

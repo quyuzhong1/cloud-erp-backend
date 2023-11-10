@@ -61,30 +61,13 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        // 组合信息
-        SoB2cEntity entity = new SoB2cEntity();
-        BeanUtils.copyProperties(dto, entity);
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
-        entity.setCode(code);
-        if (!soB2cService.save(entity)){
-            throw new ServiceException("soB2c订单保存失败");
-        }
-        // 信息校验?
+        // 主表更新或保存
+        SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
 
-        // 订单明细
-        if(CollectionUtils.isNotEmpty(dto.getDetails())){
-            List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
-                SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
-                BeanUtils.copyProperties(d, detailEntity);
-                detailEntity.setMainId(entity.getId());//增加主表id
-                return detailEntity;
-            }).collect(Collectors.toList());
+        // 详情更新或保存
+        soB2cDetailService.saveOrUpdateEntity(dto, mainEntity);
 
-            if (!soB2cDetailService.saveBatch(detailEntityList)){
-                throw new ServiceException("Shopify 订单明细批量保存失败");
-            }
-        }
+
         return ApiResult.success();
     }
 }

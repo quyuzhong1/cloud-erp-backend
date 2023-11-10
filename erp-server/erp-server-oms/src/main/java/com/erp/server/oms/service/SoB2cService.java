@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -279,4 +280,20 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO isNotNeedMerge(String id);
+
+    /**
+     * 平台订单更新或保存
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto);
+
+    /**
+     * 通过哟平台订单ID和类型查询
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
 }

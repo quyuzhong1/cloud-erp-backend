@@ -125,17 +125,6 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
 
     /**
-     * 更新订单
-     *
-     * @param logisticsOrderVO
-     * @return
-     */
-    @Override
-    public ApiResult<String> updateOrder(LogisticsOrderVO logisticsOrderVO) {
-        return ApiResult.error(-1, "功能未开放");
-    }
-
-    /**
      * 拦截订单
      *
      * @param logisticsQueryVO
@@ -273,5 +262,9 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return failure(e.getMessage());
         }
 
+    }
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.UBI;
     }
 }

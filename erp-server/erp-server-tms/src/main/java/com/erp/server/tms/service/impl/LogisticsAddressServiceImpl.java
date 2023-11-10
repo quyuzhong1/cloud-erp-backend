@@ -138,7 +138,6 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
 
-
     @Override
     public Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
         List<LogisticsAddressDTO.PagingViewDTO> list = baseMapper.listExport(dto);
@@ -150,7 +149,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         sb.append(date);
         sb.append(name);
         try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(list, response, "", excelPath);
         } catch (IOException e) {
             log.error("销物流地址导出错 {}", e);
             return Boolean.FALSE;
@@ -174,9 +173,17 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
      */
     private void handleData(LogisticsAddressEntity entity) {
         // TODO 验证数据 & 数据赋值
+        String name = entity.getName();
+        String id = entity.getId();
+        Integer count = this.lambdaQuery().eq(LogisticsAddressEntity::getName, name).
+                ne(StringUtils.isNotBlank(id), LogisticsAddressEntity::getId, id).count();
+        if (count > 0) {
+           throw new ServiceException(ApiError.ERROR_LOGISTICS_ADDRESS_NAME_EXIST,name);
+        }
+
         String country = entity.getCountry();
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(country);
-        if(Objects.nonNull(countryEntity)){
+        if (Objects.nonNull(countryEntity)) {
             entity.setCountryName(countryEntity.getNameCn());
         }
 

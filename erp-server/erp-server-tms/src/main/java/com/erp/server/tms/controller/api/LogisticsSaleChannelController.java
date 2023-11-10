@@ -81,7 +81,7 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @PostMapping("/test")
     public ApiResult test() {
-        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.SDF.getCode());
+        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.DSF.getCode());
         LogisticsQueryBaseVO logisticsQueryVO = new LogisticsQueryBaseVO();
         ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(new ChanelQueryVO());
         return success();
