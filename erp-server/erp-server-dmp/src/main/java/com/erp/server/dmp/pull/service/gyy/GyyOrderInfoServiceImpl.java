@@ -300,7 +300,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         //平台标识
         dmpOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
-        dmpOrderInfoEntity.setItemList(initOrderItem(gyyOrderEntity, orderState));
+        List<DmpOrderItemEntity> dmpOrderItemEntities = initOrderItem(gyyOrderEntity, orderState);
+        if (CollectionUtil.isEmpty(dmpOrderItemEntities)){
+            return null;
+        }
+        dmpOrderInfoEntity.setItemList(dmpOrderItemEntities);
         return dmpOrderInfoEntity;
     }
 
@@ -323,6 +327,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
         Map<String, Integer> skuCountMap = new HashMap<>();
         for (DetailsBean detailsBean : orderItem) {
+            if(StrUtil.isBlank(detailsBean.getItemCode())){
+                continue;
+            }
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
             //商品id
             dmpOrderItemEntity.setItemId(detailsBean.getItemCode());
