@@ -16,7 +16,7 @@ public class WaybillNoInfoList implements Serializable {
     /**
      * 运单号类型 1：母单 2 :子单 3 : 签回单
      */
-    private String waybillType;
+    private Integer waybillType;
     /**
      * 运单号
      */
