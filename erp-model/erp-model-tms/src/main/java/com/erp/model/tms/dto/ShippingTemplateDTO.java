@@ -209,7 +209,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
         * 价格进制（字典 priceBinary）
         */
-        private Integer priceBinary;
+        private String priceBinary;
 
         /**
          * 价格进制名称
@@ -219,7 +219,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
         * 材积设置
         */
-        private String volumeSetting;
+        private Integer volumeSetting;
 
         /**
         * 生效日期
