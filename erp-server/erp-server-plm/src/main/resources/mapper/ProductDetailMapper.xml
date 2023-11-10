@@ -1082,9 +1082,8 @@
     </select>
 
     <!--导出-->
-    <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$PagingVO">
+    <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ExportInfoDTO">
         SELECT
-            pd.id,
             pd.id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
@@ -1093,12 +1092,16 @@
             pi.category_id AS categoryId,
             pi.category AS categoryName,
             pi.spu_no AS spuNo,
-            pi.property AS productPropertyName,
+            pi.property AS propertyName,
             pi.brand_name AS brandName,
             pi.charge_id AS chargeId,
+            pi.charge_name AS chargeName,
+            pi.usage_desc AS usageDesc,
+            pi.materials AS materials,
             pl.declare_chinese_name AS declareChineseName,
+            pl.declare_english_name AS declareEnglishName,
+            pl.declare_unit,
             pl.declare_price AS declarePrice,
-            pl.declare_currency AS declareCurrency,
             pl.declare_currency_symbol AS declareCurrencySymbol,
             pl.dest_declare_price AS destDeclarePrice,
             pl.dest_currency AS destCurrency,
@@ -1106,8 +1109,20 @@
             pl.declare_element AS declareElement,
             pl.declare_model AS declareModel,
             pl.source_country AS sourceCountry,
+            pl.source_cargo AS sourceCargo,
+            pl.exemption AS exemption,
+            pl.combination_declare_type AS combinationDeclareType,
             pl.customs_code AS customsCode,
-            ps.sale_state AS salesStatus
+            ps.sale_state AS salesStatus,
+            pp.product_size,
+            pp.gross_weight,
+            pp.net_weight,
+            pc.customs_code AS destCustomsCode,
+            pc.country_name,
+            pc.tax_rate*100 AS taxRate,
+            prc.actual_no_tax_cost,
+            prc.actual_tax_cost,
+            COALESCE((SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1),'') AS ean
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1115,6 +1130,12 @@
         ON pl.sku_id=pd.id AND pl.is_deleted= FALSE
         LEFT JOIN product_sale ps
         ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
+        LEFT JOIN product_pack pp
+        ON pp.sku_id=pd.id AND pp.is_deleted= FALSE
+        LEFT JOIN product_customs pc
+        ON pc.sku_id=pd.id AND pc.is_deleted= FALSE
+        LEFT JOIN product_cost prc
+        ON prc.sku_id=pd.id AND prc.is_deleted= FALSE
         WHERE pd.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">

@@ -371,12 +371,12 @@ public class LogisticsProductDTO {
         /**
          * 不含税成本
          */
-        private BigDecimal actualNoTaxCost;
+        private String actualNoTaxCost;
 
         /**
          * 含税成本
          */
-        private BigDecimal actualTaxCost;
+        private String actualTaxCost;
 
 
         /**
@@ -531,5 +531,225 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO{
         private List<String> ids;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportInfoDTO {
+
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
+
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+
+        /**
+         * 产品经理
+         */
+        private String chargeName;
+
+
+        /**
+         * spu
+         */
+        private String spuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+
+        /**
+         * 品牌名
+         */
+        private String brandName;
+
+        /**
+         * 产品属性
+         */
+        private String propertyName;
+
+
+        /**
+         * 销售状态
+         */
+        private Integer salesStatus;
+
+        /**
+         * 销售状态名
+         */
+        private String salesStatusName;
+
+        /**
+         * ENA 吗
+         */
+        private String ena;
+
+        /**
+         * 不含税成本
+         */
+        private BigDecimal actualNoTaxCost;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal actualTaxCost;
+
+
+        /**
+         * 产品尺寸
+         */
+        private String productSize;
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+
+
+        /**
+         * 材质
+         */
+        private String materials;
+
+        /**
+         * 用途
+         */
+        private String usageDesc;
+
+        /**
+         * 中文报关名
+         */
+        private String declareChineseName;
+
+
+
+
+
+        /**
+         * 英文报关名
+         */
+        private String declareEnglishName;
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+
+        /**
+         * 报关申报价
+         */
+        private String declarePrice;
+
+        /**
+         * 报关申报价 币种符号
+         */
+        private String declareCurrencySymbol;
+
+
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+
+        /**
+         * 中国海关编码
+         */
+        private String customsCode;
+
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal destDeclarePrice;
+
+
+        private String  destCurrencySymbol;
+
+
+
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+
+        /**
+         * 境内货源地
+         */
+        @Size(max =50,message = "境内货源地最大50字符")
+        private String sourceCargo;
+
+
+        /**
+         * 征免
+         */
+        private String exemption;
+
+        /**
+         * 原产国
+         */
+        @Size(max =50,message = "原产国最大50字符")
+        private String sourceCountry;
+
+
+        /**
+         * 组合品申报类型
+         * split 拆分
+         * combine 合并
+         */
+        private String combinationDeclareType;
+
+
+
+        /**
+         * 国家
+         */
+        private String countryName;
+
+        /**
+         * 海关编码
+         */
+        private String destCustomsCode;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+
+
+
     }
 }

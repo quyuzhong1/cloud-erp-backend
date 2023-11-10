@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -95,6 +96,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public LogisticsProductDTO.ViewDTO view(String skuId) {
         LogisticsProductDTO.ViewDTO result = new LogisticsProductDTO.ViewDTO();
         LogisticsProductDTO.ProductBaseInfoDTO productBaseInfo = baseMapper.getProductBaseInfo(skuId);
+        String cny = CurrencyEnum.CNY.getCurrencySymbol();
+        //含税成本
+        String actualTaxCost=productBaseInfo.getActualTaxCost();
+        productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost));
+
+        //不含税成本
+        String actualNoTaxCost=productBaseInfo.getActualNoTaxCost();
+        productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
+
         Integer salesStatus = productBaseInfo.getSalesStatus();
         String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
         productBaseInfo.setSalesStatusName(salesStatusName);
@@ -159,8 +169,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        List<LogisticsProductDTO.PagingVO> list = baseMapper.listExport(dto, approvalStatus);
-        fillPagingDb(list);
+        List<LogisticsProductDTO.ExportInfoDTO> list = baseMapper.listExport(dto, approvalStatus);
+        fillExport(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/productLogistics.xlsx";
         String name = "物流产品列表";
@@ -170,11 +180,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            log.error("销售订单出库导出出错 {}", e);
+            log.error("物流产品导出出错 {}", e);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
     }
+
+
 
 
     @Override
@@ -235,13 +247,32 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             String skuNo = entry.getKey();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
                     map(SkuVO::getSkuId).orElse("");
-
-            List<LogisticsProductExcelDTO> value = entry.getValue();
             Boolean isError = Boolean.FALSE;
             ProductLogisticsEntity logistics = productLogisticsList.stream().
                     filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
+            List<LogisticsProductExcelDTO> value = entry.getValue();
+            List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
+
             for (LogisticsProductExcelDTO item : value) {
-                List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>(value.size());
+                String id = logistics.getId();
+                BeanMapper.copy(item, logistics);
+                logistics.setId(id);
+                //报关申报价
+                String declarePriceStr = item.getDeclarePrice();
+                if (StringUtils.isNotBlank(declarePriceStr)) {
+                    logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
+                    logistics.setDeclareCurrency(usd.getCurrencyCode());
+                    logistics.setDeclareCurrencySymbol(usd.getCurrencySymbol());
+                }
+                //目的国申报价
+                String destDeclarePriceStr = item.getDestDeclarePrice();
+                if (StringUtils.isNotBlank(destDeclarePriceStr)) {
+                    logistics.setDestDeclarePrice(new BigDecimal(declarePriceStr));
+                    logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
+                    logistics.setDestCurrency(usd.getCurrencyCode());
+
+                }
+
 
                 List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {
@@ -257,48 +288,49 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                         errorMsgList.add("国家不存在");
                     }
                 }
+                String combinationDeclareTypeStr = item.getCombinationDeclareType();
+                String combinationDeclareType = CombinationDeclareTypeEnums.getCode(combinationDeclareTypeStr);
+                if (StringUtils.isBlank(combinationDeclareType)) {
+                    errorMsgList.add("组合品申报不存在");
+                }
 
+                ProductCustomsEntity customs = new ProductCustomsEntity();
+                customs.setSkuId(skuId);
+                customs.setCustomsCode(item.getCustomsCode());
+                customs.setCountryName(countryName);
+                customs.setCountry(country);
+                customs.setSkuNo(item.getSkuNo());
+                String taxRateStr = item.getTaxRate();
+                if (StringUtils.isNotBlank(taxRateStr)) {
+                    BigDecimal taxRate = new BigDecimal(taxRateStr);
+                    taxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                    customs.setTaxRate(taxRate);
+                } else {
+                    customs.setTaxRate(BigDecimal.ZERO);
+                }
+                customsList.add(customs);
 
+                //存在错误信息则
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isError = Boolean.TRUE;
+                    item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    break;
+                }
             }
 
 
-        }
-
-        for (LogisticsProductExcelDTO item : successList) {
-            List<String> errorMsgList = new ArrayList<>();
-            String skuNo = item.getSkuNo();
-            String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
-                    map(SkuVO::getSkuId).orElse("");
-            if (StringUtils.isBlank(skuId)) {
-                errorMsgList.add("sku不存在");
-            }
-            //存在错误信息则
-            if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(item);
+            //更新错误数据
+            if (isError) {
+                errorList.addAll(value);
                 continue;
             }
 
-            //表示正确
-            ProductLogisticsEntity productLogistics = productLogisticsList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
-            productLogistics.setSkuId(skuId);
+            Boolean logisticsResult = productLogisticsService.saveOrUpdate(logistics);
+            productCustomsService.removeBySkuId(Arrays.asList(skuId));
+            productCustomsService.saveBatch(customsList);
 
-            productLogistics.setDeclareChineseName(item.getDeclareChineseName());
-            productLogistics.setDeclareModel(item.getDeclareModel());
-            //报关申报价
-            String declarePriceStr = item.getDeclarePrice();
-
-
-
-            //报关申报价
-            String destDeclarePriceStr = item.getDestDeclarePrice();
-            productLogistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
-            productLogistics.setCustomsCode(item.getCustomsCode());
-            productLogistics.setDeclareElement(item.getDeclareElement());
-            productLogistics.setSourceCountry(item.getSourceCountry());
-            productLogisticsService.saveOrUpdate(productLogistics);
         }
+
 
     }
 
@@ -309,10 +341,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //sku
         List<String> skuIdList = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listByIds(skuIdList);
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        List<String> countryIdList = productCustomsList.stream().filter(p -> StringUtils.isNotBlank(p.getCountry())).
+                map(ProductCustomsEntity::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = CollectionUtils.isNotEmpty(countryIdList) ? sysDictFeign.listCountryByIds(countryIdList) : Collections.emptyList();
         for (ProductCustomsEntity item : productCustomsList) {
             String country = item.getCountry();
-            String countryName = countryList.stream().filter(c -> c.getId().equals(country)).map(DictCountryDTO.ListDTO::getNameCn).
+            String countryName = countryList.stream().filter(c -> c.getId().equals(country)).map(DictCountryEntity::getNameCn).
                     findFirst().orElse("");
             item.setCountryName(countryName);
             String skuNo = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).
@@ -386,6 +420,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BomInfoEntity bomInfo = bomSkuList.stream().filter(b -> b.getParentSkuNo().equals(skuNo)).
                     findFirst().orElse(null);
             item.setIsCombination(Objects.nonNull(bomInfo));
+        }
+    }
+
+
+    private void fillExport(List<LogisticsProductDTO.ExportInfoDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (LogisticsProductDTO.ExportInfoDTO item : list) {
+            Integer salesStatus = item.getSalesStatus();
+            String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
+            item.setSalesStatusName(salesStatusName);
+            String combinationDeclareType=item.getCombinationDeclareType();
+            item.setCombinationDeclareType(CombinationDeclareTypeEnums.getCode(combinationDeclareType));
         }
     }
 }
