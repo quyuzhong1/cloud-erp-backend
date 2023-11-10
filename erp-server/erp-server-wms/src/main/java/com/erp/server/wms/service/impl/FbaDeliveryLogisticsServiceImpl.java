@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -97,6 +98,11 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         if(!save) {
             throw new ServiceException("FBA发货单物流信息单保存失败");
         }
+        //更新物流信息
+        FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave = new FbaDeliveryLogisticsDTO.DeliveryLogisticsSave();
+        BeanMapper.copy(updateDTO, deliveryLogisticsSave);
+        deliveryLogisticsSave.setMainId(mainId);
+        this.saveUpdateLogistics(Arrays.asList(deliveryLogisticsSave));
 
         // 记录主单操作日志
         log.info("编辑 开始记录FBA发货单物流信息单日志数据，id：【{}】", fbaDeliveryLogisticsEntity.getId());
