@@ -38,8 +38,8 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     /**
     * 卖家sku
     */
-    @TableField("m_sku")
-    private String mSku;
+    @TableField("msku")
+    private String msku;
     /**
     * FNSKU
     */

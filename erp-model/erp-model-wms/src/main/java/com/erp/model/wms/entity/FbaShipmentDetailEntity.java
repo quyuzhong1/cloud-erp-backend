@@ -39,8 +39,8 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     /**
     * 卖家sku
     */
-    @TableField("m_sku")
-    private String mSku;
+    @TableField("msku")
+    private String msku;
     /**
     * FNSKU
     */
@@ -101,7 +101,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @Override
     public String toString() {
         return "FbaShipmentDetailEntity{" +
-                "mSku='" + mSku + '\'' +
+                "msku='" + msku + '\'' +
                 ", fnSku='" + fnSku + '\'' +
                 ", declareQty=" + declareQty +
                 ", diffQty=" + diffQty +

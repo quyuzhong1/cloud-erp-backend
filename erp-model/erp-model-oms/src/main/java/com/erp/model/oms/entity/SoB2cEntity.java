@@ -267,8 +267,19 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     public static final String SYNC_OPERATE = "sync_operate";
 
     @Override
-    public Serializable pkVal() {
-        return null;
+    public String toString() {
+        return "SoB2cEntity{" +
+                ", billDate=" + billDate +
+                ", billStatus='" + billStatus + '\'' +
+                ", payStatus='" + payStatus + '\'' +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", exchangeRate=" + exchangeRate +
+                ", shippingFee=" + shippingFee +
+                ", payTime=" + payTime +
+                ", payAmount=" + payAmount +
+                ", dictPayMethod='" + dictPayMethod + '\'' +
+                ", buyerRemark='" + buyerRemark + '\'' +
+                '}';
     }
-
 }

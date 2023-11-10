@@ -8,6 +8,7 @@ package com.erp.server.plm.controller.api;/**
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -58,6 +59,32 @@ public class LogisticsProductController extends BaseController {
     @PostMapping("/paging")
     public ApiResult<PagingVO<LogisticsProductDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.PagingVO> pagingVO = logisticsProductService.paging(dto);
+        return success(pagingVO);
+
+    }
+
+    /**
+     * tab页
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<LogisticsProductDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<LogisticsProductDTO.TabListDTO> tabList = logisticsProductService.tabList(dto);
+        return success(tabList);
+
+    }
+
+    /**
+     * 更新分页列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update/paging")
+    public ApiResult<PagingVO<LogisticsProductDTO.UpdatePagingDTO>> updatePaging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
+        PagingVO<LogisticsProductDTO.UpdatePagingDTO> pagingVO = logisticsProductService.updatePaging(dto);
         return success(pagingVO);
 
     }

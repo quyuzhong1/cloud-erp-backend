@@ -53,7 +53,7 @@ public class FbaShipmentDetailDTO implements Serializable {
         /**
         * 卖家sku
         */
-        private String mSku;
+        private String msku;
 
         /**
         * FNSKU
@@ -139,7 +139,7 @@ public class FbaShipmentDetailDTO implements Serializable {
         */
         @NotBlank(message = "卖家sku不能为空")
         @Size(max = 64,message = "卖家sku最大长度不能超过64位")
-        private String mSku;
+        private String msku;
 
         /**
         * FNSKU

@@ -276,8 +276,6 @@
         <where>
             sb2c.is_deleted = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
-            and not exists (select sbr.id from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
-            sbr.target_id = sb2c.id))
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code ilike concat('%',#{params.code},'%')
             </if>
@@ -315,7 +313,7 @@
         </where>
         group by
         sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
-        HAVING count(0) > 1
+        HAVING count(DISTINCT sb2c.id) > 1
         order by sb2c.dict_platform,sb2cr.name,sb2c.shop_id
     </select>
 
@@ -330,8 +328,6 @@
         <where>
             sb2c.is_deleted = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
-            and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
-            sbr.target_id = sb2c.id))
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code ilike concat('%',#{params.code},'%')
             </if>
@@ -405,10 +401,8 @@
         left outer join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.is_not_merge = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
-            and not exists (select sbr.id from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id
-            or sbr.target_id = sb2c.id))
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">

@@ -78,7 +78,7 @@ public class SoB2cController extends BaseController {
            serviceClass = SoB2cService.class,
            keyIdName = "id")
    public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
-      return success(soB2cService.add(dto));
+      return success(soB2cService.add(dto,null));
    }
 
     /**

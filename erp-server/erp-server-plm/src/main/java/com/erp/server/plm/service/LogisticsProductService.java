@@ -7,6 +7,7 @@ package com.erp.server.plm.service;/**
  */
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -14,6 +15,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @Description TODO
@@ -64,4 +66,22 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return java.lang.Boolean
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 获取tab 页
+     * @author yl
+     * @date 2023-11-10 14:17
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.TabListDTO>
+     */
+    List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 更新分页
+     * @author yl
+     * @date 2023-11-10 14:45
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.LogisticsProductDTO.UpdatePagingDTO>
+     */
+    PagingVO<LogisticsProductDTO.UpdatePagingDTO> updatePaging(PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto);
 }
