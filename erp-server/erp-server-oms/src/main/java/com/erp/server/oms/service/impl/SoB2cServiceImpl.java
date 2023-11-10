@@ -1020,7 +1020,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsAddDTO.setWeight(MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight()));
 
             addDTO.setLogisticsDTO(logisticsAddDTO);
-            addDTO.setRemark("被拆分订单");
+            addDTO.setRemark("拆分订单");
             //新增拆分后订单
             String soB2cId = this.add(addDTO);
             //新增拆分订单关联关系

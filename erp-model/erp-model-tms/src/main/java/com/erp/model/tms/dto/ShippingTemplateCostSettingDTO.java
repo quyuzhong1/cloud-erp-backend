@@ -55,6 +55,13 @@ public class ShippingTemplateCostSettingDTO implements Serializable {
          * 计算方式
          */
         private String calculationMethod;
+
+
+        public ViewDTO (String code,String name,String calculationMethod) {
+            this.code = code;
+            this.name = name;
+            this.calculationMethod = calculationMethod;
+        }
     }
 
     /**
