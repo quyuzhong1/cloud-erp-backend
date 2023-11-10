@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -88,4 +91,6 @@ public interface ShippingCalculationService {
      */
     BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList
             , ShippingCalculationDTO shippingCalculationDTO);
+
+    PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto);
 }

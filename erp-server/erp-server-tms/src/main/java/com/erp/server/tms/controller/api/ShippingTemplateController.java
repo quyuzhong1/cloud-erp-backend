@@ -299,11 +299,6 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogViewService
     @GetMapping("/viewOtherCost")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:shippingTemplate:viewOtherCost",
-            serviceClass = ShippingTemplateService.class,
-            keyIdName = "id")
     public ApiResult<List<ShippingTemplateOtherCostDTO.ViewDTO>> viewOtherCost() {
         List<ShippingTemplateOtherCostDTO.ViewDTO> list = shippingTemplateService.viewOtherCost();
         return success(list);

@@ -3,11 +3,14 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
@@ -253,6 +256,11 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,otherCostEntity.getCostSettingValue()));
 
         return discountCost;
+    }
+
+    @Override
+    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
+        return null;
     }
 
 

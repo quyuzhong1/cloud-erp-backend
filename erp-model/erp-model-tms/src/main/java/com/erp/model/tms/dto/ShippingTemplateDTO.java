@@ -442,7 +442,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "主键ids不能为空")
+        @NotEmpty(message = "主键ids不能为空")
         private List<String> ids;
 
         /**
