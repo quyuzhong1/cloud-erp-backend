@@ -13,13 +13,13 @@ public class ProductWarehouseLocationExcelDTO implements Serializable {
     /**
      * sku编号
      */
-    @FieldValid(fieldName = "sku编号", isNotBlank = true)
+    @FieldValid(fieldName = "sku编号", isNotBlank = true, index = 0)
     private String skuNo;
 
     /**
      * 仓位
      */
-    @FieldValid(fieldName = "仓位", isNotBlank = true)
+    @FieldValid(fieldName = "仓位", isNotBlank = true, index = 1)
     private String warehouseLocation;
 
     /**
