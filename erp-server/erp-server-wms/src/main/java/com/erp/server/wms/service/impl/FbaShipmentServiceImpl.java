@@ -30,6 +30,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
@@ -265,9 +266,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         viewDTO.setApproveStatusName(ApproveStatusEnum.WAIT_SUBMIT.getName());
 
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
+        List<String> mskuList = fbaShipmentDetailEntities.stream().filter(req -> StringUtils.isBlank(req.getSkuNo())).map(req -> req.getMsku()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(mskuList)) {
+            throw new ServiceException(ApiError.NOT_MAPPER_SKU, StrUtil.join(",", mskuList));
+        }
 
         //查询产品信息
         List<String> skuNoList = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
         //获取库存sku信息
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
