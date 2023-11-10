@@ -83,9 +83,9 @@ public interface ShippingCalculationService {
      * @author Will
      * @date: 2023/11/10 10:55
      * @param otherCostList
-     * @param shippingTemplateRule
+     * @param shippingCalculationDTO
      * @return BigDecimal
      */
     BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList
-            , ShippingTemplateRuleEntity shippingTemplateRule);
+            , ShippingCalculationDTO shippingCalculationDTO);
 }
