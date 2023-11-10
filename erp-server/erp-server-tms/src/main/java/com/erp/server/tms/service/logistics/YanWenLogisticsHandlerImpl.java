@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.logistics;
 
+import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -41,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@PlatformType(PlatformDictEnum.YAN_WEN)
+@LogisticsPlatformType(LogisticsPlatformEnum.YAN_WEN)
 public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource

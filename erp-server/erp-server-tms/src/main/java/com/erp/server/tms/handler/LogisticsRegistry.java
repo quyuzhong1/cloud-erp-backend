@@ -1,6 +1,6 @@
 package com.erp.server.tms.handler;
 
-import com.common.business.annotation.PlatformType;
+import com.common.business.annotation.LogisticsPlatformType;
 import com.erp.server.tms.service.LogisticsService;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.context.ApplicationContext;
@@ -28,7 +28,7 @@ public class LogisticsRegistry {
         Map<String, LogisticsService> beans = context.getBeansOfType(LogisticsService.class);
         for (Object bean : beans.values()) {
             Class<?> actualClass = AopProxyUtils.ultimateTargetClass(bean);
-            PlatformType platformAnnotation = actualClass.getAnnotation(PlatformType.class);
+            LogisticsPlatformType platformAnnotation = actualClass.getAnnotation(LogisticsPlatformType.class);
             handlers.put(platformAnnotation.value().getCode(), (LogisticsService) bean);
         }
     }

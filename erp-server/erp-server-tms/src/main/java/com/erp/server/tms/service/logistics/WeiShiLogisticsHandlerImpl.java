@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
-import com.common.business.annotation.PlatformType;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.annotation.LogisticsPlatformType;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
@@ -36,7 +36,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@PlatformType(PlatformDictEnum.WEI_SHI)
+@LogisticsPlatformType(LogisticsPlatformEnum.WEI_SHI)
 public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
