@@ -179,6 +179,93 @@ public class LogisticsProductDTO {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO{
+        /**
+         * 数量
+         */
+        private Integer count;
+
+        private String type;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePagingParamDTO extends SortDTO{
+        /**
+         * skulist
+         */
+        private List<String> skuNoList;
+
+        /**
+         * spu
+         */
+        private String spuNo;
+
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         *  操作内容
+         */
+        private String operateContent;
+        /**
+         *  操作人
+         */
+        private String operateUserId;
+
+        /**
+         *  操作时间
+         */
+        private List<LocalDateTime> operateTimeList;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePagingDTO {
+
+
+        private String  skuNo;
+
+        /**
+         * spu
+         */
+        private String spuNo;
+
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         *  操作项
+         */
+        private String operate;
+
+        /**
+         *  操作内容
+         */
+        private String operateContent;
+        /**
+         *  操作人
+         */
+        private String operateUserName;
+
+        /**
+         *  操作时间
+         */
+        private LocalDateTime operateTime;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
@@ -245,7 +332,7 @@ public class LogisticsProductDTO {
         private List<LocalDateTime> createTimeList;
 
         /**
-         * 修改时间
+         * 更新时间
          */
         private List<LocalDateTime> updateTimeList;
 

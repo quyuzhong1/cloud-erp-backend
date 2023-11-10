@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -98,11 +99,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         LogisticsProductDTO.ProductBaseInfoDTO productBaseInfo = baseMapper.getProductBaseInfo(skuId);
         String cny = CurrencyEnum.CNY.getCurrencySymbol();
         //含税成本
-        String actualTaxCost=productBaseInfo.getActualTaxCost();
+        String actualTaxCost = productBaseInfo.getActualTaxCost();
         productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost));
 
         //不含税成本
-        String actualNoTaxCost=productBaseInfo.getActualNoTaxCost();
+        String actualNoTaxCost = productBaseInfo.getActualNoTaxCost();
         productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
 
         Integer salesStatus = productBaseInfo.getSalesStatus();
@@ -187,8 +188,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     }
 
 
-
-
     @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         LogisticsProductExcelListener excelListenerUtil = new LogisticsProductExcelListener();
@@ -225,6 +224,48 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        LogisticsProductDTO.TabListDTO tab = new LogisticsProductDTO.TabListDTO();
+        List<String> fieldList = listField();
+        Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        String permissionSql = dto.getPermissionSql();
+        Integer count = baseMapper.logisticsProductUpdateCount(approvalStatus, fieldList, permissionSql);
+        tab.setType("update");
+        tab.setCount(count);
+        return Arrays.asList(tab);
+    }
+
+
+    @Override
+    public PagingVO<LogisticsProductDTO.UpdatePagingDTO> updatePaging(PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
+        LogisticsProductDTO.UpdatePagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        List<String> fieldList = listField();
+        IPage pageData = baseMapper.logisticsProductUpdatePaging(query, params, approvalStatus, fieldList);
+        return new PagingVO<>(pageData);
+    }
+
+
+    private List<String> listField() {
+        List<String> fieldList = new ArrayList<>(10);
+        fieldList.add("产品经理");
+        fieldList.add("产品类别");
+        fieldList.add("产品属性");
+        fieldList.add("产品品牌");
+        fieldList.add("产品用途");
+        fieldList.add("主要材质");
+        fieldList.add("实际含税成本");
+        fieldList.add("目标不含税成本");
+        fieldList.add("EAN码");
+        fieldList.add("产品尺寸");
+        fieldList.add("毛重");
+        fieldList.add("净重");
+        return fieldList;
     }
 
     private void handleImportSuccessList(List<LogisticsProductExcelDTO> successList, List<LogisticsProductExcelDTO> errorList) {
@@ -432,7 +473,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
-            String combinationDeclareType=item.getCombinationDeclareType();
+            String combinationDeclareType = item.getCombinationDeclareType();
             item.setCombinationDeclareType(CombinationDeclareTypeEnums.getCode(combinationDeclareType));
         }
     }
