@@ -959,7 +959,7 @@ public enum ApiError implements Serializable {
     ERROR_SHIPPING_RULE_NOT_EXIST(94016,"未找到运费规则"),
     ERROR_SHIPPING_WEIGHT_NOT_INTERVAL(94017,"重量【{}】不在开始重量【{}】和结束重量【{}】之间"),
     ERROR_SHIPPING_COST_SETTING_NOT_EXIST(94018,"未找到其他费用【{}】计算方式值"),
-
+    ERROR_LOGISTICS_ADDRESS_NAME_EXIST(94019,"物流地址名【{}】已存在"),
 
 
 
