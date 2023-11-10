@@ -64,4 +64,11 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return List<ListRegionDTO>
      */
     List<DictCountryDTO.ListRegionDTO> listAreaCountry(DictCountryDTO.ListParamDTO dto);
+
+    /**
+     * 根据国家名获取国家
+     * @param names
+     * @return
+     */
+    List<DictCountryEntity> listCountryByNames(List<String> names);
 }
