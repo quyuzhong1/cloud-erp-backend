@@ -77,6 +77,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
             List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
                 SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
                 BeanUtils.copyProperties(d, detailEntity);
+                detailEntity.setMainId(entity.getId());//增加主表id
                 return detailEntity;
             }).collect(Collectors.toList());
 
