@@ -124,7 +124,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 saveEntity.setId(logisticsBillEntity.getId());
             }
             this.saveOrUpdate(saveEntity);
-            logisticsBillDetailService.removeById(saveEntity.getId());
+            logisticsBillDetailService.removeByMainIds(Arrays.asList(saveEntity.getId()));
             List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<LogisticsBillDetailEntity> detailEntityList = new ArrayList<>();
             for (LogisticsBillDetailDTO.AddDTO dto : detailList) {

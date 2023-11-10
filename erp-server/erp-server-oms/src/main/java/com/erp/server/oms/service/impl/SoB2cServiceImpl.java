@@ -1877,14 +1877,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (approveSuccess) {
             //更新流转状态和分类信息
             soB2cRefCategoryService.update(ruleOrderMatchResult.getCategoryDetailIdList(),id);
-
             //自动提交
             BatchResultDTO submit = this.submit(id, Boolean.FALSE);
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
+            String approveMsg = "自动审核不通过";
+            //审核通过
+            if (ApproveType.PASS.equals(ruleOrderMatchResult.getFlowStatus())) {
+                approveMsg = "自动审核通过";
+            }
             //自动审核通过
-            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ApproveType.PASS, "自动审核通过"));
+            BatchResultDTO approve = this.approve(new ApproveOneDTO(id, ruleOrderMatchResult.getFlowStatus(), approveMsg));
             if (!approve.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_94006);
             }
