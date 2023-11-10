@@ -191,7 +191,7 @@ public class OrderDetail implements Serializable {
     private Integer prescriptionCheckStatus;
 
     /**
-     * This object contains detailed breakdown for the recipient address.
+     * This object contains detailed breakdown for the recipient address. 收货人信息
      */
     @JSONField(name = "recipient_address")
     private RecipientAddress recipientAddress;
