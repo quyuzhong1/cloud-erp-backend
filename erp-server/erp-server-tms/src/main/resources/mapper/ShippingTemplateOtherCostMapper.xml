@@ -14,6 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="main_id" property="mainId" />
        <result column="dict_code" property="dictCode" />
+       <result column="dict_name" property="dictName" />
        <result column="calculation_method" property="calculationMethod" />
        <result column="calculation_unit" property="calculationUnit" />
        <result column="cost_setting_value" property="costSettingValue" />
@@ -32,7 +33,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, dict_code, calculation_method, calculation_unit, cost_setting_value, extend_json, remark
+        main_id, dict_code, dict_name, calculation_method, calculation_unit, cost_setting_value, extend_json, remark
     </sql>
 
 
