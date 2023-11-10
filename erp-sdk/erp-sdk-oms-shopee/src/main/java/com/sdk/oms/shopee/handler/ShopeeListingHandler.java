@@ -59,6 +59,10 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
         log.info("lastTime:{},timeFrom:{}", lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
+        if (lastTime.compareTo(nextTime) == 0){
+            //nextTime +1天
+            nextTime = lastTime.plusDays(1);
+        }
         long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
         log.info("nextTime:{},timeTo:{}", nextTime, timeTo);
         //获取主店铺token
