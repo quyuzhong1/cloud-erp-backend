@@ -73,7 +73,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:paging",
             tableAlias = "ci"
     )
-    public ApiResult exportExcel(@RequestBody @Validated LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = logisticsAddressService.exportExcel(dto,response);
         return result ? success() : failure();
     }
@@ -87,7 +87,7 @@ public class LogisticsAddressController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流地址表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAddressDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@Validated @RequestBody  LogisticsAddressDTO.AddDTO dto) {
         return success(logisticsAddressService.add(dto));
     }
 
@@ -106,7 +106,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:update",
             serviceClass = LogisticsAddressService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsAddressDTO.UpdateDTO dto) {
+    public ApiResult update(@Validated  @RequestBody  LogisticsAddressDTO.UpdateDTO dto) {
         logisticsAddressService.update(dto);
         return success();
     }
@@ -142,7 +142,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:delete",
             serviceClass = LogisticsAddressService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delete(@Validated  @RequestBody  BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for(String id:dto.getIds()){
             BatchResultDTO deleteResult;
