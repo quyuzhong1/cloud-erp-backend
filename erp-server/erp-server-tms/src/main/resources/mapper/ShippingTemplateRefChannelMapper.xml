@@ -40,7 +40,7 @@
         from shipping_template_ref_channel strc
         inner join logistics_channel lc on lc.id = strc.logistics_channel_id and lc.is_deleted = false
         <where>
-            strc.is_deleted = flase
+            strc.is_deleted = false
             <if test="mainIdList != null and mainIdList.size > 0">
                 and strc.main_id in
                 <foreach collection="mainIdList" item="item" open="(" close=")" separator=",">

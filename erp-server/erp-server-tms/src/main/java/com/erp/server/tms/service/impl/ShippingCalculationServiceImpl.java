@@ -74,24 +74,43 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         shippingCalculationDTO.setTotalShippingCost(totalShippingCost);
         return shippingCalculationDTO;
     }
-
+    
+    /**
+     * @description: 运费
+     * @author Will
+     * @date: 2023/11/10 9:53
+     * @param entity 
+     * @param shippingTemplateRule 
+     * @param weight 
+     * @return BigDecimal 
+     */
     public BigDecimal calculationShippingCost (ShippingTemplateEntity entity,ShippingTemplateRuleEntity shippingTemplateRule, BigDecimal weight) {
 
         /**
          *  最终运费 = 运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
          *  运费【首重+续重】=首重费用+（收费重量-首重）/续重单位重量*单价【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
+         *  （收费重量-首重）/续重单位重量 可能存在小数则直接进1取整数计算
          *  运费【重量段】=对应重量段的价格*收费重量【与最低收费对比，小于最低收费取值最低收费，大于最低收费则直接取值费用】
          */
         //运费
-        BigDecimal shippingCost = BigDecimal.ZERO;
+        BigDecimal shippingCost ;
         if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
             //首重费用
             BigDecimal firstWeightShippingCost = shippingTemplateRule.getFirstWeightShippingCost();
+            //续重比例（进一）
+            BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),2,BigDecimal.ROUND_UP);
             //续重费用
-            BigDecimal additionalWeightShippingCost = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight())
-                    .multiply(shippingTemplateRule.getAdditionalPrice());
+            BigDecimal additionalWeightShippingCost = weightRatio.multiply(shippingTemplateRule.getAdditionalPrice());
 
+            shippingCost = MathUtil.add(firstWeightShippingCost,additionalWeightShippingCost);
+        } else {
+            //验证录入重量是否在开始重量和结束重量之间
+            if (MathUtil.compareTo(shippingTemplateRule.getStartWeight(),weight) >= MathUtil.ZERO || MathUtil.compareTo(weight, shippingTemplateRule.getEndWeight()) > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_WEIGHT_NOT_INTERVAL,weight,shippingTemplateRule.getStartWeight(),shippingTemplateRule.getEndWeight());
+            }
+            shippingCost = MathUtil.multiply(shippingTemplateRule.getShippingPrice(),weight);
         }
+        shippingCost = MathUtil.compareTo(shippingCost,shippingTemplateRule.getMinCost()) > MathUtil.ZERO ? shippingCost : shippingTemplateRule.getMinCost();
         return shippingCost;
     }
 

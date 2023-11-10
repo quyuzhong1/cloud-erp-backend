@@ -147,7 +147,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 创建人
          */
-        private String createByName;
+        private String createUserName;
         /**
          * 创建时间
          */

@@ -96,6 +96,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel() {
+        return baseMapper.listLogisticsChannel();
+    }
+
 
     /**
     * 新增修改处理数据

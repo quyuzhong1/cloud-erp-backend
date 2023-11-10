@@ -311,5 +311,23 @@ public class LogisticsChannelDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListSelectDTO {
+
+        /**
+         * 渠道名称
+         */
+        private String name;
+        /**
+         * 渠道编码
+         */
+        private String code;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+    }
 
 }
