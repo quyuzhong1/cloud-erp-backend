@@ -1,13 +1,12 @@
 package com.erp.server.tms.service;
 
+import com.common.business.annotation.LogisticsPlatformType;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.InterceptResponseVO;
-import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,7 +41,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO);
+    ApiResult<List<ConfirmResponseVO>> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO);
 
     /**
      * 取消订单
@@ -63,10 +62,10 @@ public interface LogisticsService {
     /**
      * 更新订单
      *
-     * @param logisticsOrderVO
+     * @param logisticsOrderVOS
      * @return
      */
-    ApiResult<String> updateOrder(LogisticsOrderVO logisticsOrderVO);
+    ApiResult<List<UpdateResponseVO>> updateOrder(List<LogisticsOrderVO> logisticsOrderVOS);
 
 
     ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
@@ -78,6 +77,7 @@ public interface LogisticsService {
      * @return
      */
     ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException;
+
     /**
      * 轨迹查询
      *
@@ -92,4 +92,11 @@ public interface LogisticsService {
      * @return
      */
     ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO);
+
+    /**
+     * 获取平台标识
+     *
+     * @return
+     */
+    LogisticsPlatformEnum getPlatForm();
 }

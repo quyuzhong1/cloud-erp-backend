@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum LogisticsPlatformEnum implements EnumMessage {
     SHOPEE("Shopee", "Shopee", "虾皮", "003"),
     //物流平台
-    SDF("SDF", "递四方", "递四方(新)", ""),
+    DSF("DSF", "递四方", "递四方(新)", ""),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", ""),
     UBI("UBI", "UBI", "UBI物流平台", ""),
     TRACK123("TRACK123", "track123", "track123物流平台", ""),
