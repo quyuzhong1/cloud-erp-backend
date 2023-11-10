@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -26,6 +27,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -55,6 +58,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
+
     @Resource
     private BomSkuService bomSkuService;
 
@@ -212,14 +219,50 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        List<String> currencyCodeList = successList.stream().map(LogisticsProductExcelDTO::getDeclareCurrency).distinct().collect(Collectors.toList());
-        List<String> destCurrencyList = successList.stream().map(LogisticsProductExcelDTO::getDestCurrency).distinct().collect(Collectors.toList());
-        currencyCodeList.addAll(destCurrencyList);
+        CurrencyEnum usd = CurrencyEnum.USD;
+        //sku no list
         List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        //国家
+        List<String> countryNameList = successList.stream().filter(c -> StringUtils.isNotBlank(c.getCountry())).
+                map(LogisticsProductExcelDTO::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = CollectionUtils.isNotEmpty(countryNameList) ? sysDictFeign.listCountryByNames(countryNameList) : Collections.emptyList();
+
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        Map<String, List<LogisticsProductExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(LogisticsProductExcelDTO::getSkuNo));
+        for (Map.Entry<String, List<LogisticsProductExcelDTO>> entry : map.entrySet()) {
+            String skuNo = entry.getKey();
+            String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
+                    map(SkuVO::getSkuId).orElse("");
+
+            List<LogisticsProductExcelDTO> value = entry.getValue();
+            Boolean isError = Boolean.FALSE;
+            ProductLogisticsEntity logistics = productLogisticsList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(new ProductLogisticsEntity());
+            for (LogisticsProductExcelDTO item : value) {
+                List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>(value.size());
+
+                List<String> errorMsgList = new ArrayList<>();
+                if (StringUtils.isBlank(skuId)) {
+                    errorMsgList.add("sku不存在");
+                }
+                //国家
+                String countryName = item.getCountry();
+                String country = "";
+                if (StringUtils.isNotBlank(countryName)) {
+                    country = countryList.stream().filter(s -> s.getNameCn().equals(countryName)).findFirst().
+                            map(DictCountryEntity::getId).orElse("");
+                    if (StringUtils.isBlank(country)) {
+                        errorMsgList.add("国家不存在");
+                    }
+                }
+
+
+            }
+
+
+        }
 
         for (LogisticsProductExcelDTO item : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -245,18 +288,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             productLogistics.setDeclareModel(item.getDeclareModel());
             //报关申报价
             String declarePriceStr = item.getDeclarePrice();
-            productLogistics.setDeclarePrice(new BigDecimal(declarePriceStr));
-            String declareCurrency = item.getDeclareCurrency();
-            productLogistics.setDeclareCurrency(declareCurrency);
 
-            String declareCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(declareCurrency)).findFirst().
-                    map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
-            productLogistics.setDeclareCurrencySymbol(declareCurrencySymbol);
-            String destCurrency = item.getDestCurrency();
 
-            String destCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(destCurrency)).findFirst().
-                    map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
-            productLogistics.setDestCurrencySymbol(destCurrencySymbol);
 
             //报关申报价
             String destDeclarePriceStr = item.getDestDeclarePrice();
