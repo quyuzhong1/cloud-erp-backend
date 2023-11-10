@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
@@ -11,18 +12,18 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.entity.ReportScheduleEntity;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
+import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
@@ -31,9 +32,12 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleResponse;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
+import com.erp.server.dmp.service.ReportScheduleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,10 +46,14 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -67,9 +75,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
-
     @Resource
     private BusinessServiceImpl businessService;
+    @Resource
+    private ReportScheduleService reportScheduleService;
 
 
     @Override
@@ -207,6 +216,75 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         return true;
     }
 
-    // TODO 转换切换mapstruct接口
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createReportSchedule(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
+        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
+        // TODO 支持切换时间间隔
+        OffsetDateTime roundedOffsetDateTime = currentDateTime;
+        // 15分钟
+        if (CreateReportScheduleSpecification.PeriodEnum.PT15M.equals(periodEnum)) {
+            // 获取当前分钟数
+            int currentMinute = currentDateTime.getMinute();
+            // 计算最接近的 15 分钟的整数
+            int closestFifteenMinute = ((currentMinute + 7) / 15) * 15;
+            int finialClosestFifteenMinute = 60 == closestFifteenMinute ? 0 : closestFifteenMinute;
+            // 设置当前分钟数为最接近的 15 分钟的整数
+            roundedOffsetDateTime = currentDateTime.withMinute(finialClosestFifteenMinute)
+                    .withSecond(0)
+                    .withNano(0);
+        }
+        // 30分钟
+        if (CreateReportScheduleSpecification.PeriodEnum.PT30M.equals(periodEnum)) {
+            // 获取当前分钟数
+            int currentMinute = currentDateTime.getMinute();
+            // 计算最接近的 30 分钟的整数
+            int closestThirtyMinute = ((currentMinute + 15) / 30) * 30;
+            int finialClosestThirtyMinute = 60 == closestThirtyMinute ? 0 : closestThirtyMinute;
+            // 设置当前分钟数为最接近的 15 分钟的整数
+            roundedOffsetDateTime = currentDateTime.withMinute(finialClosestThirtyMinute)
+                    .withSecond(0)
+                    .withNano(0);
+        }
+        if (CreateReportScheduleSpecification.PeriodEnum.PT30M.equals(periodEnum) || CreateReportScheduleSpecification.PeriodEnum.PT15M.equals(periodEnum)){
+            roundedOffsetDateTime = currentDateTime.withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+        }
 
+
+        String[] marketplaceIdArray = reportSchedule.getMarketplaceIds().split(",");
+        // 当前市场ID
+        String marketplaceId = Stream.of(marketplaceIdArray)
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("未找到市场信息"));
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId);
+
+        // 请求参数
+        CreateReportScheduleSpecification body = new CreateReportScheduleSpecification();
+        body.setReportType(reportSchedule.getReportType());
+        body.setMarketplaceIds(Arrays.stream(marketplaceIdArray).collect(Collectors.toList()));
+        // 格式"2023-11-07T01:00:00.000Z"
+        String formatTime = roundedOffsetDateTime.format(DateTimeFormatter.ofPattern(DatePattern.UTC_MS_PATTERN));
+        body.setNextReportCreationTime(formatTime);
+        body.setPeriod(periodEnum);
+        // 请求
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
+        // TODO 兼容已创建
+        CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
+
+        // 更新到记录
+        reportSchedule.setReportScheduleId(response.getReportScheduleId());
+        reportSchedule.setFirstNextReportCreationTime(roundedOffsetDateTime.toLocalDateTime());
+        reportSchedule.setSubscribedStatus(ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
+        if (!reportScheduleService.updateById(reportSchedule)) {
+            throw new ServiceException("[ReportScheduleEntity] 更新亚马逊报价计划失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) {
+
+    }
 }

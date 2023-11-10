@@ -6,6 +6,8 @@ import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.mapstruct.Mapping;
 
 
 /**
@@ -96,4 +98,55 @@ public class ReportFbaMyiAllInventoryMongoDTO extends ReportSuperMongoDTO {
         }
         return "";
     }
+
+    public Integer mfnFulfillableQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.mfnFulfillableQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.mfnFulfillableQuantity);
+    }
+    public Integer afnInboundWorkingQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnInboundWorkingQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnInboundWorkingQuantity);
+    }
+    public Integer afnInboundShippedQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnInboundShippedQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnInboundShippedQuantity);
+    }
+    public Integer afnInboundReceivingQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnInboundReceivingQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnInboundReceivingQuantity);
+    }
+    public Integer afnFulfillableQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnFulfillableQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnFulfillableQuantity);
+    }
+    public Integer afnReservedQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnReservedQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnReservedQuantity);
+    }
+    public Integer afnResearchingQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnResearchingQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnResearchingQuantity);
+    }
+    public Integer afnUnsellableQuantityCheckToInt(){
+        if (StringUtils.isBlank(this.afnUnsellableQuantity)){
+            return 0;
+        }
+        return Integer.parseInt(this.afnUnsellableQuantity);
+    }
+
+
 }

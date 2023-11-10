@@ -20,6 +20,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
@@ -106,9 +107,9 @@ public class ReportsApiTest {
         // 亚马逊物流管理库存 - 已存档
 //        body.setReportType("GET_FBA_MYI_ALL_INVENTORY_DATA");
         // 亚马逊物流预留库存报告
-        body.setReportType("GET_RESERVED_INVENTORY_DATA");
+//        body.setReportType("GET_RESERVED_INVENTORY_DATA");
         // 亚马逊物流管理库存状况报告
-//        body.setReportType("GET_FBA_INVENTORY_PLANNING_DATA");
+        body.setReportType("GET_FBA_INVENTORY_PLANNING_DATA");
         body.setMarketplaceIds(Arrays.asList("ATVPDKIKX0DER"));
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         CreateReportResponse response = api.createReport(body);
@@ -116,7 +117,8 @@ public class ReportsApiTest {
         System.out.println(JSONUtil.toJsonStr(response));
 
         // 亚马逊物流管理库存{"reportId":"724464019664"}
-        // 亚马逊库存库龄报告{"reportId":"724476019664"} 不存在
+        // 亚马逊库存库龄报告{"reportId":"724476019664"}
+        // 亚马逊库存库龄报告{"reportId":"728730019671"}
         // 亚马逊物流预留库存报告{"reportId":"724489019664"}
         // 亚马逊物流管理库存状况报告{"reportId":"724480019664"}
         // 亚马逊物流管理库存状况报告{"reportId":"727590019669"}
@@ -133,15 +135,16 @@ public class ReportsApiTest {
     @Test
     public void createReportScheduleTest() throws ApiException {
         CreateReportScheduleSpecification body = new CreateReportScheduleSpecification();
+
         // 正式环境参数
 //        body.setReportType("GET_MERCHANT_LISTINGS_DATA");
 //        body.setMarketplaceIds(Arrays.asList("A1AM78C64UM0Y8"));
 //        body.setNextReportCreationTime("2023-10-18T03:00:00.000Z");
 //        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT1H);
-        body.setReportType("GET_RESERVED_INVENTORY_DATA");
+        body.setReportType("GET_FBA_INVENTORY_PLANNING_DATA");
         body.setMarketplaceIds(Arrays.asList("ATVPDKIKX0DER"));
-        body.setNextReportCreationTime("2023-11-07T01:00:00.000Z");
-        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT15M);
+        body.setNextReportCreationTime("2023-11-11T00:00:00.000Z");
+        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.P2D);
         // 沙箱参数
 //        body.setReportType("FEE_DISCOUNTS_REPORT");
 //        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT5M);
@@ -272,7 +275,8 @@ public class ReportsApiTest {
     public void getReportsTest() throws Exception {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
+        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType());
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
         Integer pageSize = 100;

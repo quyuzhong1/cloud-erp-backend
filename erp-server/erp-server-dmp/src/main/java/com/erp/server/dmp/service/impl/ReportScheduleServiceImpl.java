@@ -84,7 +84,13 @@ public class ReportScheduleServiceImpl extends SuperServiceImpl<ReportScheduleMa
     }
 
     @Override
-    public List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus) {
-        return null;
+    public List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus, Integer size){
+        return lambdaQuery()
+                .eq(ReportScheduleEntity::getSubscribedStatus, subscribedStatus)
+                .eq(ReportScheduleEntity::getCancelStatus, cancelStatus)
+                .orderByAsc(ReportScheduleEntity::getId)
+                .last(" LIMIT " + size)
+                .list()
+                ;
     }
 }

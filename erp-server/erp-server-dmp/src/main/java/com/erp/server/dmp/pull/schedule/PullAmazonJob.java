@@ -39,6 +39,7 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -137,7 +138,7 @@ public class PullAmazonJob {
         marketplaceEnumList.forEach(marketplaceEnum -> {
             try {
                 // 查询当前marketplace的前一天到今日的所有报表
-                List<String> reportTypes = Collections.singletonList(AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType());
+                List<String> reportTypes = Collections.singletonList(AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType());
                 List<String> processingStatuses = null;
                 List<String> marketplaceIds = null;
                 Integer pageSize = null;
@@ -361,7 +362,7 @@ public class PullAmazonJob {
         XxlJobHelper.log("[亚马逊组合库存信息任务] 任务开始 size={}", size);
         // 查询所有店铺是否有最新生成的报告文档url
 
-        ReportInventoryCombineMongoDTO queryCombineInventoryDTO = ReportInventoryCombineMongoDTO.unCombineStatus();
+        ReportInventoryCombineMongoDTO queryCombineInventoryDTO = ReportInventoryCombineMongoDTO.canCombineStatus();
         List<ReportInventoryCombineMongoDTO> mongoData = mongoService.findMongoData(queryCombineInventoryDTO, 0, size, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
         if (CollectionUtils.isEmpty(mongoData)){
             XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,无需要组合的库存主记录");
@@ -369,6 +370,13 @@ public class PullAmazonJob {
         }
         // 库存组合数据记录
         ReportInventoryCombineMongoDTO combineInventoryDTO = mongoData.stream().findFirst().orElseThrow(() -> new ServiceException("库存主记录不存在"));
+
+        if (StringUtils.isBlank(combineInventoryDTO.getInventoryPlanningReportId())
+                || StringUtils.isBlank(combineInventoryDTO.getMyiAllInventoryReportId())
+                || StringUtils.isBlank(combineInventoryDTO.getReservedReportId())){
+            XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,无需要报告ID都不为空的库存主记录");
+            return ReturnT.SUCCESS;
+        }
         // 查询库存数据
         // 库存管理数据
         ReportFbaMyiAllInventoryMongoDTO queryMyiAllInventoryMongoDTO = ReportFbaMyiAllInventoryMongoDTO.queryReportId(combineInventoryDTO.getMyiAllInventoryReportId());
@@ -394,38 +402,89 @@ public class PullAmazonJob {
     }
 
     /**
-     * 亚马逊获取报表计划请求任务
+     * 亚马逊请求报表计划任务
      */
     @XxlJob("amazonReportScheduleJob")
     public ReturnT<String> amazonReportScheduleJob() {
-        Integer size = 1000;
+        Integer size = 1;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
         }
         // 根据报告ID和状态获取reportDocumentId
-        XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务开始 size={}", size);
+        XxlJobHelper.log("[亚马逊请求报表计划任务] 任务开始 size={}", size);
         // 根据状态查询未请求的数据
-        List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.findList(ReportScheduleSubscribedStatusEnum.WAIT.getCode(), ReportScheduleCancelStatusEnum.NONE.getCode());
-//        if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
-//            XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束,无需要更新的信息");
-//            return ReturnT.SUCCESS;
-//        }
-//        reportList.forEach(report -> {
-//            try {
-//                platformDataThread.findUrlAndSend(tableName, report);
-//            } catch (Exception e) {
-//                String errorMsg = JSONUtil.toJsonStr(e);
-//                XxlJobHelper.log("[亚马逊获取报表计划请求任务] 拉取亚马逊报表失败：reportId={}, error={}",
-//                        report.getReportId(),
-//                        errorMsg
-//                );
-//                throw new ServiceException("亚马逊获取报表计划请求任务:error=" + errorMsg);
-//            }
-//
-//        });
+        List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.findList(
+                ReportScheduleSubscribedStatusEnum.WAIT.getCode(),
+                ReportScheduleCancelStatusEnum.NONE.getCode(),
+                size
+        );
+        if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
+            XxlJobHelper.log("[亚马逊请求报表计划任务] 任务结束,无需要更新的信息");
+            return ReturnT.SUCCESS;
+        }
+        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+
+        reportScheduleEntityList.forEach(reportSchedule -> {
+            try {
+                reportHandleService.createReportSchedule(reportSchedule, currentDateTime);
+            } catch (Exception e) {
+                String errorMsg = JSONUtil.toJsonStr(e);
+                XxlJobHelper.log("[亚马逊请求报表计划任务] 创建亚马逊报表计划失败：reportId={}, error={}",
+                        reportSchedule.getReportScheduleId(),
+                        errorMsg
+                );
+                throw new ServiceException("亚马逊请求报表计划任务:error=" + errorMsg);
+            }
+        });
         XxlJobHelper.log("[亚马逊获取报表计划请求任务] 任务结束");
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 亚马逊请求创建报表
+     */
+    @XxlJob("amazonReportJob")
+    public ReturnT<String> amazonReportJob() {
+        Integer size = 1;
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        // 根据报告ID和状态获取reportDocumentId
+        XxlJobHelper.log("[亚马逊请求创建报表] 任务开始 size={}", size);
+        // 根据状态查询未请求的数据
+        List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.lambdaQuery()
+                .eq(ReportScheduleEntity::getSubscribedStatus, ReportScheduleSubscribedStatusEnum.ALREADY.getCode())
+                .eq(ReportScheduleEntity::getCancelStatus, ReportScheduleCancelStatusEnum.NONE.getCode())
+                .in(ReportScheduleEntity::getReportType,
+                        Arrays.asList(AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType())
+                )
+                .orderByAsc(ReportScheduleEntity::getId)
+                .last(" LIMIT " + size)
+                .list()
+                ;
+        if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
+            XxlJobHelper.log("[亚马逊请求创建报表] 任务结束,无需要更新的信息");
+            return ReturnT.SUCCESS;
+        }
+        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+
+        reportScheduleEntityList.forEach(reportSchedule -> {
+            try {
+                reportHandleService.createReport(reportSchedule, currentDateTime);
+            } catch (Exception e) {
+                String errorMsg = JSONUtil.toJsonStr(e);
+                XxlJobHelper.log("[亚马逊请求创建报表] 创建亚马逊报表计划失败：reportId={}, error={}",
+                        reportSchedule.getReportScheduleId(),
+                        errorMsg
+                );
+                throw new ServiceException("亚马逊请求创建报表:error=" + errorMsg);
+            }
+        });
+        XxlJobHelper.log("[亚马逊请求创建报表] 任务结束");
         return ReturnT.SUCCESS;
     }
 

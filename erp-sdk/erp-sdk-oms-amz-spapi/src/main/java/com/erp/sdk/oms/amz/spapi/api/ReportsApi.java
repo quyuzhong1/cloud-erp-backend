@@ -1295,7 +1295,7 @@ public class ReportsApi {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(endpointsEnum.getEndpointsByProfile())
+                .endpoint(endpointsEnum.getEndpoints())
                 .build();
         if (null == reportsApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");

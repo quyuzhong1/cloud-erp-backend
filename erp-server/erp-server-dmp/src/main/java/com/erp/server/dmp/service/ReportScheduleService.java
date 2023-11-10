@@ -5,6 +5,7 @@ import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ReportScheduleDTO;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 
 import java.util.List;
 
@@ -56,5 +57,5 @@ public interface ReportScheduleService extends SuperService<ReportScheduleEntity
      * @author Jim
      * @date: 2023-11-10
      */
-    List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus);
+    List<ReportScheduleEntity> findList(String subscribedStatus, String cancelStatus, Integer size);
 }

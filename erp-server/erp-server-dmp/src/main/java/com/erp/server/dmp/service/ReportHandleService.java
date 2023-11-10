@@ -1,11 +1,14 @@
 package com.erp.server.dmp.service;
 
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportInventoryCombineMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -30,4 +33,20 @@ public interface ReportHandleService {
      * @since 2023-10-10
      **/
     Boolean pullShipment(DmpPullShipmentDTO dto);
+
+    /**
+     * 请求报告计划
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    void createReportSchedule(ReportScheduleEntity reportSchedule, OffsetDateTime roundedDateTime) throws Exception;
+
+    /**
+     * 请求创建报告
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime);
 }
