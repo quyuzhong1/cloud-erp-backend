@@ -315,6 +315,9 @@ public class FileUtil {
     }
 
     public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
+        if(StringUtils.isBlank(pdfUrl)){
+            return null;
+        }
         InputStream inStream = null;
         String base64 = "";
         try {

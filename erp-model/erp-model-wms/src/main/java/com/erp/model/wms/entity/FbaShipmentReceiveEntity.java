@@ -31,11 +31,6 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     @TableField("detail_id")
     private String detailId;
     /**
-    * 亚马逊FBA货件单号
-    */
-    @TableField("fba_shipment_id")
-    private String fbaShipmentId;
-    /**
     * 平台sku
     */
     @TableField("asin")

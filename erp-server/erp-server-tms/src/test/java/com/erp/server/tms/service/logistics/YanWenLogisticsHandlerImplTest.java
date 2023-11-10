@@ -90,24 +90,25 @@ public class YanWenLogisticsHandlerImplTest {
         System.out.println(result);
     }
 
-//    @Test
-//    public void getLabelUrl() {
-//        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
-//        logisticsQueryVO.setDeliveryNo(Arrays.asList("LR085325053CN"));
-//        System.out.println(yanWenLogisticsHandler.getLabelList(logisticsQueryVO));
-//    }
-//
-//    @Test
-//    public void cancelOrder() {
-//        LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
-//        cancelOrderVO.setTransportNo(Arrays.asList("LR085933164CN","LR085325053CN"));
-//        System.out.println(yanWenLogisticsHandler.cancelOrder(cancelOrderVO));
-//    }
-//
-//    @Test
-//    public void queryOrder() {
-//        LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
-//        logisticsQueryBaseVO.setDeliveryNo(Collections.singletonList("wj12345168"));
-//        System.out.println(yanWenLogisticsHandler.queryOrderList(logisticsQueryBaseVO));
-//    }
+    @Test
+    public void getLabelUrl() {
+        LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+        logisticsQueryVO.setTransportNo("LR085325053CN");
+        System.out.println(yanWenLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO)));
+    }
+
+    @Test
+    public void cancelOrder() {
+        LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
+        cancelOrderVO.setTransportNo("LR085933164CN");
+        cancelOrderVO.setDeliveryNo("WJ085933164CN");
+        System.out.println(yanWenLogisticsHandler.cancelOrder(Arrays.asList(cancelOrderVO)));
+    }
+
+    @Test
+    public void queryOrder() {
+        LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
+        logisticsQueryBaseVO.setDeliveryNo("wj12345168");
+        System.out.println(yanWenLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryBaseVO)));
+    }
 }

@@ -393,6 +393,15 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     public List<ShippingTemplateOtherCostDTO.ViewDTO> viewOtherCost() {
 
         ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
+        //折扣下拉
+        List<DictBasicDTO.ViewDTO> discountList = dictBasicService.getByKey(ShippingCostNameEnum.DISCOUNT_RATE.getCode());
+        //燃油下拉
+        List<DictBasicDTO.ViewDTO> fuelSurchargeList = dictBasicService.getByKey(ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getCode());
+        //边长下拉
+        List<DictBasicDTO.ViewDTO> sideList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_SIDE.getCode());
+        //票下拉
+        List<DictBasicDTO.ViewDTO> voteList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_VOTE.getCode());
+
         List<ShippingTemplateOtherCostDTO.ViewDTO> list = new ArrayList<>();
         for (ShippingCostNameEnum shippingCostNameEnum : values) {
             ShippingTemplateOtherCostDTO.ViewDTO viewDTO = new ShippingTemplateOtherCostDTO.ViewDTO();
@@ -400,6 +409,22 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             viewDTO.setDictName(shippingCostNameEnum.getName());
             viewDTO.setCalculationMethod(shippingCostNameEnum.getType());
             viewDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
+            if (ShippingCostNameEnum.DISCOUNT_RATE.equals(shippingCostNameEnum)) {
+                List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = discountList.stream().map(obj -> new ShippingTemplateCostSettingDTO.ViewDTO(obj.getCode(), obj.getName(), shippingCostNameEnum.getType())).collect(Collectors.toList());
+                viewDTO.setCostSettingList(costSettingList);
+            }
+            if (ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.equals(shippingCostNameEnum)) {
+                List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = sideList.stream().map(obj -> new ShippingTemplateCostSettingDTO.ViewDTO(obj.getCode(), obj.getName(), shippingCostNameEnum.getType())).collect(Collectors.toList());
+                viewDTO.setCostSettingList(costSettingList);
+            }
+            if (ShippingCostNameEnum.SIGNATURE_COST.equals(shippingCostNameEnum) || ShippingCostNameEnum.PREMIUM_COST.equals(shippingCostNameEnum)) {
+                List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = voteList.stream().map(obj -> new ShippingTemplateCostSettingDTO.ViewDTO(obj.getCode(), obj.getName(), shippingCostNameEnum.getType())).collect(Collectors.toList());
+                viewDTO.setCostSettingList(costSettingList);
+            }
+            if (ShippingCostNameEnum.FUEL_SURCHARGE_RATE.equals(shippingCostNameEnum)) {
+                List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = fuelSurchargeList.stream().map(obj -> new ShippingTemplateCostSettingDTO.ViewDTO(obj.getCode(), obj.getName(), shippingCostNameEnum.getType())).collect(Collectors.toList());
+                viewDTO.setCostSettingList(costSettingList);
+            }
             list.add(viewDTO);
         }
         return list;
