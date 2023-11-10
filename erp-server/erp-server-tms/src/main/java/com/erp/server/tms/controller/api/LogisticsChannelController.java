@@ -19,6 +19,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 
+import java.util.List;
+
 /**
  * 物流渠道表
  *
@@ -66,5 +68,15 @@ public class LogisticsChannelController extends BaseController {
     }
 
 
+    /**
+     * 渠道列表
+     * @author Will
+     * @date: 2023/11/10 9:57
+     * @return ApiResult<AddDTO>
+     */
+    @GetMapping("/listLogisticsChannel")
+    public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel() {
+        return success(logisticsChannelService.listLogisticsChannel());
+    }
 
 }

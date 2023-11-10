@@ -19,7 +19,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     UBI("UBI", "UBI", "UBI物流平台", ""),
     TRACK123("TRACK123", "track123", "track123物流平台", ""),
     YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", ""),
-    WEI_SHI("WeiShi", "深圳前海纬狮物流网络科技有限公司", "深圳前海纬狮物流网络科技有限公司", ""),
+    WEI_SHI("WeiShi", "纬狮", "深圳前海纬狮物流网络科技有限公司", ""),
     YUN_TU("YunTu", "云途(新)", "云途(新)", ""),
     TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "");
 
