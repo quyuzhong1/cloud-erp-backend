@@ -196,6 +196,18 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.PagingVO>
      */
     List<LogisticsProductDTO.ExportInfoDTO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
+
+    /**
+     * 更新分页
+     * @param query
+     * @param params
+     * @param approvalStatus
+     * @param fieldList
+     * @return
+     */
+    IPage<LogisticsProductDTO.UpdatePagingDTO> logisticsProductUpdatePaging(Page query,@Param("params") LogisticsProductDTO.UpdatePagingParamDTO params,@Param("approveStatus") Integer approvalStatus,@Param("fieldList") List<String> fieldList);
+
+    Integer logisticsProductUpdateCount(@Param("approveStatus")Integer approvalStatus,@Param("fieldList") List<String> fieldList,@Param("permissionSql")String permissionSql);
 }
 
 
