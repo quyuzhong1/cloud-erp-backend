@@ -155,7 +155,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         //明细
         orderDTO.setDetails(parseDetailDto(orderDetail));
 
-        return new PlatformOrderDTO();
+        return orderDTO;
     }
 
     /**
