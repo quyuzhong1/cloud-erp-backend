@@ -54,7 +54,15 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     public List<DictCountryDTO.ListDTO> listCountryByParam(DictCountryDTO.ListParamDTO dto) {
         List<DictCountryDTO.ListDTO> list = baseMapper.listCountryByParam(dto);
-        return list;
+        if (CollectionUtils.isEmpty(dto.getNameCnList())) {
+            return list;
+        }
+        List<DictCountryDTO.ListDTO> resultList = new ArrayList<>();
+        for (String nameCn : dto.getNameCnList()) {
+            DictCountryDTO.ListDTO listDTO = list.stream().filter(obj -> obj.getNameCn().equals(nameCn)).findFirst().orElse(new DictCountryDTO.ListDTO());
+            resultList.add(listDTO);
+        }
+        return resultList;
     }
 
     public static void main(String[] args) {

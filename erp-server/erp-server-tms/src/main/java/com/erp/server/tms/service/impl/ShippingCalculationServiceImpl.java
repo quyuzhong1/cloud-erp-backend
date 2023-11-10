@@ -1,21 +1,30 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
+import com.erp.model.tms.enums.ShippingCostNameEnum;
 import com.erp.server.tms.service.ShippingCalculationService;
+import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Will
@@ -29,8 +38,12 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     @Resource
     private ShippingTemplateOtherCostService shippingTemplateOtherCostService;
 
+    @Resource
+    private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
+
     @Override
-    public ShippingCalculationDTO calculationFinalShippingCost (ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule, BigDecimal weight) {
+    public  ShippingCalculationDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
+            , BigDecimal weight) {
         ShippingCalculationDTO shippingCalculationDTO = new ShippingCalculationDTO();
 
         //查询其他费用
@@ -52,10 +65,10 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         BigDecimal premiumCost = calculationPremiumCost(otherCostList);
         shippingCalculationDTO.setPremiumCost(premiumCost);
         //超尺寸附加费
-        BigDecimal oversizeSurchargeCost = calculationOversizeSurchargeCost(otherCostList);
+        BigDecimal oversizeSurchargeCost = calculationOversizeSurchargeCost(otherCostList,null,null,null);
         shippingCalculationDTO.setOversizeSurchargeCost(oversizeSurchargeCost);
         //燃油附加费
-        BigDecimal fuelSurchargeCost = calculationFuelSurchargeCost(otherCostList, shippingTemplateRule);
+        BigDecimal fuelSurchargeCost = calculationFuelSurchargeCost(otherCostList,shippingCalculationDTO);
         shippingCalculationDTO.setFuelSurchargeCost(fuelSurchargeCost);
         //折扣费
         BigDecimal discountCost = calculationDiscountCost(otherCostList, shippingTemplateRule);
@@ -74,17 +87,13 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         shippingCalculationDTO.setTotalShippingCost(totalShippingCost);
         return shippingCalculationDTO;
     }
-    
+
+
     /**
-     * @description: 运费
-     * @author Will
-     * @date: 2023/11/10 9:53
-     * @param entity 
-     * @param shippingTemplateRule 
-     * @param weight 
-     * @return BigDecimal 
+     * 运费
      */
-    public BigDecimal calculationShippingCost (ShippingTemplateEntity entity,ShippingTemplateRuleEntity shippingTemplateRule, BigDecimal weight) {
+    @Override
+    public BigDecimal calculationShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule, BigDecimal weight) {
 
         /**
          *  最终运费 = 运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
@@ -114,28 +123,84 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         return shippingCost;
     }
 
-    public BigDecimal calculationSignatureCost (List<ShippingTemplateOtherCostEntity> otherCostList) {
+    @Override
+    public BigDecimal calculationSignatureCost(List<ShippingTemplateOtherCostEntity> otherCostList) {
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            return BigDecimal.ZERO;
+        }
+         //签名费
+        BigDecimal signatureCost = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.SIGNATURE_COST.getCode()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostSettingValue())).orElse(BigDecimal.ZERO);
+        return signatureCost;
+    }
+
+    @Override
+    public BigDecimal calculationPremiumCost(List<ShippingTemplateOtherCostEntity> otherCostList) {
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            return BigDecimal.ZERO;
+        }
+        //保险费
+        BigDecimal premiumCost = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.PREMIUM_COST.getCode()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostSettingValue())).orElse(BigDecimal.ZERO);
+        return premiumCost;
+    }
+
+    @Override
+    public BigDecimal calculationOversizeSurchargeCost(List<ShippingTemplateOtherCostEntity> otherCostList, BigDecimal length, BigDecimal width, BigDecimal height) {
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            return BigDecimal.ZERO;
+        }
+        if (ObjectUtil.isEmpty(length) && ObjectUtil.isEmpty(width) && ObjectUtil.isEmpty(height)) {
+            return BigDecimal.ZERO;
+        }
+
+        //超尺寸附加费
+        ShippingTemplateOtherCostEntity otherCostEntity = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getCode()))
+                .findFirst().orElse(new ShippingTemplateOtherCostEntity());
+        //费用设置值
+        List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
+        if (CollectionUtils.isNotEmpty(costSettingList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getName());
+        }
+        //是否符合条件
+        Boolean isFlag = Boolean.FALSE;
+        JSONObject jsonObject = JSONUtil.parseObj(otherCostEntity.getExtendJson());
+
+        for (ShippingTemplateCostSettingEntity costSettingEntity : costSettingList) {
+            BigDecimal cost = (BigDecimal) jsonObject.get(costSettingEntity.getCode());
+        }
 
         return BigDecimal.ZERO;
     }
 
-    public BigDecimal calculationPremiumCost (List<ShippingTemplateOtherCostEntity> otherCostList) {
+    @Override
+    public BigDecimal calculationFuelSurchargeCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO shippingCalculationDTO) {
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            return BigDecimal.ZERO;
+        }
+        //燃油附加费
+        ShippingTemplateOtherCostEntity otherCostEntity = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getCode()))
+                .findFirst().orElse(new ShippingTemplateOtherCostEntity());
+        //费用设置值
+        List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
+        if (CollectionUtils.isNotEmpty(costSettingList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getName());
+        }
+        //其他费用值JSON
+        JSONObject jsonObject = JSONUtil.parseObj(shippingCalculationDTO);
+        //费用合计值
+        BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,otherCostEntity.getCostSettingValue()));
+
+        return fuelSurchargeCost;
+    }
+
+    @Override
+    public BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingTemplateRuleEntity shippingTemplateRule) {
 
         return BigDecimal.ZERO;
     }
 
-    public BigDecimal calculationOversizeSurchargeCost (List<ShippingTemplateOtherCostEntity> otherCostList) {
 
-        return BigDecimal.ZERO;
-    }
-
-    public BigDecimal calculationFuelSurchargeCost (List<ShippingTemplateOtherCostEntity> otherCostList,ShippingTemplateRuleEntity shippingTemplateRule) {
-
-        return BigDecimal.ZERO;
-    }
-
-    public BigDecimal calculationDiscountCost (List<ShippingTemplateOtherCostEntity> otherCostList,ShippingTemplateRuleEntity shippingTemplateRule) {
-
-        return BigDecimal.ZERO;
-    }
 }
