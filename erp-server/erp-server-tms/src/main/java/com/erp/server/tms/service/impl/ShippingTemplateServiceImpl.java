@@ -27,6 +27,7 @@ import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
@@ -114,6 +115,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @Resource
     private ShippingCalculationService shippingCalculationService;
@@ -555,14 +559,14 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         //国家谢谢
         List<String> countryIdList = detailList.stream().flatMap(obj -> Stream.of(obj.getToCountry(), obj.getFromCountry()))
                 .distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(countryIdList);
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
 
         for (ShippingTemplateRuleDTO.ViewDTO viewDTO :detailList) {
             //起始地
-            String fromCountryName = currencyList.stream().filter(obj -> obj.getId().equals(viewDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String fromCountryName = countryList.stream().filter(obj -> obj.getId().equals(viewDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             viewDTO.setFromCountryName(fromCountryName);
             //目的地
-            String toCountryName = currencyList.stream().filter(obj -> obj.getId().equals(viewDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(viewDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             viewDTO.setToCountryName(toCountryName);
 
             if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
