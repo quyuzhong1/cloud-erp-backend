@@ -15,6 +15,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -26,6 +27,8 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.rpc.dmp.feign.DmpReportFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -53,6 +56,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.enums.ApiError;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -91,6 +96,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Resource
+    private DmpAmazonFeign dmpAmazonFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -131,8 +138,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pullShipment(FbaShipmentDTO.pullShipmentDTO dto) {
-        return null;
+        DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
+        dmpAmazonFeign.pullShipment(pullShipmentDTO);
+        return true;
     }
 
     @Override
