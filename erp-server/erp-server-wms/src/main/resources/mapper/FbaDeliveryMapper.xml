@@ -69,7 +69,7 @@
         fd.dest_warehouse_name,
         fdl.logistics_method,
         fdd.asin,
-        fdd.m_sku,
+        fdd.msku,
         fdd.fn_sku,
         fdd.sku_no,
         fdd.stock_sku,
@@ -165,8 +165,8 @@
             AND fdd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
         </if>
         <!--卖家sku-->
-        <if test="params.mSku != null and params.mSku != ''">
-            AND fdd.m_sku ILIKE concat('%',#{params.mSku},'%')
+        <if test="params.msku != null and params.msku != ''">
+            AND fdd.msku ILIKE concat('%',#{params.msku},'%')
         </if>
         <!--审核时间-->
         <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
@@ -216,7 +216,7 @@
         fd.dest_warehouse_name,
         fdl.logistics_method,
         fdd.asin,
-        fdd.m_sku,
+        fdd.msku,
         fdd.fn_sku,
         fdd.sku_no,
         fdd.stock_sku,
@@ -321,8 +321,8 @@
                     AND fdd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
                 </if>
                 <!--卖家sku-->
-                <if test="params.mSku != null and params.mSku != ''">
-                    AND fdd.m_sku ILIKE concat('%',#{params.mSku},'%')
+                <if test="params.msku != null and params.msku != ''">
+                    AND fdd.msku ILIKE concat('%',#{params.msku},'%')
                 </if>
                 <!--审核时间-->
                 <if test="params.approveTimeList !=null and params.approveTimeList.size>0">

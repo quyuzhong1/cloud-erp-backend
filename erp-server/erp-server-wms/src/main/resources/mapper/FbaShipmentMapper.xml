@@ -61,7 +61,7 @@
             fs.shipment_receive_time,
             fsd.asin,
             fsd.fn_sku,
-            fsd.m_sku,
+            fsd.msku,
             fsd.sku_no,
             fsd.declare_qty,
             fsd.delivery_qty,
@@ -125,7 +125,7 @@
         </if>
         <!--卖家sku-->
         <if test="params.mSku != null and params.mSku != ''">
-            AND fsd.m_sku ILIKE concat('%',#{params.mSku},'%')
+            AND fsd.msku ILIKE concat('%',#{params.mSku},'%')
         </if>
 
         <if test="params.isCombination != null">
@@ -173,7 +173,7 @@
             fs.country_id,
             fs.country_name,
             fsd.asin,
-            fsd.m_sku,
+            fsd.msku,
             fsd.fn_sku,
             fsd.sku_no,
             fsd.declare_qty,
