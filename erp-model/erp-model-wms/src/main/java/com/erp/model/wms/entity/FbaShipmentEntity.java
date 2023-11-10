@@ -139,9 +139,25 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
 
     public static final String PLATFORM_CODE = "platform_code";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
+    @Override
+    public String toString() {
+        return "FbaShipmentEntity{" +
+                "code='" + code + '\'' +
+                ", name='" + name + '\'' +
+                ", shopId='" + shopId + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", countryId='" + countryId + '\'' +
+                ", countryName='" + countryName + '\'' +
+                ", fulfillmentCenter='" + fulfillmentCenter + '\'' +
+                ", deliveryStatus='" + deliveryStatus + '\'' +
+                ", platformShipmentStatus='" + platformShipmentStatus + '\'' +
+                ", shipmentCreateTime=" + shipmentCreateTime +
+                ", shipmentReceiveTime=" + shipmentReceiveTime +
+                ", labelType='" + labelType + '\'' +
+                ", packType='" + packType + '\'' +
+                ", deliveryFromAddress='" + deliveryFromAddress + '\'' +
+                ", deliveryToAddress='" + deliveryToAddress + '\'' +
+                '}';
+    }
 }

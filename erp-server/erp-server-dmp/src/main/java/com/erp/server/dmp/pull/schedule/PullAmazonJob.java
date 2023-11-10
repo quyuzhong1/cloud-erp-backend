@@ -308,16 +308,26 @@ public class PullAmazonJob {
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
-                dto.setDownloadStatus(1);
-                dto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                newDto.setDownloadStatus(1);
+                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
 
                 // 转换
                 PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
-                InboundShipmentItemList detailList = newDto.getDetailList();
-                List<PlatformFbaShipmentReceiveDTO> receiveDTOList = detailList.stream()
+                InboundShipmentItemList sourceDetailList = newDto.getDetailList();
+                List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
                         .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
                         .collect(Collectors.toList());
                 shipmentDTO.setReceiveDTOList(receiveDTOList);
+                // 合并成详情
+                List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
+                        receiveDTOList.stream()
+                        .collect(Collectors.toMap(
+                                shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
+                                shipment -> shipment,
+                                PlatformFbaShipmentReceiveDTO::merge))
+                        .values()
+                );
+                shipmentDTO.setDetailList(detailListDTO);
 
                 businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
             } catch (Exception e) {

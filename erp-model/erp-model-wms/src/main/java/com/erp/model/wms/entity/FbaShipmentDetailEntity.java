@@ -97,9 +97,16 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
 
     public static final String IS_COMBO = "is_combo";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
+    @Override
+    public String toString() {
+        return "FbaShipmentDetailEntity{" +
+                "mSku='" + mSku + '\'' +
+                ", fnSku='" + fnSku + '\'' +
+                ", declareQty=" + declareQty +
+                ", diffQty=" + diffQty +
+                ", receiveQty=" + receiveQty +
+                ", receiveDate=" + receiveDate +
+                '}';
+    }
 }

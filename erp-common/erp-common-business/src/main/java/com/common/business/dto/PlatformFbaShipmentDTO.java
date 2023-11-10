@@ -86,4 +86,9 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
      * 物流签收信息
      */
     List<PlatformFbaShipmentReceiveDTO> receiveDTOList;
+
+    /**
+     * 货件详情(由物流签收信息合并）
+     */
+    List<PlatformFbaShipmentReceiveDTO> detailList;
 }

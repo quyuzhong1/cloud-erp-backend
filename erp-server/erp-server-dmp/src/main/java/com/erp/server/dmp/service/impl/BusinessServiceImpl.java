@@ -166,7 +166,7 @@ public class BusinessServiceImpl {
         String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
         // 修改数据
         OrderMongoDTO updateDto = OrderMongoDTO.getUniqId(dto.getUniqueId());
-        MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+        MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(sourceDto), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
 
         // 异步推送到MQ

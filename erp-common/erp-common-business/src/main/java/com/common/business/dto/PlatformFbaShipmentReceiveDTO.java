@@ -1,10 +1,8 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -27,7 +25,7 @@ public class PlatformFbaShipmentReceiveDTO {
     /**
      * 卖家sku
      */
-    private String mSku;
+    private String sellerSku;
     /**
      * 申报数量
      */
@@ -49,4 +47,10 @@ public class PlatformFbaShipmentReceiveDTO {
         return this.deliveryQty - this.receiveQty;
     }
 
+    // 合并方法
+    public PlatformFbaShipmentReceiveDTO merge(PlatformFbaShipmentReceiveDTO other) {
+        this.setReceiveQty(this.getReceiveQty() + other.getReceiveQty());
+        this.setReceiveDate(this.getReceiveDate().isAfter(other.getReceiveDate()) ? this.getReceiveDate() : other.getReceiveDate());
+        return this;
+    }
 }

@@ -45,7 +45,8 @@ public interface SdkFbaShipmentConverter {
 
 
     @Mappings({
-            @Mapping(target = "MSku", source = "sellerSKU"),
+            @Mapping(target = "sellerSku", source = "sellerSKU"),
+            @Mapping(target = "fnSku", source = "fulfillmentNetworkSKU"),
             @Mapping(target = "declareQty", source = "quantityReceived"),
             @Mapping(target = "receiveQty", source = "quantityReceived"),
             @Mapping(target = "deliveryQty", source = "quantityShipped"),
