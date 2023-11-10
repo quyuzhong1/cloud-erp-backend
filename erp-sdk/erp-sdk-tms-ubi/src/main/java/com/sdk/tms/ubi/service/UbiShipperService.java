@@ -22,6 +22,7 @@ import com.sdk.tms.ubi.utils.IntegrationHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +37,31 @@ import java.util.Map;
 @Slf4j
 @Component
 public class UbiShipperService {
+    //正式环境
+//    static String host = "http://cn.etowertech.com";
+    //测试环境
+    static String host = "http://qa.etowertech.com";
 
-    static String host = "http://cn.etowertech.com";
-    static String token = "pcloTVPCXZCD5G-RRlhBfR";
-    static String key = "N1S3O3OlKKRDRfcfYFONqg";
+    //    static String token = "pcloTVPCXZCD5G-RRlhBfR";
+    static String token = "test5AdbzO5OEeOpvgAVXUFE0A";
+    //    static String key = "N1S3O3OlKKRDRfcfYFONqg";
+    static String key = "79db9e5OEeOpvgAVXUFWSD";
 
     public static void main(String[] args) {
         UbiShipperService ubiShipperService = new UbiShipperService();
         List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(token, key);
         System.out.println("列表数:" + serviceCataLogList.size());
+//        List<String> ids = new ArrayList<>();
+//        LabelRequest labelRequest = LabelRequest.builder()
+//                .orderIds(ids)
+//                //TODO 根据传参决定打印单大小
+//                .labelType("0")
+//                .packinglist(false)
+//                .merged(true)
+//                .labelFormat("JPG")
+//                .dpi("300")
+//                .build();
+//        ubiShipperService.getLabels(token, key, labelRequest);
     }
 
     /**
@@ -150,6 +167,7 @@ public class UbiShipperService {
 
     /**
      * 扣货接口
+     *
      * @param token
      * @param key
      * @param holdRequest
@@ -196,7 +214,7 @@ public class UbiShipperService {
      * @param key
      * @param numbers
      */
-    public List<TrackBase> getTrackNumber(String token, String key,List<String> numbers) {
+    public List<TrackBase> getTrackNumber(String token, String key, List<String> numbers) {
         String url = host + PathConstants.POST_TRACK_NUMBER_URL;
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJsonObject(url, numbers, headers);
