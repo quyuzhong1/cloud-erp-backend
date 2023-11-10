@@ -88,7 +88,15 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 计算方式选值
+         */
+        private List<String> settingList;
 
+        /**
+         * 计算方式名称选值
+         */
+        private List<String> settingNameList;
     }
 
     /**

@@ -1,8 +1,11 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author Will
@@ -13,48 +16,195 @@ import java.math.BigDecimal;
 @Data
 public class ShippingCalculationDTO {
 
-    /**
-     * 运费
-     */
-    private BigDecimal shippingCost;
 
     /**
-     * 操作费
+     * 查询条件
      */
-    private BigDecimal operatingCost;
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 发货方式
+         */
+        private String shipmentMethod;
+
+        /**
+         * 起始地
+         */
+        private String fromCountry;
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
+        /**
+         * 目的仓库
+         */
+        private String toWarehouse;
+
+        /**
+         * 城市
+         */
+        private String city;
+
+        /**
+         * 物流渠道id集合
+         */
+        private List<String> channelIdList;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 长
+         */
+        private String length;
+
+        /**
+         * 宽
+         */
+        private String width;
+
+        /**
+         * 高
+         */
+        private String height;
+    }
 
     /**
-     * 挂号费
+     * 列表
      */
-    private BigDecimal registrationCost;
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsName;
+
+        /**
+         * 物流渠道名称名称
+         */
+        private String channelName;
+
+        /**
+         * 目的仓库
+         */
+        private String toWarehouseName;
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
+        /**
+         * 分区
+         */
+        private String region;
+
+        /**
+         * 有效期
+         */
+        private String effectivePeriod ;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingCost;
+
+        /**
+         * 挂号费
+         */
+        private BigDecimal registrationCost;
+
+        /**
+         * 操作费
+         */
+        private BigDecimal operatingCost;
+
+        /**
+         * 其他费
+         */
+        private BigDecimal otherCost;
+
+        /**
+         * 总金额
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+    }
 
     /**
-     * 折扣费
+     * 详情
      */
-    private BigDecimal discountCost;
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
 
-    /**
-     * 签名费
-     */
-    private BigDecimal signatureCost;
+        /**
+         * 运费
+         */
+        private BigDecimal shippingCost;
 
-    /**
-     * 保险费
-     */
-    private BigDecimal premiumCost;
+        /**
+         * 操作费
+         */
+        private BigDecimal operatingCost;
 
-    /**
-     * 超尺寸附加费
-     */
-    private BigDecimal oversizeSurchargeCost;
+        /**
+         * 挂号费
+         */
+        private BigDecimal registrationCost;
 
-    /**
-     * 燃油附加费
-     */
-    private BigDecimal fuelSurchargeCost;
+        /**
+         * 折扣费
+         */
+        private BigDecimal discountCost;
 
-    /**
-     * 最终运费
-     */
-    private BigDecimal totalShippingCost;
+        /**
+         * 签名费
+         */
+        private BigDecimal signatureCost;
+
+        /**
+         * 保险费
+         */
+        private BigDecimal premiumCost;
+
+        /**
+         * 超尺寸附加费
+         */
+        private BigDecimal oversizeSurchargeCost;
+
+        /**
+         * 燃油附加费
+         */
+        private BigDecimal fuelSurchargeCost;
+
+        /**
+         * 最终运费
+         */
+        private BigDecimal totalShippingCost;
+    }
+
+
 }

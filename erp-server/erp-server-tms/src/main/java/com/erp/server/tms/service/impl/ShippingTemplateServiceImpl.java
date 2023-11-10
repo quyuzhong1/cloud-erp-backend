@@ -603,7 +603,12 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                     String name = dictList.stream().filter(obj -> obj.getCode().equals(costSettingDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     costSettingDTO.setName(name);
                 }
-                viewDTO.setCostSettingList(costSettingList);
+                //编码
+                List<String> settingList = costSettingList.stream().map(ShippingTemplateCostSettingDTO.ViewDTO::getCode).collect(Collectors.toList());
+                viewDTO.setSettingList(settingList);
+                //名称
+                List<String> settingNameList = costSettingList.stream().map(ShippingTemplateCostSettingDTO.ViewDTO::getName).collect(Collectors.toList());
+                viewDTO.setSettingNameList(settingNameList);
             }
             //数值设置
             if (StringUtils.isNotBlank(viewDTO.getExtendJson())) {
@@ -874,7 +879,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
         }
         //计算最终运费
-        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
         return shippingCalculationDTO.getTotalShippingCost();
     }
 
@@ -895,7 +900,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
         }
         //计算最终运费
-        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
         return shippingCalculationDTO.getTotalShippingCost();
     }
 
@@ -915,7 +920,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
         }
         //计算最终运费
-        ShippingCalculationDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
         return shippingCalculationDTO.getTotalShippingCost();
     }
 

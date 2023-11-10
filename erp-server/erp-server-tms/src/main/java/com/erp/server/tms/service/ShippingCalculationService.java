@@ -11,6 +11,7 @@ import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import org.apache.commons.collections4.CollectionUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -22,6 +23,25 @@ import java.util.List;
  */
 public interface ShippingCalculationService {
 
+
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/11/10 17:36
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/11/10 17:36
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO dto, HttpServletResponse response);
+
     /**
      * @description: 最终运费
      * @author Will
@@ -31,7 +51,7 @@ public interface ShippingCalculationService {
      * @param weight
      * @return ShippingCalculationDTO
      */
-    ShippingCalculationDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
+    ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
             , BigDecimal weight);
     /**
      * @description: 运费
@@ -80,7 +100,7 @@ public interface ShippingCalculationService {
      * @return BigDecimal
      */
     BigDecimal calculationFuelSurchargeCost(List<ShippingTemplateOtherCostEntity> otherCostList
-            , ShippingCalculationDTO shippingCalculationDTO);
+            , ShippingCalculationDTO.ViewDTO shippingCalculationDTO);
     /**
      * @description: 折扣额
      * @author Will
@@ -90,7 +110,7 @@ public interface ShippingCalculationService {
      * @return BigDecimal
      */
     BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList
-            , ShippingCalculationDTO shippingCalculationDTO);
+            , ShippingCalculationDTO.ViewDTO shippingCalculationDTO);
 
-    PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto);
+
 }

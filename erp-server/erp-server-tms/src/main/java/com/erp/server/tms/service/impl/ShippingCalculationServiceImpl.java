@@ -3,11 +3,16 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
@@ -18,18 +23,19 @@ import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingCostNameEnum;
 import com.erp.model.tms.enums.ShippingSideEnum;
+import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Will
@@ -38,7 +44,8 @@ import java.util.Optional;
  * @date 2023/11/9 17:53
  */
 @Service
-public class ShippingCalculationServiceImpl implements ShippingCalculationService {
+@Slf4j
+public class ShippingCalculationServiceImpl  implements ShippingCalculationService {
 
     @Resource
     private ShippingTemplateOtherCostService shippingTemplateOtherCostService;
@@ -46,10 +53,49 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     @Resource
     private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
 
+    @Resource
+    private ShippingTemplateOtherCostMapper shippingTemplateOtherCostMapper;
+
+
     @Override
-    public  ShippingCalculationDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
+    public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
+        ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<ShippingCalculationDTO.ListDTO> pageData = this.shippingTemplateOtherCostMapper.paging(query, params);
+        //清空明细数据
+        List<ShippingCalculationDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO params, HttpServletResponse response) {
+        List<ShippingCalculationDTO.ListDTO> resultList = this.shippingTemplateOtherCostMapper.listByExportExcel(params);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        String name = "运费计算列表";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/shippingCalculation.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("运费模板列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public  ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
             , BigDecimal weight) {
-        ShippingCalculationDTO shippingCalculationDTO = new ShippingCalculationDTO();
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = new ShippingCalculationDTO.ViewDTO();
 
         //查询其他费用
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainId(entity.getId());
@@ -213,7 +259,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     }
 
     @Override
-    public BigDecimal calculationFuelSurchargeCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO shippingCalculationDTO) {
+    public BigDecimal calculationFuelSurchargeCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO.ViewDTO shippingCalculationDTO) {
         if (CollectionUtils.isEmpty(otherCostList)) {
             return BigDecimal.ZERO;
         }
@@ -236,7 +282,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     }
 
     @Override
-    public BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO shippingCalculationDTO) {
+    public BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO.ViewDTO shippingCalculationDTO) {
         if (CollectionUtils.isEmpty(otherCostList)) {
             return BigDecimal.ZERO;
         }
@@ -257,11 +303,5 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
         return discountCost;
     }
-
-    @Override
-    public PagingVO<ShippingTemplateDTO.ListDTO> paging(PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
-        return null;
-    }
-
 
 }
