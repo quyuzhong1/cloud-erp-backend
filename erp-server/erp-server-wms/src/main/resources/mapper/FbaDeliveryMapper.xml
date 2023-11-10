@@ -191,7 +191,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fd.code, fd.create_time DESC
+        fd.create_time DESC, fd.code
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
