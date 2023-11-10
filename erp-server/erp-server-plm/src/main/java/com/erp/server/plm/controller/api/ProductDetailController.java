@@ -1141,4 +1141,50 @@ public class ProductDetailController extends BaseController {
         List<SkuVO> skuList = productDetailService.pdaSearchSku(dto);
         return success(skuList);
     }
+
+
+    /**
+     * excel导入产品仓位
+     *
+     * @param excelFile  文件流
+     * @param importType 请求类型
+     * @param response   响应
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品仓位")
+    @PostMapping("/importProductWarehouseLocationFile")
+    //@RequestPermissions("plm:product:detail:importProductFile")
+    public ApiResult importProductWarehouseLocationFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<BasicDictEntity> basicDictList = basicDictService.list();
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList,scmTaskFeign);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productWarehouseLocation.xlsx";
+            String name = "productWarehouseLocation";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+
+            return failure();
+        }
+        return success();
+    }
 }
