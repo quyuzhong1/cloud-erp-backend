@@ -124,8 +124,8 @@
             AND fsd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
         </if>
         <!--卖家sku-->
-        <if test="params.mSku != null and params.mSku != ''">
-            AND fsd.msku ILIKE concat('%',#{params.mSku},'%')
+        <if test="params.msku != null and params.msku != ''">
+            AND fsd.msku ILIKE concat('%',#{params.msku},'%')
         </if>
 
         <if test="params.isCombination != null">

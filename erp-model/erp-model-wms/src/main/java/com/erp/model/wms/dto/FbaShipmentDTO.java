@@ -334,7 +334,7 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 卖家sku
          */
-        private String mSku;
+        private String msku;
 
         /**
          * 是否组合品 true 是
@@ -456,11 +456,11 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 创建时间（拉取数据的日期）
          */
-        private LocalDateTime platformCreateTime;
+        private LocalDateTime shipmentCreateTime;
         /**
          * 签收时间（拉取签收数据的日期）
          */
-        private LocalDateTime platformReceiveTime;
+        private LocalDateTime shipmentReceiveTime;
         /**
          * 是否组合品 true 是
          */

@@ -6,6 +6,7 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import java.io.Serializable;
 import java.util.List;
@@ -89,19 +90,16 @@ public class LogisticsAddressDTO implements Serializable {
         private String provinceName;
 
 
-
         /**
          * 城市
          */
         private String cityName;
 
 
-
         /**
          * 区
          */
         private String districtName;
-
 
 
         /**
@@ -203,8 +201,6 @@ public class LogisticsAddressDTO implements Serializable {
         private String provinceName;
 
 
-
-
         /**
          * 城市
          */
@@ -214,8 +210,6 @@ public class LogisticsAddressDTO implements Serializable {
          * 区
          */
         private String districtName;
-
-
 
 
         /**
@@ -301,8 +295,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 电话
          */
-        @Size(max = 20, message = "电话最大长度不能超过20位")
-        @Size(min = 6, message = "电话最小长度不能小于6位字符")
+        @Size( max = 20, message = "电话 最小长度 不能小于6位字符,最大不能超过20位字符")
         private String telNumber;
 
         /**
