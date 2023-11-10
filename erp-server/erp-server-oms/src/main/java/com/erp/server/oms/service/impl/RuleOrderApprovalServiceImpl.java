@@ -206,6 +206,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         if (CollectionUtils.isEmpty(jsonObjectList)) {
             return ruleMatch;
         }
+        log.info("参数为=========={}",jsonObjectList);
         List<RuleOrderApprovalEntity> ruleOrderApprovalList = this.listOrderByPriority();
         List<String> ruleIdList = ruleOrderApprovalList.stream().map(RuleOrderApprovalEntity::getId).collect(Collectors.toList());
         //规则条件

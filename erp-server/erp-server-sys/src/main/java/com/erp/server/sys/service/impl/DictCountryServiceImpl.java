@@ -182,6 +182,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         return resultList;
     }
 
+    @Override
+    public List<DictCountryEntity> listCountryByNames(List<String> names) {
+        if(CollectionUtils.isEmpty(names)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DictCountryEntity::getNameCn,names).list();
+    }
+
 
     /**
      * 根据data flag获取国家
