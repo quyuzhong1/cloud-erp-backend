@@ -1,9 +1,7 @@
 package com.erp.model.tms.vo.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,10 +9,12 @@ import java.util.List;
 /**
  * 打印标签响应实体
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(callSuper = true)
 public class LogisticsPrintLabelResponse extends LogisticsBaseResponseVO implements Serializable {
     /**
      * 运单号

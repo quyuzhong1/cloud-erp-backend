@@ -14,6 +14,7 @@ import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingCostNameEnum;
+import com.erp.model.tms.enums.ShippingSideEnum;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,7 +73,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         BigDecimal fuelSurchargeCost = calculationFuelSurchargeCost(otherCostList,shippingCalculationDTO);
         shippingCalculationDTO.setFuelSurchargeCost(fuelSurchargeCost);
         //折扣费
-        BigDecimal discountCost = calculationDiscountCost(otherCostList, shippingTemplateRule);
+        BigDecimal discountCost = calculationDiscountCost(otherCostList, shippingCalculationDTO);
         shippingCalculationDTO.setDiscountCost(discountCost);
         /**
          * 最终运费 ：运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
@@ -153,7 +155,6 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if (ObjectUtil.isEmpty(length) && ObjectUtil.isEmpty(width) && ObjectUtil.isEmpty(height)) {
             return BigDecimal.ZERO;
         }
-
         //超尺寸附加费
         ShippingTemplateOtherCostEntity otherCostEntity = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getCode()))
                 .findFirst().orElse(new ShippingTemplateOtherCostEntity());
@@ -163,14 +164,49 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getName());
         }
         //是否符合条件
-        Boolean isFlag = Boolean.FALSE;
+        Boolean isFlag = Boolean.TRUE;
         JSONObject jsonObject = JSONUtil.parseObj(otherCostEntity.getExtendJson());
+
+        //最长边
+        BigDecimal longestEdge = Arrays.asList(length, width, height).stream().max(Comparator.comparing(obj -> obj)).orElse(BigDecimal.ZERO);
+        //最短边
+        BigDecimal shortestEdge = Arrays.asList(length, width, height).stream().min(Comparator.comparing(obj -> obj)).orElse(BigDecimal.ZERO);
+        //中间边长
+        BigDecimal edge = Arrays.asList(length, width, height).stream().filter(obj -> MathUtil.compareTo(longestEdge, obj) > MathUtil.ZERO && MathUtil.compareTo(obj, shortestEdge) > MathUtil.ZERO).findFirst().orElse(null);
+        //次边长
+        BigDecimal minorEdge = ObjectUtil.isEmpty(edge) ? longestEdge : edge;
+        //三边和
+        BigDecimal edgelSum = Arrays.asList(length, width, height).stream().reduce(BigDecimal.ZERO,BigDecimal::add);
 
         for (ShippingTemplateCostSettingEntity costSettingEntity : costSettingList) {
             BigDecimal cost = (BigDecimal) jsonObject.get(costSettingEntity.getCode());
-        }
 
-        return BigDecimal.ZERO;
+            if (ShippingSideEnum.LONGEST_EDGE.getCode().equals(costSettingEntity.getCode())) {
+                isFlag =  MathUtil.compareTo(cost,longestEdge) > MathUtil.ZERO ? Boolean.FALSE :Boolean.TRUE;
+                break;
+            }
+            if (ShippingSideEnum.MINOR_EDGE.getCode().equals(costSettingEntity.getCode())) {
+                isFlag =  MathUtil.compareTo(cost,minorEdge) > MathUtil.ZERO ? Boolean.FALSE :Boolean.TRUE;
+                break;
+            }
+            if (ShippingSideEnum.EDGEL_SUM.getCode().equals(costSettingEntity.getCode())) {
+                isFlag =  MathUtil.compareTo(cost,edgelSum) > MathUtil.ZERO ? Boolean.FALSE :Boolean.TRUE;
+                break;
+            }
+            if (ShippingSideEnum.ANY_EDGE.getCode().equals(costSettingEntity.getCode())) {
+                isFlag =  (MathUtil.compareTo(cost,length) > MathUtil.ZERO
+                            || MathUtil.compareTo(cost,width) > MathUtil.ZERO
+                            || MathUtil.compareTo(cost,height) > MathUtil.ZERO) ? Boolean.FALSE :Boolean.TRUE;
+                break;
+            }
+        }
+        if (!isFlag) {
+            return BigDecimal.ZERO;
+        }
+        //折扣费
+        BigDecimal oversizeSurchargeCost = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.DISCOUNT_RATE.getCode()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostSettingValue())).orElse(BigDecimal.ZERO);
+        return oversizeSurchargeCost;
     }
 
     @Override
@@ -190,16 +226,33 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         JSONObject jsonObject = JSONUtil.parseObj(shippingCalculationDTO);
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,otherCostEntity.getCostSettingValue()));
+        //燃油附加费率
+        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, otherCostEntity.getCostSettingValue());
 
         return fuelSurchargeCost;
     }
 
     @Override
-    public BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingTemplateRuleEntity shippingTemplateRule) {
+    public BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList, ShippingCalculationDTO shippingCalculationDTO) {
+        if (CollectionUtils.isEmpty(otherCostList)) {
+            return BigDecimal.ZERO;
+        }
+        //折扣费
+        ShippingTemplateOtherCostEntity otherCostEntity = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.DISCOUNT_RATE.getCode()))
+                .findFirst().orElse(new ShippingTemplateOtherCostEntity());
+        //费用设置值
+        List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
+        if (CollectionUtils.isNotEmpty(costSettingList)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.DISCOUNT_RATE.getName());
+        }
+        //其他费用值JSON
+        JSONObject jsonObject = JSONUtil.parseObj(shippingCalculationDTO);
+        //费用合计值
+        BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        //折扣费
+        BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,otherCostEntity.getCostSettingValue()));
 
-        return BigDecimal.ZERO;
+        return discountCost;
     }
 
 

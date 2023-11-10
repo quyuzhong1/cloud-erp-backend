@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
@@ -41,7 +42,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> confirmOrder(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<String> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO);
 
     /**
      * 取消订单
@@ -49,7 +50,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO);
+    ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsQueryVO);
 
     /**
      * 拦截订单
@@ -57,7 +58,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO);
+    ApiResult<List<InterceptResponseVO>> interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVO);
 
     /**
      * 更新订单
@@ -75,7 +76,7 @@ public interface LogisticsService {
      */
     ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO);
 
-    ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList);
+    ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 
     /**
      * 批量获取标签
@@ -83,7 +84,7 @@ public interface LogisticsService {
      * @param logisticsQueryVO
      * @return
      */
-    ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException;
+    ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException;
     /**
      * 轨迹查询
      *
