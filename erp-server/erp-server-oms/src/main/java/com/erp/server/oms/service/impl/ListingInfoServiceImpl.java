@@ -120,14 +120,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Override
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         ListingInfoEntity listingInfoEntity = lambdaQuery()
-                .eq(ListingInfoEntity::getPlatformSkuNo, dto.getMSku())
+                .eq(ListingInfoEntity::getPlatformSkuNo, dto.getMsku())
                 .last("LIMIT 1")
                 .one();
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
 
-        listingInfoEntity.setPlatformSkuNo(dto.getMSku());
+        listingInfoEntity.setPlatformSkuNo(dto.getMsku());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
         listingInfoEntity.setSkuNo(skuVO.getSkuNo());
