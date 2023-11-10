@@ -19,12 +19,16 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
+import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
@@ -108,6 +112,9 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductCustomsService productCustomsService;
+
+    @Resource
+    private WarehouseLocationFeign warehouseLocationFeign;
 
 
     /**
@@ -1143,11 +1150,11 @@ public class ProductDetailController extends BaseController {
     }
 
 
+
     /**
      * excel导入产品仓位
      *
      * @param excelFile  文件流
-     * @param importType 请求类型
      * @param response   响应
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
@@ -1156,23 +1163,23 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品仓位")
     @PostMapping("/importProductWarehouseLocationFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public ApiResult importProductWarehouseLocationFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BasicDictEntity> basicDictList = basicDictService.list();
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList,scmTaskFeign);
+    public ApiResult importProductWarehouseLocationFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.list();
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationFeign.list();
+        ProductWarehouseLocationListener excelListenerUtil = new ProductWarehouseLocationListener(productDetailEntityList, warehouseLocationList, productDetailService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
         }
-        List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        List<ProductWarehouseLocationExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+        List<ProductWarehouseLocationExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productWarehouseLocation.xlsx";
+            String excelPath = "excel/productWarehouseLocationError.xlsx";
             String name = "productWarehouseLocation";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);
@@ -1186,5 +1193,37 @@ public class ProductDetailController extends BaseController {
             return failure();
         }
         return success();
+    }
+
+    /**
+     * 下载导入模板
+     *
+     * @param request  request
+     * @param response response
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
+    @GetMapping("/importProductWarehouseLocationTemplate")
+    public void importTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/productWarehouseLocationTemplate.xlsx";
+        String excelName = "template.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

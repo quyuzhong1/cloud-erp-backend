@@ -606,4 +606,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<ProductDetailEntity>
      */
     List<ProductDetailEntity> listByChargeId(String chargeId);
+
+    /**
+     * 根据id修改产品仓位
+     * @Author Luo_WG
+     * @Date 2023/11/10 14:25
+     * @param id 主键id
+     * @param warehouseLocation 仓位信息
+     * @return void
+     **/
+    Boolean updateWarehouseLocationById(String id, String warehouseLocation);
 }
