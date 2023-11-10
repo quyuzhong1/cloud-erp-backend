@@ -79,7 +79,8 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         List<ItemInfo> itemInfos = new ArrayList<>();
 
         ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
-        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && shopeeShopById.getData().getType().equalsIgnoreCase("shopee_shop")) {
+        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
+               && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             ProductRequest productRequest = ProductRequest.builder()
                     .host(cfgAppClient.getUrl())
                     .offset(0)
