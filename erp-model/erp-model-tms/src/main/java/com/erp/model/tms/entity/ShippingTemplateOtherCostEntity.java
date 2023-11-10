@@ -40,11 +40,6 @@ public class ShippingTemplateOtherCostEntity extends BaseEntity<ShippingTemplate
     @TableField("dict_code")
     private String dictCode;
     /**
-    * 费用名称
-    */
-    @TableField("dict_name")
-    private String dictName;
-    /**
     * 计算方式
     */
     @TableField("calculation_method")

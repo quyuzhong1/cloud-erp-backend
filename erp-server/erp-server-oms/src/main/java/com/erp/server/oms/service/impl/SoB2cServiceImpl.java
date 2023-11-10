@@ -54,6 +54,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -191,17 +192,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(SoB2cDTO.AddDTO addDTO) {
+    public String add(SoB2cDTO.AddDTO addDTO,String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
 
         // 数据处理
         handleData(soB2cEntity);
 
-        log.info("开始新增B2C销售订单表");
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
         soB2cEntity.setCode(code);
+        log.info("开始新增B2C销售订单表");
+        if (StrUtil.isBlank(code)) {
+            // 生成单号
+            String businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+            soB2cEntity.setCode(businessNo);
+        }
         soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
         boolean save = super.save(soB2cEntity);
         if (!save) {
@@ -825,7 +829,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
-        String soId = this.add(addDTO);
+        String soId = this.add(addDTO,null);
         //新增关联信息
         List<SoB2cRefDTO.AddDTO> refList = new ArrayList<>();
         for (String id : ids) {
@@ -841,6 +845,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("新增合并后的订单关联关系，refList = {}", refList);
         //新增关联关系
         soB2cRefService.add(refList);
+
+        //操作日志
+        SoB2cEntity soB2cEntity = this.getById(soId);
+        List<Pair<String, String>> pairList = list.stream().
+                map(obj -> new Pair<>(obj.getId(), soB2cEntity.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(StrUtil.format("合并到新订单【{}】"), ModuleTypeEnum.SO_B2C.getCode(), pairList, "合并订单");
         return Boolean.TRUE;
     }
 
@@ -870,6 +880,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.info("作废原销售订单数据，id = {}", refEntity.getSourceId());
             unInvalid(refEntity.getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
         }
+        //操作日志
+        String msg = "B2C销售订单【{}】取消合并";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消合并");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消合并");
     }
 
@@ -970,7 +983,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
-            addDTO.setCode(StrUtil.format("{}_{}",entity.getCode(),flag));
+
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceCode(entity.getCode());
             addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
@@ -1020,15 +1033,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsAddDTO.setWeight(MathUtil.multiply(rate, soB2cLogisticsEntity.getWeight()));
 
             addDTO.setLogisticsDTO(logisticsAddDTO);
-            addDTO.setRemark("拆分订单");
+            addDTO.setRemark(StrUtil.format("【{}】拆分订单",entity.getCode()));
+
             //新增拆分后订单
-            String soB2cId = this.add(addDTO);
+            String code = StrUtil.format("{}_{}",entity.getCode(),flag);
+            String soB2cId = this.add(addDTO,code);
             //新增拆分订单关联关系
             soB2cRefService.add(SoB2cOptionTypeEnum.ENUM_SPLIT.getCode(), entity.getId(), soB2cId);
             flag ++;
         }
-        this.invalid(entity.getId(), StrUtil.format("B2C销售订单【{}】拆分作废"), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        this.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废",entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
 
+        //操作日志
+        String msg = "从【{}】拆分出新订单";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
         return Boolean.TRUE;
     }
 
@@ -1111,6 +1129,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
         unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        //操作日志
+        String msg = "从【{}】取消拆分";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
     }
 

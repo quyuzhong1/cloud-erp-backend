@@ -8,16 +8,20 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLogisticsService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +46,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Resource
     private SoB2cService soB2cService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -57,6 +64,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
         BeanMapperUtils.copy(logisticsDTO,entity);
         entity.setMainId(mainId);
+        handleLogisticsData(entity);
+
         boolean update = this.updateById(entity);
 
         //主表信息
@@ -66,6 +75,20 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
         return update;
+    }
+
+    /**
+     * @description: 数据处理
+     * @author Will
+     * @date: 2023/11/10 15:59
+     * @param entity
+     */
+    private void handleLogisticsData (SoB2cLogisticsEntity entity) {
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(entity.getAccessoriesSkuId()));
+        if (CollectionUtils.isEmpty(skuList)) {
+            return;
+        }
+        entity.setAccessoriesSkuNo(skuList.get(0).getSkuNo());
     }
 
     @Override

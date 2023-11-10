@@ -559,11 +559,6 @@ public class SoB2cDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
-         * 编码（前端无需传值）
-         */
-        private String code;
-
-        /**
          * 单据日期
          */
         private LocalDate billDate;
