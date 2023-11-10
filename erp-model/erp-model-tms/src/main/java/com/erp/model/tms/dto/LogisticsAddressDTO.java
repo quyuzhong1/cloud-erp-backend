@@ -302,6 +302,7 @@ public class LogisticsAddressDTO implements Serializable {
          * 电话
          */
         @Size(max = 20, message = "电话最大长度不能超过20位")
+        @Size(min = 6, message = "电话最小长度不能小于6位字符")
         private String telNumber;
 
         /**
