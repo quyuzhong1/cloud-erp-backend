@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.FileUtil;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
@@ -368,8 +369,12 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
                         response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
                         response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
-                        //TODO 获取文件base64  pdf文件的url下载地址,使用 GET 协议  下载文件时需要的token,设置在请求头的 X-Auth-token 字段，有效期 24h
-                        response.setBase64(printFile.getUrl());
+                        try {
+                            response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(),printFile.getToken()));
+                        } catch (IOException e) {
+                            log.error("获取标签文件异常：{}", e.getMessage());
+//                            throw new RuntimeException(e);
+                        }
                         logisticsPrintLabelResponses.add(response);
                     });
                     responseVO.setLogisticsPrintLabelResponses(logisticsPrintLabelResponses);
