@@ -25,7 +25,7 @@ import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingCostNameEnum;
-import com.erp.model.tms.enums.ShippingFeeRuleEnums;
+import com.erp.model.tms.enums.ShippingFeeRuleEnum;
 import com.erp.model.tms.enums.ShippingSideEnum;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -111,10 +111,10 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWeight()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting()));
             //重量
             BigDecimal weight = params.getWeight();
-            if (ShippingFeeRuleEnums.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+            if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, params.getWeight()) > MathUtil.ZERO ? volumeWeight : params.getWeight();
             }
-            if (ShippingFeeRuleEnums.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+            if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = volumeWeight;
             }
 
