@@ -13,5 +13,8 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 public class SenderInfo extends LogisticsAddressEntity {
+        //发件人id
+        private String actId;
+        //发件人税号
         private String taxNumber;
 }

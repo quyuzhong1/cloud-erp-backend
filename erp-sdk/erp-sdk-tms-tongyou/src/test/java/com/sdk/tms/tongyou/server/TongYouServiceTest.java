@@ -93,13 +93,8 @@ public class TongYouServiceTest {
     public void printLabel() {
         TongYouPrintLabelRequest request = TongYouPrintLabelRequest.builder()
                 .logisticsId("FZXXRKVP705")
-                .orderNo("WJ20231102001")
-                .trackNo("AT139756425CN")
-                .source("782692CE3B3123456789A4CDA15737F4")
-                .countryCode("FR")
-                .isPcd("Y")
-                .isPaoc("Y")
-                .size("3")
+                .orderNo("XM1AWJJ028110,WJ20231102001")
+                .trackNo("TYZPH0022783888YQ,AT139756425CN")
                 .build();
         TongYouPrintLabel printLabel = tongYouService.printLabel(request);
 
@@ -111,7 +106,7 @@ public class TongYouServiceTest {
     @Test
     public void getOrderInfo() {
         TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
-                .orderNo("XM1AWJJ028110")
+                .orderNo("WJ20231102001")
                 .build();
         TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request);
         System.out.println(orderInfo);

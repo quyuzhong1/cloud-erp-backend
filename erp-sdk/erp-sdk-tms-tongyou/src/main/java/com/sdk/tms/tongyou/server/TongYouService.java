@@ -66,7 +66,7 @@ public class TongYouService {
 
 
     /**
-     *  查询全部已开通的渠道
+     *  打印标签
      */
     public TongYouPrintLabel printLabel(TongYouPrintLabelRequest request){
         String sign = TongYouUtils.getPrintLabelSign(request.getLogisticsId(),request.getOrderNo(),request.getTrackNo());
