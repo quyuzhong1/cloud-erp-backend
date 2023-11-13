@@ -107,47 +107,6 @@ public class PlatformDataThread {
         }
     }
 
-    /**
-     * 查询报告文档的URL并推送到redis
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void findUrlAndSend(String tableName, ReportInfoMongoDTO report) throws Exception{
-        if (StringUtils.isBlank(report.getReportDocumentUrl()) || 1 == report.getReportDocumentUrlStatus()) {
-            return;
-        }
-        String currentMarketplaceId = report.getMarketplaceIds().stream().findFirst().orElse(null);
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(currentMarketplaceId);
-        if (null == marketplaceEnum) {
-            XxlJobHelper.log("[亚马逊获取报表文档链接] 参数异常：找不到对应MarketplaceIds， reportId+{}",
-                    report.getMarketplaceIds(),
-                    report.getReportId());
-            return;
-        }
-        // 当前报告的类型
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(report.getReportType());
-
-        //查询当前报表ID的文档链接
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
-        ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
-        report.setReportDocumentUrl(reportDocument.getUrl());
-        report.setReportDocumentUrlStatus(1);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(report), MapUtil.class);
-        ReportInfoMongoDTO updateDto = new ReportInfoMongoDTO(report.getReportId());
-        mongoService.updateMongoData(updateDto, mapUtil, tableName, ReportInfoMongoDTO.class);
-
-        if(!recordTypeEnum.isDirectSaveMongo()){
-            // 添加到缓存
-            String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, report.getReportType(), marketplaceEnum.getMarketplaceId());
-            template.opsForList().leftPush(key, report.getReportDocumentUrl());
-        } else {
-            // 下载文档内容
-            List<?> downloadList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getAndCheckMongoDTOClass());
-            // 直接保存mongo
-            if(CollectionUtil.isNotEmpty(downloadList)){
-                mongoService.saveMongoDataMult(downloadList, recordTypeEnum.getMongoTableName());
-            }
-        }
-    }
 
     /**
      * 更新或保存报表
@@ -197,7 +156,7 @@ public class PlatformDataThread {
                 .setProcessingEndTime(report.getProcessingEndTime().withOffsetSameInstant(ZoneOffset.of("+8")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
                 .setReportDocumentId(report.getReportDocumentId())
                 .setReportDocumentUrl("")
-                .setReportDocumentUrlStatus(0)
+                .setReportHandleStatus(0)
                 .setReportCancelStatus(0)
                 ;
     }

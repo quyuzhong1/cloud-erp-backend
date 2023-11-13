@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -20,14 +21,14 @@ import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
-public class YunTuLogisticsHandlerImplTest {
+public class TongYouLogisticsHandlerImplTest {
 
     @Resource
-    private YunTuLogisticsHandlerImpl yunTuLogisticsHandler;
+    private TongYouLogisticsHandlerImpl tongYouLogisticsHandler;
 
     @Test
     public void getChannel() {
-        System.out.println(yunTuLogisticsHandler.getChannel(new ChanelQueryVO()));
+        System.out.println(tongYouLogisticsHandler.getChannel(new ChanelQueryVO()));
     }
 
 
@@ -51,21 +52,23 @@ public class YunTuLogisticsHandlerImplTest {
         logisticsProductVO.setPrice(new BigDecimal("12"));
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(1);
+        logisticsProductVO.setDeclareCurrency("USD");
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
-                .channelCode("THPHR")
+                .channelCode("FZXXRKVP705")
                 .channelId("155")
                 .orderSource("ERP")
-                .deliveryNo("WEIJI2023111001007")
+                .material("material")
+                .deliveryNo("WJ20231102002")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
-                        .city("shenz")
+                        .city("BALDWIN")
                         .name("mark")
                         .companyName("componey")
                         .contact("mark")
                         .country("US")
                         .zipCode("11510")
-                        .province("state")
+                        .province("NY")
                         .telNumber("123456789")
                         .build())
                 .senderInfo(senderInfo)
@@ -84,18 +87,23 @@ public class YunTuLogisticsHandlerImplTest {
                         logisticsProductVO
                 ))
                 .build();
-        ApiResult<LogisticsOrderResponseVO> responseVOApiResult =  yunTuLogisticsHandler.createOrder(logisticsOrderVO);
+        ApiResult<LogisticsOrderResponseVO> responseVOApiResult = tongYouLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(responseVOApiResult);
     }
-
 
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO labelVO = new LogisticsGetLabelVO();
         LogisticsGetLabelVO labelVO2 = new LogisticsGetLabelVO();
-        labelVO.setDeliveryNo("WEIJI2023110901004");
-        labelVO2.setDeliveryNo("WEIJI2023111001007");
-        ApiResult<List<LogisticsPrintLabelResponse>> result = yunTuLogisticsHandler.getLabelList(Arrays.asList(labelVO,labelVO2));
+        labelVO.setDeliveryNo("XM1AWJJ028110");
+        labelVO2.setDeliveryNo("WJ20231102001");
+        labelVO2.setTrackNo("AT139756425CN");
+        labelVO.setTrackNo("TYZPH0022783888YQ");
+        LogisticsChannelEntity logisticsChannelEntity = new LogisticsChannelEntity();
+        logisticsChannelEntity.setCode("FZXXRKVP705");
+        labelVO.setLogisticsChannelEntity(logisticsChannelEntity);
+        labelVO2.setLogisticsChannelEntity(logisticsChannelEntity);
+        ApiResult<List<LogisticsPrintLabelResponse>> result = tongYouLogisticsHandler.getLabelList(Arrays.asList(labelVO,labelVO2));
         System.out.println(result);
     }
 
@@ -103,29 +111,10 @@ public class YunTuLogisticsHandlerImplTest {
     public void queryOrderListTest() throws IOException {
         LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
         LogisticsQueryBaseVO labelVO2 = new LogisticsQueryBaseVO();
-        labelVO.setDeliveryNo("WEIJI2023110901004");
-        labelVO2.setDeliveryNo("WEIJI2023111001007");
-        ApiResult<List<LogisticsOrderResponseVO>> apiResult = yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
+        labelVO.setDeliveryNo("WJ20231102001");
+        labelVO2.setDeliveryNo("WJ20231102002");
+        ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
 
-    @Test
-    public void interceptOrder() throws IOException {
-        LogisticsInterceptOrderVO labelVO = new LogisticsInterceptOrderVO();
-        LogisticsInterceptOrderVO labelVO2 = new LogisticsInterceptOrderVO();
-        labelVO.setDeliveryNo("WEIJI2023110901004");
-        labelVO2.setDeliveryNo("WEIJI2023110901003");
-        ApiResult<List<InterceptResponseVO>> apiResult = yunTuLogisticsHandler.interceptOrder(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
-    }
-
-    @Test
-    public void cancelOrder() throws IOException {
-        LogisticsCancelOrderVO labelVO = new LogisticsCancelOrderVO();
-        LogisticsCancelOrderVO labelVO2 = new LogisticsCancelOrderVO();
-        labelVO.setDeliveryNo("WEIJI2023110901004");
-        labelVO2.setDeliveryNo("WEIJI2023110901003");
-        ApiResult<List<CancelResponseVO>> apiResult = yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
-    }
 }

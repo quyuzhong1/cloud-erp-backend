@@ -46,7 +46,7 @@ public class WeiShiCreateOrderRequest {
 
     //投保金额，默认RMB
     @JSONField(name = "insurance_value")
-    private Float insuranceValue;
+    private Number insuranceValue;
 
     //包裹申报种类1:Gif礼品2:CommercialSample,商品货样3:Document,文件4:Other,其他 默认4
     @JSONField(name = "mail_cargo_type")

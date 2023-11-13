@@ -81,11 +81,10 @@ public class LogisticsMappingDTO implements Serializable {
         * 物流渠道id
         */
         @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
-        private String logisticsChannelId;
+        private String logisticsSalesChannelId;
 
         /**
-        * 物流平台
+        * 销售平台
         */
         @NotBlank(message = "物流平台不能为空")
         @Size(max = 30,message = "物流平台最大长度不能超过30位")

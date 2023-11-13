@@ -3,8 +3,10 @@ package com.common.business.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Transient;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -101,6 +103,10 @@ public class JobTaskDTO {
      */
     private String platformApiId;
 
+    /**
+     * 平台api接口id
+     */
+    private List<?> mongoDataList;
 
 
 //    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {

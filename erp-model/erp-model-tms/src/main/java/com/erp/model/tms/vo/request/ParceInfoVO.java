@@ -42,7 +42,9 @@ public class ParceInfoVO {
     //IOSS 税号
     private String ioss;
 
-    //投保金额，默认RMB
-    private Float insuranceValue;
+    //保险金额，默认RMB
+    private Number insuranceValue;
 
+    //报价金额，默认RMB
+    private Number insureValue;
 }

@@ -1,5 +1,6 @@
 package com.erp.model.tms.vo.request;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import lombok.Builder;
@@ -39,10 +40,23 @@ public class LogisticsOrderVO implements Serializable {
 
     //备注
     private String remark;
+    //材质
+    private String material;
 
     //税号
+    private String taxId;
+
+    //IOSS编号
     private String iossCode;
 
+    //是否已税
+    private Boolean isTaxed;
+
+    //运费
+    private Number transportCost;
+
+    //护照号
+    private String passportNumber;
     /**
      * 发货单号
      */
@@ -73,6 +87,5 @@ public class LogisticsOrderVO implements Serializable {
      * 渠道信息
      */
     private LogisticsChannelEntity logisticsChannelEntity;
-
 
 }

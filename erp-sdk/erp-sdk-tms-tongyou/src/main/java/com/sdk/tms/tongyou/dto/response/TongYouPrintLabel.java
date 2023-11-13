@@ -25,6 +25,6 @@ public class TongYouPrintLabel extends TongYouResponse<Object> {
     private String rfile;
 
     // 物流单号(追踪条码)
-    private Integer logisticsNo;
+    private String logisticsNo;
 
 }

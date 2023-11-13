@@ -3,6 +3,7 @@ package com.erp.server.tms.convert;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
+import com.sdk.tms.tongyou.dto.response.TongYouChannel;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
@@ -80,4 +81,14 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByYunTu(YunTuChannel data);
     List<LogisticsSaleChannelEntity> channelConvertByYunTu(List<YunTuChannel> data);
+
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "cnName"),
+            @Mapping(target = "enName", source = "enName"),
+            @Mapping(target = "channelStatus", source = "status"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByTongYou(TongYouChannel data);
+    List<LogisticsSaleChannelEntity> channelConvertByTongYou(List<TongYouChannel> data);
 }

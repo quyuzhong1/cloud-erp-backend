@@ -11,6 +11,8 @@ import com.sdk.tms.disifang.model.order.request.OrderRequest;
 import com.sdk.tms.express.model.order.request.CargoDetail;
 import com.sdk.tms.express.model.order.request.ContactInfo;
 import com.sdk.tms.express.model.order.request.CustomsInfo;
+import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
+import com.sdk.tms.tongyou.dto.response.TongYouOrderInfo;
 import com.sdk.tms.ubi.model.order.request.OrderItem;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
@@ -363,4 +365,72 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "tax",source = "insuranceValue")
     })
     CustomsInfo orderRequestCustomsInfoByExpress(ParceInfoVO parceInfoVO);
+
+    @Mappings({
+            @Mapping(target = "BNo" ,source = "deliveryNo"),
+            @Mapping(target = "charged" ,source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
+            @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),
+            @Mapping(target = "insureValue" ,source = "parceInfoVO.insureValue"),
+            @Mapping(target = "itemType" ,constant = "4"),
+            @Mapping(target = "logisticsId" ,source = "channelCode"),
+            @Mapping(target = "note" ,source = "remark"),
+            @Mapping(target = "material" ,source = "material"),
+            @Mapping(target = "orderNo" ,source = "deliveryNo"),
+            @Mapping(target = "passportNumber" ,source = "passportNumber"),
+            @Mapping(target = "source" ,source = "orderSource"),
+            @Mapping(target = "taxId" ,source = "taxId"),
+            @Mapping(target = "iossVatId" ,source = "iossCode"),
+            @Mapping(target = "isTaxed",source = "isTaxed",qualifiedByName = "boolToInteger"),
+            @Mapping(target = "transportCost",source = "transportCost"),
+            @Mapping(target = "weight",source = "parceInfoVO.totalWeight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
+            @Mapping(target = "recipient.actId",source = "receiverInfoVO.actId"),
+            @Mapping(target = "recipient.address",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "recipient.address2",source = "receiverInfoVO.addressSecond"),
+            @Mapping(target = "recipient.address3",constant = ""),
+            @Mapping(target = "recipient.CName",source = "receiverInfoVO.companyName"),
+            @Mapping(target = "recipient.city",source = "receiverInfoVO.city"),
+            @Mapping(target = "recipient.contactPerson",source = "receiverInfoVO.name"),
+            @Mapping(target = "recipient.email",source = "receiverInfoVO.email"),
+            @Mapping(target = "recipient.countryCode",source = "receiverInfoVO.country"),
+            @Mapping(target = "recipient.mobileNo",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "recipient.province",source = "receiverInfoVO.province"),
+            @Mapping(target = "recipient.telNo",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "recipient.zip",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "sender.actId",source = "senderInfo.actId"),
+            @Mapping(target = "sender.address1",source = "senderInfo.addressFirst"),
+            @Mapping(target = "sender.address2",source = "senderInfo.addressSecond"),
+            @Mapping(target = "sender.CName",source = "senderInfo.companyName"),
+            @Mapping(target = "sender.city",source = "senderInfo.cityName"),
+            @Mapping(target = "sender.country",source = "senderInfo.country"),
+            @Mapping(target = "sender.emai",source = "senderInfo.email"),
+            @Mapping(target = "sender.mobile",source = "senderInfo.telNumber"),
+            @Mapping(target = "sender.name",source = "senderInfo.name"),
+            @Mapping(target = "sender.postcode",source = "senderInfo.zipCode"),
+            @Mapping(target = "sender.province",source = "senderInfo.provinceName"),
+            @Mapping(target = "sender.tel",source = "senderInfo.telNumber"),
+            @Mapping(target = "declareInfos",source = "logisticsProductVOList")
+    })
+    TongYouCreateOrderRequest orderRequestByTongYou(LogisticsOrderVO logisticsOrderVO);
+    @Mappings({
+            @Mapping(target = "currency" ,source = "declareCurrency"),
+            @Mapping(target = "des" ,source = "productProperty"),
+            @Mapping(target = "hs" ,source = "customsCode"),
+            @Mapping(target = "nameCN" ,source = "declareChineseName"),
+            @Mapping(target = "nameEN" ,source = "declareEnglishName"),
+            @Mapping(target = "price" ,source = "price"),
+            @Mapping(target = "qty" ,source = "quantity"),
+            @Mapping(target = "sku" ,source = "skuId"),
+            @Mapping(target = "weight" ,source = "weight",qualifiedByName = "divideByOneThousandWithThreeDecimal"),
+            @Mapping(target = "url" ,source = "url")
+    })
+    TongYouCreateOrderRequest.DeclareInfo orderRequestByTongYou(LogisticsProductVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "transportNo" ,source = "transportNo"),
+            @Mapping(target = "trackNo" ,source = "trackNo"),
+            @Mapping(target = "deliveryNo" ,source = "orderNo"),
+            @Mapping(target = "logisticsChannelNo" ,source = "logisticsId"),
+            @Mapping(target = "countryCode" ,source = "countryCode")
+    })
+    LogisticsOrderResponseVO orderQueryByTongYou(TongYouOrderInfo tongYouOrderInfo);
 }

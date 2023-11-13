@@ -26,15 +26,12 @@ public class TongYouPrintLabelRequest {
     private String logisticsId;
 
     //追踪条码，有则必须填（多个用英文逗号隔开）
-    @NotNull(message = "追踪条码不能为空")
     private String trackNo;
 
     //来源
-    @NotNull(message = "来源不能为空")
     private String source;
 
     //国家二字简码(若有多个则填写第一个即可)
-    @NotNull(message = "国家二字简码不能为空")
     private String countryCode;
 
     //打印配货单(Y:打印;N:不打印)

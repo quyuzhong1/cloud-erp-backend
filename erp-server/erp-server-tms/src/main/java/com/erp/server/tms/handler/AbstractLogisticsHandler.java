@@ -1,6 +1,5 @@
 package com.erp.server.tms.handler;
 
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -20,8 +19,8 @@ import java.util.List;
  * @version: 1.0
  */
 public abstract class AbstractLogisticsHandler extends BaseController implements LogisticsService {
-    //对于一些公共方法可以进行封装
 
+    //对于一些公共方法可以进行封装
     @Override
     public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
         return null;
@@ -121,7 +120,4 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
         return ApiResult.error(-1, "功能未开放");
     }
 
-    public LogisticsPlatformEnum getPlatForm() {
-        return null;
-    }
 }
