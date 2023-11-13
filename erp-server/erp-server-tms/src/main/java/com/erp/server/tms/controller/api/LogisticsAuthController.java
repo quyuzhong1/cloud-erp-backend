@@ -35,7 +35,7 @@ public class LogisticsAuthController extends BaseController {
     private LogisticsAuthService logisticsAuthService;
 
     /**
-    * 新增
+    * 物流授权新增
     * @author Lambda
     * @date:  2023-11-02
     * @param dto
@@ -49,7 +49,7 @@ public class LogisticsAuthController extends BaseController {
 
 
     /**
-     * 详情
+     * 物流授权详情
      * @author Lambda
      * @date:  2023-11-02
      * @param id
@@ -62,7 +62,7 @@ public class LogisticsAuthController extends BaseController {
     }
 
     /**
-    * 修改
+    * 物流授权修改
     * @author Lambda
     * @date:  2023-11-02
     * @param dto

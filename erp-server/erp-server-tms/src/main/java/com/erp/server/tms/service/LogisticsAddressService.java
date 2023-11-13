@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -69,4 +70,13 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO delete(String id);
+
+    /**
+     *根据类型获取地址信息
+     *@parms type
+     *@return 
+     *@author yl
+     *@date 2023-11-13
+     */
+    List<LogisticsAddressDTO.ListDTO> listByType(String type);
 }

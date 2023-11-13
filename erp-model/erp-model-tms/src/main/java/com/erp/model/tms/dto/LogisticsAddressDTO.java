@@ -344,4 +344,15 @@ public class LogisticsAddressDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO{
+
+        private String id;
+
+        private String name;
+
+    }
+
+
 }

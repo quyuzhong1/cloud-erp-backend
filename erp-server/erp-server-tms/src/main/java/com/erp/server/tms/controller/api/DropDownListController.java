@@ -31,7 +31,7 @@ public class DropDownListController extends BaseController {
 
     /**
      * 获取对应字典数据
-     * logisticsAddress  物流地址
+     * logisticsAddress  物流地址类型
      * discountRate 折扣费率
      * fuelSurchargeRate 燃油附加费率
      * side 边长
