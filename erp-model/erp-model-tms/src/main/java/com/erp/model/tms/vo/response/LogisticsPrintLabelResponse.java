@@ -29,6 +29,14 @@ public class LogisticsPrintLabelResponse extends LogisticsBaseResponseVO impleme
      */
     private List<String> deliveryNoList;
     /**
+     * 是否存在子单
+     */
+    private boolean more;
+    /**
+     * 主运单列表
+     */
+    private List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses;
+    /**
      * 文件base64编码
      */
     private String base64;

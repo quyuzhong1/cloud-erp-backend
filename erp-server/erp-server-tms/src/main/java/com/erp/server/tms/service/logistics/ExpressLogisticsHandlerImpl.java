@@ -14,14 +14,12 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.ConfirmResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.express.model.base.BaseResult;
-import com.sdk.tms.express.model.order.request.OrderQueryRequest;
-import com.sdk.tms.express.model.order.request.OrderUpdateRequest;
-import com.sdk.tms.express.model.order.response.OrderSearchRespDto;
-import com.sdk.tms.express.model.order.response.OrderUpdateResponse;
-import com.sdk.tms.express.model.order.response.WaybillNoInfoList;
+import com.sdk.tms.express.model.order.request.*;
+import com.sdk.tms.express.model.order.response.*;
 import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +28,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,7 +54,94 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return ApiResult.error(-1, "功能未开放");
+        LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
+        OrderRequest orderRequest = processCreateOrderData(logisticsOrderVO);
+        boolean success = false;
+        BaseResult baseResult = null;
+        try {
+            baseResult = expressShipperService.createOrder(logisticsOrderVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsOrderVO.getLogisticsAuthEntity().getPassword(), orderRequest);
+            //转换实体
+            if (baseResult.isSuccess()) {
+                OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
+                responseVO.setDeliveryNo(orderResponse.getOrderId());
+                List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
+                if (CollectionUtils.isNotEmpty(waybillNoInfoList)){
+                    WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
+                    if (Objects.nonNull(waybillNoInfo)) {
+                        responseVO.setTransportNo(waybillNoInfo.getWaybillNo());
+                        responseVO.setTrackNo(waybillNoInfo.getWaybillNo());
+                    }
+                    List<WaybillNoInfo> collect = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 2).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(collect)) {
+                        responseVO.setMore(true);
+                        List<LogisticsOrderResponseVO> vos = new ArrayList<>(collect.size());
+                        collect.forEach(waybillNoInfoList2 -> {
+                            vos.add(LogisticsOrderResponseVO.builder().deliveryNo(orderResponse.getOrderId())
+                                    .trackNo(waybillNoInfoList2.getWaybillNo())
+                                    .transportNo(waybillNoInfoList2.getWaybillNo()).build());
+                        });
+                        responseVO.setLogisticsOrderResponseVOS(vos);
+                    }
+                }
+                success = true;
+                responseVO.success();
+            } else {
+                responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        if (success) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
+        } else {
+            logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
+        }
+        return success ? success(responseVO) : failure(responseVO);
+    }
+
+    /**
+     * 订单数据整理
+     * @param logisticsOrderVO
+     * @return
+     */
+    private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO){
+        //收寄双方信息
+        List<ContactInfo> contactInfoList = new ArrayList<>(2);
+        ContactInfo sender = LogisticsOrderConverter.INSTANCE.orderRequestSendUserByExpress(logisticsOrderVO);
+        ContactInfo receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByExpress(logisticsOrderVO);
+        contactInfoList.add(sender);
+        contactInfoList.add(receiver);
+        //报关信息
+        CustomsInfo customsInfo = LogisticsOrderConverter.INSTANCE.orderRequestCustomsInfoByExpress(logisticsOrderVO.getParceInfoVO());
+        //托寄物信息
+        List<CargoDetail> cargoDetails = LogisticsOrderConverter.INSTANCE.orderRequestCargoDetailByExpress(logisticsOrderVO.getLogisticsProductVOList());
+        OrderRequest orderRequest = OrderRequest.builder()
+                .language("zh-CN")
+                .orderId(logisticsOrderVO.getDeliveryNo())
+                //报关信息
+                .customsInfo(customsInfo)
+                //托寄物信息
+                .cargoDetails(cargoDetails)
+                .cargoDesc(null)
+                //增值服务
+                .serviceList(null)
+                //收寄双方信息
+                .contactInfoList(contactInfoList)
+                //顺丰月结卡号 月结支付时传值，现结不需传值；沙箱联调可使用测试月结卡号7551234567（非正式，无须绑定，仅支持联调使用）
+                .monthlyCard("7551234567")
+                .payMethod(1)
+                //快件产品类别
+                .expressTypeId(1)
+                .parcelQty(1)
+                //是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
+                .isReturnRoutelabel(1)
+                .build();
+        return orderRequest;
     }
 
     /**
@@ -105,11 +188,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             if (success) {
                 logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
                 logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }
             responseVOS.add(responseVO);
@@ -193,7 +276,6 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     private ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
         boolean success = false;
-        String msg = null;
         BaseResult baseResult = null;
         LogisticsOrderResponseVO logisticsOrderResponseVO = new LogisticsOrderResponseVO();
         OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
@@ -249,11 +331,70 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 获取标签
      *
-     * @param logisticsQueryVO
+     * @param logisticsGetLabelVOS
      * @return
      */
-    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) throws IOException {
-        return ApiResult.error(-1, "功能未开放");
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsGetLabelVOS) throws IOException {
+        List<LogisticsPrintLabelResponse> responseVOS = new ArrayList<>(logisticsGetLabelVOS.size());
+        boolean isSuccess = true;
+        for (LogisticsGetLabelVO logisticsGetLabelVO: logisticsGetLabelVOS) {
+            boolean success = false;
+            BaseResult baseResult = null;
+            LogisticsPrintLabelResponse responseVO = new LogisticsPrintLabelResponse();
+            //支持单个取消
+            OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
+                    .templateCode("fm_76130_standard_{clientcode}")
+                    .documents(Collections.singletonList(Document.builder().masterWaybillNo(logisticsGetLabelVO.getTransportNo()).build()))
+                    .version("2.0")
+                    .fileType("pdf")
+                    .sync(true)
+                    .build();
+            try {
+                baseResult = expressShipperService.getLabel(logisticsGetLabelVO.getLogisticsAuthEntity().getAccount(),
+                        logisticsGetLabelVO.getLogisticsAuthEntity().getPassword(), orderLabelRequest);
+                //转换实体
+                if (baseResult.isSuccess()) {
+                    LabelResponse labelResponse = JSONUtil.toBean(JSONUtil.toJsonStr(baseResult.getObj()), LabelResponse.class);
+                    //根据文件列表 下载文件然后转换base64
+                    List<PrintFile> files = labelResponse.getFiles();
+                    responseVO.setTransportNoList(Collections.singletonList(logisticsGetLabelVO.getTransportNo()));
+                    responseVO.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+                    responseVO.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
+                    List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses = new ArrayList<>();
+                    files.forEach(printFile -> {
+                        responseVO.setMore(true);
+                        LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+                        response.setTrackNoList(Collections.singletonList(printFile.getWaybillNo()));
+                        response.setTransportNoList(Collections.singletonList(printFile.getWaybillNo()));
+                        response.setDeliveryNoList(Collections.singletonList(printFile.getSeqNo()));
+                        //TODO 获取文件base64  pdf文件的url下载地址,使用 GET 协议  下载文件时需要的token,设置在请求头的 X-Auth-token 字段，有效期 24h
+                        response.setBase64(printFile.getUrl());
+                        logisticsPrintLabelResponses.add(response);
+                    });
+                    responseVO.setLogisticsPrintLabelResponses(logisticsPrintLabelResponses);
+                    responseVO.success();
+                    success = true;
+                } else {
+                    isSuccess = false;
+                    responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                }
+            } catch (Exception e) {
+                isSuccess = false;
+                responseVO.failure(getPlatForm().getName(), String.valueOf(-1), e.getMessage());
+            }
+            if (success) {
+                logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getLogisticsAuthEntity().getId(),
+                        logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(baseResult));
+            } else {
+                logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getLogisticsAuthEntity().getId(),
+                        logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(baseResult));
+            }
+            responseVOS.add(responseVO);
+        }
+        return isSuccess ? success(responseVOS) : failure(responseVOS);
     }
 
     @Override

@@ -1,7 +1,9 @@
 package com.sdk.tms.express.model.order.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -15,6 +17,8 @@ import java.math.BigDecimal;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CargoDetail implements Serializable {
     /**
      * 货物名称，如果需要生成电子运单，则为必填。

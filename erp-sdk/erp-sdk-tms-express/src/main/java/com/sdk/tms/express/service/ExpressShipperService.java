@@ -144,7 +144,7 @@ public class ExpressShipperService {
     }
 
     /**
-     *
+     * 获取标签
      * @param partnerId
      * @param md5Key
      * @param orderLabelRequest
