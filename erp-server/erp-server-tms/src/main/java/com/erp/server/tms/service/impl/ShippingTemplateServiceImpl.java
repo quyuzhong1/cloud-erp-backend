@@ -914,7 +914,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
         viewParamDTO.setMainId(entity.getId());
         viewParamDTO.setFromCountry(dto.getFromCountry());
-        viewParamDTO.setToCountry(dto.getToWarehouseName());
+        viewParamDTO.setToWarehouseName(dto.getToWarehouseName());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
