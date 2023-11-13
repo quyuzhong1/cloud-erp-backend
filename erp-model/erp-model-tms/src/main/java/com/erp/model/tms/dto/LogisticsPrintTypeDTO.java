@@ -82,25 +82,18 @@ public class LogisticsPrintTypeDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 物流渠道id
-        */
-        @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
-        private String logisticsChannelId;
+
 
         /**
         * 打印类型
         */
         @NotBlank(message = "打印类型不能为空")
-        @Size(max = 30,message = "打印类型最大长度不能超过30位")
         private String printType;
 
         /**
         * 标签类型
         */
         @NotBlank(message = "标签类型不能为空")
-        @Size(max = 30,message = "标签类型最大长度不能超过30位")
         private String labelType;
 
 

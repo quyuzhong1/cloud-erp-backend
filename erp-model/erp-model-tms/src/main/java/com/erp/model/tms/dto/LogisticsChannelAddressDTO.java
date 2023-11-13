@@ -87,32 +87,19 @@ public class LogisticsChannelAddressDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 物流渠道id
-        */
-        @NotBlank(message = "物流渠道id不能为空")
-        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
-        private String logisticsChannelId;
+
 
         /**
         * 店铺id
         */
-        @NotBlank(message = "店铺id不能为空")
-        @Size(max = 19,message = "店铺id最大长度不能超过19位")
         private String shopId;
 
-        /**
-        * 店铺名称
-        */
-        @NotBlank(message = "店铺名称不能为空")
-        @Size(max = 50,message = "店铺名称最大长度不能超过50位")
-        private String shopName;
+
 
         /**
         * 地址id
         */
         @NotBlank(message = "地址id不能为空")
-        @Size(max = 19,message = "地址id最大长度不能超过19位")
         private String addressId;
 
 

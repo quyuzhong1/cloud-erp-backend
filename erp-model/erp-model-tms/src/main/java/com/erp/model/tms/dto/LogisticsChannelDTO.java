@@ -153,11 +153,30 @@ public class LogisticsChannelDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 物流映射列表
+         */
+        private List<LogisticsMappingDTO.AddDTO> mappingList;
 
+        /**
+         * 打印标签类型
+         */
+        private List<LogisticsPrintTypeDTO.AddDTO> printTypeList;
+
+
+        /**
+         * 地址设置列表
+         */
+        private List<LogisticsChannelAddressDTO.AddDTO> addressList;
+
+        /**
+         * 发货限制列表
+         */
+        private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
     }
 
     /**
-    * 修改
+     * 修改
     */
     @Data
     @NoArgsConstructor
@@ -216,11 +235,6 @@ public class LogisticsChannelDTO implements Serializable {
 
 
         /**
-         * 物流映射列表
-         */
-        private List<LogisticsMappingDTO.AddDTO> mappingList;
-
-        /**
         * 纸张大小
         */
         @NotBlank(message = "纸张大小不能为空")
@@ -240,8 +254,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
         * 运费模板id
         */
-        @NotBlank(message = "运费模板id不能为空")
-        @Size(max = 19,message = "运费模板id最大长度不能超过19位")
+        @NotBlank(message = "运费模板不能为空")
         private String shippingTemplateId;
 
         /**
@@ -253,50 +266,43 @@ public class LogisticsChannelDTO implements Serializable {
         /**
         * 最高报关金额
         */
-        @NotNull(message = "最高报关金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "最高报关金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal maxCustomsAmount;
 
         /**
-        * 最高报关币别
+        * 最高报关金额币别
         */
-        @NotBlank(message = "最高报关币别不能为空")
-        @Size(max = 30,message = "最高报关币别最大长度不能超过30位")
+        @NotBlank(message = "最高报关金额币别不能为空")
         private String maxCustomsCurrency;
 
         /**
         * 最低报关金额
         */
-        @NotNull(message = "最低报关金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "最低报关金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal minCustomsAmount;
 
         /**
-        * 最低报关币种
+        * 最低报关金额币种
         */
-        @NotBlank(message = "最低报关币种不能为空")
-        @Size(max = 30,message = "最低报关币种最大长度不能超过30位")
+        @NotBlank(message = "最低报关金额币种不能为空")
         private String minCustomsCurrency;
 
         /**
         * 重量上限
         */
         @NotNull(message = "重量上限不能为空")
-        @Digits(integer = 12, fraction = 4, message = "重量上限整数位不能超过12位，小数位不能超过4位")
         private BigDecimal maxWeight;
 
         /**
         * 重量单位
         */
         @NotBlank(message = "重量单位不能为空")
-        @Size(max = 10,message = "重量单位最大长度不能超过10位")
         private String weightUnit;
 
         /**
         * 税费模式
         */
         @NotBlank(message = "税费模式不能为空")
-        @Size(max = 30,message = "税费模式最大长度不能超过30位")
         private String taxModel;
 
         /**
