@@ -320,6 +320,7 @@ public class FileUtil {
         }
         InputStream inStream = null;
         String base64 = "";
+        String prefix = "data:application/pdf;base64,";
         try {
             URL url = new URL(pdfUrl);
             //打开链接
@@ -334,7 +335,7 @@ public class FileUtil {
             //对字节数组Base64编码
             base64 = Base64.encode(inStream);
             base64 = base64.replaceAll("\r\n","");
-            return base64;
+            return prefix + base64;
         } finally {
             //关闭输入流
             if (inStream != null) {
@@ -349,6 +350,7 @@ public class FileUtil {
         }
         InputStream inStream = null;
         String base64 = "";
+        String prefix = "data:application/pdf;base64,";
         try {
             URL url = new URL(pdfUrl);
             //打开链接
@@ -365,7 +367,7 @@ public class FileUtil {
             //对字节数组Base64编码
             base64 = Base64.encode(inStream);
             base64 = base64.replaceAll("\r\n","");
-            return base64;
+            return prefix + base64;
         } finally {
             //关闭输入流
             if (inStream != null) {
