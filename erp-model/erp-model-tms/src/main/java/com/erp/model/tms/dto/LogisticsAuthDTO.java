@@ -54,7 +54,7 @@ public class LogisticsAuthDTO implements Serializable {
 
 
 
-        private List<LogisticsAuthFieldDTO.ViewDTO> fieldList;
+        private Map<String,String> fieldMap;
 
     }
 

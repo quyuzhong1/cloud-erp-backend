@@ -42,12 +42,12 @@ public class LogisticsAuthEntity extends BaseEntity<LogisticsAuthEntity> {
     /**
     * 账号
     */
-    @TableField("account")
+    @TableField(exist = false)
     private String account;
     /**
     * 密码
     */
-    @TableField("password")
+    @TableField(exist = false)
     private String password;
 
 

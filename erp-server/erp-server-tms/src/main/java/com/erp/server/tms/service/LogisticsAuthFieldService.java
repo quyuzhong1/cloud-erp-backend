@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthFieldDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -16,23 +17,25 @@ import java.util.List;
  */
 public interface LogisticsAuthFieldService extends SuperService<LogisticsAuthFieldEntity> {
 
-    /**
-    * 新增
-    * @author lambda
-    * @date: 2023-11-09
-    * @param logisticsAuthId
-    * @return
-    */
-    Boolean add(String logisticsAuthId, List<LogisticsAuthFieldDTO.AddDTO> list);
+
+
+
 
     /**
-    * 修改
-    * @author lambda
-    * @date: 2023-11-09
-    * @param dto
-    * @return
-    */
-    Boolean update(LogisticsAuthFieldDTO.UpdateDTO dto);
+     * 保存或者修改授权字段
+     *@parms id fieldMap
+     *@return
+     *@author yl
+     *@date 2023-11-09
+     */
+    void saveOrUpdateAuthField(String authId, Map<String, String> fieldMap);
 
-
+    /**
+     *根据授权id 获取到对应字段
+     *@parms authId
+     *@return 
+     *@author yl
+     *@date 2023-11-13
+     */
+    List<LogisticsAuthFieldEntity> listByLogisticsAuthId(String authId);
 }

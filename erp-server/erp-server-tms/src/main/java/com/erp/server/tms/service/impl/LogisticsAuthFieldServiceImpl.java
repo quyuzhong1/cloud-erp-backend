@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.dto.ProductTaskViewDTO;
 import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.server.tms.mapper.LogisticsAuthFieldMapper;
 import com.erp.server.tms.service.LogisticsAuthFieldService;
@@ -11,6 +12,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsAuthFieldDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -34,61 +37,44 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class LogisticsAuthFieldServiceImpl extends SuperServiceImpl<LogisticsAuthFieldMapper, LogisticsAuthFieldEntity> implements LogisticsAuthFieldService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
-    public Boolean add(String authId, List<LogisticsAuthFieldDTO.AddDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.FALSE;
-        }
-
-        List<LogisticsAuthFieldEntity> addList = BeanMapperUtils.copyList(LogisticsAuthFieldEntity.class, list);
-        addList.forEach(a -> a.setLogisticsAuthId(authId));
-        boolean save = super.saveBatch(addList);
-        if (!save) {
-            throw new ServiceException("物流授权字段值单保存失败");
-        }
-
-        return save;
-    }
-
-    /**
-     * 修改
-     */
     @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(LogisticsAuthFieldDTO.UpdateDTO updateDTO) {
-        LogisticsAuthFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权字段值单"));
-        LogisticsAuthFieldEntity logisticsAuthFieldEntity = BeanMapperUtils.map(LogisticsAuthFieldEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(logisticsAuthFieldEntity);
-        log.info("编辑 开始修改物流授权字段值单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(logisticsAuthFieldEntity);
-        if (!save) {
-            throw new ServiceException("物流授权字段值单保存失败");
+    public void saveOrUpdateAuthField(String authId, Map<String, String> fieldMap) {
+        List<LogisticsAuthFieldEntity> authFieldList = this.listByLogisticsAuthId(authId);
+        List<LogisticsAuthFieldEntity> saveOrUpdateList = new ArrayList<>(authFieldList.size());
+        List<String> updateIdList = new ArrayList<>(authFieldList.size());
+        for (Map.Entry<String, String> item : fieldMap.entrySet()) {
+            String fieldCode = item.getKey();
+            String fieldValue = item.getValue();
+            LogisticsAuthFieldEntity entity = authFieldList.stream().filter(a -> a.getFieldCode().equals(fieldCode)).findFirst().
+                    orElse(new LogisticsAuthFieldEntity());
+            entity.setFieldCode(fieldCode);
+            entity.setFieldValue(fieldValue);
+            entity.setLogisticsAuthId(authId);
+            saveOrUpdateList.add(entity);
+            String id = entity.getId();
+            if (StringUtils.isNotBlank(id)) {
+                updateIdList.add(id);
+            }
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-        log.info("编辑 开始记录物流授权字段值单日志数据，id：【{}】", logisticsAuthFieldEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsAuthFieldEntity.getId(), "物流授权字段值单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsAuthFieldEntity, null, logisticsAuthFieldEntity.getId(), msg);
-        return Boolean.TRUE;
+        List<String> deleteIdList = authFieldList.stream().filter(a -> !updateIdList.contains(a.getId())).
+                map(LogisticsAuthFieldEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        this.saveOrUpdateBatch(saveOrUpdateList);
+
+    }
+
+    @Override
+    public List<LogisticsAuthFieldEntity> listByLogisticsAuthId(String authId) {
+        return this.lambdaQuery().eq(LogisticsAuthFieldEntity::getLogisticsAuthId, authId).list();
     }
 
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(LogisticsAuthFieldEntity logisticsAuthFieldEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
+
+
 }
