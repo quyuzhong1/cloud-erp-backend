@@ -7,34 +7,35 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.DictBasicTypeEnum;
-import com.erp.model.tms.enums.LogisticsAuthStatusEnums;
-import com.erp.model.tms.enums.LogisticsSupplierTypeEnums;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
+import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsSupplierService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -138,13 +139,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      */
     private void fillPagingData(List<LogisticsSupplierDTO.PagingViewDTO> list) {
         for (LogisticsSupplierDTO.PagingViewDTO item : list) {
-            LogisticsSupplierTypeEnums type = item.getType();
+            LogisticsSupplierTypeEnum type = item.getType();
             item.setTypeName(type.getName());
             Boolean disabled = item.getDisabled();
             String disabledName = Objects.isNull(disabled) && !disabled ? "启用" : "禁用";
             item.setDisabledName(disabledName);
             String authStatus = item.getAuthStatus();
-            String authStatusName = LogisticsAuthStatusEnums.getName(authStatus);
+            String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
             item.setAuthStatusName(authStatusName);
 
         }

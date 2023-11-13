@@ -6,24 +6,18 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 运费计费规则
- *
- * @author
- * @Classname ShippingFeeRuleEnums
+ * @author Lambda
+ * @Classname LogisticsAuthStatusEnums
  * @Description TODO
- * @Date 2023-11-13 11:48
+ * @Date 2023-11-09 14:46
  * @Created by yl
  */
-public enum ShippingFeeRuleEnums implements EnumMessage {
+public enum LogisticsAuthStatusEnum implements EnumMessage {
 
-    BILLING_WEIGHT("billingWeight", "计费重"),
-    NET_WEIGHT("netWeight", "实重"),
-    VOLUME_WEIGHT("volumeWeight", "体积重");
-
-    ShippingFeeRuleEnums(String code, String name) {
-        this.code = code;
-        this.name = name;
-    }
+    ALREADY("already", "已授权"),
+    NOT("not", "未授权"),
+    CANCEL("cancel","取消授权")
+    ;
 
     /**
      * 类型
@@ -36,23 +30,29 @@ public enum ShippingFeeRuleEnums implements EnumMessage {
      */
     private String name;
 
+
+    LogisticsAuthStatusEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
     @Override
     public String getCode() {
-        return this.code;
+        return code;
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return name;
     }
 
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (ShippingFeeRuleEnums typeEnums : ShippingFeeRuleEnums.values()) {
-            if (code.equals(typeEnums.getCode())) {
-                return typeEnums.getName();
+        for (LogisticsAuthStatusEnum statusEnum : LogisticsAuthStatusEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
             }
         }
         return "";

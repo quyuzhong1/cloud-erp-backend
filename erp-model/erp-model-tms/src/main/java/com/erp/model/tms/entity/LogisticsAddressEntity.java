@@ -5,11 +5,10 @@ import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 
-import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -35,7 +34,7 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     * 类型
     */
     @TableField("type")
-    private LogisticsAddressTypeEnums type;
+    private LogisticsAddressTypeEnum type;
     /**
     * 公司名
     */

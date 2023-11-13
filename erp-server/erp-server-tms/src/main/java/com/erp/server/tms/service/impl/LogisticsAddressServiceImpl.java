@@ -11,13 +11,9 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
-import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
@@ -25,7 +21,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,7 +197,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
      */
     private void fillData(List<LogisticsAddressDTO.PagingViewDTO> list) {
         for (LogisticsAddressDTO.PagingViewDTO item : list) {
-            LogisticsAddressTypeEnums typeEnums = item.getType();
+            LogisticsAddressTypeEnum typeEnums = item.getType();
             item.setTypeName(typeEnums.getName());
         }
 

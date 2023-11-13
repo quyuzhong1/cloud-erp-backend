@@ -6,17 +6,18 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 物流地址类型枚举
+ * 物流类型枚举
  * @author Lambda
  * @Classname LogisticsAddressEnums
  * @Description TODO
  * @Date 2023-11-03 10:54
  * @Created by yl
  */
-public enum LogisticsAddressTypeEnums implements EnumMessage {
-    DELIVER("deliver","发货地址"),
-    REFUND("refund","退货地址"),
-    COLLECT("collect","揽收地址")
+public enum LogisticsSupplierTypeEnum implements EnumMessage {
+    SELF_DELIVER("selfDeliver","自发货物流"),
+    FIRST_CARRIER("firstCarrier","头程物流"),
+    OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓物流"),
+    CUSTOM("custom","自定义物流")
     ;
 
     /**
@@ -30,7 +31,7 @@ public enum LogisticsAddressTypeEnums implements EnumMessage {
      */
     private String name;
 
-    LogisticsAddressTypeEnums(String code, String name){
+    LogisticsSupplierTypeEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -49,7 +50,7 @@ public enum LogisticsAddressTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnums typeEnums : LogisticsAddressTypeEnums.values()) {
+        for (LogisticsSupplierTypeEnum typeEnums : LogisticsSupplierTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }
