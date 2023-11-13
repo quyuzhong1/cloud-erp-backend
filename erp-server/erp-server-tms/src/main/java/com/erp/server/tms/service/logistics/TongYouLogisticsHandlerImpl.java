@@ -54,7 +54,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        TongYouResponse<List<TongYouChannel>> tongYouResponse =  tongYouService.getAllChannel();
+        TongYouResponse<List<TongYouChannel>> tongYouResponse =  tongYouService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
         if(!tongYouResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,tongYouResponse.getMsg());
         }
@@ -65,7 +65,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         TongYouCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByTongYou(logisticsOrderVO);
-        TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request);
+        TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request,logisticsOrderVO.getLogisticsAuthEntity());
         if(!tongYouCreateOrder.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,tongYouCreateOrder.getMsg());
         }
@@ -89,7 +89,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .isPaoc(logisticsGetLabelVO.getIsPdn())
                     .isPcd(logisticsGetLabelVO.getIsPcd())
                     .build();
-            TongYouPrintLabel tongYouResponse = tongYouService.printLabel(request);
+            TongYouPrintLabel tongYouResponse = tongYouService.printLabel(request,logisticsGetLabelVO.getLogisticsAuthEntity());
             //调用接口失败，不立刻返回，继续剩下的调用
             if(!tongYouResponse.getSuccess()){
                 LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
@@ -130,7 +130,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
             TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
                     .orderNo(logisticsQueryBaseVO.getDeliveryNo())
                     .build();
-            TongYouOrderInfo tongYouOrderInfo = tongYouService.getOrderInfo(request);
+            TongYouOrderInfo tongYouOrderInfo = tongYouService.getOrderInfo(request,logisticsQueryBaseVO.getLogisticsAuthEntity());
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
             if(!tongYouOrderInfo.getSuccess()){
                 response.failure(getName(),logisticsQueryBaseVO.getDeliveryNo(),tongYouOrderInfo.getMsg());

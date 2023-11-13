@@ -2,6 +2,7 @@ package com.sdk.tms.tongyou.server;
 
 
 import com.common.core.utils.FileUtil;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouCallBackOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
@@ -27,7 +28,7 @@ public class TongYouServiceTest {
 
     @Test
     public void getAllChannel() {
-        System.out.println(tongYouService.getAllChannel().getData());
+        System.out.println(tongYouService.getAllChannel(new LogisticsAuthEntity()).getData());
     }
 
     @Test
@@ -75,7 +76,7 @@ public class TongYouServiceTest {
                         .build())
                 .build();
 
-        TongYouCreateOrder createOrder = tongYouService.createOrder(request);
+        TongYouCreateOrder createOrder = tongYouService.createOrder(request,new LogisticsAuthEntity());
         System.out.println(createOrder);
     }
 
@@ -85,7 +86,7 @@ public class TongYouServiceTest {
                 .logisticsId("FZXXRKVP705")
                 .orderNo("WJ20231102001")
                 .build();
-        TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request);
+        TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request,new LogisticsAuthEntity());
         System.out.println(orderInfo);
     }
 
@@ -96,7 +97,7 @@ public class TongYouServiceTest {
                 .orderNo("XM1AWJJ028110,WJ20231102001")
                 .trackNo("TYZPH0022783888YQ,AT139756425CN")
                 .build();
-        TongYouPrintLabel printLabel = tongYouService.printLabel(request);
+        TongYouPrintLabel printLabel = tongYouService.printLabel(request,new LogisticsAuthEntity());
 
         FileUtil.base64ToFile(printLabel.getBase64(),"wayBillA4.pdf","C:\\Users\\Administrator\\Desktop");
         System.out.println(printLabel);
@@ -108,7 +109,7 @@ public class TongYouServiceTest {
         TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
                 .orderNo("WJ20231102001")
                 .build();
-        TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request);
+        TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request,new LogisticsAuthEntity());
         System.out.println(orderInfo);
     }
 }
