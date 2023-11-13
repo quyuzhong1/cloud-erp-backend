@@ -57,7 +57,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel();
+        YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
@@ -68,7 +68,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
-        YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request);
+        YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getLogisticsAuthEntity());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
@@ -88,7 +88,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .waybillNumber(logisticsGetLabelVO.getTransportNo())
                     .printRemark(logisticsGetLabelVO.getPrintRemark())
                     .build();
-            YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request);
+            YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request,logisticsGetLabelVO.getLogisticsAuthEntity());
             if(!labelResponse.getSuccess()){
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,logisticsGetLabelVO.getDeliveryNo()+labelResponse.getMessage());
             }
@@ -110,7 +110,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .note(cancelOrderVO.getReason())
                     .waybillNumber(cancelOrderVO.getTransportNo())
                     .build();
-            YanWenResponse<String> yanWenResponse = yanWenService.cancelOrder(request);
+            YanWenResponse<String> yanWenResponse = yanWenService.cancelOrder(request,cancelOrderVO.getLogisticsAuthEntity());
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             if(!yanWenResponse.getSuccess()){
                 isSuccess = false;
@@ -129,7 +129,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
                 .listNumber(deliveryList)
                 .build();
-        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request);
+        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request,logisticsQueryVOList.get(0).getLogisticsAuthEntity());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }

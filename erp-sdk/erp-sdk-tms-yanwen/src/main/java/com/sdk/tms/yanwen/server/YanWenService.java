@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.enums.ApiError;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.yanwen.constants.YanWenConstants;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
@@ -28,8 +29,8 @@ public class YanWenService {
      *  查询全部已开通的渠道
      * @return List<YanWenChannel>
      */
-    public YanWenResponse<List<YanWenChannel>> getAllChannel(){
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_CHANNEL_GETLIST,null);
+    public YanWenResponse<List<YanWenChannel>> getAllChannel(LogisticsAuthEntity authEntity){
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_CHANNEL_GETLIST,null,authEntity.getAccount(),authEntity.getPassword());
         YanWenResponse<List<YanWenChannel>> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<List<YanWenChannel>>>() {}.getType());
@@ -43,9 +44,9 @@ public class YanWenService {
     /**
      *  创建运单
      */
-    public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request){
+    public YanWenResponse<YanWenCreateWayBill> createWayBill(@Valid YanWenCreateWayBillRequest request,LogisticsAuthEntity authEntity){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CREATE,paramsMap);
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CREATE,paramsMap,authEntity.getAccount(),authEntity.getPassword());
         YanWenResponse<YanWenCreateWayBill> yanWenResponseDTO;
         try {
             yanWenResponseDTO = JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenCreateWayBill>>() {}.getType());
@@ -59,9 +60,9 @@ public class YanWenService {
     /**
      * 打印标签
      */
-    public YanWenResponse<YanWenGetLabel> getLabel(@Valid YanWenGetLabelRequest request){
+    public YanWenResponse<YanWenGetLabel> getLabel(@Valid YanWenGetLabelRequest request,LogisticsAuthEntity authEntity){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_LABEL_GET,paramsMap);
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_LABEL_GET,paramsMap,authEntity.getAccount(),authEntity.getPassword());
         YanWenResponse<YanWenGetLabel> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<YanWenGetLabel>>() {}.getType());
@@ -75,9 +76,9 @@ public class YanWenService {
     /**
      *  取消订单
      */
-    public YanWenResponse<String> cancelOrder(@Valid YanWenCancelOrderRequest request){
+    public YanWenResponse<String> cancelOrder(@Valid YanWenCancelOrderRequest request,LogisticsAuthEntity authEntity){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CANCEL,paramsMap);
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_CANCEL,paramsMap,authEntity.getAccount(),authEntity.getPassword());
         YanWenResponse<String> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<String>>() {}.getType());
@@ -91,9 +92,9 @@ public class YanWenService {
     /**
      *  取消订单
      */
-    public YanWenResponse<List<YanWenQueryOrder>> queryOrder(@Valid YanWenQueryOrderRequest request){
+    public YanWenResponse<List<YanWenQueryOrder>> queryOrder(@Valid YanWenQueryOrderRequest request,LogisticsAuthEntity authEntity){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_QUERY,paramsMap);
+        String response = YanWenUtils.sendPost(YanWenConstants.METHOD_ORDER_QUERY,paramsMap,authEntity.getAccount(),authEntity.getPassword());
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponseDTO;
         try {
             yanWenResponseDTO =  JSONObject.parseObject(response,new TypeReference<YanWenResponse<List<YanWenQueryOrder>>>() {}.getType());
