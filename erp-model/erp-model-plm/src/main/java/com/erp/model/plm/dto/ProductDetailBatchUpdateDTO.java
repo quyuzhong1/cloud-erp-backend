@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,8 +20,10 @@ public class ProductDetailBatchUpdateDTO implements Serializable {
 
     /**
      * 修改的字段名称编号
+     * wms/common/enumDropDown?type=ProductBatchField
      */
     @NotBlank(message = "修改的字段名称编号不能为空")
+
     private String updateFiledCode;
 
     /**
