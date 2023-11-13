@@ -133,5 +133,11 @@ public class DictCountryDTO implements Serializable {
          * 国家
          */
         private List<ListDTO> list;
+
+
+        public ListRegionDTO (String regionCode,String regionName) {
+            this.regionCode = regionCode;
+            this.regionName = regionName;
+        }
     }
 }
