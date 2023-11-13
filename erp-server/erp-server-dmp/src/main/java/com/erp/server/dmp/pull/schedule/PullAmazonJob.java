@@ -161,43 +161,6 @@ public class PullAmazonJob {
     }
 
 
-//    /**
-//     * 亚马逊获取报表文档链接(亚马逊报表文档信息生产者)
-//     */
-//    @XxlJob("amazonReportDocumentJob")
-//    public ReturnT<String> amazonReportDocumentJob() {
-//        Integer size = 1000;
-//        String jobParamStr = XxlJobHelper.getJobParam();
-//        if (StrUtil.isNotBlank(jobParamStr)) {
-//            JSONObject jobParam = JSON.parseObject(jobParamStr);
-//            size = jobParam.getInteger("size");
-//        }
-//        // 根据报告ID和状态获取reportDocumentId
-//        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务开始 size={}", size);
-//        String tableName = MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT;
-//        // 根据状态查询未下载数据
-//        ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportDocumentUrlStatus(0);
-//        List<ReportInfoMongoDTO> reportList = mongoService.findMongoData(reportMongoDTO, 1, size, tableName, ReportInfoMongoDTO.class);
-//        if (CollectionUtil.isEmpty(reportList)) {
-//            XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束,无需要更新的信息");
-//            return ReturnT.SUCCESS;
-//        }
-//        reportList.forEach(report -> {
-//            try {
-//                platformDataThread.findUrlAndSend(tableName, report);
-//            } catch (Exception e) {
-//                String errorMsg = JSONUtil.toJsonStr(e);
-//                XxlJobHelper.log("[亚马逊获取报表文档链接] 拉取亚马逊报表失败：reportId={}, error={}",
-//                        report.getReportId(),
-//                        errorMsg
-//                );
-//                throw new ServiceException("亚马逊获取报表文档链接:error=" + errorMsg);
-//            }
-//
-//        });
-//        XxlJobHelper.log("[亚马逊获取报表文档链接] 任务结束");
-//        return ReturnT.SUCCESS;
-//    }
 
     /**
      * 拉取亚马逊订单详情任务

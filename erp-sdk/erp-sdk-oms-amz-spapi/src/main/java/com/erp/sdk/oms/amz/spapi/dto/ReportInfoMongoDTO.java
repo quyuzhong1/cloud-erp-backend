@@ -52,10 +52,10 @@ public class ReportInfoMongoDTO {
     private String reportDocumentUrl;
 
     /**
-     * 报告链接状态: 0=待获取，1=已获取
+     * 报告处理状态: 0=待处理，1=已处理
      */
-    @Panno(findType = PannoEnum.EQ, field = "reportDocumentUrlStatus")
-    private Integer reportDocumentUrlStatus;
+    @Panno(findType = PannoEnum.EQ, field = "reportHandleStatus")
+    private Integer reportHandleStatus;
 
     /**
      * 报告取消状态: 0=为取消，1=已取消

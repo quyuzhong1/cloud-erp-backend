@@ -276,7 +276,7 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType());
+        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType());
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
         Integer pageSize = 100;

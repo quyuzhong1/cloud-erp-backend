@@ -5,6 +5,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.BusinessTypeEnum;
@@ -285,6 +286,30 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) {
+
+    }
+
+    @Override
+    public void pullBusinessHandler(String shopId, String reportId, List<? extends ReportSuperMongoDTO> mongoDTOSList) {
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setShopId(shopId);
+        jobTaskDTO.setShopName(shopId);
+        jobTaskDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        jobTaskDTO.setApiCode("products");
+        jobTaskDTO.setApiName("亚马逊Listing");
+        jobTaskDTO.setIntervalTime(900);
+        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setRetryTimes(0);
+        jobTaskDTO.setCreateTime(LocalDateTime.now());
+        jobTaskDTO.setUpdateTime(LocalDateTime.now());
+        //
+        jobTaskDTO.setPlatformApiId(reportId);
+        jobTaskDTO.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
+        jobTaskDTO.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+        jobTaskDTO.setOperateType("pull");
+        jobTaskDTO.setMongoDataList(mongoDTOSList);
+        // 事务处理
+        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
 
     }
 }

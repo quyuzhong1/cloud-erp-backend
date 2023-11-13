@@ -2,12 +2,8 @@ package com.erp.server.dmp.service;
 
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaInventoryPlanningMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportFbaMyiAllInventoryMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInventoryCombineMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportReservedMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -49,4 +45,12 @@ public interface ReportHandleService {
      * @since 2023-11-10
      **/
     void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime);
+
+    /**
+     * 推送到处理器
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    void pullBusinessHandler(String shopId, String reportId, List<? extends ReportSuperMongoDTO> mongoDTOSList);
 }
