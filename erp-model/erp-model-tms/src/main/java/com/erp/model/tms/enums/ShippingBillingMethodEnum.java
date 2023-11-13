@@ -47,7 +47,7 @@ public enum ShippingBillingMethodEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+        for (ShippingBillingMethodEnum typeEnums : ShippingBillingMethodEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

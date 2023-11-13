@@ -18,7 +18,7 @@
        <result column="actual_weight" property="actualWeight" />
        <result column="volume_weight" property="volumeWeight" />
        <result column="billing_weight" property="billingWeight" />
-       <result column="estimated_shipping_cost " property="estimatedShippingCost " />
+       <result column="estimated_shipping_cost " property="estimatedShippingCost" />
        <result column="billing_weight_logistics" property="billingWeightLogistics" />
        <result column="lactual_shipping_cost" property="lactualShippingCost" />
        <result column="diff_shipping_cost" property="diffShippingCost" />
@@ -39,6 +39,29 @@
         is_deleted,
         reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, lactual_shipping_cost, diff_shipping_cost, currency, remark
     </sql>
+
+    <!-- tab列表 -->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TabListDTO">
+        select
+        reconciliation_status as tabFlag,
+        count(id) as count
+        from logistics_bill_cost lbc
+        where st.is_deleted = false and lbc.reconciliation_status in ('toBeConfirm','confirmed')
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by lbc.reconciliation_status
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listByExportExcel" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+
+    </select>
 
 
 </mapper>

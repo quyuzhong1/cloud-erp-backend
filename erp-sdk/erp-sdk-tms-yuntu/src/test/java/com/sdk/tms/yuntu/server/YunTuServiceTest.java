@@ -1,5 +1,6 @@
 package com.sdk.tms.yuntu.server;
 
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import org.junit.Test;
@@ -19,9 +20,16 @@ public class YunTuServiceTest {
     @Resource
     private YunTuService yunTuService;
 
+    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+
+    public YunTuServiceTest(){
+        logisticsAuthEntity.setAccount("ITC0893791");
+        logisticsAuthEntity.setPassword("axzc2utvPbfc9UbJDOh+7w==");
+    }
+
     @Test
     public void getAllChannel() {
-        YunTuResponse<List<YunTuChannel>> response = yunTuService.getAllChannel();
+        YunTuResponse<List<YunTuChannel>> response = yunTuService.getAllChannel(logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -90,7 +98,7 @@ public class YunTuServiceTest {
                         .extraName("云途预缴")
                         .build()))
                 .build();
-        YunTuResponse<List<YunTuCreateOrder>> response = yunTuService.createOrder(Arrays.asList(request));
+        YunTuResponse<List<YunTuCreateOrder>> response = yunTuService.createOrder(Arrays.asList(request),logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -100,7 +108,7 @@ public class YunTuServiceTest {
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
                 .customerOrderNumber("WEIJI2023110901001")
                 .build();
-        YunTuResponse<List<YunTuTrackingNumber>> response = yunTuService.getTrackingNumber(request);
+        YunTuResponse<List<YunTuTrackingNumber>> response = yunTuService.getTrackingNumber(request,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -109,7 +117,7 @@ public class YunTuServiceTest {
         YunTuPrintLabelRequest request = YunTuPrintLabelRequest.builder()
                 .orderNumbers(Arrays.asList("WEIJI2023110901004","WEIJI2023110901003","WEIJI2023110901006"))
                 .build();
-        YunTuResponse<List<YunTuPrintLabel>> response = yunTuService.getPrintLabel(request);
+        YunTuResponse<List<YunTuPrintLabel>> response = yunTuService.getPrintLabel(request,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -120,7 +128,7 @@ public class YunTuServiceTest {
                 .orderNumber("WEIJI2023110901001")
                 .remark("客户要求拦截")
                 .build();
-        YunTuResponse<YunTuInterceptOrder> response = yunTuService.interceptOrder(request);
+        YunTuResponse<YunTuInterceptOrder> response = yunTuService.interceptOrder(request,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -130,7 +138,7 @@ public class YunTuServiceTest {
                 .orderType(2)
                 .orderNumber("WEIJI2023110901001")
                 .build();
-        YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request);
+        YunTuResponse<YunTuCancelOrder> response = yunTuService.cancelOrder(request,logisticsAuthEntity);
         System.out.println(response);
     }
 }

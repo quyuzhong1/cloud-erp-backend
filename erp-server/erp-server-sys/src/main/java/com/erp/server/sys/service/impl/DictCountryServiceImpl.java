@@ -179,11 +179,9 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         allList.setRegionName("全部");
         allList.setList(countryList);
         resultList.add(allList);
-        for (DictGlobalAreaEntity areaEntity : list) {
-            DictCountryDTO.ListRegionDTO listRegionDTO = new DictCountryDTO.ListRegionDTO();
-            listRegionDTO.setRegionCode(areaEntity.getRegionCode());
-            listRegionDTO.setRegionName(areaEntity.getRegionName());
-            List<DictCountryDTO.ListDTO> detailList = countryList.stream().filter(obj -> obj.getRegionCode().equals(areaEntity.getRegionCode())).collect(Collectors.toList());
+        List<DictCountryDTO.ListRegionDTO> regionList = list.stream().map(obj -> new DictCountryDTO.ListRegionDTO(obj.getRegionCode(), obj.getRegionName())).distinct().collect(Collectors.toList());
+        for (DictCountryDTO.ListRegionDTO listRegionDTO : regionList) {
+            List<DictCountryDTO.ListDTO> detailList = countryList.stream().filter(obj -> obj.getRegionCode().equals(listRegionDTO.getRegionCode())).collect(Collectors.toList());
             listRegionDTO.setList(detailList);
             resultList.add(listRegionDTO);
         }

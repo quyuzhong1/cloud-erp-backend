@@ -1,10 +1,9 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.ErpServerTmsApplication;
@@ -26,9 +25,16 @@ public class TongYouLogisticsHandlerImplTest {
     @Resource
     private TongYouLogisticsHandlerImpl tongYouLogisticsHandler;
 
+    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+
+    public TongYouLogisticsHandlerImplTest(){
+        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
+        logisticsAuthEntity.setAccount("DADDC4078D2B7D38391A8D3F78C037BF");
+    }
+
     @Test
     public void getChannel() {
-        System.out.println(tongYouLogisticsHandler.getChannel(new ChanelQueryVO()));
+        System.out.println(tongYouLogisticsHandler.getChannel(ChanelQueryVO.builder().logisticsAuthEntity(logisticsAuthEntity).build()));
     }
 
 
@@ -54,6 +60,7 @@ public class TongYouLogisticsHandlerImplTest {
         logisticsProductVO.setQuantity(1);
         logisticsProductVO.setDeclareCurrency("USD");
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
+                .logisticsAuthEntity(logisticsAuthEntity)
                 .channelCode("FZXXRKVP705")
                 .channelId("155")
                 .orderSource("ERP")
@@ -95,9 +102,11 @@ public class TongYouLogisticsHandlerImplTest {
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO labelVO = new LogisticsGetLabelVO();
         LogisticsGetLabelVO labelVO2 = new LogisticsGetLabelVO();
-        labelVO.setDeliveryNo("XM1AWJJ028110");
         labelVO2.setDeliveryNo("WJ20231102001");
         labelVO2.setTrackNo("AT139756425CN");
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO.setDeliveryNo("XM1AWJJ028110");
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
         labelVO.setTrackNo("TYZPH0022783888YQ");
         LogisticsChannelEntity logisticsChannelEntity = new LogisticsChannelEntity();
         logisticsChannelEntity.setCode("FZXXRKVP705");
@@ -112,7 +121,9 @@ public class TongYouLogisticsHandlerImplTest {
         LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
         LogisticsQueryBaseVO labelVO2 = new LogisticsQueryBaseVO();
         labelVO.setDeliveryNo("WJ20231102001");
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
         labelVO2.setDeliveryNo("WJ20231102002");
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
         ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }

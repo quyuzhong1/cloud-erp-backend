@@ -48,7 +48,7 @@ public enum ShippingCalculationMethodEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+        for (ShippingCalculationMethodEnum typeEnums : ShippingCalculationMethodEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

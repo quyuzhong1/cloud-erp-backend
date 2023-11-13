@@ -11,13 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
@@ -26,11 +21,17 @@ public class YanWenLogisticsHandlerImplTest {
     @Resource
     private YanWenLogisticsHandlerImpl yanWenLogisticsHandler;
 
+    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+
+    public YanWenLogisticsHandlerImplTest(){
+        logisticsAuthEntity.setAccount("100000");
+        logisticsAuthEntity.setPassword("D6140AA383FD8515B09028C586493DDB");
+    }
 
 
     @Test
     public void getChannel() {
-        System.out.println(yanWenLogisticsHandler.getChannel(new ChanelQueryVO()));
+        System.out.println(yanWenLogisticsHandler.getChannel(ChanelQueryVO.builder().logisticsAuthEntity(logisticsAuthEntity).build()));
     }
 
     @Test
@@ -58,6 +59,7 @@ public class YanWenLogisticsHandlerImplTest {
                 .channelId("155")
                 .orderSource("ERP")
                 .deliveryNo("wj12345168")
+                .logisticsAuthEntity(logisticsAuthEntity)
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("123@q.con")
@@ -93,6 +95,7 @@ public class YanWenLogisticsHandlerImplTest {
     @Test
     public void getLabelUrl() {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
+        logisticsQueryVO.setLogisticsAuthEntity(logisticsAuthEntity);
         logisticsQueryVO.setTransportNo("LR085325053CN");
         System.out.println(yanWenLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO)));
     }
@@ -102,6 +105,7 @@ public class YanWenLogisticsHandlerImplTest {
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
         cancelOrderVO.setTransportNo("LR085933164CN");
         cancelOrderVO.setDeliveryNo("WJ085933164CN");
+        cancelOrderVO.setLogisticsAuthEntity(logisticsAuthEntity);
         System.out.println(yanWenLogisticsHandler.cancelOrder(Arrays.asList(cancelOrderVO)));
     }
 
@@ -109,6 +113,7 @@ public class YanWenLogisticsHandlerImplTest {
     public void queryOrder() {
         LogisticsQueryBaseVO logisticsQueryBaseVO = new LogisticsQueryBaseVO();
         logisticsQueryBaseVO.setDeliveryNo("wj12345168");
+        logisticsQueryBaseVO.setLogisticsAuthEntity(logisticsAuthEntity);
         System.out.println(yanWenLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryBaseVO)));
     }
 }

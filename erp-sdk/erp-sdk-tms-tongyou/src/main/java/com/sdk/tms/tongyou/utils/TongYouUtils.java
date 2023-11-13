@@ -11,34 +11,34 @@ import java.util.Map;
 
 public class TongYouUtils {
 
-    public static String sendPost(String method,Map<String, Object> paramsMap){
-        Map<String, String> headerMap = headerMap();
+    public static String sendPost(String method,Map<String, Object> paramsMap,String userToken){
+        Map<String, String> headerMap = headerMap(userToken);
         return OkHttpUtils.doPostJson(TongYouConstants.BASE_URL + method, paramsMap, headerMap);
     }
 
-    public static String sendPost(String method,Map<String, Object> paramsMap,String sign){
-        Map<String, String> headerMap = headerMap();
+    public static String sendPost(String method,Map<String, Object> paramsMap,String sign,String userToken){
+        Map<String, String> headerMap = headerMap(userToken);
         headerMap.put("sign",sign);
         return OkHttpUtils.doPostJson(TongYouConstants.BASE_URL + method, paramsMap, headerMap);
     }
 
-    public static Map<String,String> headerMap(){
+    public static Map<String,String> headerMap(String userToken){
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
-        headerMap.put("userToken", TongYouConstants.USER_TOKEN);
+        headerMap.put("userToken", userToken);
         return headerMap;
     }
 
-    public static String getCreateOrderSign(TongYouSignDTO tongYouSignDTO){
-        return Md5Util.md5UpperCase(TongYouConstants.USER_TOKEN+tongYouSignDTO.sign());
+    public static String getCreateOrderSign(TongYouSignDTO tongYouSignDTO,String userToken){
+        return Md5Util.md5UpperCase(userToken+tongYouSignDTO.sign());
     }
 
-    public static String getCallBackOrderSign(String logisticsId,String orderNo){
-        return Md5Util.md5UpperCase(TongYouConstants.USER_TOKEN+logisticsId+orderNo);
+    public static String getCallBackOrderSign(String logisticsId,String orderNo,String userToken){
+        return Md5Util.md5UpperCase(userToken+logisticsId+orderNo);
     }
 
-    public static String getPrintLabelSign(String logisticsId,String orderNo,String trackNo){
-        return Md5Util.md5UpperCase(TongYouConstants.USER_TOKEN+logisticsId+orderNo + trackNo);
+    public static String getPrintLabelSign(String logisticsId,String orderNo,String trackNo,String userToken){
+        return Md5Util.md5UpperCase(userToken+logisticsId+orderNo + trackNo);
     }
 
 }

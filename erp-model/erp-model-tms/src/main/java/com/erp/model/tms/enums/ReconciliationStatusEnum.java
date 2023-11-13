@@ -5,10 +5,19 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum RequestStatusEnums implements EnumMessage {
-    PROCESSING("0", "请求中"),
-    SUCCESS("1", "请求成功"),
-    FAILED("2", "请求失败");
+/**
+ * @author Will
+ * @version 1.0
+ * @description: 对账状态枚举
+ * @date 2023/11/13 15:38
+ */
+public enum ReconciliationStatusEnum implements EnumMessage {
+
+
+    TO_BE_CONFIRM("toBeConfirm","待确认"),
+    CONFIRMED("confirmed","已确认"),
+    INVALID("invalid","已作废")
+    ;
 
     /**
      * 类型
@@ -21,7 +30,7 @@ public enum RequestStatusEnums implements EnumMessage {
      */
     private String name;
 
-    RequestStatusEnums(String code, String name) {
+    ReconciliationStatusEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -40,7 +49,7 @@ public enum RequestStatusEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (RequestStatusEnums typeEnums : RequestStatusEnums.values()) {
+        for (ReconciliationStatusEnum typeEnums : ReconciliationStatusEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

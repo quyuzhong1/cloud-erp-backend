@@ -30,56 +30,72 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     */
     @TableField("reconciliation_status")
     private String reconciliationStatus;
+
     /**
     * 物流渠道id
     */
     @TableField("channel_id")
     private String channelId;
+
     /**
     * 物流单id
     */
     @TableField("logistics_bill_id")
     private String logisticsBillId;
+
+    /**
+     * 运输单号
+     */
+    private String transportNo;
+
     /**
     * 实重
     */
     @TableField("actual_weight")
     private Integer actualWeight;
+
     /**
     * 体积重
     */
     @TableField("volume_weight")
     private Integer volumeWeight;
+
     /**
     * 计费重
     */
     @TableField("billing_weight")
     private Integer billingWeight;
+
     /**
     * 预估运费
     */
     @TableField("estimated_shipping_cost ")
     private BigDecimal estimatedShippingCost ;
+
     /**
     * 计费重（物流商）
     */
     @TableField("billing_weight_logistics")
     private Integer billingWeightLogistics;
+
     /**
     * 实际运费（物流商）
     */
     @TableField("lactual_shipping_cost")
     private BigDecimal lactualShippingCost;
+
     /**
     * 运费差异
     */
     @TableField("diff_shipping_cost")
     private BigDecimal diffShippingCost;
+
     /**
     * 币别
     */
     @TableField("currency")
     private String currency;
+
     /**
     * 备注
     */
