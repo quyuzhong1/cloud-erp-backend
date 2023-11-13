@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -18,8 +19,11 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
@@ -32,6 +36,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -55,41 +60,27 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     @Resource
     private RedisTemplate<String, String> template;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
-        // 获取店铺信息
-        String shopId = data.getShopId();
-        ShopInfoEntity shop = shopInfoFeign.getShopInfoById(shopId);
-        if (null == shop) {
-            throw new ServiceException("未找到店铺信息:shopId=" + shopId);
-        }
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
-
-        // 亚马逊商品下载
-        // 查询当前店铺是否有最新生成的报告文档url
-        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL,
-                AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType(),
-                marketplaceEnum.getMarketplaceId());
-        // 报表文档信息消费者
-        String reportDocumentUrl = template.opsForValue().get(key);
-        if (ObjectUtils.isEmpty(reportDocumentUrl)) {
+        // 亚马逊商品(从已下载的mongo获取)
+        List<?> genericMongoDataList = data.getMongoDataList();
+        if (CollectionUtils.isEmpty(genericMongoDataList)) {
             return Collections.emptyList();
         }
-        List<PlatformAmazonListingDTO> resultList;
-        try {
-            // 下载报告信息
-            List<ReportListingCsvEntity> listingReoprtList = AmazonSpApiReportUtils.downloadAndParseListing(reportDocumentUrl);
 
-            // 返回下载源数据
-            resultList = listingReoprtList.stream()
-                    .map(e -> new PlatformAmazonListingDTO(e, shop))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
+        Object mongoData = data.getMongoDataList().stream().findFirst().orElse(null);
+        if (!(mongoData instanceof ReportListingMongoDTO)) {
+            throw new ServiceException("mongoDataList类型异常:error=" + genericMongoDataList.getClass().toGenericString());
         }
-        template.opsForList().rightPop(key);
-        return resultList;
+        List<ReportListingMongoDTO> mongoDataList = (List<ReportListingMongoDTO>) genericMongoDataList;
+
+        // 返回下载源数据
+        return mongoDataList.stream()
+                .map(e -> SdkListingConverter.INSTANCE.mongoDtoToListingDto(e, data.getShopId()))
+                .collect(Collectors.toList());
+
     }
 
 
@@ -125,7 +116,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         try {
             // 查询商品详情
             CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum);
-            String asin = dto.getReportEntity().getProductId();
+            String asin = dto.getProductId();
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
             Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);

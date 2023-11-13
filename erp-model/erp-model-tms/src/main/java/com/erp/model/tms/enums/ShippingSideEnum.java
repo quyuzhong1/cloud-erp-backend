@@ -49,7 +49,7 @@ public enum ShippingSideEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+        for (ShippingSideEnum typeEnums : ShippingSideEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

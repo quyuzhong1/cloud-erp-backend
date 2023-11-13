@@ -88,7 +88,7 @@ public class YunTuCreateOrderRequest {
     private Integer insuranceOption;
 
     //保险的最高额度，单位 RMB
-    private BigDecimal coverage;
+    private Number coverage;
 
     //包裹中特殊货品类型，可调用货品类型查询服务查询，可以不填写，表示普通货品
     private Integer sensitiveTypeID;

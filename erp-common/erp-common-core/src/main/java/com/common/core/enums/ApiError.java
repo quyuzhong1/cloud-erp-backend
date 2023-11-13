@@ -961,6 +961,7 @@ public enum ApiError implements Serializable {
     ERROR_SHIPPING_COST_SETTING_NOT_EXIST(94018,"未找到其他费用【{}】计算方式值"),
     ERROR_LOGISTICS_ADDRESS_NAME_EXIST(94019,"物流地址名【{}】已存在"),
     ERROR_RULE_WEIGHT_COMPARE(94020,"开始重量不能大于结束重量"),
+    ERROR_SHIPPING_PRICE_NOT_NULL(94021,"运费规则运费单价不能为空"),
 
 
 

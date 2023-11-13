@@ -1,10 +1,13 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -22,8 +25,32 @@ import javax.validation.constraints.Digits;
 @NoArgsConstructor
 public class LogisticsBillCostDTO implements Serializable {
 
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
+    }
 
+    /**
+     * 列表数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+    }
+
+    /**
+     * 列表tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+    }
 
     /**
     * 详情
@@ -212,5 +239,23 @@ public class LogisticsBillCostDTO implements Serializable {
 
     }
 
+    /**
+     * 修改状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+
+        /**
+         * ids
+         */
+        private List<String> ids;
+
+        /**
+         * 状态
+         */
+        private String reconciliationStatus;
+
+    }
 
 }

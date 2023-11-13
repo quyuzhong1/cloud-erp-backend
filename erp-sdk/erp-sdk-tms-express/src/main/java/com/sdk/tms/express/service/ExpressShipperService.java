@@ -2,6 +2,7 @@ package com.sdk.tms.express.service;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.express.enums.ExpressServiceCodeEnum;
 import com.sdk.tms.express.model.base.BaseResponse;
 import com.sdk.tms.express.model.base.BaseResult;
@@ -9,12 +10,16 @@ import com.sdk.tms.express.model.order.request.*;
 import com.sdk.tms.express.model.order.response.OrderResponse;
 import com.sdk.tms.express.model.order.response.OrderUpdateResponse;
 import com.sdk.tms.express.utils.CallExpressServiceTools;
+import com.sdk.tms.express.utils.FileUtil;
 import com.sdk.tms.express.utils.HttpClientUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -82,13 +87,78 @@ public class ExpressShipperService {
 //            System.out.println(result);
 //        }
         //查询顶顶那
-        OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
-                .orderId("QIAO-20200618-00524")//waybillNo=SF7444473356235
-                .searchType(1)
-                .language("zh-CN")
-                .build();
-        BaseResult baseResult = expressShipperService.queryOrder(CLIENT_CODE, CHECK_WORD, orderQueryRequest);
-        System.out.println(baseResult);
+//        OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
+//                .orderId("QIAO-20200618-00524")//waybillNo=SF7444473356235
+//                .searchType(1)
+//                .language("zh-CN")
+//                .build();
+//        BaseResult baseResult = expressShipperService.queryOrder(CLIENT_CODE, CHECK_WORD, orderQueryRequest);
+//        System.out.println(baseResult);
+        //获取标签
+//        OrderLabelRequest orderLabelRequest = OrderLabelRequest.builder()
+//                .templateCode("fm_210_standard_" + CLIENT_CODE)
+//                .documents(Collections.singletonList(Document.builder().masterWaybillNo("SF7444473356235").build()))
+//                .version("2.0")
+//                .fileType("pdf")
+//                .sync(true)
+//                .build();
+//        BaseResult label = expressShipperService.getLabel(CLIENT_CODE, CHECK_WORD, orderLabelRequest);
+//        System.out.println("label:" + label);
+        /**
+         * BaseResult(success=true, errorCode=null, errorMsg=null, errorMessage=null, requestId=9feba81ca6fc4af78070a720055b2ec0,
+         * obj={"clientCode":"Yg4Zf06w_sxZs3A5D","fileType":"pdf",
+         * "files":[{"areaNo":1,"documentSize":0,"pageCount":0,"pageNo":1,"seqNo":1,
+         * "token":"AUTH_tkv12_f146d1855480549d262b5c46ab0ab597ff20a97d9d0db45c16bedeb4fabd112b012deadd477ee524b1d690ce01baa3cdffbb125a6ccf69b73778dba2eb5157eb71f5f4711bf3551ed50de6e92ac3a8ea0313a861c1098a0421f61b3ded7dbfb406a9d538d75efc7a67401084540990da07119a7f5441b7ee908108438fcc0cffed9fc6133877fb3832b0bb3be9072decd553a9dd7c08f62c142463fa3c490f565434a1677773627f3a6df1bf4ffb9615174670f3250bb22e7492da552b5e9ab6",
+         * "url":"https://eos-scp-core-shenzhen-futian1-oss.sf-express.com:443/v1.2/AUTH_EOS-SCP-CORE/print-file-sbox/AAABi8dnok_ieKDG95hAW5I5Mm4FrNXa_SF7444473356235_fm_210_standard_Yg4Zf06w_sxZs3A5D_1_1.pdf",
+         * "waybillNo":"SF7444473356235"}],
+         */
+
+        String urlString = "https://eos-scp-core-shenzhen-futian1-oss.sf-express.com:443/v1.2/AUTH_EOS-SCP-CORE/print-file-sbox/AAABi8dnok_ieKDG95hAW5I5Mm4FrNXa_SF7444473356235_fm_210_standard_Yg4Zf06w_sxZs3A5D_1_1.pdf";
+        String token = "AUTH_tkv12_f146d1855480549d262b5c46ab0ab597ff20a97d9d0db45c16bedeb4fabd112b012deadd477ee524b1d690ce01baa3cdffbb125a6ccf69b73778dba2eb5157eb71f5f4711bf3551ed50de6e92ac3a8ea0313a861c1098a0421f61b3ded7dbfb406a9d538d75efc7a67401084540990da07119a7f5441b7ee908108438fcc0cffed9fc6133877fb3832b0bb3be9072decd553a9dd7c08f62c142463fa3c490f565434a1677773627f3a6df1bf4ffb9615174670f3250bb22e7492da552b5e9ab6";
+        Map<String, Object> params = new HashMap<>();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("X-Auth-token", token);
+
+//        File file = null;
+//        OutputStream outputStream = null;
+//        InputStream inputStream = null;
+//        try {
+//            String fileName = urlString.substring(urlString.lastIndexOf("."),urlString.length());
+//            file = File.createTempFile("lable_image", fileName);
+//            URL url = new URL(urlString);
+//            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+//            connection.setRequestMethod("GET");
+//            connection.setRequestProperty("X-Auth-token", token);
+//            inputStream = connection.getInputStream();
+//            outputStream = Files.newOutputStream(file.toPath());
+////            try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
+//            byte[] buffer = new byte[8192];
+//            int bytesRead;
+//            while ((bytesRead = inputStream.read(buffer)) != -1) {
+//                outputStream.write(buffer, 0, bytesRead);
+//            }
+//            connection.disconnect();
+//            System.out.println("File downloaded successfully!");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (null != outputStream){
+//                    outputStream.close();
+//                }
+//                if (null != inputStream){
+//                    inputStream.close();
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        try {
+//            String base64 = FileUtil.getBase64(file);
+//            System.out.println("base64:" + base64);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     /**
@@ -135,7 +205,7 @@ public class ExpressShipperService {
      * @param partnerId
      * @param md5Key
      * @param orderQueryRequest
-     * @return  OrderSearchRespDto
+     * @return OrderSearchRespDto
      * @throws UnsupportedEncodingException
      */
     public BaseResult queryOrder(String partnerId, String md5Key, OrderQueryRequest orderQueryRequest) throws UnsupportedEncodingException {
@@ -145,6 +215,7 @@ public class ExpressShipperService {
 
     /**
      * 获取标签
+     *
      * @param partnerId
      * @param md5Key
      * @param orderLabelRequest
@@ -167,9 +238,9 @@ public class ExpressShipperService {
         params.put("timestamp", timeStamp);
         params.put("msgData", msgData);
         params.put("msgDigest", tools.getMsgDigest(msgData, timeStamp, md5Key));
-        log.info("====调用实际请求：{}" , params);
+        log.info("====调用实际请求：{}", params);
         String result = HttpClientUtil.post(host, params);
-        log.info("====返回结果：{}" , params);
+        log.info("====返回结果：{}", params);
         BaseResponse baseResponse = JSONUtil.toBean(result, BaseResponse.class);
         BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
         return baseResult;

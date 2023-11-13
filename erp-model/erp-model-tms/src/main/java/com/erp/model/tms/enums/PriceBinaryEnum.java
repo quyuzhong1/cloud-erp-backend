@@ -52,7 +52,7 @@ public enum PriceBinaryEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+        for (PriceBinaryEnum typeEnums : PriceBinaryEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }
@@ -64,7 +64,7 @@ public enum PriceBinaryEnum implements EnumMessage {
         if (StringUtils.isBlank(name)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+        for (PriceBinaryEnum typeEnums : PriceBinaryEnum.values()) {
             if (name.equals(typeEnums.getName())) {
                 return typeEnums.getCode();
             }

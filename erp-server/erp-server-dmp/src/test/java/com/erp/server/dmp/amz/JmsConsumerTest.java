@@ -13,12 +13,14 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
-import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.client.JSON;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.reports.*;
+import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.mq.JmsAmazonSqsConsumer;
 import org.junit.Test;
@@ -28,7 +30,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -133,4 +134,147 @@ public class JmsConsumerTest {
                 "}");
         jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
     }
+
+    /**
+     * Listing消费
+     */
+    @Test
+    public void consumer4Test() throws Exception {
+        SQSTextMessage sqsTextMessage = new SQSTextMessage();
+        sqsTextMessage.setText("{\n" +
+                "        \"notificationVersion\" : \"2020-09-04\",\n" +
+                "            \"notificationType\" : \"REPORT_PROCESSING_FINISHED\",\n" +
+                "            \"payloadVersion\" : \"1.0\",\n" +
+                "            \"eventTime\" : \"2023-11-08T09:45:39.054Z\",\n" +
+                "            \"payload\" : {\n" +
+                "        \"reportProcessingFinishedNotification\" : {\n" +
+                "            \"sellerId\" : \"AZFY4CTNEDLZX\",\n" +
+                "                    \"reportId\" : \"730602019674\",\n" +
+                "                    \"reportType\" : \"GET_MERCHANT_LISTINGS_DATA\",\n" +
+                "                    \"processingStatus\" : \"DONE\",\n" +
+                "                    \"reportDocumentId\" : \"amzn1.spdoc.1.4.na.0c047a82-212d-4d0f-bd6d-eb2ca70c4793.TQLWD3FS907B4.300\"\n" +
+                "        }\n" +
+                "    },\n" +
+                "        \"notificationMetadata\" : {\n" +
+                "        \"applicationId\" : \"amzn1.sp.solution.c49ad2b8-5338-493f-b312-550e59f0b2b4\",\n" +
+                "                \"subscriptionId\" : \"f80d1da5-c932-4e1f-a36d-e434bca8deb6\",\n" +
+                "                \"publishTime\" : \"2023-11-13T00:44:30.096Z\",\n" +
+                "                \"notificationId\" : \"test4-a79a47eb-f5c6-4d74-81a7-0e132468e6cf\"\n" +
+                "    }\n" +
+                "    }");
+        jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
+    }
+
+    @Test
+    public void convertTest() throws Exception{
+        String json = "[\n" +
+                "    {\n" +
+                "        \"itemName\": \"PICTRON Phone Tripod Mount with Remote Cell Phone Tripod Adapter Grip Holder with Detachable Wireless Shutter for iPhone Video Photo Shooting (Black)\",\n" +
+                "        \"itemDescription\": \"PICTRON Cell Phone Camera Grip Holder with Detachable Wireless\",\n" +
+                "        \"listingId\": \"0804XOKUDIV\",\n" +
+                "        \"sellerSku\": \"1963-US7\",\n" +
+                "        \"price\": \"9.95\",\n" +
+                "        \"quantity\": \"\",\n" +
+                "        \"openDate\": \"2020-08-04 03:56:29 PDT\",\n" +
+                "        \"imageUrl\": \"\",\n" +
+                "        \"itemIsMarketplace\": \"y\",\n" +
+                "        \"productIdType\": \"1\",\n" +
+                "        \"zshopShippingFee\": \"\",\n" +
+                "        \"itemNote\": \"\",\n" +
+                "        \"itemCondition\": \"11\",\n" +
+                "        \"zshopCategory1\": \"\",\n" +
+                "        \"zshopBrowsePath\": \"\",\n" +
+                "        \"zshopStorefrontFeature\": \"\",\n" +
+                "        \"asin1\": \"B08F7T3N5G\",\n" +
+                "        \"asin2\": \"\",\n" +
+                "        \"asin3\": \"\",\n" +
+                "        \"willShipInternationally\": \"\",\n" +
+                "        \"expeditedShipping\": \"\",\n" +
+                "        \"zshopBoldface\": \"\",\n" +
+                "        \"productId\": \"B08F7T3N5G\",\n" +
+                "        \"bidForFeaturedPlacement\": \"\",\n" +
+                "        \"addDelete\": \"\",\n" +
+                "        \"pendingQuantity\": \"\",\n" +
+                "        \"fulfillmentChannel\": \"AMAZON_NA\",\n" +
+                "        \"merchantShippingGroup\": \"Migrated Template\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "        \"itemName\": \"Live Broadcast Boom Arm, ULANZI Flexible Desk Mount Camera Arm Clamp Webcam Stand, Microphone Boom Arm for Blue Yeti Snowball Yeti Nano, Webcam, Camera, LED Light, Voice Recording, Podcasting (LS01)\",\n" +
+                "        \"itemDescription\": \"PICTRON Camera Desk Mount Boom Arm\",\n" +
+                "        \"listingId\": \"0819Z63IFKB\",\n" +
+                "        \"sellerSku\": \"2089-US7\",\n" +
+                "        \"price\": \"109.95\",\n" +
+                "        \"quantity\": \"\",\n" +
+                "        \"openDate\": \"2022-08-19 07:11:45 PDT\",\n" +
+                "        \"imageUrl\": \"\",\n" +
+                "        \"itemIsMarketplace\": \"y\",\n" +
+                "        \"productIdType\": \"3\",\n" +
+                "        \"zshopShippingFee\": \"\",\n" +
+                "        \"itemNote\": \"\",\n" +
+                "        \"itemCondition\": \"11\",\n" +
+                "        \"zshopCategory1\": \"\",\n" +
+                "        \"zshopBrowsePath\": \"\",\n" +
+                "        \"zshopStorefrontFeature\": \"\",\n" +
+                "        \"asin1\": \"B08LZ58T2L\",\n" +
+                "        \"asin2\": \"\",\n" +
+                "        \"asin3\": \"\",\n" +
+                "        \"willShipInternationally\": \"\",\n" +
+                "        \"expeditedShipping\": \"\",\n" +
+                "        \"zshopBoldface\": \"\",\n" +
+                "        \"productId\": \"784104285258\",\n" +
+                "        \"bidForFeaturedPlacement\": \"\",\n" +
+                "        \"addDelete\": \"\",\n" +
+                "        \"pendingQuantity\": \"\",\n" +
+                "        \"fulfillmentChannel\": \"AMAZON_NA\",\n" +
+                "        \"merchantShippingGroup\": \"Migrated Template\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "        \"itemName\": \"ULANZI ST-14 Smartphone Tripod Mount Adapter Aluminum with Cold Shoe, 360° Cell Phone Stand Holder Clamp for iPhone 13 12 11 Max Pro iPhone X XR Xs 6 7 Plus\",\n" +
+                "        \"itemDescription\": \"PICTRON ST-14 Cell Phone Tripod Mount iphone tripod mount adapter for IPhone12, IPhone 11, IPhone X, IPhone 11 Pro, IPhone 11 Pro Max, IPhone SE, IPhone XR, IPhone XS, IPhone XS Max,IPhone 8, IPhone 8 Plus, IPhone 7, IPhone 7 Plus,IPhone 6 Plus, IPhone 6, IPhone 6S, IPhone 6S Plus, IPhone 5c, IPhone 5s,IPhone 5, IPhone 4, IPhone, Galaxy S9, Galaxy S7, Galaxy S9+, Galaxy S8, Galaxy S6,Galaxy S10, Galaxy S8+ and most other phones in the market.\",\n" +
+                "        \"listingId\": \"0831XW8ER2G\",\n" +
+                "        \"sellerSku\": \"2110-US7\",\n" +
+                "        \"price\": \"39.99\",\n" +
+                "        \"quantity\": \"\",\n" +
+                "        \"openDate\": \"2020-08-30 20:12:37 PDT\",\n" +
+                "        \"imageUrl\": \"\",\n" +
+                "        \"itemIsMarketplace\": \"y\",\n" +
+                "        \"productIdType\": \"3\",\n" +
+                "        \"zshopShippingFee\": \"\",\n" +
+                "        \"itemNote\": \"\",\n" +
+                "        \"itemCondition\": \"11\",\n" +
+                "        \"zshopCategory1\": \"\",\n" +
+                "        \"zshopBrowsePath\": \"\",\n" +
+                "        \"zshopStorefrontFeature\": \"\",\n" +
+                "        \"asin1\": \"B08H1NGLLF\",\n" +
+                "        \"asin2\": \"\",\n" +
+                "        \"asin3\": \"\",\n" +
+                "        \"willShipInternationally\": \"\",\n" +
+                "        \"expeditedShipping\": \"\",\n" +
+                "        \"zshopBoldface\": \"\",\n" +
+                "        \"productId\": \"782902326869\",\n" +
+                "        \"bidForFeaturedPlacement\": \"\",\n" +
+                "        \"addDelete\": \"\",\n" +
+                "        \"pendingQuantity\": \"\",\n" +
+                "        \"fulfillmentChannel\": \"AMAZON_NA\",\n" +
+                "        \"merchantShippingGroup\": \"Migrated Template\"\n" +
+                "    }\n" +
+                "]";
+
+        List<ReportListingCsvEntity> cvsList = JSONUtil.toList(json, ReportListingCsvEntity.class);
+
+        // 根据不同地区区分
+        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
+        // 查询当前报告是否是属于系统计划报告
+//        Report report = reportsApi.getReport("730602019674");
+        String reportJson = "{\"marketplaceIds\":[\"ATVPDKIKX0DER\"],\"reportId\":\"730602019674\",\"reportType\":\"GET_MERCHANT_LISTINGS_DATA\",\"dataStartTime\":1699835310000,\"dataEndTime\":1699836210000,\"reportScheduleId\":\"50007019671\",\"createdTime\":1699836258000,\"processingStatus\":\"DONE\",\"processingStartTime\":1699836265000,\"processingEndTime\":1699836276000,\"reportDocumentId\":\"amzn1.spdoc.1.4.na.0c047a82-212d-4d0f-bd6d-eb2ca70c4793.TQLWD3FS907B4.300\"}";
+        Report report = JSONUtil.toBean(reportJson, Report.class);
+
+        // TODO 转换
+        // 填充报告相关信息
+        List<? extends ReportSuperMongoDTO> mongoDTOSList =
+                jmsAmazonSqsConsumer.handleData(cvsList, report, AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA);
+
+        System.out.println(mongoDTOSList);
+    }
+
 }

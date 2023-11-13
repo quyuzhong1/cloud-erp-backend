@@ -19,7 +19,9 @@ import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
+import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -44,6 +46,10 @@ public class JmsAmazonSqsConsumer {
     private MongoService mongoService;
     @Resource
     private ReportScheduleService reportScheduleService;
+    @Resource
+    private BusinessServiceImpl businessService;
+    @Resource
+    private ReportHandleService reportHandleService;
 
     /**
      * 监听接收消息
@@ -102,6 +108,13 @@ public class JmsAmazonSqsConsumer {
             // 查询报告当前链接
             ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
             reportInfoMongoDTO.setReportDocumentUrl(reportDocument.getUrl());
+            reportInfoMongoDTO.setReportHandleStatus(0);
+            reportInfoMongoDTO.setReportCancelStatus(0);
+            reportInfoMongoDTO.setDataStartTime(report.getDataStartTime().toString());
+            reportInfoMongoDTO.setDataEndTime(report.getDataEndTime().toString());
+            reportInfoMongoDTO.setProcessingStartTime(report.getProcessingStartTime().toString());
+            reportInfoMongoDTO.setProcessingEndTime(report.getProcessingEndTime().toString());
+            reportInfoMongoDTO.setProcessingStatus(report.getProcessingStatus().getValue());
 
             List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
             // TODO 转换
@@ -116,6 +129,11 @@ public class JmsAmazonSqsConsumer {
 
             // 填充报告来源信息
             mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
+
+            // TODO 扩展
+            if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
+                reportHandleService.pullBusinessHandler(reportScheduleEntity.getShopId(), report.getReportId(), mongoDTOSList);
+            }
         }
 
         //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
@@ -174,7 +192,7 @@ public class JmsAmazonSqsConsumer {
             if (StringUtils.isNotBlank(oldCombineInventoryDTO.getMyiAllInventoryReportId()) &&
                     StringUtils.isNotBlank(oldCombineInventoryDTO.getInventoryPlanningReportId()) &&
                     StringUtils.isNotBlank(oldCombineInventoryDTO.getReservedReportId())
-            ){
+            ) {
                 oldCombineInventoryDTO.setCombineStatus(1);
             }
             // 修改数据
@@ -184,10 +202,10 @@ public class JmsAmazonSqsConsumer {
 
     }
 
-    private List<? extends ReportSuperMongoDTO> handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum){
+    public List<? extends ReportSuperMongoDTO> handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum) {
         return cvsList.stream().map(o -> {
             try {
-                ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) recordTypeEnum.getMongoDTOClass().newInstance();
+                ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) (recordTypeEnum.getMongoDTOClass().newInstance());
                 BeanUtils.copyProperties(o, mongoDTO);
                 mongoDTO.setDataStartTime(report.getDataStartTime().toString());
                 mongoDTO.setDataEndTime(report.getDataEndTime().toString());

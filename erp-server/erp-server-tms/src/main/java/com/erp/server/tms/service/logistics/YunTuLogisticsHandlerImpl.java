@@ -68,7 +68,12 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
         YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request));
         if(isFailure(yunTuResponse.getCode())){
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage());
+            List<YunTuCreateOrder> yunTuCreateOrders = yunTuResponse.getData();
+            String remark = "";
+            if(CollectionUtil.isNotEmpty(yunTuCreateOrders)){
+                remark = yunTuCreateOrders.get(0).getRemark();
+            }
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage()+remark);
         }
         YunTuCreateOrder yunTuCreateOrder = yunTuResponse.getData().get(0);
         return success(LogisticsOrderResponseVO.builder()
@@ -197,5 +202,10 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return !"0000".equals(code);
     }
 
-    private String getName(){return LogisticsPlatformEnum.YUN_TU.getName();};
+    private String getName(){return getPlatForm().getName();};
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.YUN_TU;
+    }
 }

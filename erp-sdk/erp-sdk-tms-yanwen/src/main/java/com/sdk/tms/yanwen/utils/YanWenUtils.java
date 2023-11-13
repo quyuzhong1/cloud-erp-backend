@@ -11,19 +11,19 @@ import java.util.Map;
 
 public class YanWenUtils {
 
-    public static String getSign(String data ,String method,long timestamp){
-        return Md5Util.md5(YanWenConstants.API_TOKEN+ YanWenConstants.USER_ID+data+ YanWenConstants.FORMAT+method+timestamp+ YanWenConstants.VERSION+ YanWenConstants.API_TOKEN);
+    public static String getSign(String data ,String method,long timestamp,String userId,String apiToken){
+        return Md5Util.md5(apiToken+ userId+data+ YanWenConstants.FORMAT+method+timestamp+ YanWenConstants.VERSION+ apiToken);
     }
 
-    public static String sendPost(String method,Map<String, Object> paramsMap){
+    public static String sendPost(String method,Map<String, Object> paramsMap,String userId,String apiToken){
         long timestamp = System.currentTimeMillis();;
-        String sign = getSign(JSONObject.toJSONString(paramsMap),method,timestamp);
+        String sign = getSign(JSONObject.toJSONString(paramsMap),method,timestamp,userId,apiToken);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
         String url = YanWenConstants.BASE_URL +
                 YanWenConstants.BASE_URL_SUFFIX +
                 "?user_id=" +
-                YanWenConstants.USER_ID +
+                userId +
                 "&method=" +
                 method +
                 "&format=" +
@@ -35,10 +35,6 @@ public class YanWenUtils {
                 "&version=" +
                 YanWenConstants.VERSION;
         return OkHttpUtils.doPostJson(url, paramsMap, headerMap);
-    }
-
-    public static void main(String[] args) {
-
     }
 
 }

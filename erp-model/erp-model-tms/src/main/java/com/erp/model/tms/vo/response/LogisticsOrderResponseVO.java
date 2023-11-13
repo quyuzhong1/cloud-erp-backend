@@ -42,6 +42,8 @@ public class LogisticsOrderResponseVO extends LogisticsBaseResponseVO implements
 
     String remark;
 
+    //国家二字码
+    String countryCode;
     /**
      * 是否存在 1对多订单情况
      */

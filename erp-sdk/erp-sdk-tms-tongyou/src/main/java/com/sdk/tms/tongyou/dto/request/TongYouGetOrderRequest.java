@@ -14,7 +14,7 @@ import javax.validation.constraints.NotNull;
 @ToString
 public class TongYouGetOrderRequest {
 
-    //订单编号，客户参考号（多个用英文逗号隔开）
+    //订单号
     @NotNull(message = "订单编号不能为空")
     private String orderNo;
 

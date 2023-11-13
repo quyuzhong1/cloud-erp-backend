@@ -320,6 +320,7 @@ public class FileUtil {
         }
         InputStream inStream = null;
         String base64 = "";
+        String prefix = "data:application/pdf;base64,";
         try {
             URL url = new URL(pdfUrl);
             //打开链接
@@ -334,7 +335,39 @@ public class FileUtil {
             //对字节数组Base64编码
             base64 = Base64.encode(inStream);
             base64 = base64.replaceAll("\r\n","");
-            return base64;
+            return prefix + base64;
+        } finally {
+            //关闭输入流
+            if (inStream != null) {
+                inStream.close();
+            }
+        }
+    }
+
+    public static String convertPdfUrlToBase64(String pdfUrl,String token) throws IOException {
+        if(StringUtils.isBlank(pdfUrl)){
+            return null;
+        }
+        InputStream inStream = null;
+        String base64 = "";
+        String prefix = "data:application/pdf;base64,";
+        try {
+            URL url = new URL(pdfUrl);
+            //打开链接
+            HttpURLConnection conn = null;;
+            conn = (HttpURLConnection) url.openConnection();
+            //设置请求方式为"GET"
+            conn.setRequestMethod("GET");
+            //顺丰接口调用授权
+            conn.setRequestProperty("X-Auth-token", token);
+            //超时响应时间为5秒
+            conn.setConnectTimeout(5 * 1000);
+            //通过输入流获取图片数据
+            inStream = conn.getInputStream();
+            //对字节数组Base64编码
+            base64 = Base64.encode(inStream);
+            base64 = base64.replaceAll("\r\n","");
+            return prefix + base64;
         } finally {
             //关闭输入流
             if (inStream != null) {

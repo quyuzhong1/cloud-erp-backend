@@ -2,19 +2,18 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
 
 
 /**
  * 商品报告实体
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ReportListingMongoDTO implements Serializable {
+public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Panno(findType = PannoEnum.EQ, field = "item-name")
     private String itemName;

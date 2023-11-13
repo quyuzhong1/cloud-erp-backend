@@ -1,6 +1,7 @@
 package com.sdk.tms.weishi.server;
 
 
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,16 @@ class WeiShiServiceTest {
     @Resource
     private WeiShiService weiShiService;
 
+    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+
+    public WeiShiServiceTest(){
+        logisticsAuthEntity.setAccount("dcfe81e2059c1f0e6e6263dbcb764885");
+        logisticsAuthEntity.setPassword("dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+    }
+
     @Test
     void getAllChannel() {
-        WeiShiResponse<List<WeiShiChannel>> channel= weiShiService.getAllChannel();
+        WeiShiResponse<List<WeiShiChannel>> channel= weiShiService.getAllChannel(logisticsAuthEntity);
         System.out.println(channel);
     }
 
@@ -60,7 +68,7 @@ class WeiShiServiceTest {
                         .invoiceUnitcharge(12.0F)
                         .build()))
                 .build();
-        WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest);
+        WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -71,7 +79,7 @@ class WeiShiServiceTest {
                 .lableType("2")
                 .build()
                 ;
-        WeiShiGetLabelUrl weiShiGetLabelUrl = weiShiService.getLabelUrl(weiShiGetLabelUrlRequest);
+        WeiShiGetLabelUrl weiShiGetLabelUrl = weiShiService.getLabelUrl(weiShiGetLabelUrlRequest,logisticsAuthEntity);
         System.out.println(weiShiGetLabelUrl);
     }
 
@@ -81,7 +89,7 @@ class WeiShiServiceTest {
                 .referenceNo("TEST2019102800132")
                 .build()
                 ;
-        WeiShiResponse response = weiShiService.interceptOrder(weiShiGetLabelUrlRequest);
+        WeiShiResponse response = weiShiService.interceptOrder(weiShiGetLabelUrlRequest,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -91,7 +99,7 @@ class WeiShiServiceTest {
                 .referenceNo("TEST2019102800132")
                 .build()
                 ;
-        WeiShiResponse response = weiShiService.cancelOrder(weiShiCancelOrderRequest);
+        WeiShiResponse response = weiShiService.cancelOrder(weiShiCancelOrderRequest,logisticsAuthEntity);
         System.out.println(response);
     }
 
@@ -101,7 +109,7 @@ class WeiShiServiceTest {
                 .referenceNoList(Arrays.asList("wj12345167710"))
                 .build()
                 ;
-        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest);
+        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest,logisticsAuthEntity);
         System.out.println(response);
     }
 }

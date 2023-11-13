@@ -47,7 +47,7 @@
             str.to_warehouse_name
         from shipping_template_rule str
         <where>
-            str.is_deleted = false
+            str.is_deleted = false and str.to_warehouse_name != ''
         </where>
         group by str.to_warehouse_name
     </select>
@@ -55,7 +55,7 @@
     <select id="listRegionName" resultType="java.lang.String">
         select
             str.region
-        from shipping_template_rule str
+        from shipping_template_rule str and str.region != ''
         <where>
             str.is_deleted = false
         </where>

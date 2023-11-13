@@ -77,4 +77,6 @@ public class ReceiverInfoVO {
      */
     @TableField("zip_code")
     private String zipCode;
+    //买家ID
+    private String actId;
 }
