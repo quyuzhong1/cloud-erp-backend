@@ -31,6 +31,7 @@ import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,6 +128,9 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
      */
     @Override
     public ShopAuthEntity getByShopId(String shopId) {
+        if (StringUtils.isBlank(shopId)){
+            return null;
+        }
         return this.lambdaQuery().eq(ShopAuthEntity::getShopId, shopId).
                 last("LIMIT 1").one();
     }
