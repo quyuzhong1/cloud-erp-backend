@@ -203,6 +203,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 店铺名称
+     */
+    @TableField(exist = false)
+    private String shopName;
+
 
     public static final String CODE = "code";
 
