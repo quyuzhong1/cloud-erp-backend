@@ -67,6 +67,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -200,7 +201,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 数据处理
         handleData(soB2cEntity);
-
+        //创建时间
+        soB2cEntity.setCreateTime(ObjectUtils.isEmpty(addDTO.getCreateTime()) ? LocalDateTime.now() : addDTO.getCreateTime());
         soB2cEntity.setCode(code);
         log.info("开始新增B2C销售订单表");
         if (StrUtil.isBlank(code)) {
@@ -208,7 +210,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
             soB2cEntity.setCode(businessNo);
         }
-        soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
         boolean save = super.save(soB2cEntity);
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
@@ -772,6 +773,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //合并后取最小单据日期
         LocalDate billDate = list.stream().map(SoB2cEntity::getBillDate).min((x, y) -> x.compareTo(y)).orElse(null);
         addDTO.setBillDate(billDate);
+        //合并后取最小创建日期
+        LocalDateTime createTime = list.stream().map(SoB2cEntity::getCreateTime).min((x, y) -> x.compareTo(y)).orElse(null);
+        addDTO.setCreateTime(createTime);
+        //合并后取最小付款时间
+        LocalDateTime payTime = list.stream().map(SoB2cEntity::getPayTime).min((x, y) -> x.compareTo(y)).orElse(null);
+        addDTO.setPayTime(payTime);
+
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setSourceId(StrUtil.join(",", ids));
         List<String> codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
@@ -1445,6 +1453,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ).count();
                 if (mergeCount > 0) {
                     labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_MERGE.getCode());
+                    labelDTO.setMergeCount(Integer.valueOf(String.valueOf(mergeCount)));
                 }
                 //拆分
                 long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
@@ -1537,6 +1546,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+
     /**
      * 分页查询、导出 数据处理
      */
@@ -1555,8 +1565,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             return;
         }
-        soB2cEntity.setBillDate(LocalDate.now());
-        BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
         if (MathUtil.compareTo(exchangeRate,MathUtil.ZERO) == MathUtil.ZERO) {
             throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST,LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),soB2cEntity.getCurrency());
         }
