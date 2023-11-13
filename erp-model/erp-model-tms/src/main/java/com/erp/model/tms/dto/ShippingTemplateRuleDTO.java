@@ -109,6 +109,11 @@ public class ShippingTemplateRuleDTO implements Serializable {
         private BigDecimal additionalPrice;
 
         /**
+         * 运费单价
+         */
+        private BigDecimal shippingPrice;
+
+        /**
         * 挂号费
         */
         private BigDecimal registrationCost;

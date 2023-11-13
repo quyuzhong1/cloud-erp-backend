@@ -1,7 +1,6 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 
 import java.util.List;
@@ -51,4 +50,13 @@ public interface ShippingTemplateOtherCostService extends SuperService<ShippingT
      * @param mainId
      */
     void deleteByMainId(String mainId);
+
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/11/13 10:27
+     * @param mainIdList
+     * @return List<ShippingTemplateOtherCostEntity>
+     */
+    List<ShippingTemplateOtherCostEntity> listByMainIds(List<String> mainIdList);
 }
