@@ -236,6 +236,14 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 throw new ServiceException(ApiError.ERROR_ADDITIONAL_PRICE_NOT_NULL);
             }
         }
+        //重量段必填校验
+        if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(entity.getBillingMethod())) {
+            //运费单价
+            long shippingPriceCount = detailList.stream().filter(obj -> ObjectUtil.isEmpty(obj.getShippingPrice())).count();
+            if (shippingPriceCount > 0) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_PRICE_NOT_NULL);
+            }
+        }
 
         //数据赋值
         for (ShippingTemplateRuleEntity ruleEntity : detailList) {
