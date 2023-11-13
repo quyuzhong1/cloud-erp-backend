@@ -69,7 +69,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         // 亚马逊商品下载
         // 查询当前店铺是否有最新生成的报告文档url
         String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL,
-                AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType(),
+                AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType(),
                 marketplaceEnum.getMarketplaceId());
         // 报表文档信息消费者
         String reportDocumentUrl = template.opsForValue().get(key);

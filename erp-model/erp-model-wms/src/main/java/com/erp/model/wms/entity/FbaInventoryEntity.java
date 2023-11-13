@@ -5,6 +5,7 @@ import com.common.core.anno.Panno;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 import com.common.core.enums.PannoEnum;
 import lombok.Data;
@@ -30,8 +31,8 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
     /**
     * 仓库名称
     */
-    @TableField("name")
-    private String name;
+//    @TableField("name")
+//    private String name;
     /**
     * 平台sku
     */
@@ -125,25 +126,25 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
      * 数据开始时间
      */
     @TableField("data_start_time")
-    private String dataStartTime;
+    private OffsetDateTime dataStartTime;
 
     /**
      * 数据结束时间
      */
     @TableField("data_end_time")
-    private String dataEndTime;
+    private OffsetDateTime dataEndTime;
 
     /**
      * 库龄 0-30 天的可售商品数量
      */
     @TableField("inventory_age_0_to_30_days")
-    private String inventoryAge0To30Days;
+    private Integer inventoryAge0To30Days;
 
     /**
      * 库龄 31-60 天的可售商品数量
      */
     @TableField("inventory_age_31_to_60_days")
-    private String inventoryAge31To60Days;
+    private Integer inventoryAge31To60Days;
 
     /**
      * 库龄 61-90 天的可售商品数量
@@ -155,7 +156,7 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
      * 库龄 91-180 天的可售商品数量
      */
     @TableField("inventory_age_91_to_180_days")
-    private String inventoryAge91To180Days;
+    private Integer inventoryAge91To180Days;
 
     /**
      * 库龄 181-270 天的可售商品数量

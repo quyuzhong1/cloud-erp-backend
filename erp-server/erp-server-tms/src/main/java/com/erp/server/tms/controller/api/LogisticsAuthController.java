@@ -47,6 +47,20 @@ public class LogisticsAuthController extends BaseController {
         return success(logisticsAuthService.add(dto));
     }
 
+
+    /**
+     * 详情
+     * @author Lambda
+     * @date:  2023-11-02
+     * @param id
+     * @return ApiResult
+     */
+    @GetMapping("/view")
+    public ApiResult<LogisticsAuthDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id")String id) {
+        LogisticsAuthDTO.ViewDTO view=logisticsAuthService.view(id);
+        return success(view);
+    }
+
     /**
     * 修改
     * @author Lambda

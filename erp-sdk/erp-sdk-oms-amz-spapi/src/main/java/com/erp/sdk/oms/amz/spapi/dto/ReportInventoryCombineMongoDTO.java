@@ -70,9 +70,9 @@ public class ReportInventoryCombineMongoDTO {
         this.marketplaceIds = marketplaceIds;
     }
 
-    public static ReportInventoryCombineMongoDTO unCombineStatus() {
+    public static ReportInventoryCombineMongoDTO canCombineStatus() {
         ReportInventoryCombineMongoDTO combineInventoryDTO = new ReportInventoryCombineMongoDTO();
-        combineInventoryDTO.setCombineStatus(0);
+        combineInventoryDTO.setCombineStatus(1);
         return combineInventoryDTO;
     }
 }

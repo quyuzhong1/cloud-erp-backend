@@ -46,6 +46,11 @@ public class LogisticsAuthFieldDTO implements Serializable {
         private String fieldCode;
 
         /**
+         * 字段名
+         */
+        private String fieldName;
+
+        /**
         * 字段值
         */
         private String fieldValue;
@@ -82,12 +87,6 @@ public class LogisticsAuthFieldDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 物流商授权表id
-        */
-        @NotBlank(message = "物流商授权表id不能为空")
-        @Size(max = 19,message = "物流商授权表id最大长度不能超过19位")
-        private String logisticsAuthId;
 
         /**
         * 字段

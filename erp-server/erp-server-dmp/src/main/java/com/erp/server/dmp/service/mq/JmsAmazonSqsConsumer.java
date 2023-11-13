@@ -25,11 +25,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.jms.Message;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 亚马逊SQS消息监听
@@ -48,6 +50,7 @@ public class JmsAmazonSqsConsumer {
      * 如果有多个Factory 需要手动指定
      */
     @JmsListener(destination = "erpNotifications", containerFactory = "jmsListenerContainerFactory")
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.debug("接收到亚马逊SQS通知:{}", textMessage.getText());
@@ -55,7 +58,7 @@ public class JmsAmazonSqsConsumer {
             // TODO 开发环境暂时过滤
             return ;
         }
-        // TODO 已存mongo忽略
+
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(new JSONObject(textMessage.getText()).getStr("notificationType"))) {
             NotificationSQSEntity sqsEntity = JSONUtil.toBean(textMessage.getText(), NotificationSQSEntity.class);
@@ -73,12 +76,14 @@ public class JmsAmazonSqsConsumer {
             ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
             // 查询当前报告是否是属于系统计划报告
             Report report = reportsApi.getReport(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportId());
+
             String reportScheduleId = report.getReportScheduleId();
             if (StringUtils.isBlank(reportScheduleId)) {
                 return;
             }
             // 查询报告计划ID是否已存在
             ReportScheduleEntity reportScheduleEntity = reportScheduleService.getByReportScheduleId(reportScheduleId);
+//            ReportScheduleEntity reportScheduleEntity = reportScheduleService.getById("1722786406251237379");
             if (null == reportScheduleEntity) {
                 // 不存在跳过
                 return;
@@ -86,7 +91,7 @@ public class JmsAmazonSqsConsumer {
             // 校验报告是否已存在？
             ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
             List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-            if (CollectionUtils.isEmpty(mongoData)) {
+            if (!CollectionUtils.isEmpty(mongoData)) {
                 // 存在跳过
                 return;
             }
@@ -101,7 +106,7 @@ public class JmsAmazonSqsConsumer {
             List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
             // TODO 转换
             // 填充报告相关信息
-            handleData(cvsList, report, recordTypeEnum);
+            List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 
             //判断是否添加库存主表
             this.checkAndSaveMainInventory(report, reportScheduleEntity);
@@ -110,11 +115,11 @@ public class JmsAmazonSqsConsumer {
             mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
 
             // 填充报告来源信息
-            mongoService.saveMongoDataMult(cvsList, recordTypeEnum.getMongoTableName());
+            mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
         }
 
         //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
-        message.acknowledge();
+//        message.acknowledge();
     }
 
 
@@ -179,8 +184,8 @@ public class JmsAmazonSqsConsumer {
 
     }
 
-    private void handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum){
-        cvsList.forEach(o -> {
+    private List<? extends ReportSuperMongoDTO> handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum){
+        return cvsList.stream().map(o -> {
             try {
                 ReportSuperMongoDTO mongoDTO = (ReportSuperMongoDTO) recordTypeEnum.getMongoDTOClass().newInstance();
                 BeanUtils.copyProperties(o, mongoDTO);
@@ -189,10 +194,11 @@ public class JmsAmazonSqsConsumer {
                 mongoDTO.setMarketplaceIds(report.getMarketplaceIds());
                 mongoDTO.setReportId(report.getReportId());
                 mongoDTO.setReportScheduleId(report.getReportScheduleId());
+                return mongoDTO;
             } catch (Exception e) {
                 throw new ServiceException("csv转换mongoDTO失败, error=" + e.getMessage());
             }
-        });
+        }).collect(Collectors.toList());
     }
 
 }

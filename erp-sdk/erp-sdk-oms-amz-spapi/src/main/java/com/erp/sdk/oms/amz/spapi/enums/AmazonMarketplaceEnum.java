@@ -82,6 +82,6 @@ public enum AmazonMarketplaceEnum {
         return Stream.of(AmazonMarketplaceEnum.values())
                 .filter(e -> e.getMarketplaceId().equalsIgnoreCase(marketPlaceId))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new ServiceException("未找到对应Marketplace"));
     }
 }
