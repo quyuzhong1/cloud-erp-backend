@@ -77,7 +77,12 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         findDTO.setBusinessType(appClientEnum.getBusinessType());
         findDTO.setDictPlatform(appClientEnum.getPlatform());
         findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        }catch (Exception e){
+            log.error("erp-dmp服务获取虾皮配置信息异常：{}",e.getMessage());
+        }
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
