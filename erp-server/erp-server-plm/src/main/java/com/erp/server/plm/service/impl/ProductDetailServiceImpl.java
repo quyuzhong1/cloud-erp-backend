@@ -3934,5 +3934,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.listByChargeId(chargeId);
     }
 
+    @Override
+    public Boolean updateWarehouseLocationById(String id, String warehouseLocation) {
+        boolean flag = lambdaUpdate()
+                .eq(ProductDetailEntity::getId, id)
+                .set(ProductDetailEntity::getWarehouseLocation, warehouseLocation)
+                .update();
 
+        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, id).list();
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+
+        return flag;
+    }
 }
