@@ -354,6 +354,11 @@ public class SoB2cDTO implements Serializable {
          * 2、合并生成的新订单 merge
          */
         private String refType;
+
+        /**
+         * 合并数量
+         */
+        private Integer mergeCount;
     }
 
     /**
@@ -562,14 +567,22 @@ public class SoB2cDTO implements Serializable {
          * 单据日期
          */
         private LocalDate billDate;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
         /**
          * 来源订单id
          */
         private String sourceId;
+
         /**
          * 来源类型
          */
         private String sourceType;
+
         /**
          * 来源订单编码
          */
