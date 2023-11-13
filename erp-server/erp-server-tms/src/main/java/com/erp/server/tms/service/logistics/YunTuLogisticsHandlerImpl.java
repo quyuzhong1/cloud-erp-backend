@@ -55,7 +55,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        YunTuResponse<List<YunTuChannel>> yunTuResponse =  yunTuService.getAllChannel();
+        YunTuResponse<List<YunTuChannel>> yunTuResponse =  yunTuService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
         if(isFailure(yunTuResponse.getCode())){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage());
         }
@@ -66,7 +66,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
-        YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request));
+        YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getLogisticsAuthEntity());
         if(isFailure(yunTuResponse.getCode())){
             List<YunTuCreateOrder> yunTuCreateOrders = yunTuResponse.getData();
             String remark = "";
@@ -90,7 +90,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuPrintLabelRequest request = YunTuPrintLabelRequest.builder()
                 .orderNumbers(deliveryList)
                 .build();
-        YunTuResponse<List<YunTuPrintLabel>> yunTuResponse = yunTuService.getPrintLabel(request);
+        YunTuResponse<List<YunTuPrintLabel>> yunTuResponse = yunTuService.getPrintLabel(request,labelVO.get(0).getLogisticsAuthEntity());
         List<LogisticsPrintLabelResponse> responseList = new ArrayList<>();
         //云途调取打印标签，可能全部失败，也有可能部分成功，部分失败
         if(isFailure(yunTuResponse.getCode())){
@@ -139,7 +139,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
                 .customerOrderNumber(String.join(",", deliveryList))
                 .build();
-        YunTuResponse<List<YunTuTrackingNumber>> yunTuResponse = yunTuService.getTrackingNumber(request);
+        YunTuResponse<List<YunTuTrackingNumber>> yunTuResponse = yunTuService.getTrackingNumber(request,logisticsQueryVOList.get(0).getLogisticsAuthEntity());
         List<LogisticsOrderResponseVO> responseList = new ArrayList<>();
         if(isFailure(yunTuResponse.getCode())){
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
@@ -162,7 +162,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderType(2)
                     .orderNumber(interceptOrderVO.getDeliveryNo())
                     .build();
-            YunTuResponse<YunTuInterceptOrder> yunTuResponse = yunTuService.interceptOrder(request);
+            YunTuResponse<YunTuInterceptOrder> yunTuResponse = yunTuService.interceptOrder(request,interceptOrderVO.getLogisticsAuthEntity());
             InterceptResponseVO interceptResponseVO = LogisticsOperationOrderConverter.INSTANCE.interceptOrderCovert(interceptOrderVO);
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;
@@ -185,7 +185,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderType(2)
                     .orderNumber(cancelOrderVO.getDeliveryNo())
                     .build();
-            YunTuResponse<YunTuCancelOrder> yunTuResponse = yunTuService.cancelOrder(request);
+            YunTuResponse<YunTuCancelOrder> yunTuResponse = yunTuService.cancelOrder(request,cancelOrderVO.getLogisticsAuthEntity());
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;

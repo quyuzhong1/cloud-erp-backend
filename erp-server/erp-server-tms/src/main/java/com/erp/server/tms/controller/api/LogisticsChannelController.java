@@ -44,7 +44,7 @@ public class LogisticsChannelController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道表新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsChannelDTO.AddDTO dto) {
         return success(logisticsChannelService.add(dto));
     }

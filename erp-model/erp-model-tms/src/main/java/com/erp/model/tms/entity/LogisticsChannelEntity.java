@@ -80,6 +80,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("fee_rule")
     private String feeRule;
+
+    /**
+     * 纸张大小
+     */
+    @TableField("paper_size")
+    private String paperSize;
     /**
     * 最高报关金额
     */

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -25,9 +26,16 @@ public class YunTuLogisticsHandlerImplTest {
     @Resource
     private YunTuLogisticsHandlerImpl yunTuLogisticsHandler;
 
+    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+
+    public YunTuLogisticsHandlerImplTest(){
+        logisticsAuthEntity.setAccount("ITC0893791");
+        logisticsAuthEntity.setPassword("axzc2utvPbfc9UbJDOh+7w==");
+    }
+
     @Test
     public void getChannel() {
-        System.out.println(yunTuLogisticsHandler.getChannel(new ChanelQueryVO()));
+        System.out.println(yunTuLogisticsHandler.getChannel(ChanelQueryVO.builder().logisticsAuthEntity(logisticsAuthEntity).build()));
     }
 
 
@@ -53,6 +61,7 @@ public class YunTuLogisticsHandlerImplTest {
         logisticsProductVO.setQuantity(1);
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .channelCode("THPHR")
+                .logisticsAuthEntity(logisticsAuthEntity)
                 .channelId("155")
                 .orderSource("ERP")
                 .deliveryNo("WEIJI2023111001007")
@@ -95,6 +104,8 @@ public class YunTuLogisticsHandlerImplTest {
         LogisticsGetLabelVO labelVO2 = new LogisticsGetLabelVO();
         labelVO.setDeliveryNo("WEIJI2023110901004");
         labelVO2.setDeliveryNo("WEIJI2023111001007");
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
         ApiResult<List<LogisticsPrintLabelResponse>> result = yunTuLogisticsHandler.getLabelList(Arrays.asList(labelVO,labelVO2));
         System.out.println(result);
     }
@@ -104,6 +115,8 @@ public class YunTuLogisticsHandlerImplTest {
         LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
         LogisticsQueryBaseVO labelVO2 = new LogisticsQueryBaseVO();
         labelVO.setDeliveryNo("WEIJI2023110901004");
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
         labelVO2.setDeliveryNo("WEIJI2023111001007");
         ApiResult<List<LogisticsOrderResponseVO>> apiResult = yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
@@ -114,7 +127,9 @@ public class YunTuLogisticsHandlerImplTest {
         LogisticsInterceptOrderVO labelVO = new LogisticsInterceptOrderVO();
         LogisticsInterceptOrderVO labelVO2 = new LogisticsInterceptOrderVO();
         labelVO.setDeliveryNo("WEIJI2023110901004");
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
         ApiResult<List<InterceptResponseVO>> apiResult = yunTuLogisticsHandler.interceptOrder(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
@@ -124,7 +139,9 @@ public class YunTuLogisticsHandlerImplTest {
         LogisticsCancelOrderVO labelVO = new LogisticsCancelOrderVO();
         LogisticsCancelOrderVO labelVO2 = new LogisticsCancelOrderVO();
         labelVO.setDeliveryNo("WEIJI2023110901004");
+        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
+        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
         ApiResult<List<CancelResponseVO>> apiResult = yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }

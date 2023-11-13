@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 面板打印设置表 服务类
@@ -18,10 +20,10 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
     * 新增
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsPrintTypeDTO.AddDTO dto);
+    Boolean add(String channelId, List<LogisticsPrintTypeDTO.AddDTO> list);
 
     /**
     * 修改

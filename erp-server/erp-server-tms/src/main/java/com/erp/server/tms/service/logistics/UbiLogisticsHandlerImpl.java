@@ -1,31 +1,44 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.LogisticsPlatformResultEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
+import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
+import com.sdk.tms.ubi.model.label.LabelRequest;
+import com.sdk.tms.ubi.model.label.LabelResponse;
+import com.sdk.tms.ubi.model.order.request.HoldRequest;
 import com.sdk.tms.ubi.model.order.request.OrderItem;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.OrderResponse;
+import com.sdk.tms.ubi.model.order.response.TrackBase;
 import com.sdk.tms.ubi.service.UbiShipperService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -91,66 +104,94 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     /**
      * 取消订单
      *
-     * @param logisticsQueryVO
+     * @param logisticsCancelOrderVOS
      * @return
      */
-//    @Override
-//    public ApiResult<String> cancelOrder(LogisticsCancelOrderVO logisticsQueryVO) {
-//        //只支持单个订单取消
-//        try {
-//            OrderResponse orderResponse = ubiShipperService.deleteShipperOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
-//                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), logisticsQueryVO.getTransportNo().get(0));
-//
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-//            return success(orderResponse.getStatus());
-//        } catch (Exception e) {
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
-//            return failure(e.getMessage());
-//        }
-//    }
+    @Override
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsCancelOrderVOS) {
+        LogisticsCancelOrderVO logisticsCancelOrderVO = logisticsCancelOrderVOS.stream().filter(e -> Objects.nonNull(e.getLogisticsAuthEntity())).findFirst().orElse(null);
+        List<CancelResponseVO> responseVOS = new ArrayList<>();
+        boolean isSuccess = true;
+        for (LogisticsCancelOrderVO logisticsQueryVO : logisticsCancelOrderVOS) {
+            //只支持单个订单取消
+            CancelResponseVO responseVO = new CancelResponseVO();
+            try {
+                OrderResponse orderResponse = ubiShipperService.deleteShipperOrder(logisticsCancelOrderVO.getLogisticsAuthEntity().getAccount(),
+                        logisticsCancelOrderVO.getLogisticsAuthEntity().getPassword(), logisticsQueryVO.getDeliveryNo());
+                logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                        logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
+                if ("Success".equalsIgnoreCase(orderResponse.getStatus())){
+                    responseVO.success();
+                    responseVO.setDeliveryNo(orderResponse.getReferenceNo());
+                    responseVO.setTransportNo(orderResponse.getOrderId());
+                    responseVO.setTrackNo(orderResponse.getTrackingNo());
+                }else {
+                    isSuccess = false;
+                    logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                            logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
+                    responseVO.failure(LogisticsPlatformEnum.UBI.getName(),"-1", orderResponse.getErrors());
+                    responseVO.setDeliveryNo(orderResponse.getReferenceNo());
+                }
+                responseVOS.add(responseVO);
+            } catch (Exception e) {
+                logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
+                        logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
+                isSuccess = false;
+            }
+        }
+        return isSuccess?success(responseVOS):failure(responseVOS);
+    }
 
 
     /**
      * 拦截订单
      *
-     * @param logisticsQueryVO
+     * @param logisticsInterceptOrderVOS
      * @return
      */
-//    @Override
-//    public ApiResult<List<InterceptResponseVO>> interceptOrder(LogisticsInterceptOrderVO logisticsQueryVO) {
-//        HoldRequest holdRequest = HoldRequest.builder()
-//                .orderIds(logisticsQueryVO.getDeliveryNo())
-//                .holdType(1)
-//                .build();
-//        try {
-//            List<OrderResponse> orderResponses = ubiShipperService.interceptOrder(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
-//                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), holdRequest);
-//
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getDeliveryNo().get(0), BusinessTypeEnums.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponses));
-//            List<InterceptResponseVO> responseVOS = new ArrayList<>();
-//            if (CollectionUtils.isNotEmpty(orderResponses)) {
-//                orderResponses.stream().forEach(orderResponse -> {
-//                    responseVOS.add(InterceptResponseVO.builder()
-////                            .errors(orderResponse.getErrors())
-////                            .status(orderResponse.getStatus())
-//                            .deliveryNo(orderResponse.getOrderId())
-//                            .build());
-//                });
-//            }
-//            return success(responseVOS);
-//        } catch (Exception e) {
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getDeliveryNo().get(0), BusinessTypeEnums.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
-//            return failure(e.getMessage());
-//        }
-//    }
+    @Override
+    public ApiResult<List<InterceptResponseVO>> interceptOrder(List<LogisticsInterceptOrderVO> logisticsInterceptOrderVOS) {
+        LogisticsInterceptOrderVO logisticsInterceptOrderVO = logisticsInterceptOrderVOS.stream().filter(e -> Objects.nonNull(e.getLogisticsAuthEntity())).findFirst().orElse(null);
+        HoldRequest holdRequest = HoldRequest.builder()
+                .orderIds(logisticsInterceptOrderVOS.stream().map(LogisticsInterceptOrderVO::getDeliveryNo).collect(Collectors.toList()))
+                .holdType(1)
+                .build();
+        try {
+            List<OrderResponse> orderResponses = ubiShipperService.interceptOrder(logisticsInterceptOrderVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsInterceptOrderVO.getLogisticsAuthEntity().getPassword(), holdRequest);
+            logisticsOrderOperateLogService.addOperateLog(logisticsInterceptOrderVO.getLogisticsAuthEntity().getId(),
+                    logisticsInterceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(orderResponses));
+            List<InterceptResponseVO> responseVOS = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(orderResponses)) {
+                orderResponses.stream().forEach(orderResponse -> {
+                    if ("Success".equalsIgnoreCase(orderResponse.getStatus())) {
+                        InterceptResponseVO responseVO = InterceptResponseVO.builder()
+                                .deliveryNo(orderResponse.getOrderId())
+                                .build();
+                        responseVO.setCode(LogisticsPlatformResultEnum.SUCESS.getCode());
+                        responseVOS.add(responseVO);
+                    } else {
+                        InterceptResponseVO responseVO = InterceptResponseVO.builder()
+                                .deliveryNo(orderResponse.getOrderId())
+                                .build();
+                        responseVO.setCode(LogisticsPlatformResultEnum.FAILURE.getCode());
+                        responseVO.setMessage(LogisticsPlatformResultEnum.FAILURE.getDesc());
+                        responseVOS.add(responseVO);
+                    }
+                });
+            }
+            return success(responseVOS);
+        } catch (Exception e) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsInterceptOrderVO.getLogisticsAuthEntity().getId(),
+                    logisticsInterceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsInterceptOrderVOS), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
+        }
+    }
 
     /**
      * 查询订单(批量)
@@ -158,25 +199,26 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsQueryVOList
      * @return
      */
-//    @Override
-//    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(LogisticsQueryBaseVO logisticsQueryVOList) {
-//        try {
-//            List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryVOList.getLogisticsAuthEntity().getAccount(),
-//                    logisticsQueryVOList.getLogisticsAuthEntity().getPassword(), logisticsQueryVOList.getDeliveryNo());
-//
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVOList.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(trackNumber));
-//            //转换
-//            List<LogisticsOrderResponseVO> responseVOS = LogisticsOrderConverter.INSTANCE.ordersQueryByUBI(trackNumber);
-//            return success(responseVOS);
-//        } catch (Exception e) {
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVOList.getTransportNo().get(0), BusinessTypeEnums.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e.getMessage()));
-//            return failure(e.getMessage());
-//        }
-//    }
+    @Override
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        LogisticsQueryBaseVO logisticsQueryBaseVO = logisticsQueryVOList.stream().filter(e -> Objects.nonNull(e.getLogisticsAuthEntity())).findFirst().orElse(null);
+        try {
+            List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryBaseVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsQueryBaseVO.getLogisticsAuthEntity().getPassword(), logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()));
+
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(trackNumber));
+            //转换
+            List<LogisticsOrderResponseVO> responseVOS = LogisticsOrderConverter.INSTANCE.ordersQueryByUBI(trackNumber);
+            return success(responseVOS);
+        } catch (Exception e) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getLogisticsAuthEntity().getId(),
+                    logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
+        }
+    }
 
     /**
      * 获取标签批量
@@ -184,49 +226,41 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsQueryVO
      * @return
      */
-//    @Override
-//    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(LogisticsGetLabelVO logisticsQueryVO) {
-//        LabelRequest labelRequest = LabelRequest.builder()
-//                .orderIds(logisticsQueryVO.getDeliveryNo())
-//                //TODO 根据传参决定打印单大小
-//                .labelType("0")
-//                .packinglist(false)
-//                .merged(true)
-//                .labelFormat("JPG")
-//                .dpi("300")
-//                .build();
-//        try {
-//            List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsQueryVO.getLogisticsAuthEntity().getAccount(),
-//                    logisticsQueryVO.getLogisticsAuthEntity().getPassword(), labelRequest);
-//
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
-//            List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
-//            labelSpecs.forEach(labelResponse -> {
-//                responses.add(LogisticsPrintLabelResponse.builder()
-//                        .transportNoList(Collections.singletonList(labelResponse.getOrderId()))
-//                        .base64(labelResponse.getLabelContent())
-//                        .trackNoList(Collections.singletonList(labelResponse.getTrackingNo()))
-//                        .build());
-//            });
-//            return success(responses);
-//        } catch (Exception e) {
-//            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getLogisticsAuthEntity().getId(),
-//                    logisticsQueryVO.getTransportNo().get(0), BusinessTypeEnums.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
-//            return failure(e.getMessage());
-//        }
-//    }
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
+        LabelRequest labelRequest = LabelRequest.builder()
+                .orderIds(logisticsQueryVO.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()))
+                //TODO 根据传参决定打印单大小
+                .labelType("0")
+                .packinglist(false)
+                .merged(true)
+                .labelFormat("JPG")
+                .dpi("300")
+                .build();
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getLogisticsAuthEntity())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
+        try {
+            List<LabelResponse> labelSpecs = ubiShipperService.getLabels(logisticsGetLabelVO.getLogisticsAuthEntity().getAccount(),
+                    logisticsGetLabelVO.getLogisticsAuthEntity().getPassword(), labelRequest);
 
-    /**
-     * 轨迹查询
-     *
-     * @param logisticsQueryVO
-     * @return
-     */
-    public ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+            logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getLogisticsAuthEntity().getId(),
+                    logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelSpecs));
+            List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
+            labelSpecs.forEach(labelResponse -> {
+                responses.add(LogisticsPrintLabelResponse.builder()
+                        .deliveryNoList(Collections.singletonList(labelResponse.getOrderId()))
+                        .base64(labelResponse.getLabelContent())
+                        .trackNoList(Collections.singletonList(labelResponse.getTrackingNo()))
+                        .build());
+            });
+            return success(responses);
+        } catch (Exception e) {
+            logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getLogisticsAuthEntity().getId(),
+                    logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -253,6 +287,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.UBI;

@@ -36,6 +36,13 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     private String salesPlatform;
 
 
+    /**
+     * 销售渠道表id(logistics_sale_channel)
+     */
+    @TableField("logistics_sale_channel_id")
+    private String logisticsSaleChannelId;
+
+
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     public static final String SALES_PLATFORM = "sales_platform";

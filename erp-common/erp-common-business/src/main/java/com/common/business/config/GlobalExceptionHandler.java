@@ -46,6 +46,7 @@ import java.util.Objects;
         "com.erp.server.plm.controller.api",
         "com.erp.server.sys.controller.api",
         "com.erp.server.oms.controller.api",
+        "com.erp.server.tms.controller.api",
 
         "com.erp.server.scm.controller.pda",
         "com.erp.server.wms.controller.pda",
