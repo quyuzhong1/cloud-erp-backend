@@ -1,8 +1,14 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +38,54 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     */
     Boolean update(LogisticsBillCostDTO.UpdateDTO dto);
 
-
+    /**
+     * @description: tab列表
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<LogisticsBillCostDTO.ListDTO> paging(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+    /**
+     * @description: 状态变更
+     * @author Will
+     * @date: 2023/11/13 15:36
+     * @param id
+     * @param reconciliationStatus
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus);
+    /**
+     * @description: 下载模板
+     * @author Will
+     * @date: 2023/11/13 15:36
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/11/13 15:37
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/11/13 16:20
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response);
 }
