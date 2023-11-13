@@ -15,6 +15,7 @@ package com.erp.sdk.oms.amz.spapi.api;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
@@ -29,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Data
@@ -47,8 +49,8 @@ public class OrdersV0Api {
     /**
      * 初始化Api
      */
-    public static OrdersV0Api initApi(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+    public static OrdersV0Api initApi(AmazonEndpointsEnum endpointsEnum, boolean isSandbox) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
         LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
         AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         OrdersV0Api ordersV0Api = new OrdersV0Api.Builder()
@@ -59,7 +61,7 @@ public class OrdersV0Api {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(isSandbox ? endpointsEnum.getEndpointsByProfile() : endpointsEnum.getEndpoints())
                 .build();
         if (null == ordersV0Api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -1001,14 +1003,11 @@ public class OrdersV0Api {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if (progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
-                @Override
-                public Response intercept(Interceptor.Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
-                    return originalResponse.newBuilder()
-                            .body(new ProgressResponseBody(originalResponse.body(), progressListener))
-                            .build();
-                }
+            apiClient.getHttpClient().networkInterceptors().add(chain -> {
+                Response originalResponse = chain.proceed(chain.request());
+                return originalResponse.newBuilder()
+                        .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                        .build();
             });
         }
 
@@ -1286,12 +1285,13 @@ public class OrdersV0Api {
      * @return GetOrdersResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public List<Order> getAllOrders(List<String> marketplaceIds, String createdAfter, String createdBefore, String lastUpdatedAfter, String lastUpdatedBefore, List<String> orderStatuses, List<String> fulfillmentChannels, List<String> paymentMethods, String buyerEmail, String sellerOrderId, Integer maxResultsPerPage, List<String> easyShipShipmentStatuses, List<String> electronicInvoiceStatuses, String nextToken, List<String> amazonOrderIds, String actualFulfillmentSupplySourceId, Boolean isISPU, String storeChainStoreId, String earliestDeliveryDateBefore, String earliestDeliveryDateAfter, String latestDeliveryDateBefore, String latestDeliveryDateAfter) throws ApiException {
-        GetOrdersResponse orders = getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
+    public List<Order> getAllOrders(List<String> marketplaceIds, String createdAfter, String createdBefore, String lastUpdatedAfter, String lastUpdatedBefore, List<String> orderStatuses, List<String> fulfillmentChannels, List<String> paymentMethods, String buyerEmail, String sellerOrderId, List<String> easyShipShipmentStatuses, List<String> electronicInvoiceStatuses, String nextToken, List<String> amazonOrderIds, String actualFulfillmentSupplySourceId, Boolean isISPU, String storeChainStoreId, String earliestDeliveryDateBefore, String earliestDeliveryDateAfter, String latestDeliveryDateBefore, String latestDeliveryDateAfter) throws Exception {
+        GetOrdersResponse orders = getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, 100, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
         List<Order> resultOrderList = new LinkedList<>(orders.getPayload().getOrders());
         String currentNextToken = orders.getPayload().getNextToken();
-        while (StringUtils.isNotBlank(currentNextToken)) {
-            GetOrdersResponse currentResp = getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
+        while (StringUtils.isNotBlank(currentNextToken) && orders.getPayload().getOrders().size() == 100) {
+            TimeUnit.SECONDS.sleep(2);
+            GetOrdersResponse currentResp = getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
             resultOrderList.addAll(currentResp.getPayload().getOrders());
             currentNextToken = currentResp.getPayload().getNextToken();
         }

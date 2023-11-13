@@ -56,27 +56,22 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
         // 亚马逊订单下载
-        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), false);
         String createdAfter = null;
-        String lastUpdatedAfter = null;
-        if (BusinessCommonConstants.hasProfile("prod")) {
-            // 正式环境请求
-            // 东八区转UTC时间
-            lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
-        } else {
-            // 其他环境请求
-            createdAfter = "TEST_CASE_200";
-        }
+        // 正式环境请求
+        // 东八区转UTC时间
+        String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
+        String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
         try {
             // 发起请求
             List<Order> orderList = api.getAllOrders(Collections.singletonList(marketplaceEnum.getMarketplaceId()),
-                    createdAfter, null, lastUpdatedAfter, null, null, null, null, null, null, 10,
+                    createdAfter, null, lastUpdatedAfter, lastUpdatedBefore, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null,null, null);
             // 返回下载源数据
             return orderList.stream()
                     .map(e-> new PlatformAmazonOrderDTO(e, shop))
                     .collect(Collectors.toList());
-        } catch (ApiException e) {
+        } catch (Exception e) {
             throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
         }
     }
@@ -115,7 +110,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
         // 查询订单详情
-        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum);
+        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), false);
         OrderItemList allOrderItems = null;
         try {
             allOrderItems = ordersVoApi.getAllOrderItems(dto.getUniqueId(), null);
