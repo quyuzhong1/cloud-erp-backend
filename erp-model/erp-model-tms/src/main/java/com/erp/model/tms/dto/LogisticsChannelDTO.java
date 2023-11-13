@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -175,10 +176,9 @@ public class LogisticsChannelDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
+        * 物流商id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
+        @NotBlank(message = "物流商不能为空")
         private String mainId;
 
         /**
@@ -188,6 +188,12 @@ public class LogisticsChannelDTO implements Serializable {
         @Size(max = 100,message = "渠道名称最大长度不能超过100位")
         private String name;
 
+
+        /**
+         * 渠道代码
+         */
+        private String code;
+
         /**
         * 时效
         */
@@ -196,9 +202,9 @@ public class LogisticsChannelDTO implements Serializable {
 
         /**
         * 时效单位
+         * 默认day
         */
         @NotBlank(message = "时效单位不能为空")
-        @Size(max = 30,message = "时效单位最大长度不能超过30位")
         private String effectiveTimeUnit;
 
         /**
@@ -208,24 +214,28 @@ public class LogisticsChannelDTO implements Serializable {
         @Size(max = 30,message = "物流轨迹查询方式最大长度不能超过30位")
         private String trackQueryMode;
 
-        /**
-        * 纸张长
-        */
-        @NotNull(message = "纸张长不能为空")
-        private Integer paperLength;
 
         /**
-        * 纸张宽
+         * 物流映射列表
+         */
+        private List<LogisticsMappingDTO.AddDTO> mappingList;
+
+        /**
+        * 纸张大小
         */
-        @NotNull(message = "纸张宽不能为空")
-        private Integer paperWidth;
+        @NotBlank(message = "纸张大小不能为空")
+        private String paperSize;
+
+
 
         /**
         * 分拣码
         */
-        @NotBlank(message = "分拣码不能为空")
-        @Size(max = 30,message = "分拣码最大长度不能超过30位")
+        @Size(max = 30,message = "分拣码最大长度不能超过10位")
         private String sortingCode;
+
+
+
 
         /**
         * 运费模板id
@@ -238,7 +248,6 @@ public class LogisticsChannelDTO implements Serializable {
         * 费用规则
         */
         @NotBlank(message = "费用规则不能为空")
-        @Size(max = 30,message = "费用规则最大长度不能超过30位")
         private String feeRule;
 
         /**

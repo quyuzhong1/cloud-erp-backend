@@ -6,19 +6,24 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 物流类型枚举
- * @author Lambda
- * @Classname LogisticsAddressEnums
+ * 运费计费规则
+ *
+ * @author
+ * @Classname ShippingFeeRuleEnums
  * @Description TODO
- * @Date 2023-11-03 10:54
+ * @Date 2023-11-13 11:48
  * @Created by yl
  */
-public enum LogisticsSupplierTypeEnums implements EnumMessage {
-    SELF_DELIVER("selfDeliver","自发货物流"),
-    FIRST_CARRIER("firstCarrier","头程物流"),
-    OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓物流"),
-    CUSTOM("custom","自定义物流")
-    ;
+public enum ShippingFeeRuleEnum implements EnumMessage {
+
+    BILLING_WEIGHT("billingWeight", "计费重"),
+    NET_WEIGHT("netWeight", "实重"),
+    VOLUME_WEIGHT("volumeWeight", "体积重");
+
+    ShippingFeeRuleEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
 
     /**
      * 类型
@@ -30,11 +35,6 @@ public enum LogisticsSupplierTypeEnums implements EnumMessage {
      * 名称
      */
     private String name;
-
-    LogisticsSupplierTypeEnums(String code, String name){
-        this.code = code;
-        this.name = name;
-    }
 
     @Override
     public String getCode() {
@@ -50,7 +50,7 @@ public enum LogisticsSupplierTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsSupplierTypeEnums typeEnums : LogisticsSupplierTypeEnums.values()) {
+        for (ShippingFeeRuleEnum typeEnums : ShippingFeeRuleEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

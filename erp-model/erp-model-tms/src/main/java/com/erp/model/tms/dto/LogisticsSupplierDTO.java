@@ -1,20 +1,15 @@
 package com.erp.model.tms.dto;
 
-import java.time.LocalDateTime;
-
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.tms.enums.LogisticsSupplierTypeEnums;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
-import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -90,7 +85,7 @@ public class LogisticsSupplierDTO implements Serializable {
         /**
          * 类型
          */
-        private LogisticsSupplierTypeEnums type;
+        private LogisticsSupplierTypeEnum type;
 
         /**
          * 类型名称
@@ -227,7 +222,7 @@ public class LogisticsSupplierDTO implements Serializable {
          * 类型
          */
         @NotNull(message = "类型不能为空")
-        private LogisticsSupplierTypeEnums type;
+        private LogisticsSupplierTypeEnum type;
 
 
     }

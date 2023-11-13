@@ -22,7 +22,7 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import java.util.List;
 
 /**
- * 物流渠道表
+ * 物流商管理
  *
  * @author Lambda
  * @since 2023-11-02
@@ -37,7 +37,7 @@ public class LogisticsChannelController extends BaseController {
     private LogisticsChannelService logisticsChannelService;
 
     /**
-    * 新增
+    * 物流渠道新增
     * @author Lambda
     * @date:  2023-11-02
     * @param dto
@@ -50,7 +50,7 @@ public class LogisticsChannelController extends BaseController {
     }
 
     /**
-    * 修改
+    * 物流渠道修改
     * @author Lambda
     * @date:  2023-11-02
     * @param dto
@@ -69,7 +69,7 @@ public class LogisticsChannelController extends BaseController {
 
 
     /**
-     * 渠道列表
+     * 物流渠道列表
      * @author Will
      * @date: 2023/11/10 9:57
      * @return ApiResult<AddDTO>

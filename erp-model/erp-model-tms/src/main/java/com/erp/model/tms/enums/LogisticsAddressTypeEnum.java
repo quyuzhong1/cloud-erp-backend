@@ -6,17 +6,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * 物流地址类型枚举
  * @author Lambda
- * @Classname LogisticsAuthStatusEnums
+ * @Classname LogisticsAddressEnums
  * @Description TODO
- * @Date 2023-11-09 14:46
+ * @Date 2023-11-03 10:54
  * @Created by yl
  */
-public enum LogisticsAuthStatusEnums implements EnumMessage {
-
-    ALREADY("already", "已授权"),
-    NOT("not", "未授权"),
-    CANCEL("cancel","取消授权")
+public enum LogisticsAddressTypeEnum implements EnumMessage {
+    DELIVER("deliver","发货地址"),
+    REFUND("refund","退货地址"),
+    COLLECT("collect","揽收地址")
     ;
 
     /**
@@ -30,29 +30,28 @@ public enum LogisticsAuthStatusEnums implements EnumMessage {
      */
     private String name;
 
-
-    LogisticsAuthStatusEnums(String code, String name) {
+    LogisticsAddressTypeEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
 
     @Override
     public String getCode() {
-        return code;
+        return this.code;
     }
 
     @Override
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAuthStatusEnums statusEnum : LogisticsAuthStatusEnums.values()) {
-            if (code.equals(statusEnum.getCode())) {
-                return statusEnum.getName();
+        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
+            if (code.equals(typeEnums.getCode())) {
+                return typeEnums.getName();
             }
         }
         return "";
