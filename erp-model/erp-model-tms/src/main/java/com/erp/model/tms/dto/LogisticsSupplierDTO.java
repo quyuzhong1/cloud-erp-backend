@@ -213,6 +213,7 @@ public class LogisticsSupplierDTO implements Serializable {
 
         /**
          * 供应商id
+         * 来源 http://172.16.100.11:3002/project/83/interface/api/14038
          */
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
@@ -220,6 +221,7 @@ public class LogisticsSupplierDTO implements Serializable {
 
         /**
          * 类型
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=logisticsSupplierType
          */
         @NotNull(message = "类型不能为空")
         private LogisticsSupplierTypeEnum type;

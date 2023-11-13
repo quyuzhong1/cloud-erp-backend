@@ -51,7 +51,8 @@ public enum ModuleTypeEnum {
     FBA_SHIPMENT("48", "FBA货件单"),
     LOGISTICS_SUPPLIER("49", "物流商"),
     LOGISTICS_BILL("50", "物流单"),
-    SHIPPING_TEMPLATE("51", "运费模板"),
+    LOGISTICS_CHANNEL("51", "物流渠道"),
+    SHIPPING_TEMPLATE("53", "运费模板"),
     LOGISTICS_BILL_COST("52", "自发或费用"),
 
     ;

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流渠道映射表 服务类
@@ -18,10 +20,11 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
     * 新增
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param dtoList
+     *@param channelId
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsMappingDTO.AddDTO dto);
+    Boolean add(String channelId, List<LogisticsMappingDTO.AddDTO> dtoList);
 
     /**
     * 修改

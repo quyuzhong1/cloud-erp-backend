@@ -33,18 +33,7 @@ public class LogisticsChannelAddressController extends BaseController {
     @Autowired
     private LogisticsChannelAddressService logisticsChannelAddressService;
 
-    /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "渠道地址表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsChannelAddressDTO.AddDTO dto) {
-        return success(logisticsChannelAddressService.add(dto));
-    }
+
 
     /**
     * 修改

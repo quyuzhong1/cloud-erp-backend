@@ -69,7 +69,7 @@ public class CfgLogisticsAuthFieldController extends BaseController {
     }
 
     /**
-     * 根据平台获取对应数据
+     * 根据平台获取对应授权字段
      *
      * @return
      */

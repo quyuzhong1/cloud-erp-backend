@@ -100,10 +100,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         String cny = CurrencyEnum.CNY.getCurrencySymbol();
         //含税成本
         String actualTaxCost = productBaseInfo.getActualTaxCost();
+        if(StringUtils.isBlank(actualTaxCost)){
+            actualTaxCost="0";
+        }
         productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost));
 
         //不含税成本
         String actualNoTaxCost = productBaseInfo.getActualNoTaxCost();
+        if(StringUtils.isBlank(actualNoTaxCost)){
+            actualNoTaxCost="0";
+        }
         productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
 
         Integer salesStatus = productBaseInfo.getSalesStatus();

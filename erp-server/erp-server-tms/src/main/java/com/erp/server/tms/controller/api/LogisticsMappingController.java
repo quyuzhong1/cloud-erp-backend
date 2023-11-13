@@ -34,18 +34,7 @@ public class LogisticsMappingController extends BaseController {
     @Autowired
     private LogisticsMappingService logisticsMappingService;
 
-    /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道映射表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsMappingDTO.AddDTO dto) {
-        return success(logisticsMappingService.add(dto));
-    }
+
 
     /**
     * 修改
