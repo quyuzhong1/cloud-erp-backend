@@ -29,6 +29,7 @@ public class ShippingTemplateRefChannelEntity extends BaseEntity<ShippingTemplat
     */
     @TableField("main_id")
     private String mainId;
+
     /**
     * 物流渠道id
     */

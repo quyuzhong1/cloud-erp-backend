@@ -70,7 +70,7 @@ public enum ShippingCostNameEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnums typeEnums : LogisticsAddressTypeEnums.values()) {
+        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

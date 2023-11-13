@@ -2288,7 +2288,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SoB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto) {
-        SoB2cEntity oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
+        log.debug("===== start saveOrUpdateEntity:{}",dto);
+        SoB2cEntity oldEntity = null;
+        try {
+            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform());
+        }catch (Exception e){
+            log.error("查询订单异常：{}", e.getMessage());
+        }
         if (null == oldEntity){
             // 组合信息
             SoB2cEntity entity = new SoB2cEntity();
@@ -2296,7 +2302,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
-            if (!this.save(entity)){
+            boolean save = false;
+            try {
+                save = this.save(entity);
+            }catch (Exception e){
+                log.error("报错实体：{}", entity);
+                log.error("保存订单信息异常：PlatformCode：{},{}",dto.getPlatformCode(),e.getMessage());
+            }
+            if (!save){
                 throw new ServiceException("soB2c订单保存失败");
             }
             return entity;

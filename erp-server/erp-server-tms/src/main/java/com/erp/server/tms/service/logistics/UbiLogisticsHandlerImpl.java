@@ -5,37 +5,27 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.enums.BusinessTypeEnums;
+import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.InterceptResponseVO;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
-import com.sdk.tms.ubi.model.label.LabelRequest;
-import com.sdk.tms.ubi.model.label.LabelResponse;
-import com.sdk.tms.ubi.model.order.request.HoldRequest;
 import com.sdk.tms.ubi.model.order.request.OrderItem;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.OrderResponse;
-import com.sdk.tms.ubi.model.order.response.TrackBase;
 import com.sdk.tms.ubi.service.UbiShipperService;
-import io.seata.common.util.CollectionUtils;
-import jodd.util.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -79,7 +69,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             OrderResponse order = ubiShipperService.createOrder(ubiOrder);
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
-                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(order));
             //一票多件包裹信息 会有多层嵌套 暂不考虑
             LogisticsOrderResponseVO responseVO = LogisticsOrderResponseVO.builder()
@@ -91,7 +81,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         } catch (Exception e) {
             log.error(e.getMessage());
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getLogisticsAuthEntity().getId(),
-                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnums.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e.getMessage()));
             return failure(e.getMessage());
         }
@@ -252,12 +242,12 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             serviceCataLogList = ubiShipperService.getServiceCatalog(chanelQueryVO.getLogisticsAuthEntity().getAccount(), chanelQueryVO.getLogisticsAuthEntity().getPassword());
             List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBIList(serviceCataLogList);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getLogisticsAuthEntity().getId(),
-                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(serviceCataLogList));
             return success(list);
         } catch (Exception e) {
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getLogisticsAuthEntity().getId(),
-                    chanelQueryVO.getTransportMode(), BusinessTypeEnums.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e.getMessage()));
             return failure(e.getMessage());
         }

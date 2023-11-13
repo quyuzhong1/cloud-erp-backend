@@ -397,6 +397,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 重量
          */
+        @NotNull(message = "总量不能为空")
         private BigDecimal weight;
 
         /**

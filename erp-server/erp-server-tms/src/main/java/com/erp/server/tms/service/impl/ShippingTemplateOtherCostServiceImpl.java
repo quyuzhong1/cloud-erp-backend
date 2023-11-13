@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -96,6 +97,14 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Override
     public List<ShippingTemplateOtherCostEntity> listByMainId(String mainId) {
         return  lambdaQuery().eq(ShippingTemplateOtherCostEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    public List<ShippingTemplateOtherCostEntity> listByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return  lambdaQuery().in(ShippingTemplateOtherCostEntity::getMainId,mainIdList).list();
     }
 
     @Override

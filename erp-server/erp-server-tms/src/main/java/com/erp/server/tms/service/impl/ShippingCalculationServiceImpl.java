@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,8 +12,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
@@ -22,8 +25,12 @@ import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingCostNameEnum;
+import com.erp.model.tms.enums.ShippingFeeRuleEnums;
 import com.erp.model.tms.enums.ShippingSideEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
@@ -36,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -56,6 +64,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
     @Resource
     private ShippingTemplateOtherCostMapper shippingTemplateOtherCostMapper;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
@@ -68,7 +78,74 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
+        //处理数据
+        handleData(records,params);
         return new PagingVO(pageData);
+    }
+
+    private void handleData(List<ShippingCalculationDTO.ListDTO> records,ShippingCalculationDTO.PagingParamDTO params) {
+        //币别
+        List<String> currencyIdList = records.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO>  currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
+        //其他费用
+        List<String> templateIdList = records.stream().map(obj -> obj.getTemplateEntity().getId()).distinct().collect(Collectors.toList());
+        List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
+
+        for (ShippingCalculationDTO.ListDTO listDTO : records) {
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(listDTO.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
+
+            //有效期
+            String effectivePeriod = StrUtil.format("{}至{}",listDTO.getEffectiveDate(),listDTO.getExpireDate());
+            listDTO.setEffectivePeriod(effectivePeriod);
+
+            /**
+             * 体积重=长*宽*高/材积设置
+             * 若渠道为计费重：则取值实际重量和体积重量最大值作为计费重量
+             * 若渠道为实际重：则取值实际重量作为计算重量
+             * 若渠道为体积重：则取值体积重量作为计费重量
+             */
+            //体积重
+            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWeight()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting()));
+            //重量
+            BigDecimal weight = params.getWeight();
+            if (ShippingFeeRuleEnums.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+                weight = MathUtil.compareTo(volumeWeight, params.getWeight()) > MathUtil.ZERO ? volumeWeight : params.getWeight();
+            }
+            if (ShippingFeeRuleEnums.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+                weight = volumeWeight;
+            }
+
+            //重量单位比例
+            BigDecimal ratio = BigDecimal.ONE;
+            if (!StrUtil.equals(params.getWeightUnit(),listDTO.getWeightUnit())) {
+                if ("kg".equals(params.getWeightUnit())) {
+                    //kg
+                    ratio = new BigDecimal(1000);
+                } else{
+                    //g
+                    ratio = new BigDecimal(0.001);
+                }
+            }
+            //其他费用
+            List<ShippingTemplateOtherCostEntity> costEntityList = otherCostList.stream().filter(obj -> obj.getMainId().equals(listDTO.getTemplateEntity().getId())).collect(Collectors.toList());
+            ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(listDTO.getTemplateEntity(), listDTO.getTemplateRuleEntity(), costEntityList
+                    , weight, params.getLength(), params.getWidth(), params.getHeight());
+            listDTO.setShippingCost(MathUtil.multiply(shippingCalculationDTO.getShippingCost(),ratio));
+            listDTO.setRegistrationCost(MathUtil.multiply(shippingCalculationDTO.getRegistrationCost(),ratio));
+            listDTO.setOperatingCost(MathUtil.multiply(shippingCalculationDTO.getOperatingCost(),ratio));
+            listDTO.setTotalShippingCost(MathUtil.multiply(shippingCalculationDTO.getTotalShippingCost(),ratio));
+            //其他费用
+            ShippingCalculationDTO.OtherCostDTO otherCostDTO = new ShippingCalculationDTO.OtherCostDTO();
+            otherCostDTO.setDiscountCost(MathUtil.multiply(otherCostDTO.getDiscountCost(),ratio));
+            otherCostDTO.setPremiumCost(MathUtil.multiply(otherCostDTO.getPremiumCost(),ratio));
+            otherCostDTO.setSignatureCost(MathUtil.multiply(otherCostDTO.getSignatureCost(),ratio));
+            otherCostDTO.setOversizeSurchargeCost(MathUtil.multiply(otherCostDTO.getOversizeSurchargeCost(),ratio));
+            otherCostDTO.setFuelSurchargeCost(MathUtil.multiply(otherCostDTO.getFuelSurchargeCost(),ratio));
+            listDTO.setOtherCostDTO(otherCostDTO);
+        }
     }
 
     @Override
@@ -77,6 +154,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         if (CollectionUtils.isEmpty(resultList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
+        //处理数据
+        handleData(resultList,params);
         String name = "运费计算列表";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -95,13 +174,21 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
     @Override
     public  ShippingCalculationDTO.ViewDTO calculationFinalShippingCost(ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
             , BigDecimal weight) {
-        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = new ShippingCalculationDTO.ViewDTO();
+
 
         //查询其他费用
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(otherCostList)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
         }
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(entity, shippingTemplateRule, otherCostList, weight, null, null, null);
+        return shippingCalculationDTO;
+    }
+
+    private ShippingCalculationDTO.ViewDTO calculationFinalShippingCost (ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
+            ,List<ShippingTemplateOtherCostEntity> otherCostList, BigDecimal weight,BigDecimal length,BigDecimal width,BigDecimal height) {
+
+        ShippingCalculationDTO.ViewDTO shippingCalculationDTO = new ShippingCalculationDTO.ViewDTO();
         //运费
         BigDecimal shippingCost = calculationShippingCost(entity, shippingTemplateRule, weight);
         shippingCalculationDTO.setShippingCost(shippingCost);
@@ -136,9 +223,9 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 .add(fuelSurchargeCost)
                 .subtract(discountCost);
         shippingCalculationDTO.setTotalShippingCost(totalShippingCost);
+
         return shippingCalculationDTO;
     }
-
 
     /**
      * 运费

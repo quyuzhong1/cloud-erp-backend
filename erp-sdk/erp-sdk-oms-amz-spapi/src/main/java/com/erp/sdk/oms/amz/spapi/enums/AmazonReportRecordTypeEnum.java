@@ -30,8 +30,8 @@ public enum AmazonReportRecordTypeEnum {
     // 库存报告类型值
     // https://developer-docs.amazon.com/sp-api/docs/report-type-values-inventory
 //    GET_FLAT_FILE_OPEN_LISTINGS_DATA("GET_FLAT_FILE_OPEN_LISTINGS_DATA", "库存报告", false, "", null),
-    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
-//    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, "", null),
+//    GET_MERCHANT_LISTINGS_ALL_DATA("GET_MERCHANT_LISTINGS_ALL_DATA", "所有商品信息报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
+    GET_MERCHANT_LISTINGS_DATA("GET_MERCHANT_LISTINGS_DATA", "在售商品报告", false, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingCsvEntity.class, ReportListingMongoDTO.class),
 //    GET_MERCHANT_LISTINGS_INACTIVE_DATA("GET_MERCHANT_LISTINGS_INACTIVE_DATA", "非在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT("GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT", "表符分隔的库存模板文件在售商品报告", false, "", null),
 //    GET_MERCHANT_LISTINGS_DATA_LITE("GET_MERCHANT_LISTINGS_DATA_LITE", "在售商品报告精简版（仅包含数量大于零的商品的 SKU、ASIN、价格和数量字段）", false, "", null),
@@ -91,7 +91,7 @@ public enum AmazonReportRecordTypeEnum {
         return Stream.of(AmazonReportRecordTypeEnum.values())
                 .filter(e -> e.getRecordType().equalsIgnoreCase(reportType))
                 .findFirst()
-                .orElseThrow(() -> new ServiceException("找不到对应报告类型：reportType=" + reportType))
+                .orElse(null)
                 ;
     }
 

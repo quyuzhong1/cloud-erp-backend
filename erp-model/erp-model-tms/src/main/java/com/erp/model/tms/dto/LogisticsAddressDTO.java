@@ -3,10 +3,9 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.tms.enums.LogisticsAddressTypeEnums;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import java.io.Serializable;
 import java.util.List;
@@ -47,7 +46,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 类型
          */
-        private LogisticsAddressTypeEnums type;
+        private LogisticsAddressTypeEnum type;
 
         /**
          * 类型名称
@@ -158,7 +157,7 @@ public class LogisticsAddressDTO implements Serializable {
         /**
          * 类型
          */
-        private LogisticsAddressTypeEnums type;
+        private LogisticsAddressTypeEnum type;
 
         /**
          * 类型
@@ -271,7 +270,7 @@ public class LogisticsAddressDTO implements Serializable {
          * http://172.16.100.11:3002/project/128/interface/api/25522
          */
         @NotNull(message = "类型不能为空")
-        private LogisticsAddressTypeEnums type;
+        private LogisticsAddressTypeEnum type;
 
         /**
          * 公司名
@@ -340,6 +339,17 @@ public class LogisticsAddressDTO implements Serializable {
         @Size(max = 20, message = "邮编最大长度不能超过20位")
         private String zipCode;
 
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO{
+
+        private String id;
+
+        private String name;
 
     }
 

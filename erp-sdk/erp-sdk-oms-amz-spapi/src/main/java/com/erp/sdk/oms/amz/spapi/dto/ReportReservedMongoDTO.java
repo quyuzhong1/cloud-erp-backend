@@ -5,6 +5,8 @@ import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.mapstruct.Mapping;
 
 
 /**
@@ -42,5 +44,26 @@ public class ReportReservedMongoDTO extends ReportSuperMongoDTO {
         ReportReservedMongoDTO reservedMongoDTO = new ReportReservedMongoDTO();
         reservedMongoDTO.setReportId(reservedReportId);
         return reservedMongoDTO;
+    }
+
+    public Integer reservedFCTransfersCheckToInt(){
+        if (StringUtils.isBlank(this.reservedFCTransfers)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedFCTransfers);
+    }
+
+    public Integer reservedFCProcessingCheckToInt(){
+        if (StringUtils.isBlank(this.reservedFCProcessing)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedFCProcessing);
+    }
+
+    public Integer reservedCustomerOrdersCheckToInt(){
+        if (StringUtils.isBlank(this.reservedCustomerOrders)){
+            return 0;
+        }
+        return Integer.parseInt(this.reservedCustomerOrders);
     }
 }

@@ -5,7 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum BusinessTypeEnums implements EnumMessage {
+public enum BusinessTypeEnum implements EnumMessage {
     CREATE_ORDER("createOrder", "创建订单"),
     CONFIRM_ORDER("confirmOrder", "确认订单"),
     UPDATE_ORDER("updateOrder", "更新订单"),
@@ -28,7 +28,7 @@ public enum BusinessTypeEnums implements EnumMessage {
      */
     private String name;
 
-    BusinessTypeEnums(String code, String name) {
+    BusinessTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +47,7 @@ public enum BusinessTypeEnums implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BusinessTypeEnums typeEnums : BusinessTypeEnums.values()) {
+        for (BusinessTypeEnum typeEnums : BusinessTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

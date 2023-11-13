@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum RuleOrderFlowStatusEnum {
 
-    WAIT_DISTRIBUTION("waitDistribution",  "待配货"),
+    REJECT("reject",  "审核不通过"),
 
-    IN_DISTRIBUTION("inDistribution",  "配货中"),;
+    PASS("pass",  "审核通过"),;
 
 
     /**

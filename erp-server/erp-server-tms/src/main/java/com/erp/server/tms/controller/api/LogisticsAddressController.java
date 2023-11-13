@@ -74,9 +74,10 @@ public class LogisticsAddressController extends BaseController {
             tableAlias = "ci"
     )
     public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = logisticsAddressService.exportExcel(dto,response);
+        Boolean result = logisticsAddressService.exportExcel(dto, response);
         return result ? success() : failure();
     }
+
     /**
      * 新增
      *
@@ -87,7 +88,7 @@ public class LogisticsAddressController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流地址表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@Validated @RequestBody  LogisticsAddressDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@Validated @RequestBody LogisticsAddressDTO.AddDTO dto) {
         return success(logisticsAddressService.add(dto));
     }
 
@@ -106,7 +107,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:update",
             serviceClass = LogisticsAddressService.class,
             keyIdName = "id")
-    public ApiResult update(@Validated  @RequestBody  LogisticsAddressDTO.UpdateDTO dto) {
+    public ApiResult update(@Validated @RequestBody LogisticsAddressDTO.UpdateDTO dto) {
         logisticsAddressService.update(dto);
         return success();
     }
@@ -133,6 +134,7 @@ public class LogisticsAddressController extends BaseController {
 
     /**
      * 删除
+     *
      * @param dto
      * @return
      */
@@ -142,15 +144,15 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:delete",
             serviceClass = LogisticsAddressService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> delete(@Validated  @RequestBody  BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delete(@Validated @RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for(String id:dto.getIds()){
+        for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult=logisticsAddressService.delete(id);
-            }catch (Exception e){
-                log.error("物流地址删除失败{}",e);
-                LogisticsAddressEntity  entity=logisticsAddressService.getById(id);
+                deleteResult = logisticsAddressService.delete(id);
+            } catch (Exception e) {
+                log.error("物流地址删除失败{}", e);
+                LogisticsAddressEntity entity = logisticsAddressService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "物流地址不存在, 删除失败");
                     resultDTOS.add(deleteResult);
@@ -166,7 +168,16 @@ public class LogisticsAddressController extends BaseController {
 
     }
 
-
+    /**
+     * 根据地址类型获取地址列表
+     *
+     * @return
+     */
+    @GetMapping("/listByType")
+    public ApiResult<List<LogisticsAddressDTO.ListDTO>> listByType(@RequestParam("type") String type) {
+        List<LogisticsAddressDTO.ListDTO> list = logisticsAddressService.listByType(type);
+        return success(list);
+    }
 
 
 }

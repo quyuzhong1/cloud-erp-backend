@@ -6,15 +6,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author Will
- * @version 1.0
- * @description: 计费方式枚举
- * @date 2023/11/8 9:40
+ * @author Lambda
+ * @Classname LogisticsAuthStatusEnums
+ * @Description TODO
+ * @Date 2023-11-09 14:46
+ * @Created by yl
  */
-public enum ShippingBillingMethodEnum implements EnumMessage {
+public enum LogisticsAuthStatusEnum implements EnumMessage {
 
-    ENUM_SEVERAL_WEIGHT("severalWeight","续重+首重"),
-    ENUM_WEIGHT_SEGMENT("weightSegment","重量段")
+    ALREADY("already", "已授权"),
+    NOT("not", "未授权"),
+    CANCEL("cancel","取消授权")
     ;
 
     /**
@@ -28,28 +30,29 @@ public enum ShippingBillingMethodEnum implements EnumMessage {
      */
     private String name;
 
-    ShippingBillingMethodEnum(String code, String name){
+
+    LogisticsAuthStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
     @Override
     public String getCode() {
-        return this.code;
+        return code;
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return name;
     }
 
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsAddressTypeEnum typeEnums : LogisticsAddressTypeEnum.values()) {
-            if (code.equals(typeEnums.getCode())) {
-                return typeEnums.getName();
+        for (LogisticsAuthStatusEnum statusEnum : LogisticsAuthStatusEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
             }
         }
         return "";

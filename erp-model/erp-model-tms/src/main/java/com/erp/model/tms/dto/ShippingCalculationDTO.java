@@ -1,10 +1,16 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -32,17 +38,17 @@ public class ShippingCalculationDTO {
         /**
          * 起始地
          */
-        private String fromCountry;
+        private List<String> fromCountryList;
 
         /**
          * 目的地
          */
-        private String toCountry;
+        private List<String> toCountryList;
 
         /**
          * 目的仓库
          */
-        private String toWarehouse;
+        private List<String> toWarehouseList;
 
         /**
          * 城市
@@ -57,27 +63,29 @@ public class ShippingCalculationDTO {
         /**
          * 重量
          */
+        @NotNull(message = "重量不能为空")
         private BigDecimal weight;
 
         /**
          * 重量单位
          */
+        @NotBlank(message = "重量单位不能为空")
         private String weightUnit;
 
         /**
          * 长
          */
-        private String length;
+        private BigDecimal length;
 
         /**
          * 宽
          */
-        private String width;
+        private BigDecimal width;
 
         /**
          * 高
          */
-        private String height;
+        private BigDecimal height;
     }
 
     /**
@@ -96,6 +104,11 @@ public class ShippingCalculationDTO {
          * 物流渠道名称名称
          */
         private String channelName;
+
+        /**
+         * 计费规则
+         */
+        private String feeRule;
 
         /**
          * 目的仓库
@@ -118,6 +131,26 @@ public class ShippingCalculationDTO {
         private String effectivePeriod ;
 
         /**
+         * 生效日期
+         */
+        private LocalDate effectiveDate ;
+
+        /**
+         * 失效日期
+         */
+        private LocalDate expireDate ;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 材积设置
+         */
+        private Integer volumeSetting;
+
+        /**
          * 运费
          */
         private BigDecimal shippingCost;
@@ -133,14 +166,19 @@ public class ShippingCalculationDTO {
         private BigDecimal operatingCost;
 
         /**
-         * 其他费
+         * 其他费用
          */
-        private BigDecimal otherCost;
+        private OtherCostDTO otherCostDTO;
+
+        /**
+         * 其他费用
+         */
+        private String otherCostStr;
 
         /**
          * 总金额
          */
-        private BigDecimal totalAmount;
+        private BigDecimal totalShippingCost;
 
         /**
          * 币别
@@ -151,6 +189,49 @@ public class ShippingCalculationDTO {
          * 币别符号
          */
         private String currencySymbol;
+
+        /**
+         * 模板对象
+         */
+        private ShippingTemplateEntity templateEntity;
+
+        /**
+         * 模板规则
+         */
+        private ShippingTemplateRuleEntity templateRuleEntity;
+    }
+
+    /**
+     * 其他费用
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OtherCostDTO {
+
+        /**
+         * 折扣费
+         */
+        private BigDecimal discountCost;
+
+        /**
+         * 超尺寸附加费
+         */
+        private BigDecimal oversizeSurchargeCost;
+
+        /**
+         * 签名费
+         */
+        private BigDecimal signatureCost;
+
+        /**
+         * 燃油附加费
+         */
+        private BigDecimal fuelSurchargeCost;
+
+        /**
+         * 保险费
+         */
+        private BigDecimal premiumCost;
     }
 
     /**
@@ -181,24 +262,24 @@ public class ShippingCalculationDTO {
         private BigDecimal discountCost;
 
         /**
-         * 签名费
-         */
-        private BigDecimal signatureCost;
-
-        /**
-         * 保险费
-         */
-        private BigDecimal premiumCost;
-
-        /**
          * 超尺寸附加费
          */
         private BigDecimal oversizeSurchargeCost;
 
         /**
+         * 签名费
+         */
+        private BigDecimal signatureCost;
+
+        /**
          * 燃油附加费
          */
         private BigDecimal fuelSurchargeCost;
+
+        /**
+         * 保险费
+         */
+        private BigDecimal premiumCost;
 
         /**
          * 最终运费

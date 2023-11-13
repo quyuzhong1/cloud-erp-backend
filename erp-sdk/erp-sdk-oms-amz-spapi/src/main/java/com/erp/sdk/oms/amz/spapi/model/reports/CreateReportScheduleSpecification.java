@@ -13,6 +13,7 @@
 
 package com.erp.sdk.oms.amz.spapi.model.reports;
 
+import com.common.core.exception.ServiceException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * CreateReportScheduleSpecification
@@ -84,6 +86,14 @@ public class CreateReportScheduleSpecification {
 
         PeriodEnum(String value) {
             this.value = value;
+        }
+
+        public static PeriodEnum getByCode(String period) {
+            return Stream.of(PeriodEnum.values())
+                    .filter(periodEnum -> periodEnum.getValue().equalsIgnoreCase(period))
+                    .findFirst()
+                    .orElseThrow(() -> new ServiceException("为找到对应时间段类型:"+ period))
+                    ;
         }
 
         public String getValue() {

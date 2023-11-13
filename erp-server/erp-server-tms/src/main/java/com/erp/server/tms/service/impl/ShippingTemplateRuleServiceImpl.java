@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,8 +70,6 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         List<ShippingTemplateRuleEntity> list = BeanMapperUtils.copyList(ShippingTemplateRuleEntity.class, detailList);
         //验证必填信息
         checkPurchasePrice(list,mainId);
-        //数据格式化
-        handleData(list,mainId);
         boolean save = this.saveBatch(list);
         if(!save) {
             throw new ServiceException("运费规则单保存失败");
@@ -91,8 +91,6 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         List<ShippingTemplateRuleEntity> list = BeanMapperUtils.copyList(ShippingTemplateRuleEntity.class, detailList);
         //验证必填信息
         checkPurchasePrice(list,mainId);
-        //数据格式化
-        handleData(list,mainId);
         //原明细数据
         List<ShippingTemplateRuleEntity> oldList = this.listByMainId(mainId);
         List<String> deleteIds = getDeleteIds(list, oldList);
@@ -129,11 +127,11 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
     @Override
     public ShippingTemplateRuleEntity getShippingTemplateRule(ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO) {
         return lambdaQuery()
-                .eq(StringUtils.isEmpty(viewParamDTO.getFromCountry()),ShippingTemplateRuleEntity::getFromCountry,viewParamDTO.getFromCountry())
-                .eq(StringUtils.isEmpty(viewParamDTO.getToCountry()),ShippingTemplateRuleEntity::getToCountry,viewParamDTO.getToCountry())
-                .eq(StringUtils.isEmpty(viewParamDTO.getRegion()),ShippingTemplateRuleEntity::getRegion,viewParamDTO.getRegion())
-                .eq(StringUtils.isEmpty(viewParamDTO.getToWarehouseName()),ShippingTemplateRuleEntity::getToWarehouseName,viewParamDTO.getToWarehouseName())
-                .eq(StringUtils.isEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
+                .eq(StringUtils.isNotEmpty(viewParamDTO.getFromCountry()),ShippingTemplateRuleEntity::getFromCountry,viewParamDTO.getFromCountry())
+                .eq(StringUtils.isNotEmpty(viewParamDTO.getToCountry()),ShippingTemplateRuleEntity::getToCountry,viewParamDTO.getToCountry())
+                .eq(StringUtils.isNotEmpty(viewParamDTO.getRegion()),ShippingTemplateRuleEntity::getRegion,viewParamDTO.getRegion())
+                .eq(StringUtils.isNotEmpty(viewParamDTO.getToWarehouseName()),ShippingTemplateRuleEntity::getToWarehouseName,viewParamDTO.getToWarehouseName())
+                .eq(StringUtils.isNotEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
                 .last("limit 1")
                 .one();
     }
@@ -161,6 +159,13 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
         }
+
+        //重量验证
+        long weightCount = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getStartWeight(), obj.getEndWeight()) > MathUtil.ZERO).count();
+        if (weightCount > 0) {
+            throw new ServiceException(ApiError.ERROR_RULE_WEIGHT_COMPARE);
+        }
+
         //按国家
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(entity.getType())) {
 
@@ -232,17 +237,16 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             }
         }
 
-
-    }
-
-
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(List<ShippingTemplateRuleEntity> detailList,String mainId) {
+        //数据赋值
         for (ShippingTemplateRuleEntity ruleEntity : detailList) {
+            if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
+                ruleEntity.setShippingPrice(BigDecimal.ZERO);
+            } else {
+                ruleEntity.setFirstWeight(BigDecimal.ZERO);
+                ruleEntity.setFirstWeightShippingCost(BigDecimal.ZERO);
+                ruleEntity.setAdditionalUnitWeight(BigDecimal.ZERO);
+                ruleEntity.setAdditionalPrice(BigDecimal.ZERO);
+            }
             ruleEntity.setMainId(mainId);
         }
     }

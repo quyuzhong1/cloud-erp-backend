@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -50,16 +52,9 @@ public class LogisticsAuthDTO implements Serializable {
         */
         private String name;
 
-        /**
-        * 账号
-        */
-        private String account;
 
-        /**
-        * 密码
-        */
-        private String password;
 
+        private Map<String,String> fieldMap;
 
     }
 
@@ -94,6 +89,7 @@ public class LogisticsAuthDTO implements Serializable {
 
         /**
         * 物流平台
+         * http://172.16.100.11:3002/project/128/interface/api/25522
         */
         @NotBlank(message = "物流平台不能为空")
         @Size(max = 30,message = "物流平台最大长度不能超过30位")
@@ -106,26 +102,9 @@ public class LogisticsAuthDTO implements Serializable {
         @Size(max = 19,message = "物流商id最大长度不能超过19位")
         private String mainId;
 
-        /**
-        * name
-        */
-        @NotBlank(message = "name不能为空")
-        @Size(max = 30,message = "name最大长度不能超过30位")
-        private String name;
 
-        /**
-        * 账号
-        */
-        @NotBlank(message = "账号不能为空")
-        @Size(max = 255,message = "账号最大长度不能超过255位")
-        private String account;
 
-        /**
-        * 密码
-        */
-        @NotBlank(message = "密码不能为空")
-        @Size(max = 50,message = "密码最大长度不能超过50位")
-        private String password;
+        private Map<String,String> fieldMap;
 
 
     }
