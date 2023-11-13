@@ -28,6 +28,8 @@ public enum OperationTypeEnum {
 
     DELETE("delete", "删除操作"),
     PERMISSION("permission", "设置权限操作"),
+    UPDATE_STATUS("update_status", "状态变更操作"),
+
     ;
     @JsonValue
     @EnumValue
