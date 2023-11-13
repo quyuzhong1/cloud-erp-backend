@@ -362,7 +362,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "declaredValue" ,source = "totalPrice"),
             @Mapping(target = "declaredValueCurrency" ,source = "currency"),
             @Mapping(target = "taxPayMethod",constant = "1"),
-            @Mapping(target = "tax",source = "insuranceValue")
+//            @Mapping(target = "tax",source = "insuranceValue")
     })
     CustomsInfo orderRequestCustomsInfoByExpress(ParceInfoVO parceInfoVO);
 

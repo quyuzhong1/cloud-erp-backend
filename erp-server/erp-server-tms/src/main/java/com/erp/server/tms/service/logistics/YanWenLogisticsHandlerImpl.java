@@ -137,5 +137,9 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return success(list);
     }
 
-    private String getName(){return LogisticsPlatformEnum.YAN_WEN.getName();};
+    private String getName(){return getPlatForm().getName();}
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.YAN_WEN;
+    }
 }

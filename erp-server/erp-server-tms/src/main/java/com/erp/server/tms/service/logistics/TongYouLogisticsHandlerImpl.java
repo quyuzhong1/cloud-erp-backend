@@ -144,5 +144,11 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return isSuccess?success(responseList):failure(responseList);
     }
 
-    private String getName(){return LogisticsPlatformEnum.TONG_YOU.getName();}
+    private String getName(){return getPlatForm().getName();}
+
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.TONG_YOU;
+    }
 }

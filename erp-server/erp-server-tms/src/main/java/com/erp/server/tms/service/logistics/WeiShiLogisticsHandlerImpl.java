@@ -165,5 +165,10 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return !TmsConstant.SUCCESS.equals(ask);
     }
 
-    private String getName(){return LogisticsPlatformEnum.WEI_SHI.getName();};
+    private String getName(){return getPlatForm().getName();};
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.WEI_SHI;
+    }
 }

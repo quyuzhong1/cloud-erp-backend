@@ -202,5 +202,10 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return !"0000".equals(code);
     }
 
-    private String getName(){return LogisticsPlatformEnum.YUN_TU.getName();};
+    private String getName(){return getPlatForm().getName();};
+
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.YUN_TU;
+    }
 }
