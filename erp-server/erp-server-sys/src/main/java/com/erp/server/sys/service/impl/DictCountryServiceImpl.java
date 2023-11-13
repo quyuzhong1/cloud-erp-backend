@@ -170,7 +170,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     public List<DictCountryDTO.ListRegionDTO> listAreaCountry(DictCountryDTO.ListParamDTO dto) {
         //区域数据
         List<DictGlobalAreaEntity> list = dictGlobalAreaService.lambdaQuery()
-                .eq(DictGlobalAreaEntity::getRegionCode, dto.getRegionCode()).list();
+                .eq(StrUtil.isNotBlank(dto.getRegionCode()),DictGlobalAreaEntity::getRegionCode, dto.getRegionCode()).list();
         //国家数据
         List<DictCountryDTO.ListDTO> countryList = this.listCountryByParam(dto);
         List<DictCountryDTO.ListRegionDTO> resultList = new ArrayList<>();

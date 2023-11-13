@@ -88,7 +88,8 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         }
         List<OrderDetail> orderDTOS = new ArrayList<>();
         ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
-        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && shopeeShopById.getData().getType().equalsIgnoreCase("shopee_shop")) {
+        if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())
+                && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             OrderRequest orderRequest = OrderRequest.builder()
                     .offset(0)
                     .timeFrom(timeFrom)
