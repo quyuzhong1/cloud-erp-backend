@@ -1,7 +1,9 @@
 package com.sdk.tms.express.model.order.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -14,6 +16,8 @@ import java.io.Serializable;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ContactInfo implements Serializable {
     /**
      * 地址类型：1，寄件方信息2，到件方信息

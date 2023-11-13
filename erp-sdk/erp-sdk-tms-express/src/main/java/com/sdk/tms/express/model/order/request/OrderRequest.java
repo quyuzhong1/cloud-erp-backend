@@ -61,7 +61,7 @@ public class OrderRequest implements Serializable {
     /**
      * 顺丰月结卡号
      */
-    private Long monthlyCard;
+    private String monthlyCard;
     /*
      *付款方式，支持以下值：1:寄方付2:收方付3:第三方付
      */
@@ -69,11 +69,11 @@ public class OrderRequest implements Serializable {
     /**
      * 快件产品类别，支持附录《快件产品类别表》的产品编码值，仅可使用与顺丰销售约定的快件产品。
      */
-    private Long expressTypeId;
+    private Integer expressTypeId;
     /**
      * 包裹数，一个包裹对应一个运单号；若包裹数大于1，则返回一个母运单号和N-1 个子运单号。
      */
-    private Long parcelQty;
+    private Integer parcelQty;
     /**
      * 客户订单货物总长，单位厘米，精确到小数点后3 位，包含子母件。
      */
@@ -176,7 +176,7 @@ public class OrderRequest implements Serializable {
     /**
      * 是否返回路由标签：默认0，1：返回路由标签，0：不返回
      */
-    private String isReturnRoutelabel;
+    private Integer isReturnRoutelabel;
     /**
      * 是否使用国家统一面单号1：是，0：否（默认）
      */

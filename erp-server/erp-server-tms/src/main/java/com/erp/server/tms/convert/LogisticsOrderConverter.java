@@ -4,9 +4,13 @@ import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
+import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
+import com.sdk.tms.express.model.order.request.CargoDetail;
+import com.sdk.tms.express.model.order.request.ContactInfo;
+import com.sdk.tms.express.model.order.request.CustomsInfo;
 import com.sdk.tms.ubi.model.order.request.OrderItem;
 import com.sdk.tms.ubi.model.order.request.UbiOrder;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
@@ -304,4 +308,59 @@ public interface LogisticsOrderConverter {
     })
     LogisticsOrderResponseVO orderQueryByYunTu(YunTuTrackingNumber data);
     List<LogisticsOrderResponseVO> orderQueryByYunTu(List<YunTuTrackingNumber> data);
+
+
+    @Mappings({
+            @Mapping(target = "contactType" ,constant = "1"),
+            @Mapping(target = "company",source = "senderInfo.companyName"),
+            @Mapping(target = "country",source = "senderInfo.country"),
+            @Mapping(target = "province",source = "senderInfo.provinceName"),
+            @Mapping(target = "city",source = "senderInfo.cityName"),
+            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "address",source = "senderInfo.addressFirst"),
+            @Mapping(target = "postCode",source = "senderInfo.zipCode"),
+            @Mapping(target = "contact",source = "senderInfo.name"),
+            @Mapping(target = "tel",source = "senderInfo.telNumber"),
+            @Mapping(target = "mobile",source = "senderInfo.telNumber"),
+            @Mapping(target = "email",source = "senderInfo.email")
+    })
+    ContactInfo orderRequestSendUserByExpress(LogisticsOrderVO logisticsOrderVO);
+    @Mappings({
+            @Mapping(target = "contactType" ,constant = "2"),
+            @Mapping(target = "country" ,source = "receiverInfoVO.country"),
+            @Mapping(target = "company",source = "receiverInfoVO.companyName"),
+            @Mapping(target = "province",source = "receiverInfoVO.province"),
+            @Mapping(target = "city",source = "receiverInfoVO.city"),
+            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "address",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "email",source = "receiverInfoVO.email"),
+            @Mapping(target = "postCode",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "contact",source = "receiverInfoVO.name"),
+            @Mapping(target = "tel",source = "receiverInfoVO.telNumber"),
+            @Mapping(target = "mobile",source = "receiverInfoVO.telNumber")
+    })
+    ContactInfo orderRequestReceiverUserByExpress(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "name" ,source = "declareChineseName"),
+            @Mapping(target = "count" ,source = "quantity"),
+            @Mapping(target = "unit",source = "declareUnit"),
+            @Mapping(target = "weight",source = "weight", qualifiedByName = "gTokg"),
+            @Mapping(target = "amount",source = "price"),
+            @Mapping(target = "currency",source = "declareCurrency"),
+            @Mapping(target = "sourceArea",source = "sourceCountry"),
+            @Mapping(target = "hsCode",source = "customsCode"),
+            @Mapping(target = "goodsCode",source = "customsCode"),
+            @Mapping(target = "specifications",source = "declareModel")
+    })
+    CargoDetail orderRequestCargoDetailByExpress(LogisticsProductVO logisticsProductVO);
+    List<CargoDetail> orderRequestCargoDetailByExpress(List<LogisticsProductVO> logisticsProductVOList);
+
+    @Mappings({
+            @Mapping(target = "declaredValue" ,source = "totalPrice"),
+            @Mapping(target = "declaredValueCurrency" ,source = "currency"),
+            @Mapping(target = "taxPayMethod",constant = "1"),
+            @Mapping(target = "tax",source = "insuranceValue")
+    })
+    CustomsInfo orderRequestCustomsInfoByExpress(ParceInfoVO parceInfoVO);
 }
