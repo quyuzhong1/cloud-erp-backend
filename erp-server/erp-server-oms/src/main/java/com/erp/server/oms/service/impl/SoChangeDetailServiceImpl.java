@@ -642,11 +642,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //刪除
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();
             List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
-            long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
+            long qtyCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getQty() <= 0).count();
             if (qtyCount > 0) {
                 throw new ServiceException("销售数量不能小于0");
             }
-            long priceCount = notDeleteList.stream().filter(n -> n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+            long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
             if (priceCount > 0) {
                 throw new ServiceException("单价不能小于0");
             }
