@@ -726,9 +726,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
         String filterStr = String.join(" and ", queryFilters);
         paramDTO.setFilterString(filterStr);
-        paramDTO.setTopRowCount(5000);
+        paramDTO.setTopRowCount(99999999);
         paramDTO.setStartRow(MathUtil.ONE);
-        paramDTO.setLimit(5000);
+        paramDTO.setLimit(99999999);
         List<Map<String, Object>> listData =  dmpSyncFeign.listKingdeeData(paramDTO);
         return listData;
     }
