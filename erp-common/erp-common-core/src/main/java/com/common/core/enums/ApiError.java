@@ -120,7 +120,7 @@ public enum ApiError implements Serializable {
     ERROR_9028(9028, "枚举转换失败"),
     ERROR_9029(9029, "部门不存在"),
     ERROR_9030(9030, "产品经理不能为空"),
-    ERROR_9031(9031, "产品部负责人不能为空"),
+    ERROR_9031(9031, "产品经理上级不能为空"),
     ERROR_9032(9032, "产品研发中心负责人不能为空"),
     ERROR_9033(9033, "产品研发中心负责人或者供应链管理中心负责人不能为空"),
     ERROR_9034(9034, "品质部,采购开发组,采购执行组,物流部负责人不能为空"),
@@ -393,7 +393,7 @@ public enum ApiError implements Serializable {
 
     ERROR_95174(95174, "只有暂停的项目才能重新启动"),
     ERROR_95175(95175, "已终止的项目不能进行更改"),
-    ERROR_95176(95176, "审核通过后只支持批量更新【销售状态】【是否可销售】【产品开发状态】"),
+    ERROR_95176(95176, "审核通过后只支持批量更新【销售状态】【是否可销售】【产品开发状态】【推荐仓位】"),
     ERROR_95177(95174, "已立项的产品不能再次立项"),
     ERROR_95178(95178, "已催办一次，请在30分钟后再催办"),
     ERROR_95179(95179, "已终止,暂停的项目不能进行立项"),
@@ -477,6 +477,7 @@ public enum ApiError implements Serializable {
     ERROR_EXIST_BASIC_LABEL_NAME(95255, "基础标签单标签名称{}数据重复"),
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
+    ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
 
 
     /**
