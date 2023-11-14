@@ -27,6 +27,8 @@ import com.erp.model.plm.enums.ProductChangeStateEnum;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -38,6 +40,7 @@ import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -170,7 +173,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_9030);
         }
         //产品经理上级
-        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
+        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
@@ -201,7 +204,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
 
         //产品经理上级
-        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
+        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
@@ -224,13 +227,14 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
     }
+
     /**
+     * @param detailsJson
      * @description: 验证sku变更
      * @author Will
      * @date: 2023/5/16 10:11
-     * @param detailsJson
      */
-    public void checkSkuChange(String  detailsJson) {
+    public void checkSkuChange(String detailsJson) {
         if (StringUtils.isBlank(detailsJson)) {
             return;
         }
@@ -307,8 +311,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             //产品经理
             parameterMap.put("productManagerList", productManagerList);
 
-            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
+            //获取产品经理上一级
+            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
@@ -380,25 +384,21 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             Map<String, Object> parameterMap = new HashMap<>();
 
             List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
-            List<String> skuIdList=bomInfoService.getSkuIdList(skuList);
-
-
-
+            List<String> skuIdList = bomInfoService.getSkuIdList(skuList);
 
             //产品经理
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
             if (CollectionUtils.isEmpty(productManagerList)) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
-
             //产品经理
             parameterMap.put("productManagerList", productManagerList);
-
-
-            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
+            //获取产品经理上一级
+            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
             if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
+
             //产品经理上级
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
 
@@ -425,6 +425,38 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
 
         }
+    }
+
+    /**
+     * 获取产品经理上一级
+     *
+     * @param productManagerList
+     */
+    private List<String> getProductManagerSupervisorList(List<String> productManagerList) {
+        List<String> productManagerSupervisorList = new ArrayList<>(10);
+
+        //直接部门负责人
+        Integer directDepartmentCharge = ChargeSuperiorEnum.DIRECT_DEPARTMENT_CHARGE.getCode();
+        //二级部门负责人
+        Integer secondDepartmentCharge = ChargeSuperiorEnum.SECOND_DEPARTMENT_CHARGE.getCode();
+        //产品经理所有上级
+        List<UserSuperiorDTO> userSuperiorList = sysUserFeign.listSuperiorByUserIds(productManagerList);
+        for (String item : productManagerList) {
+            List<String> userSuperiorIdList = userSuperiorList.stream().filter(u -> u.getCurrentUserId().equals(item) &&
+                    directDepartmentCharge.equals(u.getLevel())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userSuperiorIdList)) {
+                productManagerSupervisorList.addAll(userSuperiorIdList);
+            } else {
+                List<String> secondSuperiorIdList = userSuperiorList.stream().filter(u -> u.getCurrentUserId().equals(item) &&
+                        secondDepartmentCharge.equals(u.getLevel())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(secondSuperiorIdList)) {
+                    productManagerSupervisorList.addAll(secondSuperiorIdList);
+                }
+            }
+        }
+        productManagerSupervisorList = productManagerSupervisorList.stream().distinct().collect(Collectors.toList());
+        return productManagerSupervisorList;
+
     }
 
 
@@ -523,7 +555,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             List<String> userNameList = new ArrayList<>(5);
             if (currentAuditor != null) {
                 List<String> handleUserIdList = currentAuditor.getHandleUserIdList();
-                for (String  handleUserId:handleUserIdList) {
+                for (String handleUserId : handleUserIdList) {
                     FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(handleUserId)).
                             findFirst().orElse(null);
                     if (user != null) {
@@ -531,8 +563,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                     }
                 }
             }
-            if(CollectionUtils.isNotEmpty(userNameList)){
-                item.setPersonApproving(String.join(",",userNameList));
+            if (CollectionUtils.isNotEmpty(userNameList)) {
+                item.setPersonApproving(String.join(",", userNameList));
             }
 
         }
@@ -708,6 +740,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-30 14:10
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void approvalNoPass(AuditParamDTO dto) {
         String id = dto.getId();
         //获取到变更信息
@@ -718,10 +752,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        changeEntity.setApprovalFinishTime(LocalDateTime.now());
-        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
-        this.updateById(changeEntity);
-
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
@@ -731,7 +761,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (Objects.isNull(processTask)) {
             throw new ServiceException(ApiError.ERROR_94005);
         }
-
+        changeEntity.setApprovalFinishTime(LocalDateTime.now());
+        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
+        this.updateById(changeEntity);
         if (processTask != null) {
             ApproveProcessDTO process = new ApproveProcessDTO();
             process.setComment(dto.getComment());

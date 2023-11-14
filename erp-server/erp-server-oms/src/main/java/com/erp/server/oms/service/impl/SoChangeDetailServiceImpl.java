@@ -637,7 +637,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (qtyCount > 0) {
                 throw new ServiceException("销售数量不能小于0");
             }
-            long priceCount = notDeleteList.stream().filter(n -> n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+            long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
             if (priceCount > 0) {
                 throw new ServiceException("单价不能小于0");
             }
