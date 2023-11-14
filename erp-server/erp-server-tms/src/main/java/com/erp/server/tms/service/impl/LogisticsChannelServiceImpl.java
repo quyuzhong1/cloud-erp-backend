@@ -127,8 +127,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceId(String sourceId) {
         List<LogisticsChannelEntity> list = this.listDbBySourceId(sourceId);
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
-        List<String> templateIdList = list.stream().map(LogisticsChannelEntity::getShippingTemplateId).distinct().collect(Collectors.toList());
-        List<ShippingTemplateEntity> shippingTemplateList = CollectionUtils.isNotEmpty(templateIdList) ? shippingTemplateService.listByIds(templateIdList) : Collections.emptyList();
 
         for (LogisticsChannelEntity item : list) {
             LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
