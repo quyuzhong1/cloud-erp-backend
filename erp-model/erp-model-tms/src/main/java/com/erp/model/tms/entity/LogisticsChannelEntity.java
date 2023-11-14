@@ -85,11 +85,7 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("sorting_code")
     private String sortingCode;
-    /**
-    * 运费模板id
-    */
-    @TableField("shipping_template_id")
-    private String shippingTemplateId;
+
     /**
     * 费用规则
     */
