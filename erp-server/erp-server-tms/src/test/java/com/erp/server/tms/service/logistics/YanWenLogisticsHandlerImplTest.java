@@ -82,7 +82,6 @@ public class YanWenLogisticsHandlerImplTest {
                         .length(1)
                         .totalWeight(123)
                         .width(123)
-                        .ioss("123456")
                         .build())
                 .logisticsProductVOList(Arrays.asList(
                                 logisticsProductVO

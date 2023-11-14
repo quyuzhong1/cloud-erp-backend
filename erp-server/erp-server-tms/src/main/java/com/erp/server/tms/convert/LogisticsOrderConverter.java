@@ -119,7 +119,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "parcelInfo.height",source = "parceInfoVO.height"),
             @Mapping(target = "parcelInfo.width",source = "parceInfoVO.width"),
             @Mapping(target = "parcelInfo.length",source = "parceInfoVO.length"),
-            @Mapping(target = "parcelInfo.ioss",source = "parceInfoVO.ioss"),
+            @Mapping(target = "parcelInfo.ioss",source = "iossCode"),
             @Mapping(target = "parcelInfo.productList",source = "logisticsProductVOList")
     })
     YanWenCreateWayBillRequest orderRequestByYanWen(LogisticsOrderVO logisticsOrderVO);

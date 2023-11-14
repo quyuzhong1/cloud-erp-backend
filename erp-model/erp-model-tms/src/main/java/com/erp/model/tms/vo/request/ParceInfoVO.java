@@ -40,9 +40,6 @@ public class ParceInfoVO {
     //包裹长(单位:cm)
     private Integer length;
 
-    //IOSS 税号
-    private String ioss;
-
     //保险金额，默认RMB
     private Number insuranceValue;
 
