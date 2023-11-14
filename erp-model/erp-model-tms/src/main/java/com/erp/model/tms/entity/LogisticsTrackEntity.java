@@ -1,0 +1,63 @@
+package com.erp.model.tms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 物流轨迹表
+ * </p>
+ *
+ * @author zdy
+ * @since 2023-11-14
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("logistics_track")
+public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
+
+    /**
+    * 运单号
+    */
+    @TableField("track_no")
+    private String trackNo;
+    /**
+    * 运单时间
+    */
+    @TableField("track_time")
+    private LocalDateTime trackTime;
+    /**
+    * 状态  状态 0查询不到,1等待揽收,2运输途中，3派送途中，4投递失败，5可能异常，6成功签收，7运输过久，8到达代取
+    */
+    @TableField("status")
+    private String status;
+    /**
+    * 内容
+    */
+    @TableField("content")
+    private String content;
+
+
+    public static final String TRACK_NO = "track_no";
+
+    public static final String TRACK_TIME = "track_time";
+
+    public static final String STATUS = "status";
+
+    public static final String CONTENT = "content";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

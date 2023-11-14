@@ -4,6 +4,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.service.LogisticsService;
@@ -103,10 +104,10 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     /**
      * 轨迹查询
      *
-     * @param logisticsQueryVO
+     * @param logisticsQueryBaseVOS
      * @return
      */
-    public ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO) {
+    public ApiResult<List<LogisticsTrackEntity>> getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
         return ApiResult.error(-1, "功能未开放");
     }
 

@@ -3,6 +3,7 @@ package com.sdk.tms.track123.model.response;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author zdy
@@ -13,8 +14,8 @@ import java.io.Serializable;
  */
 @Data
 public class ResponseData implements Serializable {
-    //收货
+    //查询成功的单号
     private TrackInfo accepted;
-    //拒收
-    private TrackInfo rejected;
+    //查询失败的单号
+    private List<Rejected> rejected;
 }

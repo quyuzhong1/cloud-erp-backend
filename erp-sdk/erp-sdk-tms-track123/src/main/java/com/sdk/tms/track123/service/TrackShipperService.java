@@ -1,6 +1,9 @@
 package com.sdk.tms.track123.service;
 
+import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
+import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.response.TrackResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +12,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,11 +27,12 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TrackShipperService {
-    String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
-    String token = "61be2f7d071441a483841be3b97e7373";
+    static String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
+    static String token = "9fa500686633410a84ff0b00daed555e";
 
     public static void main(String[] args) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        getCourierList();
+        TrackShipperService trackShipperService = new TrackShipperService();
+//        trackShipperService.getCourierList(token);
 
 //        String message = "Hello, World!";
 //        String secretKey = "mySecretKey";
@@ -38,29 +44,49 @@ public class TrackShipperService {
 //        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
 //            e.printStackTrace();
 //        }
+
+        List<String> trackNos = new ArrayList<>();
+        trackNos.add("304071414818");
+        trackNos.add("620372231752");
+
+        TrackRequest orderRequest = TrackRequest.builder()
+                .trackNos(trackNos)
+                .createTimeStart("2021-08-01 00:00:00")
+                .createTimeEnd("2021-09-28 00:00:00")
+                .cursor("")
+                .queryPageSize(100)
+                .build();
+        trackShipperService.getTrack(token, orderRequest);
     }
 
     /**
      * 获取快递物流商列表
      */
-    public static void getCourierList() throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        String token = "7fe88dd10c0747dab41653ac878d3d84";
+    public void getCourierList(String token) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         long timestamp = System.currentTimeMillis();
-        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
-        String signature = bytesToHex(hmacSha256Bytes);
+//        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
+//        String signature = bytesToHex(hmacSha256Bytes);
         String url = "https://api.track123.com/gateway/open-api/tk/v2/courier/list";
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", "61be2f7d071441a483841be3b97e7373");
-        headers.put("signature", signature);
+        headers.put("Track123-Api-Secret", token);
+//        headers.put("signature", signature);
         headers.put("timestamp", String.valueOf(timestamp));
 
-        String string = OkHttpUtils.doGet(url, new LinkedHashMap<>(), new LinkedHashMap<>());
+        String string = OkHttpUtils.doGet(url, new LinkedHashMap<>(), headers);
         System.out.println(string);
     }
 
-    public void getTrack() {
-
+    public TrackResponse getTrack(String token, TrackRequest trackRequest) {
+        long timestamp = System.currentTimeMillis();
+        String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("Content-Type", "application/json;charset=utf-8");
+        headers.put("Track123-Api-Secret", token);
+        headers.put("timestamp", String.valueOf(timestamp));
+        String result = OkHttpUtils.doPostJsonObject(url, trackRequest, headers);
+        System.out.println(result);
+        return JSONUtil.toBean(result, TrackResponse.class);
     }
 
 

@@ -1,0 +1,122 @@
+package com.erp.model.tms.dto;
+
+import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 物流轨迹表请求响应实体
+ * </p>
+ *
+ * @author zdy
+ * @since 2023-11-14
+*/
+@Data
+@NoArgsConstructor
+public class LogisticsTrackDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 运单号
+        */
+        private String trackNo;
+
+        /**
+        * 运单时间
+        */
+        private LocalDateTime trackTime;
+
+        /**
+        * 状态
+        */
+        private String status;
+
+        /**
+        * 内容
+        */
+        private String content;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 运单号
+        */
+        @NotBlank(message = "运单号不能为空")
+        @Size(max = 30,message = "运单号最大长度不能超过30位")
+        private String trackNo;
+
+        /**
+        * 运单时间
+        */
+        @NotNull(message = "运单时间不能为空")
+        private LocalDateTime trackTime;
+
+        /**
+        * 状态
+        */
+        @NotBlank(message = "状态不能为空")
+        @Size(max = 30,message = "状态最大长度不能超过30位")
+        private String status;
+
+        /**
+        * 内容
+        */
+        @NotBlank(message = "内容不能为空")
+        @Size(max = 200,message = "内容最大长度不能超过200位")
+        private String content;
+
+
+    }
+
+
+}
