@@ -52,7 +52,7 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
             errorMsgList.addAll(msgList);
         }
 
-        ProductDetailEntity entity = productDetailEntityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus()) && req.getSkuNo().equals(dto)).findFirst().orElse(null);
+        ProductDetailEntity entity = productDetailEntityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus()) && req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(entity)) {
             errorMsgList.add("sku编号不存在或未审核通过！");
         }
