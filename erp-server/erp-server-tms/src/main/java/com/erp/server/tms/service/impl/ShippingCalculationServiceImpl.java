@@ -23,10 +23,7 @@ import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
-import com.erp.model.tms.enums.ShippingBillingMethodEnum;
-import com.erp.model.tms.enums.ShippingCostNameEnum;
-import com.erp.model.tms.enums.ShippingFeeRuleEnum;
-import com.erp.model.tms.enums.ShippingSideEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.ShippingRegionCityMapper;
@@ -144,12 +141,15 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             listDTO.setTotalShippingCost(MathUtil.multiply(shippingCalculationDTO.getTotalShippingCost(),ratio));
             //其他费用
             ShippingCalculationDTO.OtherCostDTO otherCostDTO = new ShippingCalculationDTO.OtherCostDTO();
-            otherCostDTO.setDiscountCost(MathUtil.multiply(otherCostDTO.getDiscountCost(),ratio));
-            otherCostDTO.setPremiumCost(MathUtil.multiply(otherCostDTO.getPremiumCost(),ratio));
-            otherCostDTO.setSignatureCost(MathUtil.multiply(otherCostDTO.getSignatureCost(),ratio));
-            otherCostDTO.setOversizeSurchargeCost(MathUtil.multiply(otherCostDTO.getOversizeSurchargeCost(),ratio));
-            otherCostDTO.setFuelSurchargeCost(MathUtil.multiply(otherCostDTO.getFuelSurchargeCost(),ratio));
+            otherCostDTO.setDiscountCost(MathUtil.multiply(shippingCalculationDTO.getDiscountCost(),ratio));
+            otherCostDTO.setPremiumCost(MathUtil.multiply(shippingCalculationDTO.getPremiumCost(),ratio));
+            otherCostDTO.setSignatureCost(MathUtil.multiply(shippingCalculationDTO.getSignatureCost(),ratio));
+            otherCostDTO.setOversizeSurchargeCost(MathUtil.multiply(shippingCalculationDTO.getOversizeSurchargeCost(),ratio));
+            otherCostDTO.setFuelSurchargeCost(MathUtil.multiply(shippingCalculationDTO.getFuelSurchargeCost(),ratio));
             listDTO.setOtherCostDTO(otherCostDTO);
+            //其他费用字符串
+            String otherCostStr = JSONUtil.parseObj(otherCostDTO).entrySet().stream().filter(obj -> MathUtil.compareTo(obj.getValue(), MathUtil.ZERO) > MathUtil.ZERO).map(obj -> ShippingOtherCostNameEnum.getName(obj.getKey()).concat(":").concat(obj.getValue().toString())).collect(Collectors.joining(";"));
+            listDTO.setOtherCostStr(otherCostStr);
         }
     }
 
