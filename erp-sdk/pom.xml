@@ -32,6 +32,7 @@
         <module>erp-sdk-tms-weishi</module>
         <module>erp-sdk-tms-yuntu</module>
         <module>erp-sdk-tms-tongyou</module>
+        <module>erp-sdk-tms-aliexpress</module>
     </modules>
 
     <dependencies>
