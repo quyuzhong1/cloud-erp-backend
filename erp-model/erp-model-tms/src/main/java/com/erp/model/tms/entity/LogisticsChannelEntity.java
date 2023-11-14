@@ -26,10 +26,20 @@ import com.common.business.enums.ApproveStatusEnum;
 public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
 
     /**
-    * 主表id
+    * 来源id
+     * 物流商(logistics_supplier)id
+     * 或者
+     * 物流仓库表id logistics_warehouse'
     */
-    @TableField("main_id")
-    private String mainId;
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     * logisticsWarehouse  logisticsSupplier
+     */
+    @TableField("source_type")
+    private String sourceType;
     /**
     * 渠道名称
     */
@@ -45,6 +55,8 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("effective_time")
     private Integer effectiveTime;
+
+
     /**
     * 时效单位
     */
@@ -55,6 +67,9 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("track_query_mode")
     private String trackQueryMode;
+
+    @TableField("paper_size")
+    private String paperSize;
     /**
     * 纸张长
     */
@@ -81,11 +96,7 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("fee_rule")
     private String feeRule;
 
-    /**
-     * 纸张大小
-     */
-    @TableField("paper_size")
-    private String paperSize;
+
     /**
     * 最高报关金额
     */
@@ -136,6 +147,13 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     */
     @TableField("is_api_insurance")
     private Boolean isApiInsurance;
+
+
+    /**
+     * 是否禁用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
 
     public static final String MAIN_ID = "main_id";

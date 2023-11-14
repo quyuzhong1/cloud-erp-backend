@@ -108,6 +108,17 @@ public class LogisticsSupplierController extends BaseController {
         return success();
     }
 
+    /**
+     * 分页列表详情
+     */
+    @GetMapping("channelView")
+    public ApiResult<LogisticsSupplierDTO.ChannelViewDTO> channelView(@RequestParam(value = "id")String id){
+       LogisticsSupplierDTO.ChannelViewDTO channelView=logisticsSupplierService.channelView(id);
+       return success(channelView);
+    }
+
+
+
 
 
 }

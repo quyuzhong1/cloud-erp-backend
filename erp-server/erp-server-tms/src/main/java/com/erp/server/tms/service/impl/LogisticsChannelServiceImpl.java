@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -14,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -57,6 +60,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Autowired
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
+    @Autowired
+    private ShippingTemplateService shippingTemplateService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -74,11 +80,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
         //面单设置 打印类型
-        logisticsPrintTypeService.add(channelId,addDTO.getPrintTypeList());
+        logisticsPrintTypeService.add(channelId, addDTO.getPrintTypeList());
         //物流地址
-        logisticsChannelAddressService.add(channelId,addDTO.getAddressList());
+        logisticsChannelAddressService.add(channelId, addDTO.getAddressList());
         //发货限制 黑名单
-        logisticsChannelBlacklistService.add(channelId,addDTO.getBlackList());
+        logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -117,13 +123,32 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseMapper.listLogisticsChannel();
     }
 
+    @Override
+    public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceId(String sourceId) {
+        List<LogisticsChannelEntity> list = this.listDbBySourceId(sourceId);
+        List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
+        List<String> templateIdList = list.stream().map(LogisticsChannelEntity::getShippingTemplateId).distinct().collect(Collectors.toList());
+        List<ShippingTemplateEntity> shippingTemplateList = CollectionUtils.isNotEmpty(templateIdList) ? shippingTemplateService.listByIds(templateIdList) : Collections.emptyList();
+
+        for (LogisticsChannelEntity item : list) {
+            LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
+            base.setCode(item.getCode());
+            base.setDisabled(item.getDisabled());
+        }
+        return null;
+    }
+
+    private List<LogisticsChannelEntity> listDbBySourceId(String sourceId) {
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getSourceId, sourceId).orderByDesc(LogisticsChannelEntity::getCreateTime).list();
+    }
+
 
     /**
      * 新增修改处理数据
      */
     private void handleData(LogisticsChannelEntity logisticsChannelEntity) {
-        String mainId = logisticsChannelEntity.getMainId();
-        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
+        String sourceId = logisticsChannelEntity.getSourceId();
+        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(sourceId);
         if (Objects.isNull(logisticsSupplier)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }

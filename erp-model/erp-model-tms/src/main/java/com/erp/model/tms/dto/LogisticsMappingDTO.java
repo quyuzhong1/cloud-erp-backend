@@ -81,10 +81,11 @@ public class LogisticsMappingDTO implements Serializable {
         * 物流渠道id
         */
         @NotBlank(message = "物流渠道id不能为空")
-        private String logisticsSalesChannelId;
+        private String logisticsSaleChannelId;
 
         /**
         * 销售平台
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=channelSalesPlatform
         */
         @NotBlank(message = "物流平台不能为空")
         @Size(max = 30,message = "物流平台最大长度不能超过30位")

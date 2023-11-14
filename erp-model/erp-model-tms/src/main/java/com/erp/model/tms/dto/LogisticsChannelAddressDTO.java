@@ -98,6 +98,7 @@ public class LogisticsChannelAddressDTO implements Serializable {
 
         /**
         * 地址id
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25783
         */
         @NotBlank(message = "地址id不能为空")
         private String addressId;

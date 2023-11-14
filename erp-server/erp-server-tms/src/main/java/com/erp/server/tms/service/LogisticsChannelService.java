@@ -41,4 +41,11 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return List<ListSelectDTO>
      */
     List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel();
+
+    /**
+     * 根据来源id 获取渠道列表
+     * @param sourceId
+     * @return
+     */
+    List<LogisticsChannelDTO.BaseDTO> listBaseBySourceId(String sourceId);
 }
