@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
+import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.server.tms.mapper.LogisticsChannelAddressMapper;
 import com.erp.server.tms.service.LogisticsChannelAddressService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,6 +12,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,10 +37,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<LogisticsChannelAddressMapper, LogisticsChannelAddressEntity> implements LogisticsChannelAddressService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -47,9 +46,11 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
             return Boolean.FALSE;
         }
         List<LogisticsChannelAddressEntity> saveList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
+        saveList.forEach(p -> p.setLogisticsChannelId(channelId));
+
         // 数据处理
         handleData(saveList);
-        return Boolean.TRUE;
+        return this.saveBatch(saveList);
     }
 
     /**
@@ -57,27 +58,35 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsChannelAddressDTO.UpdateDTO updateDTO) {
-        LogisticsChannelAddressEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "渠道地址单"));
-        LogisticsChannelAddressEntity logisticsChannelAddressEntity = BeanMapperUtils.map(LogisticsChannelAddressEntity.class, updateDTO);
-
-
-        log.info("编辑 开始修改渠道地址单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(logisticsChannelAddressEntity);
-        if (!save) {
-            throw new ServiceException("渠道地址单保存失败");
+    public Boolean update(String channelId,List<LogisticsChannelAddressDTO.UpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录渠道地址单日志数据，id：【{}】", logisticsChannelAddressEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelAddressEntity.getId(), "渠道地址单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsChannelAddressEntity, null, logisticsChannelAddressEntity.getId(), msg);
-        return Boolean.TRUE;
+        List<LogisticsChannelAddressEntity> updateList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
+        updateList.forEach(p -> p.setLogisticsChannelId(channelId));
+        // 数据处理
+        handleData(updateList);
+        List<LogisticsChannelAddressEntity> dbList = this.listDbByChannelId(channelId);
+        List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
+                map(LogisticsChannelAddressEntity::getId).collect(Collectors.toList());
+        List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsChannelAddressEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        return this.saveOrUpdateBatch(updateList);
     }
 
+
+
+    @Override
+    public List<LogisticsChannelAddressDTO.ViewDTO> listByChannelId(String channelId) {
+
+        return baseMapper.listByChannelId(channelId);
+    }
+
+    public List<LogisticsChannelAddressEntity> listDbByChannelId(String channelId){
+          return this.lambdaQuery().eq(LogisticsChannelAddressEntity::getLogisticsChannelId,channelId).list();
+    }
 
     /**
      * 新增修改处理数据

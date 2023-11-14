@@ -55,6 +55,16 @@ public class LogisticsChannelAddressDTO implements Serializable {
         */
         private String addressId;
 
+        /**
+         * 地址类型
+         * deliver 发货
+         * refund 退货
+         * collect 揽收
+         */
+        private String logisticsAddressType;
+
+        private String logisticsAddressName;
+
 
     }
 

@@ -29,10 +29,17 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
     * 修改
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(LogisticsPrintTypeDTO.UpdateDTO dto);
+    Boolean update(String channelId,List<LogisticsPrintTypeDTO.UpdateDTO> list);
 
-
+    /**
+     * 根据渠道id 获取打印标签列表
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<LogisticsPrintTypeDTO.ViewDTO> listByChannelId(String channelId);
 }

@@ -29,10 +29,17 @@ public interface LogisticsChannelBlacklistService extends SuperService<Logistics
     * 修改
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(LogisticsChannelBlacklistDTO.UpdateDTO dto);
+    Boolean update(String channelId,List<LogisticsChannelBlacklistDTO.UpdateDTO> list);
 
-
+    /**
+     * 根据渠道id 查询黑名单
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<LogisticsChannelBlacklistDTO.ViewDTO> listByChannelId(String channelId);
 }

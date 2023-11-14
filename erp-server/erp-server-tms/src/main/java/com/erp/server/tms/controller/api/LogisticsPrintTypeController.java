@@ -28,27 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/logisticsPrintType")
 public class LogisticsPrintTypeController extends BaseController {
 
-    @Autowired
-    private LogisticsPrintTypeService logisticsPrintTypeService;
 
-
-    /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsPrintType:update",
-        serviceClass = LogisticsPrintTypeService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsPrintTypeDTO.UpdateDTO dto) {
-        logisticsPrintTypeService.update(dto);
-        return success();
-    }
 
 
 

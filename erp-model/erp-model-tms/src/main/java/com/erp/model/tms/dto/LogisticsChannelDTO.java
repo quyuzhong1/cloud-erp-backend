@@ -38,6 +38,8 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String id;
 
+        private String sourceId;
+
         /**
          * 渠道名
          */
@@ -58,12 +60,6 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String effectiveTimeStr;
 
-
-
-        /**
-         * 运费模板id
-         */
-        private String shippingTemplateId;
 
         /**
          * 运费模板名
@@ -88,14 +84,14 @@ public class LogisticsChannelDTO implements Serializable {
         private String id;
 
         /**
-         * 主表id
+         * 来源id
          */
-        private String mainId;
+        private String sourceId;
 
         /**
-         * 渠道名称
+         * 来源类型
          */
-        private String name;
+        private String sourceType;
 
         /**
          * 渠道代码
@@ -128,6 +124,11 @@ public class LogisticsChannelDTO implements Serializable {
         private Integer paperWidth;
 
         /**
+         * 纸张大小
+         */
+        private String paperSize;
+
+        /**
          * 分拣码
          */
         private String sortingCode;
@@ -138,9 +139,16 @@ public class LogisticsChannelDTO implements Serializable {
         private String shippingTemplateId;
 
         /**
+         * 运费模板名称
+         */
+        private String shippingTemplateName;
+
+        /**
          * 费用规则
          */
         private String feeRule;
+
+
 
         /**
          * 最高报关金额
@@ -192,6 +200,27 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private Boolean isApiInsurance;
 
+        /**
+         * 物流映射列表
+         */
+        private List<LogisticsMappingDTO.ViewDTO> mappingList;
+
+        /**
+         * 打印标签类型
+         */
+        private List<LogisticsPrintTypeDTO.ViewDTO> printTypeList;
+
+
+        /**
+         * 地址列表
+         */
+        private List<LogisticsChannelAddressDTO.ViewDTO> addressList;
+
+        /**
+         * 发货限制列表
+         */
+        private List<LogisticsChannelBlacklistDTO.ViewDTO> blackList;
+
 
     }
 
@@ -232,10 +261,32 @@ public class LogisticsChannelDTO implements Serializable {
     public static class UpdateDTO extends CommonDTO {
 
         /**
-         * 主键id
+         * 渠道
          */
-        @NotBlank(message = "主键id不能为空")
+        @NotBlank(message = "渠道不能为空")
         private String id;
+
+
+        /**
+         * 物流映射列表
+         */
+        private List<LogisticsMappingDTO.UpdateDTO> mappingList;
+
+        /**
+         * 打印标签类型
+         */
+        private List<LogisticsPrintTypeDTO.UpdateDTO> printTypeList;
+
+
+        /**
+         * 地址设置列表
+         */
+        private List<LogisticsChannelAddressDTO.UpdateDTO> addressList;
+
+        /**
+         * 发货限制列表
+         */
+        private List<LogisticsChannelBlacklistDTO.UpdateDTO> blackList;
 
     }
 
@@ -244,10 +295,21 @@ public class LogisticsChannelDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 物流商id
+         * 来源id
+         * 物流商id 或者物流仓库id(当类型为海外仓物流)
          */
-        @NotBlank(message = "物流商不能为空")
-        private String mainId;
+        @NotBlank(message = "来源不能为空")
+        private String sourceId;
+
+
+
+        /**
+         * 来源类型
+         *logisticsSupplier  物流商
+         * logisticsWarehouse 物流仓
+         */
+        @NotBlank(message = "来源类型为空")
+        private String sourceType;
 
         /**
          * 渠道名称

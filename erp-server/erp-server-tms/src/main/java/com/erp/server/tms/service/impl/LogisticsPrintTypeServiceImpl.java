@@ -11,6 +11,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsPrintTypeDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -56,28 +58,31 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsPrintTypeDTO.UpdateDTO updateDTO) {
-        LogisticsPrintTypeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "面板打印设置单"));
-        LogisticsPrintTypeEntity logisticsPrintTypeEntity = BeanMapperUtils.map(LogisticsPrintTypeEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(logisticsPrintTypeEntity);
-        log.info("编辑 开始修改面板打印设置单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(logisticsPrintTypeEntity);
-        if (!save) {
-            throw new ServiceException("面板打印设置单保存失败");
+    public Boolean update(String channelId,List<LogisticsPrintTypeDTO.UpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录面板打印设置单日志数据，id：【{}】", logisticsPrintTypeEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsPrintTypeEntity.getId(), "面板打印设置单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsPrintTypeEntity, null, logisticsPrintTypeEntity.getId(), msg);
-        return Boolean.TRUE;
+        List<LogisticsPrintTypeEntity> updateList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
+        updateList.forEach(p -> p.setLogisticsChannelId(channelId));
+        List<LogisticsPrintTypeEntity> dbList = this.listDbByChannelId(channelId);
+        List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
+                map(LogisticsPrintTypeEntity::getId).collect(Collectors.toList());
+        List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsPrintTypeEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        return this.saveOrUpdateBatch(updateList);
     }
 
+    @Override
+    public List<LogisticsPrintTypeDTO.ViewDTO> listByChannelId(String channelId) {
+        List<LogisticsPrintTypeEntity> dbList=this.listDbByChannelId(channelId);
+        return BeanMapperUtils.copyList(LogisticsPrintTypeDTO.ViewDTO.class,dbList);
+    }
+
+    public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {
+        return this.lambdaQuery().eq(LogisticsPrintTypeEntity::getLogisticsChannelId, channelId).list();
+    }
 
     /**
      * 新增修改处理数据

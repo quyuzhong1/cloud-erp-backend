@@ -31,28 +31,10 @@ import com.erp.model.tms.dto.LogisticsMappingDTO;
 @RequestMapping("/logisticsMapping")
 public class LogisticsMappingController extends BaseController {
 
-    @Autowired
-    private LogisticsMappingService logisticsMappingService;
 
 
 
-    /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsMapping:update",
-        serviceClass = LogisticsMappingService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsMappingDTO.UpdateDTO dto) {
-        logisticsMappingService.update(dto);
-        return success();
-    }
+
 
 
 

@@ -30,28 +30,10 @@ import com.common.business.enums.DataAttributeEnum;
 @RequestMapping("/logisticsChannelAddress")
 public class LogisticsChannelAddressController extends BaseController {
 
-    @Autowired
-    private LogisticsChannelAddressService logisticsChannelAddressService;
 
 
 
-    /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsChannelAddress:update",
-        serviceClass = LogisticsChannelAddressService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsChannelAddressDTO.UpdateDTO dto) {
-        logisticsChannelAddressService.update(dto);
-        return success();
-    }
+
 
 
 

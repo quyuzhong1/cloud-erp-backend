@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.UnitEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
@@ -23,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +67,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsChannelDTO.AddDTO addDTO) {
@@ -103,20 +102,21 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道单"));
         LogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(LogisticsChannelEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(logisticsChannelEntity);
-        log.info("编辑 开始修改物流渠道单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(logisticsChannelEntity);
         if (!save) {
-            throw new ServiceException("物流渠道单保存失败");
+            throw new ServiceException("物流渠道更新失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        String channelId = updateDTO.getId();
+        //平台物流映射
+        logisticsMappingService.update(channelId, updateDTO.getMappingList());
+        //面单设置 打印类型
+        logisticsPrintTypeService.update(channelId, updateDTO.getPrintTypeList());
+        //物流地址
+        logisticsChannelAddressService.update(channelId, updateDTO.getAddressList());
+        //发货限制 黑名单
+        logisticsChannelBlacklistService.update(channelId, updateDTO.getBlackList());
         // 记录主单操作日志
-        log.info("编辑 开始记录物流渠道单日志数据，单号：【{}】", logisticsChannelEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, null, logisticsChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -138,6 +138,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setDisabled(item.getDisabled());
             base.setId(item.getId());
             base.setName(item.getName());
+            base.setSourceId(item.getSourceId());
             base.setSortingCode(item.getSortingCode());
             Integer effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
@@ -146,8 +147,55 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String id = item.getId();
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
+            base.setShippingTemplateName(ShippingTemplateName);
+            resultList.add(base);
         }
-        return null;
+        return resultList;
+    }
+
+
+    @Override
+    public LogisticsChannelDTO.ViewDTO view(String id) {
+        LogisticsChannelEntity channelEntity = this.getById(id);
+        if (Objects.isNull(channelEntity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        LogisticsChannelDTO.ViewDTO view = new LogisticsChannelDTO.ViewDTO();
+        BeanMapperUtils.copy(channelEntity, view);
+        List<ShippingTemplateRefChannelEntity> templateRefChannelList = shippingTemplateRefChannelService.listChannelIdList(Arrays.asList(id));
+        String shippingTemplateId = "";
+        String shippingTemplateName = "";
+        if (CollectionUtils.isNotEmpty(templateRefChannelList)) {
+            shippingTemplateId = templateRefChannelList.get(0).getMainId();
+            shippingTemplateName = templateRefChannelList.get(0).getShippingTemplateName();
+        }
+        view.setShippingTemplateId(shippingTemplateId);
+        view.setShippingTemplateName(shippingTemplateName);
+        /**
+         * 物流映射列表
+         */
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(id);
+
+        /**
+         * 打印标签类型
+         */
+        List<LogisticsPrintTypeDTO.ViewDTO> printTypeList = logisticsPrintTypeService.listByChannelId(id);
+
+
+        /**
+         * 地址列表
+         */
+        List<LogisticsChannelAddressDTO.ViewDTO> addressList = logisticsChannelAddressService.listByChannelId(id);
+
+        /**
+         * 发货限制列表
+         */
+        List<LogisticsChannelBlacklistDTO.ViewDTO> blackList = logisticsChannelBlacklistService.listByChannelId(id);
+        view.setAddressList(addressList);
+        view.setBlackList(blackList);
+        view.setMappingList(mappingList);
+        view.setPrintTypeList(printTypeList);
+        return view;
     }
 
     private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {
