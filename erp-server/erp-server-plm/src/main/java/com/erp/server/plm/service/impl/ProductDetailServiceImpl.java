@@ -3730,8 +3730,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
                         && (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
                         || ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())
-                        || ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
-                        || ProductBatchFieldEnum.WAREHOUSE_LOCATION.getCode().equals(dto.getUpdateFiledCode()))
+                        || ProductBatchFieldEnum.PRODUCT_STATE.getCode().equals(dto.getUpdateFiledCode()))
         ).count();
 
         if (count != detailApprovalList.size()) {
