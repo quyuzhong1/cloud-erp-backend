@@ -5,6 +5,7 @@ import com.common.core.anno.StateEnumValue;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
@@ -47,4 +48,7 @@ public class ParceInfoVO {
 
     //报价金额，默认RMB
     private Number insureValue;
+
+    //物品类型（0、礼物；1、文件;2、商业样本;3、回货品;4、其他）,去发货填写，不填默认4
+    private Integer itemType;
 }
