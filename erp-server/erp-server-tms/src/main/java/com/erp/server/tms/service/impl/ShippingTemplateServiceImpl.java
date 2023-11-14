@@ -376,7 +376,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         pairList.add(new Pair<>(0,errorList));
 
-        if (successList.size() > 0) {
+        if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
             String name = "ShippingTemplateError";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
