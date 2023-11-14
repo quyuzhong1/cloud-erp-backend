@@ -250,17 +250,17 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 实重
         */
-        private Integer actualWeight;
+        private BigDecimal actualWeight;
 
         /**
         * 体积重
         */
-        private Integer volumeWeight;
+        private BigDecimal volumeWeight;
 
         /**
         * 计费重
         */
-        private Integer billingWeight;
+        private BigDecimal billingWeight;
 
         /**
         * 预估运费
@@ -270,7 +270,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 计费重（物流商）
         */
-        private Integer billingWeightLogistics;
+        private BigDecimal billingWeightLogistics;
 
         /**
         * 实际运费（物流商）
@@ -310,13 +310,30 @@ public class LogisticsBillCostDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 计费重（物流商）
+         */
+        private BigDecimal billingWeightLogistics;
+
+        /**
+         * 实际运费（物流商）
+         */
+        @Digits(integer = 12, fraction = 4, message = "实际运费（物流商）整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal lactualShippingCost;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注最大长度不能超过255位")
+        private String remark;
 
     }
 
@@ -348,17 +365,17 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 实重
         */
-        private Integer actualWeight;
+        private BigDecimal actualWeight;
 
         /**
         * 体积重
         */
-        private Integer volumeWeight;
+        private BigDecimal volumeWeight;
 
         /**
         * 计费重
         */
-        private Integer billingWeight;
+        private BigDecimal billingWeight;
 
         /**
         * 预估运费
@@ -370,7 +387,7 @@ public class LogisticsBillCostDTO implements Serializable {
         * 计费重（物流商）
         */
         @NotNull(message = "计费重（物流商）不能为空")
-        private Integer billingWeightLogistics;
+        private BigDecimal billingWeightLogistics;
 
         /**
         * 实际运费（物流商）
@@ -402,6 +419,34 @@ public class LogisticsBillCostDTO implements Serializable {
 
 
     }
+    /**
+     * 修改导入数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDataDTO {
+
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId ;
+
+        /**
+         * 计费重[物流商]
+         */
+        private BigDecimal billingWeightLogistics;
+
+        /**
+         * 实际运费[物流商]
+         */
+        private BigDecimal lactualShippingCost;
+
+        /**
+         * 币种
+         */
+        private String currency;
+    }
+
 
     /**
      * 修改状态

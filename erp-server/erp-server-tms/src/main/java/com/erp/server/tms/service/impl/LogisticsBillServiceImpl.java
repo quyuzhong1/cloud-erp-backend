@@ -146,4 +146,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         return baseMapper.listLogisticsBillVoBySourceIds(sourceIdList);
     }
+
+    @Override
+    public List<LogisticsBillEntity> listByOutstockCodeList(List<String> outstockCodeList) {
+        if (CollectionUtils.isEmpty(outstockCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(LogisticsBillEntity::getOutstockCode,outstockCodeList).list();
+    }
 }
