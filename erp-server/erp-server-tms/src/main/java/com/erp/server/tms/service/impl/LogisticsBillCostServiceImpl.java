@@ -19,11 +19,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
+import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.DictBasicService;
@@ -189,9 +192,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ShippingTemplateCityExcelListener cityExcelListenerUtil = new ShippingTemplateCityExcelListener();
+        LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), ShippingTemplateCityExcelDTO.class, cityExcelListenerUtil).sheet(1).doRead();
+            EasyExcel.read(excelFile.getInputStream(), LogisticsBillCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -199,9 +202,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        
+        List<LogisticsBillCostExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<LogisticsBillCostExcelDTO > errorList = excelListenerUtil.getErrorList();
+
+        List<LogisticsBillCostExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //处理验证成功数据
+        handleImportSuccessList(successList, errorList);
 
         return null;
+    }
+
+    private void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList,List<LogisticsBillCostExcelDTO > errorList) {
+
+
     }
 
     @Override
