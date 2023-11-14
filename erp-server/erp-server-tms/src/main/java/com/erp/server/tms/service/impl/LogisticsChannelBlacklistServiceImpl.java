@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -42,10 +43,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<LogisticsChannelBlacklistMapper, LogisticsChannelBlacklistEntity> implements LogisticsChannelBlacklistService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
+
 
     @Autowired
     private SysDictFeign sysDictFeign;
@@ -59,7 +57,7 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         List<LogisticsChannelBlacklistEntity> blacklistList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
         // 数据处理
         handleData(blacklistList);
-        blacklistList.forEach(b->b.setLogisticsChannelId(channelId));
+        blacklistList.forEach(b -> b.setLogisticsChannelId(channelId));
         boolean save = super.saveBatch(blacklistList);
         if (!save) {
             throw new ServiceException("渠道黑名单表保存失败");
@@ -72,25 +70,34 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsChannelBlacklistDTO.UpdateDTO updateDTO) {
-        LogisticsChannelBlacklistEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "渠道黑名单表"));
-        LogisticsChannelBlacklistEntity logisticsChannelBlacklistEntity = BeanMapperUtils.map(LogisticsChannelBlacklistEntity.class, updateDTO);
-
-
-        log.info("编辑 开始修改渠道黑名单表数据，id：【{}】", old.getId());
-        boolean save = super.updateById(logisticsChannelBlacklistEntity);
-        if (!save) {
-            throw new ServiceException("渠道黑名单表保存失败");
+    public Boolean update(String channelId,List<LogisticsChannelBlacklistDTO.UpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        List<LogisticsChannelBlacklistEntity> updateList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
+        updateList.forEach(b -> b.setLogisticsChannelId(channelId));
+        // 数据处理
+        handleData(updateList);
 
-        // 记录主单操作日志
-        log.info("编辑 开始记录渠道黑名单表日志数据，id：【{}】", logisticsChannelBlacklistEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelBlacklistEntity.getId(), "渠道黑名单表");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, logisticsChannelBlacklistEntity, null, logisticsChannelBlacklistEntity.getId(), msg);
-        return Boolean.TRUE;
+        List<LogisticsChannelBlacklistEntity> dbList = this.listDbByChannelId(channelId);
+        List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
+                map(LogisticsChannelBlacklistEntity::getId).collect(Collectors.toList());
+        List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsChannelBlacklistEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        return this.saveOrUpdateBatch(updateList);
+
+    }
+
+    @Override
+    public List<LogisticsChannelBlacklistDTO.ViewDTO> listByChannelId(String channelId) {
+        List<LogisticsChannelBlacklistEntity> dbList = this.listDbByChannelId(channelId);
+        return BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.ViewDTO.class,dbList);
+    }
+
+    public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {
+        return this.lambdaQuery().eq(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelId).list();
     }
 
 

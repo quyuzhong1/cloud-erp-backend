@@ -38,7 +38,7 @@
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$TabListDTO">
         SELECT
         COUNT(id) AS count,
-        type
+        type AS tabFlag
         FROM logistics_supplier
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
@@ -56,6 +56,7 @@
         update_time,
         supplier_id,
         supplier_name,
+        supplier_name AS name,
         type,
         disabled,
         auth_status,

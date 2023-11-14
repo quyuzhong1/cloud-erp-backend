@@ -84,6 +84,11 @@ public class LogisticsSupplierDTO implements Serializable {
         private String id;
 
         /**
+         * 物流商名
+         */
+        private String name;
+
+        /**
          * 类型
          */
         private LogisticsSupplierTypeEnum type;
@@ -123,6 +128,11 @@ public class LogisticsSupplierDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
         /**
          * 最新授权时间

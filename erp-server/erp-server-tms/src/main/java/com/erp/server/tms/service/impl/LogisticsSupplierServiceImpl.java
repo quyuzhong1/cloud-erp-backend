@@ -27,6 +27,7 @@ import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -140,7 +141,6 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Override
     public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id) {
-        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
@@ -148,20 +148,25 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         sourceIdList.add(id);
         List<String> logisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
         sourceIdList.addAll(logisticsWarehouseIdList);
-        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceIdList(sourceIdList);
-
-        String warehouseId = "";
-        String warehouseName = "";
-        String sourceId = id;
-//        if (Objects.nonNull(logisticsWarehouse)) {
-//            warehouseId = logisticsWarehouse.getWarehouseId();
-//            warehouseName = logisticsWarehouse.getWarehouseName();
-//            sourceId = logisticsWarehouse.getId();
-//        }
-//        viewDTO.setWarehouseId(warehouseId);
-//        viewDTO.setWarehouseName(warehouseName);
-//        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceId(sourceId);
-//        viewDTO.setChannelList(channelList);
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseBySourceIdList(sourceIdList);
+        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
+            for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
+                LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+                channelView.setWarehouseId(item.getWarehouseId());
+                channelView.setWarehouseName(item.getWarehouseName());
+                List<LogisticsChannelDTO.BaseDTO> channelList=allChannelList.stream().filter(c->c.getSourceId().equals(item.getId())).collect(Collectors.toList());
+                channelView.setChannelList(channelList);
+                viewList.add(channelView);
+            }
+        }else{
+            LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+            channelView.setWarehouseId("");
+            channelView.setWarehouseName("");
+            List<LogisticsChannelDTO.BaseDTO> channelList=allChannelList.stream().filter(c->c.getSourceId().equals(id)).collect(Collectors.toList());
+            channelView.setChannelList(channelList);
+            viewList.add(channelView);
+        }
         return viewList;
     }
 

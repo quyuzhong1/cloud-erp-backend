@@ -37,31 +37,53 @@ public class LogisticsChannelController extends BaseController {
     private LogisticsChannelService logisticsChannelService;
 
     /**
-    * 物流渠道新增
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 物流渠道新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-11-02
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsChannelDTO.AddDTO dto) {
         return success(logisticsChannelService.add(dto));
     }
 
+
     /**
-    * 物流渠道修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
+     * 物流渠道详情
+     *
+     * @param id
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsChannel:view",
+            serviceClass = LogisticsChannelService.class,
+            keyIdName = "id")
+    public ApiResult<LogisticsChannelDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id") String id) {
+        LogisticsChannelDTO.ViewDTO view = logisticsChannelService.view(id);
+        return success(view);
+    }
+
+    /**
+     * 物流渠道修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsChannel:update",
-        serviceClass = LogisticsChannelService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsChannel:update",
+            serviceClass = LogisticsChannelService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated LogisticsChannelDTO.UpdateDTO dto) {
         logisticsChannelService.update(dto);
         return success();
@@ -70,9 +92,10 @@ public class LogisticsChannelController extends BaseController {
 
     /**
      * 物流渠道列表
+     *
+     * @return ApiResult<AddDTO>
      * @author Will
      * @date: 2023/11/10 9:57
-     * @return ApiResult<AddDTO>
      */
     @GetMapping("/listLogisticsChannel")
     public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel() {

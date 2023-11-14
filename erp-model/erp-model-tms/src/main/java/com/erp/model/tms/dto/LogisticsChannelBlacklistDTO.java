@@ -46,9 +46,19 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String country;
 
         /**
+         * 国家名
+         */
+        private String countryName;
+
+        /**
         * 省 州
         */
         private String province;
+
+        /**
+         * 省名
+         */
+        private String provinceName;
 
         /**
         * 城市
@@ -56,9 +66,19 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String city;
 
         /**
+         * 城市名
+         */
+        private String cityName;
+
+        /**
         * 区
         */
-        private String district ;
+        private String district;
+
+        /**
+         * 区名
+         */
+        private String districtName;
 
 
     }

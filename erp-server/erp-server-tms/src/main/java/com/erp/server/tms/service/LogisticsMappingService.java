@@ -30,10 +30,18 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
     * 修改
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(LogisticsMappingDTO.UpdateDTO dto);
+    Boolean update(String channelId,List<LogisticsMappingDTO.UpdateDTO> list);
 
 
+    /**
+     * 根据渠道id 查询数据
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<LogisticsMappingDTO.ViewDTO> listByChannelId(String channelId);
 }
