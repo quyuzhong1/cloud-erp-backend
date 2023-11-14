@@ -78,7 +78,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //物流地址
         logisticsChannelAddressService.add(channelId,addDTO.getAddressList());
         //发货限制 黑名单
-       // logisticsChannelBlacklistService.add(channelId,addDTO.getBlackList());
+        logisticsChannelBlacklistService.add(channelId,addDTO.getBlackList());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
