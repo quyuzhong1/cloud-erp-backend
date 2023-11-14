@@ -1,19 +1,19 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.sdk.oms.amz.spapi.model.orders.Money;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItem;
+import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -31,9 +31,24 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
     private String shopId;
 
+    /**
+     * 数据下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    private Integer downloadStatus;
+
+    /**
+     * 订单明细
+     */
+    private OrderItemList details;
+
     public PlatformAmazonOrderDTO(Order order, ShopInfoEntity shopInfoEntity) {
         this.order = order;
         this.shopId = shopInfoEntity.getId();
+        this.setUniqueId(order.getAmazonOrderId());
+        this.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        this.setDownloadStatus(0);
     }
 
     /**
@@ -44,6 +59,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         Order sourceOrder = dto.getOrder();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
+        BeanUtils.copyProperties(dto, orderDTO);
         // 订单日期
         LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseSystemTime();
         orderDTO.setBillDate(purchaseLocalDateTime.toLocalDate());
@@ -66,20 +82,20 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // （soB2cPayStatus字典类型）
         orderDTO.setPayStatus(sourceOrder.convertPayStatus());
         // 订单金额
-        orderDTO.setAmount(new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
+        orderDTO.setAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 币别（原币）
-        orderDTO.setCurrency(sourceOrder.getOrderTotal().getCurrencyCode());
+        orderDTO.setCurrency(null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode());
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
         // TODO 运费收入
-        BigDecimal shippingFee =BigDecimal.ZERO;
+        BigDecimal shippingFee = BigDecimal.ZERO;
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
         orderDTO.setPayTime(purchaseLocalDateTime);
         // 付款金额
-        orderDTO.setPayAmount(new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
+        orderDTO.setPayAmount(null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount()));
         // 付款方式
-        orderDTO.setDictPayMethod(sourceOrder.getPaymentMethod().getValue());
+        orderDTO.setDictPayMethod(null == sourceOrder.getPaymentMethod() ? "":sourceOrder.getPaymentMethod().getValue());
         // 买家备注
         orderDTO.setBuyerRemark("");
         // 订单备注
@@ -108,6 +124,50 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 0=详情数据需要更新(不发送MQ)
         // 1=详情数据已更新(发送MQ)
         orderDTO.setDownloadStatus(isSendMq ? 1 : 0);
+
+        // 订单财务信息
+        List<PlatformOrderFinanceDTO> financeDTOList = new LinkedList<>();
+        dto.getDetails().forEach(e-> {
+            Money money = e.getShippingPrice();
+            if (null == money){
+                return;
+            }
+            PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
+            financeDTO.setShippingCost(null == money.getAmount() ? BigDecimal.ZERO : new BigDecimal(money.getAmount()));
+            financeDTO.setCurrency(null == money.getCurrencyCode() ? "" : money.getCurrencyCode());
+            financeDTOList.add(financeDTO);
+        });
+        orderDTO.setFinancesList(financeDTOList);
+
+        // TODO 订单物流信息
+
+        // 订单买家信息
+        List<PlatformOrderReceiverDTO> receiverList = new LinkedList<>();
+        BuyerInfo buyerInfo = dto.getOrder().getBuyerInfo();
+        if (null != dto.getOrder().getBuyerInfo()){
+            PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
+            receiverDTO.setName(StringUtils.isBlank(buyerInfo.getBuyerName()) ? "" : buyerInfo.getBuyerName());
+            receiverDTO.setEmail(StringUtils.isBlank(buyerInfo.getBuyerEmail()) ? "" : buyerInfo.getBuyerEmail());
+            Address shippingAddress = dto.getOrder().getShippingAddress();
+            if (null != shippingAddress){
+                receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
+                receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddressLine2()) ? "" : shippingAddress.getAddressLine2());
+                if (StringUtils.isBlank(shippingAddress.getAddressLine3())){
+                    receiverDTO.setSecondAddress(receiverDTO.getSecondAddress() + shippingAddress.getAddressLine3());
+                }
+                receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+                receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCounty()) ? "" : shippingAddress.getCounty());
+                receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+                receiverDTO.setFullAddress(
+                        (StringUtils.isBlank(shippingAddress.getDistrict()) ? "" : shippingAddress.getDistrict()) +
+                        (StringUtils.isBlank(shippingAddress.getStateOrRegion()) ? "" : shippingAddress.getStateOrRegion()) +
+                        (StringUtils.isBlank(shippingAddress.getPostalCode()) ? "" : shippingAddress.getPostalCode())
+                );
+                receiverDTO.setPostCode(shippingAddress.getPostalCode());
+            }
+            receiverList.add(receiverDTO);
+        }
+        orderDTO.setReceiverList(receiverList);
         return orderDTO;
     }
 
