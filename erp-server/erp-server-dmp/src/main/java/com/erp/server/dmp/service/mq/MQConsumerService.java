@@ -290,7 +290,11 @@ public class MQConsumerService {
     public class ConsumerPlmProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
-            dmpOrderItemService.updateNewSign(ext);
+            try {
+                dmpOrderItemService.updateNewSign(ext);
+            }catch (Exception e){
+                log.error("sync_dmp_product_listing_tag 更新新品标记失败 ！{}",JSONUtil.toJsonStr(ext),e);
+            }
         }
     }
 
@@ -301,7 +305,11 @@ public class MQConsumerService {
     public class ConsumerGetProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
-            dmpOrderItemService.getProductListing(ext);
+            try {
+                dmpOrderItemService.getProductListing(ext);
+            }catch (Exception e){
+                log.error("get_dmp_product_listing_tag 查询产品listing失败 ！{}",JSONUtil.toJsonStr(ext),e);
+            }
         }
     }
 
