@@ -176,7 +176,7 @@ public class LogisticsBillCostController extends BaseController {
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
         Boolean flag = logisticsBillCostService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
