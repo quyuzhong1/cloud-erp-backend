@@ -286,137 +286,137 @@
 
     <select id="getProductKey" resultType="com.erp.model.plm.dto.ProductKeyDTO">
         SELECT pi."id",
-               pd.id  AS sku_id,
-               pp.id  AS purchase_id,
-               pc.id  AS cost_id,
-               ps.id  AS sale_id,
-               ppk.id AS pack_id,
-               pl.id  AS logistics_id
+        pd.id  AS sku_id,
+        pp.id  AS purchase_id,
+        pc.id  AS cost_id,
+        ps.id  AS sale_id,
+        ppk.id AS pack_id,
+        pl.id  AS logistics_id
         FROM product_info pi
-                 INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
-                 LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
-                 LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
-                 LEFT JOIN product_sale ps ON ps.sku_id = pd."id" AND ps.is_deleted = FALSE
-                 LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
-                 LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
+        INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        LEFT JOIN product_sale ps ON ps.sku_id = pd."id" AND ps.is_deleted = FALSE
+        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id" AND ppk.is_deleted = FALSE
+        LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE
-          AND pd.id = #{skuId} LIMIT 1
+        AND pd.id = #{skuId} LIMIT 1
     </select>
 
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT pi."id",
-               pd.images_url,
-               pd.sku_no,
-               pd.product_state,
-               pd.name,
-               pd.name_en,
-               pi.name    as spuName,
-               pi.name_en as spuNameEn,
-               pi.charge_name,
-               pi.charge_id,
-               pi.brand_name,
-               pi.brand_id,
-               pi.property,
-               pi.property_id,
-               pi.grade_id,
-               pi.grade,
-               pi.category,
-               pi.category_id,
-               pi.sale_method,
-               pi.sell_spot,
-               pi.function_desc,
-               pi.usage_desc,
-               pi.pirate_risk,
-               pi.materials,
-               pd.plan_listing_time,
-               pd.first_mass_product_date,
-               pd.unit_id,
-               unit.name  AS unit_name,
-               pd.product_state,
-               pi.entrusted_develop_cost,
-               pi.mold_cost,
-               pi.sample_fee,
-               pi.is_customized,
-               pi.sales_channel,
-               pd.status
+        pd.images_url,
+        pd.sku_no,
+        pd.product_state,
+        pd.name,
+        pd.name_en,
+        pi.name    as spuName,
+        pi.name_en as spuNameEn,
+        pi.charge_name,
+        pi.charge_id,
+        pi.brand_name,
+        pi.brand_id,
+        pi.property,
+        pi.property_id,
+        pi.grade_id,
+        pi.grade,
+        pi.category,
+        pi.category_id,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials,
+        pd.plan_listing_time,
+        pd.first_mass_product_date,
+        pd.unit_id,
+        unit.name  AS unit_name,
+        pd.product_state,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel,
+        pd.status
         FROM product_info pi
-                 LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
-                 LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
+        LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE
-          AND pi.id = #{productId} LIMIT 1
+        AND pi.id = #{productId} LIMIT 1
     </select>
 
     <select id="getNoSpecDetailBySkuId" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT pi."id",
-               pd.images_url,
-               pd.sku_no,
-               pd.product_state,
-               pd.name,
-               pd.name_en,
-               pi.name    as spuName,
-               pi.name_en as spuNameEn,
-               pi.charge_name,
-               pi.charge_id,
-               pi.brand_name,
-               pi.brand_id,
-               pi.property,
-               pi.property_id,
-               pi.grade_id,
-               pi.grade,
-               pi.category,
-               pi.category_id,
-               pi.sale_method,
-               pi.sell_spot,
-               pi.function_desc,
-               pi.usage_desc,
-               pi.pirate_risk,
-               pi.materials,
-               pd.plan_listing_time,
-               pd.first_mass_product_date,
-               pd.unit_id,
-               unit.name  AS unit_name,
-               pd.product_state,
-               pi.entrusted_develop_cost,
-               pi.mold_cost,
-               pi.sample_fee,
-               pi.is_customized,
-               pi.sales_channel,
-               pd.status
+        pd.images_url,
+        pd.sku_no,
+        pd.product_state,
+        pd.name,
+        pd.name_en,
+        pi.name    as spuName,
+        pi.name_en as spuNameEn,
+        pi.charge_name,
+        pi.charge_id,
+        pi.brand_name,
+        pi.brand_id,
+        pi.property,
+        pi.property_id,
+        pi.grade_id,
+        pi.grade,
+        pi.category,
+        pi.category_id,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials,
+        pd.plan_listing_time,
+        pd.first_mass_product_date,
+        pd.unit_id,
+        unit.name  AS unit_name,
+        pd.product_state,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel,
+        pd.status
         FROM product_info pi
-                 LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
-                 LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
+        LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE
-          AND pd.id = #{skuId} LIMIT 1
+        AND pd.id = #{skuId} LIMIT 1
     </select>
     <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManySpecBaseDTO">
         SELECT pi."id",
-               pi.spu_no,
-               pi."name",
-               pi.name_en,
-               pi.charge_name,
-               pi.charge_id,
-               pi.brand_name,
-               pi.brand_id,
-               pi.property,
-               pi.property_id,
-               pi.grade_id,
-               pi.grade,
-               pi.category,
-               pi.category_id,
-               pi.sale_method,
-               pi.sell_spot,
-               pi.function_desc,
-               pi.usage_desc,
-               pi.pirate_risk,
-               pi.materials,
-               pi.entrusted_develop_cost,
-               pi.mold_cost,
-               pi.sample_fee,
-               pi.is_customized,
-               pi.sales_channel
+        pi.spu_no,
+        pi."name",
+        pi.name_en,
+        pi.charge_name,
+        pi.charge_id,
+        pi.brand_name,
+        pi.brand_id,
+        pi.property,
+        pi.property_id,
+        pi.grade_id,
+        pi.grade,
+        pi.category,
+        pi.category_id,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel
         FROM product_info pi
         WHERE pi.is_deleted = FALSE
-          AND pi.id = #{productId}
+        AND pi.id = #{productId}
     </select>
 
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelDTO">
@@ -546,13 +546,13 @@
 
     <select id="getProductIdBySkuClean" resultType="com.erp.model.plm.dto.CleanSkuDto">
         SELECT brand_id,
-               brand_name,
-               category_id,
-               category AS categoryName
+        brand_name,
+        category_id,
+        category AS categoryName
         FROM product_info pi
-                 LEFT JOIN product_detail pd ON pd.product_id = pi.id AND pd.is_deleted = FALSE
+        LEFT JOIN product_detail pd ON pd.product_id = pi.id AND pd.is_deleted = FALSE
         WHERE pd.sku_no = #{sku}
-          AND pi.is_deleted = FALSE
+        AND pi.is_deleted = FALSE
     </select>
 
     <select id="getSkuBySkuNos" resultType="com.erp.model.plm.vo.SkuVO">
@@ -927,41 +927,41 @@
 
     <select id="listByChargeId" resultType="com.erp.model.plm.entity.ProductDetailEntity">
         SELECT id,
-               charge_id,
-               charge_name
+        charge_id,
+        charge_name
         FROM product_detail
         WHERE is_deleted = false
-          and string_to_array(charge_id, ',') &amp;&amp;  string_to_array(#{chargeId}
-            , ',')
+        and string_to_array(charge_id, ',') &amp;&amp;  string_to_array(#{chargeId}
+        , ',')
     </select>
 
     <select id="logisticsProductPaging" resultType="com.erp.model.plm.dto.LogisticsProductDTO$PagingVO">
         SELECT
-            pd.id,
-            pd.id AS skuId,
-            pd.sku_no AS skuNo,
-            pd.name AS productName,
-            pd.status AS approveStatus,
-            pd.create_time AS createTime,
-            pd.update_time AS updateTime,
-            pi.category_id AS categoryId,
-            pi.category AS categoryName,
-            pi.spu_no AS spuNo,
-            pi.property AS productPropertyName,
-            pi.brand_name AS brandName,
-            pi.charge_id AS chargeId,
-            pl.declare_chinese_name AS declareChineseName,
-            pl.declare_price AS declarePrice,
-            pl.declare_currency AS declareCurrency,
-            pl.declare_currency_symbol AS declareCurrencySymbol,
-            pl.dest_declare_price AS destDeclarePrice,
-            pl.dest_currency AS destCurrency,
-            pl.dest_currency_symbol AS destCurrencySymbol,
-            pl.declare_element AS declareElement,
-            pl.declare_model AS declareModel,
-            pl.source_country AS sourceCountry,
-            pl.customs_code AS customsCode,
-            ps.sale_state AS salesStatus
+        pd.id,
+        pd.id AS skuId,
+        pd.sku_no AS skuNo,
+        pd.name AS productName,
+        pd.status AS approveStatus,
+        pd.create_time AS createTime,
+        pd.update_time AS updateTime,
+        pi.category_id AS categoryId,
+        pi.category AS categoryName,
+        pi.spu_no AS spuNo,
+        pi.property AS productPropertyName,
+        pi.brand_name AS brandName,
+        pi.charge_id AS chargeId,
+        pl.declare_chinese_name AS declareChineseName,
+        pl.declare_price AS declarePrice,
+        pl.declare_currency AS declareCurrency,
+        pl.declare_currency_symbol AS declareCurrencySymbol,
+        pl.dest_declare_price AS destDeclarePrice,
+        pl.dest_currency AS destCurrency,
+        pl.dest_currency_symbol AS destCurrencySymbol,
+        pl.declare_element AS declareElement,
+        pl.declare_model AS declareModel,
+        pl.source_country AS sourceCountry,
+        pl.customs_code AS customsCode,
+        ps.sale_state AS salesStatus
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1051,25 +1051,25 @@
     </select>
     <!--获取物流产品基础数据-->
     <select id="getProductBaseInfo" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ProductBaseInfoDTO">
-         SELECT
-             pd.sku_no ,
-             pd.name AS productName,
-             pd.images_url,
-             pi.category_id,
-             pi.spu_no,
-             pi.charge_name,
-             pi.brand_name,
-             pi.property AS propertyName,
-             pi.materials,
-             pi.usage_desc,
-             ps.sale_state AS salesStatus,
-             pp.product_size,
-             pp.gross_weight,
-             pp.net_weight,
-             pp.product_size,
-             pc.actual_tax_cost,
-             pc.actual_no_tax_cost,
-             (SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
+        SELECT
+        pd.sku_no ,
+        pd.name AS productName,
+        pd.images_url,
+        pi.category_id,
+        pi.spu_no,
+        pi.charge_name,
+        pi.brand_name,
+        pi.property AS propertyName,
+        pi.materials,
+        pi.usage_desc,
+        ps.sale_state AS salesStatus,
+        pp.product_size,
+        pp.gross_weight,
+        pp.net_weight,
+        pp.product_size,
+        pc.actual_tax_cost,
+        pc.actual_no_tax_cost,
+        (SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1086,45 +1086,45 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ExportInfoDTO">
         SELECT
-            pd.id AS skuId,
-            pd.sku_no AS skuNo,
-            pd.name AS productName,
-            pd.status AS approveStatus,
-            pd.create_time AS createTime,
-            pi.category_id AS categoryId,
-            pi.category AS categoryName,
-            pi.spu_no AS spuNo,
-            pi.property AS propertyName,
-            pi.brand_name AS brandName,
-            pi.charge_id AS chargeId,
-            pi.charge_name AS chargeName,
-            pi.usage_desc AS usageDesc,
-            pi.materials AS materials,
-            pl.declare_chinese_name AS declareChineseName,
-            pl.declare_english_name AS declareEnglishName,
-            pl.declare_unit,
-            pl.declare_price AS declarePrice,
-            pl.declare_currency_symbol AS declareCurrencySymbol,
-            pl.dest_declare_price AS destDeclarePrice,
-            pl.dest_currency AS destCurrency,
-            pl.dest_currency_symbol AS destCurrencySymbol,
-            pl.declare_element AS declareElement,
-            pl.declare_model AS declareModel,
-            pl.source_country AS sourceCountry,
-            pl.source_cargo AS sourceCargo,
-            pl.exemption AS exemption,
-            pl.combination_declare_type AS combinationDeclareType,
-            pl.customs_code AS customsCode,
-            ps.sale_state AS salesStatus,
-            pp.product_size,
-            pp.gross_weight,
-            pp.net_weight,
-            pc.customs_code AS destCustomsCode,
-            pc.country_name,
-            pc.tax_rate*100 AS taxRate,
-            prc.actual_no_tax_cost,
-            prc.actual_tax_cost,
-            COALESCE((SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1),'') AS ean
+        pd.id AS skuId,
+        pd.sku_no AS skuNo,
+        pd.name AS productName,
+        pd.status AS approveStatus,
+        pd.create_time AS createTime,
+        pi.category_id AS categoryId,
+        pi.category AS categoryName,
+        pi.spu_no AS spuNo,
+        pi.property AS propertyName,
+        pi.brand_name AS brandName,
+        pi.charge_id AS chargeId,
+        pi.charge_name AS chargeName,
+        pi.usage_desc AS usageDesc,
+        pi.materials AS materials,
+        pl.declare_chinese_name AS declareChineseName,
+        pl.declare_english_name AS declareEnglishName,
+        pl.declare_unit,
+        pl.declare_price AS declarePrice,
+        pl.declare_currency_symbol AS declareCurrencySymbol,
+        pl.dest_declare_price AS destDeclarePrice,
+        pl.dest_currency AS destCurrency,
+        pl.dest_currency_symbol AS destCurrencySymbol,
+        pl.declare_element AS declareElement,
+        pl.declare_model AS declareModel,
+        pl.source_country AS sourceCountry,
+        pl.source_cargo AS sourceCargo,
+        pl.exemption AS exemption,
+        pl.combination_declare_type AS combinationDeclareType,
+        pl.customs_code AS customsCode,
+        ps.sale_state AS salesStatus,
+        pp.product_size,
+        pp.gross_weight,
+        pp.net_weight,
+        pc.customs_code AS destCustomsCode,
+        pc.country_name,
+        pc.tax_rate*100 AS taxRate,
+        prc.actual_no_tax_cost,
+        prc.actual_tax_cost,
+        COALESCE((SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1),'') AS ean
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1236,28 +1236,28 @@
 
     <select id="logisticsProductUpdatePaging"
             resultType="com.erp.model.plm.dto.LogisticsProductDTO$UpdatePagingDTO">
-         SELECT
-             pd.sku_no AS skuNo,
-             pd.id AS skuId,
-             pd.id AS id,
-             pd.name AS productName,
-             pi.spu_no AS spuNo,
-             sl.operation AS operate,
-             sl.content AS operateContent,
-             sl.create_user_name  AS operateUserName,
-             sl.create_time AS operateTime
-         FROM sys_log sl
-         LEFT JOIN product_detail pd
-         ON sl.business_id = pd.id AND pd.is_deleted = FALSE
-         LEFT JOIN product_info pi
-         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
-         WHERE sl.is_deleted=FALSE
-         AND pd.status=#{approveStatus}
-         AND sl.field_name IN
+        SELECT
+        pd.sku_no AS skuNo,
+        pd.id AS skuId,
+        pd.id AS id,
+        pd.name AS productName,
+        pi.spu_no AS spuNo,
+        sl.operation AS operate,
+        sl.content AS operateContent,
+        sl.create_user_name  AS operateUserName,
+        sl.create_time AS operateTime
+        FROM sys_log sl
+        LEFT JOIN product_detail pd
+        ON sl.business_id = pd.id AND pd.is_deleted = FALSE
+        LEFT JOIN product_info pi
+        ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        WHERE sl.is_deleted=FALSE
+        AND pd.status=#{approveStatus}
+        AND sl.field_name IN
         <!--字段-->
-         <foreach collection="fieldList" item="item" open="(" separator="," close=")">
-              #{item}
-         </foreach>
+        <foreach collection="fieldList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         <!--sku no-->
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND pd.sku_no IN
@@ -1304,7 +1304,7 @@
     </select>
     <select id="logisticsProductUpdateCount" resultType="java.lang.Integer">
         SELECT
-         count(sl.id)
+        count(sl.id)
         FROM sys_log sl
         LEFT JOIN product_detail pd
         ON sl.business_id = pd.id AND pd.is_deleted = FALSE
