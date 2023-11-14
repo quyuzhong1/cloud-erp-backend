@@ -41,4 +41,8 @@ public class LogisticsQueryBaseVO implements Serializable {
      * 订单状态
      */
     String orderStatus;
+    /**
+     * 虾皮店铺id
+     */
+    String shopeeId;
 }

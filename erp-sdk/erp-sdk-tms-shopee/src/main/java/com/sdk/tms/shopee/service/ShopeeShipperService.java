@@ -9,6 +9,7 @@ import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.shopee.model.logistics.response.TrackNumber;
+import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
 import com.sdk.tms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ public class ShopeeShipperService {
      * @param baseRequest
      * @return
      */
-    public static List<LogisticsChannel> getChannelList(BaseRequest baseRequest) {
+    public List<LogisticsChannel> getChannelList(BaseRequest baseRequest) {
 //        String path = "/api/v2/logistics/get_channel_list";
         baseRequest.setPath(PathConstants.GET_CHANNEL_LIST_URL);
         long timestamp = System.currentTimeMillis() / 1000L;
@@ -61,12 +62,35 @@ public class ShopeeShipperService {
     }
 
     /**
+     * 获取跟踪号（单个接口）
+     *
+     * @param trackRequest
+     * @return
+     */
+    public BaseResponse getTrackNumber(TrackRequest trackRequest) {
+        trackRequest.setPath(PathConstants.GET_TRACK_NUMBER_URL);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        trackRequest.setTimestamp(timestamp);
+        BaseRequest baseRequest = BaseRequest.builder()
+                .timestamp(trackRequest.getTimestamp())
+                .path(trackRequest.getPath())
+                .accessToken(trackRequest.getAccessToken())
+                .partnerId(trackRequest.getPartnerId())
+                .partnerKey(trackRequest.getPartnerKey())
+                .shopId(trackRequest.getShopId())
+                .build();
+        HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
+        paramMap.put("order_sn", trackRequest.getOrderSn());
+        return ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
+    }
+
+    /**
      * 获取跟踪号列表
      *
      * @param trackRequest
      * @return
      */
-    public static TrackNumber getTrackNumberList(TrackRequest trackRequest) {
+    public TrackNumber getTrackNumberList(TrackRequest trackRequest) {
         trackRequest.setPath(PathConstants.GET_TRACK_NUMBER_LIST_URL);
         long timestamp = System.currentTimeMillis() / 1000L;
         trackRequest.setTimestamp(timestamp);
@@ -97,7 +121,7 @@ public class ShopeeShipperService {
         return JSONObject.parseObject(response.toJSONString(), TrackNumber.class);
     }
 
-    private static HashMap<String, Object> getOrderCommonParam(BaseRequest baseRequest) {
+    private HashMap<String, Object> getOrderCommonParam(BaseRequest baseRequest) {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("timestamp", baseRequest.getTimestamp());
         paramMap.put("sign", ShopeeApiUtils.getOrderSign(baseRequest.getPath(), baseRequest.getAccessToken(), baseRequest.getPartnerId(),

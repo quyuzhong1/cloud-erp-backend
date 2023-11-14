@@ -29,4 +29,5 @@ public class TrackRequest implements Serializable {
     private String partnerKey;
     private Integer pageSize;
     private String cursor;
+    private String orderSn;
 }

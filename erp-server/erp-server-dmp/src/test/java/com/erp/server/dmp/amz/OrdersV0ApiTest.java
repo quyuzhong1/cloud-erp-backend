@@ -32,6 +32,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * API tests for OrdersV0Api
@@ -58,8 +60,8 @@ public class OrdersV0ApiTest {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
-//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
+//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
                 .build();
         if (null == api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -72,16 +74,16 @@ public class OrdersV0ApiTest {
         List<String> fulfillmentChannels = new ArrayList<>();
 //        fulfillmentChannels.add("MFN");
         List<String> orderStatuses = new ArrayList<>();
-        String createdAfter = "TEST_CASE_200";
-        String lastUpdatedAfter = null;
-//        String createdAfter = null;
+//        String createdAfter = "TEST_CASE_200";
+//        String lastUpdatedAfter = null;
+        String createdAfter = null;
 //        String createdAfter = "2020-10-01T00:00:00";
-//        String createdBefore = "2023-10-16T00:00:00";
-//        String lastUpdatedAfter = "2023-10-15T00:00:00Z";
+        String createdBefore = "2023-10-16T00:00:00";
+        String lastUpdatedAfter = "2023-10-15T00:00:00Z";
 //        String lastUpdatedAfter = "2023-10-15T16:30:19";
 //        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
 //        orderStatuses.add("Unshipped");
-        GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, null, lastUpdatedAfter,
+        GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter,
                 null, null, null, null, null, null, 10,
                 null, null, null, null, null, null,
                 null, null, null, null, null);
@@ -94,6 +96,64 @@ public class OrdersV0ApiTest {
         System.out.println(JSONUtil.toJsonStr(orderList));
     }
 
+    @Test
+    public void getOrderAllListTest() throws Exception {
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.US;
+//        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+        OrdersV0Api api = new OrdersV0Api.Builder()
+                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+                //北美，https://sellingpartnerapi-na.amazon.com
+                //欧洲，https://sellingpartnerapi-eu.amazon.com
+                //远东，https://sellingpartnerapi-fe.amazon.com
+//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
+                .build();
+        if (null == api) {
+            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+        }
+
+        List<String> marketplaceIds = new ArrayList<>();
+        marketplaceIds.add("ATVPDKIKX0DER");//根据国家确定
+//        marketplaceIds.add("A1AM78C64UM0Y8");//根据国家确定
+
+        List<String> fulfillmentChannels = new ArrayList<>();
+//        fulfillmentChannels.add("MFN");
+        List<String> orderStatuses = new ArrayList<>();
+//        String createdAfter = "TEST_CASE_200";
+//        String lastUpdatedAfter = null;
+        String createdAfter = null;
+//        String createdAfter = "2020-10-01T00:00:00";
+        String createdBefore = null;
+        String lastUpdateBefore = "2023-11-11T00:00:00.000Z";
+        String lastUpdatedAfter = "2023-11-12T23:00:00.000Z";
+//        String lastUpdatedAfter = "2023-10-15T16:30:19";
+//        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
+//        orderStatuses.add("Unshipped");
+        List<Order> allOrders = api.getAllOrders(marketplaceIds, createdAfter, createdBefore, lastUpdateBefore,
+                lastUpdatedAfter, null, null, null, null, null,
+                null, null, null, null, null, null,
+                null, null, null, null, null);
+        if (null == allOrders) {
+            throw new RuntimeException("响应为空");
+        }
+        System.out.println(allOrders);
+        System.out.println("amz sp-查询订单");
+        System.out.println(JSONUtil.toJsonStr(allOrders));
+        Map<String, List<Order>> collect = allOrders.stream().collect(Collectors.groupingBy(Order::getAmazonOrderId));
+        for (Map.Entry<String, List<Order>> stringListEntry : collect.entrySet()) {
+            if ( stringListEntry.getValue().size() > 1 ){
+                System.out.println("存在重复,value={}"+ JSONUtil.toJsonStr(stringListEntry.getValue()));
+            }
+        }
+    }
+
+
 
     /**
      * Returns the order that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 0.0167 | 20 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
@@ -103,7 +163,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderTest() throws ApiException {
         String orderId = "TEST_CASE_200";
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderResponse response = api.getOrder(orderId);
         System.out.println("根据ID查询订单");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -118,7 +178,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderAddressTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderAddressResponse response = api.getOrderAddress(orderId);
 
         // TODO: test validations
@@ -132,7 +192,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderBuyerInfoTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderBuyerInfoResponse response = api.getOrderBuyerInfo(orderId);
 
         // TODO: test validations
@@ -147,7 +207,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderItemsResponse response = api.getOrderItems(orderId, nextToken);
 
         // TODO: test validations
@@ -162,7 +222,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsBuyerInfoTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderItemsBuyerInfoResponse response = api.getOrderItemsBuyerInfo(orderId, nextToken);
 
         // TODO: test validations
@@ -176,7 +236,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderRegulatedInfoTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrderRegulatedInfoResponse response = api.getOrderRegulatedInfo(orderId);
 
         // TODO: test validations
@@ -211,7 +271,7 @@ public class OrdersV0ApiTest {
         String earliestDeliveryDateAfter = null;
         String latestDeliveryDateBefore = null;
         String latestDeliveryDateAfter = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
 
         // TODO: test validations
@@ -227,7 +287,7 @@ public class OrdersV0ApiTest {
      */
 //    @Test
 //    public void updateVerificationStatusTest() throws ApiException {
-//        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+//        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
 //        String orderId = null;
 //        UpdateVerificationStatusRequest payload = null;
 //        api.updateVerificationStatus(orderId, payload);
@@ -265,7 +325,7 @@ public class OrdersV0ApiTest {
         orderItemList.add(orderItem);
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         String orderId = "902-1106328-1059050";
         api.confirmShipment(body, orderId);
 

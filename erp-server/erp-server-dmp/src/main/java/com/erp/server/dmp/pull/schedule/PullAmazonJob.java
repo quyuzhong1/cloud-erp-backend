@@ -96,10 +96,13 @@ public class PullAmazonJob {
      * 拉取亚马逊任务
      */
     @XxlJob("amazonExecute")
-    public void execute() {
+    public ReturnT<String> execute() {
+        XxlJobHelper.log("[拉取亚马逊任务] 任务开始 =====");
         threadPoolTaskExecutor.execute(() -> {
             platformDataThread.executeTask(PlatformDictEnum.AMAZON.getCode());
         });
+        XxlJobHelper.log("[拉取亚马逊任务] 任务结束 =====");
+        return ReturnT.SUCCESS;
     }
 
     /**
