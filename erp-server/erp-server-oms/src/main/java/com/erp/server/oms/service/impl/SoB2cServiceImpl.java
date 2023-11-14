@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -1595,6 +1596,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> payStatusList = new ArrayList<>(1);
         //单据状态
         List<String> billStatusList = new ArrayList<>(1);
+
+        // 全部
+        if (SearchType.ALL.equals(params.getTabFlag())) {
+            params.setInvalidStatus(Boolean.FALSE);
+        }
 
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(params.getTabFlag())) {
