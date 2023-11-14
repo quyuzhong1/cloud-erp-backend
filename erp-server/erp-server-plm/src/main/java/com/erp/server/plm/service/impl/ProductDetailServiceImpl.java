@@ -3724,18 +3724,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_98004);
         }
 
-/*        List<ProductDetailEntity> detailApprovalList = entityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus())).collect(Collectors.toList());
+        List<ProductDetailEntity> detailApprovalList = entityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus())).collect(Collectors.toList());
         //审核通过后支持批量更新【销售状态】【是否可销售】【产品开发状态】
         long count = entityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
                         && (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
                         || ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())
-                        || ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode()))
+                        || ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
+                        || ProductBatchFieldEnum.WAREHOUSE_LOCATION.getCode().equals(dto.getUpdateFiledCode()))
         ).count();
 
         if (count != detailApprovalList.size()) {
             throw new ServiceException(ApiError.ERROR_95176);
-        }*/
+        }
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name
         if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode()) || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
