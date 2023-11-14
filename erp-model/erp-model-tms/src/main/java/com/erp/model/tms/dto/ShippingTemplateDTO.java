@@ -35,7 +35,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
          * 类型（启用true,停用false）
          */
-        private String tabFlag;
+        private Boolean tabFlag;
 
         /**
          * 数量

@@ -346,6 +346,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(String billingMethod, String type, MultipartFile excelFile, HttpServletResponse response) {
         List<Pair<Integer,List<?>>> pairList = new ArrayList<>();
         //获取第一页数据
@@ -375,7 +376,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         String excelPath =  getExportErrorExcelPath(billingMethod,type);
 
         pairList.add(new Pair<>(0,errorList));
-
+        pairList.add(new Pair<>(1,cityErrorList));
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
             String name = "ShippingTemplateError";
@@ -502,7 +503,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                     ruleAddDTO.setToCountry(toCountry);
                 }
                 ruleAddDTO.setRegion(excelDTO.getRegion());
-                List<String> cityList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(ruleAddDTO.getToCountry()) && obj.getRegion().equals(ruleAddDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
+                List<String> cityList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(excelDTO.getToCountry()) && obj.getRegion().equals(excelDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(cityList)) {
                     ruleAddDTO.setCityList(cityList);
                 }
@@ -530,6 +531,12 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             List<ShippingTemplateOtherCostDTO.AddDTO> otherCostList = addShippingTemplateOtherCost(excelValueDTO);
             addDTO.setOtherCostList(otherCostList);
             this.add(addDTO);
+        }
+        //添加城市错误信息
+        for (ShippingTemplateExcelDTO excelDTO :errorList) {
+            //城市信息
+            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(excelDTO.getToCountry()) && obj.getRegion().equals(excelDTO.getRegion())).distinct().collect(Collectors.toList());
+            cityErrorList.addAll(cityExcelList);
         }
     }
 
@@ -736,26 +743,26 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
             if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_country1.xlsx";
+                return "excel/shippingTemplateError_country1.xlsx";
             }
             if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_country2.xlsx";
+                return "excel/shippingTemplateError_country2.xlsx";
             }
         }
         if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
             if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_region1.xlsx";
+                return "excel/shippingTemplateError_region1.xlsx";
             }
             if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_region2.xlsx";
+                return "excel/shippingTemplateError_region2.xlsx";
             }
         }
         if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(type)) {
             if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_warehouse1.xlsx";
+                return "excel/shippingTemplateError_warehouse1.xlsx";
             }
             if (ShippingBillingMethodEnum.ENUM_WEIGHT_SEGMENT.getCode().equals(billingMethod)) {
-                return "classpath:excel/shippingTemplateError_warehouse2.xlsx";
+                return "excel/shippingTemplateError_warehouse2.xlsx";
             }
         }
         throw new ServiceException(ApiError.ERROR_95131);
