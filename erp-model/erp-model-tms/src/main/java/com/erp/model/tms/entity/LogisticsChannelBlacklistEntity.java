@@ -47,8 +47,30 @@ public class LogisticsChannelBlacklistEntity extends BaseEntity<LogisticsChannel
     /**
     * 区
     */
-    @TableField("district ")
-    private String district ;
+    @TableField("district")
+    private String district;
+
+
+    /**
+     * 国家
+     */
+    @TableField("country_name")
+    private String countryName;
+    /**
+     * 省 州
+     */
+    @TableField("province_name")
+    private String provinceName;
+    /**
+     * 城市
+     */
+    @TableField("city_name")
+    private String cityName;
+    /**
+     * 区
+     */
+    @TableField("district_name")
+    private String districtName;
 
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";

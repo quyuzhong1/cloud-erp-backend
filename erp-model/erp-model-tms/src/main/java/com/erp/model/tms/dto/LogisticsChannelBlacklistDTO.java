@@ -94,25 +94,25 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
 
 
         /**
-        * 国家
+        * 国家 id
         */
         @NotBlank(message = "国家不能为空")
         private String country;
 
         /**
-        * 省 州
+        * 省 州 id
         */
         @NotBlank(message = "省 州不能为空")
         private String province;
 
         /**
-        * 城市
+        * 城市id
         */
         @NotBlank(message = "城市不能为空")
         private String city;
 
         /**
-        * 区
+        * 区id
         */
         @NotBlank(message = "区不能为空")
         private String district;

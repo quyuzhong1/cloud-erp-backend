@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 渠道黑名单表 服务类
@@ -18,10 +20,10 @@ public interface LogisticsChannelBlacklistService extends SuperService<Logistics
     * 新增
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsChannelBlacklistDTO.AddDTO dto);
+    Boolean add(String channelId, List<LogisticsChannelBlacklistDTO.AddDTO> list);
 
     /**
     * 修改

@@ -506,6 +506,11 @@ public class LogisticsProductDTO {
          */
         private String usageDesc;
 
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+
     }
 
     /**

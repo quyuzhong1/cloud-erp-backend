@@ -112,6 +112,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
 
+        List<String> skuNoList = Arrays.asList(productBaseInfo.getSkuNo());
+        List<BomInfoEntity> bomSkuList = bomSkuService.listAllBomByParentSkuNos(skuNoList);
+        productBaseInfo.setIsCombination(CollectionUtils.isNotEmpty(bomSkuList));
+
         Integer salesStatus = productBaseInfo.getSalesStatus();
         String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
         productBaseInfo.setSalesStatusName(salesStatusName);
