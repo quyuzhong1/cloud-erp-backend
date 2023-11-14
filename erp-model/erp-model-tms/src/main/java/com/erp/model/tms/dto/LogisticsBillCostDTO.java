@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -31,8 +33,66 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 物流单号
+         */
+        private List<String> codeList;
+        /**
+         * 对账状态
+         */
+        private List<String> reconciliationStatusList;
+        /**
+         * 订单类型
+         */
+        private String sourceType;
+        /**
+         * 店铺
+         */
+        private List<String> shopIdList;
+        /**
+         * 销售订单编码
+         */
+        private List<String> sourceCodeList;
+        /**
+         * 物流渠道
+         */
+        private List<String> channelIdList;
+        /**
+         * 运输状态
+         */
+        private List<String> transportStatusList;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 差异选项
+         */
+        private List<String>  diffOptionList;
+        /**
+         * 发货时间集合
+         */
+        private List<LocalDate> deliveryTimeList;
+        /**
+         * 下单时间集合
+         */
+        private List<LocalDate> orderTimeList;
+    }
+
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportExcelParamDTO extends ShippingTemplateDTO.PagingParamDTO {
+
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
 
     }
+
 
     /**
      * 列表数据
@@ -40,6 +100,106 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id
+         */
+       private String id;
+        /**
+         * 订单类型名称
+         */
+        private String    sourceTypeName;
+        /**
+         * 对账状态
+         */
+        private String    reconciliationStatus;
+        /**
+         * 对账状态
+         */
+        private String   reconciliationStatusName;
+        /**
+         * 渠道名称
+         */
+        private String  channelName;
+        /**
+         * 物流单号
+         */
+        private String  transportNo;
+        /**
+         * 运输状态
+         */
+        private String  transportStatus;
+        /**
+         * 运输状态
+         */
+        private String  transportStatusName;
+        /**
+         * 实重
+         */
+        private BigDecimal   actualWeight;
+        /**
+         * 体积重
+         */
+        private BigDecimal  volumeWeight;
+       /**
+         * 计费重
+         */
+        private BigDecimal  billingWeight;
+        /**
+         * 预估运费
+         */
+        private BigDecimal estimatedShippingCost;
+         /**
+         * 计费重（物流商）
+         */
+        private BigDecimal  billingWeightLogistics;
+        /**
+         * 实际运费（物流商）
+         */
+        private BigDecimal actualShippingCost;
+        /**
+         * 运费
+         */
+        private BigDecimal diffShippingCost;
+        /**
+         * 平台
+         */
+        private String   salesPlatform;
+        /**
+         * 来来源id
+         */
+        private String   sourceId;
+        /**
+         *  来源单号
+         */
+        private String  sourceType;
+        /**
+         * 来源单号
+         */
+        private String  sourceCode;
+        /**
+         * 销售出库单编码
+         */
+        private String  outstockCode;
+        /**
+         * 目的国家
+         */
+        private String  toCountry;
+        /**
+         * 客户名称
+         */
+        private String  customerName;
+        /**
+         * 订单时间
+         */
+        private LocalDateTime  orderTime;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
+        /**
+         * 备注
+         */
+        private String  remark;
 
     }
 
@@ -49,7 +209,15 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class TabListDTO {
+        /**
+         * 类型（启用true,停用false）
+         */
+        private Boolean tabFlag;
 
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 
     /**
@@ -180,25 +348,21 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 实重
         */
-        @NotNull(message = "实重不能为空")
         private Integer actualWeight;
 
         /**
         * 体积重
         */
-        @NotNull(message = "体积重不能为空")
         private Integer volumeWeight;
 
         /**
         * 计费重
         */
-        @NotNull(message = "计费重不能为空")
         private Integer billingWeight;
 
         /**
         * 预估运费
         */
-        @NotNull(message = "预估运费不能为空")
         @Digits(integer = 12, fraction = 4, message = "预估运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal estimatedShippingCost ;
 

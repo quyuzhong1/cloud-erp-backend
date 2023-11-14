@@ -11,18 +11,22 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
@@ -62,8 +66,13 @@ import javax.servlet.http.HttpServletResponse;
 public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity> implements LogisticsBillCostService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -196,7 +205,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
         List<LogisticsBillCostDTO.ListDTO> resultList = this.baseMapper.listByExportExcel(dto);
         if (CollectionUtils.isEmpty(resultList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
@@ -233,7 +242,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param records
      */
     private void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
+        List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.TRANSPORT_STATUS.getType());
 
-
+        for (LogisticsBillCostDTO.ListDTO listDTO : records) {
+            listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
+            listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
+            String name = transportStatusList.stream().filter(obj -> obj.getCode().equals(listDTO.getTransportStatus())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setTransportStatusName(name);
+        }
     }
 }

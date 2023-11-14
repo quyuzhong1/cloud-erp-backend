@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -56,9 +57,9 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             return Boolean.FALSE;
         }
         List<LogisticsChannelBlacklistEntity> blacklistList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
-
         // 数据处理
         handleData(blacklistList);
+        blacklistList.forEach(b->b.setLogisticsChannelId(channelId));
         boolean save = super.saveBatch(blacklistList);
         if (!save) {
             throw new ServiceException("渠道黑名单表保存失败");
@@ -120,10 +121,36 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             countryList = sysDictFeign.listCountryByIds(countryIdList);
         }
         List<DictCityEntity> cityList = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(cityIdList)){
-            cityList=sysDictFeign.listCityByIdList(cityIdList);
+        cityIdList = cityIdList.stream().distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(cityIdList)) {
+            cityList = sysDictFeign.listCityByIdList(cityIdList);
         }
 
+        for (LogisticsChannelBlacklistEntity item : list) {
+            String country = item.getCountry();
+            //国家名称
+            String countryName = countryList.stream().filter(c -> c.getId().equals(country)).
+                    map(DictCountryEntity::getNameCn).findFirst().orElse("");
+            item.setCountryName(countryName);
+            String province = item.getProvince();
+            //省名称
+            String provinceName = cityList.stream().filter(c -> c.getId().equals(province)).
+                    map(DictCityEntity::getName).findFirst().orElse("");
+            item.setProvinceName(provinceName);
+
+            String city = item.getCity();
+            //城市名称
+            String cityName = cityList.stream().filter(c -> c.getId().equals(city)).
+                    map(DictCityEntity::getName).findFirst().orElse("");
+            item.setCityName(cityName);
+
+            String district = item.getDistrict();
+            //区名称
+            String districtName = cityList.stream().filter(c -> c.getId().equals(district)).
+                    map(DictCityEntity::getName).findFirst().orElse("");
+            item.setDistrictName(districtName);
+
+        }
 
 
     }

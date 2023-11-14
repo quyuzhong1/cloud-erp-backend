@@ -4,14 +4,14 @@
 
     <select id="listByIdList" resultType="com.erp.model.sys.entity.DictCityEntity">
         SELECT
-          id,
-          name,
-          country_code,
-          timezone,zip_code,
-          latitude,longitude,
-          parent_id,level,type,
-          index,disabled,
-          kingdee_code,code
+        dc.id,
+        dc.name,
+        dc.country_code,
+        dc.timezone,dc.zip_code,
+        dc.latitude,dc.longitude,
+        dc.parent_id,dc.level,dc.type,
+        dc.index,dc.disabled,
+        dc.kingdee_code,dc.code
         FROM  dict_city  dc
         LEFT  JOIN
         dict_country   cou

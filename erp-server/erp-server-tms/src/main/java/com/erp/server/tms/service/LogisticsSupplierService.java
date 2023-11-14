@@ -52,4 +52,13 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return com.common.business.vo.PagingVO<com.erp.model.tms.dto.LogisticsSupplierDTO.PagingViewDTO>
      */
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto);
+
+    /**
+     * 分页获取渠道相关信息
+     *@parms id
+     *@return 
+     *@author yl
+     *@date 2023-11-14
+     */
+    LogisticsSupplierDTO.ChannelViewDTO channelView(String id);
 }

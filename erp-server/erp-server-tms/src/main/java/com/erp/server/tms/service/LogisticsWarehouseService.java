@@ -33,4 +33,12 @@ public interface LogisticsWarehouseService extends SuperService<LogisticsWarehou
     Boolean update(LogisticsWarehouseDTO.UpdateDTO dto);
 
 
+    /**
+     * 根据物流商id 获取对应数据
+     *@parms logisticsSupplierId 物流商id
+     *@return
+     *@author yl
+     *@date 2023-11-14
+     */
+    LogisticsWarehouseEntity getByLogisticsSupplierId(String logisticsSupplierId);
 }

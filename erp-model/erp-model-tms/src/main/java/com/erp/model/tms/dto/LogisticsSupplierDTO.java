@@ -30,12 +30,12 @@ public class LogisticsSupplierDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String tabFlag;
 
         /**
          * 类型名
          */
-        private String typeName;
+        private String tabName;
 
         /**
          * 数量
@@ -74,6 +74,7 @@ public class LogisticsSupplierDTO implements Serializable {
 
 
     }
+
     @Data
     @NoArgsConstructor
     public static class PagingViewDTO{
@@ -133,6 +134,26 @@ public class LogisticsSupplierDTO implements Serializable {
 
 
 
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChannelViewDTO{
+        /**
+         * 仓库id
+         */
+         private String warehouseId;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+        /**
+         * 渠道列表
+         */
+        private List<LogisticsChannelDTO.BaseDTO> channelList;
 
     }
 

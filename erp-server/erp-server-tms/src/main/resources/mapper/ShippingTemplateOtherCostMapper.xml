@@ -75,7 +75,7 @@
             st.volume_setting as volumeSetting,
             st.currency
         from logistics_supplier ls
-        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        inner join logistics_channel lc on ls.id = lc.source_id and lc.is_deleted = false
         inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
         inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
         inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
@@ -87,13 +87,13 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.toCountryList != null and params.toCountry.size > 0">
+            <if test="params.toCountryList != null and params.toCountryList.size > 0">
                 and str.to_country in
                 <foreach collection="params.toCountryList" open="(" close=")" separator="," item="item">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.toWarehouseList != null and params.toWarehouse.size > 0">
+            <if test="params.toWarehouseList != null and params.toWarehouseList.size > 0">
                 and str.to_warehouse in
                 <foreach collection="params.toWarehouseList" open="(" close=")" separator="," item="item">
                     #{item}

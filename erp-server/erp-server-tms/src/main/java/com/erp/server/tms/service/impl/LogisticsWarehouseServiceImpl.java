@@ -87,6 +87,12 @@ public class LogisticsWarehouseServiceImpl extends SuperServiceImpl<LogisticsWar
         return Boolean.TRUE;
     }
 
+    @Override
+    public LogisticsWarehouseEntity getByLogisticsSupplierId(String logisticsSupplierId) {
+        return this.lambdaQuery().eq(LogisticsWarehouseEntity::getMainId,logisticsSupplierId).
+                last("LIMIT").one();
+    }
+
 
     /**
     * 新增修改处理数据

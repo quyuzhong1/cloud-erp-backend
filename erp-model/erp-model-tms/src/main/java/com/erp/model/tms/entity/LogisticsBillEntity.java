@@ -85,7 +85,11 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     */
     @TableField("transport_no")
     private String transportNo;
-
+    /**
+     * 目的地
+     */
+    @TableField("to_country")
+    private String toCountry;
 
     public static final String SALES_PLATFORM = "sales_platform";
 
