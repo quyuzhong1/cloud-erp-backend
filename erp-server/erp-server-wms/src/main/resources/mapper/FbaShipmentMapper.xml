@@ -139,14 +139,12 @@
         <!--创建时间（拉取数据的日期）-->
         <if test="params.shipmentCreateTimeList !=null and params.shipmentCreateTimeList.size>0">
             AND fs.shipment_create_time >= #{params.shipmentCreateTimeList[0]} and
-            (#{params.shipmentCreateTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > fs.shipment_create_time
+            #{params.shipmentCreateTimeList[1]} >= fs.shipment_create_time
         </if>
         <!--签收时间（拉取签收数据的日期）-->
         <if test="params.shipmentReceiveTimeList !=null and params.shipmentReceiveTimeList.size>0">
             AND fs.shipment_receive_time >= #{params.shipmentReceiveTimeList[0]} and
-            (#{params.shipmentReceiveTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > fs.shipment_receive_time
+            #{params.shipmentReceiveTimeList[1]} > fs.shipment_receive_time
         </if>
 
         <!--数据权限-->

@@ -350,12 +350,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 创建时间（拉取数据的日期）
          */
-        private List<String> shipmentCreateTimeList;
+        private List<LocalDateTime> shipmentCreateTimeList;
 
         /**
          * 签收时间（拉取签收数据的日期）
          */
-        private List<String> shipmentReceiveTimeList;
+        private List<LocalDateTime> shipmentReceiveTimeList;
 
     }
 
