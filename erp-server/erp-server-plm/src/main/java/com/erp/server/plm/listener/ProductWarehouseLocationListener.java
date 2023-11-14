@@ -67,7 +67,7 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
             return;
         }
 
-        productDetailService.updateWarehouseLocationById(entity.getId(), entity.getWarehouseLocation());
+        productDetailService.updateWarehouseLocationById(entity.getId(), dto.getWarehouseLocation());
     }
 
     public List<ProductWarehouseLocationExcelDTO> getDateList() {
