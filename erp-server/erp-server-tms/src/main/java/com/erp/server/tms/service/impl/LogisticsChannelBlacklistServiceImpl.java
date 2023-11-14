@@ -3,7 +3,11 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,6 +15,8 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +46,9 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private SysDictFeign sysDictFeign;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(String channelId, List<LogisticsChannelBlacklistDTO.AddDTO> list) {
@@ -50,12 +59,10 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
 
         // 数据处理
         handleData(blacklistList);
-
         boolean save = super.saveBatch(blacklistList);
         if (!save) {
             throw new ServiceException("渠道黑名单表保存失败");
         }
-
         return save;
     }
 
@@ -93,6 +100,31 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //国家
         List<String> countryIdList = new ArrayList<>(2);
+        List<String> cityIdList = new ArrayList<>(2);
+        for (LogisticsChannelBlacklistEntity item : list) {
+            String country = item.getCountry();
+            if (!countryIdList.contains(country)) {
+                countryIdList.add(country);
+            }
+            String city = item.getCity();
+            cityIdList.add(city);
+            String province = item.getProvince();
+            cityIdList.add(province);
+            String district = item.getDistrict();
+            cityIdList.add(district);
+        }
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(countryIdList)) {
+            countryList = sysDictFeign.listCountryByIds(countryIdList);
+        }
+        List<DictCityEntity> cityList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(cityIdList)){
+            cityList=sysDictFeign.listCityByIdList(cityIdList);
+        }
+
+
+
     }
 }

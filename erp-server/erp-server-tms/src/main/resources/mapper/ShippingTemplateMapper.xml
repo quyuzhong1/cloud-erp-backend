@@ -59,7 +59,7 @@
                 st.name ilike concat('%',#{params.name},'%')
             </if>
             <if test="params.disabled != null">
-                st.disabled = #{params.disabled}
+                and st.disabled = #{params.disabled}
             </if>
             <if test="params.effectiveDateList != null and params.effectiveDateList.size != ''">
                 and st.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1

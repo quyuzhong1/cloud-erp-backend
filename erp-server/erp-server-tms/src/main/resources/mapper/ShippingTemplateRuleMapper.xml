@@ -55,9 +55,9 @@
     <select id="listRegionName" resultType="java.lang.String">
         select
             str.region
-        from shipping_template_rule str and str.region != ''
+        from shipping_template_rule str
         <where>
-            str.is_deleted = false
+            str.is_deleted = false and str.region != ''
         </where>
         group by str.region
     </select>

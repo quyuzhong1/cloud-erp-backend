@@ -463,6 +463,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         List<String> nameList = successList.stream().map(ShippingTemplateExcelDTO::getName).distinct().collect(Collectors.toList());
         List<ShippingTemplateEntity> shippingTemplateList = listByNames(nameList);
 
+        //查询国家数据
+        List<String> countryNameList = successList.stream().flatMap(obj -> Stream.of(obj.getFromCountry(), obj.getToCountry())).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByNames(countryNameList);
+
         Map<String, List<ShippingTemplateExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(ShippingTemplateExcelDTO::getName));
 
         for (Map.Entry<String, List<ShippingTemplateExcelDTO>> entry :  map.entrySet()) {
@@ -482,15 +486,21 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             Boolean isError = Boolean.FALSE;
             for (ShippingTemplateExcelDTO excelDTO : value) {
                 //验证数据
-                List<String> errorMsgList = checkImportData(billingMethod, type, excelDTO, shippingTemplateList,citySuccessList);
+                List<String> errorMsgList = checkImportData(billingMethod, type, excelDTO, shippingTemplateList,citySuccessList,dictCountryList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isError = Boolean.TRUE;
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     break;
                 }
                 ShippingTemplateRuleDTO.AddDTO ruleAddDTO = new ShippingTemplateRuleDTO.AddDTO();
-                ruleAddDTO.setFromCountry(excelDTO.getFromCountry());
-                ruleAddDTO.setToCountry(excelDTO.getToCountry());
+                //起始国
+                String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                ruleAddDTO.setFromCountry(fromCountry);
+                //目的国
+                if (StrUtil.isNotBlank(excelDTO.getToCountry())) {
+                    String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                    ruleAddDTO.setToCountry(toCountry);
+                }
                 ruleAddDTO.setRegion(excelDTO.getRegion());
                 List<String> cityList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(ruleAddDTO.getToCountry()) && obj.getRegion().equals(ruleAddDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(cityList)) {
@@ -810,7 +820,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
      * 导入验证数据
      */
     private List<String> checkImportData (String billingMethod, String type,ShippingTemplateExcelDTO addDTO
-            ,List<ShippingTemplateEntity> shippingTemplateList,List<ShippingTemplateCityExcelDTO> citySuccessList) {
+            ,List<ShippingTemplateEntity> shippingTemplateList,List<ShippingTemplateCityExcelDTO> citySuccessList
+            ,List<DictCountryEntity> dictCountryList) {
         List<String> errorMsgList = new ArrayList<>();
 
         long count = shippingTemplateList.stream().filter(obj -> obj.getName().equals(addDTO.getName())).count();
@@ -818,9 +829,20 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             errorMsgList.add("已存在相同模板");
         }
 
+        String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        if (StrUtil.isBlank(fromCountry)) {
+            errorMsgList.add("系统中未找起始国家");
+        }
+
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(type)) {
             if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
                 errorMsgList.add("目的地不能为空");
+            }
+            if (StrUtil.isNotBlank(addDTO.getToCountry())) {
+                String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                if (StrUtil.isBlank(toCountry)) {
+                    errorMsgList.add("系统中未找目的地");
+                }
             }
         }
         if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(type)) {
