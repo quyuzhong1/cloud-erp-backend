@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Data
 public class TrackingDetail implements Serializable {
     private String address;
-    private LocalDate eventTime;
+    private String eventTime;
     private LocalDateTime eventTimeZeroUTC;
     private String timezone;
     private String eventDetail;

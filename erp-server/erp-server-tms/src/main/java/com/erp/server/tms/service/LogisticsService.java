@@ -5,6 +5,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 
@@ -81,10 +82,10 @@ public interface LogisticsService {
     /**
      * 轨迹查询
      *
-     * @param logisticsQueryVO
+     * @param logisticsQueryBaseVOS
      * @return
      */
-    ApiResult getTrack(LogisticsQueryBaseVO logisticsQueryVO);
+    ApiResult<List<LogisticsTrackEntity>> getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS);
 
     /**
      * 渠道查询

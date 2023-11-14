@@ -46,6 +46,7 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     /**
      * 运输单号
      */
+    @TableField("transport_no")
     private String transportNo;
 
     /**
@@ -69,7 +70,7 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     /**
     * 预估运费
     */
-    @TableField("estimated_shipping_cost ")
+    @TableField("estimated_shipping_cost")
     private BigDecimal estimatedShippingCost ;
 
     /**
