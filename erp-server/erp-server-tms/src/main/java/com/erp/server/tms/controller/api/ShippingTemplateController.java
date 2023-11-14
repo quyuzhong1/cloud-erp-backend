@@ -157,7 +157,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运费模板")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult importFile(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = shippingTemplateService.importFile(billingMethod,type,excelFile, response);
         return result ? success() : failure();
     }
