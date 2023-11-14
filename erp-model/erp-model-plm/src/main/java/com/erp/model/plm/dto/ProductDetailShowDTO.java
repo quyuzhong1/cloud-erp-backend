@@ -303,4 +303,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 是否是组合品 TRUE 是  FAlse 否
      */
     private Boolean isCombination;
+
+    /**
+     * 仓位
+     */
+    private String warehouseLocation;
 }
