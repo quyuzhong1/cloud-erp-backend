@@ -170,7 +170,7 @@ public class PullAmazonJob {
      */
     @XxlJob("amazonSalesOrderDetailDownload")
     public ReturnT<String> amazonSalesOrderDetail() {
-        Integer size = 1000;
+        Integer size = 100;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
@@ -179,7 +179,7 @@ public class PullAmazonJob {
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformAmazonOrderDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class);
+        List<PlatformAmazonOrderDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 100, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_ORDER, PlatformAmazonOrderDTO.class);
         if (CollectionUtil.isEmpty(orderEntityList)) {
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
@@ -188,7 +188,7 @@ public class PullAmazonJob {
             try {
                 // 下载和处理详情
                 PlatformAmazonOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, null);
-                String category = PlatformCategoryEnum.OMS.getCode();
+                String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.ORDER.getCode();
 //                newDto.setDownloadStatus(1);
@@ -236,7 +236,7 @@ public class PullAmazonJob {
                 extendObj.put("shopId", taskEntity.getShopId());
                 // 下载和处理详情
                 PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, extendObj);
-                String category = PlatformCategoryEnum.OMS.getCode();
+                String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.PRODUCT.getCode();
                 List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));

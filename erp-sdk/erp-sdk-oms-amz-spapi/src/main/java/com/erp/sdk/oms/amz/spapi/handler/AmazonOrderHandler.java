@@ -9,6 +9,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.PlatformOrderFinanceDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,12 +22,15 @@ import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.orders.Money;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -120,12 +124,10 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (CollectionUtils.isEmpty(allOrderItems)){
             return dto;
         }
-        // 详情转换
-        List<PlatformOrderDetailDTO> detailDtoList = allOrderItems.stream()
-                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
-                .collect(Collectors.toList());
-        // TODO
-//        dto.setDetails(detailDtoList);
+//        List<PlatformOrderDetailDTO> detailDtoList = allOrderItems.stream()
+//                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
+//                .collect(Collectors.toList());
+        dto.setDetails(allOrderItems);
         return dto;
     }
 

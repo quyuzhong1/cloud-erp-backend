@@ -119,7 +119,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "parcelInfo.height",source = "parceInfoVO.height"),
             @Mapping(target = "parcelInfo.width",source = "parceInfoVO.width"),
             @Mapping(target = "parcelInfo.length",source = "parceInfoVO.length"),
-            @Mapping(target = "parcelInfo.ioss",source = "parceInfoVO.ioss"),
+            @Mapping(target = "parcelInfo.ioss",source = "iossCode"),
             @Mapping(target = "parcelInfo.productList",source = "logisticsProductVOList")
     })
     YanWenCreateWayBillRequest orderRequestByYanWen(LogisticsOrderVO logisticsOrderVO);
@@ -371,7 +371,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "charged" ,source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
             @Mapping(target = "insuranceValue" ,source = "parceInfoVO.insuranceValue"),
             @Mapping(target = "insureValue" ,source = "parceInfoVO.insureValue"),
-            @Mapping(target = "itemType" ,constant = "4"),
+            @Mapping(target = "itemType" ,source = "parceInfoVO.itemType",defaultValue = "4"),
             @Mapping(target = "logisticsId" ,source = "channelCode"),
             @Mapping(target = "note" ,source = "remark"),
             @Mapping(target = "material" ,source = "material"),
