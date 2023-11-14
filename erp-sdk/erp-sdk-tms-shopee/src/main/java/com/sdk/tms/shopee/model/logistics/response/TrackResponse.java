@@ -14,8 +14,15 @@ import java.io.Serializable;
  */
 @Data
 public class TrackResponse implements Serializable {
-    private Boolean more;
-    @JSONField(name = "next_cursor")
-    private String nextCursor;
+    @JSONField(name = "tracking_number")
+    private String trackingNumber;
+    @JSONField(name = "plp_number")
+    private String plpNumber;
+    @JSONField(name = "first_mile_tracking_number")
+    private String firstMileTrackingNumber;
+    @JSONField(name = "last_mile_tracking_number")
+    private String lastMileTrackingNumber;
+    @JSONField(name = "hint")
+    private String hint;
 
 }
