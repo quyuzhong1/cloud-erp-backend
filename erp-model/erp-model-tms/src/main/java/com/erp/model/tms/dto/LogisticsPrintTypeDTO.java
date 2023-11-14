@@ -85,13 +85,18 @@ public class LogisticsPrintTypeDTO implements Serializable {
 
 
         /**
-        * 打印类型
+        * 打印类型 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=printType
+         * addressBill 地址单
+         * allocateCargoBill  配货单
+         * customsBill  报关单
         */
         @NotBlank(message = "打印类型不能为空")
         private String printType;
 
         /**
-        * 标签类型
+        * 标签类型  来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=labelType
+         * authority 官方
+         * custom 自定义
         */
         @NotBlank(message = "标签类型不能为空")
         private String labelType;

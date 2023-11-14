@@ -49,6 +49,21 @@
             </if>
         </where>
     </select>
+    <select id="listChannelIdList" resultType="com.erp.model.tms.entity.ShippingTemplateRefChannelEntity">
+        select
+            strc.id,
+            strc.main_id as mainId,
+            strc.logistics_channel_id as logisticsChannelId,
+            strc.name as shippingTemplateName
+        from shipping_template_ref_channel strc
+        where strc.is_deleted = false
+        <if test="channelIdList != null and channelIdList.size > 0">
+            and strc.logistics_channel_id in
+            <foreach collection="channelIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

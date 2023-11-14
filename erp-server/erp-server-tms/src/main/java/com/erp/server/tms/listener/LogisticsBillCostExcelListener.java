@@ -4,27 +4,28 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LogisticsBillCostExcelListener extends AnalysisEventListener<ShippingTemplateCityExcelDTO> {
+public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
 
     /**
      * 错误信息
      */
-    private List<ShippingTemplateCityExcelDTO> errorList = new ArrayList<>();
+    private List<LogisticsBillCostExcelDTO> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<ShippingTemplateCityExcelDTO> dataList = new ArrayList<>();
+    private List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
-    private List<ShippingTemplateCityExcelDTO> successList = new ArrayList<>();
+    private List<LogisticsBillCostExcelDTO> successList = new ArrayList<>();
 
     public LogisticsBillCostExcelListener() {
 
@@ -39,7 +40,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Shippi
     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(ShippingTemplateCityExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(LogisticsBillCostExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
 
         //基础验证
@@ -59,15 +60,15 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Shippi
 
     }
 
-    public List<ShippingTemplateCityExcelDTO> getErrorList(){
+    public List<LogisticsBillCostExcelDTO> getErrorList(){
         return errorList;
     }
 
-    public List<ShippingTemplateCityExcelDTO> getSuccessList(){
+    public List<LogisticsBillCostExcelDTO> getSuccessList(){
         return successList;
     }
 
-    public List<ShippingTemplateCityExcelDTO> getExcelDateList(){
+    public List<LogisticsBillCostExcelDTO> getExcelDateList(){
         return dataList;
     }
 

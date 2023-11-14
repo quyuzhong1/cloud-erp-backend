@@ -58,9 +58,17 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
     @Override
     public List<ShippingTemplateRefChannelDTO.ViewDTO> listByMainIds(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listByMainIds(mainIdList);
+    }
+
+    @Override
+    public List<ShippingTemplateRefChannelEntity> listChannelIdList(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listChannelIdList(channelIdList);
     }
 
     /**

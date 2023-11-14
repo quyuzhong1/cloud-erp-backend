@@ -29,6 +29,8 @@ import com.erp.model.tms.enums.ShippingFeeRuleEnum;
 import com.erp.model.tms.enums.ShippingSideEnum;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.mapper.ShippingRegionCityMapper;
+import com.erp.server.tms.mapper.ShippingTemplateMapper;
 import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
 import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.ShippingCalculationService;
@@ -63,6 +65,9 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
 
     @Resource
     private ShippingTemplateOtherCostMapper shippingTemplateOtherCostMapper;
+
+    @Resource
+    private ShippingRegionCityMapper shippingRegionCityMapper;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -389,6 +394,11 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,MathUtil.divide(otherCostEntity.getCostSettingValue(),MathUtil.BigDecimal_100)));
 
         return discountCost;
+    }
+
+    @Override
+    public List<String> listRegionCity(ShippingCalculationDTO.ListRegionCityParamDTO dto) {
+        return shippingRegionCityMapper.listRegionCity(dto);
     }
 
 }

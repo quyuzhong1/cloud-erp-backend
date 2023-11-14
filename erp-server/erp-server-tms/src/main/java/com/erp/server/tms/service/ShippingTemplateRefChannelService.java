@@ -33,4 +33,14 @@ public interface ShippingTemplateRefChannelService extends SuperService<Shipping
      * @return List<ShippingTemplateRefChannelDTO.ViewDTO>
     */
     List<ShippingTemplateRefChannelDTO.ViewDTO> listByMainIds(List<String> idList);
+
+    /**
+     * 根据渠道id 集合获取对应数据
+     *
+     *@parms channelIdList
+     *@return 
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<ShippingTemplateRefChannelEntity> listChannelIdList(List<String> channelIdList);
 }

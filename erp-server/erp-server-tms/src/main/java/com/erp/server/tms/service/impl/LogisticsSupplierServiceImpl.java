@@ -15,17 +15,16 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.LogisticsWarehouseEntity;
 import com.erp.model.tms.enums.DictBasicTypeEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,9 +56,15 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Autowired
     private ScmTaskFeign scmTaskFeign;
 
-
     @Autowired
     private DictBasicService dictBasicService;
+
+
+    @Autowired
+    private LogisticsWarehouseService logisticsWarehouseService;
+
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -110,9 +116,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         for (DictBasicDTO.ViewDTO item : typeList) {
             LogisticsSupplierDTO.TabListDTO tab = new LogisticsSupplierDTO.TabListDTO();
             String type = item.getCode();
-            tab.setType(type);
-            tab.setTypeName(item.getName());
-            Integer count = list.stream().filter(l -> l.getType().equals(type)).
+            tab.setTabFlag(type);
+            tab.setTabName(item.getName());
+            Integer count = list.stream().filter(l -> l.getTabFlag().equals(type)).
                     map(LogisticsSupplierDTO.TabListDTO::getCount).findFirst().orElse(0);
             tab.setCount(count);
             resultList.add(tab);
@@ -130,6 +136,33 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
         fillPagingData(list);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id) {
+        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
+        LogisticsSupplierEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<String> sourceIdList = new ArrayList<>(10);
+        sourceIdList.add(id);
+        List<String> logisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
+        sourceIdList.addAll(logisticsWarehouseIdList);
+        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceIdList(sourceIdList);
+
+        String warehouseId = "";
+        String warehouseName = "";
+        String sourceId = id;
+//        if (Objects.nonNull(logisticsWarehouse)) {
+//            warehouseId = logisticsWarehouse.getWarehouseId();
+//            warehouseName = logisticsWarehouse.getWarehouseName();
+//            sourceId = logisticsWarehouse.getId();
+//        }
+//        viewDTO.setWarehouseId(warehouseId);
+//        viewDTO.setWarehouseName(warehouseName);
+//        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceId(sourceId);
+//        viewDTO.setChannelList(channelList);
+        return viewList;
     }
 
     /**

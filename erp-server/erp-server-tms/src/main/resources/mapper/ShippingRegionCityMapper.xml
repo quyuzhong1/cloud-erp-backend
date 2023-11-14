@@ -32,5 +32,19 @@
         main_id, shipping_template_rule_id, city, region
     </sql>
 
+    <select id="listRegionCity" resultType="java.lang.String">
+        select
+            src.city
+        from shipping_region_city src
+        <where>
+            src.is_deleted = false
+            <if test="params.templateRuleId != null and params.templateRuleId != ''">
+              and src.shipping_template_rule_id = #{params.templateRuleId}
+            </if>
+            <if test="params.region != null and params.region != ''">
+              and src.region = #{params.region}
+            </if>
+        </where>
+    </select>
 
 </mapper>

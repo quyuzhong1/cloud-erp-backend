@@ -3,9 +3,12 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.UnitEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -14,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -57,6 +63,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Autowired
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
+    @Autowired
+    private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -74,11 +83,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
         //面单设置 打印类型
-        logisticsPrintTypeService.add(channelId,addDTO.getPrintTypeList());
+        logisticsPrintTypeService.add(channelId, addDTO.getPrintTypeList());
         //物流地址
-        logisticsChannelAddressService.add(channelId,addDTO.getAddressList());
+        logisticsChannelAddressService.add(channelId, addDTO.getAddressList());
         //发货限制 黑名单
-        logisticsChannelBlacklistService.add(channelId,addDTO.getBlackList());
+        logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -117,13 +126,48 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseMapper.listLogisticsChannel();
     }
 
+    @Override
+    public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList) {
+        List<LogisticsChannelEntity> list = this.listDbBySourceIdList(sourceIdList);
+        List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
+        List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+        List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
+        for (LogisticsChannelEntity item : list) {
+            LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
+            base.setCode(item.getCode());
+            base.setDisabled(item.getDisabled());
+            base.setId(item.getId());
+            base.setName(item.getName());
+            base.setSortingCode(item.getSortingCode());
+            Integer effectiveTime = item.getEffectiveTime();
+            String timeUnit = item.getEffectiveTimeUnit();
+            String timeUnitName = UnitEnum.getName(timeUnit);
+            base.setEffectiveTimeStr(effectiveTime.toString().concat(timeUnitName));
+            String id = item.getId();
+            String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
+                    map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
+        }
+        return null;
+    }
+
+    private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getSourceId, sourceIdList).list();
+    }
+
+    private List<LogisticsChannelEntity> listDbBySourceId(String sourceId) {
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getSourceId, sourceId).orderByDesc(LogisticsChannelEntity::getCreateTime).list();
+    }
+
 
     /**
      * 新增修改处理数据
      */
     private void handleData(LogisticsChannelEntity logisticsChannelEntity) {
-        String mainId = logisticsChannelEntity.getMainId();
-        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
+        String sourceId = logisticsChannelEntity.getSourceId();
+        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(sourceId);
         if (Objects.isNull(logisticsSupplier)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }

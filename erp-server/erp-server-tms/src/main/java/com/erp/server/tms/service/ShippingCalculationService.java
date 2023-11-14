@@ -112,5 +112,12 @@ public interface ShippingCalculationService {
     BigDecimal calculationDiscountCost(List<ShippingTemplateOtherCostEntity> otherCostList
             , ShippingCalculationDTO.ViewDTO shippingCalculationDTO);
 
-
+    /**
+     * @description: 查询分区城市
+     * @author Will
+     * @date: 2023/11/14 17:25
+     * @param dto
+     * @return List<String>
+     */
+    List<String> listRegionCity(ShippingCalculationDTO.ListRegionCityParamDTO dto);
 }

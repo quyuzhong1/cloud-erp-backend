@@ -37,8 +37,8 @@ public class LogisticsWarehouseEntity extends BaseEntity<LogisticsWarehouseEntit
     /**
     * 仓库名称
     */
-    @TableField("name")
-    private String name;
+    @TableField("warehouse_name")
+    private String warehouseName;
 
 
     public static final String MAIN_ID = "main_id";

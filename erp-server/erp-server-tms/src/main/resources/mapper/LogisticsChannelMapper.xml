@@ -51,6 +51,7 @@
 
     <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
         select
+            lc.id,
             lc.code,
             lc.name,
             lc.disabled
