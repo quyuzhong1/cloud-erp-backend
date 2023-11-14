@@ -25,10 +25,16 @@ import com.common.business.enums.ApproveStatusEnum;
 public class ShippingTemplateRefChannelEntity extends BaseEntity<ShippingTemplateRefChannelEntity> {
 
     /**
-    * 主表id
+    * 主表id 模板id
     */
     @TableField("main_id")
     private String mainId;
+
+    /**
+     * 模板名称
+     */
+    @TableField(exist = false)
+    private String shippingTemplateName;
 
     /**
     * 物流渠道id

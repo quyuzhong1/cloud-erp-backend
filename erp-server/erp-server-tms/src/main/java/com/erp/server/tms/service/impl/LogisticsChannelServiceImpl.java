@@ -7,6 +7,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -61,7 +62,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
     @Autowired
-    private ShippingTemplateService shippingTemplateService;
+    private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -124,16 +125,24 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceId(String sourceId) {
-        List<LogisticsChannelEntity> list = this.listDbBySourceId(sourceId);
+    public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList) {
+        List<LogisticsChannelEntity> list = this.listDbBySourceIdList(sourceIdList);
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
-
+        List<String> channelIdList=list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+        List<ShippingTemplateRefChannelEntity>  shippingTemplateList= shippingTemplateRefChannelService.listChannelIdList(channelIdList);
         for (LogisticsChannelEntity item : list) {
             LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
             base.setCode(item.getCode());
             base.setDisabled(item.getDisabled());
         }
         return null;
+    }
+
+    private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getSourceId, sourceIdList).list();
     }
 
     private List<LogisticsChannelEntity> listDbBySourceId(String sourceId) {

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -138,24 +139,30 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public LogisticsSupplierDTO.ChannelViewDTO channelView(String id) {
-        LogisticsSupplierDTO.ChannelViewDTO viewDTO = new LogisticsSupplierDTO.ChannelViewDTO();
+    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id) {
+        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
-        LogisticsWarehouseEntity logisticsWarehouse = logisticsWarehouseService.getByLogisticsSupplierId(id);
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<String> sourceIdList = new ArrayList<>(10);
+        sourceIdList.add(id);
+        List<String> logisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
+        sourceIdList.addAll(logisticsWarehouseIdList);
+        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceIdList(sourceIdList);
+
         String warehouseId = "";
         String warehouseName = "";
         String sourceId = id;
-        if (Objects.nonNull(logisticsWarehouse)) {
-            warehouseId = logisticsWarehouse.getWarehouseId();
-            warehouseName = logisticsWarehouse.getWarehouseName();
-            sourceId = logisticsWarehouse.getId();
-        }
-        viewDTO.setWarehouseId(warehouseId);
-        viewDTO.setWarehouseName(warehouseName);
-        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceId(sourceId);
-        viewDTO.setChannelList(channelList);
-        return viewDTO;
+//        if (Objects.nonNull(logisticsWarehouse)) {
+//            warehouseId = logisticsWarehouse.getWarehouseId();
+//            warehouseName = logisticsWarehouse.getWarehouseName();
+//            sourceId = logisticsWarehouse.getId();
+//        }
+//        viewDTO.setWarehouseId(warehouseId);
+//        viewDTO.setWarehouseName(warehouseName);
+//        List<LogisticsChannelDTO.BaseDTO> channelList = logisticsChannelService.listBaseBySourceId(sourceId);
+//        viewDTO.setChannelList(channelList);
+        return viewList;
     }
 
     /**

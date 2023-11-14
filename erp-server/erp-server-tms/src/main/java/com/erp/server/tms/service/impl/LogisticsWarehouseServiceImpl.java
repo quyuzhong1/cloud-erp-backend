@@ -88,9 +88,8 @@ public class LogisticsWarehouseServiceImpl extends SuperServiceImpl<LogisticsWar
     }
 
     @Override
-    public LogisticsWarehouseEntity getByLogisticsSupplierId(String logisticsSupplierId) {
-        return this.lambdaQuery().eq(LogisticsWarehouseEntity::getMainId,logisticsSupplierId).
-                last("LIMIT").one();
+    public List<LogisticsWarehouseEntity> listByLogisticsSupplierId(String logisticsSupplierId) {
+        return this.lambdaQuery().eq(LogisticsWarehouseEntity::getMainId,logisticsSupplierId).list();
     }
 
 

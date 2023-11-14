@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsWarehouseDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外仓物流商 仓库表 服务类
@@ -40,5 +42,5 @@ public interface LogisticsWarehouseService extends SuperService<LogisticsWarehou
      *@author yl
      *@date 2023-11-14
      */
-    LogisticsWarehouseEntity getByLogisticsSupplierId(String logisticsSupplierId);
+    List<LogisticsWarehouseEntity> listByLogisticsSupplierId(String logisticsSupplierId);
 }
