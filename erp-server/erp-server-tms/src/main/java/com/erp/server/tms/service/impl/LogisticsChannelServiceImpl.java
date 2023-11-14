@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.UnitEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -128,12 +130,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList) {
         List<LogisticsChannelEntity> list = this.listDbBySourceIdList(sourceIdList);
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
-        List<String> channelIdList=list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
-        List<ShippingTemplateRefChannelEntity>  shippingTemplateList= shippingTemplateRefChannelService.listChannelIdList(channelIdList);
+        List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+        List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
         for (LogisticsChannelEntity item : list) {
             LogisticsChannelDTO.BaseDTO base = new LogisticsChannelDTO.BaseDTO();
             base.setCode(item.getCode());
             base.setDisabled(item.getDisabled());
+            base.setId(item.getId());
+            base.setName(item.getName());
+            base.setSortingCode(item.getSortingCode());
+            Integer effectiveTime = item.getEffectiveTime();
+            String timeUnit = item.getEffectiveTimeUnit();
+            String timeUnitName = UnitEnum.getName(timeUnit);
+            base.setEffectiveTimeStr(effectiveTime.toString().concat(timeUnitName));
+            String id = item.getId();
+            String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
+                    map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
         }
         return null;
     }
