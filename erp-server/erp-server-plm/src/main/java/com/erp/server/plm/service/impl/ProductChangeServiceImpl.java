@@ -40,6 +40,7 @@ import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -739,6 +740,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-30 14:10
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void approvalNoPass(AuditParamDTO dto) {
         String id = dto.getId();
         //获取到变更信息
@@ -749,10 +752,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        changeEntity.setApprovalFinishTime(LocalDateTime.now());
-        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
-        this.updateById(changeEntity);
-
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
@@ -762,7 +761,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (Objects.isNull(processTask)) {
             throw new ServiceException(ApiError.ERROR_94005);
         }
-
+        changeEntity.setApprovalFinishTime(LocalDateTime.now());
+        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
+        this.updateById(changeEntity);
         if (processTask != null) {
             ApproveProcessDTO process = new ApproveProcessDTO();
             process.setComment(dto.getComment());
