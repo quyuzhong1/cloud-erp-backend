@@ -45,7 +45,6 @@
               and src.region = #{params.region}
             </if>
         </where>
-        where
     </select>
 
 </mapper>
