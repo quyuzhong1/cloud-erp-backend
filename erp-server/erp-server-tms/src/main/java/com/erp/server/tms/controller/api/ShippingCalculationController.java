@@ -77,4 +77,18 @@ public class ShippingCalculationController extends BaseController {
         Boolean flag = shippingCalculationService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 查询分区城市
+     * @author Will
+     * @date: 2023/11/14 17:24
+     * @param dto
+     * @return ApiResult<List<String>>
+     */
+    @PostMapping(value = "/listRegionCity")
+    public ApiResult<List<String>> listRegionCity(@RequestBody @Validated ShippingCalculationDTO.ListRegionCityParamDTO dto) {
+        List<String> list = shippingCalculationService.listRegionCity(dto);
+        return success(list);
+    }
+
 }

@@ -287,5 +287,22 @@ public class ShippingCalculationDTO {
         private BigDecimal totalShippingCost;
     }
 
+    /**
+     * 查询城市参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListRegionCityParamDTO {
+
+        /**
+         * 模板规则 id
+         */
+        private String templateRuleId;
+
+        /**
+         * 分区
+         */
+        private String region;
+    }
 
 }
