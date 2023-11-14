@@ -3729,12 +3729,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_APPROVE_UPDATE_LOCATION);
         }
 
-        //审核通过后支持批量更新【销售状态】【是否可销售】【产品开发状态】
+        //审核通过后支持批量更新【销售状态】【是否可销售】【产品开发状态】【推荐仓位】
         long count = entityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
                         && (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
                         || ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())
-                        || ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode()))
+                        || ProductBatchFieldEnum.PRODUCT_STATE.getCode().equals(dto.getUpdateFiledCode())
+                        || ProductBatchFieldEnum.WAREHOUSE_LOCATION.getCode().equals(dto.getUpdateFiledCode()))
         ).count();
 
         if (count != detailApprovalList.size()) {

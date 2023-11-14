@@ -28,4 +28,13 @@ public interface ShippingTemplateRefChannelMapper extends BaseMapper<ShippingTem
      * @return List<ViewDTO>
      */
     List<ShippingTemplateRefChannelDTO.ViewDTO> listByMainIds(@Param("mainIdList") List<String> mainIdList);
+
+    /**
+     * 根据渠道id 获取对应数据
+     *@parms channelIdList
+     *@return 
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<ShippingTemplateRefChannelEntity> listChannelIdList(@Param("channelIdList") List<String> channelIdList);
 }
