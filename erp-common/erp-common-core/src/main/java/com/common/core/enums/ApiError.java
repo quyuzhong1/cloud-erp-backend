@@ -477,6 +477,7 @@ public enum ApiError implements Serializable {
     ERROR_EXIST_BASIC_LABEL_NAME(95255, "基础标签单标签名称{}数据重复"),
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
+    ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
 
 
     /**
