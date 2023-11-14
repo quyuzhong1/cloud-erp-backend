@@ -19,6 +19,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=YanWenService.class)
@@ -27,15 +29,15 @@ class YanWenServiceTest {
     @Resource
     private YanWenService yanWenService;
 
-    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+    private Map<String, String> authMap = new HashMap<>();
 
     public YanWenServiceTest(){
-        logisticsAuthEntity.setAccount("100000");
-        logisticsAuthEntity.setPassword("D6140AA383FD8515B09028C586493DDB");
+        authMap.put("clientId","100000");
+        authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
     }
     @Test
     public void getAllChannel() {
-        System.out.println(yanWenService.getAllChannel(logisticsAuthEntity));
+        System.out.println(yanWenService.getAllChannel(authMap));
     }
 
     @Test
@@ -68,7 +70,7 @@ class YanWenServiceTest {
                                 .build()))
                         .build())
                 .build();
-        System.out.println(yanWenService.createWayBill(yanWenCreateWayBillRequest,logisticsAuthEntity));
+        System.out.println(yanWenService.createWayBill(yanWenCreateWayBillRequest,authMap));
     }
 
     @Test
@@ -76,7 +78,7 @@ class YanWenServiceTest {
         YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
                 .waybillNumber("LR084318011CN")
                 .build();
-        YanWenResponse<YanWenGetLabel> response = yanWenService.getLabel(request,logisticsAuthEntity);
+        YanWenResponse<YanWenGetLabel> response = yanWenService.getLabel(request,authMap);
         String base64 = response.getData().getBase64String();
         FileUtil.base64ToFile(base64,"wayBill.pdf","C:\\Users\\Administrator\\Desktop");
         System.out.println(response);
@@ -87,7 +89,7 @@ class YanWenServiceTest {
         YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()
                 .waybillNumber("LR083592414CN")
                 .build();
-        System.out.println(yanWenService.cancelOrder(request,logisticsAuthEntity));
+        System.out.println(yanWenService.cancelOrder(request,authMap));
     }
 
     @Test
@@ -95,6 +97,6 @@ class YanWenServiceTest {
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
                 .listNumber(Arrays.asList("LR083592414CN","weiji1233211"))
                 .build();
-        System.out.println(yanWenService.queryOrder(request,logisticsAuthEntity).getData());
+        System.out.println(yanWenService.queryOrder(request,authMap).getData());
     }
 }

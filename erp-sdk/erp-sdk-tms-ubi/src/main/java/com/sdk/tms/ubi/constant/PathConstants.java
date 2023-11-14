@@ -8,6 +8,10 @@ package com.sdk.tms.ubi.constant;
  * @version: 1.0
  */
 public interface PathConstants {
+    //测试环境
+    String BASE_URL = "http://qa.etowertech.com";
+    //正式环境
+//    String BASE_URL = "http://cn.etowertech.com";
     //创建订单
     String POST_CREATE_ORDERS_URL = "/services/shipper/orders";
     //打印标签

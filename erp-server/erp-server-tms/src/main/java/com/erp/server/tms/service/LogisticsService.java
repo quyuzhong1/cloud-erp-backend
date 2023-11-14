@@ -11,6 +11,7 @@ import com.erp.model.tms.vo.response.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -26,7 +27,7 @@ public interface LogisticsService {
      * @param authId
      * @return
      */
-    LogisticsAuthEntity getLogisticsAuthConfig(String authId);
+    Map<String, String> getLogisticsAuthConfig(String authId);
 
     /**
      * 创建订单

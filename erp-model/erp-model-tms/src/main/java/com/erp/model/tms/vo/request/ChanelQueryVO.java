@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -27,5 +28,5 @@ public class ChanelQueryVO implements Serializable {
     /**
      * 授权信息
      */
-    LogisticsAuthEntity logisticsAuthEntity;
+    Map<String, String> authMap;
 }

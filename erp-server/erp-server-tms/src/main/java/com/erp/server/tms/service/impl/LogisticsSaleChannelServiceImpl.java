@@ -95,6 +95,13 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity) {
+        //检查数据是否存在
+
+        return null;
+    }
+
 
     /**
     * 新增修改处理数据

@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
@@ -16,20 +17,22 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.erp.server.tms.service.LogisticsAuthService;
+import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
 import com.sdk.tms.tongyou.dto.response.*;
 import com.sdk.tms.tongyou.server.TongYouService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -42,19 +45,37 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsAuthService logisticsAuthService;
-
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
     @Resource
     private TongYouService tongYouService;
+    @Resource
+    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
 
     @Override
-    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
-        //自定义渠道配置信息 支持 物流：渠道 = 1：n
-        return logisticsAuthService.getById(authId);
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (StringUtils.isNoneBlank(authId)) {
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        } else {
+            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
+            if (Objects.nonNull(authEntity)) {
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
+            }
+        }
+        Map<String, String> map = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
     }
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        TongYouResponse<List<TongYouChannel>> tongYouResponse =  tongYouService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
+        TongYouResponse<List<TongYouChannel>> tongYouResponse =  tongYouService.getAllChannel(chanelQueryVO.getAuthMap());
         if(!tongYouResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,tongYouResponse.getMsg());
         }
@@ -65,7 +86,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         TongYouCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByTongYou(logisticsOrderVO);
-        TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request,logisticsOrderVO.getLogisticsAuthEntity());
+        TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request,logisticsOrderVO.getAuthMap());
         if(!tongYouCreateOrder.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,tongYouCreateOrder.getMsg());
         }
@@ -89,11 +110,11 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .isPaoc(logisticsGetLabelVO.getIsPdn())
                     .isPcd(logisticsGetLabelVO.getIsPcd())
                     .build();
-            TongYouPrintLabel tongYouResponse = tongYouService.printLabel(request,logisticsGetLabelVO.getLogisticsAuthEntity());
+            TongYouPrintLabel tongYouResponse = tongYouService.printLabel(request,logisticsGetLabelVO.getAuthMap());
             //调用接口失败，不立刻返回，继续剩下的调用
             if(!tongYouResponse.getSuccess()){
                 LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
-                response.failure(getName(),logisticsGetLabelVO.getDeliveryNo(),tongYouResponse.getMsg());
+                response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),tongYouResponse.getMsg());
                 responseList.add(response);
                 isSuccess = false;
                 continue;
@@ -130,10 +151,10 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
             TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
                     .orderNo(logisticsQueryBaseVO.getDeliveryNo())
                     .build();
-            TongYouOrderInfo tongYouOrderInfo = tongYouService.getOrderInfo(request,logisticsQueryBaseVO.getLogisticsAuthEntity());
+            TongYouOrderInfo tongYouOrderInfo = tongYouService.getOrderInfo(request,logisticsQueryBaseVO.getAuthMap());
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
             if(!tongYouOrderInfo.getSuccess()){
-                response.failure(getName(),logisticsQueryBaseVO.getDeliveryNo(),tongYouOrderInfo.getMsg());
+                response.failure(getPlatForm().getName(),logisticsQueryBaseVO.getDeliveryNo(),tongYouOrderInfo.getMsg());
                 responseList.add(response);
                 isSuccess = false;
                 continue;
@@ -143,8 +164,6 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return isSuccess?success(responseList):failure(responseList);
     }
-
-    private String getName(){return getPlatForm().getName();}
 
 
     @Override

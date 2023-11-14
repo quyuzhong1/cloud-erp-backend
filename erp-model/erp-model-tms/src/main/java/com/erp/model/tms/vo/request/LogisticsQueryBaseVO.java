@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -36,7 +37,7 @@ public class LogisticsQueryBaseVO implements Serializable {
     /**
      * 授权信息
      */
-    LogisticsAuthEntity logisticsAuthEntity;
+    Map<String, String> authMap;
     /**
      * 订单状态
      */

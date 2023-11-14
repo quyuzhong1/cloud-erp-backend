@@ -1,5 +1,6 @@
 package com.erp.server.tms.handler;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -11,6 +12,7 @@ import com.erp.server.tms.service.LogisticsService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -23,7 +25,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
 
     //对于一些公共方法可以进行封装
     @Override
-    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
         return null;
     }
 
@@ -120,5 +122,12 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
-
+    /**
+     * 获取平台标识
+     *
+     * @return
+     */
+    public LogisticsPlatformEnum getPlatForm(){
+        return null;
+    }
 }

@@ -12,7 +12,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=WeiShiService.class)
@@ -21,16 +23,16 @@ class WeiShiServiceTest {
     @Resource
     private WeiShiService weiShiService;
 
-    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+    private Map<String, String> authMap = new HashMap<>();
 
     public WeiShiServiceTest(){
-        logisticsAuthEntity.setAccount("dcfe81e2059c1f0e6e6263dbcb764885");
-        logisticsAuthEntity.setPassword("dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
     }
 
     @Test
     void getAllChannel() {
-        WeiShiResponse<List<WeiShiChannel>> channel= weiShiService.getAllChannel(logisticsAuthEntity);
+        WeiShiResponse<List<WeiShiChannel>> channel= weiShiService.getAllChannel(authMap);
         System.out.println(channel);
     }
 
@@ -68,7 +70,7 @@ class WeiShiServiceTest {
                         .invoiceUnitcharge(12.0F)
                         .build()))
                 .build();
-        WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest,logisticsAuthEntity);
+        WeiShiCreateOrder response = weiShiService.createOrder(weiShiCreateOrderRequest,authMap);
         System.out.println(response);
     }
 
@@ -79,7 +81,7 @@ class WeiShiServiceTest {
                 .lableType("2")
                 .build()
                 ;
-        WeiShiGetLabelUrl weiShiGetLabelUrl = weiShiService.getLabelUrl(weiShiGetLabelUrlRequest,logisticsAuthEntity);
+        WeiShiGetLabelUrl weiShiGetLabelUrl = weiShiService.getLabelUrl(weiShiGetLabelUrlRequest,authMap);
         System.out.println(weiShiGetLabelUrl);
     }
 
@@ -89,7 +91,7 @@ class WeiShiServiceTest {
                 .referenceNo("TEST2019102800132")
                 .build()
                 ;
-        WeiShiResponse response = weiShiService.interceptOrder(weiShiGetLabelUrlRequest,logisticsAuthEntity);
+        WeiShiResponse response = weiShiService.interceptOrder(weiShiGetLabelUrlRequest,authMap);
         System.out.println(response);
     }
 
@@ -99,7 +101,7 @@ class WeiShiServiceTest {
                 .referenceNo("TEST2019102800132")
                 .build()
                 ;
-        WeiShiResponse response = weiShiService.cancelOrder(weiShiCancelOrderRequest,logisticsAuthEntity);
+        WeiShiResponse response = weiShiService.cancelOrder(weiShiCancelOrderRequest,authMap);
         System.out.println(response);
     }
 
@@ -109,7 +111,7 @@ class WeiShiServiceTest {
                 .referenceNoList(Arrays.asList("wj12345167710"))
                 .build()
                 ;
-        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest,logisticsAuthEntity);
+        WeiShiResponse<List<WeiShiGetTrackNumber>> response = weiShiService.getTrackNumber(weiShiCancelOrderRequest,authMap);
         System.out.println(response);
     }
 }

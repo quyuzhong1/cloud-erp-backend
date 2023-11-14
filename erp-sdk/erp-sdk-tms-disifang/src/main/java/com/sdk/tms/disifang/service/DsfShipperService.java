@@ -15,6 +15,9 @@ import com.sdk.tms.disifang.utils.ApiHttpClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author zdy
  * @ClassName DsfLogisticsServiceImpl
@@ -34,13 +37,13 @@ public class DsfShipperService {
     /**
      * 获取标签 打印标签
      *
-     * @param appKey
-     * @param appSecret
-     * @param ambientEnum
+     * @param authMap
      * @param labelSingleRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getLabel(String appKey, String appSecret, AmbientEnum ambientEnum, LabelSingleRequest labelSingleRequest) {
+    public ResponseMsg getLabel(Map<String, String> authMap, LabelSingleRequest labelSingleRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.label.get";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -59,12 +62,13 @@ public class DsfShipperService {
     /**
      * 批量获取标签 打印标签
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param labelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getLabelList(String appKey, String appSecret,  LabelRequest labelRequest) {
+    public ResponseMsg getLabelList(Map<String, String> authMap,  LabelRequest labelRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.label.getlist";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -83,12 +87,13 @@ public class DsfShipperService {
     /**
      * 物流产品查询 获取渠道
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param chanelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getChanelList(String appKey, String appSecret, ChanelRequest chanelRequest) {
+    public ResponseMsg getChanelList(Map<String, String> authMap, ChanelRequest chanelRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.logistics_product.getlist";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -107,12 +112,13 @@ public class DsfShipperService {
     /**
      * 创建直发委托单
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param orderRequest
      * @return ResponseMsg
      */
-    public ResponseMsg createOrder(String appKey, String appSecret, OrderRequest orderRequest) {
+    public ResponseMsg createOrder(Map<String, String> authMap, OrderRequest orderRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.create";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -132,12 +138,13 @@ public class DsfShipperService {
     /**
      * 取消直发委托单
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param orderCancelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg cancelOrder(String appKey, String appSecret, OrderCancelRequest orderCancelRequest) {
+    public ResponseMsg cancelOrder(Map<String, String> authMap, OrderCancelRequest orderCancelRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.cancel";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -157,12 +164,13 @@ public class DsfShipperService {
     /**
      * 查询直发委托单
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param orderQueryRequest
      * @return ResponseMsg
      */
-    public ResponseMsg queryOrder(String appKey, String appSecret, OrderQueryRequest orderQueryRequest) {
+    public ResponseMsg queryOrder(Map<String, String> authMap, OrderQueryRequest orderQueryRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.get";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -182,12 +190,13 @@ public class DsfShipperService {
     /**
      * 创建揽收预约单 下单
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param orderCollectRequest
      * @return ResponseMsg
      */
-    public ResponseMsg createCollectOrder(String appKey, String appSecret, OrderCollectRequest orderCollectRequest) {
+    public ResponseMsg createCollectOrder(Map<String, String> authMap, OrderCollectRequest orderCollectRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.api.collect.create.order";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -207,12 +216,13 @@ public class DsfShipperService {
     /**
      * 创建揽收预约单 下单
      *
-     * @param appKey
-     * @param appSecret
+     * @param authMap
      * @param orderCollectRequest
      * @return ResponseMsg
      */
-    public ResponseMsg cancelCollectOrder(String appKey, String appSecret, OrderCollectRequest orderCollectRequest) {
+    public ResponseMsg cancelCollectOrder(Map<String, String> authMap, OrderCollectRequest orderCollectRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.cancel";
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
@@ -234,8 +244,9 @@ public class DsfShipperService {
         DsfShipperService dsfShipperService = new DsfShipperService();
         String token = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
         String key = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
+        Map<String,String> map = new HashMap<>();
         ChanelRequest chanelRequest = ChanelRequest.builder().transport_mode("1").build();
-        ResponseMsg chanelList = dsfShipperService.getChanelList(appKey, appSecret, chanelRequest);
+        ResponseMsg chanelList = dsfShipperService.getChanelList(map, chanelRequest);
         System.out.println(chanelList);
 //        String str = "app_key16081f05-e8fc-4250-b9c4-0660d1ecbb28" +
 //                "formatjson" +

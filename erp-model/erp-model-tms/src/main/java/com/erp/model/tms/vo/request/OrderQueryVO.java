@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -30,6 +31,6 @@ public class OrderQueryVO implements Serializable {
     /**
      * 授权信息
      */
-    LogisticsAuthEntity logisticsAuthEntity;
+    Map<String, String> authMap;
 
 }

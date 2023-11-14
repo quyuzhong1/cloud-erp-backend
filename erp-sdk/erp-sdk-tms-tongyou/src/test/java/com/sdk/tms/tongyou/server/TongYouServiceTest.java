@@ -18,6 +18,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=TongYouService.class)
@@ -25,15 +27,15 @@ public class TongYouServiceTest {
 
     @Resource
     private TongYouService tongYouService;
-    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+    private Map<String, String> authMap = new HashMap<>();
 
     public TongYouServiceTest(){
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        logisticsAuthEntity.setAccount("DADDC4078D2B7D38391A8D3F78C037BF");
+        authMap.put("clientSecret", "DADDC4078D2B7D38391A8D3F78C037BF");
     }
     @Test
     public void getAllChannel() {
-        System.out.println(tongYouService.getAllChannel(logisticsAuthEntity).getData());
+        System.out.println(tongYouService.getAllChannel(authMap).getData());
     }
 
     @Test
@@ -81,7 +83,7 @@ public class TongYouServiceTest {
                         .build())
                 .build();
 
-        TongYouCreateOrder createOrder = tongYouService.createOrder(request,logisticsAuthEntity);
+        TongYouCreateOrder createOrder = tongYouService.createOrder(request,authMap);
         System.out.println(createOrder);
     }
 
@@ -91,7 +93,7 @@ public class TongYouServiceTest {
                 .logisticsId("FZXXRKVP705")
                 .orderNo("WJ20231102001")
                 .build();
-        TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request,logisticsAuthEntity);
+        TongYouCallBackOrder orderInfo = tongYouService.callBackOrderInfo(request,authMap);
         System.out.println(orderInfo);
     }
 
@@ -102,7 +104,7 @@ public class TongYouServiceTest {
                 .orderNo("XM1AWJJ028110,WJ20231102001")
                 .trackNo("TYZPH0022783888YQ,AT139756425CN")
                 .build();
-        TongYouPrintLabel printLabel = tongYouService.printLabel(request,logisticsAuthEntity);
+        TongYouPrintLabel printLabel = tongYouService.printLabel(request,authMap);
 
         FileUtil.base64ToFile(printLabel.getBase64(),"wayBillA4.pdf","C:\\Users\\Administrator\\Desktop");
         System.out.println(printLabel);
@@ -114,7 +116,7 @@ public class TongYouServiceTest {
         TongYouGetOrderRequest request = TongYouGetOrderRequest.builder()
                 .orderNo("WJ20231102001")
                 .build();
-        TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request,logisticsAuthEntity);
+        TongYouOrderInfo orderInfo = tongYouService.getOrderInfo(request,authMap);
         System.out.println(orderInfo);
     }
 }

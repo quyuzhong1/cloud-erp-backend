@@ -15,7 +15,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -30,14 +32,18 @@ public class DsfLogisticsHandlerImplTest {
     @Resource
     DsfLogisticsHandlerImpl dsfLogisticsHandler;
 
+    private Map<String, String> authMap = new HashMap<>();
+
+    public DsfLogisticsHandlerImplTest(){
+        authMap.put("clientId","5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d");
+        authMap.put("clientSecret","b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad");
+    }
+
     @Test
     public void getChannel(){
-        LogisticsAuthEntity authEntity = new LogisticsAuthEntity();
-        authEntity.setAccount("5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d");
-        authEntity.setPassword("b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad");
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         chanelQueryVO.setTransportMode("1");
-        chanelQueryVO.setLogisticsAuthEntity(authEntity);
+        chanelQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsSaleChannelEntity>> channel = dsfLogisticsHandler.getChannel(chanelQueryVO);
         System.out.println(channel);
     }
@@ -46,9 +52,6 @@ public class DsfLogisticsHandlerImplTest {
         LogisticsChannelEntity logisticsChannelEntity = new LogisticsChannelEntity();
         logisticsChannelEntity.setTaxModel("DDP");
         logisticsChannelEntity.setCode("");
-        LogisticsAuthEntity authEntity = new LogisticsAuthEntity();
-        authEntity.setAccount("");
-        authEntity.setPassword("");
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
@@ -82,7 +85,7 @@ public class DsfLogisticsHandlerImplTest {
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .deliveryNo("")
                 .logisticsChannelEntity(logisticsChannelEntity)
-                .logisticsAuthEntity(authEntity)
+                .authMap(authMap)
                 .logisticsProductVOList(Collections.singletonList(logisticsProductVO))
                 .senderInfo(senderInfo)
                 .receiverInfoVO(receiverInfoVO)

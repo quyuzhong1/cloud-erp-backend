@@ -2,6 +2,7 @@ package com.sdk.tms.track123.service;
 
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
+import com.sdk.tms.track123.constant.PathConstants;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.TrackResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -64,27 +65,22 @@ public class TrackShipperService {
      */
     public void getCourierList(String token) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         long timestamp = System.currentTimeMillis();
-//        byte[] hmacSha256Bytes = calculateHmacSHA256(token, String.valueOf(timestamp));
-//        String signature = bytesToHex(hmacSha256Bytes);
-        String url = "https://api.track123.com/gateway/open-api/tk/v2/courier/list";
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
-//        headers.put("signature", signature);
         headers.put("timestamp", String.valueOf(timestamp));
 
-        String string = OkHttpUtils.doGet(url, new LinkedHashMap<>(), headers);
+        String string = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.GET_COURIER_URL, new LinkedHashMap<>(), headers);
         System.out.println(string);
     }
 
     public TrackResponse getTrack(String token, TrackRequest trackRequest) {
         long timestamp = System.currentTimeMillis();
-        String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
-        String result = OkHttpUtils.doPostJsonObject(url, trackRequest, headers);
+        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.GET_TRACK_URL, trackRequest, headers);
         System.out.println(result);
         return JSONUtil.toBean(result, TrackResponse.class);
     }

@@ -5,6 +5,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
@@ -18,20 +19,22 @@ import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.erp.server.tms.service.LogisticsAuthService;
+import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.server.YanWenService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -45,19 +48,37 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsAuthService logisticsAuthService;
-
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+    @Resource
+    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
     @Resource
     private YanWenService yanWenService;
 
     @Override
-    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
-        //自定义渠道配置信息 支持 物流：渠道 = 1：n
-        return logisticsAuthService.getById(authId);
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (StringUtils.isNoneBlank(authId)) {
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        } else {
+            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
+            if (Objects.nonNull(authEntity)) {
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
+            }
+        }
+        Map<String, String> map = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
     }
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
+        YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel(chanelQueryVO.getAuthMap());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
@@ -68,7 +89,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
-        YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getLogisticsAuthEntity());
+        YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getAuthMap());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
@@ -88,7 +109,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .waybillNumber(logisticsGetLabelVO.getTransportNo())
                     .printRemark(logisticsGetLabelVO.getPrintRemark())
                     .build();
-            YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request,logisticsGetLabelVO.getLogisticsAuthEntity());
+            YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request,logisticsGetLabelVO.getAuthMap());
             if(!labelResponse.getSuccess()){
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,logisticsGetLabelVO.getDeliveryNo()+labelResponse.getMessage());
             }
@@ -110,7 +131,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .note(cancelOrderVO.getReason())
                     .waybillNumber(cancelOrderVO.getTransportNo())
                     .build();
-            YanWenResponse<String> yanWenResponse = yanWenService.cancelOrder(request,cancelOrderVO.getLogisticsAuthEntity());
+            YanWenResponse<String> yanWenResponse = yanWenService.cancelOrder(request,cancelOrderVO.getAuthMap());
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             if(!yanWenResponse.getSuccess()){
                 isSuccess = false;
@@ -129,7 +150,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
                 .listNumber(deliveryList)
                 .build();
-        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request,logisticsQueryVOList.get(0).getLogisticsAuthEntity());
+        YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request,logisticsQueryVOList.get(0).getAuthMap());
         if(!yanWenResponse.getSuccess()){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }

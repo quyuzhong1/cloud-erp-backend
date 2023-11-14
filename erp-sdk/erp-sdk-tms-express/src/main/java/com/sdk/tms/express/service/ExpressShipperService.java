@@ -3,6 +3,7 @@ package com.sdk.tms.express.service;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
+import com.sdk.tms.express.constants.PathConstants;
 import com.sdk.tms.express.enums.ExpressServiceCodeEnum;
 import com.sdk.tms.express.model.base.BaseResponse;
 import com.sdk.tms.express.model.base.BaseResult;
@@ -32,16 +33,7 @@ import java.util.*;
 @Slf4j
 @Component
 public class ExpressShipperService {
-    /**
-     * 丰桥新沙箱测试顾客编码  Yg4Zf06w_sxZs3A5D
-     * 校验码  3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw
-     **/
-    private static final String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-    private static final String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
 
-
-    //沙箱环境的地址 -PRO
-    private static final String host = "https://sfapi-sbox.sf-express.com/std/service";
 
     public static void main(String[] args) throws UnsupportedEncodingException {
         ExpressShipperService expressShipperService = new ExpressShipperService();
@@ -170,15 +162,16 @@ public class ExpressShipperService {
      * (3) 筛单
      * (4) 路由注册（可选）
      *
-     * @param partnerId
-     * @param md5Key
+     * @param authMap
      * @param orderRequest
      * @return OrderResponse
      * @throws UnsupportedEncodingException
      */
-    public BaseResult createOrder(String partnerId, String md5Key, OrderRequest orderRequest) throws UnsupportedEncodingException {
+    public BaseResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws UnsupportedEncodingException {
+        String partnerId = authMap.get("clientId");
+        String md5Key = authMap.get("clientSecret");
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_CREATE_ORDER; //下订单
-        return doPost(host, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
+        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
     }
 
     /**
@@ -188,43 +181,46 @@ public class ExpressShipperService {
      * (1) 客户在确定将货物交付给顺丰托运后，将运单上的一些重要信息，如快件重量通过此接口发送给顺丰。(2) 客户在发货前取消订单。
      * 注意：订单取消之后，订单号也是不能重复利用的。
      *
-     * @param partnerId
-     * @param md5Key
+     * @param authMap
      * @param orderUpdateRequest
      * @return OrderUpdateResponse
      * @throws UnsupportedEncodingException
      */
-    public BaseResult updateOrder(String partnerId, String md5Key, OrderUpdateRequest orderUpdateRequest) throws UnsupportedEncodingException {
+    public BaseResult updateOrder(Map<String, String> authMap, OrderUpdateRequest orderUpdateRequest) throws UnsupportedEncodingException {
+        String partnerId = authMap.get("clientId");
+        String md5Key = authMap.get("clientSecret");
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_UPDATE_ORDER; //订单确认/取消接口
-        return doPost(host, partnerId, md5Key, JSONUtil.toJsonStr(orderUpdateRequest), standardService.getCode());
+        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderUpdateRequest), standardService.getCode());
     }
 
     /**
      * 查询订单结果
      *
-     * @param partnerId
-     * @param md5Key
+     * @param authMap
      * @param orderQueryRequest
      * @return OrderSearchRespDto
      * @throws UnsupportedEncodingException
      */
-    public BaseResult queryOrder(String partnerId, String md5Key, OrderQueryRequest orderQueryRequest) throws UnsupportedEncodingException {
+    public BaseResult queryOrder(Map<String, String> authMap, OrderQueryRequest orderQueryRequest) throws UnsupportedEncodingException {
+        String partnerId = authMap.get("clientId");
+        String md5Key = authMap.get("clientSecret");
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_SEARCH_ORDER_RESP; //查询订单结果
-        return doPost(host, partnerId, md5Key, JSONUtil.toJsonStr(orderQueryRequest), standardService.getCode());
+        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderQueryRequest), standardService.getCode());
     }
 
     /**
      * 获取标签
      *
-     * @param partnerId
-     * @param md5Key
+     * @param authMap
      * @param orderLabelRequest
      * @return
      * @throws UnsupportedEncodingException
      */
-    public BaseResult getLabel(String partnerId, String md5Key, OrderLabelRequest orderLabelRequest) throws UnsupportedEncodingException {
+    public BaseResult getLabel(Map<String, String> authMap, OrderLabelRequest orderLabelRequest) throws UnsupportedEncodingException {
+        String partnerId = authMap.get("clientId");
+        String md5Key = authMap.get("clientSecret");
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.COM_RECE_CLOUD_PRINT_WAYBILLS; //面单打印
-        return doPost(host, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
+        return doPost(PathConstants.BASE_URL, partnerId, md5Key, JSONUtil.toJsonStr(orderLabelRequest), standardService.getCode());
     }
 
     private static BaseResult doPost(String host, String partnerId, String md5Key, String msgData, String serviceCode) throws UnsupportedEncodingException {
