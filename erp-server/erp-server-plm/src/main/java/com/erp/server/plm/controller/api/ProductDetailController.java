@@ -1163,7 +1163,7 @@ public class ProductDetailController extends BaseController {
         List<ProductDetailEntity> productDetailEntityList = productDetailService.list();
         ProductWarehouseLocationListener excelListenerUtil = new ProductWarehouseLocationListener(productDetailEntityList, productDetailService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), ProductWarehouseLocationExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
         }
