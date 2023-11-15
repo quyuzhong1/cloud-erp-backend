@@ -1,7 +1,9 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 
 import java.util.List;
@@ -59,4 +61,12 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @return Boolean
      */
     Boolean deleteByMainIds(List<String> mainIds);
+
+    /**
+     * 平台订单明细更新或保存
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 }

@@ -14,8 +14,7 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.oms.service.SoB2cDetailService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import io.seata.common.util.CollectionUtils;
 import jodd.util.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +48,12 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private SoB2cService soB2cService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
+    @Resource
+    private SoB2cFinanceService soB2cFinanceService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -63,11 +68,14 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
-
         // 详情更新或保存
         soB2cDetailService.saveOrUpdateEntity(dto, mainEntity);
-
-
+        //物流信息更新保存
+        soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
+        //买家信息更新保存
+        soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity);
+        //财务信息更新保存
+//        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
         return ApiResult.success();
     }
 }

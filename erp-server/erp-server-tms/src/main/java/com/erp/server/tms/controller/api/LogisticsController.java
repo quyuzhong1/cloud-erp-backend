@@ -38,56 +38,52 @@ public class LogisticsController extends BaseController {
 
     @PostMapping("/createOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流新增订单")
-    public void createOrder(LogisticsOrderVO logisticsOrderVO) {
+    public ApiResult createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsService service = logisticsRegistry.getHandler("");
         ApiResult<LogisticsOrderResponseVO> order = service.createOrder(logisticsOrderVO);
-
+        return success();
     }
 
     @PostMapping("/confirmOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流订单确认")
-    public void confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO) {
-
+    public ApiResult confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO) {
+        return success();
     }
 
     @PostMapping("/cancelOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流订单取消")
-    public void cancelOrder(List<LogisticsCancelOrderVO> logisticsQueryVO) {
-
+    public ApiResult cancelOrder(List<LogisticsCancelOrderVO> logisticsQueryVO) {
+        return success();
     }
 
     @PostMapping("/interceptOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流订单拦截")
-    public void interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVO) {
-
+    public ApiResult interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVO) {
+        return success();
     }
 
     @PostMapping("/updateOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流订单更新")
-    public void updateOrder(List<LogisticsOrderVO> logisticsOrderVOS) {
-
+    public ApiResult updateOrder(List<LogisticsOrderVO> logisticsOrderVOS) {
+        return success();
     }
 
     @PostMapping("/queryOrderList")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流订单查询")
-    public void queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-
+    public ApiResult queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        return success();
     }
 
     @PostMapping("/getLabelList")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流面单查询")
-    public void getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) {
-
+    public ApiResult getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) {
+        return success();
     }
 
     @PostMapping("/getTrack")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流轨迹查询")
-    public void getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
-
+    public ApiResult getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
+        return success();
     }
 
     @PostMapping("/getChannel")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道同步")
     public ApiResult getChannel(@RequestParam(value = "platform") String platform) {
         return logisticsBaseService.syncLogisticsChannel(platform);
     }

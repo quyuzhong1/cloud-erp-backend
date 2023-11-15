@@ -94,7 +94,21 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     */
     @TableField("full_address")
         private String fullAddress;
-
+    /**
+     * 国家二字码
+     */
+    @TableField("country")
+    private String country;
+    /**
+     * 省
+     */
+    @TableField("province_name")
+    private String provinceName;
+    /**
+     * 区
+     */
+    @TableField("district_name")
+    private String districtName;
 
     public static final String MAIN_ID = "main_id";
 
