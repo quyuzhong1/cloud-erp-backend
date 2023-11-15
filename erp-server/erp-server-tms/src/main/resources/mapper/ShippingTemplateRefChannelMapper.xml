@@ -54,8 +54,10 @@
             strc.id,
             strc.main_id as mainId,
             strc.logistics_channel_id as logisticsChannelId,
-            strc.name as shippingTemplateName
+            st.name as shippingTemplateName
         from shipping_template_ref_channel strc
+        inner join shipping_template st on st.id = strc.main_id
+        and st.is_deleted = false
         where strc.is_deleted = false
         <if test="channelIdList != null and channelIdList.size > 0">
             and strc.logistics_channel_id in

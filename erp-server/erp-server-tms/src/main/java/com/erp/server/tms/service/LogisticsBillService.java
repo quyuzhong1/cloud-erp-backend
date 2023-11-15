@@ -60,4 +60,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
      **/
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(List<String> sourceIdList);
+
+    /**
+     * @description: 根据出库单号查询
+     * @author Will
+     * @date: 2023/11/14 19:32
+     * @param outstockCodeList
+     * @return List<LogisticsBillEntity>
+     */
+    List<LogisticsBillEntity> listByOutstockCodeList(List<String> outstockCodeList);
 }

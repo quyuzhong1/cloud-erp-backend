@@ -49,4 +49,12 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      */
     List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList);
 
+    /**
+     * 详情
+     *@parms id
+     *@return 
+     *@author yl
+     *@date 2023-11-14
+     */
+    LogisticsChannelDTO.ViewDTO view(String id);
 }

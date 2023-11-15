@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
@@ -31,6 +32,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "platformChannelId", source = "id"),
             @Mapping(target = "cnName", source = "nameCh"),
             @Mapping(target = "enName", source = "nameEn"),
+            @Mapping(target = "logisticsPlatform", constant = "YanWen"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByYanWen(YanWenChannel yanWenChannelList);
@@ -42,7 +44,6 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "enName", source = "logistics_product_name_en"),
             @Mapping(target = "isTrack", source = "order_track",qualifiedByName = "yOrNToBoolean"),
             @Mapping(target = "logisticsPlatform", constant = "DSF"),
-//            @Mapping(target = "transport_mode", source = "shipmentMethod"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByDSF(ChanelInfo chanelInfo);
@@ -54,6 +55,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "isTrack", source = "trackStatus"),
             @Mapping(target = "aging", source = "aging"),
+            @Mapping(target = "logisticsPlatform", constant = "WeiShi"),
             @Mapping(target = "id", ignore = true),
     })
     LogisticsSaleChannelEntity channelConvertByWeiShi(WeiShiChannel data);
@@ -77,6 +79,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "enName", source = "EName"),
             @Mapping(target = "isTrack", source = "hasTrackingNumber"),
             @Mapping(target = "aging", source = "displayName"),
+            @Mapping(target = "logisticsPlatform", constant = "YunTu"),
             @Mapping(target = "id", ignore = true),
     })
     LogisticsSaleChannelEntity channelConvertByYunTu(YunTuChannel data);
@@ -87,6 +90,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "cnName", source = "cnName"),
             @Mapping(target = "enName", source = "enName"),
             @Mapping(target = "channelStatus", source = "status"),
+            @Mapping(target = "logisticsPlatform", constant = "TongYou"),
             @Mapping(target = "id", ignore = true),
     })
     LogisticsSaleChannelEntity channelConvertByTongYou(TongYouChannel data);

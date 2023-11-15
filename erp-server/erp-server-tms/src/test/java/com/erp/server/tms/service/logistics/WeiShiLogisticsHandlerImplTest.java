@@ -15,7 +15,9 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
@@ -24,17 +26,17 @@ public class WeiShiLogisticsHandlerImplTest {
     @Resource
     WeiShiLogisticsHandlerImpl weiShiLogisticsHandler;
 
-    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+    private Map<String, String> authMap = new HashMap<>();
 
     public WeiShiLogisticsHandlerImplTest(){
-        logisticsAuthEntity.setAccount("dcfe81e2059c1f0e6e6263dbcb764885");
-        logisticsAuthEntity.setPassword("dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
     }
 
 
     @Test
     public void getChannel() {
-        System.out.println(weiShiLogisticsHandler.getChannel(ChanelQueryVO.builder().logisticsAuthEntity(logisticsAuthEntity).build()));
+        System.out.println(weiShiLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build()));
     }
 
 
@@ -59,7 +61,7 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(10);
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
-                .logisticsAuthEntity(logisticsAuthEntity)
+                .authMap(authMap)
                 .channelCode("MX1001")
                 .channelId("155")
                 .orderSource("ERP")
@@ -100,10 +102,10 @@ public class WeiShiLogisticsHandlerImplTest {
     public void getLabelUrl() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO = new LogisticsGetLabelVO();
         logisticsQueryVO.setDeliveryNo("wj12345167721");
-        logisticsQueryVO.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVO.setAuthMap(authMap);
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
         logisticsQueryVO2.setDeliveryNo("wj12345167720");
-        logisticsQueryVO2.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> result = weiShiLogisticsHandler.getLabelList(Arrays.asList(logisticsQueryVO,logisticsQueryVO2));
         System.out.println(result);
     }
@@ -112,10 +114,10 @@ public class WeiShiLogisticsHandlerImplTest {
     public void queryOrderList() {
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVOList.setAuthMap(authMap);
         LogisticsQueryBaseVO logisticsQueryVOList2 = new LogisticsQueryBaseVO();
         logisticsQueryVOList2.setDeliveryNo("wj12345167720");
-        logisticsQueryVOList2.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVOList2.setAuthMap(authMap);
         System.out.println(weiShiLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryVOList2,logisticsQueryVOList)));
     }
 
@@ -125,10 +127,10 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setTransportNo("wj1234516772");
         logisticsQueryVOList.setTrackNo("wj123451677");
-        logisticsQueryVOList.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVOList.setAuthMap(authMap);
         LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
         logisticsQueryVOList2.setDeliveryNo("wj12345167720");
-        logisticsQueryVOList2.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVOList2.setAuthMap(authMap);
         System.out.println(weiShiLogisticsHandler.interceptOrder(Arrays.asList(logisticsQueryVOList,logisticsQueryVOList2)));
     }
 
@@ -138,7 +140,7 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setTransportNo("wj1234516772");
         logisticsQueryVOList.setTrackNo("wj123451677");
-        logisticsQueryVOList.setLogisticsAuthEntity(logisticsAuthEntity);
+        logisticsQueryVOList.setAuthMap(authMap);
         System.out.println(weiShiLogisticsHandler.cancelOrder(Arrays.asList(logisticsQueryVOList)));
     }
 }

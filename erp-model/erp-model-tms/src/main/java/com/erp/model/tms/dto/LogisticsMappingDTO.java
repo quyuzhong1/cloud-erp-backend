@@ -35,15 +35,16 @@ public class LogisticsMappingDTO implements Serializable {
         */
         private String  id;
 
-        /**
-        * 物流渠道id
-        */
-        private String logisticsChannelId;
 
         /**
         * 物流平台
         */
         private String salesPlatform;
+
+        /**
+         *  物流销售渠道id
+         */
+        private String logisticsSaleChannelId;
 
 
     }

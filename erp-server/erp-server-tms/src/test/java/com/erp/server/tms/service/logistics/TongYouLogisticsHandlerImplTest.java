@@ -16,7 +16,9 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
@@ -25,16 +27,16 @@ public class TongYouLogisticsHandlerImplTest {
     @Resource
     private TongYouLogisticsHandlerImpl tongYouLogisticsHandler;
 
-    private LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+    private Map<String, String> authMap = new HashMap<>();
 
     public TongYouLogisticsHandlerImplTest(){
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        logisticsAuthEntity.setAccount("DADDC4078D2B7D38391A8D3F78C037BF");
+        authMap.put("clientSecret","DADDC4078D2B7D38391A8D3F78C037BF");
     }
 
     @Test
     public void getChannel() {
-        System.out.println(tongYouLogisticsHandler.getChannel(ChanelQueryVO.builder().logisticsAuthEntity(logisticsAuthEntity).build()));
+        System.out.println(tongYouLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build()));
     }
 
 
@@ -60,7 +62,7 @@ public class TongYouLogisticsHandlerImplTest {
         logisticsProductVO.setQuantity(1);
         logisticsProductVO.setDeclareCurrency("USD");
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
-                .logisticsAuthEntity(logisticsAuthEntity)
+                .authMap(authMap)
                 .channelCode("FZXXRKVP705")
                 .channelId("155")
                 .orderSource("ERP")
@@ -104,9 +106,9 @@ public class TongYouLogisticsHandlerImplTest {
         LogisticsGetLabelVO labelVO2 = new LogisticsGetLabelVO();
         labelVO2.setDeliveryNo("WJ20231102001");
         labelVO2.setTrackNo("AT139756425CN");
-        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO2.setAuthMap(authMap);
         labelVO.setDeliveryNo("XM1AWJJ028110");
-        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO.setAuthMap(authMap);
         labelVO.setTrackNo("TYZPH0022783888YQ");
         LogisticsChannelEntity logisticsChannelEntity = new LogisticsChannelEntity();
         logisticsChannelEntity.setCode("FZXXRKVP705");
@@ -121,9 +123,9 @@ public class TongYouLogisticsHandlerImplTest {
         LogisticsQueryBaseVO labelVO = new LogisticsQueryBaseVO();
         LogisticsQueryBaseVO labelVO2 = new LogisticsQueryBaseVO();
         labelVO.setDeliveryNo("WJ20231102001");
-        labelVO.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WJ20231102002");
-        labelVO2.setLogisticsAuthEntity(logisticsAuthEntity);
+        labelVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }

@@ -7,6 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FileUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -17,19 +18,20 @@ import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.erp.server.tms.service.LogisticsAuthService;
+import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.server.YunTuService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -43,19 +45,37 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private LogisticsAuthService logisticsAuthService;
-
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+    @Resource
+    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
     @Resource
     private YunTuService yunTuService;
 
     @Override
-    public LogisticsAuthEntity getLogisticsAuthConfig(String authId) {
-        //自定义渠道配置信息 支持 物流：渠道 = 1：n
-        return logisticsAuthService.getById(authId);
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (StringUtils.isNoneBlank(authId)) {
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        } else {
+            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
+            if (Objects.nonNull(authEntity)) {
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
+            }
+        }
+        Map<String, String> map = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
     }
 
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        YunTuResponse<List<YunTuChannel>> yunTuResponse =  yunTuService.getAllChannel(chanelQueryVO.getLogisticsAuthEntity());
+        YunTuResponse<List<YunTuChannel>> yunTuResponse =  yunTuService.getAllChannel(chanelQueryVO.getAuthMap());
         if(isFailure(yunTuResponse.getCode())){
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage());
         }
@@ -66,7 +86,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
-        YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getLogisticsAuthEntity());
+        YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getAuthMap());
         if(isFailure(yunTuResponse.getCode())){
             List<YunTuCreateOrder> yunTuCreateOrders = yunTuResponse.getData();
             String remark = "";
@@ -90,7 +110,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuPrintLabelRequest request = YunTuPrintLabelRequest.builder()
                 .orderNumbers(deliveryList)
                 .build();
-        YunTuResponse<List<YunTuPrintLabel>> yunTuResponse = yunTuService.getPrintLabel(request,labelVO.get(0).getLogisticsAuthEntity());
+        YunTuResponse<List<YunTuPrintLabel>> yunTuResponse = yunTuService.getPrintLabel(request,labelVO.get(0).getAuthMap());
         List<LogisticsPrintLabelResponse> responseList = new ArrayList<>();
         //云途调取打印标签，可能全部失败，也有可能部分成功，部分失败
         if(isFailure(yunTuResponse.getCode())){
@@ -139,7 +159,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuGetTrackingNumRequest request = YunTuGetTrackingNumRequest.builder()
                 .customerOrderNumber(String.join(",", deliveryList))
                 .build();
-        YunTuResponse<List<YunTuTrackingNumber>> yunTuResponse = yunTuService.getTrackingNumber(request,logisticsQueryVOList.get(0).getLogisticsAuthEntity());
+        YunTuResponse<List<YunTuTrackingNumber>> yunTuResponse = yunTuService.getTrackingNumber(request,logisticsQueryVOList.get(0).getAuthMap());
         List<LogisticsOrderResponseVO> responseList = new ArrayList<>();
         if(isFailure(yunTuResponse.getCode())){
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
@@ -162,7 +182,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderType(2)
                     .orderNumber(interceptOrderVO.getDeliveryNo())
                     .build();
-            YunTuResponse<YunTuInterceptOrder> yunTuResponse = yunTuService.interceptOrder(request,interceptOrderVO.getLogisticsAuthEntity());
+            YunTuResponse<YunTuInterceptOrder> yunTuResponse = yunTuService.interceptOrder(request,interceptOrderVO.getAuthMap());
             InterceptResponseVO interceptResponseVO = LogisticsOperationOrderConverter.INSTANCE.interceptOrderCovert(interceptOrderVO);
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;
@@ -185,7 +205,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderType(2)
                     .orderNumber(cancelOrderVO.getDeliveryNo())
                     .build();
-            YunTuResponse<YunTuCancelOrder> yunTuResponse = yunTuService.cancelOrder(request,cancelOrderVO.getLogisticsAuthEntity());
+            YunTuResponse<YunTuCancelOrder> yunTuResponse = yunTuService.cancelOrder(request,cancelOrderVO.getAuthMap());
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;

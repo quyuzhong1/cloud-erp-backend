@@ -3,6 +3,7 @@ package com.sdk.tms.disifang.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.disifang.constants.AmbientEnum;
+import com.sdk.tms.disifang.constants.EnvironOption;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -96,7 +97,7 @@ public class HttpClientUtils {
     }
 
     public static String getAddress(AmbientEnum ambient) {
-        String urlProfiels = AmbientEnum.TEST_ADDRESS.equals(ambient) ? "http://open-test.4px.com" : "http://open.4px.com";
+        String urlProfiels = AmbientEnum.TEST_ADDRESS.equals(ambient) ? EnvironOption.SANDBOX_ADDRESS : EnvironOption.FARMAL_ADDRESS;
         return urlProfiels;
     }
 }

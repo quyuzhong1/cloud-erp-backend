@@ -9,6 +9,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -82,7 +83,7 @@ public class LogisticsOrderVO implements Serializable {
     /**
      * 授权信息
      */
-    private LogisticsAuthEntity logisticsAuthEntity;
+    private Map<String, String> authMap;
     /**
      * 渠道信息
      */

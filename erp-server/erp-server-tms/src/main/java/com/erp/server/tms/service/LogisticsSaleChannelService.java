@@ -33,4 +33,5 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     Boolean update(LogisticsSaleChannelDTO.UpdateDTO dto);
 
 
+    Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity);
 }

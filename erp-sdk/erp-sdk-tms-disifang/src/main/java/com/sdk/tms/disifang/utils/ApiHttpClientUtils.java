@@ -2,6 +2,7 @@ package com.sdk.tms.disifang.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.disifang.constants.AmbientEnum;
+import com.sdk.tms.disifang.constants.EnvironOption;
 import com.sdk.tms.disifang.model.base.AffterentParam;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
 import org.apache.commons.collections4.MapUtils;
@@ -25,7 +26,7 @@ public class ApiHttpClientUtils extends HttpClientUtils {
         String jsonStr = getBodyJson(paramMap);
         String urlProfiles = getAddress(ambient);
         StringBuilder urlStr = new StringBuilder(urlProfiles);
-        urlStr.append("/router/api/service");
+        urlStr.append(EnvironOption.OPEN_API_ROUTER);
         Long timestamp = Long.valueOf((new Date()).getTime());
         String sign = SignUtil.getSingByParam(param, jsonStr, timestamp);
         StringBuilder url = getRequestUrl(param, urlStr, timestamp, sign);
@@ -45,10 +46,9 @@ public class ApiHttpClientUtils extends HttpClientUtils {
     public static String apiJsonPost(AffterentParam param, String bodyJsonStr, AmbientEnum ambient) {
         if (!checkParam(param))
             return ResponseMsg.fial("参数缺失").toString();
-//        String bodyJsonStr = getBodyJson(paramMap);
         String urlProfiles = getAddress(ambient);
         StringBuilder urlStr = new StringBuilder(urlProfiles);
-        urlStr.append("/router/api/service");
+        urlStr.append(EnvironOption.OPEN_API_ROUTER);
         Long timestamp = new Date().getTime();
         String sign = SignUtil.getSingByParam(param, bodyJsonStr, timestamp);
         StringBuilder url = getRequestUrl(param, urlStr, timestamp, sign);
@@ -68,7 +68,7 @@ public class ApiHttpClientUtils extends HttpClientUtils {
         String bodyJsonStr = getBodyJson(paramMap);
         String urlProfiles = getAddress(ambient);
         StringBuilder urlStr = new StringBuilder(urlProfiles);
-        urlStr.append("/router/api/service");
+        urlStr.append(EnvironOption.OPEN_API_ROUTER);
         Long timestamp = new Date().getTime();
         String sign = SignUtil.getSingByParam(param, bodyJsonStr, timestamp);
         StringBuilder url = getRequestUrl(param, urlStr, timestamp, sign);

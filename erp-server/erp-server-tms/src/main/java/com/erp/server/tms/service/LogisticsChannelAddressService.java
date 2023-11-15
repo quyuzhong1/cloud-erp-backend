@@ -29,10 +29,17 @@ public interface LogisticsChannelAddressService extends SuperService<LogisticsCh
     * 修改
     * @author Lambda
     * @date: 2023-11-02
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(LogisticsChannelAddressDTO.UpdateDTO dto);
+    Boolean update(String channelId,List<LogisticsChannelAddressDTO.UpdateDTO> list);
 
-
+    /**
+     * 根据渠道id查询数据
+     *@parms channelId
+     *@return 
+     *@author yl
+     *@date 2023-11-14
+     */
+    List<LogisticsChannelAddressDTO.ViewDTO> listByChannelId(String channelId);
 }

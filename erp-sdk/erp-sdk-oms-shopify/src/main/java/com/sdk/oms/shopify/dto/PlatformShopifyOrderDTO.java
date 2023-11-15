@@ -1,20 +1,18 @@
 package com.sdk.oms.shopify.dto;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
-import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
-import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
-import com.sdk.oms.shopify.api.rest.model.ShopifyShippingLine;
+import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,6 +122,45 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
+
+        // 订单买家信息
+        List<PlatformOrderReceiverDTO> receiverList = new LinkedList<>();
+        ShopifyCustomer customer = dto.getShopifyOrder().getCustomer();
+        ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
+        if (null != customer) {
+            PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
+            receiverDTO.setName(
+                    (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
+                            (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getLastname())
+            );
+            receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
+
+            receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
+            receiverDTO.setSecondAddress(
+                    StringUtils.isBlank(shippingAddress.getAddress2()) ? "" : shippingAddress.getAddress2()
+            );
+
+            receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
+            receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCountry()) ? "" : shippingAddress.getCountry());
+            receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
+            receiverDTO.setFullAddress("");
+            receiverDTO.setPostCode(shippingAddress.getZip());
+            receiverList.add(receiverDTO);
+        }
+        orderDTO.setReceiverList(receiverList);
+
+        // 订单财务信息
+        List<PlatformOrderFinanceDTO> financesList = new LinkedList<>();
+        List<ShopifyShippingLine> shippingLines = dto.getShopifyOrder().getShippingLines();
+        if (!CollectionUtils.isEmpty(shippingLines)){
+            PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
+            // 合计
+            BigDecimal totalShippingPrice = dto.getShopifyOrder().getShippingLines()
+                    .stream()
+                    .map(ShopifyShippingLine::getPrice)
+                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            financeDTO.setShippingCost(totalShippingPrice);
+        }
         return orderDTO;
 
     }

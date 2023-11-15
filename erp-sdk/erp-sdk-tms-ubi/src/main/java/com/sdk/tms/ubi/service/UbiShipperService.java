@@ -22,10 +22,7 @@ import com.sdk.tms.ubi.utils.IntegrationHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zdy
@@ -49,7 +46,10 @@ public class UbiShipperService {
 
     public static void main(String[] args) {
         UbiShipperService ubiShipperService = new UbiShipperService();
-        List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(token, key);
+        Map<String,String> authMap = new HashMap<>();
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(authMap);
         System.out.println("列表数:" + serviceCataLogList.size());
 //        List<String> ids = new ArrayList<>();
 //        LabelRequest labelRequest = LabelRequest.builder()
@@ -70,8 +70,10 @@ public class UbiShipperService {
      * @param ubiOrder
      * @return
      */
-    public OrderResponse createOrder(UbiOrder ubiOrder) {
-        String url = host + PathConstants.POST_CREATE_ORDERS_URL;
+    public OrderResponse createOrder(Map<String, String> authMap,UbiOrder ubiOrder) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.POST_CREATE_ORDERS_URL;
         log.info("创建订单url：{}", url);
         Map<String, Object> params = BeanUtil.beanToMap(ubiOrder);
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
@@ -93,11 +95,12 @@ public class UbiShipperService {
      * 通过字段值Merged支持去合并PDF格式的面单，其它格式不支持合并；
      *
      * @param labelRequest
-     * @param token
-     * @param key
+     * @param authMap
      */
-    public List<LabelResponse> getLabels(String token, String key, LabelRequest labelRequest) {
-        String url = host + PathConstants.POST_LABELS_URL;
+    public List<LabelResponse> getLabels(Map<String, String> authMap, LabelRequest labelRequest) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.POST_LABELS_URL;
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJsonObject(url, labelRequest, headers);
         log.info("打印标签：{}", res);
@@ -117,8 +120,10 @@ public class UbiShipperService {
      * @param orderId
      * @param trackingNo
      */
-    public static List<Label> getLabelSpecs(String referenceNo, String orderId, String trackingNo) {
-        String url = host + PathConstants.POST_LABEL_SPECS_URL;
+    public static List<Label> getLabelSpecs(Map<String, String> authMap,String referenceNo, String orderId, String trackingNo) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.POST_LABEL_SPECS_URL;
         log.info("获取标签url：{}", url);
         Map<String, Object> params = new LinkedHashMap<>();
         if (StrUtil.isNotBlank(referenceNo)) {
@@ -146,12 +151,13 @@ public class UbiShipperService {
      * URL支持用客户端订单号(referenceNo)或服务端订单号(orderId)来进行删除，如果为一票多件订单需要同时删除，
      * 则将客户端订单号(referenceNo)或服务端订单号(orderId)传值主单对应的值
      *
-     * @param token
-     * @param key
+     * @param authMap
      * @param code
      */
-    public OrderResponse deleteShipperOrder(String token, String key, String code) {
-        String url = host + StrUtil.format(PathConstants.DELETE_LABEL_SPECS_URL, code);
+    public OrderResponse deleteShipperOrder(Map<String, String> authMap, String code) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + StrUtil.format(PathConstants.DELETE_LABEL_SPECS_URL, code);
         log.info("单件删除 url：{}", url);
         Map<String, Object> params = new LinkedHashMap<>();
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.DELETE_REQUEST_METHOD, url, token, key);
@@ -168,13 +174,14 @@ public class UbiShipperService {
     /**
      * 扣货接口
      *
-     * @param token
-     * @param key
+     * @param authMap
      * @param holdRequest
      * @return
      */
-    public List<OrderResponse> interceptOrder(String token, String key, HoldRequest holdRequest) {
-        String url = host + PathConstants.POST_INTERCEPT_ORDER_URL;
+    public List<OrderResponse> interceptOrder(Map<String, String> authMap, HoldRequest holdRequest) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.POST_INTERCEPT_ORDER_URL;
         log.info("单件删除 url：{}", url);
         java.util.Map<String, Object> params = new LinkedHashMap<>();
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
@@ -191,8 +198,10 @@ public class UbiShipperService {
     /**
      * 获取开通的服务
      */
-    public List<ServiceCataLog> getServiceCatalog(String token, String key) {
-        String url = host + PathConstants.GET_SERVICE_CATALOG_URL;
+    public List<ServiceCataLog> getServiceCatalog(Map<String, String> authMap) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.GET_SERVICE_CATALOG_URL;
         log.info("获取开通的服务url：{}", url);
         java.util.Map<String, Object> params = new LinkedHashMap<>();
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.GET_REQUEST_METHOD, url, token, key);
@@ -210,12 +219,13 @@ public class UbiShipperService {
      * 获取跟踪号
      * 客户使用 参考号 查询跟踪号，最多获取300条记录
      *
-     * @param token
-     * @param key
+     * @param authMap
      * @param numbers
      */
-    public List<TrackBase> getTrackNumber(String token, String key, List<String> numbers) {
-        String url = host + PathConstants.POST_TRACK_NUMBER_URL;
+    public List<TrackBase> getTrackNumber(Map<String, String> authMap, List<String> numbers) {
+        String token = authMap.get("clientId");
+        String key = authMap.get("clientSecret");
+        String url = PathConstants.BASE_URL + PathConstants.POST_TRACK_NUMBER_URL;
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJsonObject(url, numbers, headers);
         log.info("获取跟踪号：{}", res);

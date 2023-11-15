@@ -9,23 +9,28 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
+import com.erp.server.tms.service.LogisticsAuthService;
+import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.TrackNumber;
 import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
 import com.sdk.tms.shopee.service.ShopeeShipperService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author zdy
@@ -42,9 +47,34 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private ShopeeShipperService shopeeShipperService;
     @Resource
+    private LogisticsAuthService logisticsAuthService;
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+    @Resource
     private ShopeeFeign shopeeFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+
+
+    /**
+     * 虾皮  authId 需要是店铺 shopId
+     * @param authId
+     * @return
+     */
+    @Override
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFeign.getShopeeShopById(authId);
+        Map<String, String> map = new HashMap<>();
+//        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+//            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+//                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+//            });
+//        }
+        return map;
+    }
 
     /**
      * 查询订单(批量)
