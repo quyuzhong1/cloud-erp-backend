@@ -40,4 +40,13 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     LogisticsAuthDTO.ViewDTO view(String id);
+
+    /**
+     * 取消授权
+     *@parms id
+     *@return
+     *@author yl
+     *@date 2023-11-15
+     */
+    BatchResultDTO cancel(String id);
 }

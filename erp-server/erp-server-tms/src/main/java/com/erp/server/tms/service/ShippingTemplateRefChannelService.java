@@ -43,4 +43,13 @@ public interface ShippingTemplateRefChannelService extends SuperService<Shipping
      *@date 2023-11-14
      */
     List<ShippingTemplateRefChannelEntity> listChannelIdList(List<String> channelIdList);
+
+    /**
+     * 保存模板渠道关系
+     *@parmschannelId 渠道id
+     *@return templateId 模板id
+     *@author yl
+     *@date 2023-11-15
+     */
+    void addRef(String channelId, String templateId);
 }

@@ -3,25 +3,28 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsAuthDTO;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -45,10 +48,15 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Autowired
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO addDTO) {
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(addDTO.getMainId());
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
         LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
         BeanMapperUtils.copy(addDTO, logisticsAuthEntity);
         // 数据处理
@@ -57,6 +65,9 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (!save) {
             throw new ServiceException("物流授权单保存失败");
         }
+        supplierEntity.setAuthTime(LocalDateTime.now());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.ALREADY.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), addDTO.getFieldMap());
         // 操作日志
@@ -74,6 +85,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public Boolean update(LogisticsAuthDTO.UpdateDTO updateDTO) {
         LogisticsAuthEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权单"));
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(updateDTO.getMainId());
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+
         LogisticsAuthEntity logisticsAuthEntity = BeanMapperUtils.map(LogisticsAuthEntity.class, updateDTO);
         // 数据处理
         handleData(logisticsAuthEntity);
@@ -81,6 +97,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (!save) {
             throw new ServiceException("物流授权单保存失败");
         }
+        supplierEntity.setAuthTime(LocalDateTime.now());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.ALREADY.getCode());
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), updateDTO.getFieldMap());
         return Boolean.TRUE;
@@ -101,6 +119,25 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         view.setFieldMap(map);
         return view;
+    }
+
+    @Override
+    public BatchResultDTO cancel(String id) {
+        LogisticsAuthEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+        }
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(entity.getMainId());
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        String  authStatus=supplierEntity.getAuthStatus();
+        if(!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)){
+            throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
+        }
+        this.removeById(id);
+        return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
+
     }
 
 
