@@ -175,7 +175,7 @@ public class ShippingTemplateController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:shippingTemplate:paging",
-            tableAlias = "ti"
+            tableAlias = "st"
     )
     public ApiResult exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
         Boolean flag = shippingTemplateService.exportExcel(dto, response);
