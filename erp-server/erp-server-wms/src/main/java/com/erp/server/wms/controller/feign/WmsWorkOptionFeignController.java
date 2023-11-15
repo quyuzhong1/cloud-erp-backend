@@ -45,6 +45,9 @@ public class WmsWorkOptionFeignController {
     @Resource
     private StocktakingTaskService stocktakingTaskService;
 
+    @Resource
+    private FbaDeliveryService fbaDeliveryService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -126,6 +129,23 @@ public class WmsWorkOptionFeignController {
         String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
         oneDto.setId(id);
         stocktakingTaskService.approve(id, oneDto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * FBA发货单
+     * @Author Luo_WG
+     * @Date 2023/11/15 18:01
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/fbaDeliveryApprove")
+    public Boolean fbaDeliveryApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        ApproveOneDTO oneDto = new ApproveOneDTO();
+        BeanMapper.copy(baseApproveParamDTO,oneDto);
+        String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
+        oneDto.setId(id);
+        fbaDeliveryService.approve(oneDto);
         return Boolean.TRUE;
     }
 }

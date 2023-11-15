@@ -251,4 +251,14 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("/feign/wmsSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * FBA发货单
+     * @Author Luo_WG
+     * @Date 2023/11/15 18:01
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/wmsWorkOption/fbaDeliveryApprove")
+    Boolean fbaDeliveryApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 }

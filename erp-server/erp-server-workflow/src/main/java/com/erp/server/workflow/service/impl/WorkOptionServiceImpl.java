@@ -664,8 +664,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case TRANSFER_APPLICATION:
                 wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
+                break;
             case STOCKTAKING_TASK:
                 wmsTaskFeign.stocktakingTaskApprove(baseApproveParamDTO);
+                break;
+            case FBA_DELIVERY:
+                wmsTaskFeign.fbaDeliveryApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
