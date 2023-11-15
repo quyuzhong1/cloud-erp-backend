@@ -142,26 +142,26 @@ public class JmsConsumerTest {
     public void consumer4Test() throws Exception {
         SQSTextMessage sqsTextMessage = new SQSTextMessage();
         sqsTextMessage.setText("{\n" +
-                "        \"notificationVersion\" : \"2020-09-04\",\n" +
-                "            \"notificationType\" : \"REPORT_PROCESSING_FINISHED\",\n" +
-                "            \"payloadVersion\" : \"1.0\",\n" +
-                "            \"eventTime\" : \"2023-11-08T09:45:39.054Z\",\n" +
-                "            \"payload\" : {\n" +
-                "        \"reportProcessingFinishedNotification\" : {\n" +
-                "            \"sellerId\" : \"AZFY4CTNEDLZX\",\n" +
-                "                    \"reportId\" : \"730602019674\",\n" +
-                "                    \"reportType\" : \"GET_MERCHANT_LISTINGS_DATA\",\n" +
-                "                    \"processingStatus\" : \"DONE\",\n" +
-                "                    \"reportDocumentId\" : \"amzn1.spdoc.1.4.na.0c047a82-212d-4d0f-bd6d-eb2ca70c4793.TQLWD3FS907B4.300\"\n" +
-                "        }\n" +
-                "    },\n" +
-                "        \"notificationMetadata\" : {\n" +
-                "        \"applicationId\" : \"amzn1.sp.solution.c49ad2b8-5338-493f-b312-550e59f0b2b4\",\n" +
-                "                \"subscriptionId\" : \"f80d1da5-c932-4e1f-a36d-e434bca8deb6\",\n" +
-                "                \"publishTime\" : \"2023-11-13T00:44:30.096Z\",\n" +
-                "                \"notificationId\" : \"test4-a79a47eb-f5c6-4d74-81a7-0e132468e6cf\"\n" +
+                "  \"notificationVersion\" : \"2020-09-04\",\n" +
+                "  \"notificationType\" : \"REPORT_PROCESSING_FINISHED\",\n" +
+                "  \"payloadVersion\" : \"1.0\",\n" +
+                "  \"eventTime\" : \"2023-11-15T09:59:04Z\",\n" +
+                "  \"payload\" : {\n" +
+                "    \"reportProcessingFinishedNotification\" : {\n" +
+                "      \"sellerId\" : \"AZFY4CTNEDLZX\",\n" +
+                "      \"reportId\" : \"732452019676\",\n" +
+                "      \"reportType\" : \"GET_MERCHANT_LISTINGS_DATA\",\n" +
+                "      \"processingStatus\" : \"DONE\",\n" +
+                "      \"reportDocumentId\" : \"amzn1.spdoc.1.4.na.4ca2b3b7-d23d-430b-ab72-536e36850d7c.T2KUAO6JEW1T6T.300\"\n" +
                 "    }\n" +
-                "    }");
+                "  },\n" +
+                "  \"notificationMetadata\" : {\n" +
+                "    \"applicationId\" : \"amzn1.sp.solution.c49ad2b8-5338-493f-b312-550e59f0b2b4\",\n" +
+                "    \"subscriptionId\" : \"f80d1da5-c932-4e1f-a36d-e434bca8deb6\",\n" +
+                "    \"publishTime\" : \"2023-11-13T00:44:30.096Z\",\n" +
+                "    \"notificationId\" : \"test6-a79a47eb-f5c6-4d74-81a7-0e132468e6cf\"\n" +
+                "  }\n" +
+                "}");
         jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
     }
 

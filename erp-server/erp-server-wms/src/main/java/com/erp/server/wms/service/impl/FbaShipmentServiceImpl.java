@@ -39,6 +39,7 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
@@ -54,6 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -124,6 +126,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
         if (ObjectUtil.isEmpty(detailEntity)) {
@@ -142,6 +145,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
+
 
         //映射sku
         dto.setShopId(entity.getShopId());
@@ -164,9 +168,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailEntity.setIsCombination(Boolean.FALSE);
             }
             //添加日志
-            FbaShipmentEntity old = this.getById(detailEntity.getId());
-            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
+            List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByIds(Arrays.asList(dto.getDetailId()));
 
+            //操作日志
+            List<Pair<String, String>> pairList = fbaShipmentDetailEntities.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getMsku() + " 映射 " + dto.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("映射了一个sku【%s】", ModuleTypeEnum.FBA_SHIPMENT.getCode(), pairList, "编辑信息");
             fbaShipmentDetailService.updateById(detailEntity);
         }
         return flag;
@@ -289,6 +295,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
         }
 
+        //Delete和Cancel状态的货件不允许下推发货单
+        List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
+                .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
+                    || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)) {
+            throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
+        }
+
         //根据sku获取产品信息
         List<String> skuNos = list.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -406,6 +421,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
+
         //根据仓库id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
         List<String> destWarehouseIds = list.stream().map(req -> req.getDestWarehouseId()).distinct().collect(Collectors.toList());
@@ -756,6 +772,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 只有未发货数据允许删除
         if (!Objects.equals(FbaDeliveryStatusEnum.UN_SHIPPED.getCode(), entity.getDeliveryStatus())) {
             throw new ServiceException(ApiError.IS_DELIVERY_DELETE);
+        }
+
+        List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryService.listBySourceIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+            throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_NOT_DELETE);
         }
 
         // 删除明细数据

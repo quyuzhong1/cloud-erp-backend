@@ -57,8 +57,6 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
-    @Resource
-    private RedisTemplate<String, String> template;
 
 
     @Override
