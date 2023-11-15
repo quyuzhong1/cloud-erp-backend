@@ -54,7 +54,6 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("platform_product_name")
     private String platformProductName;
 
-
     /**
      * 平台
      */
@@ -62,7 +61,10 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     private String platform;
 
     /**
-     * 类型 platform 平台  warehouse 仓库
+     * 类型
+     * platform=平台
+     * warehouse=仓库
+     * {@link com.erp.model.oms.enums.RuleTypeEnum}
      */
     @TableField("type")
     private String type;
@@ -116,9 +118,17 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
 
     public static final String PRODUCT_PACKING = "product_packing";
 
+
     @Override
-    public Serializable pkVal() {
-        return null;
+    public String toString() {
+        return "ListingInfoEntity{" +
+                ", productName='" + productName + '\'' +
+                ", platformProductName='" + platformProductName + '\'' +
+                ", productImageUrl='" + productImageUrl + '\'' +
+                ", productSpec='" + productSpec + '\'' +
+                ", productPacking='" + productPacking + '\'' +
+                ", platformUpdateTime='" + platformUpdateTime + '\'' +
+                '}';
     }
 
 }

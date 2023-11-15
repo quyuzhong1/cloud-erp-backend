@@ -91,4 +91,9 @@ public class PlatformProductDTO extends UniqueDto {
      * 数据下载时间
      */
     private String downloadTime;
+
+    /**
+     * ERP系统店铺ID
+     */
+    private String shopId;
 }

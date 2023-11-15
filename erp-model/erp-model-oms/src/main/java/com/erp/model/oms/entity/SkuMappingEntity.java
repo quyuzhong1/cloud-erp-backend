@@ -2,14 +2,17 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * <p>
@@ -22,6 +25,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("sku_mapping")
 public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
 
@@ -98,7 +102,6 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     @TableField("expire_time")
     private LocalDateTime expireTime;
 
-
     /**
      * 是否失效
      * true 失效
@@ -107,11 +110,27 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     @TableField("is_expire")
     private Boolean isExpire;
 
+    /**
+     * 对照关系是否映射到改服务商所有仓库: f=否, t=是
+     */
+    @TableField("has_mapping_all")
+    private Boolean hasMappingAll;
 
 
-    @Override
-    public Serializable pkVal() {
-        return null;
+
+    public SkuMappingEntity(ListingInfoEntity entity) {
+        this.shopId = "";
+        this.dictPlatform = PlatformDictEnum.AMAZON.getCode();
+        this.platformName = PlatformDictEnum.AMAZON.getName();
+        this.productSkuId = "";
+        this.productSkuNo = "";
+        this.productName = "";
+        this.type = RuleTypeEnum.PLATFORM;
+        this.listingId = entity.getId();
+        this.warehouseId = "";
+        this.warehouseName = "";
+        this.effectiveTime = LocalDateTime.now(ZoneId.systemDefault());
+        this.expireTime = this.effectiveTime.plusYears(MathUtil.NUMBER_100);
+        this.isExpire = false;
     }
-
 }

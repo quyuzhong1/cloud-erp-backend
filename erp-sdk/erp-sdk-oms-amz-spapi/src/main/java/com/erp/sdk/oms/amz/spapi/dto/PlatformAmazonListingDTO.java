@@ -112,8 +112,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
                 // 平台最后修改时间
-                .setPlatformUpdateTime(sourceEntity.getPlatformUpdateTime());
-                // TODO 记录时区
+                .setPlatformUpdateTime(sourceEntity.getPlatformUpdateTime())
+                // 店铺ID
+                .setShopId(sourceEntity.getShopId())
+                ;
+
         // 平台
         resultDto.setPlatform(PlatformDictEnum.AMAZON.getCode());
         resultDto.setUniqueId(sourceEntity.getListingId());
