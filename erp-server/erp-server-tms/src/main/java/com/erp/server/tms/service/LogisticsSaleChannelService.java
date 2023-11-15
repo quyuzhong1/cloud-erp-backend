@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -34,4 +37,11 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
 
 
     Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity);
+
+    /**
+     * 根据类型获取列表
+     * @param platformType
+     * @return
+     */
+    List<SaleChannelDTO> listByType(String platformType);
 }
