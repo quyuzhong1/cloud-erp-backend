@@ -445,6 +445,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return  shippingTemplateRuleMapper.listRegionName();
     }
 
+    @Override
+    public List<ShippingTemplateDTO.SelectDTO> listShippingTemplate() {
+        return baseMapper.listShippingTemplate();
+    }
+
     /**
      * @description: 导入数据处理
      * @author Will

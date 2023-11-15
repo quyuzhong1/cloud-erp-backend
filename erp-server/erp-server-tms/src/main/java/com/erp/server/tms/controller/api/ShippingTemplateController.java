@@ -305,6 +305,18 @@ public class ShippingTemplateController extends BaseController {
     }
 
     /**
+     * 运费模板下拉
+     * @author Will
+     * @date: 2023/11/9 11:20
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @GetMapping("/listShippingTemplate")
+    public ApiResult<List<ShippingTemplateDTO.SelectDTO>> listShippingTemplate() {
+        List<ShippingTemplateDTO.SelectDTO> list = shippingTemplateService.listShippingTemplate();
+        return success(list);
+    }
+
+    /**
      * 仓库名称下拉
      * @author Will
      * @date: 2023/11/9 11:20
@@ -327,4 +339,7 @@ public class ShippingTemplateController extends BaseController {
         List<String> list = shippingTemplateService.listRegionName();
         return success(list);
     }
+
+
+
 }

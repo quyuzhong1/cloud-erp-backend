@@ -452,4 +452,26 @@ public class ShippingTemplateDTO implements Serializable {
         @NotNull(message = "启用停用状态不能为空")
         private Boolean disabled;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO  {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+    }
+
 }
