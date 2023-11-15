@@ -23,8 +23,27 @@ import javax.validation.constraints.Size;
 public class LogisticsBillDTO implements Serializable {
 
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO{
+        /**
+         * 类型
+         */
+        private String tabFlag;
 
+        /**
+         * 类型名
+         */
+        private String tabName;
 
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
     /**
     * 详情
     */
