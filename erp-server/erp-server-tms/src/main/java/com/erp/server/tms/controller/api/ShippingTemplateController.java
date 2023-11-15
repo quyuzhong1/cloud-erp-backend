@@ -175,7 +175,7 @@ public class ShippingTemplateController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:shippingTemplate:paging",
-            tableAlias = "ti"
+            tableAlias = "st"
     )
     public ApiResult exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
         Boolean flag = shippingTemplateService.exportExcel(dto, response);
@@ -252,7 +252,7 @@ public class ShippingTemplateController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -287,7 +287,7 @@ public class ShippingTemplateController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

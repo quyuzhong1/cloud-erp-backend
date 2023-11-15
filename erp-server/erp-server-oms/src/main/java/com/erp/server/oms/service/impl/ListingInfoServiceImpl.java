@@ -3,26 +3,33 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -37,6 +44,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SkuMappingService skuMappingService;
 
     /**
      * 根据 sku 获取到listing 数据
@@ -127,14 +137,28 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
 
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(dto.getSkuNo()));
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException("sku不存在");
+        }
 
-
-        listingInfoEntity.setPlatformSkuNo(dto.getMsku());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
-        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
-        listingInfoEntity.setSkuNo(skuVO.getSkuNo());
-        listingInfoEntity.setProductName(skuVO.getSkuName());
-        listingInfoEntity.setMatchResult(Boolean.TRUE);
-        return this.updateById(listingInfoEntity);
+        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+        skuMappingEntity.setWarehouseId("");
+        skuMappingEntity.setWarehouseName("");
+        skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
+        skuMappingEntity.setShopId(dto.getShopId());
+        skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
+        skuMappingEntity.setProductSkuId(skuList.get(0).getSkuId());
+        skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
+        skuMappingEntity.setProductName(skuList.get(0).getSkuName());
+        skuMappingEntity.setListingId(listingInfoEntity.getId());
+        skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
+        LocalDateTime now = LocalDateTime.now();
+        //生效时间
+        skuMappingEntity.setEffectiveTime(now);
+        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        boolean save = skuMappingService.save(skuMappingEntity);
+        return save;
     }
 }

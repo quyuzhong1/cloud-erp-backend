@@ -42,4 +42,13 @@ public interface LogisticsChannelAddressService extends SuperService<LogisticsCh
      *@date 2023-11-14
      */
     List<LogisticsChannelAddressDTO.ViewDTO> listByChannelId(String channelId);
+
+    /**
+     * 根据渠道删除数据
+     *@parms channelIdList
+     *@return
+     *@author yl
+     *@date 2023-11-15
+     */
+    void removeByChannelIdList(List<String> channelIdList);
 }

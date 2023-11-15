@@ -5,6 +5,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
+import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.server.tms.mapper.LogisticsMappingMapper;
 import com.erp.server.tms.service.LogisticsMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,14 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     public List<LogisticsMappingDTO.ViewDTO> listByChannelId(String channelId) {
         List<LogisticsMappingEntity> dbList = this.listDbByChannelId(channelId);
         return BeanMapperUtils.copyList(LogisticsMappingDTO.ViewDTO.class, dbList);
+    }
+
+    @Override
+    public void removeByChannelIdList(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsMappingEntity::getLogisticsChannelId, channelIdList).remove();
     }
 
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {

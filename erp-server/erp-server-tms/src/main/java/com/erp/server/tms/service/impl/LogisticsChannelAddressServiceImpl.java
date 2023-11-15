@@ -1,30 +1,20 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
 import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
-import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.server.tms.mapper.LogisticsChannelAddressMapper;
 import com.erp.server.tms.service.LogisticsChannelAddressService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -58,7 +48,7 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String channelId,List<LogisticsChannelAddressDTO.UpdateDTO> list) {
+    public Boolean update(String channelId, List<LogisticsChannelAddressDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
@@ -77,15 +67,23 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
     }
 
 
-
     @Override
     public List<LogisticsChannelAddressDTO.ViewDTO> listByChannelId(String channelId) {
 
         return baseMapper.listByChannelId(channelId);
     }
 
-    public List<LogisticsChannelAddressEntity> listDbByChannelId(String channelId){
-          return this.lambdaQuery().eq(LogisticsChannelAddressEntity::getLogisticsChannelId,channelId).list();
+    @Override
+    public void removeByChannelIdList(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return;
+        }
+        this.lambdaUpdate().eq(LogisticsChannelAddressEntity::getLogisticsChannelId, channelIdList).remove();
+
+    }
+
+    public List<LogisticsChannelAddressEntity> listDbByChannelId(String channelId) {
+        return this.lambdaQuery().eq(LogisticsChannelAddressEntity::getLogisticsChannelId, channelId).list();
     }
 
     /**
@@ -93,6 +91,6 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
      */
     private void handleData(List<LogisticsChannelAddressEntity> list) {
         // TODO 验证数据 & 数据赋值
-        List<String> shopIdList=list.stream().map(LogisticsChannelAddressEntity::getShopId).collect(Collectors.toList());
+        List<String> shopIdList = list.stream().map(LogisticsChannelAddressEntity::getShopId).collect(Collectors.toList());
     }
 }

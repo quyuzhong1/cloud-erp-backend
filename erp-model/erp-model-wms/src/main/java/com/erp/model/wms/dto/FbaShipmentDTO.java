@@ -276,6 +276,10 @@ public class FbaShipmentDTO implements Serializable {
          * 卖家sku
          */
         private String msku;
+        /**
+         * 店铺id（后端用）
+         */
+        private String shopId;
     }
 
     /**

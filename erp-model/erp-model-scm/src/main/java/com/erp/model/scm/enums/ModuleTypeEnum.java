@@ -53,7 +53,7 @@ public enum ModuleTypeEnum {
     LOGISTICS_BILL("50", "物流单"),
     LOGISTICS_CHANNEL("51", "物流渠道"),
     SHIPPING_TEMPLATE("53", "运费模板"),
-    LOGISTICS_BILL_COST("52", "自发或费用"),
+    LOGISTICS_BILL_COST("52", "自发货费用"),
 
     ;
 

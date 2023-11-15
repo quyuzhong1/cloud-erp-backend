@@ -1,9 +1,13 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +26,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -117,8 +122,38 @@ public class LogisticsSupplierController extends BaseController {
        return success(channelViewList);
     }
 
-
-
+    /**
+     * 物流商删除
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "物流商删除")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsSupplier:delete",
+            serviceClass = LogisticsSupplierService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = logisticsSupplierService.delete(id);
+            } catch (Exception e) {
+                log.error("物流商删除失败{}", e);
+                LogisticsSupplierEntity entity = logisticsSupplierService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "物流商不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSupplierName(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 
 }

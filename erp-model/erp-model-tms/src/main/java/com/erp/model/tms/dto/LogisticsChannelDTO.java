@@ -327,8 +327,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 时效
          */
-        @NotNull(message = "时效不能为空")
-        private Integer effectiveTime;
+        private String effectiveTime;
 
         /**
          * 时效单位

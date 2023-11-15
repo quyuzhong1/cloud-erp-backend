@@ -1,6 +1,9 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +22,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -100,6 +104,79 @@ public class LogisticsChannelController extends BaseController {
     @GetMapping("/listLogisticsChannel")
     public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel() {
         return success(logisticsChannelService.listLogisticsChannel());
+    }
+
+
+    /**
+     * 物流渠道删除
+     *
+     * @return ApiResult<AddDTO>
+     * @author Will
+     * @date: 2023/11/10 9:57
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "渠道删除")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsChannel:delete",
+            serviceClass = LogisticsChannelService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = logisticsChannelService.delete(id);
+            } catch (Exception e) {
+                log.error("物流渠道删除失败{}", e);
+                LogisticsChannelEntity entity = logisticsChannelService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "物流渠道不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 物流渠道更改启用禁用状态
+     *
+     * @return ApiResult<AddDTO>
+     * @author Will
+     * @date: 2023/11/10 9:57
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
+    @PostMapping("/updateStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsChannel:updateStatus",
+            serviceClass = LogisticsChannelService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated BatchStateDTO.DisabledParamDTO dto){
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result=logisticsChannelService.updateStatus(id,dto.getDisabled());
+            }catch (Exception e){
+                log.error("渠道 停用/启用失败 {}",e);
+                LogisticsChannelEntity entity = logisticsChannelService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "物流渠道不存在, 删除失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 
 }

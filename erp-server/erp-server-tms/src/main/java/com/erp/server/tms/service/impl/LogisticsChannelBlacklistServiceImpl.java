@@ -1,36 +1,26 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
+import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -70,7 +60,7 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String channelId,List<LogisticsChannelBlacklistDTO.UpdateDTO> list) {
+    public Boolean update(String channelId, List<LogisticsChannelBlacklistDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
@@ -93,7 +83,15 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
     @Override
     public List<LogisticsChannelBlacklistDTO.ViewDTO> listByChannelId(String channelId) {
         List<LogisticsChannelBlacklistEntity> dbList = this.listDbByChannelId(channelId);
-        return BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.ViewDTO.class,dbList);
+        return BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.ViewDTO.class, dbList);
+    }
+
+    @Override
+    public void removeByChannelIdList(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelIdList).remove();
     }
 
     public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {

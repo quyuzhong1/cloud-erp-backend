@@ -43,4 +43,5 @@ public interface LogisticsWarehouseService extends SuperService<LogisticsWarehou
      *@date 2023-11-14
      */
     List<LogisticsWarehouseEntity> listByLogisticsSupplierId(String logisticsSupplierId);
+
 }

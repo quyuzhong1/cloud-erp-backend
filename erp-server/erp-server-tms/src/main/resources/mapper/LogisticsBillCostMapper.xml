@@ -46,7 +46,7 @@
         reconciliation_status as tabFlag,
         count(id) as count
         from logistics_bill_cost lbc
-        where st.is_deleted = false and lbc.reconciliation_status in ('toBeConfirm','confirmed')
+        where lbc.is_deleted = false and lbc.reconciliation_status in ('toBeConfirm','confirmed')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -199,9 +199,9 @@
         ) lbd on lb.id = lbd.main_id
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
-            lc.is_deleted = false
+            lbc.is_deleted = false
             <if test="params.ids != null and params.ids.size > 0">
-                and st.id in
+                and lbc.id in
                 <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
