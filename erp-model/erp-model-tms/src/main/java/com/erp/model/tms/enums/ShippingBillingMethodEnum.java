@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum ShippingBillingMethodEnum implements EnumMessage {
 
-    ENUM_SEVERAL_WEIGHT("severalWeight","续重+首重"),
+    ENUM_SEVERAL_WEIGHT("severalWeight","首重+续重"),
     ENUM_WEIGHT_SEGMENT("weightSegment","重量段")
     ;
 

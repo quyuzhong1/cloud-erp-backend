@@ -43,7 +43,7 @@ public class ShippingTemplateCostSettingServiceImpl extends SuperServiceImpl<Shi
     @Override
     public Boolean add(List<ShippingTemplateCostSettingDTO.AddDTO> list,List<String> otherCostIdList) {
 
-        //删除原有城市
+        //删除原有计算方式
         deleteByOtherCostIdList(otherCostIdList);
 
         if (CollectionUtils.isEmpty(list)) {
@@ -56,7 +56,7 @@ public class ShippingTemplateCostSettingServiceImpl extends SuperServiceImpl<Shi
         //数据格式化
         handleData(costSettingList);
 
-        //新增城市
+        //新增计算方式
         boolean save = this.saveBatch(costSettingList);
         if(!save) {
             throw new ServiceException("其他费用计算方式选值");

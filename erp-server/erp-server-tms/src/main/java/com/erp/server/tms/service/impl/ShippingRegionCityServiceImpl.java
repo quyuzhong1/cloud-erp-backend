@@ -10,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,18 @@ public class ShippingRegionCityServiceImpl extends SuperServiceImpl<ShippingRegi
 
     @Override
     public void deleteByRuleIdList(List<String> ruleIdList) {
+        if (CollectionUtils.isEmpty(ruleIdList)) {
+            return;
+        }
         lambdaUpdate().in(ShippingRegionCityEntity::getShippingTemplateRuleId,ruleIdList).remove();
+    }
+
+    @Override
+    public List<ShippingRegionCityEntity> listByRuleIdList(List<String> ruleIdList) {
+        if (CollectionUtils.isEmpty(ruleIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ShippingRegionCityEntity::getShippingTemplateRuleId,ruleIdList).list();
     }
 
     /**
