@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -119,6 +120,9 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
+        if (CollectionUtils.isEmpty(queryList)) {
+            throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("sourceCode").toString()));
+        }
         Object financeId = queryList.get(0).get("FPOOrderFinance_FEntryID");
         Object exchangeRate = queryList.get(0).get("FExchangeRate");
         map.put("financeId",financeId);
