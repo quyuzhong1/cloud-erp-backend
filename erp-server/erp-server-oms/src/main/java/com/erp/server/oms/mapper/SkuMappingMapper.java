@@ -2,6 +2,7 @@ package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -67,6 +68,15 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(@Param("platformSkuNoList") List<String> platformSkuNoList);
 
     /**
+     * 根据平台sku查询sku映射信息
+     * @Author Luo_WG
+     * @Date 2023/11/15 15:28
+     * @param listingInfoParamDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
+     **/
+    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(@Param("params") ListingInfoParamDTO listingInfoParamDTO);
+
+    /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20
@@ -74,4 +84,5 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
     List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@Param("productSkuNoList") List<String> productSkuNoList);
+
 }

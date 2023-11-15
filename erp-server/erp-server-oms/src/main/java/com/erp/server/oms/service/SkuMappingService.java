@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import org.apache.ibatis.annotations.Param;
@@ -129,7 +130,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @param list
      * @return List<ListSkuDTO>
      */
-    List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(ValidList<SkuMappingDTO.ListSkuParamDTO> list);
+    List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<SkuMappingDTO.ListSkuParamDTO> list);
 
     
     /**
@@ -142,6 +143,15 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(List<String> platformSkuNoList);
 
     /**
+     * 根据平台sku查询sku映射信息
+     * @Author Luo_WG
+     * @Date 2023/11/15 15:28
+     * @param listingInfoParamDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
+     **/
+    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO);
+
+    /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20
@@ -149,4 +159,15 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
     List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList);
+
+    /**
+     * 根据listingId查询sku映射表
+     * @Author Luo_WG
+     * @Date 2023/11/15 15:03
+     * @param listingIds
+     * @return java.util.List<com.erp.model.oms.entity.SkuMappingEntity>
+     **/
+    List<SkuMappingEntity> listByListingIds(List<String> listingIds);
+
+
 }
