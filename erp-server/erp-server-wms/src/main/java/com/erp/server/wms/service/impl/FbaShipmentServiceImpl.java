@@ -124,6 +124,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
         if (ObjectUtil.isEmpty(detailEntity)) {
@@ -142,6 +143,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
+
 
         //映射sku
         dto.setShopId(entity.getShopId());
@@ -165,8 +167,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             //添加日志
             FbaShipmentEntity old = this.getById(detailEntity.getId());
-            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
 
+            List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByIds(Arrays.asList(dto.getDetailId()));
+
+            //操作日志
+            List<Pair<String, String>> pairList = fbaShipmentDetailEntities.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getMsku() + " 映射 " + dto.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("映射了一个sku【%s】", ModuleTypeEnum.FBA_SHIPMENT.getCode(), pairList, "编辑信息");
             fbaShipmentDetailService.updateById(detailEntity);
         }
         return flag;
