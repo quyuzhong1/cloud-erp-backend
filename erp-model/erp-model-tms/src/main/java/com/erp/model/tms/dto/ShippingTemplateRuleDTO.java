@@ -269,6 +269,11 @@ public class ShippingTemplateRuleDTO implements Serializable {
         private String fromCountry;
 
         /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
          * 目的地
          */
         private String toCountry;

@@ -168,6 +168,8 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getRegion()),ShippingTemplateRuleEntity::getRegion,viewParamDTO.getRegion())
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getToWarehouseName()),ShippingTemplateRuleEntity::getToWarehouseName,viewParamDTO.getToWarehouseName())
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
+                .gt(ShippingTemplateRuleEntity::getEndWeight,viewParamDTO.getWeight())
+                .le(ShippingTemplateRuleEntity::getStartWeight,viewParamDTO.getWeight())
                 .last("limit 1")
                 .one();
     }
