@@ -183,9 +183,6 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Override
     public List<BomChildrenSkuDTO> listBomChildBySkuNos(List<String> parentSkuNos) {
-        if (CollectionUtils.isEmpty(parentSkuNos)) {
-            return Collections.EMPTY_LIST;
-        }
         return baseMapper.listBomChildBySkuNos(parentSkuNos);
     }
 
