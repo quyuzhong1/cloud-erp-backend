@@ -21,9 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +64,8 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
      * 审核
      */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //查询采购订单财务信息
+        handleFinance(map);
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -109,5 +109,17 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         }
     }
 
-
+    /**
+     * 查询采购订单财务信息
+     */
+    private void handleFinance (Map<String, Object> map) {
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FPOOrderFinance_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
+        Object financeId = queryList.get(0).get("FPOOrderFinance_FEntryID");
+        map.put("financeId",financeId);
+    }
 }
