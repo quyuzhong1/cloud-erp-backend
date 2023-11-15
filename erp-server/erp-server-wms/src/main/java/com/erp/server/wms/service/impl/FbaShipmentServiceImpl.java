@@ -471,7 +471,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据来源id查询发货单
         List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
-        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(ids);
+        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(detailIds);
         //根据详情id查询收货记录
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
         //根据sku获取产品信息
@@ -490,8 +490,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //签收数量 QuantityReceived
             Integer receiveQty = fbaShipmentReceiveEntities.stream().filter(req -> req.getDetailId().equals(record.getDetailId())).mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
             record.setReceiveQty(receiveQty);
-            //在途数量 QuantityReceived-发货数量，不为0时显示红色
-            record.setTransportQty(receiveQty - deliveryQty);
+            //发货数量-QuantityReceived，签收量大于等于发货量时，在途为0
+            if (receiveQty >= deliveryQty) {
+                record.setTransportQty(0);
+            } else {
+                record.setTransportQty(deliveryQty - receiveQty);
+            }
             //产品名称
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());

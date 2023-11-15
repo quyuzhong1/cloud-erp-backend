@@ -1069,7 +1069,7 @@
              pp.product_size,
              pc.actual_tax_cost,
              pc.actual_no_tax_cost,
-             (SELECT   ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
+             (SELECT  ean FROM product_purchase WHERE sku_id=pd.id and is_deleted=FALSE LIMIT 1) AS ean
         FROM product_detail pd
         LEFT JOIN product_info pi
         ON pi.id = pd.product_id AND pi.is_deleted = FALSE
@@ -1300,7 +1300,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pd.create_time DESC
+        sl.create_time DESC
     </select>
     <select id="logisticsProductUpdateCount" resultType="java.lang.Integer">
         SELECT

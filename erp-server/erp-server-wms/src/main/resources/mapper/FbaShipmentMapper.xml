@@ -64,8 +64,6 @@
             fsd.msku,
             fsd.sku_no,
             fsd.declare_qty,
-            fsd.delivery_qty,
-            fsd.delivery_qty,
             fsd.diff_qty,
             fsd.is_combination
         FROM fba_shipment fs

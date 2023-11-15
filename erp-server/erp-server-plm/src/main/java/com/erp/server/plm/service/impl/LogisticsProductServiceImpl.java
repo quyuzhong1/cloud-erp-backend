@@ -131,18 +131,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BeanMapper.copy(productLogistics, declareInfo);
         }
         result.setDeclareInfo(declareInfo);
-
-
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(productCustomsList)) {
             customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
-            BigDecimal flag = MathUtil.BigDecimal_100;
-            for (ProductCustomsDTO.ViewDTO item : customsList) {
-                BigDecimal taxRate = item.getTaxRate();
-                taxRate = MathUtil.multiply(taxRate, flag);
-                item.setTaxRate(taxRate);
-            }
         }
         result.setCustomsList(customsList);
         return result;
@@ -221,7 +213,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productLogisticsError.xlsx";
+            String excelPath = "excel/logisticsProductError.xlsx";
             String name = "productLogistics";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);
@@ -318,10 +310,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 //目的国申报价
                 String destDeclarePriceStr = item.getDestDeclarePrice();
                 if (StringUtils.isNotBlank(destDeclarePriceStr)) {
-                    logistics.setDestDeclarePrice(new BigDecimal(declarePriceStr));
+                    logistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
                     logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
                     logistics.setDestCurrency(usd.getCurrencyCode());
-
                 }
 
 
@@ -341,20 +332,20 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 }
                 String combinationDeclareTypeStr = item.getCombinationDeclareType();
                 String combinationDeclareType = CombinationDeclareTypeEnums.getCode(combinationDeclareTypeStr);
+                logistics.setCombinationDeclareType(combinationDeclareType);
                 if (StringUtils.isBlank(combinationDeclareType)) {
                     errorMsgList.add("组合品申报不存在");
                 }
 
                 ProductCustomsEntity customs = new ProductCustomsEntity();
                 customs.setSkuId(skuId);
-                customs.setCustomsCode(item.getCustomsCode());
+                customs.setCustomsCode(item.getDestCustomsCode());
                 customs.setCountryName(countryName);
                 customs.setCountry(country);
                 customs.setSkuNo(item.getSkuNo());
                 String taxRateStr = item.getTaxRate();
                 if (StringUtils.isNotBlank(taxRateStr)) {
                     BigDecimal taxRate = new BigDecimal(taxRateStr);
-                    taxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
                     customs.setTaxRate(taxRate);
                 } else {
                     customs.setTaxRate(BigDecimal.ZERO);
@@ -390,8 +381,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         //sku
-        List<String> skuIdList = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listByIds(skuIdList);
+        List<String> skuNoList = productCustomsList.stream().map(ProductCustomsEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listBySkuNos(skuNoList);
         List<String> countryIdList = productCustomsList.stream().filter(p -> StringUtils.isNotBlank(p.getCountry())).
                 map(ProductCustomsEntity::getCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = CollectionUtils.isNotEmpty(countryIdList) ? sysDictFeign.listCountryByIds(countryIdList) : Collections.emptyList();
@@ -400,9 +391,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             String countryName = countryList.stream().filter(c -> c.getId().equals(country)).map(DictCountryEntity::getNameCn).
                     findFirst().orElse("");
             item.setCountryName(countryName);
-            String skuNo = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).
-                    map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
-            item.setSkuNo(skuNo);
+            String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    map(ProductDetailEntity::getId).findFirst().orElse("");
+            item.setSkuId(skuId);
             BigDecimal taxRate = item.getTaxRate();
             taxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             item.setTaxRate(taxRate);

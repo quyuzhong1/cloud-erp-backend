@@ -233,7 +233,7 @@ public class LogisticsProductDTO {
         /**
          *  操作时间
          */
-        private List<LocalDateTime> operateTimeList;
+        private List<LocalDate> operateTimeList;
 
     }
 
@@ -468,7 +468,7 @@ public class LogisticsProductDTO {
         /**
          * ENA 吗
          */
-        private String ena;
+        private String ean;
 
         /**
          * 不含税成本
