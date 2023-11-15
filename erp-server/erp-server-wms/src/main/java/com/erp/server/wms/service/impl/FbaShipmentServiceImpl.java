@@ -120,9 +120,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
+        FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
+        if (ObjectUtil.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+        }
+        FbaShipmentEntity entity = this.getById(detailEntity.getMainId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+        }
+        dto.setShopId(entity.getShopId());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
-            FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(dto.getDetailId());
+
             detailEntity.setSkuNo(dto.getSkuNo());
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
 
