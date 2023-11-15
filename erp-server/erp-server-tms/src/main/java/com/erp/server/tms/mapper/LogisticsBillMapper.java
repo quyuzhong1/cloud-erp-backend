@@ -28,4 +28,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
      **/
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@Param("sourceIdList") List<String> sourceIdList);
+
+    /**
+     * 统计tab
+     *@parms permissionSql
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    List<LogisticsBillDTO.TabListDTO> tabList(@Param("permissionSql") String permissionSql);
 }

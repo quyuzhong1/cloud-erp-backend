@@ -60,4 +60,15 @@
             </foreach>
         </if>
     </select>
+    <!--tab 页统计-->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillDTO$TabListDTO">
+        SELECT
+        COUNT(id) AS count,
+        track_status AS tabFlag
+        FROM logistics_bill_detail
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY track_status
+    </select>
 </mapper>

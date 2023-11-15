@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
@@ -17,6 +18,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +46,8 @@ public class ShopeeAuthJob {
     private ShopeeAuthService shopeeAuthService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
 
     /**
      * 更新shopee授权时间
@@ -118,5 +122,14 @@ public class ShopeeAuthJob {
                 shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
             }
         }
+    }
+
+    /**
+     * 获取虾皮包裹编号
+     */
+    @XxlJob("shopeeGetLogisticsTrackNo")
+    public void getLogisticsPackageNumber() {
+        //TODO 获取虾皮无物流单号订单
+        //TODO 同步获取单号
     }
 }

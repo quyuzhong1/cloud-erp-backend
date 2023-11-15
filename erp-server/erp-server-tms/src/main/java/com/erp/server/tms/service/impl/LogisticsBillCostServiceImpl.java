@@ -287,7 +287,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param records
      */
     private void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
-        List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.TRANSPORT_STATUS.getType());
+        List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
 
         for (LogisticsBillCostDTO.ListDTO listDTO : records) {
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));

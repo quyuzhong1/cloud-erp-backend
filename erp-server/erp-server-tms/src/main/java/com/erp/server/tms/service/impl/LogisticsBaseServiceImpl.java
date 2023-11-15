@@ -6,6 +6,8 @@ import com.common.core.enums.ApiError;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsBaseService;
@@ -58,6 +60,13 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         log.info("=====渠道同步结束=====");
         return ApiResult.success();
+    }
+
+    @Override
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.SHOPEE.getCode());
+        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = service.queryOrderList(logisticsQueryVOList);
+        return listApiResult;
     }
 
     private ApiResult syncSingleChannel(String platform) {

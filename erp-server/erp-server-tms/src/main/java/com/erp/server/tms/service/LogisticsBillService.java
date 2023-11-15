@@ -69,4 +69,15 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillEntity>
      */
     List<LogisticsBillEntity> listByOutstockCodeList(List<String> outstockCodeList);
+    
+    /**
+     * tab 列表
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    List<LogisticsBillDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+
 }

@@ -16,7 +16,6 @@
        <result column="cn_name" property="cnName" />
        <result column="en_name" property="enName" />
        <result column="code" property="code" />
-       <result column="expire_time" property="expireTime" />
        <result column="channel_status" property="channelStatus" />
        <result column="supplier_name" property="supplierName" />
        <result column="supplier_code" property="supplierCode" />
@@ -41,5 +40,15 @@
         platform_channel_id, cn_name, en_name, code, expire_time, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging
     </sql>
 
-
+    <select id="listByType" resultType="com.erp.model.tms.dto.SaleChannelDTO">
+        SELECT
+            id,
+            cn_name,
+            platform_channel_id,
+            code
+        FROM
+            logistics_sale_channel t
+        WHERE
+            t.logistics_platform = #{platformType}
+    </select>
 </mapper>

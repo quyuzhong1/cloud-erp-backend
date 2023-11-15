@@ -1,6 +1,10 @@
 package com.erp.server.tms.service;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+
+import java.util.List;
 
 /**
  * @author zdy
@@ -23,4 +27,10 @@ public interface LogisticsBaseService {
      * @return
      */
     ApiResult syncAllLogisticsChannel();
+
+    /**
+     * 查询订单信息
+     * @param logisticsQueryVOList
+     */
+    ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 }

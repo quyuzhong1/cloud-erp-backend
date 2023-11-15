@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.server.tms.mapper.LogisticsSaleChannelMapper;
 import com.erp.server.tms.service.CommonService;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 /**
@@ -105,6 +107,11 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
             logisticsSaleChannelEntity.setId(one.getId());
         }
         return this.saveOrUpdate(logisticsSaleChannelEntity);
+    }
+
+    @Override
+    public List<SaleChannelDTO> listByType(String platformType) {
+        return baseMapper.listByType(platformType);
     }
 
 

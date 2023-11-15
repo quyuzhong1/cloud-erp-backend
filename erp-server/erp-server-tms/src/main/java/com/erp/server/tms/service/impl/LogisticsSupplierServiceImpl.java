@@ -14,6 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -21,13 +22,12 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.LogisticsWarehouseEntity;
-import com.erp.model.tms.enums.DictBasicTypeEnum;
+import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
-import com.sun.xml.bind.v2.TODO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -115,7 +115,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<LogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
-        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_SUPPLIER.getType());
+        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_SUPPLIER.getType());
         List<LogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
         for (DictBasicDTO.ViewDTO item : typeList) {
             LogisticsSupplierDTO.TabListDTO tab = new LogisticsSupplierDTO.TabListDTO();

@@ -2,6 +2,9 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderLogisticsDTO;
+import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -15,12 +18,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -78,6 +83,9 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         return lambdaQuery().eq(SoB2cReceiverEntity::getMainId,mainId).one();
     }
 
+    private List<SoB2cReceiverEntity> getListByMainId(String mainId) {
+        return lambdaQuery().eq(SoB2cReceiverEntity::getMainId,mainId).list();
+    }
     @Override
     public List<SoB2cReceiverEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(SoB2cReceiverEntity::getMainId,mainIds).list();
@@ -86,6 +94,43 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     public Boolean deleteByMainIds(List<String> mainIds) {
         return lambdaUpdate().in(SoB2cReceiverEntity::getMainId,mainIds).remove();
+    }
+
+    @Override
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
+        List<PlatformOrderReceiverDTO> receiverList = dto.getReceiverList();
+        if (CollectionUtils.isEmpty(receiverList)){
+            //清空主表下的物流信息
+            deleteByMainIds(Collections.singletonList(mainEntity.getId()));
+        }else {
+            //获取主表下物流记录
+            List<SoB2cReceiverEntity> listByMainId = getListByMainId(mainEntity.getId());
+            if (CollectionUtils.isEmpty(listByMainId)){
+                //新增
+                receiverList.forEach(platformOrderLogisticsDTO -> {
+                    SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
+                    BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                    this.saveOrUpdate(entity);
+                });
+            }else {
+                //转map 比较是否存在记录 不存在则删除 存在则更新
+                Map<String, SoB2cReceiverEntity> map = listByMainId.stream().filter(e -> StrUtil.isNotBlank(e.getCustomerId())).collect(Collectors.toMap(SoB2cReceiverEntity::getCustomerId, Function.identity()));
+                receiverList.forEach(platformOrderLogisticsDTO -> {
+                    SoB2cReceiverEntity entity = map.get(platformOrderLogisticsDTO.getCustomerId());
+                    if (Objects.isNull(entity)){
+                        entity = new SoB2cReceiverEntity();
+                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                        this.saveOrUpdate(entity);
+                    }else {
+                        SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
+                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                        entity2.setId(entity.getId());
+                        this.saveOrUpdate(entity2);
+                    }
+                });
+            }
+        }
     }
 
     /**

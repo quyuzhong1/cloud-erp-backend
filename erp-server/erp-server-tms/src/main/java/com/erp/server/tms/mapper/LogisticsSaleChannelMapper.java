@@ -1,8 +1,14 @@
 package com.erp.server.tms.mapper;
+
+import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
+import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +22,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChannelEntity> {
 
+    /**
+     * 根据类型获取原始渠道列表
+     *
+     * @param platformType
+     * @return
+     */
+    List<SaleChannelDTO> listByType(@Param("platformType") String platformType);
 }
