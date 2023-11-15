@@ -79,6 +79,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             throw new ServiceException("物流渠道单保存失败");
         }
         String channelId = logisticsChannelEntity.getId();
+        //模板id
+        String templateId = addDTO.getShippingTemplateId();
+        //保存模板和渠道的关系表
+        shippingTemplateRefChannelService.addRef(channelId,templateId);
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
         //面单设置 打印类型

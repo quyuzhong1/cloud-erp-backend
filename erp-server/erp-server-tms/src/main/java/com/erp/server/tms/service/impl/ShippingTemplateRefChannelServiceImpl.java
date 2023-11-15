@@ -18,11 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 运费模板渠道关联表 服务实现类
@@ -37,7 +39,7 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(List<ShippingTemplateRefChannelDTO.AddDTO> list,String mainId) {
+    public Boolean add(List<ShippingTemplateRefChannelDTO.AddDTO> list, String mainId) {
         //删除原有城市
         deleteByMainId(mainId);
         if (CollectionUtils.isEmpty(list)) {
@@ -48,7 +50,7 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
         log.info("开始新增渠道关联");
         //新增城市
         boolean save = this.saveBatch(refChannelList);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("运渠道关联保存失败");
         }
         return save;
@@ -71,20 +73,34 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
         return baseMapper.listChannelIdList(channelIdList);
     }
 
-    /**
-     * @description: 删除渠道
-     * @author Will
-     * @date: 2023/11/8 14:35
-     * @param mainId
-     */
-    private void deleteByMainId (String mainId) {
-        lambdaUpdate().eq(ShippingTemplateRefChannelEntity::getMainId,mainId).remove();
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addRef(String channelId, String templateId) {
+        deleteByChannelId(channelId);
+        ShippingTemplateRefChannelEntity entity = new ShippingTemplateRefChannelEntity();
+        entity.setLogisticsChannelId(channelId);
+        entity.setMainId(templateId);
+        this.save(entity);
+    }
+
+    private void deleteByChannelId(String channelId) {
+        lambdaUpdate().eq(ShippingTemplateRefChannelEntity::getLogisticsChannelId, channelId).remove();
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * @param mainId
+     * @description: 删除渠道
+     * @author Will
+     * @date: 2023/11/8 14:35
+     */
+    private void deleteByMainId(String mainId) {
+        lambdaUpdate().eq(ShippingTemplateRefChannelEntity::getMainId, mainId).remove();
+    }
+
+    /**
+     * 新增修改处理数据
+     */
     private void handleData(ShippingTemplateRefChannelEntity shippingTemplateRefChannelEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

@@ -964,7 +964,7 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_ADDRESS_NAME_EXIST(94019,"物流地址名【{}】已存在"),
     ERROR_RULE_WEIGHT_COMPARE(94020,"开始重量不能大于结束重量"),
     ERROR_SHIPPING_PRICE_NOT_NULL(94021,"运费规则运费单价不能为空"),
-
+    ERROR_CANCEL_CONDITION(94022,"只有已授权才能取消授权"),
 
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),

@@ -19,6 +19,9 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 物流商管理
  *
@@ -35,12 +38,13 @@ public class LogisticsAuthController extends BaseController {
     private LogisticsAuthService logisticsAuthService;
 
     /**
-    * 物流授权新增
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 物流授权新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-11-02
+     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流授权表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
@@ -50,35 +54,59 @@ public class LogisticsAuthController extends BaseController {
 
     /**
      * 物流授权详情
-     * @author Lambda
-     * @date:  2023-11-02
+     *
      * @param id
      * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
      */
+    @LogViewService
     @GetMapping("/view")
-    public ApiResult<LogisticsAuthDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id")String id) {
-        LogisticsAuthDTO.ViewDTO view=logisticsAuthService.view(id);
+    public ApiResult<LogisticsAuthDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id") String id) {
+        LogisticsAuthDTO.ViewDTO view = logisticsAuthService.view(id);
         return success(view);
     }
 
     /**
-    * 物流授权修改
-    * @author Lambda
-    * @date:  2023-11-02
-    * @param dto
-    * @return ApiResult
-    */
+     * 物流授权修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsAuth:update",
-        serviceClass = LogisticsAuthService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsAuth:update",
+            serviceClass = LogisticsAuthService.class,
+            keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "物流商授权更新")
     public ApiResult update(@RequestBody @Validated LogisticsAuthDTO.UpdateDTO dto) {
         logisticsAuthService.update(dto);
         return success();
     }
 
+    /**
+     * 取消授权
+     *
+     * @return
+     */
+    @PostMapping("/cancel")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "物流商取消授权")
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult=logisticsAuthService.cancel(id);
+            }catch (Exception e){
+
+            }
+        }
+
+        return success();
+    }
 
 
 }
