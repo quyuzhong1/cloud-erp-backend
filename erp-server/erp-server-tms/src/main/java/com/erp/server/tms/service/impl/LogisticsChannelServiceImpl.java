@@ -3,6 +3,8 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
@@ -82,7 +84,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //模板id
         String templateId = addDTO.getShippingTemplateId();
         //保存模板和渠道的关系表
-        shippingTemplateRefChannelService.addRef(channelId,templateId);
+        shippingTemplateRefChannelService.addRef(channelId, templateId);
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
         //面单设置 打印类型
@@ -121,7 +123,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelBlacklistService.update(channelId, updateDTO.getBlackList());
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
-        operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, null, logisticsChannelEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -144,10 +146,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setName(item.getName());
             base.setSourceId(item.getSourceId());
             base.setSortingCode(item.getSortingCode());
-            Integer effectiveTime = item.getEffectiveTime();
+            String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
             String timeUnitName = UnitEnum.getName(timeUnit);
-            base.setEffectiveTimeStr(effectiveTime.toString().concat(timeUnitName));
+            base.setEffectiveTimeStr(effectiveTime.concat(timeUnitName));
             String id = item.getId();
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
@@ -200,6 +202,67 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
         return view;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        LogisticsChannelEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getCode(), "删除盘点计划单数据");
+        removeById(id);
+        List<String> channelIdList = Arrays.asList(id);
+        //平台物流映射
+        logisticsMappingService.removeByChannelIdList(channelIdList);
+        //面单设置 打印类型
+        logisticsPrintTypeService.removeByChannelIdList(channelIdList);
+        //物流地址
+        logisticsChannelAddressService.removeByChannelIdList(channelIdList);
+        //发货限制 黑名单
+        logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+
+    }
+
+    @Override
+    public BatchResultDTO updateStatus(String id, Boolean disabled) {
+        LogisticsChannelEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        Boolean dbDisabled = entity.getDisabled();
+        if (dbDisabled.equals(disabled)) {
+            throw new ServiceException("存在相同状态");
+        }
+        entity.setDisabled(disabled);
+        this.updateById(entity);
+        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getName(), "启用/停用");
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeBySourceIdList(List<String> sourceIdList) {
+        List<LogisticsChannelEntity> channelList = this.listDbBySourceIdList(sourceIdList);
+        List<String> channelIdList = channelList.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(channelIdList)) {
+            this.removeByIds(channelIdList);
+        }
+        //平台物流映射
+        logisticsMappingService.removeByChannelIdList(channelIdList);
+        //面单设置 打印类型
+        logisticsPrintTypeService.removeByChannelIdList(channelIdList);
+        //物流地址
+        logisticsChannelAddressService.removeByChannelIdList(channelIdList);
+        //发货限制 黑名单
+        logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
+
     }
 
     private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {

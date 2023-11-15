@@ -39,16 +39,7 @@ public class LogisticsAuthEntity extends BaseEntity<LogisticsAuthEntity> {
     */
     @TableField("name")
     private String name;
-    /**
-    * 账号
-    */
-    @TableField(exist = false)
-    private String account;
-    /**
-    * 密码
-    */
-    @TableField(exist = false)
-    private String password;
+
 
 
     public static final String LOGISTICS_PLATFORM = "logistics_platform";

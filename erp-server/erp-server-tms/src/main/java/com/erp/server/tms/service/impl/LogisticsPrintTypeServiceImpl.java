@@ -58,7 +58,7 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String channelId,List<LogisticsPrintTypeDTO.UpdateDTO> list) {
+    public Boolean update(String channelId, List<LogisticsPrintTypeDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
@@ -76,8 +76,18 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
 
     @Override
     public List<LogisticsPrintTypeDTO.ViewDTO> listByChannelId(String channelId) {
-        List<LogisticsPrintTypeEntity> dbList=this.listDbByChannelId(channelId);
-        return BeanMapperUtils.copyList(LogisticsPrintTypeDTO.ViewDTO.class,dbList);
+        List<LogisticsPrintTypeEntity> dbList = this.listDbByChannelId(channelId);
+        return BeanMapperUtils.copyList(LogisticsPrintTypeDTO.ViewDTO.class, dbList);
+    }
+
+
+    @Override
+    public void removeByChannelIdList(List<String> channelIdList) {
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList).remove();
+
     }
 
     public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {

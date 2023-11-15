@@ -57,4 +57,31 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-14
      */
     LogisticsChannelDTO.ViewDTO view(String id);
+
+    /**
+     *删除渠道
+     *@parms id
+     *@return
+     *@author yl
+     *@date 2023-11-15
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     *更改启用停用状态
+     *@parms id
+     *@return disabled 状态
+     *@author yl
+     *@date 2023-11-15
+     */
+    BatchResultDTO updateStatus(String id, Boolean disabled);
+
+    /**
+     * 删除渠道根据来源id
+     *@parms sourceIdList
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    void removeBySourceIdList(List<String> sourceIdList);
 }

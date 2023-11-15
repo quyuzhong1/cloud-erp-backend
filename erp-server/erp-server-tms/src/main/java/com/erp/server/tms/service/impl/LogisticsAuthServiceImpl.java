@@ -99,20 +99,21 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         supplierEntity.setAuthTime(LocalDateTime.now());
         supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.ALREADY.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), updateDTO.getFieldMap());
         return Boolean.TRUE;
     }
 
     @Override
-    public LogisticsAuthDTO.ViewDTO view(String id) {
-        LogisticsAuthEntity authEntity = this.getById(id);
+    public LogisticsAuthDTO.ViewDTO view(String mainId) {
+        LogisticsAuthEntity authEntity = this.getByMainId("",mainId);
         if (Objects.isNull(authEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
         }
         LogisticsAuthDTO.ViewDTO view = new LogisticsAuthDTO.ViewDTO();
         BeanMapperUtils.copy(authEntity, view);
-        List<LogisticsAuthFieldEntity> authFieldList = logisticsAuthFieldService.listByLogisticsAuthId(id);
+        List<LogisticsAuthFieldEntity> authFieldList = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
         Map<String, String> map = new HashMap<>();
         for (LogisticsAuthFieldEntity item : authFieldList) {
             map.put(item.getFieldCode(), item.getFieldValue());
@@ -121,7 +122,12 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return view;
     }
 
+    private LogisticsAuthEntity getByMainId(String id,String mainId) {
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id),LogisticsAuthEntity::getId,id).eq(LogisticsAuthEntity::getMainId,mainId).last("LIMIT 1").one();
+    }
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
         LogisticsAuthEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -136,6 +142,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
         }
         this.removeById(id);
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.CANCEL.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
         return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
 
     }
@@ -149,7 +157,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         String mainId = logisticsAuthEntity.getMainId();
         String logisticsPlatform = logisticsAuthEntity.getLogisticsPlatform();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
-        LogisticsAuthEntity authEntity = this.getByMainIdAndPlatform(logisticsAuthEntity.getId(), mainId, logisticsPlatform);
+        LogisticsAuthEntity authEntity = this.getByMainId(logisticsAuthEntity.getId(), mainId);
         if (Objects.nonNull(authEntity)) {
             throw new ServiceException("物流商该平台授权信息已存在");
         }

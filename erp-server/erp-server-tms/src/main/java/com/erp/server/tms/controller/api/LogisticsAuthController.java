@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -62,7 +64,7 @@ public class LogisticsAuthController extends BaseController {
      */
     @LogViewService
     @GetMapping("/view")
-    public ApiResult<LogisticsAuthDTO.ViewDTO> view(@RequestBody @RequestParam(value = "id") String id) {
+    public ApiResult<LogisticsAuthDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
         LogisticsAuthDTO.ViewDTO view = logisticsAuthService.view(id);
         return success(view);
     }
@@ -97,15 +99,24 @@ public class LogisticsAuthController extends BaseController {
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
+            BatchResultDTO cancelResult;
             try {
-                deleteResult=logisticsAuthService.cancel(id);
+                cancelResult=logisticsAuthService.cancel(id);
             }catch (Exception e){
-
+                log.error("物流商取消授权失败{}",e);
+                LogisticsAuthEntity entity = logisticsAuthService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "物流授权不存在, 取消授权失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
             }
+            resultDTOS.add(cancelResult);
         }
 
-        return success();
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 
 

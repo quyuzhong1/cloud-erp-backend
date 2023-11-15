@@ -44,4 +44,13 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      *@date 2023-11-14
      */
     List<LogisticsMappingDTO.ViewDTO> listByChannelId(String channelId);
+
+    /**
+     * 根据渠道id 删除
+     *@parms channelId
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    void removeByChannelIdList(List<String> channelIds);
 }

@@ -42,4 +42,13 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
      *@date 2023-11-14
      */
     List<LogisticsPrintTypeDTO.ViewDTO> listByChannelId(String channelId);
+
+    /**
+     * 根据渠道删除
+     *@parms channelId 渠道id
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    void removeByChannelIdList(List<String> channelIdList);
 }

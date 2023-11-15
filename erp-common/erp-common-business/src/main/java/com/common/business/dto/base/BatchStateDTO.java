@@ -28,4 +28,20 @@ public class BatchStateDTO implements Serializable {
      */
     @NotNull(message = "状态不能为空")
     private Boolean state;
+
+    @Data
+    @NoArgsConstructor
+    public static class  DisabledParamDTO{
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否禁用
+         */
+        @NotNull(message = "启用停用状态不能为空")
+        private Boolean disabled;
+    }
 }

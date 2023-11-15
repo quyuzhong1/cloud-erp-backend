@@ -54,7 +54,7 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     * 时效
     */
     @TableField("effective_time")
-    private Integer effectiveTime;
+    private String effectiveTime;
 
 
     /**
