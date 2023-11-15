@@ -2,4 +2,45 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.FbaDeliveryDetailMapper">
 
+    <!--根据来源详情id查询发货详情-->
+    <select id="listBySourceDetailIds" resultType="com.erp.model.wms.entity.FbaDeliveryDetailEntity">
+        SELECT
+            fdd.id,
+            fdd.create_time,
+            fdd.update_time,
+            fdd.create_user_name,
+            fdd.create_user_id,
+            fdd.update_user_name,
+            fdd.update_user_id,
+            fdd.version,
+            fdd.is_deleted,
+            fdd.main_id,
+            fdd.asin,
+            fdd.msku,
+            fdd.fn_sku,
+            fdd.sku_no,
+            fdd.product_name,
+            fdd.stock_sku,
+            fdd.declare_qty,
+            fdd.plan_qty,
+            fdd.delivery_qty,
+            fdd.is_combination,
+            fdd.net_weight,
+            fdd.product_size_length,
+            fdd.product_size_width,
+            fdd.product_size_height,
+            fdd.source_detail_id,
+            fdd.warehouse_location,
+            fdd.receive_date,
+            fd.approve_status
+        FROM fba_delivery fd
+        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="sourceDetailIds != null and sourceDetailIds.idList.size > 0">
+            AND fdd.source_detail_id IN
+            <foreach collection="sourceDetailIds" item="sourceDetailId" open="(" separator="," close=")">
+                #{sourceDetailId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

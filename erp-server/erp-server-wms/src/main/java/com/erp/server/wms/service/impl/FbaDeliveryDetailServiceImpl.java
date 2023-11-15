@@ -106,7 +106,8 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         if (CollectionUtils.isEmpty(detailIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FbaDeliveryDetailEntity::getSourceDetailId, detailIds).list();
+        List<FbaDeliveryDetailEntity> list = baseMapper.listBySourceDetailIds(detailIds);
+        return list;
     }
 
     @Override
