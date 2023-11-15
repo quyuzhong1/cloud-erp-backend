@@ -223,6 +223,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
+    @Transactional
     public void exportList(FbaDeliveryDTO.ExportDTO param, HttpServletResponse response) {
         List<FbaDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {

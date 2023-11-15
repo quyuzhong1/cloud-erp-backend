@@ -133,7 +133,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
         }
+        //根据平台sku查询映射信息
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.SkuDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
+        }
+
+        //映射sku
         dto.setShopId(entity.getShopId());
+        dto.setPlatform(PlatformDictEnum.AMAZON.getCode());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
 
@@ -176,7 +188,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.ShipmentStatusRecordView> listShipmentStatusRecord(String id) {
-        List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByIds(Arrays.asList(id));
+        List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByMainIds(Arrays.asList(id));
         List<FbaShipmentDTO.ShipmentStatusRecordView> list = new ArrayList<>();
         for (FbaShipmentStatusEntity fbaShipmentReceiveEntity : fbaShipmentStatusEntities) {
             //映射字段

@@ -10,8 +10,14 @@ import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.mapper.FbaShipmentStatusMapper;
 import com.erp.server.wms.service.FbaShipmentStatusService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * <p>
  * FBA货件状态信息 服务实现类
@@ -32,5 +38,13 @@ public class FbaShipmentStatusServiceImpl extends SuperServiceImpl<FbaShipmentSt
         if (!this.save(entity)){
             throw new ServiceException("[FbaShipmentStatusEntity] 保存失败：entity=" + JSONUtil.toJsonStr(entity));
         }
+    }
+
+    @Override
+    public List<FbaShipmentStatusEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FbaShipmentStatusEntity::getMainId, mainIds).list();
     }
 }

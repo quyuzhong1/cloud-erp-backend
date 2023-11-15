@@ -58,10 +58,10 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
      * 根据来源单号查询发货记录
      * @Author Luo_WG
      * @Date 2023/11/1 18:07
-     * @param ids
+     * @param sourceIds
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("ids") List<String> ids);
+    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
 
     /**
      * 下推加工单列表查询

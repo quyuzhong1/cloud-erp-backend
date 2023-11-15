@@ -280,6 +280,10 @@ public class FbaShipmentDTO implements Serializable {
          * 店铺id（后端用）
          */
         private String shopId;
+        /**
+         * 平台（后端用）
+         */
+        private String platform;
     }
 
     /**

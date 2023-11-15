@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -135,6 +137,10 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
             //费用名称
             String name = dictList.stream().filter(obj -> obj.getCode().equals(otherCostEntity.getDictCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             otherCostEntity.setDictName(name);
+            //费用设置值
+            if (ObjectUtil.isEmpty(otherCostEntity.getCostSettingValue())) {
+                otherCostEntity.setCostSettingValue(BigDecimal.ZERO);
+            }
         }
     }
 

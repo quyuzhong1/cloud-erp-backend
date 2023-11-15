@@ -249,11 +249,14 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         if (ShippingBillingMethodEnum.ENUM_SEVERAL_WEIGHT.getCode().equals(entity.getBillingMethod())) {
             //首重费用
             BigDecimal firstWeightShippingCost = shippingTemplateRule.getFirstWeightShippingCost();
-            //续重比例（进一）
-            BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),0,BigDecimal.ROUND_UP);
             //续重费用
-            BigDecimal additionalWeightShippingCost = weightRatio.multiply(shippingTemplateRule.getAdditionalPrice());
-
+            BigDecimal additionalWeightShippingCost = BigDecimal.ZERO;
+            if (MathUtil.compareTo(weight,shippingTemplateRule.getFirstWeight()) > MathUtil.ZERO) {
+                //续重比例（进一）
+                BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),0,BigDecimal.ROUND_UP);
+                //续重费用
+                additionalWeightShippingCost = weightRatio.multiply(shippingTemplateRule.getAdditionalPrice());
+            }
             shippingCost = MathUtil.add(firstWeightShippingCost,additionalWeightShippingCost);
         } else {
             //验证录入重量是否在开始重量和结束重量之间
@@ -302,7 +305,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         //费用设置值
         List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
         if (CollectionUtils.isNotEmpty(costSettingList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getName());
+            return BigDecimal.ZERO;
         }
         //是否符合条件
         Boolean isFlag = Boolean.TRUE;
@@ -360,8 +363,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 .findFirst().orElse(new ShippingTemplateOtherCostEntity());
         //费用设置值
         List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
-        if (CollectionUtils.isNotEmpty(costSettingList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getName());
+        if (CollectionUtils.isEmpty(costSettingList)) {
+            return BigDecimal.ZERO;
         }
         //其他费用值JSON
         JSONObject jsonObject = JSONUtil.parseObj(shippingCalculationDTO);
@@ -383,8 +386,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 .findFirst().orElse(new ShippingTemplateOtherCostEntity());
         //费用设置值
         List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
-        if (CollectionUtils.isNotEmpty(costSettingList)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_COST_SETTING_NOT_EXIST,ShippingCostNameEnum.DISCOUNT_RATE.getName());
+        if (CollectionUtils.isEmpty(costSettingList)) {
+            return BigDecimal.ZERO;
         }
         //其他费用值JSON
         JSONObject jsonObject = JSONUtil.parseObj(shippingCalculationDTO);

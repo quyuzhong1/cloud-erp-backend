@@ -239,7 +239,6 @@
                 </foreach>
             </when>
             <otherwise>
-
                 <!--状态-->
                 <if test="params.tabFlag != null and params.tabFlag != ''">
                     AND fd.approve_status = #{params.tabFlag}
@@ -274,10 +273,10 @@
                     </foreach>
                 </if>
                 <!--发货仓-->
-                <if test="params.deleverWarehouseIdList != null and params.deleverWarehouseIdList.size > 0">
-                    AND fd.delever_warehouse_id in
-                    <foreach collection="params.deleverWarehouseIdList" item="deleverWarehouseId" open="(" close=")" separator=",">
-                        #{deleverWarehouseId}
+                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                    AND fd.delivery_warehouse_id in
+                    <foreach collection="params.deliveryWarehouseIdList" item="deliveryWarehouseId" open="(" close=")" separator=",">
+                        #{deliveryWarehouseId}
                     </foreach>
                 </if>
                 <!--目的仓-->
@@ -336,13 +335,13 @@
                     (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
                     DAY' ) > fd.create_time
                 </if>
-                <!--数据权限-->
-                <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql}
-                </if>
+
             </otherwise>
         </choose>
-
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -368,16 +367,17 @@
         SELECT
         fd.code AS deliveryCode,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
+        CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fdl.delivery_time AS deliveryTime
         FROM  fba_delivery fd
         INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
-        <if test="ids != null and ids.size > 0">
-            AND fd.id IN
-            <foreach collection="ids" item="id" open="(" close=")" separator=",">
-                #{id}
+        <if test="sourceIds != null and sourceIds.size > 0">
+            AND fd.source_id IN
+            <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
+                #{sourceId}
             </foreach>
         </if>
         GROUP BY fd.code,

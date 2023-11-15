@@ -3,10 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.erp.model.wms.entity.StocktakingProfitLossEntity;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.TransferApplicationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
@@ -36,6 +33,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private StocktakingProfitLossService  stocktakingProfitLossService;
 
+    @Resource
+    private FbaDeliveryService fbaDeliveryService;
+
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -58,6 +58,11 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case STOCKTAKING_PROFIT_LOSS:
                 //盘盈盘亏单
                 stocktakingProfitLossApproveEnd(dto);
+                break;
+
+            case FBA_DELIVERY:
+                //FBA发货单
+                fbaDeliveryApproveEnd(dto);
                 break;
             default:
                 break;
@@ -124,6 +129,22 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         return stocktakingPlanService.approveEnd(approveOne,entity);
+    }
+
+    /**
+     * FBA发货单
+     * @Author Luo_WG
+     * @Date 2023/11/15 17:56
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean fbaDeliveryApproveEnd(EndProcessDTO dto) {
+        //FBA发货单
+        FbaDeliveryEntity entity = fbaDeliveryService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return fbaDeliveryService.approveEnd(approveOne,entity);
     }
 
 }

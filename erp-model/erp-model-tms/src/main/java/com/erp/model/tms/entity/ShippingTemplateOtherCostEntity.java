@@ -1,6 +1,8 @@
 package com.erp.model.tms.entity;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -57,12 +59,12 @@ public class ShippingTemplateOtherCostEntity extends BaseEntity<ShippingTemplate
     /**
     * 费用设置值
     */
-    @TableField("cost_setting_value")
+    @TableField(value = "cost_setting_value" )
     private BigDecimal costSettingValue;
     /**
     * 数值设置json
     */
-    @TableField("extend_json")
+    @TableField(value ="extend_json")
     private String extendJson;
     /**
     * 备注

@@ -131,6 +131,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         ListingInfoEntity listingInfoEntity = lambdaQuery()
                 .eq(ListingInfoEntity::getSkuNo, dto.getMsku())
+                .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
                 .last("LIMIT 1")
                 .one();
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
