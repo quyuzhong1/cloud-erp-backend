@@ -117,10 +117,10 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPOOrderFinance_FEntryID,FPOOrderFinance_FExchangeRate";
+        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         Object financeId = queryList.get(0).get("FPOOrderFinance_FEntryID");
-        Object exchangeRate = queryList.get(0).get("FPOOrderFinance_FExchangeRate");
+        Object exchangeRate = queryList.get(0).get("FExchangeRate");
         map.put("financeId",financeId);
         map.put("exchangeRate",exchangeRate);
     }
