@@ -176,7 +176,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FbaShipmentDTO.ShipmentStatusRecordView> listShipmentStatusRecord(String id) {
-        List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByIds(Arrays.asList(id));
+        List<FbaShipmentStatusEntity> fbaShipmentStatusEntities = fbaShipmentStatusService.listByMainIds(Arrays.asList(id));
         List<FbaShipmentDTO.ShipmentStatusRecordView> list = new ArrayList<>();
         for (FbaShipmentStatusEntity fbaShipmentReceiveEntity : fbaShipmentStatusEntities) {
             //映射字段

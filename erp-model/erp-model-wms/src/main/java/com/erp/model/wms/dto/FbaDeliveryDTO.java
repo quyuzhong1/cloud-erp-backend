@@ -65,7 +65,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 审核时间
          */
-         private List<String> approveTimeList;
+         private List<LocalDateTime> approveTimeList;
          /**
          * 单据编号
          */
@@ -126,7 +126,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 创建时间
          */
-         private List<String> createTimeList;
+         private List<LocalDateTime> createTimeList;
      }
 
     /**
