@@ -933,11 +933,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
-    public List<FbaDeliveryEntity> listBySourceIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public List<FbaDeliveryEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FbaDeliveryEntity::getId, ids).list();
+        return lambdaQuery().in(FbaDeliveryEntity::getSourceId, sourceIds).list();
     }
 
     /**

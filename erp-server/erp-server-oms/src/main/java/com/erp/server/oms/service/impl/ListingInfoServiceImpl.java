@@ -147,7 +147,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setWarehouseName("");
         skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
         skuMappingEntity.setShopId(dto.getShopId());
-        skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
         skuMappingEntity.setProductSkuId(skuList.get(0).getSkuId());
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());

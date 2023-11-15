@@ -17,6 +17,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -536,12 +537,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
     @Override
-    public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(ValidList<SkuMappingDTO.ListSkuParamDTO> dataList) {
+    public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<SkuMappingDTO.ListSkuParamDTO> dataList) {
         if (CollectionUtils.isEmpty(dataList)) {
             return Collections.EMPTY_LIST;
         }
-        List<SkuMappingDTO.ListSkuParamDTO> paramList = dataList.getList();
-        List<String> skuNoList = paramList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
@@ -555,7 +555,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
-        for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : paramList) {
+        for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : dataList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
             listSkuDTO.setProductSkuId(skuVO.getSkuId());
@@ -608,6 +608,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return Collections.emptyList();
         }
         return baseMapper.listByPlatformSkuNoList(platformSkuNoList);
+    }
+
+    @Override
+    public List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO) {
+        return baseMapper.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
     }
 
     @Override
@@ -753,4 +758,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<SkuMappingEntity> resultList = this.lambdaQuery().eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
         return resultList;
     }
+
+    @Override
+    public List<SkuMappingEntity> listByListingIds(List<String> listingIds) {
+        return lambdaQuery().in(SkuMappingEntity::getListingId, listingIds).list();
+    }
+
 }

@@ -1,9 +1,7 @@
 package com.erp.server.tms.service;
 
-import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
@@ -69,7 +67,11 @@ public interface LogisticsService {
      */
     ApiResult<List<UpdateResponseVO>> updateOrder(List<LogisticsOrderVO> logisticsOrderVOS);
 
-
+    /**
+     * 获取订单列表
+     * @param logisticsQueryVOList
+     * @return
+     */
     ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 
     /**

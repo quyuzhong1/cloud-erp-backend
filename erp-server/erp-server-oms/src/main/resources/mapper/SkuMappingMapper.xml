@@ -348,6 +348,37 @@
         </if>
     </select>
 
+    <!--根据平台sku查询sku映射信息-->
+    <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
+        SELECT li.id AS listingId,
+            sm.product_sku_id,
+            sm.product_sku_no,
+            li.sku_no AS flagSkuNo,
+            li.product_name AS flagProductName,
+            li.platform_sku_no,
+            li.platform_product_name
+        FROM sku_mapping sm
+        INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
+        WHERE sm.is_deleted = FALSE
+        AND sm.is_expire=FALSE
+        <!--平台sku no 列表-->
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo}
+            </foreach>
+        </if>
+        <!--平台-->
+        <if test="params.platform != null and params.platform != ''">
+            AND li.platform = #{params.platform}
+            AND li.dict_platform = #{params.platform}
+        </if>
+        <!--匹配结果吧true 已匹配 false 未匹配-->
+        <if test="params.matchResult != null and params.matchResult != ''">
+            AND li.match_result = #{params.matchResult}
+        </if>
+    </select>
+
     <select id="listStockSkuNoByProductSkuNo" resultType="com.erp.model.oms.dto.SkuMappingDTO$listStockSkuNoByProductSkuNoView">
         SELECT
             sm.id,
@@ -367,5 +398,9 @@
             </foreach>
 
         </if>
+    </select>
+
+    <select id="listByPlatformSkuNos" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListSkuDTO">
+
     </select>
 </mapper>

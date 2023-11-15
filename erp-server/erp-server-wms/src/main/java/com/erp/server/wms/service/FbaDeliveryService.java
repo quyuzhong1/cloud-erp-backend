@@ -211,10 +211,10 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * 根据来源单号查询发货信息
      * @Author Luo_WG
      * @Date 2023/11/8 10:00
-     * @param ids
+     * @param sourceIds
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryEntity>
      **/
-    List<FbaDeliveryEntity> listBySourceIds(List<String> ids);
+    List<FbaDeliveryEntity> listBySourceIds(List<String> sourceIds);
 
     /**
      * 根据版本号重新获取下推加工单的子件详情

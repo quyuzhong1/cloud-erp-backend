@@ -5,8 +5,6 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticsPlatformResultEnum;
@@ -19,10 +17,7 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
-import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
-import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.ubi.model.label.LabelRequest;
 import com.sdk.tms.ubi.model.label.LabelResponse;
@@ -33,7 +28,6 @@ import com.sdk.tms.ubi.model.order.response.OrderResponse;
 import com.sdk.tms.ubi.model.order.response.TrackBase;
 import com.sdk.tms.ubi.service.UbiShipperService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -57,32 +51,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     UbiShipperService ubiShipperService;
     @Resource
-    LogisticsAuthService logisticsAuthService;
-    @Resource
-    private LogisticsAuthFieldService logisticsAuthFieldService;
-    @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
-
-    @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (StringUtils.isNoneBlank(authId)) {
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        } else {
-            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
-                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
-            if (Objects.nonNull(authEntity)) {
-                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
-            }
-        }
-        Map<String, String> map = new HashMap<>();
-        if (io.seata.common.util.CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
-        return map;
-    }
     /**
      * 创建订单
      *
@@ -296,7 +265,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<ServiceCataLog> serviceCataLogList;
         try {
             serviceCataLogList = ubiShipperService.getServiceCatalog(chanelQueryVO.getAuthMap());
-            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBIList(serviceCataLogList);
+            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBI(serviceCataLogList);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(serviceCataLogList));

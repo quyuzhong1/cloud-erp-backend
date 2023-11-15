@@ -13,6 +13,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
@@ -22,6 +23,7 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -33,6 +35,7 @@ import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.dmp.feign.DmpReportFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -103,6 +106,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private OmsListingInfoFeign omsListingInfoFeign;
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -466,7 +471,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据来源id查询发货单
         List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
-        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(ids);
+        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(detailIds);
         //根据详情id查询收货记录
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
         //根据sku获取产品信息
@@ -485,8 +490,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //签收数量 QuantityReceived
             Integer receiveQty = fbaShipmentReceiveEntities.stream().filter(req -> req.getDetailId().equals(record.getDetailId())).mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
             record.setReceiveQty(receiveQty);
-            //在途数量 QuantityReceived-发货数量，不为0时显示红色
-            record.setTransportQty(receiveQty - deliveryQty);
+            //发货数量-QuantityReceived，签收量大于等于发货量时，在途为0
+            if (receiveQty >= deliveryQty) {
+                record.setTransportQty(0);
+            } else {
+                record.setTransportQty(deliveryQty - receiveQty);
+            }
             //产品名称
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());
@@ -756,28 +765,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
         FbaShipmentEntity entity = this.getById(detailEntity.getMainId());
-        //根据平台sku查询对照表
+        //根据平台sku查询Listing信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
-        listingInfoParamDTO.setMatchResult(Boolean.TRUE);
-        List<ListingInfoEntity> list = omsListingInfoFeign.list(listingInfoParamDTO);
-
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        SkuMappingDTO.SkuDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
         //校验对照表是否有对照关系
-        if (CollectionUtils.isEmpty(list)) {
+        if (ObjectUtil.isEmpty(skuDTO)) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "更新失败，无对照关系！");
         } else {
-            ListingInfoEntity listingInfoEntity = list.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(listingInfoEntity)) {
-                detailEntity.setSkuNo(listingInfoEntity.getSkuNo());
-                //添加日志
-                FbaShipmentEntity old = this.getById(detailEntity.getId());
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
-
-                fbaShipmentDetailService.updateById(detailEntity);
-                return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
-            } else {
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}_{}", detailEntity.getMsku(), "更新失败，无对照关系！"));
-            }
+            detailEntity.setSkuNo(skuDTO.getProductSkuNo());
+            detailEntity.setSkuId(skuDTO.getProductSkuId());
+            //添加日志
+            FbaShipmentEntity old = this.getById(detailEntity.getId());
+            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
+            fbaShipmentDetailService.updateById(detailEntity);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
         }
     }
 

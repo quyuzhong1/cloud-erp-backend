@@ -1,26 +1,23 @@
 package com.erp.server.tms.controller.api;
 
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSaleChannelService;
+import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author zdy
@@ -33,14 +30,11 @@ import java.util.Map;
 @RestController
 @LogSystemModule("物流渠道")
 @RequestMapping("/logistics")
-public class LogisticsController {
-
+public class LogisticsController extends BaseController {
+    @Resource
+    LogisticsBaseService logisticsBaseService;
     @Resource
     LogisticsRegistry logisticsRegistry;
-    @Resource
-    LogisticsChannelService logisticsChannelService;
-    @Resource
-    LogisticsSaleChannelService logisticsSaleChannelService;
 
     @PostMapping("/createOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流新增订单")
@@ -93,23 +87,8 @@ public class LogisticsController {
     }
 
     @PostMapping("/getChannel")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道查询")
-    public void getChannel() {
-        ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
-        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
-        for (LogisticsPlatformEnum platformEnum : platformEnums) {
-            LogisticsService service = logisticsRegistry.getHandler(platformEnum.getCode());
-            Map<String, String> map = service.getLogisticsAuthConfig("");
-            chanelQueryVO.setAuthMap(map);
-            ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-            //把结果存储数据库
-            if (channels.isSuccess()) {
-                channels.getData().forEach(logisticsSaleChannelEntity -> {
-                    logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
-                });
-
-            }
-        }
-
+//    @LogAction(value = LogActionEnum.INSERT, desc = "物流渠道同步")
+    public ApiResult getChannel(@RequestParam(value = "platform") String platform) {
+        return logisticsBaseService.syncLogisticsChannel(platform);
     }
 }

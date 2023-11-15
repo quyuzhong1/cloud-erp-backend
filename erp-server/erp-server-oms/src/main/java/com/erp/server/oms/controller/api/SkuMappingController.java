@@ -187,7 +187,7 @@ public class SkuMappingController extends BaseController {
      */
     @PostMapping("/listBySkuNoList")
     public ApiResult<List<SkuMappingDTO.ListSkuDTO>> listBySkuNoList(@RequestBody @Validated ValidList<SkuMappingDTO.ListSkuParamDTO> list) {
-        List<SkuMappingDTO.ListSkuDTO> resultList = skuMappingService.listBySkuNoList(list);
+        List<SkuMappingDTO.ListSkuDTO> resultList = skuMappingService.listBySkuNoList(list.getList());
         return success(resultList);
     }
 }

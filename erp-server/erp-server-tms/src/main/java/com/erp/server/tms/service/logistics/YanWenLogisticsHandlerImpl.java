@@ -1,12 +1,13 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
@@ -19,8 +20,6 @@ import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
-import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
@@ -28,9 +27,7 @@ import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.*;
 import com.sdk.tms.yanwen.server.YanWenService;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -45,44 +42,24 @@ import java.util.stream.Collectors;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.YAN_WEN)
 public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
-
-    @Resource
-    private LogisticsAuthService logisticsAuthService;
-    @Resource
-    private LogisticsAuthFieldService logisticsAuthFieldService;
     @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
     @Resource
     private YanWenService yanWenService;
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (StringUtils.isNoneBlank(authId)) {
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        } else {
-            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
-                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
-            if (Objects.nonNull(authEntity)) {
-                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
-            }
-        }
-        Map<String, String> map = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
-        return map;
-    }
-
-    @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel(chanelQueryVO.getAuthMap());
         if(!yanWenResponse.getSuccess()){
+            logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yanWenResponse));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         List<LogisticsSaleChannelEntity> response = LogisticsChannelConverter.INSTANCE.channelConvertByYanWenList(yanWenResponse.getData());
+        logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yanWenResponse));
         return success(response);
     }
 
@@ -91,8 +68,14 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
         YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getAuthMap());
         if(!yanWenResponse.getSuccess()){
+            logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
+        logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
         return success(LogisticsOrderResponseVO.builder()
                 .transportNo(yanWenResponse.getData().getWaybillNumber())
                 .deliveryNo(yanWenResponse.getData().getOrderNumber())
@@ -111,6 +94,9 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .build();
             YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request,logisticsGetLabelVO.getAuthMap());
             if(!labelResponse.getSuccess()){
+                logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                        logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,logisticsGetLabelVO.getDeliveryNo()+labelResponse.getMessage());
             }
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
@@ -118,6 +104,9 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
             response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
             response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
             result.add(response);
+            logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                    logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
         }
         return success(result);
     }
@@ -135,9 +124,15 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
             CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
             if(!yanWenResponse.getSuccess()){
                 isSuccess = false;
-                cancelResponseVO.failure(getName(),cancelOrderVO.getDeliveryNo(),yanWenResponse.getMessage());
+                cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),yanWenResponse.getMessage());
+                logisticsOrderOperateLogService.addOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                        cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
             }else{
                 cancelResponseVO.success();
+                logisticsOrderOperateLogService.addOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                        cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
             }
             result.add(cancelResponseVO);
         }
@@ -152,13 +147,17 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request,logisticsQueryVOList.get(0).getAuthMap());
         if(!yanWenResponse.getSuccess()){
+            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+                    UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yanWenResponse));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
         }
         List<LogisticsOrderResponseVO> list = LogisticsOrderConverter.INSTANCE.orderQueryByYanWen(yanWenResponse.getData());
+        logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+                UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yanWenResponse));
         return success(list);
     }
-
-    private String getName(){return getPlatForm().getName();}
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.YAN_WEN;

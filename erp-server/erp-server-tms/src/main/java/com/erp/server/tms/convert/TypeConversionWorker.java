@@ -74,4 +74,25 @@ public class TypeConversionWorker {
             return Double.valueOf(0);
         }
     }
+
+    /**
+     * 虾皮 渠道状态0正常1.暂停2.已关闭（默认0）
+     * @param obj
+     * @return
+     */
+    @Named("booleanToStatus")
+    public Integer booleanToStatus(Object obj) {
+        if (Objects.isNull(obj)) {
+            return 0;
+        }
+        if (obj instanceof Boolean){
+            if ((Boolean)obj){
+                return 0;
+            }else {
+                return 2;
+            }
+        }else {
+            return 0;
+        }
+    }
 }
