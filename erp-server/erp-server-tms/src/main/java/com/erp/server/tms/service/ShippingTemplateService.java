@@ -144,4 +144,11 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @return List<String>
      */
     List<String> listRegionName();
+    /**
+     * @description: 查询运费模板
+     * @author Will
+     * @date: 2023/11/15 16:24
+     * @return List<SelectDTO>
+     */
+    List<ShippingTemplateDTO.SelectDTO> listShippingTemplate();
 }

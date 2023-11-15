@@ -156,7 +156,16 @@
         st.id desc
     </select>
 
-
+    <select id="listShippingTemplate" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$SelectDTO">
+        select
+               st.id,
+               st.name,
+               st.disabled
+        from shipping_template st
+        <where>
+            st.is_deleted = false
+        </where>
+    </select>
 
 
 </mapper>
