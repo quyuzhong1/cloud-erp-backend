@@ -57,7 +57,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return
      */
-     String add(SoB2cDTO.AddDTO dto,String code);
+     SoB2cEntity add(SoB2cDTO.AddDTO dto,String code);
 
      /**
      * 修改

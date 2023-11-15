@@ -196,7 +196,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(SoB2cDTO.AddDTO addDTO,String code) {
+    public SoB2cEntity add(SoB2cDTO.AddDTO addDTO,String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
 
@@ -246,7 +246,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //自动匹配配货规则
             distributionRule(soB2cEntity.getId(),detailList);
         }
-        return soB2cEntity.getId();
+        return soB2cEntity;
     }
 
     /**
@@ -848,7 +848,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
-        String soId = this.add(addDTO,null);
+        SoB2cEntity add = this.add(addDTO, null);
+        String soId = add.getId();
         //新增关联信息
         List<SoB2cRefDTO.AddDTO> refList = new ArrayList<>();
         for (String id : ids) {
@@ -859,7 +860,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             refList.add(refAddDTO);
             log.info("作废原销售订单数据，id = {}", id);
             //作废
-            this.invalid(id, StrUtil.format("B2C销售订单【{}】合并作废"), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+            this.invalid(id, StrUtil.format("B2C销售订单合并作废，合并后订单【{}】",add.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
         }
         log.info("新增合并后的订单关联关系，refList = {}", refList);
         //新增关联关系
@@ -869,7 +870,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity soB2cEntity = this.getById(soId);
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), soB2cEntity.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(StrUtil.format("合并到新订单【{}】"), ModuleTypeEnum.SO_B2C.getCode(), pairList, "合并订单");
+        operateLogService.batchAddModuleOperateLog(StrUtil.format("合并到新订单【{}】",add.getCode()), ModuleTypeEnum.SO_B2C.getCode(), pairList, "合并订单");
         return Boolean.TRUE;
     }
 
@@ -1056,7 +1057,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //新增拆分后订单
             String code = StrUtil.format("{}_{}",entity.getCode(),flag);
-            String soB2cId = this.add(addDTO,code);
+            SoB2cEntity add = this.add(addDTO, code);
+            String soB2cId = add.getId();
             //新增拆分订单关联关系
             soB2cRefService.add(SoB2cOptionTypeEnum.ENUM_SPLIT.getCode(), entity.getId(), soB2cId);
             flag ++;
