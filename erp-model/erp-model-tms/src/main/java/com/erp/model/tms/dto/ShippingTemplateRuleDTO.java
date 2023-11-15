@@ -289,4 +289,20 @@ public class ShippingTemplateRuleDTO implements Serializable {
         private String toWarehouseName;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IntervalDTO {
+
+        /**
+         * 开始重量
+         */
+        private BigDecimal startWeight;
+
+        /**
+         * 结束重量
+         */
+        private BigDecimal endWeight;
+    }
 }

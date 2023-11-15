@@ -21,6 +21,7 @@ import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -130,16 +131,16 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Override
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
         ListingInfoEntity listingInfoEntity = lambdaQuery()
-                .eq(ListingInfoEntity::getSkuNo, dto.getMsku())
+                .eq(ListingInfoEntity::getPlatformSkuNo, dto.getMsku())
                 .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
                 .last("LIMIT 1")
                 .one();
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
-
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(dto.getSkuNo()));
-        if (CollectionUtils.isEmpty(skuList)) {
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+        if (ObjectUtil.isEmpty(skuVO)) {
             throw new ServiceException("sku不存在");
         }
 
@@ -148,9 +149,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setWarehouseName("");
         skuMappingEntity.setType(RuleTypeEnum.PLATFORM);
         skuMappingEntity.setShopId(dto.getShopId());
-        skuMappingEntity.setProductSkuId(skuList.get(0).getSkuId());
-        skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
-        skuMappingEntity.setProductName(skuList.get(0).getSkuName());
+        skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+        skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
         skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
