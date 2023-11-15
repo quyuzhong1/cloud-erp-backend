@@ -3,9 +3,7 @@ package com.common.business.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -20,6 +18,8 @@ import java.time.LocalDateTime;
  * @since 2023-10-09
  **/
 @Data
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class PlatformOrderLogisticsDTO implements Serializable {
 

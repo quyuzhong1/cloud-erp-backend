@@ -1,8 +1,12 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -36,4 +40,13 @@ public interface SoB2cFinanceService extends SuperService<SoB2cFinanceEntity> {
      * 根据父级id查询
      */
     SoB2cFinanceEntity getByMainId(String mainId);
+
+    Boolean deleteByMainIds(List<String> mainIds);
+    /**
+     * 平台订单明细更新或保存
+     *
+     * @Author Jim
+     * @since 2023-11-10
+     **/
+    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 }

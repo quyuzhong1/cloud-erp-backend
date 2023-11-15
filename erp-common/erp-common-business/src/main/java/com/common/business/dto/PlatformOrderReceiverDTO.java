@@ -3,9 +3,7 @@ package com.common.business.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -18,6 +16,8 @@ import java.io.Serializable;
  * @since 2023-10-09
  **/
 @Data
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class PlatformOrderReceiverDTO implements Serializable {
     /**
@@ -72,5 +72,16 @@ public class PlatformOrderReceiverDTO implements Serializable {
      * 街道详细地址
      */
     private String fullAddress;
-
+    /**
+     * 国家二字码
+     */
+    private String country;
+    /**
+     * 省
+     */
+    private String provinceName;
+    /**
+     * 区
+     */
+    private String districtName;
 }

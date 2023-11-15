@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +20,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+
+import java.util.List;
 
 /**
  * 物流单
@@ -49,22 +52,20 @@ public class LogisticsBillController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author lambda
-    * @date:  2023-11-09
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "物流单修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsBill:update",
-        serviceClass = LogisticsBillService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsBillDTO.UpdateDTO dto) {
-        logisticsBillService.update(dto);
-        return success();
+     * tab 列表
+     * @author yl
+     * @date 2023-11-09 10:54
+     * @param dto
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBill:paging",
+            tableAlias = "logistics_bill_detail"
+    )
+    public ApiResult<List<LogisticsBillDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<LogisticsBillDTO.TabListDTO> tabList = logisticsBillService.tabList(dto);
+        return success(tabList);
     }
 
 

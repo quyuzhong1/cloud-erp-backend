@@ -1,14 +1,14 @@
 package com.sdk.oms.shopee.dto;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.*;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
 import com.sdk.oms.shopee.dto.order.response.OrderItemDetail;
+import com.sdk.oms.shopee.dto.order.response.Package;
+import com.sdk.oms.shopee.dto.order.response.RecipientAddress;
 import com.sdk.oms.shopee.dto.product.response.ImageInfo;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
 import io.seata.common.util.CollectionUtils;
@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -158,7 +159,12 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setSyncKingdeeStatus("0");
         //明细
         orderDTO.setDetails(parseDetailDto(orderDetail));
-
+        //B2C销售订单买家信息表
+        orderDTO.setReceiverList(parseReceiverList(orderDetail));
+        //B2C销售订单物流信息表
+        orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
+        //B2C销售订单财务信息表
+        orderDTO.setFinancesList(parseFinancesList(orderDetail));
         return orderDTO;
     }
 
@@ -166,12 +172,73 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(OrderDetail orderDetail) {
-        if(Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getItems())){
+        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getItems())) {
             return Collections.emptyList();
         }
         return orderDetail.getItems().stream()
                 .map(e -> intPlatformOrderDetailDTO(e, orderDetail))
                 .collect(Collectors.toList());
+    }
+
+    public static List<PlatformOrderReceiverDTO> parseReceiverList(OrderDetail orderDetail) {
+        if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getRecipientAddress())) {
+            return Collections.emptyList();
+        }
+        RecipientAddress recipientAddress = orderDetail.getRecipientAddress();
+        List<PlatformOrderReceiverDTO> receiverDTOS = new ArrayList<>();
+        receiverDTOS.add(PlatformOrderReceiverDTO.builder()
+                .loginId(String.valueOf(orderDetail.getBuyerUserId()))
+                .customerId(String.valueOf(orderDetail.getBuyerUserId()))
+                .name(recipientAddress.getName())
+                .telNumber(recipientAddress.getPhone())
+                .receiverTelNumber(recipientAddress.getPhone())
+                .email("")
+                .country(recipientAddress.getRegion())
+                .provinceName(recipientAddress.getState())
+                .cityName(recipientAddress.getCity())
+                .districtName(recipientAddress.getDistrict())
+                .postCode(recipientAddress.getZipcode())
+                .firstAddress(recipientAddress.getFullAddress())
+                .fullAddress(recipientAddress.getFullAddress())
+                .build());
+        return receiverDTOS;
+    }
+
+    public static List<PlatformOrderLogisticsDTO> parseLogisticsList(OrderDetail orderDetail) {
+        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getPackages())) {
+            return Collections.emptyList();
+        }
+        List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
+        List<Package> packages = orderDetail.getPackages();
+        packages.forEach(p->{
+            Instant instant = Instant.ofEpochSecond(orderDetail.getShipByDate());
+            ZoneId zone = ZoneId.systemDefault();
+            PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
+                    .code(p.getPackageNumber())
+                    .name(LogisticsPlatformEnum.SHOPEE.getName())
+                    .deliveryTime(LocalDateTime.ofInstant(instant, zone))
+                    .dictLogisticsMethod(p.getShippingCarrier())
+                    .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
+                    .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
+                    .accessoriesCostCurrency(orderDetail.getCurrency())
+                    .actualShippingCurrency(orderDetail.getCurrency())
+                    .estimatedShippingCurrency(orderDetail.getCurrency())
+                    .build();
+            logisticsDTOS.add(dto);
+        });
+        return logisticsDTOS;
+    }
+
+    public static List<PlatformOrderFinanceDTO> parseFinancesList(OrderDetail orderDetail) {
+        if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
+            return Collections.emptyList();
+        }
+        List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
+        PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
+                .currency(orderDetail.getCurrency())
+                .logisticsCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
+                .build();
+        return financeDTOList;
     }
 
     /**

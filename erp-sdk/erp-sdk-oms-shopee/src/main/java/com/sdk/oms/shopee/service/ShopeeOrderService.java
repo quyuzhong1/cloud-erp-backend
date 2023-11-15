@@ -113,7 +113,7 @@ public class ShopeeOrderService {
         orderRequest.setTimestamp(timestamp);
         HashMap<String, Object> paramMap = getOrderCommonParam(orderRequest);
         //create_time, update_time.
-        paramMap.put("time_range_field", "create_time");
+        paramMap.put("time_range_field", "update_time");
         //15天内
 //        Long time_from = timestamp - (3600 * 24 * 14);
 //        Long time_to = timestamp;

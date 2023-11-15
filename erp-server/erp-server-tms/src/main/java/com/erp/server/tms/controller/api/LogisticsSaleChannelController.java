@@ -4,28 +4,19 @@ package com.erp.server.tms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
-import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -44,8 +35,6 @@ public class LogisticsSaleChannelController extends BaseController {
 
     @Autowired
     private LogisticsSaleChannelService logisticsSaleChannelService;
-    @Resource
-    private LogisticsRegistry logisticsRegistry;
 
     /**
     * 新增
@@ -79,12 +68,13 @@ public class LogisticsSaleChannelController extends BaseController {
         return success();
     }
 
-    @PostMapping("/test")
-    public ApiResult test() {
-        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.DSF.getCode());
-        LogisticsQueryBaseVO logisticsQueryVO = new LogisticsQueryBaseVO();
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = service.getChannel(new ChanelQueryVO());
-        return success();
+    /**
+     * 根据平台类型获取渠道列表
+     * @return
+     */
+    @PostMapping("/listByType")
+    public ApiResult<List<SaleChannelDTO>> listByType(@RequestParam String platformType) {
+        return success(logisticsSaleChannelService.listByType(platformType));
     }
 
 }

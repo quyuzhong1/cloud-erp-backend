@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
  * @since 2023-10-09
  **/
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlatformOrderFinanceDTO implements Serializable {
