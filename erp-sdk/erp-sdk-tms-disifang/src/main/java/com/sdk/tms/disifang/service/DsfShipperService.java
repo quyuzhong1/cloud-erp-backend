@@ -1,15 +1,13 @@
 package com.sdk.tms.disifang.service;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.sdk.tms.disifang.constants.AmbientEnum;
 import com.sdk.tms.disifang.model.base.AffterentParam;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
 import com.sdk.tms.disifang.model.label.request.LabelRequest;
 import com.sdk.tms.disifang.model.label.request.LabelSingleRequest;
-import com.sdk.tms.disifang.model.order.request.OrderCancelRequest;
-import com.sdk.tms.disifang.model.order.request.OrderCollectRequest;
-import com.sdk.tms.disifang.model.order.request.OrderQueryRequest;
-import com.sdk.tms.disifang.model.order.request.OrderRequest;
+import com.sdk.tms.disifang.model.order.request.*;
 import com.sdk.tms.disifang.model.product.request.ChanelRequest;
 import com.sdk.tms.disifang.utils.ApiHttpClientUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +26,16 @@ import java.util.Map;
 @Slf4j
 @Component
 public class DsfShipperService {
+    //生产环境
     static String host = "https://open.4px.com/router/api/service";
-    //        static String host = "https://open-test.4px.com/router/api/service";
-    static String method = "ds.xms.label.getlist";
     static String appKey = "fad2854e-93a7-4598-95ff-cb60557dbc0a";
     static String appSecret = "0e91ca81-22f8-4fce-95d1-18ed6269604b";
+
+    //测试环境
+//    static String host = "https://open-test.4px.com/router/api/service";
+//    static String appKey = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
+//    static String appSecret = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
+
 
     /**
      * 获取标签 打印标签
@@ -66,7 +69,7 @@ public class DsfShipperService {
      * @param labelRequest
      * @return ResponseMsg
      */
-    public ResponseMsg getLabelList(Map<String, String> authMap,  LabelRequest labelRequest) {
+    public ResponseMsg getLabelList(Map<String, String> authMap, LabelRequest labelRequest) {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.label.getlist";
@@ -162,6 +165,32 @@ public class DsfShipperService {
     }
 
     /**
+     * 申请|取消拦截订单
+     *
+     * @param authMap
+     * @param orderInterceptRequest
+     * @return ResponseMsg
+     */
+    public ResponseMsg interceptOrder(Map<String, String> authMap, OrderInterceptRequest orderInterceptRequest) {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String method = "ds.xms.order.hold";
+        AffterentParam param = AffterentParam.builder()
+                .version("1.0")
+                .format("json")
+                .language("cn")
+                .appKey(appKey)
+                .appSecret(appSecret)
+                .method(method)
+                .build();
+        String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderInterceptRequest), AmbientEnum.FORMAT_ADDRESS);
+        ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
+        System.out.println(responseMsg);
+        //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
+        return responseMsg;
+    }
+
+    /**
      * 查询直发委托单
      *
      * @param authMap
@@ -242,9 +271,11 @@ public class DsfShipperService {
 
     public static void main(String[] args) {
         DsfShipperService dsfShipperService = new DsfShipperService();
-        String token = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
-        String key = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
-        Map<String,String> map = new HashMap<>();
+//        String token = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
+//        String key = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
+        Map<String, String> map = new HashMap<>();
+        map.put("clientId",appKey);
+        map.put("clientSecret",appSecret);
         ChanelRequest chanelRequest = ChanelRequest.builder().transport_mode("1").build();
         ResponseMsg chanelList = dsfShipperService.getChanelList(map, chanelRequest);
         System.out.println(chanelList);

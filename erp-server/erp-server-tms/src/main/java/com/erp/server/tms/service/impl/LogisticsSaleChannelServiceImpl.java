@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -98,8 +99,12 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     @Override
     public Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity) {
         //检查数据是否存在
-
-        return null;
+        LogisticsSaleChannelEntity one = lambdaQuery().eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsSaleChannelEntity.getLogisticsPlatform())
+                .eq(LogisticsSaleChannelEntity::getCode, logisticsSaleChannelEntity.getCode()).last("limit 1").one();
+        if (Objects.nonNull(one)){
+            logisticsSaleChannelEntity.setId(one.getId());
+        }
+        return this.saveOrUpdate(logisticsSaleChannelEntity);
     }
 
 

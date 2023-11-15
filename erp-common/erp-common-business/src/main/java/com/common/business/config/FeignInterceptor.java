@@ -71,7 +71,7 @@ public class FeignInterceptor implements RequestInterceptor {
 
         // seata分布式事务XID，防止事务无法回滚
         String xid = RootContext.getXID();
-        if(StrUtils.isNotEmpty(xid)) {
+        if((null != xid && xid.trim().length() > 0)) {
             log.info("分布式事务seata,feign传递的xid:{}",xid);
             requestTemplate.header(RootContext.KEY_XID,xid);
         }

@@ -1,9 +1,9 @@
 package com.erp.server.tms.convert;
 
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
+import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
@@ -47,13 +47,13 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByDSF(ChanelInfo chanelInfo);
-    List<LogisticsSaleChannelEntity> channelConvertByDSFList(List<ChanelInfo> chanelInfos);
+    List<LogisticsSaleChannelEntity> channelConvertByDSF(List<ChanelInfo> chanelInfos);
 
     @Mappings({
             @Mapping(target = "cnName", source = "cnName"),
             @Mapping(target = "enName", source = "enName"),
             @Mapping(target = "code", source = "code"),
-            @Mapping(target = "isTrack", source = "trackStatus"),
+            @Mapping(target = "isTrack", source = "trackStatus", qualifiedByName = "yOrNToBoolean"),
             @Mapping(target = "aging", source = "aging"),
             @Mapping(target = "logisticsPlatform", constant = "WeiShi"),
             @Mapping(target = "id", ignore = true),
@@ -71,14 +71,14 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByUBI(ServiceCataLog serviceCataLog);
-    List<LogisticsSaleChannelEntity> channelConvertByUBIList(List<ServiceCataLog> serviceCataLogList);
+    List<LogisticsSaleChannelEntity> channelConvertByUBI(List<ServiceCataLog> serviceCataLogList);
 
     @Mappings({
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "cnName", source = "CName"),
             @Mapping(target = "enName", source = "EName"),
             @Mapping(target = "isTrack", source = "hasTrackingNumber"),
-            @Mapping(target = "aging", source = "displayName"),
+//            @Mapping(target = "aging", source = "displayName"),
             @Mapping(target = "logisticsPlatform", constant = "YunTu"),
             @Mapping(target = "id", ignore = true),
     })
@@ -95,4 +95,16 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByTongYou(TongYouChannel data);
     List<LogisticsSaleChannelEntity> channelConvertByTongYou(List<TongYouChannel> data);
+
+    @Mappings({
+            @Mapping(target = "platformChannelId", source = "logisticsChannelId"),
+            @Mapping(target = "code", source = "logisticsChannelId"),
+            @Mapping(target = "cnName", source = "logisticsChannelName"),
+            @Mapping(target = "enName", source = "logisticsChannelName"),
+            @Mapping(target = "channelStatus", source = "enabled",qualifiedByName = "booleanToStatus"),
+            @Mapping(target = "logisticsPlatform", constant = "Shopee"),
+            @Mapping(target = "id", ignore = true),
+    })
+    LogisticsSaleChannelEntity channelConvertByShopee(LogisticsChannel logisticsChannel);
+    List<LogisticsSaleChannelEntity> channelConvertByShopee(List<LogisticsChannel> logisticsChannels);
 }

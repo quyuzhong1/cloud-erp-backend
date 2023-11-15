@@ -1,22 +1,17 @@
 package com.sdk.tms.shopee.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.shopee.constant.PathConstants;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
-import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.shopee.model.logistics.response.TrackNumber;
-import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
 import com.sdk.tms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -40,25 +35,12 @@ public class ShopeeShipperService {
      * @param baseRequest
      * @return
      */
-    public List<LogisticsChannel> getChannelList(BaseRequest baseRequest) {
-//        String path = "/api/v2/logistics/get_channel_list";
-        baseRequest.setPath(PathConstants.GET_CHANNEL_LIST_URL);
+    public BaseResponse getChannelList(BaseRequest baseRequest) {
         long timestamp = System.currentTimeMillis() / 1000L;
+        baseRequest.setPath(PathConstants.GET_CHANNEL_LIST_URL);
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
-        BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
-        if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            return Collections.emptyList();
-        }
-        JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
-            log.error("获取渠道列表异常：{}", error);
-            return Collections.emptyList();
-        }
-        JSONArray jsonArray = (JSONArray) response.get("logistics_channel_list");
-        //渠道列表
-        return JSONObject.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
+        return ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
     }
 
     /**
@@ -81,7 +63,7 @@ public class ShopeeShipperService {
                 .build();
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
         paramMap.put("order_sn", trackRequest.getOrderSn());
-        return ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
+        return ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
     }
 
     /**
@@ -107,7 +89,7 @@ public class ShopeeShipperService {
         paramMap.put("to_date", trackRequest.getToDate());
         paramMap.put("page_size", trackRequest.getPageSize());
         paramMap.put("cursor", trackRequest.getCursor());
-        BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
+        BaseResponse baseResponse = ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
             return null;
         }

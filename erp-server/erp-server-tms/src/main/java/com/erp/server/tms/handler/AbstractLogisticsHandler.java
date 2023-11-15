@@ -4,15 +4,23 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
+import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsService;
+import io.seata.common.util.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author zdy
@@ -23,10 +31,32 @@ import java.util.Map;
  */
 public abstract class AbstractLogisticsHandler extends BaseController implements LogisticsService {
 
+    @Resource
+    private LogisticsAuthService logisticsAuthService;
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+
     //对于一些公共方法可以进行封装
-    @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        return null;
+        Map<String, String> map = new HashMap<>();
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (StringUtils.isNoneBlank(authId)) {
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        } else {
+            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
+                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).last("limit 1").one();
+            if (Objects.nonNull(authEntity)) {
+                map.put("id", authEntity.getId());
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
+            }
+        }
+        map.put("id", authId);
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
     }
 
     /**

@@ -46,11 +46,6 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("code")
     private String code;
     /**
-    * 时效
-    */
-    @TableField("expire_time")
-    private LocalDateTime expireTime;
-    /**
     * 渠道状态0正常1.暂停2.已关闭（默认0）
     */
     @TableField("channel_status")

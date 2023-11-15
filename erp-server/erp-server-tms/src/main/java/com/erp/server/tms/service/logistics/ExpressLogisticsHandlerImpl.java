@@ -19,8 +19,6 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsAuthFieldService;
-import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.express.model.order.request.*;
@@ -28,7 +26,6 @@ import com.sdk.tms.express.model.order.response.*;
 import com.sdk.tms.express.service.ExpressShipperService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -51,35 +48,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     ExpressShipperService expressShipperService;
     @Resource
-    private LogisticsAuthService logisticsAuthService;
-    @Resource
-    private LogisticsAuthFieldService logisticsAuthFieldService;
-    @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
-
-
-    @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
-        Map<String, String> map = new HashMap<>();
-        if (StringUtils.isNoneBlank(authId)) {
-            map.put("id",authId);
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        } else {
-            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
-                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).one();
-            if (Objects.nonNull(authEntity)) {
-                map.put("id",authEntity.getId());
-                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
-            }
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
-        return map;
-    }
 
     /**
      * 创建订单

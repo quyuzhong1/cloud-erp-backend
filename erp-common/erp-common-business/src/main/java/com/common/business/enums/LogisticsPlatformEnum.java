@@ -16,6 +16,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", ""),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", ""),
+    ALI_EXPRESS("ALI_EXPRESS", "速卖通", "无忧物流[速卖通]", ""),
     UBI("UBI", "UBI", "UBI物流平台", ""),
     TRACK123("TRACK123", "track123", "track123物流平台", ""),
     YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", ""),
