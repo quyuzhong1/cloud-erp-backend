@@ -324,6 +324,31 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public FbaDeliveryDTO.ViewDTO getDeliverView(String id) {
+        //校验货件单据是否存在
+        List<FbaShipmentEntity> fbaShipmentEntities = this.listByIds(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(fbaShipmentEntities)) {
+            throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+        }
+
+        List<FbaShipmentDetailEntity> list = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
+        //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
+        list.forEach(req -> {
+            if (StringUtils.isBlank(req.getSkuNo())) {
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+            }
+        });
+
+        //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
+
+        //Delete和Cancel状态的货件不允许下推发货单
+        List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
+                .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
+                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)) {
+            throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
+        }
+
         FbaShipmentEntity entity = this.getById(id);
         //根据店铺id查询店铺信息
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Arrays.asList(entity.getShopId()));

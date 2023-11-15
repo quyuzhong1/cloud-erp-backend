@@ -120,6 +120,12 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 审核状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
+
 
     public static final String MAIN_ID = "main_id";
 

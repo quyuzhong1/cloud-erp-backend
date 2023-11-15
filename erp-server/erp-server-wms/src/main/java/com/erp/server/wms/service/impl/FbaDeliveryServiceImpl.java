@@ -9,8 +9,10 @@ import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -23,9 +25,11 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.mapper.FbaDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -54,6 +58,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -113,6 +118,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private InventoryTransCoreService inventoryTransCoreService;
     @Autowired
     private LogisticsBillFeign logisticsBillFeign;
+    @Autowired
+    private ShopInfoFeign shopInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -656,7 +663,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             detailVie.setImageUrl(skuVO.getSkuImagesUrl());
             //获取已出库数量（排除此单出库数量）
             Integer useDeliveryQty = entities.stream()
-                    .filter(req -> req.getSourceDetailId().equals(fbaDeliveryDetailEntity.getSourceDetailId()) && !req.getId().equals(fbaDeliveryDetailEntity.getId()))
+                    .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                            && req.getSourceDetailId().equals(fbaDeliveryDetailEntity.getSourceDetailId())
+                            && !req.getId().equals(fbaDeliveryDetailEntity.getId()))
                     .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
                     .sum();
             detailVie.setUseDeliveryQty(useDeliveryQty);
@@ -991,19 +1000,24 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     * 新增修改处理数据
     */
     private void handleData(FbaDeliveryEntity fbaDeliveryEntity) {
+        if (StringUtils.isNotBlank(fbaDeliveryEntity.getSourceId())) {
+            FbaShipmentEntity entity = fbaShipmentService.getById(fbaDeliveryEntity.getSourceId());
+            //根据店铺id查询店铺信息
+            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Arrays.asList(entity.getShopId()));
+            //设置店铺的仓位为目的仓
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> entity.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
+            fbaDeliveryEntity.setDestWarehouseId(shopInfoEntity.getWarehouseId());
+            fbaDeliveryEntity.setDestWarehouseName(shopInfoEntity.getWarehouseName());
+        }
         //根据仓库id查询仓库信息
         List<String> warehouseIds = new ArrayList<>();
         warehouseIds.add(fbaDeliveryEntity.getDeliveryWarehouseId());
-        warehouseIds.add(fbaDeliveryEntity.getDestWarehouseId());
         List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
 
         //根据仓库信息获取核算公司
         List<String> orgIds = warehouseEntities.stream().map(req -> req.getOrgId()).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
 
-        //设置仓库名称
-        String destWarehouseName = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDestWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        fbaDeliveryEntity.setDestWarehouseName(destWarehouseName);
         WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
         fbaDeliveryEntity.setDeliveryWarehouseName(warehouseEntity.getName());
 
