@@ -11,6 +11,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ShippingRegionCityDTO;
 import com.erp.model.tms.entity.ShippingRegionCityEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
@@ -18,6 +19,7 @@ import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingTemplateTypeEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.ShippingTemplateRuleMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -35,6 +37,7 @@ import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -53,7 +56,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
     private OperateLogService operateLogService;
 
     @Autowired
-    private CommonService commonService;
+    private SysDictFeign sysDictFeign;
 
     @Autowired
     private ShippingTemplateService shippingTemplateService;
@@ -204,6 +207,10 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             throw new ServiceException(ApiError.ERROR_RULE_WEIGHT_COMPARE);
         }
 
+        //查询国家信息
+        List<String> countryIdList = detailList.stream().flatMap(obj -> Stream.of(obj.getFromCountry(), obj.getToCountry())).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+
         //按国家
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(entity.getType())) {
             //必填校验
@@ -214,9 +221,15 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToCountry())));
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
                 List<ShippingTemplateRuleEntity> value = entry.getValue();
-                if (value.size() > 1) {
-
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_EXIST,value.get(0).getFromCountry(),value.get(0).getToCountry());
+                //国家名称
+                String fromCountryName = countryList.stream().filter(obj -> obj.getId().equals(value.get(0).getFromCountry())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(value.get(0).getToCountry())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                //验证区间是否重叠
+                Boolean check = checkInterval(value);
+                if (check) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_REPEAT,fromCountryName,toCountryName);
                 }
             }
         }
@@ -235,8 +248,15 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getRegion())));
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
                 List<ShippingTemplateRuleEntity> value = entry.getValue();
-                if (value.size() > 1) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_REGION_EXIST,value.get(0).getFromCountry(),value.get(0).getRegion());
+                //国家名称
+                String fromCountryName = countryList.stream().filter(obj -> obj.getId().equals(value.get(0).getFromCountry())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(value.get(0).getToCountry())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                //验证区间是否重叠
+                Boolean check = checkInterval(value);
+                if (check) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_REGION_REPEAT,fromCountryName,toCountryName,value.get(0).getRegion());
                 }
             }
         }
@@ -250,8 +270,13 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             }
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
                 List<ShippingTemplateRuleEntity> value = entry.getValue();
-                if (value.size() > 1) {
-                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_EXIST,value.get(0).getFromCountry(),value.get(0).getToWarehouseName());
+                //国家名称
+                String fromCountryName = countryList.stream().filter(obj -> obj.getId().equals(value.get(0).getFromCountry())).findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                //验证区间是否重叠
+                Boolean check = checkInterval(value);
+                if (check) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_RULE_WAREHOUSE_REPEAT,fromCountryName,value.get(0).getToWarehouseName());
                 }
             }
         }
@@ -330,5 +355,24 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             return;
         }
         shippingRegionCityService.add(addList);
+    }
+
+    /**
+     * @description: 验证区间是否重叠
+     * @author Will
+     * @date: 2023/11/15 19:03
+     * @param value
+     */
+    private Boolean checkInterval (List<ShippingTemplateRuleEntity> value) {
+        //区间
+        List<ShippingTemplateRuleDTO.IntervalDTO> intervalList = value.stream().map(obj -> new ShippingTemplateRuleDTO.IntervalDTO(obj.getStartWeight(), obj.getEndWeight())).collect(Collectors.toList());
+        for (int i = 0; i < intervalList.size()-1; i++) {
+            for (int j = i+1; j < intervalList.size(); j++) {
+                if (MathUtil.compareTo(intervalList.get(i).getEndWeight(), intervalList.get(j).getStartWeight()) > MathUtil.ZERO) {
+                    return Boolean.TRUE;
+                }
+            }
+        }
+        return Boolean.FALSE;
     }
 }
