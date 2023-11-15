@@ -133,7 +133,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
         }
+        //根据平台sku查询映射信息
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
+        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.SkuDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
+        }
+
+        //映射sku
         dto.setShopId(entity.getShopId());
+        dto.setPlatform(PlatformDictEnum.AMAZON.getCode());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
 

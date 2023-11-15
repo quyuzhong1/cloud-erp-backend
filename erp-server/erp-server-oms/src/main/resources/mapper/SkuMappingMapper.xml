@@ -371,7 +371,7 @@
         <!--平台-->
         <if test="params.platform != null and params.platform != ''">
             AND li.platform = #{params.platform}
-            AND li.dict_platform = #{params.platform}
+            AND sm.dict_platform = #{params.platform}
         </if>
         <!--匹配结果吧true 已匹配 false 未匹配-->
         <if test="params.matchResult != null and params.matchResult != ''">
@@ -398,9 +398,5 @@
             </foreach>
 
         </if>
-    </select>
-
-    <select id="listByPlatformSkuNos" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListSkuDTO">
-
     </select>
 </mapper>
