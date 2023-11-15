@@ -166,8 +166,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailEntity.setIsCombination(Boolean.FALSE);
             }
             //添加日志
-            FbaShipmentEntity old = this.getById(detailEntity.getId());
-
             List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByIds(Arrays.asList(dto.getDetailId()));
 
             //操作日志
