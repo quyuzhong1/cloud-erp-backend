@@ -12,6 +12,7 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingRegionCityDTO;
+import com.erp.model.tms.entity.ShippingRegionCityEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -101,9 +102,44 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             operateLogService.batchAddModuleOperateLog("删除了一个起始地区间【%s】", ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
+        //新增城市分区
+        addOrUpdateShippingRegionCity(list);
+        //处理明细id及操作日志
+        doOpHandleDetails(list,mainId,Boolean.FALSE);
         //新增或修改
         this.saveOrUpdateBatch(list);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 处理明细中的数据id
+     */
+    private void doOpHandleDetails (List<ShippingTemplateRuleEntity> newList, String shippingTemplateId,Boolean isAdd) {
+        //添加操作日志
+        List<ShippingTemplateRuleEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //新增日志
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(shippingTemplateId, obj.getFromCountry())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条模板规则【%s】", ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), addPairList, "编辑操作");
+        }
+        //规则id集合
+        List<String> ruleIdList = newList.stream().map(ShippingTemplateRuleEntity::getId).collect(Collectors.toList());
+        List<ShippingRegionCityEntity> shippingRegionCityList = shippingRegionCityService.listByRuleIdList(ruleIdList);
+
+        for (ShippingTemplateRuleEntity entity : newList) {
+            //操作日志
+            if (StringUtils.isNotBlank(entity.getId())) {
+                //原城市
+                List<String> oldCityList = shippingRegionCityList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).map(ShippingRegionCityEntity::getCity).collect(Collectors.toList());
+
+                ShippingTemplateRuleEntity old = this.getById(entity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
+                }
+                old.setCityList(oldCityList);
+                operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),shippingTemplateId,"",String.format("【%s】",old.getFromCountry()));
+            }
+        }
     }
 
     @Override
