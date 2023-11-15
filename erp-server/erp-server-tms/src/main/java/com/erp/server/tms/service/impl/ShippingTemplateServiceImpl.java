@@ -908,6 +908,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setMainId(entity.getId());
         viewParamDTO.setFromCountry(dto.getFromCountry());
         viewParamDTO.setToCountry(dto.getToCountry());
+        viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
@@ -929,6 +930,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setFromCountry(dto.getFromCountry());
         viewParamDTO.setToCountry(dto.getToCountry());
         viewParamDTO.setRegion(dto.getRegion());
+        viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);
@@ -949,6 +951,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         viewParamDTO.setMainId(entity.getId());
         viewParamDTO.setFromCountry(dto.getFromCountry());
         viewParamDTO.setToWarehouseName(dto.getToWarehouseName());
+        viewParamDTO.setWeight(dto.getWeight());
         ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
         if (ObjectUtil.isEmpty(shippingTemplateRule)) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_RULE_NOT_EXIST);

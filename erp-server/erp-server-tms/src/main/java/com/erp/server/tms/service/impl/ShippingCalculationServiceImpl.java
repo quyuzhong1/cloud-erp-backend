@@ -250,7 +250,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             //首重费用
             BigDecimal firstWeightShippingCost = shippingTemplateRule.getFirstWeightShippingCost();
             //续重比例（进一）
-            BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),2,BigDecimal.ROUND_UP);
+            BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),0,BigDecimal.ROUND_UP);
             //续重费用
             BigDecimal additionalWeightShippingCost = weightRatio.multiply(shippingTemplateRule.getAdditionalPrice());
 
