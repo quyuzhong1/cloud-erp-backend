@@ -471,18 +471,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             logisticsAddDTO.setLogisticsRemark("");
             logisticsAddDTO.setDeliveryCode(shipmentList.get(0).getCode());
             logisticsAddDTO.setMainId(shipmentList.get(0).getId());
-            logisticsAddDTO.setDeliveryTime(LocalDateTime.now());
-
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
-
             //设置仓库名称
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
             //详情信息
             List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDTO.GenerateDeliverView generateDeliverView : shipmentList) {
-
                 //映射字段
                 FbaDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
 
