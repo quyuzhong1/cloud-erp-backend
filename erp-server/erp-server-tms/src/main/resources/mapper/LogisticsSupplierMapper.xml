@@ -180,6 +180,26 @@
         </if>
         ls.create_time DESC
     </select>
+    <select id="getById" resultType="com.erp.model.tms.entity.LogisticsSupplierEntity">
+        SELECT
+            ls.id,
+            ls.create_user_name,
+            ls.create_time,
+            ls.update_user_name,
+            ls.update_time,
+            ls.supplier_id,
+            ls.supplier_name,
+            ls.supplier_name,
+            ls.type,
+            ls.disabled,
+            ls.auth_status,
+            ls.auth_time,
+            la.logistics_platform AS authLogisticsPlatform
+        FROM logistics_supplier ls
+        LEFT JOIN logistics_auth la
+        INNER JOIN ls.id=la.main_id and la.is_deleted=false
+        where ls.id=#{id}
+    </select>
 
 
 </mapper>

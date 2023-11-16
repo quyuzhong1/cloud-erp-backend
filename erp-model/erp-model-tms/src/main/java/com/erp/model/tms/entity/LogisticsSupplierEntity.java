@@ -57,6 +57,12 @@ public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity>
     @TableField("auth_time")
     private LocalDateTime authTime;
 
+    /**
+     * 授权的物流平台
+     */
+    @TableField(exist = false)
+    private String authLogisticsPlatform;
+
 
     public static final String SUPPLIER_ID = "supplier_id";
 

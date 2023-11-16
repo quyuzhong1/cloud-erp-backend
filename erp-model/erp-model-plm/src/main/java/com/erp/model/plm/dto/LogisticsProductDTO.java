@@ -465,6 +465,12 @@ public class LogisticsProductDTO {
          */
         private String propertyName;
 
+
+        /**
+         * 物流属性
+         */
+        private String logisticsPropertyName;
+
         /**
          * ENA 吗
          */
