@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
@@ -358,12 +359,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 创建时间（拉取数据的日期）
          */
-        private List<LocalDateTime> shipmentCreateTimeList;
+        private List<LocalDate> shipmentCreateTimeList;
 
         /**
          * 签收时间（拉取签收数据的日期）
          */
-        private List<LocalDateTime> shipmentReceiveTimeList;
+        private List<LocalDate> shipmentReceiveTimeList;
 
     }
 
