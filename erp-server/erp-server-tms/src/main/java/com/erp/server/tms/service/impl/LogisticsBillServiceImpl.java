@@ -8,12 +8,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
@@ -28,6 +31,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,6 +61,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private DictBasicService dictBasicService;
+
+
+    @Autowired
+    private LogisticsTrackService logisticsTrackService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -182,12 +191,23 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             tab.setCount(count);
             resultList.add(tab);
         }
-        LogisticsBillDTO.TabListDTO allTab = new LogisticsBillDTO.TabListDTO();
-        allTab.setTabFlag(LogisticTrackStatusEnum.ALL.getCode());
-        allTab.setTabName(LogisticTrackStatusEnum.ALL.getName());
-        Integer allCount = resultList.stream().mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
-        allTab.setCount(allCount);
-        resultList.add(allTab);
+        String allCode = LogisticTrackStatusEnum.ALL.getCode();
+        LogisticsBillDTO.TabListDTO allTab = resultList.stream().filter(r -> r.getTabFlag().equals(allCode)).findFirst().orElse(null);
+        if (Objects.nonNull(allTab)) {
+            allTab.setTabFlag(LogisticTrackStatusEnum.ALL.getCode());
+            allTab.setTabName(LogisticTrackStatusEnum.ALL.getName());
+            Integer allCount = resultList.stream().mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
+            allTab.setCount(allCount);
+        } else {
+            allTab = new LogisticsBillDTO.TabListDTO();
+            allTab.setTabFlag(LogisticTrackStatusEnum.ALL.getCode());
+            allTab.setTabName(LogisticTrackStatusEnum.ALL.getName());
+            Integer allCount = resultList.stream().mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
+            allTab.setCount(allCount);
+            resultList.add(allTab);
+        }
+
+
         return resultList;
     }
 
@@ -196,8 +216,52 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsBillDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        String all = LogisticTrackStatusEnum.ALL.getCode();
+        if (all.equals(params.getType())) {
+            params.setType("");
+        }
         IPage pageData = baseMapper.paging(query, params);
 
-        return null;
+        List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
     }
+
+    private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        List<String> trackNoList = list.stream().map(LogisticsBillDTO.PagingVO::getTrackNo).distinct().collect(Collectors.toList());
+        List<LogisticsTrackEntity> trackList = logisticsTrackService.listByTrackNoList(trackNoList);
+        for (LogisticsBillDTO.PagingVO item : list) {
+            String salesPlatform = item.getSalesPlatform();
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(salesPlatform);
+            String salesPlatformName = Objects.nonNull(salesPlatformEnum) ? salesPlatformEnum.getDesc() : "";
+            item.setSalesPlatformName(salesPlatformName);
+            //发货时间
+            LocalDateTime deliveryTime = item.getDeliveryTime();
+            Integer transportDays = 0;
+            if (Objects.nonNull(deliveryTime)) {
+                Duration duration = Duration.between(now, deliveryTime);
+                transportDays = Math.toIntExact(duration.toDays());
+            }
+            item.setTransportDays(transportDays);
+            String trackStatus = item.getTrackStatus();
+            String trackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
+            item.setTrackStatusName(trackStatusName);
+            String trackNo = item.getTrackNo();
+            LogisticsTrackEntity trackEntity = trackList.stream().filter(t -> t.getTrackNo().equals(trackNo)).
+                    sorted(Comparator.comparing(LogisticsTrackEntity::getCreateTime).reversed()).findFirst().orElse(null);
+            if (Objects.nonNull(trackEntity)) {
+                item.setTrackContent(trackEntity.getContent());
+                item.setUpdateTime(trackEntity.getUpdateTime());
+            }
+            LocalDateTime signTime = trackList.stream().filter(t -> "6".equals(t.getStatus())).findFirst().
+                    map(LogisticsTrackEntity::getCreateTime).orElse(null);
+            item.setSignTime(signTime);
+
+        }
+    }
+
 }

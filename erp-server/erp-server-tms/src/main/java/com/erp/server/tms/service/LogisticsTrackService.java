@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 物流轨迹表 服务类
@@ -32,5 +34,21 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
     */
     Boolean update(LogisticsTrackDTO.UpdateDTO dto);
 
+    /**
+     * 根据运输单号查询数据
+     * @author yl
+     * @date 2023-11-16 15:50
+     * @param trackNoList
+     * @return 
+     */
+    List<LogisticsTrackEntity> listByTrackNoList(List<String> trackNoList);
 
+    /**
+     * 根据运输单查询数据
+     *@parms trackNo
+     *@return 
+     *@author yl
+     *@date 2023-11-16
+     */
+    List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo);
 }

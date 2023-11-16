@@ -55,6 +55,20 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+
+        /**
+         * 类型
+         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
+         */
+        @NotBlank(message = "类型不能为空")
+        private String  type;
+
+
+        /**
+         * 物流单号
+         */
+        private List<String>  trackNoList;
         /**
          * 销售平台
          */
@@ -206,6 +220,11 @@ public class LogisticsBillDTO implements Serializable {
          * 轨迹描述
          */
         private String trackContent;
+
+        /**
+         * 最新更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 

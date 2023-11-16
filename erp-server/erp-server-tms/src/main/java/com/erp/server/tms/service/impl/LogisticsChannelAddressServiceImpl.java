@@ -79,7 +79,7 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
         if (CollectionUtils.isEmpty(channelIdList)) {
             return;
         }
-        this.lambdaUpdate().eq(LogisticsChannelAddressEntity::getLogisticsChannelId, channelIdList).remove();
+        this.lambdaUpdate().in(LogisticsChannelAddressEntity::getLogisticsChannelId, channelIdList).remove();
 
     }
 
