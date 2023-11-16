@@ -1,6 +1,6 @@
 package ${package.Dto};
 <#---------新增或修改CommonDTO不显示字段------------------>
-<#assign updateNoShow=["code", "approveStatus", "invalidStatus", "invalidRemark", "approveTime", "approveUserName", "approveUserId"]>
+<#assign updateNoShow=["code", "approveStatus", "invalidStatus", "invalidRemark", "approveTime", "approveUserName", "approveUserId", "skuNo"]>
 <#assign fieldMap={}/>
 <#list table.fields as field>
     <#assign fieldMap += {field.propertyName:field.propertyName} />
