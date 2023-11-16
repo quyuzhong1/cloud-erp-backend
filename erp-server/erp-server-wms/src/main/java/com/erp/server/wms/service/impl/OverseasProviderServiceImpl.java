@@ -2,6 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.OverseasProviderService;
@@ -101,5 +104,15 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     */
     private void handleData(OverseasProviderEntity overseasProviderEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public PagingVO<OverseasProviderDTO.ListDTO> paging(PagingDTO<OverseasProviderDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public OverseasProviderDTO.ViewDTO view(String id) {
+        return null;
     }
 }
