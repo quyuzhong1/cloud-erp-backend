@@ -84,4 +84,15 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-15
      */
     void removeBySourceIdList(List<String> sourceIdList);
+
+    /**
+     * 复制渠道
+     *@parms id
+     *@return
+     *@author yl
+     *@date 2023-11-15
+     */
+    Boolean copy(String id);
+
+
 }

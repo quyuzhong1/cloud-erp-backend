@@ -36,4 +36,11 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      * @return
      */
     IPage<LogisticsSupplierDTO.PagingViewDTO> paging(Page query, @Param("params")LogisticsSupplierDTO.PagingParamDTO params);
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    List<LogisticsSupplierDTO.PagingViewDTO> listExport(@Param("params") LogisticsSupplierDTO.ExportDTO dto);
 }

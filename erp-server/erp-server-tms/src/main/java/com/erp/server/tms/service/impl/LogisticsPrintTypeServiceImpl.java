@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsPrintTypeEntity;
 import com.erp.server.tms.mapper.LogisticsPrintTypeMapper;
 import com.erp.server.tms.service.LogisticsPrintTypeService;
@@ -36,10 +37,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPrintTypeMapper, LogisticsPrintTypeEntity> implements LogisticsPrintTypeService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private CommonService commonService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -88,6 +86,16 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         }
         this.lambdaUpdate().in(LogisticsPrintTypeEntity::getLogisticsChannelId, channelIdList).remove();
 
+    }
+
+    @Override
+    public void copy(String channelId, String addChannelId) {
+        List<LogisticsPrintTypeEntity> list = listDbByChannelId(channelId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
+            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            this.saveBatch(addList);
+        }
     }
 
     public List<LogisticsPrintTypeEntity> listDbByChannelId(String channelId) {

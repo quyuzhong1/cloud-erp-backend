@@ -77,6 +77,18 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
         this.lambdaUpdate().in(LogisticsMappingEntity::getLogisticsChannelId, channelIdList).remove();
     }
 
+    @Override
+    public void copy(String channelId, String addChannelId) {
+        List<LogisticsMappingEntity> list = listDbByChannelId(channelId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<LogisticsMappingEntity> addList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, list);
+            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            this.saveBatch(addList);
+        }
+
+
+    }
+
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
 

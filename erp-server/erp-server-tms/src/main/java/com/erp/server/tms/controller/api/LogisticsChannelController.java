@@ -54,6 +54,23 @@ public class LogisticsChannelController extends BaseController {
         return success(logisticsChannelService.add(dto));
     }
 
+    /**
+     * 物流渠道复制
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-11-02
+     */
+    @PostMapping("/copy")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道复制id={id}")
+    public ApiResult copy(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = logisticsChannelService.copy(dto.getId());
+        return result ? success() : failure();
+    }
+
+
+
 
     /**
      * 物流渠道详情
@@ -157,14 +174,14 @@ public class LogisticsChannelController extends BaseController {
             menuCode = "tms:logisticsChannel:updateStatus",
             serviceClass = LogisticsChannelService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated BatchStateDTO.DisabledParamDTO dto){
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated BatchStateDTO.DisabledParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result=logisticsChannelService.updateStatus(id,dto.getDisabled());
-            }catch (Exception e){
-                log.error("渠道 停用/启用失败 {}",e);
+                result = logisticsChannelService.updateStatus(id, dto.getDisabled());
+            } catch (Exception e) {
+                log.error("渠道 停用/启用失败 {}", e);
                 LogisticsChannelEntity entity = logisticsChannelService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "物流渠道不存在, 删除失败");
