@@ -1,10 +1,13 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,7 +25,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("overseas_provider")
+@TableName(value = "overseas_provider", autoResultMap = true)
 public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
 
     /**
@@ -48,8 +51,8 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
     /**
     * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
     */
-    @TableField("auth_json")
-    private String authJson;
+    @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
+    private Map<String, String> authJson;
 
 
     public static final String CODE = "code";
