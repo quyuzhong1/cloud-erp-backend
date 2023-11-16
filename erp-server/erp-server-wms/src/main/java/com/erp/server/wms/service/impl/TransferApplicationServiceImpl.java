@@ -41,6 +41,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
@@ -335,6 +336,15 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //组织
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(Arrays.asList(viewDTO.getOutOrgId()));
+        param.setSkuIdList(skuIds);
+        param.setWarehouseIdList(Arrays.asList(viewDTO.getOutWarehouseId()));
+        //库存信息
+        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
+
         for (TransferApplicationDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -342,7 +352,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId());
+            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
+                    .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
         }
         viewDTO.setDetailList(viewDetailList);
