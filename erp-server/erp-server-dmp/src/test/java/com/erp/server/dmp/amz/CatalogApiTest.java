@@ -55,7 +55,7 @@ public class CatalogApiTest {
 //        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships","vendorDetails");
 //        List<String> includedData = null;
         String locale = null;
-        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US);
+        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         Item response = api.getCatalogItem(asin, marketplaceIds, includedData, locale);
         System.out.println("Catalog信息");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -84,7 +84,7 @@ public class CatalogApiTest {
         Integer pageSize = null;
         String pageToken = null;
         String keywordsLocale = null;
-        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US);
+        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
         ItemSearchResults response = api.searchCatalogItems(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
         System.out.println("CatalogItems信息");
         System.out.println(JSONUtil.toJsonStr(response));

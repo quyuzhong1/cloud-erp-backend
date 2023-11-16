@@ -81,7 +81,7 @@ public class PlatformProductDTO extends UniqueDto {
     private LocalDateTime platformUpdateTime;
 
     /**
-     * 数据下载状态
+     * 详情或其他数据下载状态
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
