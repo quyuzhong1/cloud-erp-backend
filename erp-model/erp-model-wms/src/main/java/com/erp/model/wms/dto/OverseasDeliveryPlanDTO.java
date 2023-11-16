@@ -98,7 +98,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 作废状态
         */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
         * 作废备注
@@ -219,7 +219,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 作废状态
         */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
         * 作废备注

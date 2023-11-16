@@ -1,10 +1,14 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -52,16 +56,19 @@ public class OverseasProviderDTO implements Serializable {
         private String authStatus;
 
         /**
+        * 授权状态中文名
+        */
+        private String authStatusName;
+
+        /**
         * 授权时间
         */
         private LocalDateTime authTime;
 
         /**
-        * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
-        */
-        private String authJson;
-
-
+         * 详情
+         */
+        private List<OverseasProviderWarehouseDTO.ViewDTO> detailList;
     }
 
     /**
@@ -121,5 +128,73 @@ public class OverseasProviderDTO implements Serializable {
 
     }
 
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 服务商名称
+         */
+        private String name;
 
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 更新人
+         */
+        private String updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
+    }
+
+
+    /**
+     * 列表查询入参
+     */
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 服务商编号
+         */
+        private String code;
+        /**
+         * 服务商名称
+         */
+        private String name;
+        /**
+         * 授权状态 already 已授权 not未授权 cancel 取消授权
+         */
+        private String authStatus;
+        /**
+         * 授权状态中文名
+         */
+        private String authStatusName;
+        /**
+         * 授权时间
+         */
+        private LocalDateTime authTime;
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 修改人
+         */
+        private String updateUserId;
+        /**
+         * 修改人中文名
+         */
+        private String updateUserName;
+    }
 }

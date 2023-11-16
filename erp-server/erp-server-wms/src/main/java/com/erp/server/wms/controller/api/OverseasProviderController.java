@@ -1,6 +1,11 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.PdaVersionDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.server.wms.service.FbaDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -67,6 +72,40 @@ public class OverseasProviderController extends BaseController {
         return success();
     }
 
+    /**
+     * 列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 16:12
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasProviderDTO.ListDTO>>
+     **/
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:paging",
+            tableAlias = "op"
+    )
+    public ApiResult<PagingVO<OverseasProviderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasProviderDTO.PagingParamDTO> dto) {
+        PagingVO<OverseasProviderDTO.ListDTO> result = overseasProviderService.paging(dto);
+        return success(result);
+    }
 
-
+    /**
+     * 详情
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param id
+     * @return ApiResult<FbaDeliveryDTO.ViewDTO>>
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:view",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<OverseasProviderDTO.ViewDTO> view(@RequestParam("id") String id) {
+        OverseasProviderDTO.ViewDTO result = overseasProviderService.view(id);
+        return success(result);
+    }
 }
