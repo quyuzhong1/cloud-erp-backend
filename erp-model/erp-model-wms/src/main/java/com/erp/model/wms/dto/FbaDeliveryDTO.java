@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -65,7 +66,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 审核时间
          */
-         private List<LocalDateTime> approveTimeList;
+         private List<LocalDate> approveTimeList;
          /**
          * 单据编号
          */
@@ -126,7 +127,7 @@ public class FbaDeliveryDTO implements Serializable {
          /**
          * 创建时间
          */
-         private List<LocalDateTime> createTimeList;
+         private List<LocalDate> createTimeList;
      }
 
     /**
