@@ -12,6 +12,7 @@ package ${package.ServiceImpl};
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
+import com.common.business.dto.base.BaseResultDTO;
 </#if>
 
 import cn.hutool.core.util.StrUtil;
