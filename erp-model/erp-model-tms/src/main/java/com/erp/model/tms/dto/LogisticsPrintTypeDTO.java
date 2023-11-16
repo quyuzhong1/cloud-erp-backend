@@ -90,7 +90,6 @@ public class LogisticsPrintTypeDTO implements Serializable {
          * allocateCargoBill  配货单
          * customsBill  报关单
         */
-        @NotBlank(message = "打印类型不能为空")
         private String printType;
 
         /**

@@ -186,7 +186,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         sourceIdList.add(id);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             sourceIdList.addAll(logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList()));
-            List<String> LogisticsWarehouseIdList=logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
+            List<String> LogisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
             logisticsWarehouseService.removeByIds(LogisticsWarehouseIdList);
         }
         //删除渠道根据来源id
@@ -197,19 +197,25 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     /**
      * 物流商物流渠道同步
-     *@parms id
-     *@return
-     *@author yl
-     *@date 2023-11-15
+     *
+     * @return
+     * @parms id
+     * @author yl
+     * @date 2023-11-15
      */
     @Override
-    public Boolean sync(String id) {
+    public BatchResultDTO sync(String id) {
+        LogisticsSupplierEntity logisticsSupplier = this.getById(id);
+        if(Objects.isNull(logisticsSupplier)){
+            throw new ServiceException("供应商不存在");
+        }
+
         return null;
     }
 
     @Override
     public Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
-       List<LogisticsSupplierDTO.PagingViewDTO>list = baseMapper.listExport(dto);
+        List<LogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
         fillPagingData(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/logisticsSupplier.xlsx";
