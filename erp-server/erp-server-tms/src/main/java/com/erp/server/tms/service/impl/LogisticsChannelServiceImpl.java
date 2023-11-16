@@ -265,6 +265,28 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean copy(String id) {
+        LogisticsChannelEntity channel = this.getById(id);
+        if (Objects.isNull(channel)) {
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        LogisticsChannelEntity addChannel = new LogisticsChannelEntity();
+        BeanMapperUtils.copy(channel, addChannel);
+        Boolean result = this.save(addChannel);
+
+        //平台物流映射
+        logisticsMappingService.copy(id,addChannel.getId());
+        //面单设置 打印类型
+        logisticsPrintTypeService.copy(id,addChannel.getId());
+        //物流地址
+        logisticsChannelAddressService.copy(id,addChannel.getId());
+        //发货限制 黑名单
+        logisticsChannelBlacklistService.copy(id,addChannel.getId());
+        return result;
+    }
+
     private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {
         if (CollectionUtils.isEmpty(sourceIdList)) {
             return Collections.emptyList();

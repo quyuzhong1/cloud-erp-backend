@@ -8,6 +8,7 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
@@ -92,6 +93,16 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             return;
         }
         this.lambdaUpdate().in(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelIdList).remove();
+    }
+
+    @Override
+    public void copy(String channelId, String addChannelId) {
+        List<LogisticsChannelBlacklistEntity> list = listDbByChannelId(channelId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<LogisticsChannelBlacklistEntity> addList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
+            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            this.saveBatch(addList);
+        }
     }
 
     public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {

@@ -51,4 +51,14 @@ public interface LogisticsPrintTypeService extends SuperService<LogisticsPrintTy
      *@date 2023-11-15
      */
     void removeByChannelIdList(List<String> channelIdList);
+
+
+    /**
+     *复制渠道
+     *@parms channelId 复制的渠道id
+     *@return addChannelId 添加的渠道id
+     *@author yl
+     *@date 2023-11-15
+     */
+    void copy(String channelId, String addChannelId);
 }

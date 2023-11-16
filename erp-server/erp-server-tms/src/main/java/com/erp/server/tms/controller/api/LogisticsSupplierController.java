@@ -26,6 +26,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,6 +123,35 @@ public class LogisticsSupplierController extends BaseController {
        List<LogisticsSupplierDTO.ChannelViewDTO> channelViewList=logisticsSupplierService.listChannelView(id);
        return success(channelViewList);
     }
+
+
+    /**
+     * 物流渠道同步
+     *
+     * @param
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-11-02
+     */
+    @PostMapping("/sync")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道同步")
+    public ApiResult sync(@RequestBody BaseIdDTO dto) {
+        Boolean result = logisticsSupplierService.sync(dto.getId());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
+    public ApiResult export(@RequestBody @Valid LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = logisticsSupplierService.export(dto,response);
+        return result ? success() : failure();
+    }
+
 
     /**
      * 物流商删除
