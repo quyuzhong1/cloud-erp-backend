@@ -1634,5 +1634,22 @@
         WHERE is_deleted = false and string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
     </select>
 
+    <select id="listProductBySkuIds" resultType="com.erp.model.plm.dto.ProductDetailDTO$ProductDTO">
+            select
+                pi.id as productId,
+                pd.id as skuId,
+                pd.sku_no,
+                pi.category,
+                pi.property
+            from  product_detail pd
+            left join product_info pi on pi.id = pd.product_id and pi.is_deleted = false
+            <where>
+                pd.is_deleted = false and pd.id in
+                <foreach collection="skuIds" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </where>
+    </select>
+
 
 </mapper>
