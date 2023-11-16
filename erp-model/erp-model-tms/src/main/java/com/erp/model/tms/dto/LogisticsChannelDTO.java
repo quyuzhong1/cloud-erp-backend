@@ -101,7 +101,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 时效
          */
-        private Integer effectiveTime;
+        private String effectiveTime;
 
         /**
          * 时效单位
@@ -370,7 +370,6 @@ public class LogisticsChannelDTO implements Serializable {
          * 费用规则
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=shippingFeeRule
          */
-        @NotBlank(message = "费用规则不能为空")
         private String feeRule;
 
         /**
@@ -400,7 +399,6 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 重量上限
          */
-        @NotNull(message = "重量上限不能为空")
         private BigDecimal maxWeight;
 
         /**
@@ -414,25 +412,21 @@ public class LogisticsChannelDTO implements Serializable {
          * 税费模式
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=taxModel
          */
-        @NotBlank(message = "税费模式不能为空")
         private String taxModel;
 
         /**
          * 是否ioss 预交
          */
-        @NotNull(message = "是否ioss 预交不能为空")
         private Boolean isIossPrepay;
 
         /**
          * 是否签名服务
          */
-        @NotNull(message = "是否签名服务不能为空")
         private Boolean isApiSign;
 
         /**
          * 是否保险
          */
-        @NotNull(message = "是否保险不能为空")
         private Boolean isApiInsurance;
 
 

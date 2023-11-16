@@ -135,9 +135,26 @@ public class LogisticsSupplierController extends BaseController {
      */
     @PostMapping("/sync")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道同步")
-    public ApiResult sync(@RequestBody BaseIdDTO dto) {
-        Boolean result = logisticsSupplierService.sync(dto.getId());
-        return result ? success() : failure();
+    public ApiResult sync(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = logisticsSupplierService.sync(id);
+            } catch (Exception e) {
+                log.error("物流渠道同步失败{}", e);
+                LogisticsSupplierEntity entity = logisticsSupplierService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "物流商不存在, 同步失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getSupplierName(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

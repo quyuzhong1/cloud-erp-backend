@@ -79,7 +79,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@author yl
      *@date 2023-11-15
      */
-    Boolean sync(String id);
+    BatchResultDTO sync(String id);
 
     
     /**
