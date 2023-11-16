@@ -377,4 +377,19 @@ public class ProductSkuFeignController {
         }
         return productSaleService.listBySkuIds(skuIds);
     }
+
+    /**
+     * @description: 根据skuid查询产品信息
+     * @author Will
+     * @date: 2023/11/16 15:16
+     * @param skuIds
+     * @return List<ProductDTO>
+     */
+    @PostMapping("/listProductBySkuIds")
+    public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        return productInfoService.listProductBySkuIds(skuIds);
+    }
 }
