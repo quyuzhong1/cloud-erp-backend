@@ -1,8 +1,10 @@
 package com.sdk.tms.disifang.model.order.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -64,6 +66,7 @@ public class DeclareProductInfo implements Serializable {
      * 3	申报数量
      * 是
      */
+    @NotNull(message = "申报数量不能为空")
     @JSONField(name = "declare_product_code_qty")
     private Integer declare_product_code_qty;
     /**
@@ -100,24 +103,28 @@ public class DeclareProductInfo implements Serializable {
      * 23	出口国/起始国/发件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
      * 是
      */
+    @NotNull(message = "起始国申报单价不能为空")
     @JSONField(name = "declare_unit_price_export")
     private BigDecimal declare_unit_price_export;
     /**
      * USD	出口国/起始国/发件人国家_申报单价币种（按照ISO标准；支持的币种，根据物流产品+收件人国家配置；币种需和进口国申报币种一致）
      *  是
      */
+    @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "起始国申报单价币种代码有误")
     @JSONField(name = "currency_export")
     private String currency_export;
     /**
      * 进口国/目的国/收件人国家_申报单价（按对应币别的法定单位，最多4位小数点）
      *  是
      */
+    @NotNull(message = "目的国申报单价不能为空")
     @JSONField(name = "declare_unit_price_import")
     private BigDecimal declare_unit_price_import;
     /**
      * 进口国/目的国/收件人国家_申报单价币种（按照ISO标准；支持的币种，根据物流产品+收件人国家配置；币种需和出口国申报币种一致）
      * 是
      */
+    @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "目的国申报单价币种代码有误")
     @JSONField(name = "currency_import")
     private String currency_import;
     /**

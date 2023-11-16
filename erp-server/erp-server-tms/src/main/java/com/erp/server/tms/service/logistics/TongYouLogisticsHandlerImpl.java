@@ -89,7 +89,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
             TongYouPrintLabelRequest request = TongYouPrintLabelRequest.builder()
                     .orderNo(logisticsGetLabelVO.getDeliveryNo())
                     .trackNo(logisticsGetLabelVO.getTrackNo())
-                    .logisticsId(logisticsGetLabelVO.getLogisticsChannelEntity().getCode())
+                    .logisticsId(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                     .isPaoc(logisticsGetLabelVO.getIsPdn())
                     .isPcd(logisticsGetLabelVO.getIsPcd())
                     .build();

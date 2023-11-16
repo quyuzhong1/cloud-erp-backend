@@ -2,6 +2,7 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
@@ -60,10 +61,15 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsProductVO.setPrice(new BigDecimal("12"));
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(10);
+        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
+        logisticsSaleChannel.setCode("MX1001");
+        logisticsSaleChannel.setShipmentMethod("Express-Post");
+        logisticsSaleChannel.setPlatformChannelId("155");
+
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
-                .channelCode("MX1001")
-                .channelId("155")
+//                .channelCode("MX1001")
+//                .channelId("155")
                 .orderSource("ERP")
                 .deliveryNo("wj12345167721")
                 .receiverInfoVO(ReceiverInfoVO.builder()

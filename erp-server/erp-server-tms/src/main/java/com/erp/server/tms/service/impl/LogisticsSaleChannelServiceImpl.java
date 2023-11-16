@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -17,6 +18,7 @@ import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,9 +102,21 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
 
     @Override
     public Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity) {
+        LambdaQueryWrapper<LogisticsSaleChannelEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsSaleChannelEntity.getLogisticsPlatform());
+        queryWrapper.eq(LogisticsSaleChannelEntity::getCode, logisticsSaleChannelEntity.getCode());
+        if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getOriginCountry())){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getOriginCountry, logisticsSaleChannelEntity.getOriginCountry());
+        }
+        if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getDestinationCountry())){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getDestinationCountry, logisticsSaleChannelEntity.getDestinationCountry());
+        }
+        if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getShipmentMethod())){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getShipmentMethod, logisticsSaleChannelEntity.getShipmentMethod());
+        }
+        queryWrapper.last("limit 1");
+        LogisticsSaleChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
-        LogisticsSaleChannelEntity one = lambdaQuery().eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsSaleChannelEntity.getLogisticsPlatform())
-                .eq(LogisticsSaleChannelEntity::getCode, logisticsSaleChannelEntity.getCode()).last("limit 1").one();
         if (Objects.nonNull(one)){
             logisticsSaleChannelEntity.setId(one.getId());
         }

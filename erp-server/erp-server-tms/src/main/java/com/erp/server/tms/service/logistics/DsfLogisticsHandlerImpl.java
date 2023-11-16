@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,15 +62,27 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         logisticsOrderVO.getLogisticsProductVOList().forEach(logisticsProductVO -> {
             Parcel parcel = new Parcel();
             parcel.setWeight(logisticsProductVO.getWeight());
-            parcel.setParcel_value(logisticsProductVO.getDeclarePrice());
-            parcel.setCurrency(logisticsProductVO.getDeclareCurrency());
-            if (logisticsProductVO.isElectric()) {
+            parcel.setParcel_value(logisticsProductVO.getPrice().multiply(BigDecimal.valueOf(logisticsProductVO.getQuantity())));
+            parcel.setCurrency(logisticsOrderVO.getParceInfoVO().getCurrency());
+            if (logisticsProductVO.getIsElectric()) {
                 parcel.setInclude_battery("Y");
             } else {
                 parcel.setInclude_battery("N");
             }
             //海关申报信息
             DeclareProductInfo productInfo = LogisticsOrderConverter.INSTANCE.dsfProductMapping(logisticsProductVO);
+            if (StringUtils.isEmpty(productInfo.getCountry_export())){
+                productInfo.setCountry_export(logisticsOrderVO.getSenderInfo().getCountry());
+            }
+            if (StringUtils.isEmpty(productInfo.getCountry_import())){
+                productInfo.setCountry_import(logisticsOrderVO.getReceiverInfoVO().getCountry());
+            }
+            if (StringUtils.isEmpty(productInfo.getCurrency_export())){
+                productInfo.setCurrency_export(logisticsOrderVO.getParceInfoVO().getCurrency());
+            }
+            if (StringUtils.isEmpty(productInfo.getCurrency_import())){
+                productInfo.setCurrency_import(logisticsOrderVO.getParceInfoVO().getCurrency());
+            }
             parcel.setDeclare_product_info(Collections.singletonList(productInfo));
             parcelList.add(parcel);
         });
@@ -80,11 +95,9 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         OrderRequest orderRequest = LogisticsOrderConverter.INSTANCE.orderRequestToDsf(logisticsOrderVO);
         //包裹信息封装
         orderRequest.setParcelList(getParcel(logisticsOrderVO));
-        //保险信息封装 暂时不做 默认为N
-        orderRequest.setIs_insure("N");
         ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
         if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-            apiResult.setMsg(responseMsg.getMsg());
+            apiResult.setMsg(responseMsg.getErrors().get(0).getErrorMsg());
             apiResult.setCode(-1);
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
@@ -124,7 +137,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             CancelResponseVO responseVO = new CancelResponseVO();
             try {
                 OrderCancelRequest orderCancelRequest = OrderCancelRequest.builder()
-                        .request_no(logisticsQueryVO.getTransportNo())
+                        .request_no(logisticsQueryVO.getDeliveryNo())
                         .cancel_reason(StringUtils.isBlank(logisticsQueryVO.getReason()) ? "订单取消" : logisticsQueryVO.getReason())
                         .build();
                 ResponseMsg orderResponse = dsfShipperService.cancelOrder(logisticsCancelOrderVO.getAuthMap(), orderCancelRequest);
@@ -169,7 +182,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             InterceptResponseVO responseVO = new InterceptResponseVO();
             try {
                 OrderInterceptRequest orderInterceptRequest = OrderInterceptRequest.builder()
-                        .request_no(logisticsQueryVO.getTransportNo())
+                        .request_no(logisticsQueryVO.getDeliveryNo())
                         .holdReason(StringUtils.isBlank(logisticsQueryVO.getInterceptReason()) ? "订单拦截" : logisticsQueryVO.getInterceptReason())
                         .build();
                 ResponseMsg orderResponse = dsfShipperService.interceptOrder(logisticsQueryVO.getAuthMap(), orderInterceptRequest);
@@ -215,54 +228,26 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             ResponseMsg responseMsg = dsfShipperService.queryOrder(logisticsQueryBaseVO.getAuthMap(), orderQueryRequest);
             //失败
             if (!StringUtils.isBlank(responseMsg.getResult()) && Objects.equals("1", responseMsg.getResult())) {
-                QueryOrderResponse queryOrderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(responseMsg.getData()), QueryOrderResponse.class);
-                LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                        .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
-                        .trackNo(queryOrderResponse.getConsignmentInfo().getTracking_no())
-                        .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
-                        .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())
-                        .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
-                        .build();
-                logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
-                        logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responseMsg));
-                list.add(orderResponseVO);
+//                List<QueryOrderResponse> responses = JSONUtil.toList(JSONUtil.parseArray(responseMsg.getData()), QueryOrderResponse.class);
+                List<QueryOrderResponse> responses = JSONObject.parseArray(responseMsg.getData().toString(), QueryOrderResponse.class);
+                if (CollectionUtils.isNotEmpty(responses)){
+                    responses.forEach(queryOrderResponse ->{
+                        LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                                .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
+                                .trackNo(queryOrderResponse.getConsignmentInfo().getTrackingNo())
+                                .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
+                                .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())
+                                .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
+                                .build();
+                        logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                                logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
+                                RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responseMsg));
+                        list.add(orderResponseVO);
+                    });
+                }
             }
         });
         return success(list);
-    }
-
-    /**
-     * 查询订单
-     *
-     * @param logisticsQueryVO
-     * @return
-     */
-    public ApiResult<LogisticsOrderResponseVO> queryOrder(LogisticsQueryBaseVO logisticsQueryVO) {
-        OrderQueryRequest orderQueryRequest = OrderQueryRequest.builder()
-                .request_no(logisticsQueryVO.getTransportNo())
-                .build();
-        ResponseMsg responseMsg = dsfShipperService.queryOrder(logisticsQueryVO.getAuthMap(), orderQueryRequest);
-        //失败
-        if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getAuthMap().get("id"),
-                    logisticsQueryVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
-            return failure(responseMsg.getMsg());
-        } else {
-            QueryOrderResponse queryOrderResponse = JSONUtil.toBean(JSONUtil.toJsonStr(responseMsg.getData()), QueryOrderResponse.class);
-            LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                    .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
-                    .trackNo(queryOrderResponse.getConsignmentInfo().getTracking_no())
-                    .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
-                    .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())
-                    .odaResultSign(queryOrderResponse.getConsignmentInfo().getOda_result_sign())
-                    .build();
-            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getAuthMap().get("id"),
-                    logisticsQueryVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
-            return success(orderResponseVO);
-        }
     }
 
     /**
@@ -279,7 +264,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
                 .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
-                .logisticsProductCode(logisticsGetLabelVO.getLogisticsChannelEntity().getCode())
+                .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();
         ResponseMsg responseMsg = dsfShipperService.getLabelList(logisticsGetLabelVO.getAuthMap(), labelRequest);
         LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
@@ -325,7 +310,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
             return failure(responseMsg.getMsg());
         } else {
-            List<ChanelInfo> chanelInfos = JSONUtil.toList(JSONUtil.toJsonStr(responseMsg.getData()), ChanelInfo.class);
+            List<ChanelInfo> chanelInfos = JSONObject.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));

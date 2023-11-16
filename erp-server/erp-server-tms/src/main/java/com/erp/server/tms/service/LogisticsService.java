@@ -28,6 +28,13 @@ public interface LogisticsService {
     Map<String, String> getLogisticsAuthConfig(String authId);
 
     /**
+     * 根据平台获取授权列表
+     * @param platform
+     * @return
+     */
+    List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform);
+
+    /**
      * 创建订单
      *
      * @param logisticsOrderVO

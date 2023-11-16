@@ -85,6 +85,21 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     */
     @TableField("aging")
     private String aging;
+    /**
+     * 发货地
+     */
+    @TableField("origin_country")
+    private String originCountry;
+    /**
+     * 目的地
+     */
+    @TableField("destination_country")
+    private String destinationCountry;
+    /**
+     * 授权表ID
+     */
+    @TableField("auth_id")
+    private String authId;
 
 
     public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";

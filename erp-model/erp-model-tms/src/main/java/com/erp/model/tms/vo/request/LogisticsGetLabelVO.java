@@ -17,7 +17,7 @@ public class LogisticsGetLabelVO extends LogisticsQueryBaseVO implements Seriali
     /**
      * 物流产品代码 递四方必填
      */
-    private LogisticsChannelEntity logisticsChannelEntity;
+    private LogisticsSaleChannelEntity logisticsSaleChannelEntity;
 
     //打印配货单(Y:打印;N:不打印)
     private String isPdn;

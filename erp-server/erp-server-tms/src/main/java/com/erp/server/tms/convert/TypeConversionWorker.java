@@ -66,7 +66,8 @@ public class TypeConversionWorker {
             return null;
         }
         if (obj instanceof Integer){
-            return (Double)obj/1000;
+            int res = (Integer) obj/1000;
+            return (double) res;
         }else if (obj instanceof Double){
             Double d = (Double) obj;
             return d/1000;
