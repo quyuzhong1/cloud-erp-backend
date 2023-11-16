@@ -31,6 +31,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleResponse;
@@ -169,8 +170,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
             List<String> shipmentIdList = dto.getShipmentCodeList();
             // 请求亚马逊接口
-            InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
-            if (CollectionUtils.isEmpty(responseList)) {
+            GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
+
+            InboundShipmentList responseList = shipments.getPayload().getShipmentData();
+            if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
                 return true;
             }
             // 返回下载源数据
