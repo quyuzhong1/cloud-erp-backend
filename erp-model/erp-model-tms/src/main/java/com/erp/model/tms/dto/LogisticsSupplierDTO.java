@@ -48,6 +48,14 @@ public class LogisticsSupplierDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+
+        /**
+         * 物流商类型
+         *
+         */
+        @NotBlank(message = "物流类型不能为空")
+        private String type;
+
         /**
          * 物流商
          */
@@ -73,6 +81,12 @@ public class LogisticsSupplierDTO implements Serializable {
         private List<LocalDateTime>  updateTimeList;
 
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO{
+        private List<String> ids;
     }
 
     @Data

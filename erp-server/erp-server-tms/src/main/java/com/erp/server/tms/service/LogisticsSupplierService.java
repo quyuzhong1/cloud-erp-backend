@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -70,4 +71,23 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-11-15
      */
     BatchResultDTO delete(String id);
+
+    /**
+     * 物流商物流渠道同步
+     *@parms id
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    Boolean sync(String id);
+
+    
+    /**
+     * 导出
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-11-15
+     */
+    Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse httpServletResponse);
 }

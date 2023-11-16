@@ -12,8 +12,10 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -35,10 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -193,6 +194,38 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
 
     }
+
+    /**
+     * 物流商物流渠道同步
+     *@parms id
+     *@return
+     *@author yl
+     *@date 2023-11-15
+     */
+    @Override
+    public Boolean sync(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
+       List<LogisticsSupplierDTO.PagingViewDTO>list = baseMapper.listExport(dto);
+        fillPagingData(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/logisticsSupplier.xlsx";
+        String name = "物流商列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("物流商导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 
     /**
      * 填充分页数据

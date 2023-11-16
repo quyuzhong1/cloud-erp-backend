@@ -5,6 +5,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
 import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
+import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.server.tms.mapper.LogisticsChannelAddressMapper;
 import com.erp.server.tms.service.LogisticsChannelAddressService;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +81,16 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
         }
         this.lambdaUpdate().eq(LogisticsChannelAddressEntity::getLogisticsChannelId, channelIdList).remove();
 
+    }
+
+    @Override
+    public void copy(String channelId, String addChannelId) {
+        List<LogisticsChannelAddressEntity> list = listDbByChannelId(channelId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<LogisticsChannelAddressEntity> addList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
+            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            this.saveBatch(addList);
+        }
     }
 
     public List<LogisticsChannelAddressEntity> listDbByChannelId(String channelId) {
