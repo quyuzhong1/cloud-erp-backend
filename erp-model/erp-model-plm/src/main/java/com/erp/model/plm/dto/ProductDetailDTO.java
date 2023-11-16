@@ -202,4 +202,38 @@ public class ProductDetailDTO implements Serializable {
         private Integer status;
 
     }
+
+
+    /**
+     * 产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDTO {
+
+        /**
+         * 产品id
+         */
+        private String productId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 分类
+         */
+        private String category;
+
+        /**
+         * 属性
+         */
+        private String property;
+    }
 }

@@ -34,6 +34,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -1888,14 +1889,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         JSONObject  json = JSONUtil.parseObj(entity);
         //匹配审核规则
-        List<JSONObject> jsonList = new ArrayList<>();
-        for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
-            JSONObject jsonObject = JSONUtil.parseObj(soB2cDetailEntity);
-            for (Map.Entry<String, Object> entry : json.entrySet()) {
-                jsonObject.set(entry.getKey(),entry.getValue());
-            }
-            jsonList.add(jsonObject);
-        }
+        List<JSONObject> jsonList = handleMatchJson(id, detailList);
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonList);
         //审核规则是否通过
         Boolean approveSuccess = ObjectUtils.isEmpty(ruleOrderMatchResult) ? Boolean.FALSE : Boolean.TRUE;
@@ -1937,6 +1931,99 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //标识异常并且审核不通过
         updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
         return Boolean.FALSE;
+    }
+    
+    /**
+     * @description: 审核规则匹配字段处理
+     * @author Will
+     * @date: 2023/11/16 15:27
+     * @param id 
+     * @param detailList 
+     * @return List<JSONObject> 
+     */
+    private List<JSONObject> handleMatchJson (String id,List<SoB2cDetailEntity> detailList) {
+        SoB2cEntity soB2cEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (ObjectUtil.isEmpty(logisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
+        if (ObjectUtil.isEmpty(receiverEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceService.getByMainId(id);
+        if (ObjectUtil.isEmpty(soB2cFinanceEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+        }
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIdList);
+
+        List<JSONObject> jsonList = new ArrayList<>();
+        for (SoB2cDetailEntity detailEntity : detailList) {
+            JSONObject jsonObject= new  JSONObject();
+            jsonObject.set("payTime",soB2cEntity.getPayTime());
+            jsonObject.set("dictPayMethod",soB2cEntity.getDictPayMethod());
+            jsonObject.set("platformSkuNo",detailEntity.getPlatformSkuNo());
+            jsonObject.set("sellerSkuNo",detailEntity.getSellerSkuNo());
+            jsonObject.set("skuQty",detailEntity.getQty());
+            jsonObject.set("goodsTotalQty",soB2cEntity.getAmount());
+            jsonObject.set("packageWeight",logisticsEntity.getWeight());
+            jsonObject.set("packageLength",logisticsEntity.getLength());
+            jsonObject.set("packageHeight",logisticsEntity.getHeight());
+            jsonObject.set("shop",soB2cEntity.getShopId());
+            jsonObject.set("skuNo",detailEntity.getSkuNo());
+            jsonObject.set("amount",detailEntity.getAmount());
+            jsonObject.set("actualShippingCost",logisticsEntity.getActualShippingCost());
+            jsonObject.set("estimatedShippingCost",logisticsEntity.getEstimatedShippingCost());
+            jsonObject.set("dictLogisticsMethod",logisticsEntity.getDictLogisticsMethod());
+            jsonObject.set("dictPlatform",soB2cEntity.getDictPlatform());
+            //是否买家留言
+            jsonObject.set("isHavebuyerRemark",null);
+
+            //明细标签处理
+            String detailLabelJson = detailEntity.getLabelJson();
+            if (StrUtil.isNotBlank(detailLabelJson)) {
+                SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabelJson, SoB2cDetailDTO.LabelJsonDTO.class);
+                //速卖通已税
+                if ("U_TAXED".equals(labelJsonDTO.getAlreadyTaxed()) || "I_TAXED".equals(labelJsonDTO.getAlreadyTaxed())) {
+                    jsonObject.set("isAliExpressTaxOrder",Boolean.TRUE);
+                }
+                //菜鸟官方仓
+                if ("cainiaoInternationalWarehouse".equals(labelJsonDTO.getLogisticsWarehouseType())) {
+                    jsonObject.set("isAliExpressNewbieWarehouse",Boolean.TRUE);
+                }
+            }
+            //主表标签处理
+            String mainLabelJson = soB2cEntity.getLabelJson();
+            if (StrUtil.isNotBlank(mainLabelJson)) {
+                SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(mainLabelJson, SoB2cDTO.LabelJsonDTO.class);
+                //FBA
+                if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
+                    jsonObject.set("isAmazonFBA",Boolean.TRUE);
+                }
+            }
+            jsonObject.set("isCombinationOrder",null);
+
+            ProductDetailDTO.ProductDTO productDTO = productList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(productDTO)) {
+                jsonObject.set("category",productDTO.getCategory());
+                jsonObject.set("property",productDTO.getProperty());
+            }
+            jsonObject.set("deliveryWarehouseId",detailEntity.getWarehouseId());
+            jsonObject.set("deliveryWarehouseLocation",detailEntity.getWarehouseLocation());
+            jsonObject.set("packageWidth",logisticsEntity.getWidth());
+            jsonObject.set("deliveryWarehouseQty",null);
+            jsonObject.set("sellerLogistics",logisticsEntity.getName());
+            jsonObject.set("destCountry",receiverEntity.getCountry());
+            jsonObject.set("destCity",receiverEntity.getCityName());
+            jsonObject.set("orderTaxCost",detailEntity.getTaxCost());
+            jsonObject.set("orderProfitRate",null);
+            jsonList.add(jsonObject);
+        }
+        return jsonList;
     }
 
     /**

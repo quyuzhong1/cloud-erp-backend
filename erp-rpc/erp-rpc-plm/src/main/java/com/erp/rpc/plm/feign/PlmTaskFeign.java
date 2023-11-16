@@ -442,4 +442,14 @@ public interface PlmTaskFeign {
      **/
     @PostMapping("feign/bom/listBomVersionBySkuNos")
     List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
+     * @description: 根据skuId集合信息查询（只查了spu、sku表）
+     * @author Will
+     * @date: 2023/11/16 15:14
+     * @param skuIdList
+     * @return List<ProductDTO>
+     */
+    @PostMapping("feign/product/listProductBySkuIds")
+    List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIdList);
 }
