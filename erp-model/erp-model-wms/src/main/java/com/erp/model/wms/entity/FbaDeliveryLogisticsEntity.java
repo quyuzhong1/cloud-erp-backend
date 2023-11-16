@@ -5,6 +5,8 @@ import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -55,6 +57,12 @@ public class FbaDeliveryLogisticsEntity extends BaseEntity<FbaDeliveryLogisticsE
     */
     @TableField("remark")
     private String remark;
+
+    /**
+    * 物流跟踪号
+    */
+    @TableField(exist = false)
+    private List<String> trackingNoList;
 
     public static final String MAIN_ID = "main_id";
 

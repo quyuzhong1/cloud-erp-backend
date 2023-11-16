@@ -98,13 +98,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         if(!save) {
             throw new ServiceException("FBA发货单物流信息单保存失败");
         }
-        //更新物流信息
-        if (CollectionUtils.isNotEmpty(updateDTO.getTrackingNoList())) {
-            FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave = new FbaDeliveryLogisticsDTO.DeliveryLogisticsSave();
-            BeanMapper.copy(updateDTO, deliveryLogisticsSave);
-            deliveryLogisticsSave.setMainId(mainId);
-            this.saveUpdateLogistics(Arrays.asList(deliveryLogisticsSave));
-        }
 
         // 记录主单操作日志
         log.info("编辑 开始记录FBA发货单物流信息单日志数据，id：【{}】", fbaDeliveryLogisticsEntity.getId());
@@ -137,7 +130,8 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     private void handleData(FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity, String mainId, String code) {
         fbaDeliveryLogisticsEntity.setMainId(mainId);
         fbaDeliveryLogisticsEntity.setDeliveryCode(code);
-
+        //更新物流信息
+        this.saveUpdateLogistics(Arrays.asList(fbaDeliveryLogisticsEntity));
     }
 
     @Override
@@ -162,7 +156,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
+    public Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsEntity> dto) {
         List<FbaDeliveryLogisticsEntity> list = new ArrayList<>();
         //查询发货单信息
         List<String> mainIds = dto.stream().map(req -> req.getMainId()).collect(Collectors.toList());
@@ -173,17 +167,16 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(shipmentIds);
 
         //更新FBA物流信息
-        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
+        for (FbaDeliveryLogisticsEntity deliveryLogisticsSave : dto) {
             FbaDeliveryLogisticsEntity entity = new FbaDeliveryLogisticsEntity();
             BeanMapper.copy(deliveryLogisticsSave, entity);
-            entity.setRemark(deliveryLogisticsSave.getLogisticsRemark());
             list.add(entity);
         }
-        boolean flag = this.updateBatchById(list);
+        boolean flag = this.saveOrUpdateBatch(list);
 
         //更新物流单信息
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-        for (FbaDeliveryLogisticsDTO.DeliveryLogisticsSave deliveryLogisticsSave : dto) {
+        for (FbaDeliveryLogisticsEntity deliveryLogisticsSave : dto) {
             FbaDeliveryEntity fbaDeliveryEntity = fbaDeliveryEntities.stream().filter(req -> req.getId().equals(deliveryLogisticsSave.getMainId())).findFirst().orElse(new FbaDeliveryEntity());
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setShopId(fbaDeliveryEntity.getShopId());
@@ -195,7 +188,7 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
             addDTO.setOutstockId("");
             addDTO.setOutstockCode("");
-            addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel());
+            addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel()==null?"":deliveryLogisticsSave.getLogisticsChannel());
             addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime());
             List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
             FbaShipmentEntity entity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getSourceId())).findFirst().orElse(new FbaShipmentEntity());

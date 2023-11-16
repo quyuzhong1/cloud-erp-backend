@@ -81,5 +81,5 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto);
+    Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsEntity> dto);
 }
