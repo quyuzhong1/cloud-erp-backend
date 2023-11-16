@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * 海外物流商
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
 */
 @Data

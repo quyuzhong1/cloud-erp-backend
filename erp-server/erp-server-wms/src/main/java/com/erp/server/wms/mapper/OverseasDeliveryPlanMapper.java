@@ -17,7 +17,7 @@ import java.util.List;
  * 发货计划 Mapper 接口
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Mapper

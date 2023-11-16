@@ -12,14 +12,14 @@ import java.util.List;
  * 海外物流商 服务类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 public interface OverseasProviderService extends SuperService<OverseasProviderEntity> {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -28,7 +28,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return

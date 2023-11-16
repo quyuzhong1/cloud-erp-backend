@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 要货申请单 Mapper 接口
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Mapper

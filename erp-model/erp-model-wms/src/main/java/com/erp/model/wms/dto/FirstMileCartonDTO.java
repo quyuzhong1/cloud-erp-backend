@@ -15,7 +15,7 @@ import javax.validation.constraints.Digits;
  * 发货单箱规信息请求响应实体
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
 */
 @Data

@@ -9,14 +9,14 @@ import com.erp.model.wms.dto.FirstMileCartonDTO;
  * 发货单箱规信息 服务类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 public interface FirstMileCartonService extends SuperService<FirstMileCartonEntity> {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -25,7 +25,7 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return

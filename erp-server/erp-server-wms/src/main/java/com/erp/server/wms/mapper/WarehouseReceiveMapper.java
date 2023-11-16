@@ -18,7 +18,7 @@ import java.util.List;
  *  采购收货单Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-06
  */
 @Mapper

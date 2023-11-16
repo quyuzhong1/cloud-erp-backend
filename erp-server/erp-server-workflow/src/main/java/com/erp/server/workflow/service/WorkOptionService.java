@@ -18,7 +18,7 @@ import java.util.List;
  *  工作台选项表服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-11
  */
 public interface WorkOptionService extends SuperService<WorkOptionEntity> {

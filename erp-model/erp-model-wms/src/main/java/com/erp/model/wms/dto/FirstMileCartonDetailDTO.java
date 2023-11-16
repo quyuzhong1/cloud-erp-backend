@@ -13,7 +13,7 @@ import javax.validation.constraints.Size;
  * 发货单箱子信息表请求响应实体
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
 */
 @Data

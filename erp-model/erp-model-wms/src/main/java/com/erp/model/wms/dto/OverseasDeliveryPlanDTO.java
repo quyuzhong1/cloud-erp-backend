@@ -18,7 +18,7 @@ import javax.validation.constraints.NotEmpty;
  * 发货计划请求响应实体
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
 */
 @Data

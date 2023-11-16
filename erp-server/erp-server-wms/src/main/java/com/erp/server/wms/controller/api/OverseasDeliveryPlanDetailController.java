@@ -23,7 +23,7 @@ import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 /**
  * 发货计划详情表
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Slf4j
@@ -37,7 +37,7 @@ public class OverseasDeliveryPlanDetailController extends BaseController {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<String>
@@ -50,7 +50,7 @@ public class OverseasDeliveryPlanDetailController extends BaseController {
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult

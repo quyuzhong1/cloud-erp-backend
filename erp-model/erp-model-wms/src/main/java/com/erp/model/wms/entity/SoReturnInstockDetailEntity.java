@@ -14,7 +14,7 @@ import java.io.Serializable;
  * 销售退货入库单明细表
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Getter
