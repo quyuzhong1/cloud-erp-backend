@@ -124,8 +124,6 @@ public class FbaDeliveryLogisticsDTO implements Serializable {
         /**
         * 物流方式
         */
-        @NotBlank(message = "物流方式不能为空")
-        @Size(max = 64,message = "物流方式最大长度不能超过64位")
         private String logisticsMethod;
 
         /**

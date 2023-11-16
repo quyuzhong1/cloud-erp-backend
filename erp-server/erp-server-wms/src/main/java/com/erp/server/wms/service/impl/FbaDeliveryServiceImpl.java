@@ -1002,6 +1002,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private void handleData(FbaDeliveryEntity fbaDeliveryEntity) {
         if (StringUtils.isNotBlank(fbaDeliveryEntity.getSourceId())) {
             FbaShipmentEntity entity = fbaShipmentService.getById(fbaDeliveryEntity.getSourceId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
+            }
             //根据店铺id查询店铺信息
             List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Arrays.asList(entity.getShopId()));
             //设置店铺的仓位为目的仓

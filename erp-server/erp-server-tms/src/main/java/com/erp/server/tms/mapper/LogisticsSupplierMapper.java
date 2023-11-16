@@ -43,4 +43,13 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      * @return
      */
     List<LogisticsSupplierDTO.PagingViewDTO> listExport(@Param("params") LogisticsSupplierDTO.ExportDTO dto);
+
+    /**
+     * 获取渠道信息
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-11-16
+     */
+    LogisticsSupplierEntity getById(@Param("id") String id);
 }

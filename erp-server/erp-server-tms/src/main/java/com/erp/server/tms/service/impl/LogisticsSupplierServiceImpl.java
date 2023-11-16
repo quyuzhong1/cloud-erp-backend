@@ -83,7 +83,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
         boolean save = super.save(logisticsSupplierEntity);
         if (!save) {
-            throw new ServiceException("物理商保存失败");
+            throw new ServiceException("物流商保存失败");
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
@@ -98,15 +98,15 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public Boolean update(LogisticsSupplierDTO.UpdateDTO updateDTO) {
         LogisticsSupplierEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物理商单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
         LogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
 
         // 数据处理
         handleData(logisticsSupplierEntity);
-        log.info("编辑 开始修改物理商单数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改物流商单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsSupplierEntity);
         if (!save) {
-            throw new ServiceException("物理商单保存失败");
+            throw new ServiceException("物流商单保存失败");
         }
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
         operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
@@ -205,10 +205,16 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      */
     @Override
     public BatchResultDTO sync(String id) {
-        LogisticsSupplierEntity logisticsSupplier = this.getById(id);
-        if(Objects.isNull(logisticsSupplier)){
-            throw new ServiceException("供应商不存在");
+        LogisticsSupplierEntity logisticsSupplier = baseMapper.getById(id);
+        if (Objects.isNull(logisticsSupplier)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单");
         }
+        String authStatus = logisticsSupplier.getAuthStatus();
+        String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
+        if (!alreadyCode.equals(authStatus)) {
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+
 
         return null;
     }

@@ -2,7 +2,9 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -57,7 +59,8 @@ public class FbaDeliveryLogisticsController extends BaseController {
      **/
     @PostMapping("/saveUpdateLogistics")
     public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
-        Boolean flag = fbaDeliveryLogisticsService.saveUpdateLogistics(dto);
+        List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FbaDeliveryLogisticsEntity.class);
+        Boolean flag = fbaDeliveryLogisticsService.saveUpdateLogistics(fbaDeliveryLogisticsEntities);
         return flag ? success() : failure();
     }
 

@@ -130,6 +130,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (Objects.nonNull(productLogistics)) {
             BeanMapper.copy(productLogistics, declareInfo);
         }
+        //物流属性
+        productBaseInfo.setLogisticsPropertyName(productLogistics.getProductProperty());
+
         result.setDeclareInfo(declareInfo);
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
         List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
@@ -318,7 +321,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
                 List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {
-                    errorMsgList.add("sku不存在");
+                    errorMsgList.add("sku不存在或者审核不通过");
                 }
                 //国家
                 String countryName = item.getCountry();
@@ -395,7 +398,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     map(ProductDetailEntity::getId).findFirst().orElse("");
             item.setSkuId(skuId);
             BigDecimal taxRate = item.getTaxRate();
-            taxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             item.setTaxRate(taxRate);
         }
         List<String> updateIdList = productCustomsList.stream().filter(c -> StringUtils.isNotEmpty(c.getId())).

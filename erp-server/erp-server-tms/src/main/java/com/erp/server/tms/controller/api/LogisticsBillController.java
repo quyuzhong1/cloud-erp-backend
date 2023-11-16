@@ -1,10 +1,14 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -38,18 +42,7 @@ public class LogisticsBillController extends BaseController {
     @Resource
     private LogisticsBillService logisticsBillService;
 
-    /**
-    * 新增
-    * @author lambda
-    * @date:  2023-11-09
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsBillDTO.AddDTO dto) {
-        return success(logisticsBillService.add(dto));
-    }
+
 
     /**
      * tab 列表
@@ -66,6 +59,24 @@ public class LogisticsBillController extends BaseController {
     public ApiResult<List<LogisticsBillDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<LogisticsBillDTO.TabListDTO> tabList = logisticsBillService.tabList(dto);
         return success(tabList);
+    }
+
+
+    /**
+     * tab 列表
+     * @author yl
+     * @date 2023-11-09 10:54
+     * @param dto
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBill:paging",
+            tableAlias = "logistics_bill_detail"
+    )
+    public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
+
+        return success();
     }
 
 

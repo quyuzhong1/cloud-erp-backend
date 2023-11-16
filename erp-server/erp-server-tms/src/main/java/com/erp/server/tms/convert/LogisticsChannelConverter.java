@@ -1,6 +1,7 @@
 package com.erp.server.tms.convert;
 
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
@@ -107,4 +108,15 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByShopee(LogisticsChannel logisticsChannel);
     List<LogisticsSaleChannelEntity> channelConvertByShopee(List<LogisticsChannel> logisticsChannels);
+
+    @Mappings({
+            @Mapping(target = "name", source = "cnName"),
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "aging", source = "effectiveTime"),
+            @Mapping(target = "id", ignore = true),
+    })
+    List<LogisticsChannelEntity> channelConvertBySaleChannel(List<LogisticsSaleChannelEntity> saleChannelList);
+
+
+
 }
