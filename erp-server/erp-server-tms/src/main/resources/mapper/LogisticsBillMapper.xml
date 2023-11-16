@@ -71,4 +71,30 @@
         </if>
         GROUP BY track_status
     </select>
+    <!--分页列表-->
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
+         SELECT
+             lb.id,
+             lb.sales_platform AS salesPlatform,
+             lb.shop_id AS shopId,
+             lb.shop_name AS shopName,
+             lb.source_type AS sourceType,
+             lb.source_type_name AS sourceTypeName,
+             lb.source_id AS sourceId,
+             lb.source_code AS sourceCode,
+             lb.outstock_id AS outstockId,
+             lb.outstock_code AS outstockCode,
+             lb.channel_id AS channelId,
+             lb.order_time AS orderTime,
+             lb.delivery_time AS deliveryTime,
+             lb.transport_no AS transportNo,
+             lb.to_country AS toCountry,
+             lbd.track_status AS trackStatus ,
+             lbd.track_no AS trackNo,
+             lbd.track_query_mode AS trackQueryMode
+         FROM  logistics_bill_detail lbd
+         LEFT JOIN  logistics_bill lb
+         ON lbd.main_id=lb.id and lb.is_deleted=false
+         WHERE lbd.is_deleted=false
+    </select>
 </mapper>

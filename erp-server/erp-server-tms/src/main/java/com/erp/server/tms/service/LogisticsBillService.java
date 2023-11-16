@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -79,5 +80,12 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      */
     List<LogisticsBillDTO.TabListDTO> tabList(PermissionsDTO dto);
 
-
+    /**
+     * 分页
+     * @author yl
+     * @date 2023-11-16 14:01
+     * @param dto
+     * @return 
+     */
+    PagingVO<LogisticsBillDTO.PagingVO> paging(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
 }

@@ -100,7 +100,10 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         List<LogisticsChannelBlacklistEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<LogisticsChannelBlacklistEntity> addList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
-            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            addList.forEach(obj ->{
+                obj.setLogisticsChannelId(addChannelId);
+                obj.setId("");
+            });
             this.saveBatch(addList);
         }
     }

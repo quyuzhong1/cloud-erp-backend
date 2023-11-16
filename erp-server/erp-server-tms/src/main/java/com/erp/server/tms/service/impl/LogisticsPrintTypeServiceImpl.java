@@ -93,7 +93,10 @@ public class LogisticsPrintTypeServiceImpl extends SuperServiceImpl<LogisticsPri
         List<LogisticsPrintTypeEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<LogisticsPrintTypeEntity> addList = BeanMapperUtils.copyList(LogisticsPrintTypeEntity.class, list);
-            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            addList.forEach(obj ->{
+                obj.setLogisticsChannelId(addChannelId);
+                obj.setId("");
+            });
             this.saveBatch(addList);
         }
     }

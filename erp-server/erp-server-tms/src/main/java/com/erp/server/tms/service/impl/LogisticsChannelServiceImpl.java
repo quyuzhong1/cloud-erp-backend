@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -273,17 +274,19 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         LogisticsChannelEntity addChannel = new LogisticsChannelEntity();
+        String addChannelId = IdWorker.getIdStr();
         BeanMapperUtils.copy(channel, addChannel);
+        addChannel.setId(addChannelId);
         Boolean result = this.save(addChannel);
 
         //平台物流映射
-        logisticsMappingService.copy(id,addChannel.getId());
+        logisticsMappingService.copy(id, addChannelId);
         //面单设置 打印类型
-        logisticsPrintTypeService.copy(id,addChannel.getId());
+        logisticsPrintTypeService.copy(id, addChannelId);
         //物流地址
-        logisticsChannelAddressService.copy(id,addChannel.getId());
+        logisticsChannelAddressService.copy(id, addChannelId);
         //发货限制 黑名单
-        logisticsChannelBlacklistService.copy(id,addChannel.getId());
+        logisticsChannelBlacklistService.copy(id, addChannelId);
         return result;
     }
 

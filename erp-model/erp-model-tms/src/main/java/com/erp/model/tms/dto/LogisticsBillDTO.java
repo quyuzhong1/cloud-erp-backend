@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -53,7 +54,7 @@ public class LogisticsBillDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO{
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 销售平台
          */
