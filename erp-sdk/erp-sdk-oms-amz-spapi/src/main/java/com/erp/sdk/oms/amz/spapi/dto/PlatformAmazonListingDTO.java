@@ -81,8 +81,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private String pendingQuantity;
 
     private String fulfillmentChannel;
-    
-    
+
     private String merchantShippingGroup;
     
     
@@ -92,6 +91,23 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
      * 平台最后修改时间(数据结束时间)
      */
     private LocalDateTime platformUpdateTime;
+
+    /**
+     * 产品规格信息
+     */
+    private String productSpec;
+
+    /**
+     * 产品包装信息
+     */
+    private String productPacking;
+
+    /**
+     * 详情或其他数据下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    private Integer downloadStatus;
 
     /**
      * 转换目标实体:PlatformProductDTO
@@ -120,6 +136,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         // 平台
         resultDto.setPlatform(PlatformDictEnum.AMAZON.getCode());
         resultDto.setUniqueId(sourceEntity.getListingId());
+        resultDto.setDownloadStatus(0);
         return resultDto;
     }
 

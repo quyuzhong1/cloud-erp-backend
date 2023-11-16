@@ -91,8 +91,9 @@ public class BusinessServiceImpl {
         String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
         String tag = StrUtil.format("{}_{}", category, business) + "_tag";
         for (T item : sourceData) {
-            OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
-            List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, tableName, tClass);
+//            OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
+            UniqueDto uniqueDto = UniqueDto.getUniqId(item.getUniqueId());
+            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
             item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             item.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){
@@ -169,8 +170,8 @@ public class BusinessServiceImpl {
         MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(sourceDto), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
 
-        // 异步推送到MQ
         String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, dto));
+        // 异步推送到MQ
         dto.setDmpSyncTaskId(modelTaskId);
         SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, dto, dto.getUniqueId());
         if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){

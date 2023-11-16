@@ -1,13 +1,9 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
@@ -17,30 +13,17 @@ import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
-import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
-import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
-import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
-import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemAttributes;
-import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensions;
-import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensionsByMarketplace;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +82,10 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
     @Override
     public PlatformAmazonListingDTO downloadDetail(PlatformAmazonListingDTO dto, JSONObject extendObj) {
-        String shopId = extendObj.getString("shopId");
+        String shopId = dto.getShopId();
+        if (null == shopId) {
+            throw new ServiceException("未找到对应shopId， uniqueId=" + dto.getUniqueId() + "shopId="+ shopId);
+        }
         // 获取店铺信息
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
         if (null == shopInfoEntity) {
@@ -111,38 +97,48 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         String productSpec = "";
         // 包装信息
         String packing = "";
-        try {
+//        try {
             // 查询商品详情
-            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum);
-            String asin = dto.getProductId();
-            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
-            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
-            Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
-            ItemAttributes attributes = response.getAttributes();
-            if (null != attributes) {
-                Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
-                if (!tempMap.isEmpty()) {
-                    productSpec = tempMap.entrySet().stream()
-                            .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
-                            .collect(Collectors.joining(","));
-                }
-            }
-            ItemDimensions dimensions = response.getDimensions();
-            if (null != dimensions) {
-                packing = dimensions.stream()
-                        .map(ItemDimensionsByMarketplace::combineStr)
-                        .filter(StringUtils::isNotBlank)
-                        .collect(Collectors.joining(","));
-            }
-        } catch (ApiException e) {
-            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
-        }
+            // TODO
+//            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum.getEndpointsEnum(), false);
+//            String asin = dto.getProductId();
+//            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+//            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
+//            Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
+//            ItemAttributes attributes = response.getAttributes();
+//            if (null != attributes) {
+//                Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
+//                if (!tempMap.isEmpty()) {
+//                    productSpec = tempMap.entrySet().stream()
+//                            .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
+//                            .collect(Collectors.joining(","));
+//                }
+//            }
+//            ItemDimensions dimensions = response.getDimensions();
+//            if (null != dimensions) {
+//                packing = dimensions.stream()
+//                        .map(ItemDimensionsByMarketplace::combineStr)
+//                        .filter(StringUtils::isNotBlank)
+//                        .collect(Collectors.joining(","));
+//            }
+//        } catch (ApiException e) {
+//            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
+//        }
         // TODO
-//        // 产品规格信息
-//        dto.setProductSpec(productSpec);
-//        // 产品包装信息
-//        dto.setProductPacking(packing);
+        // 产品规格信息
+        dto.setProductSpec(productSpec);
+        // 产品包装信息
+        dto.setProductPacking(packing);
 
         return dto;
+    }
+
+    /**
+     * 是否发送MQ
+     * true=发送
+     * false=不发送（有其他详情需要额外拉取）
+     */
+    public Boolean getIsSendMq() {
+        return Boolean.FALSE;
     }
 }

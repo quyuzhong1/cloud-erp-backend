@@ -25,4 +25,11 @@ public class UniqueDto extends DmpSyncTaskIdDTO implements Serializable {
      * 平台code
      */
     private String platform;
+
+
+    public static UniqueDto getUniqId(String uniqueId) {
+        UniqueDto uniqueDto = new UniqueDto();
+        uniqueDto.setUniqueId(uniqueId);
+        return uniqueDto;
+    }
 }

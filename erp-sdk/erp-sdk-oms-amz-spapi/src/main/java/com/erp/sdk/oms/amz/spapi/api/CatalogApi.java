@@ -16,6 +16,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.Configuration;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
@@ -53,8 +54,8 @@ public class CatalogApi {
     /**
      * 初始化Api
      */
-    public static CatalogApi initApi(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+    public static CatalogApi initApi(AmazonEndpointsEnum endpointsEnum, boolean isSandbox) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
         LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
         AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         CatalogApi catalogApi = new CatalogApi.Builder()
@@ -65,7 +66,7 @@ public class CatalogApi {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(isSandbox ? endpointsEnum.getSandboxEndpoints() : endpointsEnum.getEndpoints())
                 .build();
         if (null == catalogApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");

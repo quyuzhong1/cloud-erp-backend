@@ -191,7 +191,7 @@ public class PullAmazonJob {
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.ORDER.getCode();
-//                newDto.setDownloadStatus(1);
+                newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 List<PlatformOrderDTO> convertDto = amazonOrderHandler.convert(Arrays.asList(newDto));
                 // TODO
@@ -228,20 +228,13 @@ public class PullAmazonJob {
         }
         orderEntityList.forEach(dto -> {
             try {
-                PlatformApiTaskEntity taskEntity = platformApiTaskService.getById(dto.getDmpSyncTaskId());
-                if (null == taskEntity) {
-                    throw new ServiceException("未找到对应platform_api_task任务，id=" + dto.getDmpSyncTaskId());
-                }
-                JSONObject extendObj = new JSONObject();
-                extendObj.put("shopId", taskEntity.getShopId());
                 // 下载和处理详情
-                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, extendObj);
+                PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, new JSONObject());
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.PRODUCT.getCode();
                 List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
-                // TODO
-//                newDto.setDownloadStatus(1);
+                newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);
             } catch (Exception e) {
