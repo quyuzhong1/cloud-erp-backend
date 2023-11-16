@@ -1,0 +1,97 @@
+package com.erp.server.wms.service.impl;
+
+
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
+import com.erp.server.wms.mapper.OverseasInventoryMapper;
+import com.erp.server.wms.service.OverseasInventoryService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.CommonService;
+import com.common.core.exception.ServiceException;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.wms.dto.OverseasInventoryDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+/**
+ * <p>
+ * 海外仓库存 服务实现类
+ * </p>
+ *
+ * @author Jim
+ * @since 2023-11-16
+ */
+@Slf4j
+@Service
+public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInventoryMapper, OverseasInventoryEntity> implements OverseasInventoryService {
+    @Autowired
+    private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(OverseasInventoryDTO.AddDTO addDTO) {
+        OverseasInventoryEntity overseasInventoryEntity = new OverseasInventoryEntity();
+        BeanMapperUtils.copy(addDTO, overseasInventoryEntity);
+
+        // 数据处理
+        handleData(overseasInventoryEntity);
+
+        log.info("开始新增海外仓库存");
+        boolean save = super.save(overseasInventoryEntity);
+        if(!save) {
+            throw new ServiceException("海外仓库存保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外仓库存" , overseasInventoryEntity.getId());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, overseasInventoryEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
+
+        return new BaseResultDTO.AddDTO(overseasInventoryEntity.getId(), overseasInventoryEntity.getId());
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(OverseasInventoryDTO.UpdateDTO updateDTO) {
+        OverseasInventoryEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存"));
+        OverseasInventoryEntity overseasInventoryEntity =  BeanMapperUtils.map(OverseasInventoryEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(overseasInventoryEntity);
+        log.info("编辑 开始修改海外仓库存数据，id：【{}】", old.getId());
+        boolean save = super.updateById(overseasInventoryEntity);
+        if(!save) {
+            throw new ServiceException("海外仓库存保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 记录主单操作日志
+            log.info("编辑 开始记录海外仓库存日志数据，id：【{}】", overseasInventoryEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasInventoryEntity.getId(), "海外仓库存");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, overseasInventoryEntity, null, overseasInventoryEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(OverseasInventoryEntity overseasInventoryEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
+}
