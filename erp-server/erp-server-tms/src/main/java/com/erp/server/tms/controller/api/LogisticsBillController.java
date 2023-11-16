@@ -4,6 +4,8 @@ package com.erp.server.tms.controller.api;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,6 +45,9 @@ public class LogisticsBillController extends BaseController {
     @Resource
     private LogisticsBillService logisticsBillService;
 
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
+
 
     /**
      * tab 列表
@@ -79,6 +84,17 @@ public class LogisticsBillController extends BaseController {
     public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillDTO.PagingVO> pagingVO = logisticsBillService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 获取物流轨迹明细
+     * @return
+     */
+    @GetMapping("/getTrackInfo")
+    public ApiResult<List<LogisticsTrackDTO.ViewDTO>> listTrack(@RequestParam(value = "trackNo") String  trackNo){
+        List<LogisticsTrackDTO.ViewDTO> list=logisticsTrackService.listByTrackNo(trackNo);
+        return success(list);
+
     }
 
 
