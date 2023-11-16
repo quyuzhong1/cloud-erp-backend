@@ -208,7 +208,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         BigDecimal premiumCost = calculationPremiumCost(otherCostList);
         shippingCalculationDTO.setPremiumCost(premiumCost);
         //超尺寸附加费
-        BigDecimal oversizeSurchargeCost = calculationOversizeSurchargeCost(otherCostList,null,null,null);
+        BigDecimal oversizeSurchargeCost = calculationOversizeSurchargeCost(otherCostList,length,width,height);
         shippingCalculationDTO.setOversizeSurchargeCost(oversizeSurchargeCost);
         //燃油附加费
         BigDecimal fuelSurchargeCost = calculationFuelSurchargeCost(otherCostList,shippingCalculationDTO);
