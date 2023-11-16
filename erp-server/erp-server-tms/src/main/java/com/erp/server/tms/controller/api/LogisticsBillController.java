@@ -6,6 +6,7 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
@@ -43,12 +44,12 @@ public class LogisticsBillController extends BaseController {
     private LogisticsBillService logisticsBillService;
 
 
-
     /**
      * tab 列表
+     *
+     * @param dto
      * @author yl
      * @date 2023-11-09 10:54
-     * @param dto
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -64,21 +65,21 @@ public class LogisticsBillController extends BaseController {
 
     /**
      * tab 列表
+     *
+     * @param dto
      * @author yl
      * @date 2023-11-09 10:54
-     * @param dto
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsBill:paging",
-            tableAlias = "logistics_bill_detail"
+            tableAlias = ""
     )
     public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
-
-        return success();
+        PagingVO<LogisticsBillDTO.PagingVO> pagingVO = logisticsBillService.paging(dto);
+        return success(pagingVO);
     }
-
 
 
 }

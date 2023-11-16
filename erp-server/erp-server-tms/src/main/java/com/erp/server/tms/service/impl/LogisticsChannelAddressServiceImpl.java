@@ -88,7 +88,10 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
         List<LogisticsChannelAddressEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<LogisticsChannelAddressEntity> addList = BeanMapperUtils.copyList(LogisticsChannelAddressEntity.class, list);
-            addList.forEach(a -> a.setLogisticsChannelId(addChannelId));
+            addList.forEach(obj ->{
+                obj.setLogisticsChannelId(addChannelId);
+                obj.setId("");
+            });
             this.saveBatch(addList);
         }
     }

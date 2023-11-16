@@ -125,7 +125,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage().contains("value too long")) {
             return ApiResult.error(ApiError.ERROR_1025);
         } else {
-            return ApiResult.error(ApiError.ERROR_500);
+            return ApiResult.error(ApiError.Default);
         }
     }
 

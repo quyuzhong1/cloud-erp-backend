@@ -32,9 +32,9 @@ public enum ApiError implements Serializable {
      */
     ERROR_404_NOT_FIND(404, "接口路径不存在"),
     ERROR_405(405, "方法不被允许"),
-    ERROR_500(500, "系统异常"),
     ERROR_600(600, "缺少参数"),
     ERROR_400(400, "参数错误"),
+    GLOBAL_EXCEPTION_UN_KNOW(500, "未知异常：【{}】"),
     ERROR_DUPLICATION_NAME(501,"名称不能重复"),
     ERROR_COPY_ERROR(505,"对象复制时类型错误"),
     ERROR_1000(1000, "参数不全或类型错误！"),
@@ -85,7 +85,6 @@ public enum ApiError implements Serializable {
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
-    GLOBAL_EXCEPTION_UN_KNOW(1048, "未知异常：【{}】"),
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
 
@@ -811,6 +810,7 @@ public enum ApiError implements Serializable {
     EXIST_SKU_MAPPING(99108,"此平台sku已存在sku映射关系!"),
     EXIST_FBA_DELIVERY_NOT_DELETE(99109,"已下推发货单，无法删除!"),
     SHIPMENT_STATUS_CHECK_NOT_DELETE(99110,"DELETED和CANCELLED状态的货件不允许下推发货单"),
+    SHOP_AUTH_SHIPMENT_ERROR(99111,"该店铺未授权,不可拉取货件"),
 
 
 

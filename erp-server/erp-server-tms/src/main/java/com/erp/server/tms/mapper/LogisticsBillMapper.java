@@ -1,4 +1,6 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -37,4 +39,13 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@date 2023-11-15
      */
     List<LogisticsBillDTO.TabListDTO> tabList(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 分页
+     *@parms params
+     *@return
+     *@author yl
+     *@date 2023-11-16
+     */
+    IPage<LogisticsBillDTO.PagingVO> paging(Page query, @Param("params")LogisticsBillDTO.PagingParamDTO params);
 }
