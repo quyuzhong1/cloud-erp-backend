@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 物流商管理
+ * 物流商管理-渠道管理
  *
  * @author Lambda
  * @since 2023-11-02

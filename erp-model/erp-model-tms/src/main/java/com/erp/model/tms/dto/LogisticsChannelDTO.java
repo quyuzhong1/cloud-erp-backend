@@ -442,6 +442,16 @@ public class LogisticsChannelDTO implements Serializable {
     public static class ListSelectDTO {
 
         /**
+         * 物流商Id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+
+        /**
          * 渠道名称
          */
         private String name;
