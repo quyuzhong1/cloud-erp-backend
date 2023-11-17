@@ -141,6 +141,16 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 作废状态中文名
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态中文名
+         */
+        private String invalidStatusName;
+
+        /**
          * 发货状态
          */
         private String deliveryStatus;
@@ -188,7 +198,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 是否组合品
          */
-        private String isCombination;
+        private Boolean isCombination;
 
         /**
          * 产品名称
@@ -259,56 +269,25 @@ public class OverseasDeliveryPlanDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
         /**
         * 主键id
         */
-        private String  id;
+        private String id;
 
         /**
-        * code
+        * 单据编号
         */
         private String code;
 
         /**
-        * 审核状态
+        * 状态
         */
-        private String approveStatus;
+        private String status;
 
         /**
-        * 审核人
+        * 状态中文名
         */
-        private String approveUserId;
-
-        /**
-        * 审核人中文名
-        */
-        private String approveUserName;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 作废状态
-        */
-        private Boolean invalidStatus;
-
-        /**
-        * 作废备注
-        */
-        private String invalidRemark;
-
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-
-        /**
-        * 发货状态
-        */
-        private String deliveryStatus;
+        private String statusName;
 
         /**
         * 目的仓id
@@ -331,16 +310,19 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String countryName;
 
         /**
-        * 计划发货时间
+        * 计划发货日期
         */
         private LocalDate planDeliveryDate;
 
         /**
-        * 描述
+        * 备注
         */
-        private String remark;
+        private LocalDate remark;
 
-
+        /**
+        * 详情
+        */
+        private List<OverseasDeliveryPlanDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -350,7 +332,10 @@ public class OverseasDeliveryPlanDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 详情
+         */
+        private List<OverseasDeliveryPlanDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -366,6 +351,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 详情
+         */
+        private List<OverseasDeliveryPlanDetailDTO.UpdateDTO> detailList;
+
     }
 
     @Data
@@ -380,36 +370,26 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 发货状态
         */
-        @NotBlank(message = "发货状态不能为空")
-        @Size(max = 50,message = "发货状态最大长度不能超过50位")
         private String deliveryStatus;
 
         /**
         * 目的仓id
         */
-        @NotBlank(message = "目的仓id不能为空")
-        @Size(max = 19,message = "目的仓id最大长度不能超过19位")
         private String toWarehouseId;
 
         /**
         * 目的仓中文名
         */
-        @NotBlank(message = "目的仓中文名不能为空")
-        @Size(max = 255,message = "目的仓中文名最大长度不能超过255位")
         private String toWarehouseName;
 
         /**
         * 国家二字码
         */
-        @NotBlank(message = "国家二字码不能为空")
-        @Size(max = 19,message = "国家二字码最大长度不能超过19位")
         private String country;
 
         /**
         * 国家中文名
         */
-        @NotBlank(message = "国家中文名不能为空")
-        @Size(max = 255,message = "国家中文名最大长度不能超过255位")
         private String countryName;
 
         /**
@@ -420,11 +400,216 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 描述
         */
-        @NotBlank(message = "描述不能为空")
         private String remark;
 
 
     }
 
+    /**
+     * 发货记录
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverRecordDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 发货状态编码
+         */
+        private String deliveryStatus;
+
+        /**
+         * 发货状态名称
+         */
+        private String deliveryStatusName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 发货时间
+         */
+        private List<LocalDateTime> deliverTime;
+
+    }
+
+    /**
+     * 下推要货申请列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateRequisitionApplicationViewDTO {
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 发货计划单号
+         */
+        private String sourceCode;
+
+        /**
+         * 要货类型
+         */
+        private String type;
+
+        /**
+         * 要货类型名称
+         */
+        private String typeName;
+
+        /**
+         * 渠道
+         */
+        private String channelId;
+
+        /**
+         * 渠道中文名
+         */
+        private String channelName;
+
+        /**
+         * sku表id
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 要货数量
+         */
+        private Integer requisitionQty;
+    }
+
+    /**
+     * 下推发货单列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliverViewDTO {
+
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 发货计划单号
+         */
+        private String sourceCode;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 国家二字码
+         */
+        private String country;
+
+        /**
+         * 国家中文名
+         */
+        private String countryName;
+
+        /**
+         * 发货仓id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 发货仓名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 目的仓id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+    }
 }

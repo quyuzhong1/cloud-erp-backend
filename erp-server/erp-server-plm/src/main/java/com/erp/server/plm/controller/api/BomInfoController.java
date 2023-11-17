@@ -17,11 +17,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -34,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -404,6 +407,19 @@ public class BomInfoController extends BaseController {
     @PostMapping("/listBomVersionBySkuNos")
     public ApiResult<List<ProductBomInfoDTO.skuBomVersion>> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
         return success(bomSkuService.listBomVersionBySkuNos(dto.getSkuNos()));
+    }
+
+    /**
+     * 根据id查询子件信息
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
+     **/
+    @GetMapping("/combinationSkuChildDetail")
+    public ApiResult<List<BomChildrenSkuDTO>> combinationSkuChildDetail(@RequestBody ProductBomInfoDTO.skuIdParams dto) {
+        List<BomChildrenSkuDTO> result =  bomSkuService.listBomChildBySkuIds(dto.getSkuIds());
+        return success(result);
     }
 }
 

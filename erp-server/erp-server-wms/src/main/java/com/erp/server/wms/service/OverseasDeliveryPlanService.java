@@ -152,4 +152,48 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     */
     Boolean approveEnd(ApproveOneDTO dto, OverseasDeliveryPlanEntity entity);
 
+    /**
+     * 查询发货记录
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:24
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.DeliverRecordDTO>
+     **/
+    List<OverseasDeliveryPlanDTO.DeliverRecordDTO> listDeliverRecord(String id);
+
+    /**
+     * 下推要货申请列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:55
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>
+     **/
+    List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
+
+    /**
+     * 下推要货申请保存
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:59
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateRequisitionApplicationSave(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
+
+    /**
+     * 下推发货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:09
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
+     **/
+    List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids);
+
+    /**
+     * 下推发货单保存
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:11
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateDeliverSave(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
 }
