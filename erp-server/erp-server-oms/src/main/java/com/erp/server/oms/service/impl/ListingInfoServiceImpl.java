@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -16,6 +17,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -28,9 +30,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -49,22 +51,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Resource
     private SkuMappingService skuMappingService;
 
-    /**
-     * 根据 sku 获取到listing 数据
-     *
-     * @param skuNo
-     * @return com.erp.model.oms.entity.ListingInfoEntity
-     * @author yl
-     * @date 2023-08-18 16:35
-     */
-    @Override
-    public ListingInfoEntity getBySkuNo(String skuNo, String type) {
-        return lambdaQuery().eq(ListingInfoEntity::getSkuNo, skuNo).
-                eq(ListingInfoEntity::getType, type).
-                last("LIMIT 1").
-                one();
-    }
-
 
     /**
      * 添加库存sku
@@ -79,8 +65,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         String id = IdWorker.getIdStr();
         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
         listingInfoEntity.setId(id);
-        listingInfoEntity.setSkuNo(skuNo);
-        listingInfoEntity.setProductName(productName);
+        listingInfoEntity.setPlatformSkuNo(skuNo);
+        listingInfoEntity.setPlatformSkuName(productName);
         listingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
         if (this.save(listingInfoEntity)) {
             return id;
@@ -120,12 +106,26 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     }
 
     @Override
-    public List<ListingInfoEntity> findList(ListingInfoParamDTO dto) {
-        return lambdaQuery()
+    public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
+        List<ListingInfoEntity> list = lambdaQuery()
                 .eq(StringUtils.isNotBlank(dto.getPlatform()), ListingInfoEntity::getPlatform, dto.getPlatform())
                 .in(!CollectionUtils.isEmpty(dto.getPlatformSkuNoList()), ListingInfoEntity::getPlatformSkuNo, dto.getPlatformSkuNoList())
                 .eq(null != dto.getMatchResult(), ListingInfoEntity::getMatchResult, dto.getMatchResult())
                 .list();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        // 查询关联map
+        List<String> listingIds = list.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+
+        Map<String, List<SkuMappingEntity>> skuMappingEntityMap = skuMappingService.listByListingIds(listingIds)
+                .stream()
+                .collect(Collectors.groupingBy(SkuMappingEntity::getListingId));
+
+        // 组合
+        return list.stream()
+                .map(e -> OmsListingConverter.INSTANCE.listingAndSKuMappingToDTO(e, skuMappingEntityMap.get(e.getId()).stream().findFirst().orElse(null)))
+                .collect(Collectors.toList());
     }
 
     @Override

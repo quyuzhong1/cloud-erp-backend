@@ -22,6 +22,8 @@
         li.product_spec,
         li.product_packing,
         li.platform_update_time,
+        li.platform_spu_no,
+        li.platform_spu_name,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm

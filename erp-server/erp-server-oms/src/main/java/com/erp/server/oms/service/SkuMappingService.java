@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -170,4 +171,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingEntity> listByListingIds(List<String> listingIds);
 
 
+    /**
+     * 通过属性查询 SkuMappingEntity
+     * @author Jim
+     * @date 2023-11-17 11:40
+     */
+    SkuMappingEntity getByAttribute(String productSkuId, String warehouseId, RuleTypeEnum warehouseType);
 }

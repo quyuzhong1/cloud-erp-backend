@@ -2,11 +2,9 @@ package com.erp.server.oms.controller.feign;
 
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -41,8 +39,8 @@ public class ListingInfoFeignController extends BaseController {
      * @date 2023/11/2
      */
     @PostMapping("/list")
-    public List<ListingInfoEntity> listByType(@RequestBody ListingInfoParamDTO dto) {
-        return listingInfoService.findList(dto);
+    public List<ListingInfoWithSkuMappingDTO> listDTOByType(@RequestBody ListingInfoParamDTO dto) {
+        return listingInfoService.findListDto(dto);
     }
 
     /**

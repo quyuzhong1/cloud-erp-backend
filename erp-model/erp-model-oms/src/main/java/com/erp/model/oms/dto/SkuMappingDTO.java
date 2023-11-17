@@ -72,6 +72,11 @@ public class SkuMappingDTO implements Serializable {
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
 
+        /**
+         * 平台类型
+         */
+        // TODO
+        private String dictPlatform;
     }
 
     @Data
@@ -444,6 +449,16 @@ public class SkuMappingDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
+
+        /**
+         * 平台产品SPU编号
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台产品(SPU)名称
+         */
+        private String platformSpuName;
 
 
     }

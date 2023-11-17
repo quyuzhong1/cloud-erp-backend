@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.FbaShipmentDTO;
@@ -18,15 +18,6 @@ import java.util.List;
  * @since 2023-08-18
  */
 public interface ListingInfoService extends SuperService<ListingInfoEntity> {
-
-    /**
-     * 根据 sku 获取到listing 数据
-     * @author yl
-     * @date 2023-08-18 16:35
-     * @param skuNo
-     * @return com.erp.model.oms.entity.ListingInfoEntity
-     */
-    ListingInfoEntity getBySkuNo(String skuNo,String type);
 
     /**
      * 添加库存sku
@@ -60,7 +51,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @author  Jim
      * @date 2023/11/2
      */
-    List<ListingInfoEntity> findList(ListingInfoParamDTO dto);
+    List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto);
 
     /**
      * 新增映射skuNo

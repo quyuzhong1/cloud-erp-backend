@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -392,15 +391,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String skuId = dto.getProductSkuId();
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
+        String productSkuId = dto.getProductSkuId();
         RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
-        ListingInfoEntity listingInfo = listingInfoService.getBySkuNo(warehouseSkuNo, warehouseType.getCode());
-        String listingId = "";
-        if (Objects.nonNull(listingInfo)) {
-            listingId = listingInfo.getId();
-        } else {
-            String warehouseProductName = dto.getWarehouseProductName();
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
+        // 产品SKU在该仓库是否已绑定
+        SkuMappingEntity oldSkuMappingEntity = this.getByAttribute(productSkuId, warehouseId, warehouseType);
+        if (null != oldSkuMappingEntity){
+            // 产品SKU【{}】已在【{}】仓库绑定
+            throw new ServiceException(ApiError.ERROR_DUPLICATE_MAPPING_SKU_ID, oldSkuMappingEntity.getProductSkuNo(), oldSkuMappingEntity.getWarehouseName());
         }
+        String warehouseProductName = dto.getWarehouseProductName();
+        String listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
@@ -413,6 +413,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
         }
+
 
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setWarehouseId(warehouseId);
@@ -496,8 +497,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
-        RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
-        ListingInfoEntity listingInfo = listingInfoService.getBySkuNo(warehouseSkuNo, warehouseType.getCode());
+
+        ListingInfoEntity listingInfo = listingInfoService.getById(skuMapping.getListingId());
         String listingId = "";
         if (Objects.nonNull(listingInfo)) {
             listingId = listingInfo.getId();
@@ -525,6 +526,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setProductSkuId(productSkuId);
         addSkuMapping.setProductSkuNo(skuVOList.get(0).getSkuNo());
         addSkuMapping.setListingId(listingId);
+        addSkuMapping.setDictPlatform(skuMapping.getDictPlatform());
+        addSkuMapping.setPlatformName(skuMapping.getPlatformName());
         //生效时间
         addSkuMapping.setEffectiveTime(now);
         addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
@@ -573,8 +576,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 //库存sku信息
                 ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(warehouseSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(warehouseListing)) {
-                    listSkuDTO.setWarehouseSkuNo(warehouseListing.getSkuNo());
-                    listSkuDTO.setWarehouseProductName(warehouseListing.getProductName());
+                    listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
+                    listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
                 }
             }
             //查询平台sku信息
@@ -583,10 +586,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 //库存sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(platformListing)) {
-                    listSkuDTO.setSellerSkuNo(platformListing.getSkuNo());
-                    listSkuDTO.setSellerProductName(platformListing.getProductName());
+                    listSkuDTO.setSellerSkuNo(platformListing.getPlatformSkuNo());
+                    listSkuDTO.setSellerProductName(platformListing.getPlatformSkuName());
                     listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
-                    listSkuDTO.setPlatformProductName(platformListing.getPlatformProductName());
+                    listSkuDTO.setPlatformProductName(platformListing.getPlatformSkuName());
                 }
             }
             resultList.add(listSkuDTO);
@@ -761,7 +764,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<SkuMappingEntity> listByListingIds(List<String> listingIds) {
-        return lambdaQuery().in(SkuMappingEntity::getListingId, listingIds).list();
+        return lambdaQuery()
+                .in(SkuMappingEntity::getListingId, listingIds)
+                .eq(SkuMappingEntity::getIsExpire, false)
+                .list();
+    }
+
+    @Override
+    public SkuMappingEntity getByAttribute(String productSkuId, String warehouseId, RuleTypeEnum typeEnum) {
+        return lambdaQuery()
+                .eq(SkuMappingEntity::getProductSkuId, productSkuId)
+                .eq(SkuMappingEntity::getWarehouseId, warehouseId)
+                .eq(SkuMappingEntity::getType, typeEnum)
+                .eq(SkuMappingEntity::getIsExpire, false)
+                .last(" LIMIT 1")
+                .one();
     }
 
 }

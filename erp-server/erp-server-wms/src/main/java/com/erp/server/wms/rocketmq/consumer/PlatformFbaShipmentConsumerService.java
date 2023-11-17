@@ -12,11 +12,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.service.FbaShipmentDetailService;
@@ -29,8 +32,10 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +71,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     private OmsListingInfoFeign omsListingInfoFeign;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -85,16 +92,36 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
         // 卖家SKU列表
         List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());
-        // 查询SKU绑定的信息
-        Map<String, ListingInfoEntity> listingInfoMap = new HashMap<>();
+        // SKU绑定的信息
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = new HashMap<>();
+        // sku是否是组合类型
+        List<String> hasChildrenSkuIds = new ArrayList<>();
+
         if (!CollectionUtils.isEmpty(sellerSkuList)){
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.list(paramDTO)
+            // 查询ListingInfo和skuMapping的关系
+            List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+
+            // SKU相关信息
+            listingInfoWithSkuMappingDTOMap = listingedInfoWithSkuMappingList
                     .stream()
-                    .collect(Collectors.toMap(ListingInfoEntity::getSkuNo, Function.identity()));
+                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
+
+            List<String> erpSkuIds = listingedInfoWithSkuMappingList
+                    .stream()
+                    .map(ListingInfoWithSkuMappingDTO::getProductSkuId)
+                    .filter(e -> !StringUtils.isEmpty(e))
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 组合类型skuIds
+            hasChildrenSkuIds = plmTaskFeign.listBomChildBySkuIds(erpSkuIds)
+                    .stream()
+                    .map(BomChildrenSkuDTO::getParentSkuId)
+                    .collect(Collectors.toList());
         }
         // 查询国家信息
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(dto.getCountryId());
@@ -104,10 +131,10 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentIdAndIsDelete(entity.getFbaShipmentId(), null);
         if (null == oldEntity){
             // 新增
-            fbaShipmentService.checkAndSaveAll(entity, listingInfoMap, receiveDTOList, dto.getDetailList());
+            fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds,   receiveDTOList, dto.getDetailList());
         } else {
             // 修改
-            fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoMap, receiveDTOList, dto.getDetailList());
+            fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds, receiveDTOList, dto.getDetailList());
         }
 
         return ApiResult.success();

@@ -16,10 +16,8 @@ import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +71,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         } else {
             // 是否修改
             if (!oldEntity.toString().equals(entity.toString())) {
-                oldEntity.setPlatformProductNo(entity.getPlatformProductNo());
+                oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
                 oldEntity.setProductImageUrl(entity.getProductImageUrl());
                 oldEntity.setProductSpec(entity.getProductSpec());
                 oldEntity.setProductPacking(entity.getProductPacking());
