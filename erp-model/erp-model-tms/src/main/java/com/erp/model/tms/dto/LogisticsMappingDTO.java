@@ -81,6 +81,7 @@ public class LogisticsMappingDTO implements Serializable {
         /**
         * 物流渠道id
         */
+        @NotBlank(message = "销售的渠道不能为空")
         private String logisticsSaleChannelId;
 
         /**

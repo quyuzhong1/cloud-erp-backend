@@ -205,7 +205,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      */
     @Override
     public BatchResultDTO sync(String id) {
-        LogisticsSupplierEntity logisticsSupplier = baseMapper.getById(id);
+        LogisticsSupplierDTO.AuthDTO logisticsSupplier = baseMapper.getLogisticsSupplierAuthById(id);
         if (Objects.isNull(logisticsSupplier)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单");
         }

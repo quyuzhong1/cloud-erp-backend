@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -30,10 +31,6 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO {
 
-        /**
-         * 主键id
-         */
-        private String id;
 
         /**
          * 渠道id
@@ -46,12 +43,21 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String country;
 
         /**
-         * 国家名
+         * 国家名称
          */
-        private String countryName;
+        @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
+        List<CommonViewDTO> cityList;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonViewDTO {
+
 
         /**
-         * 省 州
+         * 省 州 id
          */
         private String province;
 
@@ -61,7 +67,7 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String provinceName;
 
         /**
-         * 城市
+         * 城市id
          */
         private String city;
 
@@ -71,7 +77,7 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String cityName;
 
         /**
-         * 区
+         * 区id
          */
         private String district;
 
@@ -107,11 +113,6 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-         * 主键id
-         */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
 
         /**
          * 国家

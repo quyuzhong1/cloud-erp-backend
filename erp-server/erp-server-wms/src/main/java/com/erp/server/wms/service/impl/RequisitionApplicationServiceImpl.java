@@ -3,6 +3,12 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.RequisitionApplicationService;
@@ -22,6 +28,9 @@ import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 要货申请单 服务实现类
@@ -96,6 +105,65 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<RequisitionApplicationDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<RequisitionApplicationDTO.ListDTO> paging(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public RequisitionApplicationDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO submit(String id) {
+        return null;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.handleListDTO> handleList(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean handleSave(List<RequisitionApplicationDTO.handleListDTO> list) {
+        return null;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.finishListDTO> finishList(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean finishSave(List<RequisitionApplicationDTO.finishListDTO> list) {
+        return null;
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.printPickingViewDTO> printPickingView(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO cancelProcess(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportExcel(RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        return null;
+    }
 
     /**
     * 新增修改处理数据

@@ -127,4 +127,7 @@ public interface LogisticsChannelConverter {
     BaseDropDownDTO.DisabledDTO convertByChannelDown(LogisticsChannelEntity logisticsChannel);
     List<BaseDropDownDTO.DisabledDTO> convertByChannelDown(List<LogisticsChannelEntity> list);
 
+
+
+
 }

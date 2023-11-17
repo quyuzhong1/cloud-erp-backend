@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.validator.ValidList;
+import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -81,7 +83,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:paging",
-            tableAlias = ""
+            tableAlias = "odp"
     )
     public ApiResult<List<OverseasDeliveryPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(overseasDeliveryPlanService.tabList(dto));
@@ -98,7 +100,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:paging",
-            tableAlias = ""
+            tableAlias = "odp"
     )
     public ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasDeliveryPlanDTO.PagingParamDTO> dto) {
         return success(overseasDeliveryPlanService.paging(dto));
@@ -111,7 +113,13 @@ public class OverseasDeliveryPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交发货计划")
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasDeliveryPlan:add",
+            serviceClass = OverseasDeliveryPlanService.class,
+            keyIdName = "id")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated OverseasDeliveryPlanDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = overseasDeliveryPlanService.addAndSubmit(dto);
         return success(result);
@@ -124,6 +132,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     * @param dto
     * @return ApiResult<Void>
     */
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交发货计划")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -241,7 +250,6 @@ public class OverseasDeliveryPlanController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
     /**
     * 删除
     * @author Luo_WG
@@ -276,6 +284,7 @@ public class OverseasDeliveryPlanController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
     /**
     * 作废
     * @author Luo_WG
@@ -359,7 +368,6 @@ public class OverseasDeliveryPlanController extends BaseController {
             menuCode = "wms:overseasDeliveryPlan:view",
             serviceClass = OverseasDeliveryPlanService.class,
             keyIdName = "id")
-    @LogViewService
     public ApiResult<OverseasDeliveryPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(overseasDeliveryPlanService.view(id));
     }
@@ -376,12 +384,77 @@ public class OverseasDeliveryPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasDeliveryPlan:export",
-            tableAlias = ""
+            tableAlias = "odp"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货计划导出Excel数据")
     public void exportList(@RequestBody @Validated OverseasDeliveryPlanDTO.ExportDTO dto, HttpServletResponse response) {
         overseasDeliveryPlanService.exportList(dto, response);
     }
 
+    /**
+     * 查询发货记录
+     * @Author Luo_WG
+     * @Date 2023/11/16 17:21
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
+     **/
+    @GetMapping("/listDeliverRecord")
+    public ApiResult<List<OverseasDeliveryPlanDTO.DeliverRecordDTO>> listDeliverRecord(@RequestParam("id") String id) {
+        List<OverseasDeliveryPlanDTO.DeliverRecordDTO> result = overseasDeliveryPlanService.listDeliverRecord(id);
+        return success(result);
+    }
 
+    /**
+     * 下推要货申请列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:07
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>>
+     **/
+    @PostMapping("/generateRequisitionApplicationView")
+    public ApiResult<List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = overseasDeliveryPlanService.generateRequisitionApplicationView(dto.getIds());
+        return success(result);
+    }
+
+    /**
+     * 下推要货申请保存
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateRequisitionApplicationSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推要货申请保存")
+    public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = overseasDeliveryPlanService.generateRequisitionApplicationSave(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下推发货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>>
+     **/
+    @PostMapping("/generateDeliverView")
+    public ApiResult<List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> generateDeliverView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> result = overseasDeliveryPlanService.generateDeliverView(dto.getIds());
+        return success(result);
+    }
+
+    /**
+     * 下推发货单保存
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存")
+    public ApiResult generateDeliverSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = overseasDeliveryPlanService.generateDeliverSave(dto.getList());
+        return flag ? success() : failure();
+    }
 }

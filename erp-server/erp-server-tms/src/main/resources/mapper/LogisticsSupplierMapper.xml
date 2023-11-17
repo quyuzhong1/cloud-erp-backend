@@ -180,7 +180,7 @@
         </if>
         ls.create_time DESC
     </select>
-    <select id="getById" resultType="com.erp.model.tms.entity.LogisticsSupplierEntity">
+    <select id="getLogisticsSupplierAuthById" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
         SELECT
             ls.id,
             ls.create_user_name,
@@ -194,7 +194,8 @@
             ls.disabled,
             ls.auth_status,
             ls.auth_time,
-            la.logistics_platform AS authLogisticsPlatform
+            la.logistics_platform,
+            la.id AS authId
         FROM logistics_supplier ls
         LEFT JOIN logistics_auth la
         INNER JOIN ls.id=la.main_id and la.is_deleted=false

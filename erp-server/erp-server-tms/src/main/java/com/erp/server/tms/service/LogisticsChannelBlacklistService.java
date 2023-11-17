@@ -32,7 +32,7 @@ public interface LogisticsChannelBlacklistService extends SuperService<Logistics
     * @param list
     * @return
     */
-    Boolean update(String channelId,List<LogisticsChannelBlacklistDTO.UpdateDTO> list);
+    Boolean update(String channelId,List<LogisticsChannelBlacklistDTO.AddDTO> list);
 
     /**
      * 根据渠道id 查询黑名单

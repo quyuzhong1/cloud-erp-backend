@@ -19,8 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,10 +44,8 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-        List<LogisticsChannelBlacklistEntity> blacklistList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
         // 数据处理
-        handleData(blacklistList);
-        blacklistList.forEach(b -> b.setLogisticsChannelId(channelId));
+        List<LogisticsChannelBlacklistEntity> blacklistList = handleData(channelId, list);
         boolean save = super.saveBatch(blacklistList);
         if (!save) {
             throw new ServiceException("渠道黑名单表保存失败");
@@ -56,35 +53,42 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         return save;
     }
 
+
     /**
      * 修改
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(String channelId, List<LogisticsChannelBlacklistDTO.UpdateDTO> list) {
+    public Boolean update(String channelId, List<LogisticsChannelBlacklistDTO.AddDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-        List<LogisticsChannelBlacklistEntity> updateList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
-        updateList.forEach(b -> b.setLogisticsChannelId(channelId));
         // 数据处理
-        handleData(updateList);
-
-        List<LogisticsChannelBlacklistEntity> dbList = this.listDbByChannelId(channelId);
-        List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
-                map(LogisticsChannelBlacklistEntity::getId).collect(Collectors.toList());
-        List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsChannelBlacklistEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            this.removeByIds(deleteIdList);
-        }
-        return this.saveOrUpdateBatch(updateList);
+        List<LogisticsChannelBlacklistEntity> updateList = handleData(channelId, list);
+        this.removeByChannelIdList(Arrays.asList(channelId));
+        return this.saveBatch(updateList);
 
     }
 
     @Override
     public List<LogisticsChannelBlacklistDTO.ViewDTO> listByChannelId(String channelId) {
         List<LogisticsChannelBlacklistEntity> dbList = this.listDbByChannelId(channelId);
-        return BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.ViewDTO.class, dbList);
+        Map<String, List<LogisticsChannelBlacklistEntity>> map = dbList.stream().
+                collect(Collectors.groupingBy(LogisticsChannelBlacklistEntity::getCountry));
+        List<LogisticsChannelBlacklistDTO.ViewDTO> resultList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<LogisticsChannelBlacklistEntity>> item : map.entrySet()) {
+            LogisticsChannelBlacklistDTO.ViewDTO view = new LogisticsChannelBlacklistDTO.ViewDTO();
+            view.setCountry(item.getKey());
+            List<LogisticsChannelBlacklistEntity> cityList = item.getValue();
+            Boolean isNotEmpty=CollectionUtils.isNotEmpty(cityList);
+            view.setCountry(isNotEmpty?cityList.get(0).getCountryName():"");
+            if(isNotEmpty){
+                view.setCityList(BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.CommonViewDTO.class,cityList));
+            }
+            resultList.add(view);
+
+        }
+        return resultList;
     }
 
     @Override
@@ -100,7 +104,7 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         List<LogisticsChannelBlacklistEntity> list = listDbByChannelId(channelId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<LogisticsChannelBlacklistEntity> addList = BeanMapperUtils.copyList(LogisticsChannelBlacklistEntity.class, list);
-            addList.forEach(obj ->{
+            addList.forEach(obj -> {
                 obj.setLogisticsChannelId(addChannelId);
                 obj.setId("");
             });
@@ -112,40 +116,47 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         return this.lambdaQuery().eq(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelId).list();
     }
 
-
     /**
-     * 新增修改处理数据
+     * 处理添加的数据
+     *
+     * @param list
      */
-    private void handleData(List<LogisticsChannelBlacklistEntity> list) {
+    private List<LogisticsChannelBlacklistEntity> handleData(String channelId, List<LogisticsChannelBlacklistDTO.AddDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            return;
+            return Collections.emptyList();
         }
-        //国家
-        List<String> countryIdList = new ArrayList<>(2);
-        List<String> cityIdList = new ArrayList<>(2);
-        for (LogisticsChannelBlacklistEntity item : list) {
-            String country = item.getCountry();
-            if (!countryIdList.contains(country)) {
-                countryIdList.add(country);
-            }
-            String city = item.getCity();
-            cityIdList.add(city);
-            String province = item.getProvince();
-            cityIdList.add(province);
-            String district = item.getDistrict();
-            cityIdList.add(district);
-        }
+        List<LogisticsChannelBlacklistEntity> addList = new ArrayList<>(10);
+        List<String> countryIdList = list.stream().map(LogisticsChannelBlacklistDTO.AddDTO::getCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(countryIdList)) {
             countryList = sysDictFeign.listCountryByIds(countryIdList);
         }
-        List<DictCityEntity> cityList = new ArrayList<>();
+        List<String> cityIdList = new ArrayList<>(10);
+        for (LogisticsChannelBlacklistDTO.AddDTO item : list) {
+            String country = item.getCountry();
+            List<LogisticsChannelBlacklistDTO.CommonDTO> cityList = item.getCityList();
+            for (LogisticsChannelBlacklistDTO.CommonDTO common : cityList) {
+                LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
+                add.setCountry(country);
+                add.setLogisticsChannelId(channelId);
+                String city = common.getCity();
+                add.setCity(city);
+                cityIdList.add(city);
+                String province = common.getProvince();
+                add.setProvince(province);
+                cityIdList.add(province);
+                String district = common.getDistrict();
+                add.setDistrict(district);
+                cityIdList.add(district);
+                addList.add(add);
+            }
+        }
         cityIdList = cityIdList.stream().distinct().collect(Collectors.toList());
+        List<DictCityEntity> cityList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(cityIdList)) {
             cityList = sysDictFeign.listCityByIdList(cityIdList);
         }
-
-        for (LogisticsChannelBlacklistEntity item : list) {
+        for (LogisticsChannelBlacklistEntity item : addList) {
             String country = item.getCountry();
             //国家名称
             String countryName = countryList.stream().filter(c -> c.getId().equals(country)).
@@ -170,7 +181,8 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             item.setDistrictName(districtName);
 
         }
-
-
+        return addList;
     }
+
+
 }
