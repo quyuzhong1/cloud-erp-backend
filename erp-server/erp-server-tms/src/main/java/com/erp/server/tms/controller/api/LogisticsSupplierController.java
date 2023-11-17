@@ -135,7 +135,7 @@ public class LogisticsSupplierController extends BaseController {
      */
     @PostMapping("/sync")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道同步")
-    public ApiResult sync(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> sync(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
 
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
