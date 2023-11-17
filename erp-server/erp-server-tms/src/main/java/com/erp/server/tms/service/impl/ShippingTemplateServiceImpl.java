@@ -915,7 +915,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
+        return shippingCalculationDTO.getTotalTrialShippingCost();
     }
 
     /**
@@ -937,7 +937,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
+        return shippingCalculationDTO.getTotalTrialShippingCost();
     }
 
     /**
@@ -958,7 +958,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
+        return shippingCalculationDTO.getTotalTrialShippingCost();
     }
 
 
@@ -971,6 +971,13 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         ShippingTemplateEntity entity = this.listByName(shippingTemplateEntity.getName());
         if (ObjectUtil.isNotEmpty(entity) && !StrUtil.equals(entity.getId(),shippingTemplateEntity.getId())) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_EXIST);
+        }
+        //验证是否能停用
+        if (StringUtils.isNotBlank(shippingTemplateEntity.getId())) {
+            List<ShippingTemplateRefChannelDTO.ViewDTO> refList = shippingTemplateRefChannelService.listByMainIds(Arrays.asList(shippingTemplateEntity.getId()));
+            if (CollectionUtils.isNotEmpty(refList) && shippingTemplateEntity.getDisabled()) {
+                throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_DISABLED);
+            }
         }
     }
 
