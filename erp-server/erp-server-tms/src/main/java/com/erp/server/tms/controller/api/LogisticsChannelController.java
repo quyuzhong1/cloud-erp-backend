@@ -118,9 +118,9 @@ public class LogisticsChannelController extends BaseController {
      * @author Will
      * @date: 2023/11/10 9:57
      */
-    @GetMapping("/listLogisticsChannel")
-    public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel() {
-        return success(logisticsChannelService.listLogisticsChannel());
+    @PostMapping("/listLogisticsChannel")
+    public ApiResult<List<LogisticsChannelDTO.ListSelectDTO>> listLogisticsChannel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(logisticsChannelService.listLogisticsChannel(dto.getIds()));
     }
 
 
