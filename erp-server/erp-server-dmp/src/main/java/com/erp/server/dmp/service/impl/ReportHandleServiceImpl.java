@@ -11,6 +11,7 @@ import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
@@ -174,7 +175,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
             InboundShipmentList responseList = shipments.getPayload().getShipmentData();
             if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
-                return true;
+                throw new ServiceException(ApiError.FBA_SHIPMENT_ERROR);
             }
             // 返回下载源数据
             List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()
@@ -192,6 +193,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             String platform = PlatformDictEnum.AMAZON.getCode();
             String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
             for (PlatformAmazonFbaShipmentDTO amazonShipmentDTO : amazonFbaShipmentDTOList) {
+                // TODO 封装?
                 amazonShipmentDTO.setDownloadStatus(1);
                 amazonShipmentDTO.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 // 转换
@@ -214,6 +216,8 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
                 businessService.pullDetailProcess(amazonShipmentDTO, platformFbaShipmentDTO, category, platform, business);
             }
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
         }
