@@ -76,6 +76,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         Map<String, String> map = new HashMap<>();
         map.put("id", authId);
+        map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey",cfgAppClient.getClientSecret());
         map.put("partnerId",cfgAppClient.getClientId());
         map.put("shopId",shopAuth.getData().getShopeeId());

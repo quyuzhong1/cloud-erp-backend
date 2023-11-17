@@ -39,14 +39,10 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
         List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (StringUtils.isNoneBlank(authId)) {
             map.put("id", authId);
+            LogisticsAuthEntity authEntity = logisticsAuthService.getById(authId);
+            if (Objects.isNull(authEntity)) return null;
+            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
             fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        } else {
-            LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
-                    .eq(LogisticsAuthEntity::getLogisticsPlatform, getPlatForm().getCode()).last("limit 1").one();
-            if (Objects.nonNull(authEntity)) {
-                map.put("id", authEntity.getId());
-                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
-            }
         }
         if (CollectionUtils.isNotEmpty(fieldEntities)) {
             fieldEntities.forEach(logisticsAuthFieldEntity -> {
@@ -65,6 +61,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
                 Map<String, String> map = new HashMap<>();
                 List<LogisticsAuthFieldEntity> fieldEntities = null;
                 map.put("id", logisticsAuthEntity.getId());
+                map.put("logisticsPlatform", logisticsAuthEntity.getLogisticsPlatform());
                 fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
                 if (CollectionUtils.isNotEmpty(fieldEntities)) {
                     fieldEntities.forEach(logisticsAuthFieldEntity -> {
