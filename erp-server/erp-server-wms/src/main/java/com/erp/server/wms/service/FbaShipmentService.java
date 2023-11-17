@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -156,5 +158,23 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO skuMappingBatch(String id);
+
+    /**
+     * 下推要货申请列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:19
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
+     **/
+    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> GenerateRequisitionApplicationView(BaseIdsDTO.IdsDTO ids);
+
+    /**
+     * FBA货件下推要货申请保存
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:22
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
 
 }

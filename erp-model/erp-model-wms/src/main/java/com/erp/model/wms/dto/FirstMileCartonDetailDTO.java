@@ -20,9 +20,6 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class FirstMileCartonDetailDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -54,8 +51,6 @@ public class FirstMileCartonDetailDTO implements Serializable {
         * 装箱数量
         */
         private Integer packQty;
-
-
     }
 
     /**
@@ -65,7 +60,6 @@ public class FirstMileCartonDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
     }
 
     /**
@@ -74,24 +68,19 @@ public class FirstMileCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
         /**
         * first_mile_carton表id
         */
-        @NotBlank(message = "first_mile_carton表id不能为空")
-        @Size(max = 19,message = "first_mile_carton表id最大长度不能超过19位")
         private String cartonId;
 
         /**
@@ -106,9 +95,31 @@ public class FirstMileCartonDetailDTO implements Serializable {
         */
         @NotNull(message = "装箱数量不能为空")
         private Integer packQty;
-
-
     }
 
+    /**
+     * 装箱清单产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingDetailDTO {
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * 箱子包装尺寸
+         */
+        private String boxSize;
+        /**
+         * 箱子包装重量
+         */
+        private String packageWeight;
+        /**
+         * 装箱SKU
+         * 例：（sku*qty+sku*qty+...）
+         */
+        private String boxDesc;
+    }
 
 }

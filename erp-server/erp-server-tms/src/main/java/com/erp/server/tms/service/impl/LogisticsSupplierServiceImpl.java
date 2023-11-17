@@ -22,6 +22,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.LogisticsWarehouseEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
@@ -70,6 +71,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
     @Autowired
     private LogisticsChannelService logisticsChannelService;
+
+    @Autowired
+    private LogisticsSaleChannelService  logisticsSaleChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -214,6 +218,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (!alreadyCode.equals(authStatus)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
+        String authId = logisticsSupplier.getAuthId();
+        List<LogisticsSaleChannelEntity>  saleChannelEntityList=logisticsSaleChannelService.listByAuthId(authId,Boolean.FALSE);
 
 
         return null;

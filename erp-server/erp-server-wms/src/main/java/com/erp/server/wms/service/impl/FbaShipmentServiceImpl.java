@@ -17,6 +17,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -836,6 +837,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             fbaShipmentDetailService.updateById(detailEntity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
         }
+    }
+
+    @Override
+    public List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> GenerateRequisitionApplicationView(BaseIdsDTO.IdsDTO ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list) {
+        return null;
     }
 
     /**

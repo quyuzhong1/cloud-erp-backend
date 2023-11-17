@@ -128,6 +128,11 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         return baseMapper.listByType(platformType);
     }
 
+    @Override
+    public List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync) {
+        return null;
+    }
+
 
     /**
     * 新增修改处理数据

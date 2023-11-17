@@ -7,10 +7,13 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.server.wms.service.FbaDeliveryService;
@@ -63,6 +66,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/skuMapping")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "sku映射：detailId={detailId}， 平台sku={msku} 映射 erpSku={skuNo}")
     public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
         Boolean flag = fbaShipmentService.skuMapping(dto);
         return flag ? success() : failure();
@@ -73,7 +77,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      */
     @PostMapping("/pullShipment")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
     public ApiResult pullShipment(@RequestBody @Validated FbaShipmentDTO.pullShipmentDTO dto) {
         Boolean flag = fbaShipmentService.pullShipment(dto);
         return flag ? success() : failure();
@@ -133,6 +137,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/finishShipment")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "完结货件：ids = {ids}")
     public ApiResult finishShipment(@RequestBody BaseIdsDTO.IdsDTO ids) {
         Boolean flag = fbaShipmentService.finishShipment(ids.getIds());
         return flag ? success() : failure();
@@ -157,6 +162,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/generateDeliverSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存：id = {id}")
     public ApiResult generateDeliverSave(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
         Boolean flag = fbaShipmentService.generateDeliverSave(list);
         return flag ? success() : failure();
@@ -183,6 +189,7 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/generateDeliverSaveAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "下推发货单保存并提交：id = {id}")
     public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
         Boolean flag = fbaShipmentService.generateDeliverSaveAndSubmit(list);
         return flag ? success() : failure();
@@ -232,6 +239,7 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/skuMappingBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
     public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -252,4 +260,32 @@ public class FbaShipmentController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 下推要货申请列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:19
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>>
+     **/
+    @PostMapping("/requisitionApplicationView")
+    public ApiResult<List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>> GenerateRequisitionApplicationView(@RequestBody BaseIdsDTO.IdsDTO ids) {
+        List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> result = fbaShipmentService.GenerateRequisitionApplicationView(ids);
+        return success(result);
+    }
+
+    /**
+     * FBA货件下推要货申请保存
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateRequisitionApplicationSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "FBA货件下推要货申请保存")
+    public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = fbaShipmentService.generateRequisitionApplicationSave(dto.getList());
+        return flag ? success() : failure();
+    }
+
 }
