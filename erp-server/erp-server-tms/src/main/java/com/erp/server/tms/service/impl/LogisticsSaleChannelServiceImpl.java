@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -128,6 +129,25 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     public List<SaleChannelDTO> listByType(String platformType) {
         return baseMapper.listByType(platformType);
     }
+
+    @Override
+    public List<LogisticsSaleChannelEntity> listByDataSource(String platformType, String overseasWarehouseId, Integer status) {
+        if (StringUtils.isNotEmpty(platformType) && StringUtils.isNotEmpty(overseasWarehouseId) && Objects.isNull(status)) return Collections.EMPTY_LIST;
+        LambdaQueryWrapper<LogisticsSaleChannelEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotEmpty(platformType)){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getLogisticsPlatform, platformType);
+        }
+        if (StringUtils.isNotEmpty(overseasWarehouseId)){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getOverseasWarehouseId, overseasWarehouseId);
+        }
+        if (Objects.nonNull(status)){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getChannelStatus, status);
+        }
+        queryWrapper.eq(LogisticsSaleChannelEntity::getIsDeleted, false);
+        List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = baseMapper.selectList(queryWrapper);
+        return logisticsSaleChannelEntities;
+    }
+
     /**
      *
      * @param authId

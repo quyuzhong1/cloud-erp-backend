@@ -100,7 +100,10 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
 
     @Override
     public List<ShippingTemplateOtherCostEntity> listByMainId(String mainId) {
-        return  lambdaQuery().eq(ShippingTemplateOtherCostEntity::getMainId,mainId).list();
+        return  lambdaQuery()
+                .eq(ShippingTemplateOtherCostEntity::getMainId,mainId)
+                .orderByAsc(ShippingTemplateOtherCostEntity::getId)
+                .list();
     }
 
     @Override

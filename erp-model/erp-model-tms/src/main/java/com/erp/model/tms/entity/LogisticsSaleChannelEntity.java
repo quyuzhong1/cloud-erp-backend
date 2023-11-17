@@ -108,6 +108,12 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("is_sync")
     private Boolean isSync;
 
+    /**
+     * 海外仓id
+     */
+    @TableField("overseas_warehouse_id")
+    private String overseasWarehouseId;
+
 
 
     public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";

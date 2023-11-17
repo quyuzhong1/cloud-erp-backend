@@ -63,8 +63,8 @@ public class ShippingTemplateExcelDTO implements Serializable {
     /**
      * 失效日期
      */
-    @ExcelProperty(value = "*失效日期")
-    @FieldValid(fieldName = "失效日期",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @ExcelProperty(value = "失效日期")
+    @FieldValid(fieldName = "失效日期",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String expireDate;
 
     /**
