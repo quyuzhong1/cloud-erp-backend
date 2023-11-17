@@ -136,7 +136,7 @@
             </if>
             <if test="params.diffOptionList != null and params.diffOptionList.size > 0">
                 and
-                <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator="or">
+                <foreach collection="params.diffOptionList" item="item" open="(" close=")" separator="or">
                     <if test="item == 'greater'">
                         lbc.diff_shipping_cost > 0
                     </if>
