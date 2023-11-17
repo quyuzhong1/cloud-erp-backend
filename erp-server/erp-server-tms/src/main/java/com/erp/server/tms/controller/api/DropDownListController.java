@@ -41,6 +41,10 @@ public class DropDownListController extends BaseController {
      * weightUnit  重量单位
      * shippingTemplateType  运费模板类型
      * logisticsSupplierType 物流商类型
+     * salesOrderType 订单类型
+     * reconciliationStatus 对账状态
+     * diffOption 差异
+     * logisticTrackStatus 物流运输状态
      *
      * @return
      */
