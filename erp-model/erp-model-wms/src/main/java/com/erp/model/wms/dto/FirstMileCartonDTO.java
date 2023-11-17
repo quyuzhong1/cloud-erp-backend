@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -82,7 +83,10 @@ public class FirstMileCartonDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 详情
+         */
+        private List<FirstMileCartonDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -98,17 +102,18 @@ public class FirstMileCartonDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 详情
+         */
+        private List<FirstMileCartonDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
@@ -151,9 +156,33 @@ public class FirstMileCartonDTO implements Serializable {
         */
         @NotNull(message = "箱数不能为空")
         private Integer boxQty;
-
-
     }
 
 
+    /**
+     * 装箱清单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 发货单号
+         */
+        private String code;
+
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 详情
+         */
+        private List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList;
+    }
 }

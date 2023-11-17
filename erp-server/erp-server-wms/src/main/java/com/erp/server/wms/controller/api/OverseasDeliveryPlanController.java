@@ -418,14 +418,14 @@ public class OverseasDeliveryPlanController extends BaseController {
     }
 
     /**
-     * 下推要货申请保存
+     * 发货计划下推要货申请保存
      * @Author Luo_WG
      * @Date 2023/11/16 18:06
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/generateRequisitionApplicationSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "下推要货申请保存")
+    @LogAction(value = LogActionEnum.INSERT, desc = "发货计划下推要货申请保存")
     public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
         Boolean flag = overseasDeliveryPlanService.generateRequisitionApplicationSave(dto.getList());
         return flag ? success() : failure();

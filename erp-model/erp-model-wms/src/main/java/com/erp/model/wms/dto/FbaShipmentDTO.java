@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -628,4 +629,102 @@ public class FbaShipmentDTO implements Serializable {
         private String warehouseLocation;
 
     }
+
+    /**
+     * 下推发货单列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateRequisitionApplicationViewDTO {
+        /**
+         * 主表id
+         */
+        private String sourceId;
+
+        /**
+         * 明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 发货计划单号
+         */
+        private String sourceCode;
+
+        /**
+         * 要货类型
+         */
+        private String type;
+
+        /**
+         * 要货类型中文
+         */
+        private String typeName;
+
+        /**
+         * 渠道
+         */
+        private String channelId;
+
+        /**
+         * 渠道中文名
+         */
+        private String channelName;
+
+        /**
+         * 平台sku
+         */
+        private String asin;
+
+        /**
+         * 买家sku
+         */
+        private String msku;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * sku表id
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 要货数量
+         */
+        private Integer requisitionQty;
+    }
+
 }
