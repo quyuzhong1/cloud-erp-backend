@@ -28,7 +28,7 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 /**
  * 海外物流商
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Slf4j
@@ -42,7 +42,7 @@ public class OverseasProviderController extends BaseController {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<String>
@@ -55,7 +55,7 @@ public class OverseasProviderController extends BaseController {
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult
@@ -108,4 +108,45 @@ public class OverseasProviderController extends BaseController {
         OverseasProviderDTO.ViewDTO result = overseasProviderService.view(id);
         return success(result);
     }
+
+    /**
+     * 服务商授权
+     * @Author Luo_WG
+     * @Date 2023/11/16 16:41
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/authorize")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:authorize",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult authorize(@RequestBody @Validated OverseasProviderDTO.AuthorizeParamDTO dto) {
+        Boolean flag = overseasProviderService.authorize(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 取消授权
+     * @Author Luo_WG
+     * @Date 2023/11/16 16:41
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/cancelAuthorize")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:cancelAuthorize",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = overseasProviderService.cancelAuthorize(dto.getIds());
+        return flag ? success() : failure();
+    }
+
+
+
 }

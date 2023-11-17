@@ -5,19 +5,21 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外物流商 服务类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 public interface OverseasProviderService extends SuperService<OverseasProviderEntity> {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -26,7 +28,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -50,4 +52,22 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * @return com.erp.model.wms.dto.OverseasProviderDTO.ViewDTO
      **/
     OverseasProviderDTO.ViewDTO view(String id);
+
+    /**
+     * 服务商授权
+     * @Author Luo_WG
+     * @Date 2023/11/16 16:41
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto);
+
+    /**
+     * 取消授权
+     * @Author Luo_WG
+     * @Date 2023/11/16 16:44
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean cancelAuthorize(List<String> ids);
 }

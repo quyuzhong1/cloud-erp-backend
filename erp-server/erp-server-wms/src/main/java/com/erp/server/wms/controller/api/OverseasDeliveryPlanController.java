@@ -29,7 +29,7 @@ import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 /**
  * 发货计划
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Slf4j
@@ -43,7 +43,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<String>
@@ -56,7 +56,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult
@@ -89,7 +89,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 列表查询
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>>
@@ -106,7 +106,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 新增并提交审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<Void>
@@ -119,7 +119,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 修改并提交审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<Void>
@@ -137,7 +137,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 提交审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -172,7 +172,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -208,7 +208,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 反审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -244,7 +244,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 删除
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -278,7 +278,7 @@ public class OverseasDeliveryPlanController extends BaseController {
     }
     /**
     * 作废
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -313,7 +313,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 撤销
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -348,7 +348,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 详情
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param id
     * @return ApiResult<OverseasDeliveryPlanDTO.ViewDTO>>
@@ -366,7 +366,7 @@ public class OverseasDeliveryPlanController extends BaseController {
 
     /**
     * 导出Excel数据
-    * @author Luo_wg
+    * @author Luo_WG
     * @date:  2023-11-16
     * @param dto
     * @param response

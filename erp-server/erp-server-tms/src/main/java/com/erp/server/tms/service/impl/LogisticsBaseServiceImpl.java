@@ -13,6 +13,7 @@ import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -71,22 +72,23 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     private ApiResult syncSingleChannel(String platform) {
         log.info("{}渠道同步开始", platform);
-        String authId = "";
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         LogisticsService service = logisticsRegistry.getHandler(platform);
-        Map<String, String> map = service.getLogisticsAuthConfig(authId);
-        if (Objects.isNull(map)) return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR);
-        chanelQueryVO.setAuthMap(map);
-        ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-        //把结果存储数据库
-        if (channels.isSuccess()) {
-            channels.getData().forEach(logisticsSaleChannelEntity -> {
-                logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
-            });
-
-        } else {
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, channels.getMsg());
-        }
+        List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platform);
+        if (CollectionUtils.isEmpty(mapList)) return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR);
+        mapList.forEach(map -> {
+            chanelQueryVO.setAuthMap(map);
+            ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+            //把结果存储数据库
+            if (channels.isSuccess()) {
+                channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    logisticsSaleChannelEntity.setAuthId(map.get("id"));
+                    logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+                });
+            } else {
+                log.error("渠道查询异常：{}",channels.getMsg());
+            }
+        });
         log.info("{}渠道同步结束", platform);
         return ApiResult.success();
     }
@@ -103,6 +105,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
+                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
 

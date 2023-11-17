@@ -2,6 +2,7 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.ErpServerTmsApplication;
@@ -57,8 +58,12 @@ public class YanWenLogisticsHandlerImplTest {
         logisticsProductVO.setPrice(new BigDecimal("12345"));
         logisticsProductVO.setWeight(123456);
         logisticsProductVO.setQuantity(1324);
+        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
+        logisticsSaleChannel.setCode("S832");
+        logisticsSaleChannel.setShipmentMethod("Express-Post");
+        logisticsSaleChannel.setPlatformChannelId("155");
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
-                .channelId("155")
+//                .channelId("155")
                 .orderSource("ERP")
                 .deliveryNo("wj12345168")
                 .authMap(authMap)

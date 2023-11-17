@@ -101,7 +101,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
-        FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
+        FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentIdAndIsDelete(entity.getFbaShipmentId(), null);
         if (null == oldEntity){
             // 新增
             fbaShipmentService.checkAndSaveAll(entity, listingInfoMap, receiveDTOList, dto.getDetailList());

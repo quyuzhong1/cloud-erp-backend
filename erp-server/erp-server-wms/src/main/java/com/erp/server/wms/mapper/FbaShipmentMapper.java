@@ -39,4 +39,12 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView>
      **/
     List<FbaShipmentDTO.GenerateDeliverView> generateDeliverView(@Param("params") BaseIdsDTO.IdsDTO ids);
+
+
+    /**
+     * 通过fbaShipmentId和isDelete查询实体
+     * @author  Jim
+     * @date 2023/11/17
+     */
+    FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId, Boolean isDelete);
 }

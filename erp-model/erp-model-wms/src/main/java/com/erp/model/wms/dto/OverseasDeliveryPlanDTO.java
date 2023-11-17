@@ -18,7 +18,7 @@ import javax.validation.constraints.NotEmpty;
  * 发货计划请求响应实体
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
 */
 @Data
@@ -45,126 +45,200 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          private Integer count;
 
      }
+
+
      /**
      * 分页列表查询参数
      */
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
-
          /**
          * 搜索类型
          */
-         private String  tabFlag;
+         private String tabFlag;
 
+         /**
+         * 单号
+         */
+         private String code;
+
+         /**
+         * 产品编号
+         */
+         private String skuNoList;
+
+         /**
+         * 审核状态
+         */
+         private List<String> approveStatusList;
+
+         /**
+         * 发货状态
+         */
+         private List<String> deliveryStatusList;
+
+         /**
+         * 发货单号
+         */
+         private String deliveryCode;
+
+         /**
+         * 目的仓库
+         */
+         private List<String> toWarehouseIdList;
+
+         /**
+         * 国家
+         */
+         private List<String> countryList;
+
+         /**
+         * 是否组合品
+         */
+         private Boolean isCombination;
+
+         /**
+         * 操作人
+         */
+         private List<String> updateUserIdList;
+
+         /**
+         * 创建时间
+         */
+         private List<LocalDate> createTimeList;
+
+         /**
+         * 审核时间
+         */
+         private List<LocalDate> approveTimeList;
      }
+
     /**
     * 分页列表
     */
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * code
-        */
+         * 编号
+         */
         private String code;
 
         /**
-        * 审核状态
-        */
+         * 审核状态
+         */
         private String approveStatus;
 
         /**
-        * 审核人
-        */
-        private String approveUserId;
-
-        /**
-        * 审核人中文名
-        */
-        private String approveUserName;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 作废状态
-        */
-        private Boolean invalidStatus;
-
-        /**
-        * 作废备注
-        */
-        private String invalidRemark;
-
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-
-        /**
-        * 发货状态
-        */
-        private String deliveryStatus;
-
-        /**
-        * 目的仓id
-        */
-        private String toWarehouseId;
-
-        /**
-        * 目的仓中文名
-        */
-        private String toWarehouseName;
-
-        /**
-        * 国家二字码
-        */
-        private String country;
-
-        /**
-        * 国家中文名
-        */
-        private String countryName;
-
-        /**
-        * 计划发货时间
-        */
-        private LocalDate planDeliveryDate;
-
-        /**
-        * 描述
-        */
-        private String remark;
-
-
-        /**
-        * 审核状态名称
-        */
+         * 审核状态中文名
+         */
         private String approveStatusName;
 
         /**
-        * 作废状态名称
-        */
-        private String invalidStatusName;
+         * 发货状态
+         */
+        private String deliveryStatus;
 
         /**
-        * 创建时间
-        */
+         * 发货状态中文名
+         */
+        private String deliveryStatusName;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 目的仓库
+         */
+        private String toWarehouseId;
+
+        /**
+         * 目的仓库中文名
+         */
+        private String toWarehouseName;
+
+        /**
+         * 国家
+         */
+        private String countryId;
+
+        /**
+         * 国家中文名
+         */
+        private String countryName;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private String isCombination;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划数量
+         */
+        private Integer planQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人中文名
+         */
+        private String createUserName;
+
+        /**
+         * 待审核人名称
+         */
+        private String waitApproveUserName;
+
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 创建时间
+         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
     }
 
     /**

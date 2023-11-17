@@ -3,6 +3,7 @@ package com.erp.model.tms.vo.request;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import lombok.Builder;
 import lombok.Data;
 
@@ -22,11 +23,11 @@ import java.util.Map;
 @Builder
 public class LogisticsOrderVO implements Serializable {
 
-    //渠道id
-    private String channelId;
-
-    //渠道code
-    private String channelCode;
+//    //渠道id
+//    private String channelId;
+//
+//    //渠道code
+//    private String channelCode;
 
     //订单来源
     private String orderSource;
@@ -58,6 +59,8 @@ public class LogisticsOrderVO implements Serializable {
 
     //护照号
     private String passportNumber;
+    //发货网点
+    private String facility;
     /**
      * 发货单号
      */
@@ -88,5 +91,8 @@ public class LogisticsOrderVO implements Serializable {
      * 渠道信息
      */
     private LogisticsChannelEntity logisticsChannelEntity;
-
+    /**
+     * 原始渠道
+     */
+    private LogisticsSaleChannelEntity logisticsSaleChannel;
 }

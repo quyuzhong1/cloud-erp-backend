@@ -18,6 +18,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
+import com.sdk.tms.ubi.model.catalog.response.Origin;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.ubi.model.label.LabelRequest;
 import com.sdk.tms.ubi.model.label.LabelResponse;
@@ -52,6 +53,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     UbiShipperService ubiShipperService;
     @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+
     /**
      * 创建订单
      *
@@ -64,18 +66,20 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         UbiOrder ubiOrder = LogisticsOrderConverter.INSTANCE.orderRequestByUBI(logisticsOrderVO);
         ubiOrder.setDescription(logisticsOrderVO.getLogisticsProductVOList().get(0).getDeclareEnglishName());
         ubiOrder.setNativeDescription(logisticsOrderVO.getLogisticsProductVOList().get(0).getDeclareChineseName());
-        ubiOrder.setWeight(Double.valueOf(logisticsOrderVO.getLogisticsProductVOList().get(0).getWeight()));
+        ubiOrder.setWeight((double) ((int) logisticsOrderVO.getLogisticsProductVOList().get(0).getWeight() / 1000));
         //TODO 货值(>=0.01)，与sum(itemCount * unitValue)的误差不能超过0.1
 //        BigDecimal price = logisticsOrderVO.getLogisticsProductVOList().get(0).getPrice();
+        ubiOrder.setVolume(Double.valueOf(0.1));
         BigDecimal price = logisticsOrderVO.getParceInfoVO().getTotalPrice();
         Integer quantity = logisticsOrderVO.getLogisticsProductVOList().get(0).getQuantity();
         ubiOrder.setInvoiceValue(logisticsOrderVO.getParceInfoVO().getTotalPrice().doubleValue());
         ubiOrder.setInvoiceCurrency(logisticsOrderVO.getParceInfoVO().getCurrency());
+        ubiOrder.setSku(logisticsOrderVO.getLogisticsProductVOList().get(0).getSkuId());
         //订单信息
         List<OrderItem> orderItems = LogisticsOrderConverter.INSTANCE.orderItemsRequestByUBI(logisticsOrderVO.getLogisticsProductVOList());
         ubiOrder.setOrderItems(orderItems);
         try {
-            OrderResponse order = ubiShipperService.createOrder(logisticsOrderVO.getAuthMap(),ubiOrder);
+            OrderResponse order = ubiShipperService.createOrder(logisticsOrderVO.getAuthMap(), ubiOrder);
             logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(order));
@@ -115,17 +119,17 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-                if ("Success".equalsIgnoreCase(orderResponse.getStatus())){
+                if ("Success".equalsIgnoreCase(orderResponse.getStatus())) {
                     responseVO.success();
                     responseVO.setDeliveryNo(orderResponse.getReferenceNo());
                     responseVO.setTransportNo(orderResponse.getOrderId());
                     responseVO.setTrackNo(orderResponse.getTrackingNo());
-                }else {
+                } else {
                     isSuccess = false;
                     logisticsOrderOperateLogService.addOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-                    responseVO.failure(LogisticsPlatformEnum.UBI.getName(),"-1", orderResponse.getErrors());
+                    responseVO.failure(LogisticsPlatformEnum.UBI.getName(), "-1", orderResponse.getErrors());
                     responseVO.setDeliveryNo(orderResponse.getReferenceNo());
                 }
                 responseVOS.add(responseVO);
@@ -136,7 +140,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 isSuccess = false;
             }
         }
-        return isSuccess?success(responseVOS):failure(responseVOS);
+        return isSuccess ? success(responseVOS) : failure(responseVOS);
     }
 
 
@@ -223,11 +227,11 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         LabelRequest labelRequest = LabelRequest.builder()
                 .orderIds(logisticsQueryVO.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()))
                 //TODO 根据传参决定打印单大小
-                .labelType("0")
+                .labelType("1")
                 .packinglist(false)
                 .merged(true)
                 .labelFormat("JPG")
-                .dpi("300")
+                .dpi("203")
                 .build();
         LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         assert logisticsGetLabelVO != null;
@@ -265,7 +269,42 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<ServiceCataLog> serviceCataLogList;
         try {
             serviceCataLogList = ubiShipperService.getServiceCatalog(chanelQueryVO.getAuthMap());
-            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBI(serviceCataLogList);
+            List<LogisticsSaleChannelEntity> list = new ArrayList<>();
+            //数据拆分
+            if (CollectionUtils.isNotEmpty(serviceCataLogList)) {
+                serviceCataLogList.forEach(serviceCataLog -> {
+                    List<String> serviceOptions = serviceCataLog.getServiceOptions();
+                    if (CollectionUtils.isNotEmpty(serviceOptions)) {
+                        serviceOptions.forEach(serviceOption -> {
+                            //快递类型
+                            List<Origin> destinations = serviceCataLog.getDestinations();
+                            if (CollectionUtils.isNotEmpty(destinations)) {
+                                destinations.forEach(destination -> {
+                                    List<Origin> origins = serviceCataLog.getOrigins();
+                                    if (CollectionUtils.isNotEmpty(origins)) {
+                                        origins.forEach(origin -> {
+                                            //发货国
+                                            LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity()
+                                                    .setCode(serviceCataLog.getServiceCode())
+                                                    .setCnName(serviceCataLog.getServiceName())
+                                                    .setEnName(serviceCataLog.getNativeName())
+                                                    .setSupplierCode(serviceCataLog.getServiceProviderCode())
+                                                    .setSupplierName(serviceCataLog.getServiceProvider())
+                                                    .setLogisticsPlatform(LogisticsPlatformEnum.UBI.getCode())
+                                                    .setChannelStatus(0)
+                                                    .setDestinationCountry(destination.getCountry())
+                                                    .setOriginCountry(origin.getCountry())
+                                                    .setShipmentMethod(serviceOption);
+                                            list.add(entity);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+//            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBI(serviceCataLogList);
             logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(serviceCataLogList));

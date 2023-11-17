@@ -52,7 +52,7 @@ import com.common.core.enums.ApiError;
  * 发货计划 服务实现类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Slf4j
@@ -481,7 +481,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         // 属性赋值
         for(OverseasDeliveryPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+//            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             // TODO 其他如需要显示名称的字段赋值
         }
     }

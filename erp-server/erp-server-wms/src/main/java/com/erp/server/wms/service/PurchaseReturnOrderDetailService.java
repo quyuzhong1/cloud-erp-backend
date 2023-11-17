@@ -12,7 +12,7 @@ import java.util.List;
  * 采购退货单明细 服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-07
  */
 public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseReturnOrderDetailEntity> {

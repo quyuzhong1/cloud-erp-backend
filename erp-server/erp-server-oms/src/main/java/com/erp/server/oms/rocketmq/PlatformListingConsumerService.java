@@ -66,7 +66,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 throw new ServiceException("Listing 产品保存失败");
             }
             // 添加到映射
-            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity);
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
             if (!skuMappingService.save(skuMappingEntity)) {
                 throw new ServiceException("SkuMapping保存失败");
             }

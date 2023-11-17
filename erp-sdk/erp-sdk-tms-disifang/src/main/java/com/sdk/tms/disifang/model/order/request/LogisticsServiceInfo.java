@@ -3,6 +3,7 @@ package com.sdk.tms.disifang.model.order.request;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -18,6 +19,7 @@ public class LogisticsServiceInfo implements Serializable {
      * 物流产品代码(点击查看详情)
      * 是
      */
+    @NotBlank(message = "物流产品代码不能为空")
     @JSONField(name = "logistics_product_code")
     private String logisticsProductCode;
     /**

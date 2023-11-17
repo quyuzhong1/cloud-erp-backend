@@ -12,14 +12,14 @@ import java.util.List;
  * 发货计划 服务类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 public interface OverseasDeliveryPlanService extends SuperService<OverseasDeliveryPlanEntity> {
 
     /**
     * 新增
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -28,7 +28,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 修改
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -37,7 +37,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 分页列表查询
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param pagingParamDTO
     * @return PagingVO<OverseasDeliveryPlanDTO.ListDTO>>
@@ -46,7 +46,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 状态统计
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return List<OverseasDeliveryPlanDTO.TabListDTO>>
@@ -55,7 +55,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 详情
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param id
     * @return
@@ -64,7 +64,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 新增并提交审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return BaseResultDTO.AddDTO
@@ -73,7 +73,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 修改并提交审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -82,7 +82,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
      /**
      * 提交审核
-     * @author Luo_wg
+     * @author Luo_WG
      * @date: 2023-11-16
      * @param id
      * @return
@@ -91,7 +91,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @return
@@ -100,7 +100,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 反审核
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param id
     * @return
@@ -109,7 +109,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 删除
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param id
     * @return
@@ -117,7 +117,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     BatchResultDTO delete(String id);
     /**
     * 作废
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param id
     * @param remark
@@ -127,7 +127,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 撤销
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param id
     * @return
@@ -136,7 +136,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
 
     /**
     * 导出Excel
-    * @author Luo_wg
+    * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
     * @param response

@@ -102,7 +102,7 @@ public class ${table.controllerName} {
         serviceClass = ${table.serviceName}.class,
         keyIdName = "id")
     </#if>
-    public ApiResult update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
         ${serviceBean}.update(dto);
         return success();
     }

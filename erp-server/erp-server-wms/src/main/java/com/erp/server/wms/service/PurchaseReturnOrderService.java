@@ -18,7 +18,7 @@ import java.util.List;
  * 采购退货单 服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-07
  */
 public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnOrderEntity> {

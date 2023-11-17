@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+
+import java.io.Serializable;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -29,7 +31,7 @@ import com.common.core.enums.ApiError;
  * 海外物流商 服务实现类
  * </p>
  *
- * @author Luo_wg
+ * @author Luo_WG
  * @since 2023-11-16
  */
 @Slf4j
@@ -113,6 +115,16 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean cancelAuthorize(List<String> ids) {
         return null;
     }
 }

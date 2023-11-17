@@ -686,6 +686,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 主表更新
         if (!oldEntity.toString().equalsIgnoreCase(entity.toString())){
+            entity.setIsDeleted(false);
             if (!this.updateById(entity)){
                 throw new ServiceException("[FbaShipmentEntity] 更新失败: entity="+ JSONUtil.toJsonStr(entity));
             }
@@ -780,11 +781,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId) {
-        return lambdaQuery()
-                .eq(FbaShipmentEntity::getFbaShipmentId, fbaShipmentId)
-                .last("LIMIT 1")
-                .one();
+    public FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId,Boolean isDelete){
+        return this.baseMapper.getByFbaShipmentIdAndIsDelete(fbaShipmentId, isDelete);
     }
 
 

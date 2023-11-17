@@ -5,6 +5,8 @@ import com.sdk.tms.disifang.model.base.Address;
 import lombok.Data;
 import lombok.*;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -30,6 +32,7 @@ public class OrderRequest implements Serializable {
      * 参考号（客户自有系统的单号，如客户单号）
      * 是
      */
+    @NotBlank(message = "客户单号不能为空")
     @JSONField(name = "ref_no")
     private String refNo;
     /**
@@ -41,12 +44,14 @@ public class OrderRequest implements Serializable {
      * 业务类型(4PX内部调度所需，如需对接传值将说明，默认值：BDS。)
      * 是
      */
+    @NotBlank(message = "业务类型不能为空")
     @JSONField(name = "business_type")
     private String businessType;
     /**
      * 税费费用承担方式(可选值：U、P); U：DDU由收件人支付关税; P：DDP 由寄件方支付关税 （如果物流产品只提供其中一种，则以4PX提供的为准）
      * 是
      */
+    @NotBlank(message = "税费费用承担方式不能为空")
     @JSONField(name = "duty_type")
     private String dutyType;
     /**
@@ -138,13 +143,14 @@ public class OrderRequest implements Serializable {
     /**
      *是否投保(Y、N)
      */
+    @NotNull(message = "是否投保不能为空")
     @JSONField(name = "is_insure")
     private String is_insure;
     /**
      *保险信息（投保时必须填写）
      */
     @JSONField(name = "insurance_info")
-    private InsuranceInfo insurance_info;
+    private InsuranceInfo insuranceInfo;
     /**
      *发件人信息
      */
@@ -155,4 +161,28 @@ public class OrderRequest implements Serializable {
      */
     @JSONField(name = "recipient_info")
     private Address recipientInfo;
+    /**
+     *货物到仓方式信息
+     */
+    @JSONField(name = "deliver_type_info")
+    private DeliverTypeInfo deliverTypeInfo;
+    /**
+     *投递信息
+     */
+    @JSONField(name = "deliver_to_recipient_info")
+    private DeliverToRecipientInfo deliverToRecipientInfo;
+    /**
+     * 	扩展字段
+     */
+    private String ext;
+    /**
+     * 	分拣分区
+     */
+    @JSONField(name = "sort_code")
+    private String sortCode;
+    /**
+     * 	订单附件列表
+     */
+    @JSONField(name = "order_attachment_info")
+    private List<OrderAttachmentInfo> orderAttachmentInfos;
 }

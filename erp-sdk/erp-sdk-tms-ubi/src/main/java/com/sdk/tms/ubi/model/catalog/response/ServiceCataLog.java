@@ -23,5 +23,10 @@ public class ServiceCataLog implements Serializable {
     private String serviceDescription;
     private String customerSupportPhone;
     private String customerSupportEMail;
+    //发货地
     private List<Origin> origins;
+    //目的地
+    private List<Origin> destinations;
+    //服务选项
+    private List<String> serviceOptions;
 }

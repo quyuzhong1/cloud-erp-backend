@@ -3,6 +3,7 @@ package com.erp.server.tms.service.logistics;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
@@ -61,10 +62,16 @@ public class TongYouLogisticsHandlerImplTest {
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(1);
         logisticsProductVO.setDeclareCurrency("USD");
+
+        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
+        logisticsSaleChannel.setCode("FZXXRKVP705");
+        logisticsSaleChannel.setShipmentMethod("Express-Post");
+        logisticsSaleChannel.setPlatformChannelId("155");
+
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
-                .channelCode("FZXXRKVP705")
-                .channelId("155")
+//                .channelCode("FZXXRKVP705")
+//                .channelId("155")
                 .orderSource("ERP")
                 .material("material")
                 .deliveryNo("WJ20231102002")
@@ -110,10 +117,10 @@ public class TongYouLogisticsHandlerImplTest {
         labelVO.setDeliveryNo("XM1AWJJ028110");
         labelVO.setAuthMap(authMap);
         labelVO.setTrackNo("TYZPH0022783888YQ");
-        LogisticsChannelEntity logisticsChannelEntity = new LogisticsChannelEntity();
+        LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
         logisticsChannelEntity.setCode("FZXXRKVP705");
-        labelVO.setLogisticsChannelEntity(logisticsChannelEntity);
-        labelVO2.setLogisticsChannelEntity(logisticsChannelEntity);
+        labelVO.setLogisticsSaleChannelEntity(logisticsChannelEntity);
+        labelVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
         ApiResult<List<LogisticsPrintLabelResponse>> result = tongYouLogisticsHandler.getLabelList(Arrays.asList(labelVO,labelVO2));
         System.out.println(result);
     }

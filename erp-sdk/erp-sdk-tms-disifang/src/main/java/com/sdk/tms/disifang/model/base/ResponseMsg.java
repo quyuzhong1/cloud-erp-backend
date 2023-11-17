@@ -1,6 +1,11 @@
 package com.sdk.tms.disifang.model.base;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * @author zdy
@@ -15,15 +20,10 @@ public class ResponseMsg {
 
     public String msg;
 
-    public error errors;
+    public List<ResError> errors;
 
     public Object data;
 
-    class error {
-        String errorCode;
-
-        String errorMsg;
-    }
 
     public static ResponseMsg fial(String msg) {
         ResponseMsg responseMsg = new ResponseMsg();
