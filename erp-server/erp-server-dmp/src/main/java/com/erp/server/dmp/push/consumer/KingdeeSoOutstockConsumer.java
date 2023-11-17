@@ -70,6 +70,11 @@ public class KingdeeSoOutstockConsumer<T extends DmpSyncTaskIdDTO> extends Abstr
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
     public ApiResult<?> handle(Object ext) {
         Map<String, Object> map = JSONUtil.parseObj(ext);
         kingdeeSoOutstockConsumerService.executeConsumer(map);
