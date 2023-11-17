@@ -46,6 +46,13 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     List<SaleChannelDTO> listByType(String platformType);
 
     /**
+     * 根据数据来源获取源数据
+     * @param platformType
+     * @return
+     */
+    List<LogisticsSaleChannelEntity> listByDataSource(String platformType,String overseasWarehouseId,Integer status);
+
+    /**
      *  根据授权状态和同步状态查询数据
      * @author yl
      *
