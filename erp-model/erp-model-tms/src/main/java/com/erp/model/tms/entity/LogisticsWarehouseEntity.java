@@ -30,16 +30,20 @@ public class LogisticsWarehouseEntity extends BaseEntity<LogisticsWarehouseEntit
     @TableField("main_id")
     private String mainId;
     /**
-    * 仓库id
+    * 海外仓库id 对应 wms overseas_provider_warehouse 表id
     */
-    @TableField("warehouse_id")
-    private String warehouseId;
+    @TableField("overseas_warehouse_id")
+    private String overseasWarehouseId;
     /**
-    * 仓库名称
+    *  自研erp 仓库名
     */
     @TableField("warehouse_name")
     private String warehouseName;
-
+    /**
+     *  自研erp 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
 
     public static final String MAIN_ID = "main_id";
 

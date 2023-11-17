@@ -106,7 +106,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
      * false 未同步
      */
     @TableField("is_sync")
-    private String isSync;
+    private Boolean isSync;
 
 
 

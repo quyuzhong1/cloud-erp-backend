@@ -69,8 +69,9 @@ public class LogisticsController extends BaseController {
     }
 
     @PostMapping("/queryOrderList")
-    public ApiResult queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        return success();
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        List<LogisticsOrderResponseVO> list = logisticsBaseService.queryOrderList(logisticsQueryVOList);
+        return success(list);
     }
 
     @PostMapping("/getLabelList")

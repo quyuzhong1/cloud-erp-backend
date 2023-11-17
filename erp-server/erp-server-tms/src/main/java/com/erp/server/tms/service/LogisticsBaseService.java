@@ -32,5 +32,5 @@ public interface LogisticsBaseService {
      * 查询订单信息
      * @param logisticsQueryVOList
      */
-    ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
+    List<LogisticsOrderResponseVO> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList);
 }

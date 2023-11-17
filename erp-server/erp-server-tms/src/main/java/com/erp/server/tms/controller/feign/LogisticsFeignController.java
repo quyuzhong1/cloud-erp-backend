@@ -27,7 +27,7 @@ public class LogisticsFeignController {
     @Resource
     private LogisticsBaseService logisticsBaseService;
     @PostMapping("/queryOrderList")
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
+    public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
         return logisticsBaseService.queryOrderList(logisticsQueryVOList);
     }
 }

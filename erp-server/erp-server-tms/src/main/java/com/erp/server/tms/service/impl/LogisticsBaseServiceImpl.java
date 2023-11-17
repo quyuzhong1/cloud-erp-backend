@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -64,10 +65,22 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.SHOPEE.getCode());
-        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = service.queryOrderList(logisticsQueryVOList);
-        return listApiResult;
+    public List<LogisticsOrderResponseVO> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
+        List<LogisticsOrderResponseVO> list = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(logisticsQueryVOList)){
+            logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
+                Map<String, String> authMap = logisticsQueryBaseVO.getAuthMap();
+                if (Objects.nonNull(authMap.get("logisticsPlatform"))){
+                    LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
+                    ApiResult<List<LogisticsOrderResponseVO>> listApiResult = service.queryOrderList(logisticsQueryVOList);
+                    if (listApiResult.isSuccess()){
+                        list.addAll(listApiResult.getData());
+                    }
+                }
+            });
+        }
+
+        return list;
     }
 
     private ApiResult syncSingleChannel(String platform) {
