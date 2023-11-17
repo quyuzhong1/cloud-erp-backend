@@ -221,6 +221,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         String authId = logisticsSupplier.getAuthId();
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId, Boolean.FALSE);
         String sourceType = SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode();
+        Boolean yesSync = Boolean.TRUE;
         if (CollectionUtils.isNotEmpty(saleChannelList)) {
             List<LogisticsChannelEntity> addList = LogisticsChannelConverter.INSTANCE.channelConvertBySaleChannel(saleChannelList);
             addList.forEach(a -> {
@@ -228,10 +229,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 a.setSourceType(sourceType);
             });
             logisticsChannelService.saveBatch(addList);
+            saleChannelList.forEach(s -> {
+                s.setIsSync(yesSync);
+            });
+            logisticsSaleChannelService.updateBatchById(saleChannelList);
         }
 
 
-        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(),"同步");
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步");
 
     }
 
