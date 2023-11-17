@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -34,7 +35,14 @@ public class WeiShiLogisticsHandlerImplTest {
         authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
     }
 
-
+    public Map<String, String> getLogisticsAuthConfig(){
+        Map<String, String> logisticsAuthConfig = weiShiLogisticsHandler.getLogisticsAuthConfig("");
+        return logisticsAuthConfig;
+    }
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
+        List<Map<String, String>> logisticsAuthConfigByPlatform = weiShiLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
+        return logisticsAuthConfigByPlatform;
+    }
     @Test
     public void getChannel() {
         System.out.println(weiShiLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build()));

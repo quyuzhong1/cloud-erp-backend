@@ -8,4 +8,8 @@ package com.erp.tms.aliexpress.constants;
  * @version: 1.0
  */
 public interface PathConstants {
+    
+    String BASE_URL = "https://open.aliexpress.com/";
+    String APP_KEY = "502978";
+    String APP_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 }

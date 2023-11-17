@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -33,6 +34,15 @@ public class TongYouLogisticsHandlerImplTest {
     public TongYouLogisticsHandlerImplTest(){
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientSecret","DADDC4078D2B7D38391A8D3F78C037BF");
+    }
+
+    public Map<String, String> getLogisticsAuthConfig(){
+        Map<String, String> logisticsAuthConfig = tongYouLogisticsHandler.getLogisticsAuthConfig("");
+        return logisticsAuthConfig;
+    }
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
+        List<Map<String, String>> logisticsAuthConfigByPlatform = tongYouLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
+        return logisticsAuthConfigByPlatform;
     }
 
     @Test
