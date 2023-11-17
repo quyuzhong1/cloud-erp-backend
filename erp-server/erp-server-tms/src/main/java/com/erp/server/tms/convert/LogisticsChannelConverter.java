@@ -113,9 +113,10 @@ public interface LogisticsChannelConverter {
     @Mappings({
             @Mapping(target = "name", source = "cnName"),
             @Mapping(target = "code", source = "code"),
-            @Mapping(target = "aging", source = "effectiveTime"),
+            @Mapping(target = "effectiveTime", source = "aging"),
             @Mapping(target = "id", ignore = true),
     })
+    LogisticsChannelEntity channelConvertBySaleChannel(LogisticsSaleChannelEntity channel);
     List<LogisticsChannelEntity> channelConvertBySaleChannel(List<LogisticsSaleChannelEntity> saleChannelList);
 
     @Mappings({

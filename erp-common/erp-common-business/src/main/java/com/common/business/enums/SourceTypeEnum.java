@@ -85,6 +85,8 @@ public enum SourceTypeEnum {
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
+    LOGISTICS_SUPPLIER("logisticsSupplier","物流商",""),
+    LOGISTICS_WAREHOUSE("logisticsWarehouse","物流仓库",""),
 
     ;
 

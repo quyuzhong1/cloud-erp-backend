@@ -9,6 +9,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -127,12 +128,19 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     public List<SaleChannelDTO> listByType(String platformType) {
         return baseMapper.listByType(platformType);
     }
-
+    /**
+     *
+     * @param authId
+     * @param isSync
+     * @return
+     */
     @Override
     public List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync) {
-        return null;
-    }
 
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getAuthId,authId).
+                eq(LogisticsSaleChannelEntity::getIsSync,isSync).
+                eq(LogisticsSaleChannelEntity::getChannelStatus, MathUtil.ZERO).list();
+    }
 
     /**
     * 新增修改处理数据
