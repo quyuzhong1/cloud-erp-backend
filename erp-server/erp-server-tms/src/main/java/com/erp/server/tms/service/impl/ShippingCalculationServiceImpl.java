@@ -440,11 +440,11 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
 
         //保留两位小数四金五入
         if (PriceBinaryEnum.TWO_DECIMAL_PLACES.getCode().equals(priceBinary)) {
-            cost = cost.setScale(2);
+            cost = cost.setScale(2,BigDecimal.ROUND_HALF_UP);
         }
         //保留一位小数四舍五入
         if (PriceBinaryEnum.ONE_DECIMAL_PLACES.getCode().equals(priceBinary)) {
-            cost = cost.setScale(1);
+            cost = cost.setScale(1,BigDecimal.ROUND_HALF_UP);
         }
         //向下取整，小数舍弃
         if (PriceBinaryEnum.NO_DECIMALS.getCode().equals(priceBinary)) {
@@ -460,7 +460,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             }
             if (MathUtil.compareTo(decimalPart,0) > MathUtil.ZERO && MathUtil.compareTo(decimalPart,0.5) < MathUtil.ZERO ){
                 //未到0.5，进0.5
-                cost = cost.setScale(0,BigDecimal.ROUND_UP);
+                cost = MathUtil.add(integerPart,new BigDecimal(0.5));
             }
         }
         //向上取整，小数进1
@@ -469,10 +469,9 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         }
         //保留整数，四舍五入
         if (PriceBinaryEnum.PRESERVE_INTEGERS.getCode().equals(priceBinary)) {
-            cost = cost.setScale(0);
+            cost = cost.setScale(0,BigDecimal.ROUND_HALF_UP);
 
         }
         return  cost;
     }
-
 }
