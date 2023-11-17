@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -88,4 +89,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return 
      */
     PagingVO<LogisticsBillDTO.PagingVO> paging(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-11-16
+     */
+    Boolean exportExcel(LogisticsBillDTO.ExportDTO dto, HttpServletResponse response);
 }

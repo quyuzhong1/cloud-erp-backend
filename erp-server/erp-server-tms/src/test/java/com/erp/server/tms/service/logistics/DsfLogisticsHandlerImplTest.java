@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -36,6 +37,15 @@ public class DsfLogisticsHandlerImplTest {
     public DsfLogisticsHandlerImplTest(){
         authMap.put("clientId","fad2854e-93a7-4598-95ff-cb60557dbc0a");
         authMap.put("clientSecret","0e91ca81-22f8-4fce-95d1-18ed6269604b");
+    }
+
+    public Map<String, String> getLogisticsAuthConfig(){
+        Map<String, String> logisticsAuthConfig = dsfLogisticsHandler.getLogisticsAuthConfig("");
+        return logisticsAuthConfig;
+    }
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
+        List<Map<String, String>> logisticsAuthConfigByPlatform = dsfLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
+        return logisticsAuthConfigByPlatform;
     }
 
     @Test

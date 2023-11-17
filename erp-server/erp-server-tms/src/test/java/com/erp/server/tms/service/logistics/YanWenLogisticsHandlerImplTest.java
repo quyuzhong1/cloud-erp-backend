@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -15,6 +16,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -30,7 +32,14 @@ public class YanWenLogisticsHandlerImplTest {
         authMap.put("clientId","100000");
         authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
     }
-
+    public Map<String, String> getLogisticsAuthConfig(){
+        Map<String, String> logisticsAuthConfig = yanWenLogisticsHandler.getLogisticsAuthConfig("");
+        return logisticsAuthConfig;
+    }
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
+        List<Map<String, String>> logisticsAuthConfigByPlatform = yanWenLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
+        return logisticsAuthConfigByPlatform;
+    }
 
     @Test
     public void getChannel() {

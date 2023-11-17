@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -117,6 +118,13 @@ public interface LogisticsChannelConverter {
     })
     List<LogisticsChannelEntity> channelConvertBySaleChannel(List<LogisticsSaleChannelEntity> saleChannelList);
 
+    @Mappings({
+            @Mapping(target = "code", source = "id"),
+            @Mapping(target = "value", source = "name"),
+            @Mapping(target = "disabled", source = "disabled"),
 
+    })
+    BaseDropDownDTO.DisabledDTO convertByChannelDown(LogisticsChannelEntity logisticsChannel);
+    List<BaseDropDownDTO.DisabledDTO> convertByChannelDown(List<LogisticsChannelEntity> list);
 
 }

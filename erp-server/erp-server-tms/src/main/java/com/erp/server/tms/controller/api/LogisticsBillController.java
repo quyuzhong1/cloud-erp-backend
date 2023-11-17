@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.validation.annotation.Validated;
@@ -69,7 +70,7 @@ public class LogisticsBillController extends BaseController {
 
 
     /**
-     * tab 列表
+     * 分页
      *
      * @param dto
      * @author yl
@@ -79,13 +80,30 @@ public class LogisticsBillController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsBill:paging",
-            tableAlias = ""
+            tableAlias = "lb"
     )
     public ApiResult<PagingVO<LogisticsBillDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsBillDTO.PagingVO> pagingVO = logisticsBillService.paging(dto);
         return success(pagingVO);
     }
 
+    /**
+     * 导出
+     *
+     * @param dto
+     * @author yl
+     * @date 2023-11-09 10:54
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBill:paging",
+            tableAlias = "lb"
+    )
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = logisticsBillService.exportExcel(dto, response);
+        return result ? success() : failure();
+    }
     /**
      * 获取物流轨迹明细
      * @return

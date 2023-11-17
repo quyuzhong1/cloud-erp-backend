@@ -55,6 +55,8 @@ public class DictBasicDTO implements Serializable {
         */
         private String typeName;
 
+        private String remark;
+
 
     }
 

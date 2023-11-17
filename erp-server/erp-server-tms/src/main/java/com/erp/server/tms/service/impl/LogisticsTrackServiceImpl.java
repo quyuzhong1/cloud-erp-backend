@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -105,12 +106,19 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (CollectionUtils.isEmpty(trackNoList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(LogisticsTrackEntity::getTrackNo,trackNoList).list();
+        return this.lambdaQuery().in(LogisticsTrackEntity::getTrackNo, trackNoList).orderByDesc(LogisticsTrackEntity::getTrackTime).list();
     }
 
     @Override
     public List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo) {
-        return null;
+        List<LogisticsTrackEntity> list = this.listByTrackNoList(Arrays.asList(trackNo));
+        List<LogisticsTrackDTO.ViewDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ViewDTO.class, list);
+        for (LogisticsTrackDTO.ViewDTO item : resultList) {
+            String status = item.getStatus();
+            String statusName = LogisticTrackStatusEnum.getName(status);
+            item.setStatusName(statusName);
+        }
+        return resultList;
     }
 
 

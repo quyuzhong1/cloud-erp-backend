@@ -321,7 +321,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
                 List<String> errorMsgList = new ArrayList<>();
                 if (StringUtils.isBlank(skuId)) {
-                    errorMsgList.add("sku不存在或者审核不通过");
+                    errorMsgList.add("sku不存在或者sku未审核通过");
                 }
                 //国家
                 String countryName = item.getCountry();

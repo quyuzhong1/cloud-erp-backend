@@ -99,8 +99,12 @@
          LEFT JOIN  logistics_channel lc
          ON lc.id=lb.channel_id and lc.is_deleted=false
         WHERE lbd.is_deleted=false
-        <if test="params.type!=null and params.type!=''">
-            lbd.track_status=#{params.type}
+        <!--状态-->
+        <if test="statusList !=null and statusList.size>0">
+            AND lbd.track_status in
+            <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
         <!--物流单号-->
         <if test="params.trackNoList !=null and params.trackNoList.size>0">
@@ -158,6 +162,119 @@
             </foreach>
         </if>
 
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        lb.create_time DESC
+    </select>
+
+    <!--导出-->
+    <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
+        SELECT
+            lb.id,
+            lb.sales_platform AS salesPlatform,
+            lb.shop_id AS shopId,
+            lb.shop_name AS shopName,
+            lb.source_type AS sourceType,
+            lb.source_type_name AS sourceTypeName,
+            lb.source_id AS sourceId,
+            lb.source_code AS sourceCode,
+            lb.outstock_id AS outstockId,
+            lb.outstock_code AS outstockCode,
+            lb.channel_id AS channelId,
+            lb.order_time AS orderTime,
+            lb.delivery_time AS deliveryTime,
+            lb.transport_no AS transportNo,
+            lb.to_country AS toCountry,
+            lbd.track_status AS trackStatus ,
+            lbd.track_no AS trackNo,
+            lbd.track_query_mode AS trackQueryMode,
+            lc.name AS channelName
+        FROM  logistics_bill_detail lbd
+                  LEFT JOIN  logistics_bill lb
+                             ON lbd.main_id=lb.id and lb.is_deleted=false
+                  LEFT JOIN  logistics_channel lc
+                             ON lc.id=lb.channel_id and lc.is_deleted=false
+        WHERE lbd.is_deleted=false
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND lb.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <!--状态-->
+                <if test="statusList !=null and statusList.size>0">
+                    AND lbd.track_status in
+                    <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--物流单号-->
+                <if test="params.trackNoList !=null and params.trackNoList.size>0">
+                    AND lbd.track_no in
+                    <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--销售平台-->
+                <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
+                    AND lb.sales_platform in
+                    <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--订单类型-->
+                <if test="params.sourceTypeList !=null and params.sourceTypeList.size>0">
+                    AND lb.source_type in
+                    <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--店铺-->
+                <if test="params.shopIdList !=null and params.shopIdList.size>0">
+                    AND lb.shop_id in
+                    <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+
+                <!--下单时间-->
+                <if test="params.orderTimeList !=null and params.orderTimeList.size>0">
+                    AND lb.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lb.order_time
+                </if>
+
+                <!--发货时间-->
+                <if test="params.deliveryTimeList !=null and params.deliveryTimeList.size>0">
+                    AND lb.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lb.delivery_time
+                </if>
+
+                <!--物流渠道-->
+                <if test="params.channelIdList !=null and params.channelIdList.size>0">
+                    AND lb.channel_id in
+                    <foreach collection="params.channelIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--包裹状态-->
+                <if test="params.trackStatusList !=null and params.trackStatusList.size>0">
+                    AND lbd.track_status in
+                    <foreach collection="params.trackStatusList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            </otherwise>
+        </choose>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

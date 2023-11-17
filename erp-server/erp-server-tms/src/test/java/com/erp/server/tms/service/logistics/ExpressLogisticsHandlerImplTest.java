@@ -28,28 +28,32 @@ import java.util.*;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
-public class UBILogisticsHandlerImplTest {
+public class ExpressLogisticsHandlerImplTest {
     @Resource
-    private UbiLogisticsHandlerImpl ubiLogisticsHandler;
+    private ExpressLogisticsHandlerImpl expressLogisticsHandler;
 
     private Map<String, String> authMap = new HashMap<>();
 
-    public UBILogisticsHandlerImplTest(){
+    public ExpressLogisticsHandlerImplTest(){
+        String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
+        String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
-        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+        authMap.put("clientId",CLIENT_CODE);
+        authMap.put("clientSecret",CHECK_WORD);
     }
+
     public Map<String, String> getLogisticsAuthConfig(){
-        Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfig("");
+        Map<String, String> logisticsAuthConfig = expressLogisticsHandler.getLogisticsAuthConfig("");
         return logisticsAuthConfig;
     }
     public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
-        List<Map<String, String>> logisticsAuthConfigByPlatform = ubiLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
+        List<Map<String, String>> logisticsAuthConfigByPlatform = expressLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
         return logisticsAuthConfigByPlatform;
     }
+
     @Test
     public void getChannel() {
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = ubiLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = expressLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
         System.out.println(channel);
     }
 
@@ -122,7 +126,7 @@ public class UBILogisticsHandlerImplTest {
                 ))
                 .logisticsChannelEntity(logisticsChannel)
                 .build();
-        ApiResult<LogisticsOrderResponseVO> order = ubiLogisticsHandler.createOrder(logisticsOrderVO);
+        ApiResult<LogisticsOrderResponseVO> order = expressLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(order);
     }
 
@@ -131,7 +135,7 @@ public class UBILogisticsHandlerImplTest {
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = ubiLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
+        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = expressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
     }
 
@@ -140,7 +144,7 @@ public class UBILogisticsHandlerImplTest {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
         logisticsQueryVO2.setDeliveryNo("wj12345167721");
         logisticsQueryVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsPrintLabelResponse>> labelList = ubiLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
+        ApiResult<List<LogisticsPrintLabelResponse>> labelList = expressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
     }
 
@@ -149,7 +153,7 @@ public class UBILogisticsHandlerImplTest {
         LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
         logisticsQueryVOList2.setDeliveryNo("wj12345167721");
         logisticsQueryVOList2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> listApiResult = ubiLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
+        ApiResult<List<InterceptResponseVO>> listApiResult = expressLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
         System.out.println(listApiResult);
     }
 
@@ -160,7 +164,7 @@ public class UBILogisticsHandlerImplTest {
         logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
         logisticsQueryVOList.setTrackNo("LM000002721CA");
         logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> listApiResult = ubiLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
+        ApiResult<List<CancelResponseVO>> listApiResult = expressLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
     }
 
@@ -171,7 +175,7 @@ public class UBILogisticsHandlerImplTest {
         logisticsQueryVO.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
         logisticsQueryVO.setTrackNo("LM000002721CA");
         logisticsQueryVO.setAuthMap(authMap);
-        ApiResult<List<ConfirmResponseVO>> listApiResult = ubiLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
+        ApiResult<List<ConfirmResponseVO>> listApiResult = expressLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
     }
 }
