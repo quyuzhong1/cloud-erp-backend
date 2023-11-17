@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -94,5 +95,12 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      */
     Boolean copy(String id);
 
-
+    /**
+     *
+     *@parms 获取到所有的渠道
+     *@return 
+     *@author yl
+     *@date 2023-11-16
+     */
+    List<BaseDropDownDTO.DisabledDTO> listAll();
 }

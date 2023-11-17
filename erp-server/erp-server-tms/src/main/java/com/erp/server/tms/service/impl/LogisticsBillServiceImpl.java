@@ -10,8 +10,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -19,6 +22,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -31,6 +35,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -39,6 +44,7 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -178,33 +184,32 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public List<LogisticsBillDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<LogisticsBillDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
-        String type = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        String statusGroupType = DictBasicEnum.LOGISTIC_TRACK_STATUS_GROUP.getType();
+        String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
+
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(statusGroupType);
+
+        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
+
         List<LogisticsBillDTO.TabListDTO> resultList = new ArrayList<>(dictList.size());
+        String allFlag = TmsConstant.ALL;
         for (DictBasicDTO.ViewDTO item : dictList) {
+            String group = item.getCode();
+            List<String> statusList;
+            if (group.equals(allFlag)) {
+                statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+            } else {
+                statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
+                        map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+            }
             LogisticsBillDTO.TabListDTO tab = new LogisticsBillDTO.TabListDTO();
             String tabFlag = item.getCode();
             tab.setTabFlag(tabFlag);
             tab.setTabName(item.getName());
-            Integer count = list.stream().filter(r -> r.getTabFlag().equals(tabFlag)).
+            Integer count = list.stream().filter(r -> statusList.contains(r.getTabFlag())).
                     map(LogisticsBillDTO.TabListDTO::getCount).findFirst().orElse(0);
             tab.setCount(count);
             resultList.add(tab);
-        }
-        String allCode = LogisticTrackStatusEnum.ALL.getCode();
-        LogisticsBillDTO.TabListDTO allTab = resultList.stream().filter(r -> r.getTabFlag().equals(allCode)).findFirst().orElse(null);
-        if (Objects.nonNull(allTab)) {
-            allTab.setTabFlag(LogisticTrackStatusEnum.ALL.getCode());
-            allTab.setTabName(LogisticTrackStatusEnum.ALL.getName());
-            Integer allCount = resultList.stream().mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
-            allTab.setCount(allCount);
-        } else {
-            allTab = new LogisticsBillDTO.TabListDTO();
-            allTab.setTabFlag(LogisticTrackStatusEnum.ALL.getCode());
-            allTab.setTabName(LogisticTrackStatusEnum.ALL.getName());
-            Integer allCount = resultList.stream().mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
-            allTab.setCount(allCount);
-            resultList.add(allTab);
         }
 
 
@@ -216,15 +221,54 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsBillDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String all = LogisticTrackStatusEnum.ALL.getCode();
-        if (all.equals(params.getType())) {
-            params.setType("");
+        String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
+        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
+        String allFlag = TmsConstant.ALL;
+        String group = params.getType();
+        List<String> statusList;
+        if (group.equals(allFlag)) {
+            statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+        } else {
+            statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
+                    map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-        IPage pageData = baseMapper.paging(query, params);
 
+        IPage pageData = baseMapper.paging(query, params,statusList);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
+    }
+
+
+    @Override
+    public Boolean exportExcel(LogisticsBillDTO.ExportDTO params, HttpServletResponse response) {
+        String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
+        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
+        String allFlag = TmsConstant.ALL;
+        String group = params.getType();
+        List<String> statusList;
+        if (group.equals(allFlag)) {
+            statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+        } else {
+            statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
+                    map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+        }
+        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params,statusList);
+        fillPagingDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/LogisticsAddress.xlsx";
+        String name = "自发货物流单列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, "", excelPath);
+        } catch (IOException e) {
+            log.error("自发货物流单导出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
     }
 
     private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {

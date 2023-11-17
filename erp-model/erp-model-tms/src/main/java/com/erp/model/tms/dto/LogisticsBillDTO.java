@@ -49,6 +49,13 @@ public class LogisticsBillDTO implements Serializable {
         private Integer count;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO{
+        private List<String> ids;
+    }
+
     /**
      * 分页参数
      */
@@ -59,7 +66,7 @@ public class LogisticsBillDTO implements Serializable {
 
         /**
          * 类型
-         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
+         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatusGroup
          */
         @NotBlank(message = "类型不能为空")
         private String  type;

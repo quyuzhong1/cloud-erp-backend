@@ -56,6 +56,11 @@ public class LogisticsTrackDTO implements Serializable {
         */
         private String content;
 
+        /**
+         * 状态名
+         */
+        private String statusName;
+
 
     }
 

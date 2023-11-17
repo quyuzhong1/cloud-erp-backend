@@ -3,17 +3,16 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.PaperSizeEnum;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -288,6 +287,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //发货限制 黑名单
         logisticsChannelBlacklistService.copy(id, addChannelId);
         return result;
+    }
+
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAll() {
+        List<LogisticsChannelEntity> list=this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        return resultList;
     }
 
     private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {

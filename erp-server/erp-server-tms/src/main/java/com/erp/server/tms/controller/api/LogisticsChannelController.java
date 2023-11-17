@@ -196,4 +196,14 @@ public class LogisticsChannelController extends BaseController {
 
     }
 
+
+    /**
+     * 所有渠道下拉
+     * @return
+     */
+    @GetMapping("listAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
+        return success(logisticsChannelService.listAll());
+    }
+
 }

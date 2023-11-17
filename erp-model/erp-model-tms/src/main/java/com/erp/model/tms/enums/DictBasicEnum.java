@@ -12,6 +12,7 @@ public enum DictBasicEnum {
     FUEL_SURCHARGE_RATE("fuelSurchargeRate",  "燃油附加费率下拉"),
     SIDE("side",  "边长下拉"),
     VOTE("vote",  "票下拉"),
+    LOGISTIC_TRACK_STATUS_GROUP("logisticTrackStatusGroup",  "运输状态组"),
     LOGISTIC_TRACK_STATUS("logisticTrackStatus",  "运输状态"),
     LOGISTICS_SUPPLIER("logisticsSupplierType","物流商类型"),
     ;
