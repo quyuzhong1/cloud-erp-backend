@@ -849,16 +849,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
-    @Override
-    public Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto) {
-        return null;
-    }
-
-    @Override
-    public List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids) {
-        return null;
-    }
-
     /**
      * 拆分产品尺寸长宽高存入数据集
      * @Author Luo_WG

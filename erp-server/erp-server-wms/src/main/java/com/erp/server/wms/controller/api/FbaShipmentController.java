@@ -288,31 +288,4 @@ public class FbaShipmentController extends BaseController {
         return flag ? success() : failure();
     }
 
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/packingSave")
-    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated ValidList<FirstMileCartonDTO.AddDTO> dto) {
-        Boolean flag = fbaShipmentService.packingSave(dto);
-        return flag ? success() : failure();
-    }
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:21
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/listPacking")
-    public ApiResult<List<FirstMileCartonDTO.ListPackingDTO>> listPacking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FirstMileCartonDTO.ListPackingDTO> result = fbaShipmentService.listPacking(dto.getIds());
-        return success(result);
-    }
-
 }

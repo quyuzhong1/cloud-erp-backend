@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -1029,10 +1030,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         fbaDeliveryEntity.setInventoryOrgId(warehouseEntity.getOrgId());
         fbaDeliveryEntity.setInventoryOrgName(orgName);
-
-
     }
-
 
     @Override
     public List<FbaDeliveryDTO.SonItem> sonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto) {
@@ -1063,5 +1061,15 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             sonItemList.add(sonItem);
         }
         return sonItemList;
+    }
+
+    @Override
+    public Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids) {
+        return null;
     }
 }
