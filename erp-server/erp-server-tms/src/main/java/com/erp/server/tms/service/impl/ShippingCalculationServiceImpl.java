@@ -41,6 +41,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -190,6 +191,19 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         return shippingCalculationDTO;
     }
 
+    /**
+     * @description: 费用计算
+     * @author Will
+     * @date: 2023/11/16 16:54
+     * @param entity
+     * @param shippingTemplateRule
+     * @param otherCostList
+     * @param weight
+     * @param length
+     * @param width
+     * @param height
+     * @return ViewDTO
+     */
     private ShippingCalculationDTO.ViewDTO calculationFinalShippingCost (ShippingTemplateEntity entity, ShippingTemplateRuleEntity shippingTemplateRule
             ,List<ShippingTemplateOtherCostEntity> otherCostList, BigDecimal weight,BigDecimal length,BigDecimal width,BigDecimal height) {
 
@@ -217,7 +231,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         BigDecimal discountCost = calculationDiscountCost(otherCostList, shippingCalculationDTO);
         shippingCalculationDTO.setDiscountCost(discountCost);
         /**
-         * 最终运费 ：运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
+         * 最终运费（运费计算） ：运费 + 挂号费 + 操作费 + 燃油附加费+其他费用【超尺寸+签名费+保险费】-折扣费
+         * 价格进制进行处理
          */
         BigDecimal totalShippingCost = shippingCost
                 .add(shippingTemplateRule.getOperatingCost())
@@ -227,10 +242,19 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 .add(oversizeSurchargeCost)
                 .add(fuelSurchargeCost)
                 .subtract(discountCost);
-        shippingCalculationDTO.setTotalShippingCost(totalShippingCost);
+        shippingCalculationDTO.setTotalShippingCost(handlePriceBinary(totalShippingCost,entity.getPriceBinary()));
 
+        /**
+         * 最终运费（运费试算） ：运费+挂号费+操作费
+         * 价格进制进行处理
+         */
+        BigDecimal totalTrialShippingCost = shippingCost
+                .add(shippingTemplateRule.getOperatingCost())
+                .add(shippingTemplateRule.getRegistrationCost());
+        shippingCalculationDTO.setTotalTrialShippingCost(handlePriceBinary(totalTrialShippingCost,entity.getPriceBinary()));
         return shippingCalculationDTO;
     }
+
 
     /**
      * 运费
@@ -402,6 +426,53 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
     @Override
     public List<String> listRegionCity(ShippingCalculationDTO.ListRegionCityParamDTO dto) {
         return shippingRegionCityMapper.listRegionCity(dto);
+    }
+
+    /**
+     * @description: 价格进制调整
+     * @author Will
+     * @date: 2023/11/17 9:17
+     * @param cost
+     * @param priceBinary
+     * @return BigDecimal
+     */
+    private BigDecimal handlePriceBinary (BigDecimal cost,String priceBinary) {
+
+        //保留两位小数四金五入
+        if (PriceBinaryEnum.TWO_DECIMAL_PLACES.getCode().equals(priceBinary)) {
+            cost = cost.setScale(2);
+        }
+        //保留一位小数四舍五入
+        if (PriceBinaryEnum.ONE_DECIMAL_PLACES.getCode().equals(priceBinary)) {
+            cost = cost.setScale(1);
+        }
+        //向下取整，小数舍弃
+        if (PriceBinaryEnum.NO_DECIMALS.getCode().equals(priceBinary)) {
+            cost = cost.setScale(0,BigDecimal.ROUND_DOWN);
+        }
+        //0.5进制
+        if (PriceBinaryEnum.BINARY.getCode().equals(priceBinary)) {
+            BigDecimal integerPart = new BigDecimal(cost.intValue());
+            BigDecimal decimalPart = cost.subtract(integerPart);
+            if (MathUtil.compareTo(decimalPart,0.5) > MathUtil.ZERO ) {
+                //超过0.5，进1
+                cost = cost.setScale(0,BigDecimal.ROUND_UP);
+            }
+            if (MathUtil.compareTo(decimalPart,0) > MathUtil.ZERO && MathUtil.compareTo(decimalPart,0.5) < MathUtil.ZERO ){
+                //未到0.5，进0.5
+                cost = cost.setScale(0,BigDecimal.ROUND_UP);
+            }
+        }
+        //向上取整，小数进1
+        if (PriceBinaryEnum.ROUND_UP.getCode().equals(priceBinary)) {
+            cost = cost.setScale(0,BigDecimal.ROUND_UP);
+        }
+        //保留整数，四舍五入
+        if (PriceBinaryEnum.PRESERVE_INTEGERS.getCode().equals(priceBinary)) {
+            cost = cost.setScale(0);
+
+        }
+        return  cost;
     }
 
 }
