@@ -3,7 +3,9 @@ package com.erp.model.tms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -15,34 +17,32 @@ import javax.validation.constraints.Size;
  *
  * @author Lambda
  * @since 2023-11-02
-*/
+ */
 @Data
 @NoArgsConstructor
 public class LogisticsChannelBlacklistDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 渠道id
-        */
+         * 渠道id
+         */
         private String logisticsChannelId;
 
         /**
-        * 国家
-        */
+         * 国家
+         */
         private String country;
 
         /**
@@ -51,8 +51,8 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String countryName;
 
         /**
-        * 省 州
-        */
+         * 省 州
+         */
         private String province;
 
         /**
@@ -61,8 +61,8 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String provinceName;
 
         /**
-        * 城市
-        */
+         * 城市
+         */
         private String city;
 
         /**
@@ -71,8 +71,8 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String cityName;
 
         /**
-        * 区
-        */
+         * 区
+         */
         private String district;
 
         /**
@@ -84,27 +84,44 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO  {
+        /**
+         * 国家
+         */
+        private String country;
+
+
+        private List<CommonDTO>  cityList;
 
 
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 国家
+         */
+        private String country;
+
+
+        private List<CommonDTO>  cityList;
+
+
 
     }
 
@@ -114,23 +131,18 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
 
 
         /**
-        * 国家 id
-        */
-        private String country;
-
-        /**
-        * 省 州 id
-        */
+         * 省 州 id
+         */
         private String province;
 
         /**
-        * 城市id
-        */
+         * 城市id
+         */
         private String city;
 
         /**
-        * 区id
-        */
+         * 区id
+         */
         private String district;
 
 

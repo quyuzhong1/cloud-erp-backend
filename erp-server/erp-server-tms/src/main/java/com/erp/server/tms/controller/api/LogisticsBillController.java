@@ -1,10 +1,14 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +33,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,6 +50,9 @@ public class LogisticsBillController extends BaseController {
 
     @Resource
     private LogisticsBillService logisticsBillService;
+
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @Resource
     private LogisticsTrackService logisticsTrackService;
@@ -104,14 +112,46 @@ public class LogisticsBillController extends BaseController {
         Boolean result = logisticsBillService.exportExcel(dto, response);
         return result ? success() : failure();
     }
+
     /**
      * 获取物流轨迹明细
+     *
      * @return
      */
     @GetMapping("/getTrackInfo")
-    public ApiResult<List<LogisticsTrackDTO.ViewDTO>> listTrack(@RequestParam(value = "trackNo") String  trackNo){
-        List<LogisticsTrackDTO.ViewDTO> list=logisticsTrackService.listByTrackNo(trackNo);
+    public ApiResult<List<LogisticsTrackDTO.ViewDTO>> listTrack(@RequestParam(value = "trackNo") String trackNo) {
+        List<LogisticsTrackDTO.ViewDTO> list = logisticsTrackService.listByTrackNo(trackNo);
         return success(list);
+
+    }
+
+    /**
+     * 批量状态更新
+     *
+     * @return
+     */
+    @PostMapping("/batchUpdateStatus")
+    public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Valid LogisticsBillDTO.BatchUpdateStatusDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        String trackStatus = dto.getTrackStatus();
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = logisticsBillDetailService.updateStatus(id,trackStatus);
+            } catch (Exception e) {
+                log.error("物流商更改状态失败{}", e);
+                LogisticsBillDetailEntity entity = logisticsBillDetailService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "物流商不存在, 状态更改失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+            }
+            resultDTOS.add(result);
+
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
     }
 
