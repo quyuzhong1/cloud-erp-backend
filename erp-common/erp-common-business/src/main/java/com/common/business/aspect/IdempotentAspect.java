@@ -50,7 +50,7 @@ public class IdempotentAspect {
         //获取到方法的注解对象
         Idempotent idempotent = method.getAnnotation(Idempotent.class);
         //单位 秒
-        long interval = 60;
+        long interval = 3;
         if (idempotent.interval() > 0) {
             interval = idempotent.timeUnit().toSeconds(idempotent.interval());
         }
@@ -69,16 +69,15 @@ public class IdempotentAspect {
             token = request.getHeader("Authorization");
         }
         // 唯一标识（url +  token  + params）
-        String submitKey = "INTERFACE:" + MD5Util.toMD5(url + "_" + token + ":" + params);
+        String submitKey = "Idempotent:" + MD5Util.toMD5(url + "_" + token + ":" + params);
         boolean flag = false;
         //判断缓存中是否有此key
         if (redisUtil.hasKey(submitKey)) {
-            log.info("key={},interval={},重复提交", submitKey, interval);
+            log.warn("key={},interval={},重复提交", submitKey, interval);
         } else {
             //如果没有表示不是重复提交并设置key存活的缓存时间
             redisUtil.set(submitKey, "", interval);
             flag = true;
-            System.out.println("非重复提交");
         }
         if (flag) {
             Object result;
@@ -86,7 +85,7 @@ public class IdempotentAspect {
                 result = proceedingJoinPoint.proceed();
             } catch (Throwable e) {
                 /*异常通知方法*/
-                log.error("异常通知方法>目标方法名{},异常为：{}", method.getName(), e);
+                log.warn("异常通知方法>目标方法名{},异常为：{}", method.getName(), e);
                 throw e;
             } finally {
                 redisUtil.del(submitKey);

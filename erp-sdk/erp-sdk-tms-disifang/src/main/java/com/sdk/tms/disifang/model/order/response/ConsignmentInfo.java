@@ -23,7 +23,7 @@ public class ConsignmentInfo implements Serializable {
      * 4PX跟踪号
      */
     @JSONField(name = "4px_tracking_no")
-    private String tracking_no;
+    private String trackingNo;
     /**
      * 客户单号/客户参考号
      */

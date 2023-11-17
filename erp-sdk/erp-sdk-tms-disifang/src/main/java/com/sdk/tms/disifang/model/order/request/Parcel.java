@@ -1,8 +1,11 @@
 package com.sdk.tms.disifang.model.order.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,6 +23,7 @@ public class Parcel implements Serializable {
      *预报重量（g）
      * 是
      */
+    @NotNull(message = "预报重量不能为空")
     @JSONField(name = "weight")
     private Integer weight;
     /**
@@ -40,16 +44,19 @@ public class Parcel implements Serializable {
     /**
      *包裹申报价值（最多4位小数）
      */
+    @NotNull(message = "包裹申报价值不能为空")
     @JSONField(name = "parcel_value")
     private BigDecimal parcel_value;
     /**
      *包裹申报价值币别（按照ISO标准三字码；支持的币种，根据物流产品+收件人国家配置；币种需和进出口国申报币种一致）
      */
+    @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "包裹申报价值币别代码有误")
     @JSONField(name = "currency")
     private String currency;
     /**
      *是否含电池（Y/N）
      */
+    @NotNull(message = "是否含电池不能为空")
     @JSONField(name = "include_battery")
     private String include_battery;
     /**

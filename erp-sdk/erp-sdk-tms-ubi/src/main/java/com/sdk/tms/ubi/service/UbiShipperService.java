@@ -36,17 +36,18 @@ import java.util.*;
 public class UbiShipperService {
     //正式环境
 //    static String host = "http://cn.etowertech.com";
+    //    static String token = "pcloTVPCXZCD5G-RRlhBfR";
+    //    static String key = "N1S3O3OlKKRDRfcfYFONqg";
     //测试环境
     static String host = "http://qa.etowertech.com";
-
-    //    static String token = "pcloTVPCXZCD5G-RRlhBfR";
     static String token = "test5AdbzO5OEeOpvgAVXUFE0A";
-    //    static String key = "N1S3O3OlKKRDRfcfYFONqg";
     static String key = "79db9e5OEeOpvgAVXUFWSD";
 
     public static void main(String[] args) {
         UbiShipperService ubiShipperService = new UbiShipperService();
         Map<String,String> authMap = new HashMap<>();
+        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
+        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
         String token = authMap.get("clientId");
         String key = authMap.get("clientSecret");
         List<ServiceCataLog> serviceCataLogList = ubiShipperService.getServiceCatalog(authMap);
@@ -75,9 +76,11 @@ public class UbiShipperService {
         String key = authMap.get("clientSecret");
         String url = PathConstants.BASE_URL + PathConstants.POST_CREATE_ORDERS_URL;
         log.info("创建订单url：{}", url);
-        Map<String, Object> params = BeanUtil.beanToMap(ubiOrder);
+//        Map<String, Object> params = BeanUtil.beanToMap(ubiOrder);
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
-        String res = OkHttpUtils.doPostJson(url, params, headers);
+        List<UbiOrder> orders = new ArrayList<>();
+        orders.add(ubiOrder);
+        String res = OkHttpUtils.doPostJsonObject(url, orders, headers);
         log.info("创建订单：{}", res);
         BaseResult result = JSONUtil.toBean(res, BaseResult.class);
         if (UbiConstants.SUCCESS.equalsIgnoreCase(result.getStatus())) {
@@ -183,7 +186,7 @@ public class UbiShipperService {
         String key = authMap.get("clientSecret");
         String url = PathConstants.BASE_URL + PathConstants.POST_INTERCEPT_ORDER_URL;
         log.info("单件删除 url：{}", url);
-        java.util.Map<String, Object> params = new LinkedHashMap<>();
+//        java.util.Map<String, Object> params = new LinkedHashMap<>();
         Map<String, String> headers = IntegrationHelper.buildHeader(UbiConstants.POST_REQUEST_METHOD, url, token, key);
         String res = OkHttpUtils.doPostJsonObject(url, holdRequest, headers);
         log.info("单件删除：{}", res);

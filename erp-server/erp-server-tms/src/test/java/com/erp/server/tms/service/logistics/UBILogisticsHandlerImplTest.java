@@ -1,13 +1,12 @@
 package com.erp.server.tms.service.logistics;
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
-import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,27 +19,29 @@ import java.util.*;
 
 /**
  * @author zdy
- * @ClassName DsfLogisticsHandlerImplTest
+ * @ClassName UBILogisticsHandlerImplTest
  * @description: TODO
- * @date 2023年11月09日
+ * @date 2023年11月16日
  * @version: 1.0
  */
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerTmsApplication.class})
-public class DsfLogisticsHandlerImplTest {
+public class UBILogisticsHandlerImplTest {
     @Resource
-    DsfLogisticsHandlerImpl dsfLogisticsHandler;
+    private UbiLogisticsHandlerImpl ubiLogisticsHandler;
 
     private Map<String, String> authMap = new HashMap<>();
 
-    public DsfLogisticsHandlerImplTest(){
-        authMap.put("clientId","fad2854e-93a7-4598-95ff-cb60557dbc0a");
-        authMap.put("clientSecret","0e91ca81-22f8-4fce-95d1-18ed6269604b");
+    public UBILogisticsHandlerImplTest(){
+        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
+        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
+        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
     }
 
     @Test
     public void getChannel() {
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = dsfLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
+        ApiResult<List<LogisticsSaleChannelEntity>> channel = ubiLogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
         System.out.println(channel);
     }
 
@@ -49,12 +50,12 @@ public class DsfLogisticsHandlerImplTest {
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
-        senderInfo.setCityName("shenzhen");
-        senderInfo.setCompanyName("Ulanzi");
-        senderInfo.setName("张三");
-        senderInfo.setProvinceName("广东省");
+        senderInfo.setCityName("newyork");
+        senderInfo.setCompanyName("componeny");
+        senderInfo.setName("name");
+        senderInfo.setProvinceName("shenzhen");
         senderInfo.setTelNumber("12345678");
-        senderInfo.setEmail("123@q.con");
+        senderInfo.setEmail("321546");
         senderInfo.setCountry("CN");
         senderInfo.setZipCode("515800");
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
@@ -67,22 +68,20 @@ public class DsfLogisticsHandlerImplTest {
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(10);
         logisticsProductVO.setSourceCountry("CN");
-        logisticsProductVO.setIsElectric(false);
-        logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(12));
-        logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(12));
-
-        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("ZN");
-        logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("155");
-
         LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
-//        logisticsChannel.setCode("S832");
-        logisticsChannel.setId("1724614809662599171");
+        logisticsChannel.setCode("UBI.CA2US.CAPOST");
         //DDU/DDP
         logisticsChannel.setTaxModel("DDU");
+
+        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
+        logisticsSaleChannel.setCode("UBI.CA2US.CAPOST");
+        logisticsSaleChannel.setShipmentMethod("Express-Post");
+        logisticsSaleChannel.setPlatformChannelId("1725040739275055105");
+
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
+//                .channelCode("")
+//                .channelId("1725040739275055105")
                 .orderSource("ERP")
 //                .facility("can")
                 .deliveryNo("wj12345167721")
@@ -93,7 +92,7 @@ public class DsfLogisticsHandlerImplTest {
                         .name("mark")
                         .companyName("componey")
                         .contact("mark")
-                        .country("CN")
+                        .country("US")
                         .zipCode("11510")
                         .province("state")
                         .telNumber("123456789")
@@ -114,39 +113,35 @@ public class DsfLogisticsHandlerImplTest {
                         logisticsProductVO
                 ))
                 .logisticsChannelEntity(logisticsChannel)
-                .logisticsSaleChannel(logisticsSaleChannel)
                 .build();
-        ApiResult<LogisticsOrderResponseVO> order = dsfLogisticsHandler.createOrder(logisticsOrderVO);
+        ApiResult<LogisticsOrderResponseVO> order = ubiLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(order);
     }
 
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("8180122790156798");
+        logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = dsfLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
+        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = ubiLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
     }
 
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("8180122790156798");
+        logisticsQueryVO2.setDeliveryNo("wj12345167721");
         logisticsQueryVO2.setAuthMap(authMap);
-        LogisticsSaleChannelEntity logisticsChannelEntity = new LogisticsSaleChannelEntity();
-        logisticsChannelEntity.setCode("PX");
-        logisticsQueryVO2.setLogisticsSaleChannelEntity(logisticsChannelEntity);
-        ApiResult<List<LogisticsPrintLabelResponse>> labelList = dsfLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
+        ApiResult<List<LogisticsPrintLabelResponse>> labelList = ubiLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
     }
 
     @Test
     public void interceptOrder(){
         LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList2.setDeliveryNo("8180122790156798");
+        logisticsQueryVOList2.setDeliveryNo("wj12345167721");
         logisticsQueryVOList2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> listApiResult = dsfLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
+        ApiResult<List<InterceptResponseVO>> listApiResult = ubiLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
         System.out.println(listApiResult);
     }
 
@@ -157,7 +152,7 @@ public class DsfLogisticsHandlerImplTest {
         logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
         logisticsQueryVOList.setTrackNo("LM000002721CA");
         logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> listApiResult = dsfLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
+        ApiResult<List<CancelResponseVO>> listApiResult = ubiLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
     }
 
@@ -168,7 +163,7 @@ public class DsfLogisticsHandlerImplTest {
         logisticsQueryVO.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
         logisticsQueryVO.setTrackNo("LM000002721CA");
         logisticsQueryVO.setAuthMap(authMap);
-        ApiResult<List<ConfirmResponseVO>> listApiResult = dsfLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
+        ApiResult<List<ConfirmResponseVO>> listApiResult = ubiLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
     }
 }

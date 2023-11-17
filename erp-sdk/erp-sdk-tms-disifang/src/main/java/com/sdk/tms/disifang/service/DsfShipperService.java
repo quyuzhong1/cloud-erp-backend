@@ -2,6 +2,7 @@ package com.sdk.tms.disifang.service;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.disifang.constants.AmbientEnum;
 import com.sdk.tms.disifang.model.base.AffterentParam;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
@@ -12,6 +13,7 @@ import com.sdk.tms.disifang.model.product.request.ChanelRequest;
 import com.sdk.tms.disifang.utils.ApiHttpClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.Map;
  * @version: 1.0
  */
 @Slf4j
+@Validated
 @Component
 public class DsfShipperService {
     //生产环境
@@ -57,7 +60,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(labelSingleRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(s, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
         System.out.println(responseMsg);
         return responseMsg;
     }
@@ -82,7 +85,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(labelRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(s, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
         System.out.println(responseMsg);
         return responseMsg;
     }
@@ -107,7 +110,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(chanelRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(s, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
         System.out.println(responseMsg);
         return responseMsg;
     }
@@ -132,7 +135,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
@@ -158,7 +161,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCancelRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
@@ -184,7 +187,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderInterceptRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
@@ -210,7 +213,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderQueryRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(result, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
@@ -236,7 +239,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCollectRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(s, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
@@ -262,7 +265,7 @@ public class DsfShipperService {
                 .method(method)
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCollectRequest), AmbientEnum.FORMAT_ADDRESS);
-        ResponseMsg responseMsg = JSONUtil.toBean(s, ResponseMsg.class);
+        ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
         System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;

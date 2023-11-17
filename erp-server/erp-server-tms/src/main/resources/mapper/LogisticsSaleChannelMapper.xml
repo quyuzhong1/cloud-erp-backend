@@ -49,6 +49,8 @@
         FROM
             logistics_sale_channel t
         WHERE
-            t.logistics_platform = #{platformType}
+            t.is_deleted = false
+            AND t.channel_status = 0
+            AND t.logistics_platform = #{platformType}
     </select>
 </mapper>

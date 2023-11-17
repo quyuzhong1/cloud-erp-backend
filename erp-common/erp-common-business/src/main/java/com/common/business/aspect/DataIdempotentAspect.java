@@ -76,7 +76,7 @@ public class DataIdempotentAspect {
             List<RLock> rLocks = new ArrayList<>();
             objList.forEach(o -> {
                 try {
-                    String submitKey = "BUSINESS:" + o + "_" + businessType;
+                    String submitKey = "DataIdempotent:" + o + "_" + businessType;
                     log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
                     RLock clientLock = redissonClient.getLock(submitKey);
 
@@ -157,7 +157,7 @@ public class DataIdempotentAspect {
                     }
                 });
             } catch (Exception exception) {
-                exception.printStackTrace();
+                throw new ServiceException(ApiError.ERROR_1026);
             } finally {
                 LOCK_THREAD.remove();
             }

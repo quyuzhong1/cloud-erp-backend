@@ -17,10 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author zdy
@@ -41,6 +38,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (StringUtils.isNoneBlank(authId)) {
+            map.put("id", authId);
             fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
         } else {
             LogisticsAuthEntity authEntity = logisticsAuthService.lambdaQuery()
@@ -50,13 +48,33 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
                 fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
             }
         }
-        map.put("id", authId);
         if (CollectionUtils.isNotEmpty(fieldEntities)) {
             fieldEntities.forEach(logisticsAuthFieldEntity -> {
                 map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
             });
         }
         return map;
+    }
+
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
+        List<Map<String, String>> mapList = new ArrayList<>();
+        List<LogisticsAuthEntity> authEntityList = logisticsAuthService.lambdaQuery()
+                .eq(LogisticsAuthEntity::getLogisticsPlatform, platform).list();
+        if (CollectionUtils.isNotEmpty(authEntityList)) {
+            authEntityList.forEach(logisticsAuthEntity -> {
+                Map<String, String> map = new HashMap<>();
+                List<LogisticsAuthFieldEntity> fieldEntities = null;
+                map.put("id", logisticsAuthEntity.getId());
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
+                if (CollectionUtils.isNotEmpty(fieldEntities)) {
+                    fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                        map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+                    });
+                    mapList.add(map);
+                }
+            });
+        }
+        return mapList;
     }
 
     /**
@@ -152,12 +170,13 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
+
     /**
      * 获取平台标识
      *
      * @return
      */
-    public LogisticsPlatformEnum getPlatForm(){
+    public LogisticsPlatformEnum getPlatForm() {
         return null;
     }
 }
