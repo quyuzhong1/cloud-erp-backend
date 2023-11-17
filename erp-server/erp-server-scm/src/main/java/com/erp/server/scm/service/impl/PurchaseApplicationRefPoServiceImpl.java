@@ -37,11 +37,17 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
 
     @Override
     public void removeByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)) {
+            return;
+        }
         lambdaUpdate().in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
 
     @Override
     public void removeByPurchaseOrderDetailIds(List<String> purchaseOrderDetailIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderDetailIds)) {
+            return;
+        }
         lambdaUpdate().in(PurchaseApplicationRefPoEntity::getPurchaseOrderDetailId,purchaseOrderDetailIds).remove();
     }
 

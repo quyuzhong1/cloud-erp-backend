@@ -33,11 +33,13 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -305,6 +307,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, List<MachineSubComponentsDTO.ViewDTO>> bomSubMap = Maps.newHashMap();
         detailList.stream().forEach(obj-> bomSubMap.put(obj.getSkuId(), viewBomSubComponents( new MachineSubComponentsDTO.ViewBomParamDTO(obj.getSkuId(),obj.getReferenceVersion()))));
+
+        //组织
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(Arrays.asList(viewDTO.getInventoryOrgId()));
+        param.setSkuIdList(skuIds);
+        param.setWarehouseIdList(Arrays.asList(viewDTO.getWarehouseId()));
+        //库存信息
+        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
+
         for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -312,7 +323,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDetailDTO.getSkuId());
+            Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
+                    .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             //明细子件
             List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());

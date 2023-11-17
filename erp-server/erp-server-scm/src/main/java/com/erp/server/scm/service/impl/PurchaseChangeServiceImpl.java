@@ -643,10 +643,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             return;
         }
         List<String> purchaseOrderIds = list.stream().map(PurchaseChangeEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
-        for (String purchaseOrderId : purchaseOrderIds) {
             //更新采购申请单生成PO类型
-            purchaseOrderDetailService.updateCreatePoType(purchaseOrderId);
-        }
+            purchaseOrderService.updateCreatePoType(purchaseOrderIds);
     }
 
     /**
