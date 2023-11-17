@@ -56,6 +56,12 @@
             lc.name,
             lc.disabled
         from logistics_channel lc where lc.is_deleted = false
+        <if test="logisticsSupplierIds != null and logisticsSupplierIds.size > 0">
+            and lc.source_id in
+            <foreach collection="logisticsSupplierIds" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

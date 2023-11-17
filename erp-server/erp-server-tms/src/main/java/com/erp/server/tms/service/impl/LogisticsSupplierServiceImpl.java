@@ -29,6 +29,7 @@ import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsSupplierConverter;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -257,6 +258,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAll() {
+        List<LogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
     }
 
 

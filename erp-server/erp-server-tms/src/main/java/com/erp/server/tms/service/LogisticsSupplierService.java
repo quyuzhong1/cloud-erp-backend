@@ -90,4 +90,11 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-11-15
      */
     Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse httpServletResponse);
+    /**
+     * @description: 物流商下拉
+     * @author Will
+     * @date: 2023/11/17 16:35
+     * @return List<DisabledDTO>
+     */
+    List<BaseDropDownDTO.DisabledDTO> listAll();
 }

@@ -128,8 +128,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel() {
-        return baseMapper.listLogisticsChannel();
+    public List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds) {
+        return baseMapper.listLogisticsChannel(logisticsSupplierIds);
     }
 
     @Override

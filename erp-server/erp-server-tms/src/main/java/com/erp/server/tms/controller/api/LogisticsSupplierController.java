@@ -204,4 +204,13 @@ public class LogisticsSupplierController extends BaseController {
     }
 
 
+    /**
+     * 所有物流商下拉
+     * @return
+     */
+    @GetMapping("listAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
+        return success(logisticsSupplierService.listAll());
+    }
+
 }

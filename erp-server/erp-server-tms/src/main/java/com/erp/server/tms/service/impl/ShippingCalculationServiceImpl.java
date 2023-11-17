@@ -279,7 +279,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 //续重比例（进一）
                 BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(),0,BigDecimal.ROUND_UP);
                 //续重费用
-                additionalWeightShippingCost = weightRatio.multiply(shippingTemplateRule.getAdditionalPrice());
+                additionalWeightShippingCost = MathUtil.multiply(weightRatio,shippingTemplateRule.getAdditionalPrice(),4);
             }
             shippingCost = MathUtil.add(firstWeightShippingCost,additionalWeightShippingCost);
         } else {
@@ -287,7 +287,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             if (MathUtil.compareTo(shippingTemplateRule.getStartWeight(),weight) >= MathUtil.ZERO || MathUtil.compareTo(weight, shippingTemplateRule.getEndWeight()) > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_WEIGHT_NOT_INTERVAL,weight,shippingTemplateRule.getStartWeight(),shippingTemplateRule.getEndWeight());
             }
-            shippingCost = MathUtil.multiply(shippingTemplateRule.getShippingPrice(),weight);
+            shippingCost = MathUtil.multiply(shippingTemplateRule.getShippingPrice(),weight,4);
         }
         shippingCost = MathUtil.compareTo(shippingCost,shippingTemplateRule.getMinCost()) > MathUtil.ZERO ? shippingCost : shippingTemplateRule.getMinCost();
         return shippingCost;
@@ -395,7 +395,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
         //燃油附加费率
-        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(),MathUtil.BigDecimal_100) );
+        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(),MathUtil.BigDecimal_100),4);
 
         return fuelSurchargeCost;
     }
@@ -418,7 +418,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
         //折扣费
-        BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,MathUtil.divide(otherCostEntity.getCostSettingValue(),MathUtil.BigDecimal_100)));
+        BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1,MathUtil.divide(otherCostEntity.getCostSettingValue(),MathUtil.BigDecimal_100)),4);
 
         return discountCost;
     }
