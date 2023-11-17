@@ -625,6 +625,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (!this.save(entity)){
             throw new ServiceException("[FbaShipmentEntity] 保存失败: entity="+ JSONUtil.toJsonStr(entity));
         }
+        String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
+        operateLogService.addModuleOperateLogByObj(entity, entity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), msg);
+
         // 记录货件状态
         fbaShipmentStatusService.saveByFbaShipment(entity);
 
@@ -687,7 +690,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 主表更新
         if (!oldEntity.toString().equalsIgnoreCase(entity.toString())){
-            entity.setIsDeleted(false);
+            if (entity.getIsDeleted()){
+                entity.setIsDeleted(false);
+                String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
+                operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), oldEntity.getId(), msg);
+            }
             if (!this.updateById(entity)){
                 throw new ServiceException("[FbaShipmentEntity] 更新失败: entity="+ JSONUtil.toJsonStr(entity));
             }
