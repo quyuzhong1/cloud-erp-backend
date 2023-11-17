@@ -33,12 +33,16 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             if (!handle.isSuccess()) {
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
                 updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());
+                //异常预警
+                sendWarnMsg(dmpSyncTaskId);
                 return;
             }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
+            //异常预警
+            sendWarnMsg(dmpSyncTaskId);
         }
     }
 
@@ -48,6 +52,11 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * @param code
      */
     public abstract void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg);
+
+    /**
+     * 预警
+     */
+    public abstract void sendWarnMsg(String syncTaskId);
 
     /**
      * 处理平台数据

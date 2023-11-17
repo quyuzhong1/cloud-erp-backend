@@ -125,4 +125,12 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @param dto
      */
     String savePullTask(DmpPullTaskFeignDTO dto);
+
+    /**
+     * @description: 预警
+     * @author Will
+     * @date: 2023/11/17 11:53
+     * @param syncTaskId
+     */
+    void sendWarnMsg(String syncTaskId);
 }

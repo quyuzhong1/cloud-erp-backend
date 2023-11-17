@@ -130,6 +130,15 @@ public enum SourceTypeEnum {
         return "";
     }
 
+    public static String getTableName(String type) {
+        for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
+            if (type.equals(sourceTypeEnum.getCode())) {
+                return sourceTypeEnum.getTableName();
+            }
+        }
+        return "";
+    }
+
     public static SourceTypeEnum getEnum(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
             if (type.equals(sourceTypeEnum.getCode())) {

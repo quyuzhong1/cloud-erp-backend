@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeePurchaseOrderConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,11 @@ public class KingdeePurchaseOrderConsumer<T extends DmpSyncTaskIdDTO> extends Ab
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override
