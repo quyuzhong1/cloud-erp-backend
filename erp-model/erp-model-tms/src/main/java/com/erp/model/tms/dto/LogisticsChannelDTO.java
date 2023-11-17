@@ -291,7 +291,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 发货限制列表
          */
-        private List<LogisticsChannelBlacklistDTO.UpdateDTO> blackList;
+        private List<LogisticsChannelBlacklistDTO.AddDTO> blackList;
 
     }
 

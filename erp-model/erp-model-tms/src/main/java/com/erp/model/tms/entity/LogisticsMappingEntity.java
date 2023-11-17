@@ -43,6 +43,8 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     private String logisticsSaleChannelId;
 
 
+
+
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     public static final String SALES_PLATFORM = "sales_platform";
