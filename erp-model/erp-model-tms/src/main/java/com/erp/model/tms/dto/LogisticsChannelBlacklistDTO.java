@@ -43,6 +43,11 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
         private String country;
 
         /**
+         * 国家名
+         */
+        private String countryName;
+
+        /**
          * 国家名称
          */
         @JsonInclude(value= JsonInclude.Include.NON_EMPTY)

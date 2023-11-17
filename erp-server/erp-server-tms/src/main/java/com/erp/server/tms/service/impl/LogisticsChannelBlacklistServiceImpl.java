@@ -81,7 +81,8 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             view.setCountry(item.getKey());
             List<LogisticsChannelBlacklistEntity> cityList = item.getValue();
             Boolean isNotEmpty=CollectionUtils.isNotEmpty(cityList);
-            view.setCountry(isNotEmpty?cityList.get(0).getCountryName():"");
+            view.setCountry(isNotEmpty?cityList.get(0).getCountry():"");
+            view.setCountryName(isNotEmpty?cityList.get(0).getCountryName():"");
             if(isNotEmpty){
                 view.setCityList(BeanMapperUtils.copyList(LogisticsChannelBlacklistDTO.CommonViewDTO.class,cityList));
             }

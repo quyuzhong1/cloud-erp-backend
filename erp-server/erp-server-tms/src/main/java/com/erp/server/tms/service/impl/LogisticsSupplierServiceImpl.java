@@ -4,11 +4,9 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -22,6 +20,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.LogisticsWarehouseEntity;
@@ -29,6 +28,7 @@ import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -73,7 +73,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     private LogisticsChannelService logisticsChannelService;
 
     @Autowired
-    private LogisticsSaleChannelService  logisticsSaleChannelService;
+    private LogisticsSaleChannelService logisticsSaleChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -219,10 +219,20 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String authId = logisticsSupplier.getAuthId();
-        List<LogisticsSaleChannelEntity>  saleChannelEntityList=logisticsSaleChannelService.listByAuthId(authId,Boolean.FALSE);
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId, Boolean.FALSE);
+        String sourceType = SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode();
+        if (CollectionUtils.isNotEmpty(saleChannelList)) {
+            List<LogisticsChannelEntity> addList = LogisticsChannelConverter.INSTANCE.channelConvertBySaleChannel(saleChannelList);
+            addList.forEach(a -> {
+                a.setSourceId(id);
+                a.setSourceType(sourceType);
+            });
+            logisticsChannelService.saveBatch(addList);
+        }
 
 
-        return null;
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(),"同步");
+
     }
 
     @Override
