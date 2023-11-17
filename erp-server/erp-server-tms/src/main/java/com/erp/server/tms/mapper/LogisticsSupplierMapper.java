@@ -51,5 +51,5 @@ public interface LogisticsSupplierMapper extends BaseMapper<LogisticsSupplierEnt
      *@author yl
      *@date 2023-11-16
      */
-    LogisticsSupplierEntity getById(@Param("id") String id);
+    LogisticsSupplierDTO.AuthDTO getLogisticsSupplierAuthById(@Param("id") String id);
 }
