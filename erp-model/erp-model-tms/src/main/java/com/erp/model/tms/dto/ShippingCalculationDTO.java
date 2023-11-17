@@ -282,9 +282,14 @@ public class ShippingCalculationDTO {
         private BigDecimal premiumCost;
 
         /**
-         * 最终运费
+         * 最终运费(运费计算)
          */
         private BigDecimal totalShippingCost;
+
+        /**
+         * 最终运费（运费试算）
+         */
+        private BigDecimal totalTrialShippingCost;
     }
 
     /**

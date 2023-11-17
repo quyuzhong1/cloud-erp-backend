@@ -323,6 +323,16 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 ruleEntity.setAdditionalPrice(BigDecimal.ZERO);
             }
             ruleEntity.setMainId(mainId);
+            //清空数据
+            if (ObjectUtil.isEmpty(ruleEntity.getOperatingCost())) {
+                ruleEntity.setOperatingCost(BigDecimal.ZERO);
+            }
+            if (ObjectUtil.isEmpty(ruleEntity.getRegistrationCost())) {
+                ruleEntity.setRegistrationCost(BigDecimal.ZERO);
+            }
+            if (ObjectUtil.isEmpty(ruleEntity.getMinCost())) {
+                ruleEntity.setMinCost(BigDecimal.ZERO);
+            }
         }
     }
 

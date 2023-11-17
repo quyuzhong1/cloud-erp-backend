@@ -69,7 +69,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
         if(!save) {
             throw new ServiceException("运费规则单保存失败");
         }
-        //新增城市分区
+        //新增计算设置
         addOrUpdateCostSetting(list);
         return Boolean.TRUE;
     }
@@ -91,6 +91,8 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
         addOperateLog(list,mainId);
         //新增或修改
         this.saveOrUpdateBatch(list);
+        //新增计算设置
+        addOrUpdateCostSetting(list);
         return Boolean.TRUE;
     }
 

@@ -292,7 +292,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         // 启用/停用日志数据
         log.info("启用/停用 开始启用/停用运费模板单日志数据，id集合：【{}】", id);
         String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getName(), "启用/停用");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
     }
 
@@ -316,7 +316,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         // 删除日志数据
         log.info("删除 开始删除运费模板单日志数据，id集合：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getName(), "删除运费模板单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "删除运费模板单数据");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
 
@@ -915,7 +915,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return shippingCalculationDTO.getTotalShippingCost();
+        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
     }
 
     /**
@@ -937,7 +937,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return shippingCalculationDTO.getTotalShippingCost();
+        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
     }
 
     /**
@@ -958,7 +958,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //计算最终运费
         ShippingCalculationDTO.ViewDTO shippingCalculationDTO = shippingCalculationService.calculationFinalShippingCost(entity, shippingTemplateRule, dto.getWeight());
-        return shippingCalculationDTO.getTotalShippingCost();
+        return MathUtil.add(shippingCalculationDTO.getShippingCost(),shippingCalculationDTO.getOperatingCost()).add(shippingCalculationDTO.getRegistrationCost());
     }
 
 

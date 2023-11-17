@@ -1,6 +1,8 @@
 package com.erp.model.tms.entity;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -90,17 +92,17 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
     /**
     * 挂号费
     */
-    @TableField("registration_cost")
+    @TableField(value = "registration_cost")
     private BigDecimal registrationCost;
     /**
     * 操作费
     */
-    @TableField("operating_cost")
+    @TableField(value = "operating_cost")
     private BigDecimal operatingCost;
     /**
     * 最低收费
     */
-    @TableField("min_cost")
+    @TableField(value = "min_cost")
     private BigDecimal minCost;
 
     /**
