@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
+import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -224,4 +226,22 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>
      **/
     List<FbaDeliveryDTO.SonItem> sonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto);
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto);
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:52
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
+     **/
+    List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids);
 }

@@ -177,21 +177,4 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
 
-    /**
-     * 装箱
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:35
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto);
-
-    /**
-     * 装箱清单
-     * @Author Luo_WG
-     * @Date 2023/11/17 11:47
-     * @param ids
-     * @return java.lang.Boolean
-     **/
-    List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids);
 }

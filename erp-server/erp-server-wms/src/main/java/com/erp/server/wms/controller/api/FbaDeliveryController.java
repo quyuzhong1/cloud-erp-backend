@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.validator.ValidList;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -449,6 +451,33 @@ public class FbaDeliveryController extends BaseController {
     @PostMapping("/sonItemDetailByVersion")
     public ApiResult<List<FbaDeliveryDTO.SonItem>> sonItemDetailByVersion(@RequestBody @Validated FbaDeliveryDTO.SonItemDetailByVersion dto) {
         List<FbaDeliveryDTO.SonItem> result = fbaDeliveryService.sonItemDetailByVersion(dto);
+        return success(result);
+    }
+
+    /**
+     * 装箱
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/packingSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单装箱保存")
+    public ApiResult packingSave(@RequestBody @Validated ValidList<FirstMileCartonDTO.AddDTO> dto) {
+        Boolean flag = fbaDeliveryService.packingSave(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 装箱清单
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/listPacking")
+    public ApiResult<List<FirstMileCartonDTO.ListPackingDTO>> listPacking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FirstMileCartonDTO.ListPackingDTO> result = fbaDeliveryService.listPacking(dto.getIds());
         return success(result);
     }
 }
