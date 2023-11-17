@@ -46,26 +46,27 @@
     <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
         SELECT
-            fs.id,
-            fsd.id AS detailId,
-            fs.code,
-            fs.shop_id,
-            fs.shop_name,
-            fs.country_id,
-            fs.country_name,
-            fs.fulfillment_center,
-            fs.delivery_status,
-            (SELECT fd.code FROM fba_delivery fd WHERE fd.source_id = fs.id ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
-            fs.platform_shipment_status,
-            fs.shipment_create_time,
-            fs.shipment_receive_time,
-            fsd.asin,
-            fsd.fn_sku,
-            fsd.msku,
-            fsd.sku_no,
-            fsd.declare_qty,
-            fsd.diff_qty,
-            fsd.is_combination
+        fs.id,
+        fsd.id AS detailId,
+        fs.code,
+        fs.shop_id,
+        fs.shop_name,
+        fs.country_id,
+        fs.country_name,
+        fs.fulfillment_center,
+        fs.delivery_status,
+        (SELECT fd.code FROM fba_delivery fd WHERE fd.source_id = fs.id ORDER BY fd.create_time DESC LIMIT 1) AS
+        deliveryCode,
+        fs.platform_shipment_status,
+        fs.shipment_create_time,
+        fs.shipment_receive_time,
+        fsd.asin,
+        fsd.fn_sku,
+        fsd.msku,
+        fsd.sku_no,
+        fsd.declare_qty,
+        fsd.diff_qty,
+        fsd.is_combination
         FROM fba_shipment fs
         INNER JOIN fba_shipment_detail fsd ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE fs.is_deleted = FALSE
@@ -183,5 +184,15 @@
                 #{id}
             </foreach>
         </if>
+    </select>
+
+    <select id="getByFbaShipmentIdAndIsDelete" resultType="com.erp.model.wms.entity.FbaShipmentEntity">
+        select *
+        FROM fba_shipment
+        where fba_shipment_id = #{fbaShipmentId}
+        <if test="null != isDelete">
+            AND is_deleted = #{is_deleted}
+        </if>
+         LIMIT 1
     </select>
 </mapper>

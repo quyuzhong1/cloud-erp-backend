@@ -137,7 +137,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @author  Jim
      * @date 2023/11/2
      */
-    FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId);
+    FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId, Boolean isDelete);
 
     /**
      * 删除
