@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
@@ -34,5 +35,15 @@ public class ProductBomInfoDTO {
          * sku编码
          */
         private List<String> skuNos;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class skuIdParams {
+        /**
+         * 产品id
+         */
+        @NotNull(message = "产品id不能为空")
+        private List<String> skuIds;
     }
 }

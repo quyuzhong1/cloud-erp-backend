@@ -470,12 +470,37 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         .update(new OverseasDeliveryPlanEntity());
     }
 
+    @Override
+    public List<OverseasDeliveryPlanDTO.DeliverRecordDTO> listDeliverRecord(String id) {
+        return null;
+    }
+
+    @Override
+    public List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean generateRequisitionApplicationSave(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+        return null;
+    }
+
+    @Override
+    public List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean generateDeliverSave(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
+        return null;
+    }
+
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void fillList(List<OverseasDeliveryPlanDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
-           return;
+            return;
         }
 
         // 属性赋值
@@ -486,8 +511,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
     }
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void validateSubmit(OverseasDeliveryPlanEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
@@ -497,9 +522,10 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(OverseasDeliveryPlanEntity overseasDeliveryPlanEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
+
 }

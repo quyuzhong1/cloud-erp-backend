@@ -41,6 +41,11 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         private String mainId;
 
         /**
+        * 产品图片
+        */
+        private String imageUrl;
+
+        /**
         * 产品id
         */
         private String skuId;
@@ -49,6 +54,16 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         * 产品编号
         */
         private String skuNo;
+
+        /**
+        * 是否组合品
+        */
+        private Boolean isCombination;
+
+        /**
+        * 产品名称
+        */
+        private String productName;
 
         /**
         * bom版本
@@ -70,7 +85,10 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         */
         private Integer pickingQty;
 
-
+        /**
+        * 可用库存
+        */
+        private Integer usableQty;
     }
 
     /**

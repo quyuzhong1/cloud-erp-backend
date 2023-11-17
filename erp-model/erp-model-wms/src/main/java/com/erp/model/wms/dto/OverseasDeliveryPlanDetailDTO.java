@@ -20,25 +20,26 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class OverseasDeliveryPlanDetailDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
         /**
         * 主键id
         */
-        private String  id;
+        private String id;
 
         /**
         * 主表id
         */
         private String mainId;
+
+        /**
+         * 产品图片
+         */
+        private String imageUrl;
 
         /**
         * 产品id
@@ -60,7 +61,20 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         */
         private Boolean isCombination;
 
+        /**
+        * 产品名称
+        */
+        private String productName;
 
+        /**
+        * 库存sku
+        */
+        private String stockSku;
+
+        /**
+        * 库存sku名称
+        */
+        private String stockSkuName;
     }
 
     /**
@@ -95,29 +109,22 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 产品id
         */
-        @NotBlank(message = "产品id不能为空")
-        @Size(max = 19,message = "产品id最大长度不能超过19位")
         private String skuId;
 
         /**
         * 计划数量
         */
-        @NotNull(message = "计划数量不能为空")
         private Integer qty;
 
         /**
         * 是否组合品
         */
-        @NotNull(message = "是否组合品不能为空")
         private Boolean isCombination;
-
 
     }
 

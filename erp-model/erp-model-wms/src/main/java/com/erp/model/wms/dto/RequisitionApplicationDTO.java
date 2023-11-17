@@ -1,10 +1,12 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -20,9 +22,6 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class RequisitionApplicationDTO implements Serializable {
-
-
-
 
     /**
     * 详情
@@ -57,14 +56,29 @@ public class RequisitionApplicationDTO implements Serializable {
         private String sourceType;
 
         /**
+        * 来源类型中文
+        */
+        private String sourceTypeName;
+
+        /**
         * 单据状态
         */
         private String status;
 
         /**
+        * 单据状态中文
+        */
+        private String statusName;
+
+        /**
         * 作废状态
         */
         private String invalidStatus;
+
+        /**
+        * 作废状态中文
+        */
+        private String invalidStatusName;
 
         /**
         * 作废备注
@@ -80,6 +94,11 @@ public class RequisitionApplicationDTO implements Serializable {
         * 类型
         */
         private String type;
+
+        /**
+        * 类型名称
+        */
+        private String typeName;
 
         /**
         * 要货渠道id
@@ -136,7 +155,10 @@ public class RequisitionApplicationDTO implements Serializable {
         */
         private LocalDateTime handleTime;
 
-
+        /**
+         * 详情
+         */
+        private List<RequisitionApplicationDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -282,9 +304,392 @@ public class RequisitionApplicationDTO implements Serializable {
         * 处理时间
         */
         private LocalDateTime handleTime;
+    }
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 产品编号
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 要货类型
+         */
+        private List<String> typeList;
+
+        /**
+         * 要货渠道
+         */
+        private String channelName;
+
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 调出仓库id
+         */
+        private List<String> fromWarehouseIdList;
+
+        /**
+         * 调入仓库id
+         */
+        private List<String> toWarehouseIdList;
+
+        /**
+         * 创建人
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 处理人
+         */
+        private List<String> handleUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+        /**
+         * 处理时间
+         */
+        private List<LocalDate> handleTimeList;
 
     }
 
+    /**
+     * 列表查询返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 要货类型
+         */
+        private String type;
+
+        /**
+         * 要货类型中文
+         */
+        private String typeName;
+
+        /**
+         * 要货渠道
+         */
+        private String channelId;
+
+        /**
+         * 要货渠道中文
+         */
+        private String channelName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 要货数量
+         */
+        private Integer requisitionQty;
+
+        /**
+         * 批准数量
+         */
+        private Integer approveQty;
+
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+
+        /**
+         * 要货仓库名称
+         */
+        private String requisitionWarehouseName;
+
+        /**
+         * 调出仓库
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 调出仓库名称
+         */
+        private String fromWarehouseName;
+
+        /**
+         * 调入仓库id
+         */
+        private String toWarehouseId;
+
+        /**
+         * 调入仓库名称
+         */
+        private String toWarehouseName;
+
+        /**
+         * 创建人名称
+         */
+        private String handleUserName;
+
+        /**
+         * 处理时间
+         */
+        private String handleTime;
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
+    }
+
+    /**
+     * 处理列表返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class handleListDTO {
+        /**
+         * 主表id
+         */
+        private String sourceId;
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+        /**
+         * 详情id
+         */
+        private String sourceDetailId;
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+        /**
+         * 要货仓库中文
+         */
+        private String requisitionWarehouseName;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 要货数量
+         */
+        private Integer requisitionQty;
+        /**
+         * 批准数量
+         */
+        private Integer approveQty;
+        /**
+         * 调出仓库Id
+         */
+        private String fromWarehouseId;
+        /**
+         * 调出仓库中文
+         */
+        private String fromWarehouseName;
+        /**
+         * 调入仓库id
+         */
+        private String toWarehouseId;
+        /**
+         * 调入仓库中文
+         */
+        private String toWarehouseName;
+    }
+
+    /**
+     * 完成列表返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class finishListDTO {
+        /**
+         * 主表id
+         */
+        private String sourceId;
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+        /**
+         * 详情id
+         */
+        private String sourceDetailId;
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+        /**
+         * 要货仓库中文
+         */
+        private String requisitionWarehouseName;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+        /**
+         * 是否组合品
+         */
+        private String isCombination;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 批准数量
+         */
+        private Integer approveQty;
+        /**
+         * 拣货仓库id
+         */
+        private String pickingWarehouseId;
+        /**
+         * 拣货仓库中文
+         */
+        private String pickingWarehouseName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+
+    }
+
+    /**
+     * 打印拣货单预览
+     */
+    @Data
+    @NoArgsConstructor
+    public static class printPickingViewDTO {
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 拣货数量
+         */
+        private Integer qty;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 仓位编号
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }
