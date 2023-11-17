@@ -196,7 +196,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 //        List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
 //        LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
 //        assert logisticsGetLabelVO != null;
-//        LabelRequest labelRequest = LabelRequest.builder()
+//        request labelRequest = request.builder()
 //                .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
 //                .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
 //                .build();
