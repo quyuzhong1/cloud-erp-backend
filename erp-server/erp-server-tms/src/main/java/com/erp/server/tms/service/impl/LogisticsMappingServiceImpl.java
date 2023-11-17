@@ -2,17 +2,14 @@ package com.erp.server.tms.service.impl;
 
 
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.entity.ShippingTemplateRefChannelEntity;
 import com.erp.server.tms.mapper.LogisticsMappingMapper;
 import com.erp.server.tms.service.LogisticsMappingService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;

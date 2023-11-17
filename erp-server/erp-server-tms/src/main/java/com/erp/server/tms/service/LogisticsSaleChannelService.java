@@ -44,4 +44,15 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @return
      */
     List<SaleChannelDTO> listByType(String platformType);
+
+    /**
+     *  根据授权状态和同步状态查询数据
+     * @author yl
+     *
+     * @param authId
+     * @param isSync
+     * @date: 2023-11-08
+     * @return
+     */
+    List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync);
 }
