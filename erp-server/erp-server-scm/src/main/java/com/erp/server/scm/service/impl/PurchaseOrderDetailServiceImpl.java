@@ -170,9 +170,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
-            //删除关联关系
-            purchaseApplicationRefPoService.removeByPurchaseOrderDetailIds(deleteIds);
-
             List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId, deleteIds).list();
             list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
             //同步到WMS
@@ -193,7 +190,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), newList, IdUtil.simpleUUID());
 
         //更新采购申请单生成类型
-        updateCreatePoType(purchaseOrderId);
+        purchaseOrderService.updateCreatePoType(Arrays.asList(purchaseOrderId));
+        //删除关联关系
+        purchaseApplicationRefPoService.removeByPurchaseOrderDetailIds(deleteIds);
     }
 
 
@@ -219,62 +218,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
-
-    /**
-     * 更新生成状态
-     */
-    @Override
-    public void updateCreatePoType (String purchaseOrderId) {
-        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(new PurchaseApplicationRefPoDTO.SearchParamDTO().setPurchaseOrderIds(Arrays.asList(purchaseOrderId)));
-        //无关联数据则不处理
-        if (CollectionUtils.isEmpty(refList)) {
-            return;
-        }
-        List<String> purchaseApplicationDetailIds = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseApplicationDetailId).collect(Collectors.toList());
-
-        //采购申请明细下已采购数据
-        List<PurchaseApplicationRefPoDTO.ListDTO> list = purchaseApplicationRefPoService.list(new PurchaseApplicationRefPoDTO.SearchParamDTO().setPurchaseApplicationDetailIds(purchaseApplicationDetailIds));
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        //采购申请单明细数据
-        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(purchaseApplicationDetailIds);
-        if (CollectionUtils.isEmpty(purchaseApplicationDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98017);
-        }
-        List<PurchaseApplicationDetailEntity> resultList = new ArrayList<>();
-        Map<String, List<PurchaseApplicationRefPoDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseApplicationDetailId));
-        for (Map.Entry<String, List<PurchaseApplicationRefPoDTO.ListDTO>> entry : map.entrySet()) {
-            String key = entry.getKey();
-            List<PurchaseApplicationRefPoDTO.ListDTO> value = entry.getValue();
-
-            PurchaseApplicationDetailEntity entity = new PurchaseApplicationDetailEntity();
-            entity.setId(key);
-            //申请数量
-            PurchaseApplicationDetailEntity applicationDetail = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(key)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(applicationDetail)) {
-                throw new ServiceException(ApiError.ERROR_98017);
-            }
-            Integer applyQty = applicationDetail.getApplyQty();
-            //采购数量
-            Integer purchaseQty = value.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (MathUtil.compareTo(purchaseQty,MathUtil.ZERO) == MathUtil.ZERO) {
-                entity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
-            }
-            if (MathUtil.compareTo(applyQty,purchaseQty) == MathUtil.ZERO) {
-                entity.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
-            }
-            if (MathUtil.compareTo(applyQty,purchaseQty) > MathUtil.ZERO) {
-                entity.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
-            }
-            if (MathUtil.compareTo(purchaseQty,applyQty) > MathUtil.ZERO) {
-                throw new ServiceException(new ApiResult(1,String.format("采购申请明细SKU【%s】采购数量【%s】不能大于【%s】",applicationDetail.getSkuNo(),purchaseQty,applyQty)));
-            }
-            resultList.add(entity);
-        }
-        purchaseApplicationDetailService.updateBatchById(resultList);
-    }
-
 
     /**
      * 查询需要删除的数据

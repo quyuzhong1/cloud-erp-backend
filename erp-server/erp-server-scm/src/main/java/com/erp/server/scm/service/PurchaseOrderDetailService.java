@@ -69,13 +69,6 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      */
     void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
 
-    /**
-     * @description: 更新生成PO类型
-     * @author Will
-     * @date: 2023/4/3 17:05
-     * @param purchaseOrderId
-     */
-    void updateCreatePoType (String purchaseOrderId);
 
     /**
      * 根据明细id查询明细
