@@ -358,14 +358,14 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         if (ObjectUtil.isNotEmpty(cityExcelListenerUtil)) {
             List<ShippingTemplateCityExcelDTO> excelDateList = cityExcelListenerUtil.getExcelDateList();
             if (CollectionUtils.isEmpty(excelDateList)) {
-                throw new ServiceException(ApiError.ERROR_95123);
+                throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"分区城市");
             }
             cityErrorList = cityExcelListenerUtil.getErrorList();
             citySuccessList = cityExcelListenerUtil.getSuccessList();
         }
         List<ShippingTemplateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_95123,"基础数据");
         }
         List<ShippingTemplateExcelDTO > errorList = excelListenerUtil.getErrorList();
 
@@ -484,7 +484,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             addDTO.setName(excelValueDTO.getName());
             addDTO.setCurrency(excelValueDTO.getCurrency());
             addDTO.setEffectiveDate(LocalDateUtil.stringToLocalDateTime(excelValueDTO.getEffectiveDate()).toLocalDate());
-            addDTO.setExpireDate(LocalDateUtil.stringToLocalDateTime(excelValueDTO.getExpireDate()).toLocalDate());
+            addDTO.setExpireDate(StringUtils.isBlank(excelValueDTO.getExpireDate()) ? null : LocalDateUtil.stringToLocalDateTime(excelValueDTO.getExpireDate()).toLocalDate());
             addDTO.setVolumeSetting(Integer.valueOf(excelValueDTO.getVolumeSetting()));
             addDTO.setPriceBinary(PriceBinaryEnum.getCode(excelValueDTO.getPriceBinary()));
             addDTO.setWeightUnit(excelValueDTO.getWeightUnit());

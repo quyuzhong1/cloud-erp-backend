@@ -147,7 +147,10 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
 
     @Override
     public List<ShippingTemplateRuleEntity> listByMainId(String mainId) {
-      return   lambdaQuery().eq(ShippingTemplateRuleEntity::getMainId,mainId).list();
+      return   lambdaQuery()
+              .eq(ShippingTemplateRuleEntity::getMainId,mainId)
+              .orderByAsc(ShippingTemplateRuleEntity::getId)
+              .list();
     }
 
     @Override
@@ -171,8 +174,8 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getRegion()),ShippingTemplateRuleEntity::getRegion,viewParamDTO.getRegion())
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getToWarehouseName()),ShippingTemplateRuleEntity::getToWarehouseName,viewParamDTO.getToWarehouseName())
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
-                .gt(ShippingTemplateRuleEntity::getEndWeight,viewParamDTO.getWeight())
-                .le(ShippingTemplateRuleEntity::getStartWeight,viewParamDTO.getWeight())
+                .ge(ShippingTemplateRuleEntity::getEndWeight,viewParamDTO.getWeight())
+                .lt(ShippingTemplateRuleEntity::getStartWeight,viewParamDTO.getWeight())
                 .last("limit 1")
                 .one();
     }
@@ -376,9 +379,11 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
     private Boolean checkInterval (List<ShippingTemplateRuleEntity> value) {
         //区间
         List<ShippingTemplateRuleDTO.IntervalDTO> intervalList = value.stream().map(obj -> new ShippingTemplateRuleDTO.IntervalDTO(obj.getStartWeight(), obj.getEndWeight())).collect(Collectors.toList());
-        for (int i = 0; i < intervalList.size()-1; i++) {
-            for (int j = i+1; j < intervalList.size(); j++) {
-                if (MathUtil.compareTo(intervalList.get(i).getEndWeight(), intervalList.get(j).getStartWeight()) > MathUtil.ZERO) {
+        //排序
+        List<ShippingTemplateRuleDTO.IntervalDTO> resultList = intervalList.stream().sorted(Comparator.comparing(ShippingTemplateRuleDTO.IntervalDTO::getStartWeight)).collect(Collectors.toList());
+        for (int i = 0; i < resultList.size()-1; i++) {
+            for (int j = i+1; j < resultList.size(); j++) {
+                if (MathUtil.compareTo(resultList.get(i).getEndWeight(), resultList.get(j).getStartWeight()) > MathUtil.ZERO) {
                     return Boolean.TRUE;
                 }
             }

@@ -347,6 +347,7 @@ public class ShippingTemplateDTO implements Serializable {
         /**
         * 生效日期
         */
+        @NotNull(message = "生效日期不能为空")
         private LocalDate effectiveDate;
 
         /**

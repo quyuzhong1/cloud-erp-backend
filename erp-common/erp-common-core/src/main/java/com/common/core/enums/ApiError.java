@@ -87,6 +87,7 @@ public enum ApiError implements Serializable {
     GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
     ERROR_IMPORT_TIMEOUT(1049, "导入超时,请减少数据导入"),
     GLOBAL_EXCEPTION_ID_IN_PROCESS(1049, "记录【{}】操作中"),
+    ERROR_IMPORT_DATA_NOT_NULL(1050,"导入{}数据不能为空"),
 
 
     /**
