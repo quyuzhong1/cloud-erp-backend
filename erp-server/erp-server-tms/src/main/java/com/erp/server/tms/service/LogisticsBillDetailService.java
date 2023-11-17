@@ -52,4 +52,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @return java.lang.Boolean
      **/
     Boolean removeByMainIds(List<String> mainIds);
+
+    /**
+     * 更改状态
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-11-17
+     */
+    BatchResultDTO updateStatus(String id, String trackStatus);
 }

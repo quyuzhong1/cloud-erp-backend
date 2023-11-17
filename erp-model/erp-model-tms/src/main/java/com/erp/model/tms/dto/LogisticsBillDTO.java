@@ -78,12 +78,14 @@ public class LogisticsBillDTO implements Serializable {
         private List<String>  trackNoList;
         /**
          * 销售平台
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13435  key=salesPlatform
          */
         private List<String>  salesPlatformList;
 
 
         /**
          * 订单类型
+         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=salesOrderType
          */
         private List<String>  sourceTypeList;
 
@@ -106,12 +108,14 @@ public class LogisticsBillDTO implements Serializable {
 
         /**
          * 物流渠道
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25999
          */
         private List<String> channelIdList;
 
 
         /**
          * 包裹状态
+         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
          */
         private List<String> trackStatusList;
 
@@ -123,6 +127,13 @@ public class LogisticsBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingVO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
 
         /**
          * 销售平台
@@ -470,6 +481,26 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
+    }
+
+    /**
+     * 批量更新状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateStatusDTO{
+        /**
+         * ids
+         */
+        @Size(min = 1,message = "物流单不能为空")
+        private List<String> ids;
+
+        /**
+         * 运输状态
+         * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
+         */
+        private String trackStatus;
+
     }
 
 }

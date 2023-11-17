@@ -74,7 +74,7 @@
     <!--分页列表-->
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
          SELECT
-             lb.id,
+             lbd.id,
              lb.sales_platform AS salesPlatform,
              lb.shop_id AS shopId,
              lb.shop_name AS shopName,
