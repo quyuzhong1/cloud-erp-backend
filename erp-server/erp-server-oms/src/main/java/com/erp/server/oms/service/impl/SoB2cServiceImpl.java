@@ -2259,19 +2259,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //平台费
         if (ObjectUtils.isNotEmpty(dictPlatformOption) &&  ShopPlatformCostEnum.MULTIPLY_PLATFORM_RATE.getCode().equals(dictPlatformOption.getValue())) {
             platformCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()), platformRate);
+            financialInfoDTO.setPlatformCostType(dictPlatformOption.getValue());
+            financialInfoDTO.setPlatformRate(platformRate);
         }
         //转账费
-        if (ObjectUtils.isNotEmpty(dictVatOption) && ShopTransferCostEnum.MULTIPLY_TRANSFER_RATE.getCode().equals(dictVatOption.getValue())) {
+        if (ObjectUtils.isNotEmpty(dictTransferOption) && ShopTransferCostEnum.MULTIPLY_TRANSFER_RATE.getCode().equals(dictTransferOption.getValue())) {
             paypalCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),transferRate);
+            financialInfoDTO.setTransferCostType(dictTransferOption.getValue());
+            financialInfoDTO.setTransferRate(transferRate);
         }
         //vat费
-        if (ObjectUtils.isNotEmpty(dictTransferOption) && ShopVATCostEnum.MULTIPLY_VAT_RATE.getCode().equals(dictTransferOption.getValue())) {
+        if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.MULTIPLY_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
             vatCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),vatRate);
-        } else if (ObjectUtils.isNotEmpty(dictTransferOption) && ShopVATCostEnum.MULTIPLY_ADD_VAT_RATE.getCode().equals(dictTransferOption.getValue())) {
+        } else if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.MULTIPLY_ADD_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
             vatCost =  MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),MathUtil.add(BigDecimal.ONE,vatRate)).multiply(vatRate);
-        } else if (ObjectUtils.isNotEmpty(dictTransferOption) && ShopVATCostEnum.DIVISION_ADD_MULTIPLY_VAT_RATE.getCode().equals(dictTransferOption.getValue())) {
+        } else if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.DIVISION_ADD_MULTIPLY_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
             vatCost =  MathUtil.divide(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),MathUtil.add(BigDecimal.ONE,vatRate)).multiply(vatRate);
         }
+        financialInfoDTO.setVatCostType(dictVatOption.getValue());
+        financialInfoDTO.setVatRate(vatRate);
 
         //平台费,店铺计算
         financialInfoDTO.setPlatformCost(platformCost);
