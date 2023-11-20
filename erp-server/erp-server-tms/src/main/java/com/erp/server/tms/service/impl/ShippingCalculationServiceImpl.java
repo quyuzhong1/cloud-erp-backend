@@ -64,9 +64,6 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
     private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
 
     @Resource
-    private ShippingTemplateOtherCostMapper shippingTemplateOtherCostMapper;
-
-    @Resource
     private ShippingRegionCityMapper shippingRegionCityMapper;
 
     @Resource
@@ -81,7 +78,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<ShippingCalculationDTO.ListDTO> pageData = this.shippingTemplateOtherCostMapper.paging(query, params);
+        IPage<ShippingCalculationDTO.ListDTO> pageData = shippingTemplateOtherCostService.paging(query, params);
         //清空明细数据
         List<ShippingCalculationDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -179,7 +176,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
 
     @Override
     public Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO params, HttpServletResponse response) {
-        List<ShippingCalculationDTO.ListDTO> resultList = this.shippingTemplateOtherCostMapper.listByExportExcel(params);
+        List<ShippingCalculationDTO.ListDTO> resultList = this.shippingTemplateOtherCostService.listByExportExcel(params);
         if (CollectionUtils.isEmpty(resultList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }

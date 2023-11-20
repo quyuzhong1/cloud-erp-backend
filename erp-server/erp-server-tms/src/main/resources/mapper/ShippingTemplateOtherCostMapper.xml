@@ -82,22 +82,19 @@
         <where>
             ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
             DAY' or st.expire_date is null)
-            <if test="params.weight != null ">
-            and
-                <if test="params.weightUnit == 'kg'" >
-                    case st.weight_unit when 'kg' then
-                    #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
-                                        when 'g'  then
-                    #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
-                    end
-                </if>
-                <if test="params.weightUnit == 'g'" >
-                    case st.weight_unit when 'kg' then
-                    #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
-                                        when 'g'  then
-                    #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
-                    end
-                </if>
+            <if test="params.weightUnit != null and params.weightUnit == 'kg'" >
+                and case st.weight_unit when 'kg' then
+                #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
+                   else
+                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+                end
+            </if>
+            <if test="params.weightUnit != null and params.weightUnit == 'g'" >
+                and case st.weight_unit when 'kg' then
+                #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
+                    else
+                #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
+                end
             </if>
             <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
                 and str.from_country in
