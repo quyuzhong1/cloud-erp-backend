@@ -130,16 +130,6 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
              * 若渠道为实际重：则取值实际重量作为计算重量
              * 若渠道为体积重：则取值体积重量作为计费重量
              */
-            //体积重
-            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWeight()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting()));
-            //重量
-            BigDecimal weight = params.getWeight();
-            if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
-                weight = MathUtil.compareTo(volumeWeight, params.getWeight()) > MathUtil.ZERO ? volumeWeight : params.getWeight();
-            }
-            if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
-                weight = volumeWeight;
-            }
 
             //重量单位比例
             BigDecimal ratio = BigDecimal.ONE;
@@ -152,24 +142,37 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                     ratio = new BigDecimal(0.001);
                 }
             }
+
+            //体积重
+            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWeight()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting()));
+            //重量
+            BigDecimal weight = params.getWeight().multiply(ratio);
+            if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+                weight = MathUtil.compareTo(volumeWeight, params.getWeight()) > MathUtil.ZERO ? volumeWeight : params.getWeight();
+            }
+            if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
+                weight = volumeWeight;
+            }
+
             //其他费用
             List<ShippingTemplateOtherCostEntity> costEntityList = otherCostList.stream().filter(obj -> obj.getMainId().equals(listDTO.getTemplateEntity().getId())).collect(Collectors.toList());
             ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(listDTO.getTemplateEntity(), listDTO.getTemplateRuleEntity(), costEntityList
                     , weight, params.getLength(), params.getWidth(), params.getHeight());
-            listDTO.setShippingCost(MathUtil.multiply(shippingCalculationDTO.getShippingCost(),ratio));
-            listDTO.setRegistrationCost(MathUtil.multiply(shippingCalculationDTO.getRegistrationCost(),ratio));
-            listDTO.setOperatingCost(MathUtil.multiply(shippingCalculationDTO.getOperatingCost(),ratio));
-            listDTO.setTotalShippingCost(MathUtil.multiply(shippingCalculationDTO.getTotalShippingCost(),ratio));
+            listDTO.setShippingCost(shippingCalculationDTO.getShippingCost());
+            listDTO.setRegistrationCost(shippingCalculationDTO.getRegistrationCost());
+            listDTO.setOperatingCost(shippingCalculationDTO.getOperatingCost());
+            listDTO.setTotalShippingCost(shippingCalculationDTO.getTotalShippingCost());
             //其他费用
             ShippingCalculationDTO.OtherCostDTO otherCostDTO = new ShippingCalculationDTO.OtherCostDTO();
-            otherCostDTO.setDiscountCost(MathUtil.multiply(shippingCalculationDTO.getDiscountCost(),ratio));
-            otherCostDTO.setPremiumCost(MathUtil.multiply(shippingCalculationDTO.getPremiumCost(),ratio));
-            otherCostDTO.setSignatureCost(MathUtil.multiply(shippingCalculationDTO.getSignatureCost(),ratio));
-            otherCostDTO.setOversizeSurchargeCost(MathUtil.multiply(shippingCalculationDTO.getOversizeSurchargeCost(),ratio));
-            otherCostDTO.setFuelSurchargeCost(MathUtil.multiply(shippingCalculationDTO.getFuelSurchargeCost(),ratio));
+            otherCostDTO.setDiscountCost(shippingCalculationDTO.getDiscountCost());
+            otherCostDTO.setPremiumCost(shippingCalculationDTO.getPremiumCost());
+            otherCostDTO.setSignatureCost(shippingCalculationDTO.getSignatureCost());
+            otherCostDTO.setOversizeSurchargeCost(shippingCalculationDTO.getOversizeSurchargeCost());
+            otherCostDTO.setFuelSurchargeCost(shippingCalculationDTO.getFuelSurchargeCost());
             listDTO.setOtherCostDTO(otherCostDTO);
             //其他费用字符串
-            String otherCostStr = JSONUtil.parseObj(otherCostDTO).entrySet().stream().filter(obj -> MathUtil.compareTo(obj.getValue(), MathUtil.ZERO) > MathUtil.ZERO).map(obj -> ShippingOtherCostNameEnum.getName(obj.getKey()).concat(":").concat(obj.getValue().toString())).collect(Collectors.joining(";"));
+            String otherCostStr = JSONUtil.parseObj(otherCostDTO).entrySet().stream().filter(obj -> MathUtil.compareTo(obj.getValue(), MathUtil.ZERO) > MathUtil.ZERO)
+                    .map(obj -> ShippingOtherCostNameEnum.getName(obj.getKey()).concat(":").concat(obj.getValue().toString())).collect(Collectors.joining(";"));
             listDTO.setOtherCostStr(otherCostStr);
         }
     }
