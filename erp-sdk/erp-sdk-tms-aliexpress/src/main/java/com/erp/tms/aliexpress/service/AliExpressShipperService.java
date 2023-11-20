@@ -33,7 +33,7 @@ public class AliExpressShipperService {
         IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
-        IopResponse response = client.execute(request, token, Protocol.TOP);
+        IopResponse response = client.execute(request, PathConstants.TOKEN, Protocol.TOP);
         System.out.println(response.getBody());
         return response;
     }

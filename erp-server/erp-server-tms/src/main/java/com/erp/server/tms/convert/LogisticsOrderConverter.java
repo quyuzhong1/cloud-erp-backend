@@ -5,6 +5,7 @@ import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
+import com.erp.tms.aliexpress.model.order.request.DeclareProduct;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.sdk.tms.disifang.model.order.request.OrderRequest;
@@ -473,4 +474,19 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "countryCode" ,source = "countryCode")
     })
     LogisticsOrderResponseVO orderQueryByTongYou(TongYouOrderInfo tongYouOrderInfo);
+
+
+    @Mappings({
+            @Mapping(target = "category_cn_desc" ,source = "declareChineseName"),
+            @Mapping(target = "category_en_desc" ,source = "declareEnglishName"),
+            @Mapping(target = "contains_battery" ,source = "isElectric"),
+            @Mapping(target = "hs_code" ,source = "customsCode"),
+            @Mapping(target = "only_battery" ,source = "isElectric"),
+            @Mapping(target = "product_declare_amount" ,source = "destDeclarePrice"),
+            @Mapping(target = "product_id" ,source = "skuId"),
+            @Mapping(target = "product_num" ,source = "quantity"),
+            @Mapping(target = "product_weight" ,source = "weight")
+    })
+    DeclareProduct orderRequestProductByAliExpress(LogisticsProductVO logisticsProductVO);
+    List<DeclareProduct> orderRequestProductByAliExpress(List<LogisticsProductVO> logisticsProductVOList);
 }

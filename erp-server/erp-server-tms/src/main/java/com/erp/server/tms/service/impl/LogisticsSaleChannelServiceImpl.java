@@ -127,8 +127,9 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         //检查数据是否存在
         if (Objects.nonNull(one)){
             logisticsSaleChannelEntity.setId(one.getId());
+            return this.updateById(logisticsSaleChannelEntity);
         }
-        return this.saveOrUpdate(logisticsSaleChannelEntity);
+        return this.save(logisticsSaleChannelEntity);
     }
 
     @Override

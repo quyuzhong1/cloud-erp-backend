@@ -124,6 +124,10 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 详情id
+         */
+        private String detailId;
 
         /**
          * 编号

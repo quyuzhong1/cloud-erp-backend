@@ -46,6 +46,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$ListDTO">
         SELECT
             odp.id,
+            odpd.id AS detailId,
             odp.code,
             odp.approve_status,
             odp.invalid_status,

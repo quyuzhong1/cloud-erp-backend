@@ -524,7 +524,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
             Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(record.getDetailId())).mapToInt(FbaDeliveryDetailEntity::getDeliveryQty).sum();
-            record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
             record.setDeliveryQty(deliveryQty);
             //签收数量 QuantityReceived
             Integer receiveQty = fbaShipmentReceiveEntities.stream().filter(req -> req.getDetailId().equals(record.getDetailId())).mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -98,10 +99,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
      * @param records
      */
     @Override
-    public void processTrackData(String platformType, List<LogisticsBillDetailEntity> records) {
+    public List<BatchResultDTO> processTrackData(String platformType, List<LogisticsBillDetailEntity> records) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(records.size());
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
-        if (CollectionUtils.isEmpty(mapList)) return;
+        if (CollectionUtils.isEmpty(mapList)) Collections.emptyList();
         LogisticsTrackVO logisticsTrackVO = LogisticsTrackVO.builder()
                 .authMap(mapList.get(0))
                 .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
@@ -113,6 +115,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 Map<String, List<LogisticsTrackEntity>> collect = data.stream().sorted(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).collect(Collectors.groupingBy(LogisticsTrackEntity::getTrackNo));
                 //根据记录进行更新物流信息
                 records.forEach(logisticsBillDetailEntity -> {
+                    BatchResultDTO dto = new BatchResultDTO();
                     //获取对应编号的轨迹
                     List<LogisticsTrackEntity> logisticsTrackEntities = collect.get(logisticsBillDetailEntity.getTrackNo());
                     //先物理删除  再新增
@@ -127,33 +130,50 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
                         logisticsTrackService.checkTrackStatus(max);
                     }
+                    dto.setId(logisticsBillDetailEntity.getId());
+                    dto.setCode(logisticsBillDetailEntity.getTrackNo());
+                    dto.setSuccess(true);
+                    resultDTOS.add(dto);
                 });
                 data.forEach(logisticsTrackEntity -> {
                     logisticsTrackService.saveOrUpdate(logisticsTrackEntity);
                 });
             }
+        } else {
+            records.forEach(logisticsBillDetailEntity -> {
+                BatchResultDTO dto = new BatchResultDTO();
+                dto.setId(logisticsBillDetailEntity.getId());
+                dto.setCode(logisticsBillDetailEntity.getTrackNo());
+                dto.setSuccess(false);
+                dto.setMsg(track.getMsg());
+                resultDTOS.add(dto);
+            });
         }
+        return resultDTOS;
     }
 
-    @Async("tmsExecutor")
     @Override
-    public void batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
+    public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
         if (CollectionUtils.isNotEmpty(logisticsBillDetailEntities)) {
+            List<BatchResultDTO> dtoList = new ArrayList<>(logisticsBillDetailEntities.size());
             LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getTrackNo())).findFirst().orElse(null);
             if (Objects.nonNull(detailEntity)) throw new ServiceException(ApiError.BATCH_UPDATE_TRACK_INFO_HAS_EMPTY);
             if (logisticsBillDetailEntities.size() > 100) {
                 List<List<LogisticsBillDetailEntity>> partition = Lists.partition(logisticsBillDetailEntities, 100);
                 for (List<LogisticsBillDetailEntity> entityList : partition) {
-                    this.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList);
+                    dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList));
                 }
             } else {
-                this.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), logisticsBillDetailEntities);
+                dtoList.addAll(processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), logisticsBillDetailEntities));
             }
-
+            return dtoList;
+        } else {
+            return Collections.emptyList();
         }
     }
 
-    private ApiResult syncSingleChannel(String platform) {
+    @Override
+    public ApiResult syncSingleChannel(String platform) {
         log.info("{}渠道同步开始", platform);
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         LogisticsService service = logisticsRegistry.getHandler(platform);
@@ -176,7 +196,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         return ApiResult.success();
     }
 
-    private ApiResult syncShoppeeChannel(String platform) {
+    public ApiResult syncShoppeeChannel(String platform) {
         log.info("{}渠道同步开始", platform);
         ApiResult<List<ShopAuthEntity>> result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
         if (result.isSuccess()) {
