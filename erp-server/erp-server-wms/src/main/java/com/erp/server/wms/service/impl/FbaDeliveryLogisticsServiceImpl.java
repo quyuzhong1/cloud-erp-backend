@@ -189,7 +189,9 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             addDTO.setOutstockId("");
             addDTO.setOutstockCode("");
             addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel()==null?"":deliveryLogisticsSave.getLogisticsChannel());
-            addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime().toLocalDate());
+            if (deliveryLogisticsSave.getDeliveryTime() != null) {
+                addDTO.setDeliveryTime(deliveryLogisticsSave.getDeliveryTime().toLocalDate());
+            }
             List<String> trackingNoList = deliveryLogisticsSave.getTrackingNoList();
             FbaShipmentEntity entity = fbaShipmentEntities.stream().filter(req -> req.getId().equals(fbaDeliveryEntity.getSourceId())).findFirst().orElse(new FbaShipmentEntity());
             addDTO.setOrderTime(entity.getShipmentCreateTime());

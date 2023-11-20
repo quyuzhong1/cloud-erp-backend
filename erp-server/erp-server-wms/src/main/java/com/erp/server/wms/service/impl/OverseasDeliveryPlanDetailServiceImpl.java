@@ -80,7 +80,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<OverseasDeliveryPlanDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
@@ -92,7 +92,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         handleData(list, mainId, Boolean.TRUE);
 
         log.info("开始修改发货计划详情单");
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("修改发货计划详情失败");
         }
@@ -145,7 +145,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_OVERSEAS_DELIVERY_PLAN);
                 }
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode(), detailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
             }
         }
 

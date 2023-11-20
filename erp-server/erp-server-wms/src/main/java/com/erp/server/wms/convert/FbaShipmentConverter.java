@@ -43,7 +43,7 @@ public interface FbaShipmentConverter {
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);
 
     @Mappings({
-            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceId", source = "mainId"),
             @Mapping(target = "sourceCode", source = "code"),
             @Mapping(target = "demandType", constant = ""),
             @Mapping(target = "inventoryOrgId", constant = ""),
