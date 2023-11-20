@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -32,37 +33,67 @@ public class LogisticsTrackDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * 运单号
-        */
+         * 物流单号
+         */
         private String trackNo;
 
         /**
-        * 运单时间
-        */
+         * 详情
+         */
+        List<ListDTO> list;
+
+
+
+    }
+
+
+
+
+    /**
+     * list
+     */
+    @Data
+    public static class ListDTO{
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 是否最新
+         */
+        private Boolean isLatest;
+
+        /**
+         * 运单号
+         */
+        private String trackNo;
+
+        /**
+         * 运单时间
+         */
         private LocalDateTime trackTime;
 
         /**
-        * 状态
-        */
+         * 状态
+         */
         private String status;
 
         /**
-        * 内容
-        */
+         * 内容
+         */
         private String content;
 
         /**
          * 状态名
          */
         private String statusName;
-
-
     }
+
+
+
+
 
     /**
     * 新增

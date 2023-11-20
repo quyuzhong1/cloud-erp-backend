@@ -79,12 +79,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
         // 数据处理
         handleData(logisticsBillEntity);
-        boolean save = super.save(logisticsBillEntity);
+        boolean save = super.saveOrUpdate(logisticsBillEntity);
         if (!save) {
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity.getId(),addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity.getId(), addDTO.getDetailList());
         return save;
     }
 
@@ -125,7 +125,16 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * 新增修改处理数据
      */
     private void handleData(LogisticsBillEntity logisticsBillEntity) {
-        // TODO 验证数据 & 数据赋值
+        String outstockId = logisticsBillEntity.getOutstockId();
+        LogisticsBillEntity entity = this.getByOutstockId(outstockId);
+        if (Objects.nonNull(entity)) {
+            logisticsBillEntity.setId(entity.getId());
+        }
+    }
+
+    public LogisticsBillEntity getByOutstockId(String outstockId) {
+        return this.lambdaQuery().eq(LogisticsBillEntity::getOutstockId, outstockId).last("LIMIT 1").one();
+
     }
 
     @Override
@@ -224,7 +233,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
 
-        IPage pageData = baseMapper.paging(query, params,statusList);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<LogisticsBillDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
@@ -244,7 +253,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
         }
-        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params,statusList);
+        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params, statusList);
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/LogisticsAddress.xlsx";

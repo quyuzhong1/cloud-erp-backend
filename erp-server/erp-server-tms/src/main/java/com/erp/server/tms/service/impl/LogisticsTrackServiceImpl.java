@@ -117,15 +117,27 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     }
 
     @Override
-    public List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo) {
+    public LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo) {
+        LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
+        viewDTO.setTrackNo(trackNo);
+
         List<LogisticsTrackEntity> list = this.listByTrackNoList(Arrays.asList(trackNo));
-        List<LogisticsTrackDTO.ViewDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ViewDTO.class, list);
-        for (LogisticsTrackDTO.ViewDTO item : resultList) {
+        List<LogisticsTrackDTO.ListDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ListDTO.class, list);
+        int size = resultList.size();
+        for (int i = 0; i < size; i++) {
+            LogisticsTrackDTO.ListDTO item = resultList.get(i);
+            if (i == 0) {
+                item.setIsLatest(Boolean.TRUE);
+            }else{
+                item.setIsLatest(Boolean.FALSE);
+
+            }
             String status = item.getStatus();
             String statusName = LogisticTrackStatusEnum.getName(status);
             item.setStatusName(statusName);
         }
-        return resultList;
+        viewDTO.setList(resultList);
+        return viewDTO;
     }
 
     @Override
@@ -134,7 +146,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     }
 
     /**
-     *运输状态 状态
+     * 运输状态 状态
      * notFind 查询不到
      * waitCollect等待揽收
      * trackIng运输途中
@@ -153,11 +165,11 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         LogisticsBillDetailEntity detailByTrackNo = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
         if (Objects.isNull(detailByTrackNo)) return;
         //状态更新同步
-        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
             detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
             detailByTrackNo.setTrackTime(LocalDateTime.now());
             logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
-            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
                 //TODO 同步订单状态
 
             }

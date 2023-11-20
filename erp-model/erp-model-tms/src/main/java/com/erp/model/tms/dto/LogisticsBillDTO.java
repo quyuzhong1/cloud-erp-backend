@@ -422,8 +422,6 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 渠道id
          */
-        @NotBlank(message = "渠道id不能为空")
-        @Size(max = 19, message = "渠道id最大长度不能超过19位")
         private String channelId;
 
         /**
@@ -436,7 +434,7 @@ public class LogisticsBillDTO implements Serializable {
          * 发货时间
          */
         @NotNull(message = "发货时间不能为空")
-        private LocalDateTime deliveryTime;
+        private LocalDate deliveryTime;
 
         /**
          * 运输单号
