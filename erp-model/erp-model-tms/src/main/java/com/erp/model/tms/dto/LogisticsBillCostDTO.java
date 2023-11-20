@@ -252,9 +252,9 @@ public class LogisticsBillCostDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型（启用true,停用false）
+         * 类型
          */
-        private Boolean tabFlag;
+        private String tabFlag;
 
         /**
          * 数量
