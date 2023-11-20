@@ -7,8 +7,14 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
+import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
+import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author liuruipeng
@@ -17,6 +23,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    @Resource
+    private GoodCangService goodCangService;
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -44,4 +53,13 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
 
+    @Override
+    protected Boolean hasWarehouse() {
+        GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();
+        return isSuccess(response.getAsk());
+    }
+
+    public boolean isSuccess(String ask){
+        return "Success".equals(ask);
+    }
 }

@@ -5,7 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -15,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.server.wms.service.ThirdWarehouseService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +26,13 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 海外物流商 服务实现类
@@ -43,6 +50,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -119,12 +129,28 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
-        return null;
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(getPlatFormCodeById(dto.getId()));
+        boolean result = thirdWarehouseService.authorize(dto);
+        if(result){
+            OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
+            updateDTO.setId(dto.getId());
+            updateDTO.setAuthTime(LocalDateTime.now());
+            updateDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+            updateDTO.setAuthJson(dto.getAuthJson().toString());
+            this.update(updateDTO);
+        }
+        return result;
     }
 
     @Override
     public Boolean cancelAuthorize(List<String> ids) {
         return null;
+    }
+
+    public String getPlatFormCodeById(String id){
+        OverseasProviderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到物流商信息"));
+        return entity.getCode();
     }
 }

@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.dto.CleanBaseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class GoodCangSkuResp implements Serializable {
+public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
     //商品sku
     @JSONField(name = "product_sku")

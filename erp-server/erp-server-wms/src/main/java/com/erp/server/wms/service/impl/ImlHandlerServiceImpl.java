@@ -7,8 +7,17 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
+import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
+import com.sdk.wms.iml.dto.request.ImlBaseRequest;
+import com.sdk.wms.iml.dto.response.ImlResponse;
+import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
+import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author liuruipeng
@@ -17,6 +26,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+
+    @Resource
+    private ImlService imlService;
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -43,4 +55,16 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return null;
     }
 
+    @Override
+    protected Boolean hasWarehouse() {
+        ImlResponse<List<ImlWarehouseResp>> response = imlService.getWarehouse(ImlBaseRequest.builder()
+                        .pageSize(1)
+                        .page(1)
+                .build());
+        return isSuccess(response.getAsk());
+    }
+
+    public boolean isSuccess(String ask){
+        return "Success".equals(ask);
+    }
 }

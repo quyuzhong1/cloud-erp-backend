@@ -3,6 +3,7 @@ package com.erp.server.dmp.service;
 import com.common.business.service.SuperService;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 
 import java.time.LocalDateTime;
@@ -70,4 +71,12 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @return
      */
     Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO disabledDTO);
+
+
+    /**
+     * 第三方仓创建平台任务
+     * @param dto
+     * @return
+     */
+    Boolean createThirdWarehouseTask(ThirdWarehouseTaskDTO.AddDTO dto);
 }
