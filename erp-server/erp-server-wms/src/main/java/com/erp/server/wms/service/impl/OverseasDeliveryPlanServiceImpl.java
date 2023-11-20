@@ -831,8 +831,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         }
 
         //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(warehouseEntity.getWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(warehouseEntity.getWarehouseId())).findFirst().orElse(null);
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(overseasDeliveryPlanEntity.getToWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(overseasDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(updateDTO)) {
             overseasDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
         }
