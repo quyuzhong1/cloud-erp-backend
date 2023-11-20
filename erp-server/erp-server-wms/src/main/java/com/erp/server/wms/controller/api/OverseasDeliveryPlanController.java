@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.validator.ValidList;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -399,8 +400,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
      **/
     @GetMapping("/listDeliverRecord")
-    public ApiResult<List<OverseasDeliveryPlanDTO.DeliverRecordDTO>> listDeliverRecord(@RequestParam("id") String id) {
-        List<OverseasDeliveryPlanDTO.DeliverRecordDTO> result = overseasDeliveryPlanService.listDeliverRecord(id);
+    public ApiResult<List<FbaDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
+        List<FbaDeliveryDTO.DeliverRecordView> result = overseasDeliveryPlanService.listDeliverRecord(id);
         return success(result);
     }
 
@@ -432,6 +433,20 @@ public class OverseasDeliveryPlanController extends BaseController {
     }
 
     /**
+     * 发货计划下推要货申请保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateRequisitionApplicationSaveAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "发货计划下推要货申请保存并提交")
+    public ApiResult generateRequisitionApplicationSaveAndSubmit(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = overseasDeliveryPlanService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
      * 下推发货单列表查询
      * @Author Luo_WG
      * @Date 2023/11/16 18:06
@@ -455,6 +470,20 @@ public class OverseasDeliveryPlanController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存")
     public ApiResult generateDeliverSave(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
         Boolean flag = overseasDeliveryPlanService.generateDeliverSave(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下推发货单保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/16 18:06
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverSaveAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存并提交")
+    public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
+        Boolean flag = overseasDeliveryPlanService.generateDeliverSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
     }
 }

@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
@@ -12,6 +13,7 @@ import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FbaDeliveryDetailMapper;
@@ -48,11 +50,9 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private CommonService commonService;
-    @Autowired
-    private ShopInfoFeign shopInfoFeign;
-    @Autowired
     private PlmTaskFeign plmTaskFeign;
+    @Autowired
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -129,11 +129,21 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        //获取库存sku信息
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+
         for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
             fbaDeliveryDetailEntity.setMainId(mainId);
             fbaDeliveryDetailEntity.setProductName(skuVO.getSkuName());
             fbaDeliveryDetailEntity.setWarehouseLocation(fbaDeliveryDetailEntity.getWarehouseLocation());
+
+            //库存sku
+            String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+            fbaDeliveryDetailEntity.setStockSku(stockSku);
+
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(fbaDeliveryDetailEntity.getId())) {
                 FbaDeliveryDetailEntity old = list.stream().filter(obj -> obj.getId().equals(fbaDeliveryDetailEntity.getId())).findFirst().orElse(null);

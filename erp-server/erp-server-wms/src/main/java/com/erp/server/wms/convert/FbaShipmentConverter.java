@@ -60,8 +60,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "netWeight", constant = "0"),
             @Mapping(target = "productSizeHeight", constant = "0"),
             @Mapping(target = "productSizeLength", constant = "0"),
-            @Mapping(target = "productSizeWidth", constant = "0"),
-            @Mapping(target = "stockSku", constant = "")
+            @Mapping(target = "productSizeWidth", constant = "0")
     })
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 

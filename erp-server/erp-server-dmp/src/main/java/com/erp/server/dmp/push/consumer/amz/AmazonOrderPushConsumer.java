@@ -37,6 +37,11 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+
+    }
+
+    @Override
     public ApiResult<?> handle(Object ext) {
         // 调用亚马逊订单推送服务
         return pushOrderService.handle(ext);
