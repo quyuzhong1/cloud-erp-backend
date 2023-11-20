@@ -167,5 +167,15 @@
         </where>
     </select>
 
+    <select id="getByChannelId" resultType="com.erp.model.tms.entity.ShippingTemplateEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from shipping_template st
+        inner join shipping_template_ref_channel strc on st.id = strc.main_id and strc.is_deleted = false
+        <where>
+            st.is_deleted = false and strc.logistics_channel_id = #{channelId}
+        </where>
+    </select>
+
 
 </mapper>

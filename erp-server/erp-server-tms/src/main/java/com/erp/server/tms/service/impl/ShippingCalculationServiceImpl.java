@@ -16,6 +16,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -70,6 +72,10 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private SysDictFeign sysDictFeign;
+
+
     @Override
     public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
         ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
@@ -86,6 +92,13 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         return new PagingVO(pageData);
     }
 
+    /**
+     * @description: 列表查询数据处理
+     * @author Will
+     * @date: 2023/11/20 11:01
+     * @param records
+     * @param params
+     */
     private void handleData(List<ShippingCalculationDTO.ListDTO> records,ShippingCalculationDTO.PagingParamDTO params) {
         //币别
         List<String> currencyIdList = records.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).collect(Collectors.toList());
@@ -94,11 +107,18 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         //其他费用
         List<String> templateIdList = records.stream().map(obj -> obj.getTemplateEntity().getId()).distinct().collect(Collectors.toList());
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
+        //查询国家信息
+        List<String> countryIdList = records.stream().flatMap(obj -> Stream.of(obj.getToCountry())).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
 
         for (ShippingCalculationDTO.ListDTO listDTO : records) {
             //币种符号
             String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(listDTO.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             listDTO.setCurrencySymbol(currencySymbol);
+            //目的国
+            String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(listDTO.getToCountry())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            listDTO.setToCountry(toCountryName);
 
             //有效期
             String effectivePeriod = StrUtil.format("{}至{}",listDTO.getEffectiveDate(),listDTO.getExpireDate());

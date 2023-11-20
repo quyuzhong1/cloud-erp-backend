@@ -108,102 +108,140 @@ public class LogisticsBillCostDTO implements Serializable {
          * 订单类型名称
          */
         private String    sourceTypeName;
+
         /**
          * 对账状态
          */
         private String    reconciliationStatus;
+
         /**
          * 对账状态
          */
         private String   reconciliationStatusName;
+
         /**
          * 渠道名称
          */
         private String  channelName;
+
         /**
          * 物流单号
          */
         private String  transportNo;
+
         /**
          * 运输状态
          */
         private String  transportStatus;
+
         /**
          * 运输状态
          */
         private String  transportStatusName;
+
         /**
          * 实重
          */
         private BigDecimal   actualWeight;
+
         /**
          * 体积重
          */
         private BigDecimal  volumeWeight;
+
        /**
          * 计费重
          */
         private BigDecimal  billingWeight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
         /**
          * 预估运费
          */
         private BigDecimal estimatedShippingCost;
+
          /**
          * 计费重（物流商）
          */
         private BigDecimal  billingWeightLogistics;
+
         /**
          * 实际运费（物流商）
          */
         private BigDecimal actualShippingCost;
+
         /**
          * 运费
          */
         private BigDecimal diffShippingCost;
+
         /**
          * 平台
          */
         private String   salesPlatform;
+
         /**
          * 平台名称
          */
         private String   salesPlatformName;
+
         /**
          * 来来源id
          */
         private String   sourceId;
+
         /**
          *  来源单号
          */
         private String  sourceType;
+
         /**
          * 来源单号
          */
         private String  sourceCode;
+
         /**
          * 销售出库单编码
          */
         private String  outstockCode;
+
         /**
          * 目的国家
          */
         private String  toCountry;
+
         /**
          * 客户名称
          */
         private String  customerName;
+
         /**
          * 订单时间
          */
         private LocalDateTime  orderTime;
+
         /**
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+
         /**
          * 备注
          */
         private String  remark;
+
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
     }
 
@@ -346,13 +384,6 @@ public class LogisticsBillCostDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 对账状态（字典reconciliationStatus）
-        */
-        @NotBlank(message = "对账状态（字典reconciliationStatus）不能为空")
-        @Size(max = 32,message = "对账状态（字典reconciliationStatus）最大长度不能超过32位")
-        private String reconciliationStatus;
-
-        /**
         * 物流渠道id
         */
         @NotBlank(message = "物流渠道id不能为空")
@@ -377,35 +408,10 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal volumeWeight;
 
         /**
-        * 计费重
-        */
-        private BigDecimal billingWeight;
-
-        /**
         * 预估运费
         */
         @Digits(integer = 12, fraction = 4, message = "预估运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal estimatedShippingCost ;
-
-        /**
-        * 计费重（物流商）
-        */
-        @NotNull(message = "计费重（物流商）不能为空")
-        private BigDecimal billingWeightLogistics;
-
-        /**
-        * 实际运费（物流商）
-        */
-        @NotNull(message = "实际运费（物流商）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "实际运费（物流商）整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal lactualShippingCost;
-
-        /**
-        * 运费差异
-        */
-        @NotNull(message = "运费差异不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费差异整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal diffShippingCost;
 
         /**
         * 币别
@@ -417,7 +423,6 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 

@@ -450,6 +450,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         return baseMapper.listShippingTemplate();
     }
 
+    @Override
+    public ShippingTemplateEntity getByChannelId(String channelId) {
+        return baseMapper.getByChannelId(channelId);
+    }
+
     /**
      * @description: 导入数据处理
      * @author Will
