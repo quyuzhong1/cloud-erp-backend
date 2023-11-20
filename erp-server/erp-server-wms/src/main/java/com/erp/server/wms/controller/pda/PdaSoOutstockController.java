@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -13,9 +14,11 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,6 +36,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-04-07
  */
+@Slf4j
 @RestController
 @LogSystemModule("PDA销售出库单")
 @RequestMapping("/pdaSoOutstock")
@@ -199,8 +204,28 @@ public class PdaSoOutstockController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = soOutstockService.approve(dto);
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            SoOutstockEntity entity = soOutstockService.getById(id);
+            BatchResultDTO result;
+            try {
+                result = soOutstockService.approve(entity,new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+            } catch (Exception e) {
+                log.error("销售出库 审核失败>>>>{}", e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "销售出库单不存在, 审核失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                String message = e.getMessage();
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+
+            }
+            resultDTOS.add(result);
+        }
+
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure();
     }
 
     /**

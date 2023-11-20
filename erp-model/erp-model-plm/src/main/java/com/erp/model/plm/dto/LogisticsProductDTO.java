@@ -860,6 +860,11 @@ public class LogisticsProductDTO {
          */
         private BigDecimal taxRate;
 
+        /**
+         * 物流属性 对应属性
+         */
+        private String logisticsPropertyName;
+
 
 
 

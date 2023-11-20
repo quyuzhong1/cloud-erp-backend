@@ -217,12 +217,18 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "referenceNo", source = "deliveryNo"),
             //发货网点
 //            @Mapping(target = "facility", source = "facility"),
-            @Mapping(target = "serviceCode", source = "logisticsChannelEntity.code"),
+            @Mapping(target = "serviceCode", source = "logisticsSaleChannel.code"),
             //物流服务类型  Priority 优先  Express-Post 特快专线
-            @Mapping(target = "serviceOption", constant = "Express-Post"),
+            @Mapping(target = "serviceOption", source = "logisticsSaleChannel.shipmentMethod"),
             @Mapping(target = "incoterm", source = "logisticsChannelEntity.taxModel"),
+            @Mapping(target = "weight", source = "parceInfoVO.totalWeight"),
             //重量单位
-            @Mapping(target = "weightUnit", constant = "kg"),
+            @Mapping(target = "weightUnit", constant = "g"),
+
+            @Mapping(target = "length", source = "parceInfoVO.length"),
+            @Mapping(target = "width", source = "parceInfoVO.width"),
+            @Mapping(target = "height", source = "parceInfoVO.height"),
+            @Mapping(target = "dimensionUnit", constant = "CM"),
             @Mapping(target = "platform", source = "orderSource"),
             //收货人
             @Mapping(target = "recipientName", source = "receiverInfoVO.name"),
@@ -254,6 +260,7 @@ public interface LogisticsOrderConverter {
     @Mapping(target = "sku",source = "skuId")
     @Mapping(target = "description",source = "declareEnglishName")
     @Mapping(target = "nativeDescription",source = "declareChineseName")
+    @Mapping(target = "hsCode",source = "customsCode")
     @Mapping(target = "originCountry",source = "sourceCountry")
     @Mapping(target = "itemCount",source = "quantity")
     @Mapping(target = "unitValue",source = "price")

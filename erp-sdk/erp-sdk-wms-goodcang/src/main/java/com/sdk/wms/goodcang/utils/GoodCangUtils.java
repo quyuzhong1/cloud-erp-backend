@@ -1,5 +1,7 @@
 package com.sdk.wms.goodcang.utils;
 
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
 
@@ -8,21 +10,27 @@ import java.util.Map;
 
 public class GoodCangUtils {
 
-    public static String sendPost(String apiUrl, Map<String, Object> paramsMap, String appToken, String appKey){
-        Map<String,String> headerMap = headerMap("7013991264f611e98ea200e01b680258","6ff50abf64f611e98ea200e01b680258");
-//        Map<String,String> headerMap = headerMap("a39ab99c1437c991ec07fad4e1f78f8f","f7e4102f9b0b983e58bed3140dc22f1a");
+    public static String sendPost(String apiUrl, Map<String, Object> paramsMap){
+        Map<String,String> headerMap = headerMap();
         String url = GoodCangConstants.BASE_URL + apiUrl;
-        return OkHttpUtils.doPostJson(url, paramsMap, headerMap);
+        String response = OkHttpUtils.doPostJson(url, paramsMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(paramsMap));
+        ThirdWarehouseContext.setResponseJson(response);
+        return response;
     }
 
-    public static String sendPost(String apiUrl, String paramsJson, String appToken, String appKey){
-        Map<String,String> headerMap = headerMap("7013991264f611e98ea200e01b680258","6ff50abf64f611e98ea200e01b680258");
-//        Map<String,String> headerMap = headerMap("a39ab99c1437c991ec07fad4e1f78f8f","f7e4102f9b0b983e58bed3140dc22f1a");
+    public static String sendPost(String apiUrl, String paramsJson){
+        Map<String,String> headerMap = headerMap();
         String url = GoodCangConstants.BASE_URL + apiUrl;
-        return OkHttpUtils.doPostJson(url, paramsJson, headerMap);
+        String response = OkHttpUtils.doPostJson(url, paramsJson, headerMap);
+        ThirdWarehouseContext.setRequestJson(paramsJson);
+        ThirdWarehouseContext.setResponseJson(response);
+        return response;
     }
 
-    public static Map<String,String> headerMap(String appToken,String appKey){
+    public static Map<String,String> headerMap(){
+        String appToken = ThirdWarehouseContext.getAuthMap().get("appToken");
+        String appKey = ThirdWarehouseContext.getAuthMap().get("appKey");
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("app-token", appToken);
         headerMap.put("app-key" ,appKey);

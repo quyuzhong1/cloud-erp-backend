@@ -72,29 +72,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsTrackService logisticsTrackService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(LogisticsBillDTO.AddDTO addDTO) {
+    public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
         LogisticsBillEntity logisticsBillEntity = new LogisticsBillEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
-
         // 数据处理
         handleData(logisticsBillEntity);
-
-        log.info("开始新增物流单");
         boolean save = super.save(logisticsBillEntity);
         if (!save) {
             throw new ServiceException("物流单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流单", logisticsBillEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, logisticsBillEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-        logisticsBillDetailService.add(addDTO, logisticsBillEntity.getId());
-        return new BaseResultDTO.AddDTO(logisticsBillEntity.getId(), logisticsBillEntity.getId());
+        logisticsBillDetailService.add(logisticsBillEntity.getId(),addDTO.getDetailList());
+        return save;
     }
 
     /**

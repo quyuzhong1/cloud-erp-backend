@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
@@ -278,7 +279,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             LogisticsSupplierTypeEnum type = item.getType();
             item.setTypeName(type.getName());
             Boolean disabled = item.getDisabled();
-            String disabledName = Objects.isNull(disabled) && !disabled ? "启用" : "禁用";
+            String disabledName = Objects.nonNull(disabled) && !disabled ? "启用" : "禁用";
             item.setDisabledName(disabledName);
             String authStatus = item.getAuthStatus();
             String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);

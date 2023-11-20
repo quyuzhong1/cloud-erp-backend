@@ -30,6 +30,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
@@ -46,6 +47,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,6 +63,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private SysDictFeign sysDictFeign;
@@ -99,16 +104,17 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         LogisticsProductDTO.ProductBaseInfoDTO productBaseInfo = baseMapper.getProductBaseInfo(skuId);
         String cny = CurrencyEnum.CNY.getCurrencySymbol();
         //含税成本
-        String actualTaxCost = productBaseInfo.getActualTaxCost();
-        if(StringUtils.isBlank(actualTaxCost)){
-            actualTaxCost="0";
+        String actualTaxCostStr = productBaseInfo.getActualTaxCost();
+        if (StringUtils.isBlank(actualTaxCostStr)) {
+            actualTaxCostStr = "0";
         }
-        productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost));
+        BigDecimal actualTaxCost = new BigDecimal(actualTaxCostStr);
+        productBaseInfo.setActualTaxCost(cny.concat(actualTaxCostStr));
 
         //不含税成本
         String actualNoTaxCost = productBaseInfo.getActualNoTaxCost();
-        if(StringUtils.isBlank(actualNoTaxCost)){
-            actualNoTaxCost="0";
+        if (StringUtils.isBlank(actualNoTaxCost)) {
+            actualNoTaxCost = "0";
         }
         productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
 
@@ -127,7 +133,23 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         result.setProductBaseInfo(productBaseInfo);
         LogisticsProductDTO.DeclareInfoDTO declareInfo = new LogisticsProductDTO.DeclareInfoDTO();
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
+
+        String usdCode = CurrencyEnum.USD.getCurrencyCode();
+        String nowDay = LocalDate.now().toString();
+        //汇率
+        BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
+        if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
+            rate = new BigDecimal("7.13");
+        }
+        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
         if (Objects.nonNull(productLogistics)) {
+            //目的国申报价
+            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
+            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
+                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
+            }
+
             BeanMapper.copy(productLogistics, declareInfo);
         }
         //物流属性
@@ -141,6 +163,37 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         result.setCustomsList(customsList);
         return result;
+    }
+
+    /**
+     * 25美金及以下 60%
+     * <p>
+     * 25-50美金(含) 55%
+     * <p>
+     * 50-100美金(含)  50%
+     * <p>
+     * 100-300+   40%
+     *
+     * @param actualTaxCostUsd
+     * @return
+     */
+    private BigDecimal getDestDeclarePrice(BigDecimal actualTaxCostUsd) {
+        BigDecimal b2 = new BigDecimal("25");
+        BigDecimal b5 = new BigDecimal("50");
+        BigDecimal b100 = new BigDecimal("100");
+        if (actualTaxCostUsd.compareTo(b2) <= 0) {
+            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.6"));
+        }
+        if (actualTaxCostUsd.compareTo(b2) > 0 && actualTaxCostUsd.compareTo(b5) <= 0) {
+            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.55"));
+        }
+        if (actualTaxCostUsd.compareTo(b5) > 0 && actualTaxCostUsd.compareTo(b100) <= 0) {
+            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.5"));
+        }
+        if (actualTaxCostUsd.compareTo(b100) > 0) {
+            return MathUtil.multiply(actualTaxCostUsd, new BigDecimal("0.4"));
+        }
+        return actualTaxCostUsd;
     }
 
     /**
@@ -477,7 +530,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
             String combinationDeclareType = item.getCombinationDeclareType();
-            item.setCombinationDeclareType(CombinationDeclareTypeEnums.getCode(combinationDeclareType));
+            String combinationDeclareTypeStr=CombinationDeclareTypeEnums.getName(combinationDeclareType);
+            item.setCombinationDeclareType(combinationDeclareTypeStr);
         }
     }
 }

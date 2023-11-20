@@ -22,10 +22,11 @@ public class LogisticsBillFeignController {
 
     /**
      * 新增物流单
-     * @Author Luo_WG
-     * @Date 2023/11/9 17:59
+     *
      * @param addDTOList
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/11/9 17:59
      **/
     @PostMapping("/logisticsBillBatchSave")
     public Boolean logisticsBillBatchSave(@RequestBody List<LogisticsBillDTO.AddDTO> addDTOList) {
@@ -34,11 +35,26 @@ public class LogisticsBillFeignController {
     }
 
     /**
+     * 添加物流单
+     *
+     * @return java.lang.Boolean
+     * @parms addDTO
+     * @author yl
+     * @date 2023-11-17
+     */
+    @PostMapping("/addLogisticsBill")
+    public Boolean addLogisticsBill(@RequestBody LogisticsBillDTO.AddDTO addDTO) {
+        Boolean flag = logisticsBillService.add(addDTO);
+        return flag;
+    }
+
+    /**
      * 根据来源id查询物流信息及跟踪号
-     * @Author Luo_WG
-     * @Date 2023/11/10 9:06
+     *
      * @param sourceIdList
      * @return java.util.List<com.erp.model.tms.dto.LogisticsBillDTO.LogisticsBillVo>
+     * @Author Luo_WG
+     * @Date 2023/11/10 9:06
      **/
     @PostMapping("/listLogisticsBillVoBySourceIds")
     public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList) {

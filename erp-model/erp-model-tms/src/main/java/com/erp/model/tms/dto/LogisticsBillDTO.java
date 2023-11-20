@@ -387,6 +387,11 @@ public class LogisticsBillDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 来源类型名
+         */
+        private String sourceTypeName;
+
+        /**
          * 来源id 销售订单
          */
         @NotBlank(message = "来源id 销售订单不能为空")

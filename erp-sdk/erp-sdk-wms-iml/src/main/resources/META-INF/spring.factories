@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.wms.iml.server.ImlServer
+   com.sdk.wms.iml.service.ImlService

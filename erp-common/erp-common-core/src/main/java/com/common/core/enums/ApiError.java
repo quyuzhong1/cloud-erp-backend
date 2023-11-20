@@ -813,6 +813,7 @@ public enum ApiError implements Serializable {
     SHIPMENT_STATUS_CHECK_NOT_DELETE(99110,"DELETED和CANCELLED状态的货件不允许下推发货单"),
     SHOP_AUTH_SHIPMENT_ERROR(99111,"该店铺未授权,不可拉取货件"),
     FBA_SHIPMENT_ERROR(99112,"该FBA货件不存在"),
+    THIRD_OVERSEAS_WAREHOUSE_AUTH_ERROR(99113,"海外仓获取授权信息失败"),
 
 
 

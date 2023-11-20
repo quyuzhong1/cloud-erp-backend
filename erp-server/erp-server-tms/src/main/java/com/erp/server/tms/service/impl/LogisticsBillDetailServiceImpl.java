@@ -53,16 +53,16 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Autowired
     private CommonService commonService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(LogisticsBillDTO.AddDTO addDTO, String mainId) {
-        List<LogisticsBillDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), LogisticsBillDetailEntity.class);
-
-        //处理明细数据
-        handleData(list, mainId, Boolean.FALSE);
-        //批量新增
-        return this.saveBatch(list);
+    public Boolean add(String mainId, List<LogisticsBillDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
+            list.forEach(l -> l.setMainId(mainId));
+            //批量新增
+            return this.saveBatch(list);
+        }
+        return Boolean.TRUE;
     }
 
     /**

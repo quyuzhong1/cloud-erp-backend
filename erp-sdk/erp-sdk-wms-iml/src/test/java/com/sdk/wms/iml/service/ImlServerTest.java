@@ -1,4 +1,4 @@
-package com.sdk.wms.iml.server;
+package com.sdk.wms.iml.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -14,11 +14,11 @@ import java.util.Arrays;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=ImlServer.class)
+@SpringBootTest(classes= ImlService.class)
 public class ImlServerTest {
 
     @Resource
-    private ImlServer imlServer;
+    private ImlService imlServer;
 
     @Test
     public void getSkuList() {
@@ -107,7 +107,7 @@ public class ImlServerTest {
                 "                    \"doorplate\":\"doorplate\",\n" +
                 "                    \"company\":\"company\",\n" +
                 "                    \"name\":\"name\",\n" +
-                "                    \"phone\":\"phone\",\n" +
+                "                    \"phone\":\"123456789124\",\n" +
                 "                    \"cell_phone\":\"cell_phone\",\n" +
                 "                    \"email\":\"email\",\n" +
                 "                    \"is_order_cod\":\"1\",\n" +
@@ -139,7 +139,7 @@ public class ImlServerTest {
 
     @Test
     public void cancelOutboundBillTest() {
-        ImlResponse<String> response = imlServer.cancelOutboundBill("123","");
+        ImlResponse<String> response = imlServer.cancelOutboundBill("86526-231116-2374",null);
         System.out.println(response);
     }
 
