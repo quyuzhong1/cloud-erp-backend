@@ -1,14 +1,23 @@
 package com.erp.server.dmp.service.mq;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.UniqueDto;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -102,6 +111,25 @@ public  class MQProducerServiceTest {
 
     }
 
+    @Test
+    public void testMongoService() {
+        // 根据状态查询未下载数据
+        PlatformAmazonFbaShipmentDTO orderMongoDTO = PlatformAmazonFbaShipmentDTO.getByDownloadStatus(0);
+        List<PlatformAmazonFbaShipmentDTO> entityList = mongoService.findMongoData(orderMongoDTO, 1, 1, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, PlatformAmazonFbaShipmentDTO.class);
+        for (PlatformAmazonFbaShipmentDTO dto : entityList) {
+            dto.setDownloadStatus(1);
+            // 修改数据
+            UniqueDto updateDto = UniqueDto.getUniqId(dto.getUniqueId());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(dto), MapUtil.class);
+            String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+            String platform = PlatformDictEnum.AMAZON.getCode();
+            String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
+            Class<? extends PlatformAmazonFbaShipmentDTO> tClass = dto.getClass();
+            String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
+            mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+        }
+
+    } 
 
 
 }

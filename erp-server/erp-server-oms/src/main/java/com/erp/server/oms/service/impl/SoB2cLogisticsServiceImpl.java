@@ -112,6 +112,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public List<SoB2cLogisticsEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return lambdaQuery().in(SoB2cLogisticsEntity::getMainId,mainIds).list();
     }
 

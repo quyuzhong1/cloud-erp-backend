@@ -228,12 +228,15 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             ResponseMsg responseMsg = dsfShipperService.queryOrder(logisticsQueryBaseVO.getAuthMap(), orderQueryRequest);
             //失败
             if (!StringUtils.isBlank(responseMsg.getResult()) && Objects.equals("1", responseMsg.getResult())) {
-//                List<QueryOrderResponse> responses = JSONUtil.toList(JSONUtil.parseArray(responseMsg.getData()), QueryOrderResponse.class);
+                logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                        logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responseMsg));
+            }else {
                 List<QueryOrderResponse> responses = JSONObject.parseArray(responseMsg.getData().toString(), QueryOrderResponse.class);
                 if (CollectionUtils.isNotEmpty(responses)){
                     responses.forEach(queryOrderResponse ->{
                         LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                .transportNo(queryOrderResponse.getConsignmentInfo().getRef_no())
+                                .deliveryNo(queryOrderResponse.getConsignmentInfo().getRef_no())
                                 .trackNo(queryOrderResponse.getConsignmentInfo().getTrackingNo())
                                 .transportNo(queryOrderResponse.getConsignmentInfo().getDs_consignment_no())
                                 .logisticsChannelNo(queryOrderResponse.getConsignmentInfo().getLogistics_channel_no())

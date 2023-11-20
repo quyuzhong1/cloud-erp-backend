@@ -6,12 +6,10 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -46,6 +44,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private CommonService commonService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private LogisticsBillService logisticsBillService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -117,15 +119,27 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     }
 
     @Override
-    public List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo) {
+    public LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo) {
+        LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
+        viewDTO.setTrackNo(trackNo);
+
         List<LogisticsTrackEntity> list = this.listByTrackNoList(Arrays.asList(trackNo));
-        List<LogisticsTrackDTO.ViewDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ViewDTO.class, list);
-        for (LogisticsTrackDTO.ViewDTO item : resultList) {
+        List<LogisticsTrackDTO.ListDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ListDTO.class, list);
+        int size = resultList.size();
+        for (int i = 0; i < size; i++) {
+            LogisticsTrackDTO.ListDTO item = resultList.get(i);
+            if (i == 0) {
+                item.setIsLatest(Boolean.TRUE);
+            }else{
+                item.setIsLatest(Boolean.FALSE);
+
+            }
             String status = item.getStatus();
             String statusName = LogisticTrackStatusEnum.getName(status);
             item.setStatusName(statusName);
         }
-        return resultList;
+        viewDTO.setList(resultList);
+        return viewDTO;
     }
 
     @Override
@@ -134,7 +148,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     }
 
     /**
-     *运输状态 状态
+     * 运输状态 状态
      * notFind 查询不到
      * waitCollect等待揽收
      * trackIng运输途中
@@ -153,11 +167,11 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         LogisticsBillDetailEntity detailByTrackNo = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
         if (Objects.isNull(detailByTrackNo)) return;
         //状态更新同步
-        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
             detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
             detailByTrackNo.setTrackTime(LocalDateTime.now());
             logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
-            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
                 //TODO 同步订单状态
 
             }

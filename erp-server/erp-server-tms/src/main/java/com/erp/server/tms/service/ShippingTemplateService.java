@@ -151,4 +151,13 @@ public interface ShippingTemplateService extends SuperService<ShippingTemplateEn
      * @return List<SelectDTO>
      */
     List<ShippingTemplateDTO.SelectDTO> listShippingTemplate();
+
+    /**
+     * @description: 根据渠道id查询模板
+     * @author Will
+     * @date: 2023/11/20 12:05
+     * @param channelId
+     * @return ShippingTemplateEntity
+     */
+    ShippingTemplateEntity getByChannelId(String channelId);
 }

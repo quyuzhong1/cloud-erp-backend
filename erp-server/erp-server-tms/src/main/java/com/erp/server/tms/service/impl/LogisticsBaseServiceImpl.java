@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -17,8 +18,11 @@ import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
 import com.erp.server.tms.service.LogisticsTrackService;
+import com.google.common.collect.Lists;
 import io.seata.common.util.CollectionUtils;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -103,16 +107,16 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
                 .build();
         ApiResult<List<LogisticsTrackEntity>> track = service.getTrack(logisticsTrackVO);
-        if (track.isSuccess()){
+        if (track.isSuccess()) {
             List<LogisticsTrackEntity> data = track.getData();
-            if (CollectionUtils.isNotEmpty(data)){
+            if (CollectionUtils.isNotEmpty(data)) {
                 Map<String, List<LogisticsTrackEntity>> collect = data.stream().sorted(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).collect(Collectors.groupingBy(LogisticsTrackEntity::getTrackNo));
                 //根据记录进行更新物流信息
                 records.forEach(logisticsBillDetailEntity -> {
                     //获取对应编号的轨迹
                     List<LogisticsTrackEntity> logisticsTrackEntities = collect.get(logisticsBillDetailEntity.getTrackNo());
                     //先物理删除  再新增
-                    if (CollectionUtils.isNotEmpty(logisticsTrackEntities)){
+                    if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
                         //删除
                         logisticsTrackService.deleteByTrackNo(logisticsBillDetailEntity.getTrackNo());
                         //新增
@@ -128,6 +132,24 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     logisticsTrackService.saveOrUpdate(logisticsTrackEntity);
                 });
             }
+        }
+    }
+
+    @Async("batchUpdateTrackInfo")
+    @Override
+    public void batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
+        if (CollectionUtils.isNotEmpty(logisticsBillDetailEntities)) {
+            LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getTrackNo())).findFirst().orElse(null);
+            if (Objects.nonNull(detailEntity)) throw new ServiceException(ApiError.BATCH_UPDATE_TRACK_INFO_HAS_EMPTY);
+            if (logisticsBillDetailEntities.size() > 100) {
+                List<List<LogisticsBillDetailEntity>> partition = Lists.partition(logisticsBillDetailEntities, 100);
+                for (List<LogisticsBillDetailEntity> entityList : partition) {
+                    this.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), entityList);
+                }
+            } else {
+                this.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), logisticsBillDetailEntities);
+            }
+
         }
     }
 

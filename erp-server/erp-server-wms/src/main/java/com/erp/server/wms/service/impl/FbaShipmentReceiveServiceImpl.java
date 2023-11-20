@@ -18,6 +18,8 @@ import com.erp.model.wms.dto.FbaShipmentReceiveDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
 /**
  * <p>
  * FBA货件签收信息 服务实现类
@@ -32,6 +34,9 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
     @Override
     public List<FbaShipmentReceiveEntity> listByDetailIds(List<String> detailIds) {
+        if (CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
         return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).list();
     }
 }

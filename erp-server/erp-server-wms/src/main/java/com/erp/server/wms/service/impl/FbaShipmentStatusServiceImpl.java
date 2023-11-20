@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -35,6 +36,7 @@ public class FbaShipmentStatusServiceImpl extends SuperServiceImpl<FbaShipmentSt
     public void saveByFbaShipment(FbaShipmentEntity sourceEntity) {
         // 映射来源
         FbaShipmentStatusEntity entity = FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToStatusEntity(sourceEntity);
+        entity.setId(IdWorker.getIdStr());
         if (!this.save(entity)){
             throw new ServiceException("[FbaShipmentStatusEntity] 保存失败：entity=" + JSONUtil.toJsonStr(entity));
         }

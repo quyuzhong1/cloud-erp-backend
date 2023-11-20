@@ -53,19 +53,25 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     * 实重
     */
     @TableField("actual_weight")
-    private Integer actualWeight;
+    private BigDecimal actualWeight;
 
     /**
     * 体积重
     */
     @TableField("volume_weight")
-    private Integer volumeWeight;
+    private BigDecimal volumeWeight;
 
     /**
     * 计费重
     */
     @TableField("billing_weight")
-    private Integer billingWeight;
+    private BigDecimal billingWeight;
+
+    /**
+     * 重量单位
+     */
+    @TableField("weight_unit")
+    private String weightUnit;
 
     /**
     * 预估运费
@@ -77,7 +83,7 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     * 计费重（物流商）
     */
     @TableField("billing_weight_logistics")
-    private Integer billingWeightLogistics;
+    private BigDecimal billingWeightLogistics;
 
     /**
     * 实际运费（物流商）

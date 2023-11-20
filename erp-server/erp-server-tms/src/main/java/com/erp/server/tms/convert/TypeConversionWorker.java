@@ -1,5 +1,7 @@
 package com.erp.server.tms.convert;
 
+import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
+import io.seata.common.util.StringUtils;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
@@ -94,6 +96,15 @@ public class TypeConversionWorker {
             }
         }else {
             return 0;
+        }
+    }
+
+    @Named("convertAging")
+    public String convertAging(ChannelResponse chanelInfo){
+        if (Objects.nonNull(chanelInfo.getMaxProcessDay())&& Objects.nonNull(chanelInfo.getMinProcessDay())){
+            return chanelInfo.getMinProcessDay() +"-"+ chanelInfo.getMaxProcessDay();
+        }else{
+            return StringUtils.EMPTY;
         }
     }
 }

@@ -26,7 +26,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class AliExpressShipperService {
-    public void getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
+    public IopResponse getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -35,6 +35,7 @@ public class AliExpressShipperService {
         request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
+        return response;
     }
 
     public IopResponse createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws ApiException, InterruptedException {

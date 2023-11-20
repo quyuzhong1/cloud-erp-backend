@@ -73,11 +73,13 @@
             lb.source_id as sourceId,
             lb.source_code as sourceCode,
             lb.outstock_code as outstockCode,
-            lbc.to_country as toCountry,
+            lb.to_country as toCountry,
             lbc.customer_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
-            lbc.remark
+            lbc.remark,
+            lbc.weight_unit as weightUnit,
+            lbc.currency
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (

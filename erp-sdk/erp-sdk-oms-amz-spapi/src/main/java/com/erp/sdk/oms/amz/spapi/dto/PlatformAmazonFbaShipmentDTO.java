@@ -49,6 +49,17 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
      */
     private InboundShipmentItemList detailList;
 
+    public static PlatformAmazonFbaShipmentDTO getByDownloadStatus(Integer status) {
+        PlatformAmazonFbaShipmentDTO mongoDTO = new PlatformAmazonFbaShipmentDTO();
+        mongoDTO.setDownloadStatus(status);
+        return mongoDTO;
+    }
+
+    public static PlatformAmazonFbaShipmentDTO getUniqId(String uniqueId) {
+        PlatformAmazonFbaShipmentDTO mongoDTO = new PlatformAmazonFbaShipmentDTO();
+        mongoDTO.setUniqueId(uniqueId);
+        return mongoDTO;
+    }
 
     public PlatformAmazonFbaShipmentDTO(InboundShipmentInfo shipmentInfo, ShopInfoEntity shop) {
         this.shipmentInfo = shipmentInfo;

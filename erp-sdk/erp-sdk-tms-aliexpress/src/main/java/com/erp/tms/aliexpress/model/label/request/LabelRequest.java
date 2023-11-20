@@ -1,7 +1,10 @@
 package com.erp.tms.aliexpress.model.label.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -14,6 +17,9 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class LabelRequest implements Serializable {
     /**
      * 物流公司

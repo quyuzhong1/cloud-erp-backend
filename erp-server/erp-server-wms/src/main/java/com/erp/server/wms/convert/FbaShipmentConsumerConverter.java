@@ -47,9 +47,9 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "msku", source = "receiveDTO.sellerSku", defaultValue = ""),
             @Mapping(target = "fnSku", source = "receiveDTO.fnSku", defaultValue = ""),
             @Mapping(target = "skuNo", source = "mappingDTO.productSkuNo", defaultValue = ""),
+            @Mapping(target = "skuId", source = "mappingDTO.productSkuId", defaultValue = ""),
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
             @Mapping(target = "diffQty", expression = "java(receiveDTO.calculateDiffQty())"),
-//    @Mapping(target = "isCombination", source = ""),
             @Mapping(target = "receiveQty", source = "receiveDTO.receiveQty"),
             @Mapping(target = "receiveDate", source = "receiveDTO.receiveDate"),
     })

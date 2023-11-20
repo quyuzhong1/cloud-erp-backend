@@ -50,7 +50,7 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      *@author yl
      *@date 2023-11-16
      */
-    List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo);
+    LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo);
 
     /**
      * 根据跟踪单号进行物理删除
