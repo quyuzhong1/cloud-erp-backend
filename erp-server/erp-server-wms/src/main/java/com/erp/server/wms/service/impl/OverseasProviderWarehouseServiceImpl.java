@@ -87,6 +87,13 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         return Boolean.TRUE;
     }
 
+    @Override
+    public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .last("LIMIT 1")
+                .one();
+    }
 
     /**
     * 新增修改处理数据

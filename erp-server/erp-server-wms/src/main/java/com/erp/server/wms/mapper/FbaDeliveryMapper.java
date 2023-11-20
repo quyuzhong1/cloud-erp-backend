@@ -61,7 +61,7 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
+    List<FbaDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
 
     /**
      * 下推加工单列表查询

@@ -815,8 +815,9 @@ public enum ApiError implements Serializable {
     SHOP_AUTH_SHIPMENT_ERROR(99111,"该店铺未授权,不可拉取货件"),
     FBA_SHIPMENT_ERROR(99112,"该FBA货件不存在"),
     THIRD_OVERSEAS_WAREHOUSE_AUTH_ERROR(99113,"海外仓获取授权信息失败"),
-
-
+    ERROR_NOT_OVERSEAS_DELIVERY_PLAN(99112,"未找到发货计划单"),
+    EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE(99113,"已下推FBA发货单不允许反审核"),
+    EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE(99114,"已下要货申请不允许反审核"),
 
 
 

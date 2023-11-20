@@ -191,12 +191,12 @@ public class FbaDeliveryDetailDTO implements Serializable {
         /**
         * ERP的SKU
         */
-        private String skuNo;
+        private String skuId;
 
         /**
-        * 库存sku
+        * ERP的SKU
         */
-        private String stockSku;
+        private String skuNo;
 
         /**
         * 申报数量

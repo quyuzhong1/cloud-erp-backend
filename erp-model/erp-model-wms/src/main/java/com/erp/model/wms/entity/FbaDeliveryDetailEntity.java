@@ -121,6 +121,12 @@ public class FbaDeliveryDetailEntity extends BaseEntity<FbaDeliveryDetailEntity>
     private String warehouseLocation;
 
     /**
+     * 产品id
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
      * 审核状态
      */
     @TableField(exist = false)

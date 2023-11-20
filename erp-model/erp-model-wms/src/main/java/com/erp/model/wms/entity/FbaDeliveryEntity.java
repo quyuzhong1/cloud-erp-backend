@@ -140,6 +140,11 @@ public class FbaDeliveryEntity extends BaseEntity<FbaDeliveryEntity> {
     */
     @TableField("inventory_org_name")
     private String inventoryOrgName;
+    /**
+    * 发货状态
+    */
+    @TableField("delivery_status")
+    private String deliveryStatus;
 
 
     public static final String CODE = "code";

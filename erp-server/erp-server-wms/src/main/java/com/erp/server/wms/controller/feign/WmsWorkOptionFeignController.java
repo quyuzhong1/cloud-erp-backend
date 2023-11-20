@@ -48,6 +48,9 @@ public class WmsWorkOptionFeignController {
     @Resource
     private FbaDeliveryService fbaDeliveryService;
 
+    @Resource
+    private OverseasDeliveryPlanService overseasDeliveryPlanService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -146,6 +149,23 @@ public class WmsWorkOptionFeignController {
         String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
         oneDto.setId(id);
         fbaDeliveryService.approve(oneDto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 海外发货计划
+     * @Author Luo_WG
+     * @Date 2023/11/17 16:16
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/overseasDeliveryPlanApprove")
+    public Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        ApproveOneDTO oneDto = new ApproveOneDTO();
+        BeanMapper.copy(baseApproveParamDTO,oneDto);
+        String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
+        oneDto.setId(id);
+        overseasDeliveryPlanService.approve(oneDto);
         return Boolean.TRUE;
     }
 }

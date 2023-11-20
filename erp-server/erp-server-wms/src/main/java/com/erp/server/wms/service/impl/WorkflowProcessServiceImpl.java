@@ -20,12 +20,10 @@ import java.util.List;
 @Service
 public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
-
     @Resource
     private TransferApplicationService transferApplicationService;
     @Resource
     private StocktakingPlanService stocktakingPlanService;
-
 
     @Resource
     private StocktakingTaskService stocktakingTaskService;
@@ -36,6 +34,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private FbaDeliveryService fbaDeliveryService;
 
+    @Resource
+    private OverseasDeliveryPlanService overseasDeliveryPlanService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -49,20 +49,21 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //调拨申请
                 StocktakingPlanApproveEnd(dto);
                 break;
-
             case STOCKTAKING_TASK:
                 //盘点任务
                 stocktakingTaskApproveEnd(dto);
                 break;
-
             case STOCKTAKING_PROFIT_LOSS:
                 //盘盈盘亏单
                 stocktakingProfitLossApproveEnd(dto);
                 break;
-
             case FBA_DELIVERY:
                 //FBA发货单
                 fbaDeliveryApproveEnd(dto);
+                break;
+            case OVERSEAS_DELIVERY_PLAN:
+                //海外发货计划
+                overseasDeliveryPlanApproveEnd(dto);
                 break;
             default:
                 break;
@@ -145,6 +146,22 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         return fbaDeliveryService.approveEnd(approveOne,entity);
+    }
+
+    /**
+     * 海外发货计划
+     * @Author Luo_WG
+     * @Date 2023/11/17 16:14
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean overseasDeliveryPlanApproveEnd(EndProcessDTO dto) {
+        //FBA发货单
+        OverseasDeliveryPlanEntity entity = overseasDeliveryPlanService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return overseasDeliveryPlanService.approveEnd(approveOne,entity);
     }
 
 }

@@ -91,8 +91,8 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordDTO>>
      **/
     @GetMapping("/listDeliverRecord")
-    public ApiResult<List<FbaShipmentDTO.DeliverRecordView>> listDeliverRecord(@RequestParam(value = "id") String id) {
-        List<FbaShipmentDTO.DeliverRecordView> result = fbaShipmentService.listDeliverRecord(id);
+    public ApiResult<List<FbaDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam(value = "id") String id) {
+        List<FbaDeliveryDTO.DeliverRecordView> result = fbaShipmentService.listDeliverRecord(id);
         return success(result);
     }
 
