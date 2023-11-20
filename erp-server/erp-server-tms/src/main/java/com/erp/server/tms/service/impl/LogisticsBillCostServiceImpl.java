@@ -133,6 +133,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<LogisticsBillCostDTO.TabListDTO> resultList = new ArrayList<>();
         List<LogisticsBillCostDTO.TabListDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
         ReconciliationStatusEnum[] values = ReconciliationStatusEnum.values();
         for (ReconciliationStatusEnum statusEnum : values) {
@@ -143,8 +144,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             tabListDTO.setTabFlag(statusEnum.getCode());
             Integer count = dbList.stream().filter(obj -> obj.getTabFlag().equals(statusEnum.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(MathUtil.ZERO);
             tabListDTO.setCount(count);
+            resultList.add(tabListDTO);
         }
-        return dbList;
+        return resultList;
     }
 
     @Override
