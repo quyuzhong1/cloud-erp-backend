@@ -41,7 +41,8 @@ public interface LogisticsBaseService {
      * 处理轨迹查询业务数据
      *
      * @param platformType
-     * @param trackNos
      */
     void processTrackData(String platformType, List<LogisticsBillDetailEntity> records);
+
+    void batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities);
 }

@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
@@ -129,6 +130,17 @@ public interface LogisticsChannelConverter {
     List<BaseDropDownDTO.DisabledDTO> convertByChannelDown(List<LogisticsChannelEntity> list);
 
 
-
+    @Mappings({
+            @Mapping(target = "code", source = "serviceName"),
+            @Mapping(target = "cnName", source = "displayName"),
+            @Mapping(target = "enName", source = "displayName"),
+            @Mapping(target = "supplierName", source = "logisticsCompany"),
+            @Mapping(target = "isTrack", constant = "true"),
+            @Mapping(target = "aging", source = ".", qualifiedByName = "convertAging"),
+            @Mapping(target = "logisticsPlatform", constant = "ALI_EXPRESS"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByAliExpress(ChannelResponse chanelInfo);
+    List<LogisticsSaleChannelEntity> channelConvertByAliExpress(List<ChannelResponse> chanelInfos);
 
 }

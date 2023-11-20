@@ -485,6 +485,7 @@ public enum ApiError implements Serializable {
      * 从96000 开始
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
+    BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
 
     /**
      * bi 错误

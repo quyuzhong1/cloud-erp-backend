@@ -18,9 +18,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
-import com.erp.model.tms.dto.ShippingTemplateRefChannelDTO;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateExcelDTO;
@@ -29,6 +28,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.listener.ShippingTemplateCityExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
@@ -44,7 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,6 +80,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Autowired
     private LogisticsBillService logisticsBillService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -275,6 +278,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //运费差异
         BigDecimal diffShippingCost = MathUtil.subtract(entity.getLactualShippingCost(), entity.getEstimatedShippingCost());
         entity.setDiffShippingCost(diffShippingCost);
+
+        //计费重
+        BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
+                ? entity.getActualWeight() : entity.getVolumeWeight();
+        entity.setBillingWeight(billingWeight);
     }
 
 
@@ -287,17 +295,27 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param records
      */
     private void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
+        //运输状态
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
+
+        //币别信息
+        List<String> currencyList = records.stream().map(LogisticsBillCostDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
 
         for (LogisticsBillCostDTO.ListDTO listDTO : records) {
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
+            //运输状态
             String name = transportStatusList.stream().filter(obj -> obj.getCode().equals(listDTO.getTransportStatus())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setTransportStatusName(name);
+            //平台名称
             PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(listDTO.getSalesPlatform());
             if (ObjectUtil.isNotEmpty(platformDictEnum)) {
                 listDTO.setSalesPlatformName(platformDictEnum.getName());
             }
+            //币别符号
+            String currencySymbol = currencyViewList.stream().filter(obj -> obj.getId().equals(listDTO.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            listDTO.setCurrencySymbol(currencySymbol);
         }
     }
 

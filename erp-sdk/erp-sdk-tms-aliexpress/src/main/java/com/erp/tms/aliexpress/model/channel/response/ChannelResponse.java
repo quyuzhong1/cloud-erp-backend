@@ -1,6 +1,7 @@
 package com.erp.tms.aliexpress.model.channel.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.Data;
 
 /**
  * @author zdy
@@ -9,6 +10,7 @@ import com.alibaba.fastjson.annotation.JSONField;
  * @date 2023年11月17日
  * @version: 1.0
  */
+@Data
 public class ChannelResponse {
     /**
      * 推荐显示排序
