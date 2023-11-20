@@ -13,10 +13,11 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="sku_no" property="skuNo" />
-        <result column="product_name" property="productName" />
         <result column="platform_sku_no" property="platformSkuNo" />
-        <result column="platform_product_name" property="platformProductName" />
+        <result column="platform_sku_name" property="platformSkuName" />
+        <result column="platform_spu_no" property="platformSpuNo" />
+        <result column="platform_spu_name" property="platformSpuName" />
+        <result column="platform_fn_sku" property="platformFnSku" />
         <result column="type" property="type" />
         <result column="match_result" property="matchResult" />
         <result column="product_image_url" property="productImageUrl" />

@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingInfoDTO;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -51,6 +53,17 @@ public class ListingInfoController extends BaseController {
     public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
         Boolean flag = listingInfoService.skuMapping(dto);
         return flag ? success() : failure();
+    }
+
+    /**
+     * sku映射选择框列表
+     * @Author Jim
+     * @Date 2023/11/20
+     **/
+    @PostMapping("/select/list")
+    public ApiResult<List<ListingInfoDTO.BaseDropDownDTO>> listByType(@RequestBody @Valid ListingInfoDTO.BaseDropDownParamDTO dto) {
+        List<ListingInfoDTO.BaseDropDownDTO> list = listingInfoService.listByTypeWithFieldName(dto);
+        return success(list);
     }
 
 }
