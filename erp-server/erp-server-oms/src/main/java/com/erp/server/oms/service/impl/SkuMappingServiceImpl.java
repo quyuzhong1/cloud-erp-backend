@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -423,6 +425,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
+        skuMappingEntity.setDictPlatform(dto.getDictPlatform());
+        skuMappingEntity.setHasMappingAll(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.checkAndGetHasMappingAll());
         LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(now);

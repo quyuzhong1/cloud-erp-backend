@@ -206,7 +206,9 @@
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.dict_platform,
+        sm.platform_name
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
