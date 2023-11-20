@@ -162,7 +162,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private ProjectInfoService projectInfoService;
 
 
-
     /**
      * 添加系统的产品任务
      * 只添加立项模板的任务
@@ -3409,9 +3408,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ProjectTaskEntity> noticeList = new ArrayList<>();
                 for (ProjectTaskEntity review : reviewList) {
                     String chargeId = review.getChargeId();
-                    if (StringUtils.isBlank(chargeId)) {
-                        throw new ServiceException(ApiError.ERROR_95027);
-                    }
+                    checkTaskChargeId(chargeId);
                     StartProcessDTO startProcess = new StartProcessDTO();
                     startProcess.setBusinessKey(processEntity.getBusinessKey());
                     startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
@@ -3459,6 +3456,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         return flag;
+    }
+
+    /**
+     * 检查任务负责人是否为空 不能启动流程
+     *
+     * @param chargeId
+     */
+    private void checkTaskChargeId(String chargeId) {
+        if (StringUtils.isBlank(chargeId)) {
+            throw new ServiceException(ApiError.ERROR_APPROVE_NOT_START);
+        }
+        List<String> list = Arrays.asList(chargeId.split(","));
+        long count = list.stream().filter(s -> StringUtils.isBlank(s)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_APPROVE_NOT_START);
+        }
     }
 
     /**
@@ -4021,7 +4034,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             comment.setAttachUrlList(dto.getAttachUrlList());
             taskCommentList.add(comment);
         }
-        Integer approvalNoPassCode= TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, approvalNoPassCode, null, null);
         if (flag) {
@@ -4033,7 +4046,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
 
-            list.forEach(t->t.setStatus(approvalNoPassCode));
+            list.forEach(t -> t.setStatus(approvalNoPassCode));
         }
 
         taskCommentService.batchSaveTaskComment(taskCommentList);
@@ -4163,10 +4176,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //任务列表的负责人名称
         List<ProjectTaskEntity> projectTaskList = this.baseMapper.listByChargeId(sysUserInfoDTO.getUid());
-       if (CollectionUtils.isNotEmpty(projectTaskList)) {
-           List<String> chargeIdsList = projectTaskList.stream().flatMap(obj -> Stream.of(Arrays.stream(obj.getChargeId().split(",")).toArray(String[]::new))).distinct().collect(Collectors.toList());
-           chargeIdList.addAll(chargeIdsList);
-       }
+        if (CollectionUtils.isNotEmpty(projectTaskList)) {
+            List<String> chargeIdsList = projectTaskList.stream().flatMap(obj -> Stream.of(Arrays.stream(obj.getChargeId().split(",")).toArray(String[]::new))).distinct().collect(Collectors.toList());
+            chargeIdList.addAll(chargeIdsList);
+        }
         //产品开发管理产品经理
         List<ProductInfoEntity> productInfoList = this.productInfoService.listByChargeId(sysUserInfoDTO.getUid());
         if (CollectionUtils.isNotEmpty(productInfoList)) {
@@ -4187,16 +4200,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //成员分类
-        List<ProjectMembersEntity> projectMembersList = this.projectMembersService.lambdaQuery().eq(ProjectMembersEntity::getMemberId,sysUserInfoDTO.getUid()).list();
+        List<ProjectMembersEntity> projectMembersList = this.projectMembersService.lambdaQuery().eq(ProjectMembersEntity::getMemberId, sysUserInfoDTO.getUid()).list();
         if (CollectionUtils.isNotEmpty(projectMembersList)) {
             List<String> chargeIdsList = projectMembersList.stream().flatMap(obj -> Stream.of(Arrays.stream(obj.getMemberId().split(",")).toArray(String[]::new))).distinct().collect(Collectors.toList());
             chargeIdList.addAll(chargeIdsList);
         }
 
 
-       if (CollectionUtils.isEmpty(chargeIdList)) {
-           return;
-       }
+        if (CollectionUtils.isEmpty(chargeIdList)) {
+            return;
+        }
         chargeIdList = chargeIdList.stream().distinct().collect(Collectors.toList());
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(chargeIdList);
         //更新模板任务负责人
@@ -4246,8 +4259,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author yl
      * @date 2022-11-17 15:52
      * 33
-     *
-     *
      */
     @Override
     public Boolean restartTask(OperateBaseTaskDTO dto) {
@@ -4471,9 +4482,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Map<String, Object> parameterMap = new HashMap<>();
         //如果是 评审任务 就是任务负责人
         String chargeId = taskEntity.getChargeId();
-        if (StringUtils.isEmpty(chargeId)) {
-            throw new ServiceException(ApiError.ERROR_95045);
-        }
+        checkTaskChargeId(chargeId);
         List<String> membersIds = Arrays.asList(chargeId.split(","));
         parameterMap.put("taskChargeIdList", membersIds);
         startProcess.setParameterMap(parameterMap);

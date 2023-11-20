@@ -479,7 +479,7 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
     ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
-
+    ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
     /**
      * TMS 错误
      * 从96000 开始
