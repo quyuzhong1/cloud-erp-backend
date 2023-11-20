@@ -197,6 +197,16 @@ public class WarehouseDTO implements Serializable {
         private Boolean disabled;
 
         private ApproveStatusEnum approveStatus;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
     }
 
     @Data

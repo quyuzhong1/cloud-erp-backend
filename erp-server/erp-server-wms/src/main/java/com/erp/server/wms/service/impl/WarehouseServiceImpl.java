@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -21,6 +22,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
@@ -116,7 +118,22 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             if (!statusList.contains(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
+            // TODO 查询仓库关联服务商
+            //平台
+            String dictPlatform = "";
+            //平台名称
+            String platformName = "";
+            if (listDTO.getName().contains("艾姆勒")){
+                dictPlatform = OmsPlatformEnum.OMS_IML.getCode();
+                platformName = OmsPlatformEnum.OMS_IML.getName();
+            } else if (listDTO.getName().contains("谷仓")){
+                dictPlatform = OmsPlatformEnum.OMS_GOOD_CANG.getCode();
+                platformName = OmsPlatformEnum.OMS_GOOD_CANG.getName();
+            }
+            listDTO.setDictPlatform(dictPlatform);
+            listDTO.setPlatformName(platformName);
         }
+
 
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
