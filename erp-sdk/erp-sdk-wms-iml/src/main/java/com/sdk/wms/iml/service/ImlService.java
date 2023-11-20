@@ -1,4 +1,4 @@
-package com.sdk.wms.iml.server;
+package com.sdk.wms.iml.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @Component
 @Validated
-public class ImlServer {
+public class ImlService {
 
     /**
      * 授权（调用拉取仓库接口，接口调用成功则说明授权成功）
@@ -34,7 +34,7 @@ public class ImlServer {
      * 获取商品列表
      */
     public ImlResponse<List<ImlProductResp>> getSkuList(@Valid ImlGetProductReq imlProductReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_LIST, imlProductReq, "", "");
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_LIST, imlProductReq);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlProductResp>>>() {}.getType());
     }
 
@@ -42,7 +42,7 @@ public class ImlServer {
      * 获取仓库列表
      */
     public ImlResponse<List<ImlWarehouseResp>> getWarehouse(ImlBaseRequest imlBaseRequest){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_WAREHOUSE,imlBaseRequest,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_WAREHOUSE,imlBaseRequest);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlWarehouseResp>>>() {}.getType());
     }
 
@@ -50,7 +50,7 @@ public class ImlServer {
      * 获取揽收区域
      */
     public ImlResponse<List<ImlRegionResp>> getReceivingRegion(){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIVING_REGION,null,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIVING_REGION,null);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlRegionResp>>>() {}.getType());
     }
 
@@ -58,7 +58,7 @@ public class ImlServer {
      * 获取入库单
      */
     public ImlResponse<List<ImlReceiptResp>> getReceiptBatch(@Valid ImlGetReceiptReq imlGetReceiptReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIPT,imlGetReceiptReq,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_RECEIPT,imlGetReceiptReq);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlReceiptResp>>>() {}.getType());
     }
 
@@ -66,7 +66,7 @@ public class ImlServer {
      * 创建入库单
      */
     public ImlResponse<String> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_INBOUND,imlGetReceiptReq,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_INBOUND,imlGetReceiptReq);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值
         if(StringUtil.isNotBlank(respDto.getReceivingCode())){
@@ -81,7 +81,7 @@ public class ImlServer {
     public ImlResponse<String> cancelInboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String receivingCode){
         Map<String,Object> paramsMap = new HashMap<>();
         paramsMap.put("receiving_code",receivingCode);
-        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_INBOUND,paramsMap,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_INBOUND,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
     }
 
@@ -90,7 +90,7 @@ public class ImlServer {
      * 创建出库单
      */
     public ImlResponse<String> createOutboundBill(@Valid ImlCreateOutboundReq imlCreateOutboundReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_ORDER,imlCreateOutboundReq,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_ORDER,imlCreateOutboundReq);
         System.out.println(response);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值
@@ -107,7 +107,7 @@ public class ImlServer {
         Map<String,Object> paramsMap = new HashMap<>();
         paramsMap.put("order_code",orderCode);
         paramsMap.put("reason",reason);
-        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_ORDER,paramsMap,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_ORDER,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
     }
 
@@ -115,7 +115,7 @@ public class ImlServer {
      * 获取库存
      */
     public ImlResponse<List<ImlInventoryResp>> getProductInventory(@Valid ImlGetInventoryReq imlGetInventoryReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq,"","");
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryResp>>>() {}.getType());
     }
 }

@@ -38,6 +38,9 @@ public enum PlatformDictEnum implements EnumMessage {
     WEI_SHI("WeiShi", "深圳前海纬狮物流网络科技有限公司", "深圳前海纬狮物流网络科技有限公司", "46"),
     YUN_TU("YunTu", "云途(新)", "云途(新)", "47"),
     TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "48"),
+    //第三方仓
+    GOOD_CANG("GoodCang", "谷仓", "谷仓", "49"),
+    IML("Iml", "艾姆勒", "艾姆勒", "50"),
         ;
 
 

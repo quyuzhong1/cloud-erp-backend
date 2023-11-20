@@ -1,4 +1,4 @@
-package com.sdk.wms.goodcang.server;
+package com.sdk.wms.goodcang.service;
 
 
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
@@ -13,9 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
