@@ -102,7 +102,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         List<CurrencyDTO.ViewDTO>  currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         //其他费用
-        List<String> templateIdList = records.stream().map(obj -> obj.getTemplateEntity().getId()).distinct().collect(Collectors.toList());
+        List<String> templateIdList = records.stream().map(obj -> obj.getTemplateId()).distinct().collect(Collectors.toList());
         List<ShippingTemplateOtherCostEntity> otherCostList = shippingTemplateOtherCostService.listByMainIds(templateIdList);
         //查询国家信息
         List<String> countryIdList = records.stream().flatMap(obj -> Stream.of(obj.getToCountry())).distinct().collect(Collectors.toList());
@@ -152,8 +152,17 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             }
 
             //其他费用
-            List<ShippingTemplateOtherCostEntity> costEntityList = otherCostList.stream().filter(obj -> obj.getMainId().equals(listDTO.getTemplateEntity().getId())).collect(Collectors.toList());
-            ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(listDTO.getTemplateEntity(), listDTO.getTemplateRuleEntity(), costEntityList
+            List<ShippingTemplateOtherCostEntity> costEntityList = otherCostList.stream().filter(obj -> obj.getMainId().equals(listDTO.getTemplateId())).collect(Collectors.toList());
+            //模板信息
+            ShippingTemplateEntity shippingTemplateEntity = new ShippingTemplateEntity();
+            BeanMapperUtils.copy(listDTO,shippingTemplateEntity);
+            shippingTemplateEntity.setId(listDTO.getTemplateId());
+            //规则信息
+            ShippingTemplateRuleEntity ruleEntity = new ShippingTemplateRuleEntity();
+            BeanMapperUtils.copy(listDTO,ruleEntity);
+            ruleEntity.setId(listDTO.getTemplateRuleId());
+
+            ShippingCalculationDTO.ViewDTO shippingCalculationDTO = calculationFinalShippingCost(shippingTemplateEntity, ruleEntity, costEntityList
                     , weight, params.getLength(), params.getWidth(), params.getHeight());
             listDTO.setShippingCost(shippingCalculationDTO.getShippingCost());
             listDTO.setRegistrationCost(shippingCalculationDTO.getRegistrationCost());
@@ -348,7 +357,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 .findFirst().orElse(new ShippingTemplateOtherCostEntity());
         //费用设置值
         List<ShippingTemplateCostSettingEntity> costSettingList = shippingTemplateCostSettingService.listByOtherCostIds(Arrays.asList(otherCostEntity.getId()));
-        if (CollectionUtils.isNotEmpty(costSettingList)) {
+        if (CollectionUtils.isEmpty(costSettingList)) {
             return BigDecimal.ZERO;
         }
         //是否符合条件
@@ -367,7 +376,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         BigDecimal edgelSum = Arrays.asList(length, width, height).stream().reduce(BigDecimal.ZERO,BigDecimal::add);
 
         for (ShippingTemplateCostSettingEntity costSettingEntity : costSettingList) {
-            BigDecimal cost = (BigDecimal) jsonObject.get(costSettingEntity.getCode());
+            BigDecimal cost = MathUtil.valueOf(jsonObject.get(costSettingEntity.getCode()));
 
             if (ShippingSideEnum.LONGEST_EDGE.getCode().equals(costSettingEntity.getCode())) {
                 isFlag =  MathUtil.compareTo(cost,longestEdge) > MathUtil.ZERO ? Boolean.FALSE :Boolean.TRUE;
@@ -391,10 +400,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         if (!isFlag) {
             return BigDecimal.ZERO;
         }
-        //折扣费
-        BigDecimal oversizeSurchargeCost = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.DISCOUNT_RATE.getCode()))
-                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCostSettingValue())).orElse(BigDecimal.ZERO);
-        return oversizeSurchargeCost;
+        //超尺寸附加费
+        return otherCostEntity.getCostSettingValue();
     }
 
     @Override

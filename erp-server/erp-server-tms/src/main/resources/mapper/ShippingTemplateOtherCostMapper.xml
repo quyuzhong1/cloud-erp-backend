@@ -14,23 +14,20 @@
        <result column="weightUnit" property="weightUnit" />
        <result column="volumeSetting" property="volumeSetting" />
        <result column="currency" property="currency" />
-       <association property="templateEntity" javaType="com.erp.model.tms.entity.ShippingTemplateEntity" >
-            <id column="templateId" property="id"  />
-           <result column="billingMethod" property="billingMethod" />
-       </association>
-        <association property="templateRuleEntity" javaType="com.erp.model.tms.entity.ShippingTemplateRuleEntity" >
-            <id column="templateRuleId" property="id"  />
-            <result column="startWeight" property="startWeight" />
-            <result column="endWeight" property="endWeight" />
-            <result column="firstWeight" property="firstWeight" />
-            <result column="firstWeightShippingCost" property="firstWeightShippingCost" />
-            <result column="additionalUnitWeight" property="additionalUnitWeight" />
-            <result column="additionalPrice" property="additionalPrice" />
-            <result column="shippingPrice" property="shippingPrice" />
-            <result column="registrationCost" property="registrationCost" />
-            <result column="operatingCost" property="operatingCost" />
-            <result column="minCost" property="minCost" />
-        </association>
+        <result column="templateId" property="templateId"  />
+       <result column="billingMethod" property="billingMethod" />
+       <result column="priceBinary" property="priceBinary" />
+        <result column="templateRuleId" property="templateRuleId"  />
+        <result column="startWeight" property="startWeight" />
+        <result column="endWeight" property="endWeight" />
+        <result column="firstWeight" property="firstWeight" />
+        <result column="firstWeightShippingCost" property="firstWeightShippingCost" />
+        <result column="additionalUnitWeight" property="additionalUnitWeight" />
+        <result column="additionalPrice" property="additionalPrice" />
+        <result column="shippingPrice" property="shippingPrice" />
+        <result column="registrationCost" property="registrationCost" />
+        <result column="operatingCost" property="operatingCost" />
+        <result column="minCost" property="minCost" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -69,6 +66,7 @@
             str.to_country as toCountry,
             str.to_warehouse_name as toWarehouseName,
             str.region as region,
+            st.price_binary as priceBinary,
             st.effective_date as  effectiveDate,
             st.expire_date as  expireDate,
             st.weight_unit as weightUnit,
@@ -150,6 +148,7 @@
         str.to_country as toCountry,
         str.to_warehouse_name as toWarehouseName,
         str.region as region,
+        st.price_binary as priceBinary,
         st.effective_date as  effectiveDate,
         st.expire_date as  expireDate,
         st.weight_unit as weightUnit,
