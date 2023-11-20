@@ -1,5 +1,8 @@
 package com.erp.server.tms.service;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -18,47 +21,62 @@ import java.util.List;
 public interface LogisticsBillDetailService extends SuperService<LogisticsBillDetailEntity> {
 
     /**
-    * 新增
-    * @author lambda
-    * @date: 2023-11-09
-    * @param dto
-    * @return
-    */
+     * 新增
+     *
+     * @param dto
+     * @return
+     * @author lambda
+     * @date: 2023-11-09
+     */
     Boolean add(LogisticsBillDTO.AddDTO dto, String mainId);
 
     /**
-    * 修改
-    * @author lambda
-    * @date: 2023-11-09
-    * @param dto
-    * @return
-    */
+     * 修改
+     *
+     * @param dto
+     * @return
+     * @author lambda
+     * @date: 2023-11-09
+     */
     Boolean update(LogisticsBillDTO.UpdateDTO dto, String mainId);
 
     /**
      * 根据主表id查询详情
-     * @Author Luo_WG
-     * @Date 2023/11/9 19:52
+     *
      * @param mainIds
      * @return java.util.List<com.erp.model.tms.entity.LogisticsBillDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/11/9 19:52
      **/
     List<LogisticsBillDetailEntity> listByMainIds(List<String> mainIds);
 
     /**
      * 根据主表id删除详情
-     * @Author Luo_WG
-     * @Date 2023/11/9 19:52
+     *
      * @param mainIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/11/9 19:52
      **/
     Boolean removeByMainIds(List<String> mainIds);
 
     /**
      * 更改状态
-     *@parms
-     *@return 
-     *@author yl
-     *@date 2023-11-17
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-17
      */
     BatchResultDTO updateStatus(String id, String trackStatus);
+
+    /**
+     * 分页获取轨迹数据
+     *
+     * @param query
+     * @return
+     */
+    IPage<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
+
+    LogisticsBillDetailEntity getDetailByTrackNo(String trackNo);
 }

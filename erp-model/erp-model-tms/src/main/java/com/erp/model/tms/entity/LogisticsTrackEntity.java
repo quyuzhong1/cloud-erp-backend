@@ -36,7 +36,11 @@ public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
     @TableField("track_time")
     private LocalDateTime trackTime;
     /**
-    * 状态  状态 0查询不到,1等待揽收,2运输途中，3派送途中，4投递失败，5可能异常，6成功签收，7运输过久，8到达代取
+    * 状态  运输状态 状态 notFind  查询不到 waitCollect 等待揽收
+     * trackIng 运输途中 arriveWaitTake 到达待取
+     * deliveryIng 派送途中 deliveryFail 投递失败
+     * sign 成功签收 maybeException 可能异常
+     * transportLong  运输过久
     */
     @TableField("status")
     private String status;

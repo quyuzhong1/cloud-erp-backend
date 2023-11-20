@@ -92,10 +92,10 @@ public interface LogisticsService {
     /**
      * 轨迹查询
      *
-     * @param logisticsQueryBaseVOS
+     * @param logisticsTrackVO
      * @return
      */
-    ApiResult<List<LogisticsTrackEntity>> getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS);
+    ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO);
 
     /**
      * 渠道查询

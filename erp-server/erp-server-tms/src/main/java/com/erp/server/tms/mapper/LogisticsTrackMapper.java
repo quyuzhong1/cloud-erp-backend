@@ -3,6 +3,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LogisticsTrackMapper extends BaseMapper<LogisticsTrackEntity> {
 
+    void deleteByTrackNo(@Param("trackNo") String trackNo);
 }
