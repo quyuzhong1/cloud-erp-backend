@@ -471,4 +471,13 @@ public class LogisticsChannelDTO implements Serializable {
         private Boolean disabled;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class IdsDTO {
+
+        /**
+         * 物流商ids
+         */
+        private List<String> ids;
+    }
 }

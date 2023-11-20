@@ -38,7 +38,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private List<String> codeList;
         /**
-         * 对账状态
+         * 对账状态 reconciliationStatus字典
          */
         private List<String> reconciliationStatusList;
         /**
