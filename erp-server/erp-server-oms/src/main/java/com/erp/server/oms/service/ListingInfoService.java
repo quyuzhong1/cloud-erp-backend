@@ -61,4 +61,11 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return java.lang.Boolean
      **/
     Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto);
+
+    /**
+     * 新增映射skuNo
+     * @Author Jim
+     * @Date 2023/11/20
+     **/
+    List<ListingInfoDTO.BaseDropDownDTO> listByTypeWithFieldName(ListingInfoDTO.BaseDropDownParamDTO dto);
 }

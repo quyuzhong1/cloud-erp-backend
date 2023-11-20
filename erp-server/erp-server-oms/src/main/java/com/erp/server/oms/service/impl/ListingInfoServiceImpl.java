@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -161,5 +162,25 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         boolean save = skuMappingService.save(skuMappingEntity);
         return save;
+    }
+
+    @Override
+    public List<ListingInfoDTO.BaseDropDownDTO> listByTypeWithFieldName(ListingInfoDTO.BaseDropDownParamDTO dto) {
+        String type = dto.checkAndGetType();
+
+        List<ListingInfoEntity> list = lambdaQuery()
+                .eq(ListingInfoEntity::getType, type)
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        String fieldName = dto.checkAndGetFieldName();
+        // 组合
+        return list.stream()
+                .map(e -> ReflectUtil.getFieldValue(e, fieldName))
+                .distinct()
+                .filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.toString()))
+                .map(e -> ListingInfoDTO.BaseDropDownDTO.init(e.toString()))
+                .collect(Collectors.toList());
     }
 }
