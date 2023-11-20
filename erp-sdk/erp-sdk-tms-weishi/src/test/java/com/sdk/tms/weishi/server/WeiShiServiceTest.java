@@ -48,7 +48,7 @@ class WeiShiServiceTest {
                         .consigneeStreet("纽约")
                         .consigneeName("mark")
                         .consigneePostcode("11510")
-                        .consigneeCity("shenz")
+                        .consigneeCity("shenzhen")
                         .consigneeMobile("123456789")
                         .consigneeProvince("state")
                         .build())

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -13,21 +14,24 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsSaleChannelMapper;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
+import com.erp.server.tms.service.LogisticsService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import javax.annotation.Resource;
+import java.util.*;
+
 /**
  * <p>
  * 销售平台物流渠道表 服务实现类
@@ -45,6 +49,8 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private LogisticsRegistry logisticsRegistry;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -162,10 +168,31 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
                 eq(LogisticsSaleChannelEntity::getChannelStatus, MathUtil.ZERO).list();
     }
 
+    @Async
+    @Override
+    public void asyncUpdateSaleChannel(Map<String, String> authMap) {
+        if (Objects.isNull(authMap)) return;
+        if(StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
+        LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
+        ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
+        chanelQueryVO.setAuthMap(authMap);
+        ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+        if (channels.isSuccess()) {
+            channels.getData().forEach(logisticsSaleChannelEntity -> {
+                logisticsSaleChannelEntity.setAuthId(authMap.get("id"));
+                this.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+            });
+        } else {
+            log.error("同步渠道异常：{}",channels.getMsg());
+        }
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(LogisticsSaleChannelEntity logisticsSaleChannelEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+
 }

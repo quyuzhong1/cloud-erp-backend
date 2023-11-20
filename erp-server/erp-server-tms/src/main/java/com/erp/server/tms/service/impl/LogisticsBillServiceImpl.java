@@ -100,7 +100,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity.getId(),addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity,addDTO.getDetailList());
 
         //新增物流费用单
         addLogisticsBillCost(logisticsBillEntity);

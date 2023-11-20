@@ -1,8 +1,11 @@
 package com.erp.server.tms.service;
+
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -36,8 +39,6 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * 获取到授权详情
      * @author yl
      * @date 2023-11-10 17:50
-     * @param id
-     * @return
      */
     LogisticsAuthDTO.ViewDTO view(String id);
 
@@ -49,4 +50,21 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      *@date 2023-11-15
      */
     BatchResultDTO cancel(String id);
+
+    /**
+     * 根据渠道id 获取授权信息
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-20
+     */
+    LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId);
+
+    /**
+     * 根据授权id组装授权信息
+     *
+     * @param authId
+     * @return
+     */
+    Map<String, String> getLogisticsAuthConfig(String authId);
 }

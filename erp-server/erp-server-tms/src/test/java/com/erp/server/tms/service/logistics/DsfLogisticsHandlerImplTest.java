@@ -60,9 +60,9 @@ public class DsfLogisticsHandlerImplTest {
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
         senderInfo.setCityName("shenzhen");
-        senderInfo.setCompanyName("Ulanzi");
-        senderInfo.setName("张三");
-        senderInfo.setProvinceName("广东省");
+        senderInfo.setCompanyName("Ulanzi Shen");
+        senderInfo.setName("zhang san");
+        senderInfo.setProvinceName("guangdong");
         senderInfo.setTelNumber("12345678");
         senderInfo.setEmail("123@q.con");
         senderInfo.setCountry("CN");
@@ -82,7 +82,7 @@ public class DsfLogisticsHandlerImplTest {
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(12));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("ZN");
+        logisticsSaleChannel.setCode("A1");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("155");
 
@@ -100,10 +100,10 @@ public class DsfLogisticsHandlerImplTest {
                         .addressFirst("address")
                         .email("123@q.con")
                         .city("shenz")
-                        .name("mark")
+                        .name("mark zhang")
                         .companyName("componey")
                         .contact("mark")
-                        .country("CN")
+                        .country("HK")
                         .zipCode("11510")
                         .province("state")
                         .telNumber("123456789")

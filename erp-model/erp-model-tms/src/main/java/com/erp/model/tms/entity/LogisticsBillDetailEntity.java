@@ -52,10 +52,16 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("track_time")
     private LocalDateTime trackTime;
     /**
-     * 上次查询轨迹时间
+     * 是否需要进行物流轨迹查询
      */
     @TableField("track_enable")
     private Boolean trackEnable;
+
+    /**
+     * 物流商授权id
+     */
+    @TableField("logistics_auth_id")
+    private String logisticsAuthId;
 
     public static final String MAIN_ID = "main_id";
 

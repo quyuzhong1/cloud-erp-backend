@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsSaleChannelDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -62,4 +63,9 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @return
      */
     List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync);
+
+    /**
+     * 异步拉取销售渠道数据
+     */
+    void asyncUpdateSaleChannel(Map<String, String> authMap);
 }

@@ -121,7 +121,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             listDTO.setToCountry(toCountryName);
 
             //有效期
-            String effectivePeriod = StrUtil.format("{}至{}",listDTO.getEffectiveDate(),listDTO.getExpireDate());
+            String effectivePeriod = StrUtil.format("{}至{}",listDTO.getEffectiveDate(),ObjectUtil.isEmpty(listDTO.getExpireDate()) ? "无期限" : listDTO.getExpireDate());
             listDTO.setEffectivePeriod(effectivePeriod);
 
             /**

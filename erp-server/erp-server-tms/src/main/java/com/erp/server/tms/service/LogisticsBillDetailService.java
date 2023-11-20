@@ -6,6 +6,7 @@ import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @author lambda
      * @date: 2023-11-09
      */
-    Boolean add(String mainId,List<LogisticsBillDetailDTO.AddDTO> list );
+    Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> list );
 
     /**
      * 修改
