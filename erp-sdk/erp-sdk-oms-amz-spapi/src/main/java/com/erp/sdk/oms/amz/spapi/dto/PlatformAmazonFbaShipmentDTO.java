@@ -57,7 +57,9 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
      */
     public String convertPackType(){
         if(null != this.shipmentInfo) {
-            return this.shipmentInfo.getAreCasesRequired() ? "原厂包装" : "混装";
+            if (null != this.getShipmentInfo().getAreCasesRequired()){
+                return this.shipmentInfo.getAreCasesRequired() ? "原厂包装" : "混装";
+            }
         }
         return "";
     }
