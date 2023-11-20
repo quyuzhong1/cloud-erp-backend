@@ -227,7 +227,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             tab.setTabFlag(tabFlag);
             tab.setTabName(item.getName());
             Integer count = list.stream().filter(r -> statusList.contains(r.getTabFlag())).
-                    map(LogisticsBillDTO.TabListDTO::getCount).findFirst().orElse(0);
+                    mapToInt(LogisticsBillDTO.TabListDTO::getCount).sum();
             tab.setCount(count);
             resultList.add(tab);
         }
@@ -276,7 +276,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params, statusList);
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/LogisticsAddress.xlsx";
+        String excelPath = "excel/logisticsBill.xlsx";
         String name = "自发货物流单列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
