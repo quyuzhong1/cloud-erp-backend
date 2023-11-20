@@ -3,16 +3,17 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private CommonService commonService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private LogisticsBillService logisticsBillService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -157,10 +162,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
             detailByTrackNo.setTrackTime(LocalDateTime.now());
             logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
-            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
-                //TODO 同步订单状态
-
-            }
         }
     }
 
