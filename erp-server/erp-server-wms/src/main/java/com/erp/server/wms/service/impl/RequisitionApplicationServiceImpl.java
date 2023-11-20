@@ -13,6 +13,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
+import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -50,6 +51,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private CommonService commonService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Autowired
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -73,8 +76,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "要货申请单" , requisitionApplicationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        // 新增明细
+        requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
         return new BaseResultDTO.AddDTO(requisitionApplicationEntity.getId(), code);
     }
 
@@ -95,13 +98,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(!save) {
             throw new ServiceException("要货申请单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 修改明细数据（包含增删改）
+        requisitionApplicationDetailService.update(updateDTO, requisitionApplicationEntity.getId());
 
         // 记录主单操作日志
-            log.info("编辑 开始记录要货申请单日志数据，单号：【{}】", requisitionApplicationEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), requisitionApplicationEntity.getCode(), "要货申请单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, requisitionApplicationEntity, null, requisitionApplicationEntity.getId(), msg);
+        log.info("编辑 开始记录要货申请单日志数据，单号：【{}】", requisitionApplicationEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), requisitionApplicationEntity.getCode(), "要货申请单");
+        operateLogService.addModuleOperateLogByObj(old, requisitionApplicationEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -174,6 +177,5 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     * 新增修改处理数据
     */
     private void handleData(RequisitionApplicationEntity requisitionApplicationEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

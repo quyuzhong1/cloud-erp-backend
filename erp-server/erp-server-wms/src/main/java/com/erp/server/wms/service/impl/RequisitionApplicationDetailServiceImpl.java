@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
@@ -38,7 +39,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(RequisitionApplicationDetailDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO addDTO, String mainId) {
         RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = new RequisitionApplicationDetailEntity();
         BeanMapperUtils.copy(addDTO, requisitionApplicationDetailEntity);
 
@@ -65,7 +66,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(RequisitionApplicationDetailDTO.UpdateDTO updateDTO) {
+    public Boolean update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
         RequisitionApplicationDetailEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单明细单"));
         RequisitionApplicationDetailEntity requisitionApplicationDetailEntity =  BeanMapperUtils.map(RequisitionApplicationDetailEntity.class, updateDTO);
