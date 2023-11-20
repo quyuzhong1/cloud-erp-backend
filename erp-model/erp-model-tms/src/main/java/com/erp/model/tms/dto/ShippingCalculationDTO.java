@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -191,6 +192,55 @@ public class ShippingCalculationDTO {
         private String currencySymbol;
 
         /**
+         * 模板id
+         */
+        private String templateId;
+        /**
+         * 重量段类型
+         */
+        private String billingMethod;
+        /**
+         * 进制
+         */
+        private String priceBinary;
+        /**
+         * 进制
+         */
+        private String templateRuleId;
+        /**
+         * 开始重量
+         */
+        private BigDecimal startWeight;
+        /**
+         * 结束重量
+         */
+        private BigDecimal endWeight;
+        /**
+         * 首重
+         */
+        private BigDecimal firstWeight;
+        /**
+         * 首重运费
+         */
+        private BigDecimal firstWeightShippingCost;
+        /**
+         * 续重单位重量
+         */
+        private BigDecimal additionalUnitWeight;
+        /**
+         * 续重单价
+         */
+        private BigDecimal additionalPrice;
+        /**
+         * 运费单价
+         */
+        private BigDecimal shippingPrice;
+        /**
+         * 最低收费
+         */
+        private BigDecimal minCost;
+
+        /**
          * 模板对象
          */
         private ShippingTemplateEntity templateEntity;
@@ -199,6 +249,7 @@ public class ShippingCalculationDTO {
          * 模板规则
          */
         private ShippingTemplateRuleEntity templateRuleEntity;
+
     }
 
     /**

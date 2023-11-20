@@ -436,7 +436,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
     private Boolean validateDisApprove(FbaDeliveryEntity entity) {
         // 已审核支持反审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         return true;
@@ -988,8 +988,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     * 分页查询、导出 数据处理
     */
     private void validateSubmit(FbaDeliveryEntity entity) {
+
         // 待提交或审核不通过并且未作废允许提交
-        if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
+        if(!entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && !entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;

@@ -1892,7 +1892,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<JSONObject> jsonList = handleMatchJson(id, detailList);
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonList);
         //审核规则是否通过
-        Boolean approveSuccess = ObjectUtils.isEmpty(ruleOrderMatchResult) ? Boolean.FALSE : Boolean.TRUE;
+        Boolean approveSuccess = (CollectionUtils.isEmpty(ruleOrderMatchResult.getCategoryDetailIdList()) || StrUtil.isBlank(ruleOrderMatchResult.getFlowStatus())) ? Boolean.FALSE : Boolean.TRUE;
         //匹配审核规则通过,自动提交并审核
         if (approveSuccess) {
             //更新流转状态和分类信息
