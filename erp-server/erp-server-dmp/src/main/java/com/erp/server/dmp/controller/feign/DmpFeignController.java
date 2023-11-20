@@ -224,4 +224,17 @@ public class DmpFeignController extends BaseController {
     Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids) {
         return dmpOrderInfoService.removeOrderByIds(ids);
     }
+
+    /**
+     * @description: 拉取数据预警
+     * @author Will
+     * @date: 2023/11/17 14:35
+     * @param syncTaskId
+     * @return Boolean
+     */
+    @PostMapping("/pull/sendWarnMsg")
+    public Boolean sendWarnMsg(@RequestBody String syncTaskId) {
+        dmpPullTaskService.sendWarnMsg(syncTaskId);
+        return Boolean.TRUE;
+    }
 }

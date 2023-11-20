@@ -55,6 +55,8 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage())? ExceptionUtil.stacktraceToOneLineString(e,10):e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
+            //错误预警
+            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
         }
 
     }

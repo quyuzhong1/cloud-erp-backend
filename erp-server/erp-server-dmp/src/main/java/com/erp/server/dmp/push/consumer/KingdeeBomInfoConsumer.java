@@ -69,6 +69,11 @@ public class KingdeeBomInfoConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
     public ApiResult<?> handle(Object ext) {
         Map<String, Object> map = JSONUtil.parseObj(ext);
         kingdeeBomInfoConsumerService.executeBomInfoConsumer(map);

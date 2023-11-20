@@ -12,6 +12,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncFbaDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -39,6 +40,9 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<DmpSyncMqDTO> {
     @Autowired
     private MQProducerService mqProducerService;
 
+    @Autowired
+    private DmpTaskFeign dmpTaskFeign;
+
     @Override
     public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
@@ -56,6 +60,8 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<DmpSyncMqDTO> {
             // 同步失败
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
+            //错误预警
+            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
             // 发送消息通知
             this.sendTaskNotice(dmpSyncMqDTO.getDmpSyncTaskId(),
                     StrUtil.format("FBA发货单生成ERP加工单异常，同步任务id：{}，异常原因：{}", paramDTO.getDmpSyncTaskId(), e.getMessage()));
