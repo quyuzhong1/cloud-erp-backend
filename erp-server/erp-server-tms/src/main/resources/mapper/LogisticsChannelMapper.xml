@@ -58,10 +58,10 @@
             ls.id as logisticsSupplierId,
             ls.supplier_name as supplierName
         from logistics_channel lc
-        inner join logistics_supplier ls on lc.source_id = ls.id and ls.is_deleted = false
+        inner join logistics_supplier ls on lc.main_id = ls.id and ls.is_deleted = false
         where lc.is_deleted = false
         <if test="logisticsSupplierIds != null and logisticsSupplierIds.size > 0">
-            and lc.source_id in
+            and lc.main_id in
             <foreach collection="logisticsSupplierIds" open="(" close=")" item="item" separator=",">
                 #{item}
             </foreach>
@@ -75,7 +75,7 @@
             lc.disabled
         FROM logistics_channel lc
         INNER JOIN logistics_supplier ls
-        ON lc.source_id = ls.id and ls.is_deleted = false
+        ON lc.main_id = ls.id and ls.is_deleted = false
         WHERE lc.is_deleted=false
         AND ls.supplier_id=#{supplierId}
     </select>

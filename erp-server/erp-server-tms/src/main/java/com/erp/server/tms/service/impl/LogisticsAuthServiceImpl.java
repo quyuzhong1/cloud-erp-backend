@@ -157,22 +157,12 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     public LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId) {
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
-        String supplierCode = SourceTypeEnum.LOGISTICS_SUPPLIER.getCode();
         if (Objects.nonNull(channelEntity)) {
-            String sourceId = channelEntity.getSourceId();
-            String sourceType = channelEntity.getSourceType();
-            if (supplierCode.equals(sourceType)) {
-                return this.view(sourceId);
-            } else {
-                LogisticsWarehouseEntity logisticsWarehouse = logisticsWarehouseService.getById(sourceId);
-                if(Objects.nonNull(logisticsWarehouse)){
-                    return this.view(logisticsWarehouse.getMainId());
-                }
-            }
+            return this.view(channelEntity.getMainId());
 
         }
 
-        return  new LogisticsAuthDTO.ViewDTO();
+        return new LogisticsAuthDTO.ViewDTO();
     }
 
 

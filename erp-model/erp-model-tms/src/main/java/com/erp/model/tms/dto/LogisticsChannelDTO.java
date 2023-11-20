@@ -38,6 +38,9 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String id;
 
+
+        private String mainId;
+
         private String sourceId;
 
         /**
@@ -300,21 +303,13 @@ public class LogisticsChannelDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 来源id
-         * 物流商id 或者物流仓库id(当类型为海外仓物流)
+         * 物流商
+         *
          */
-        @NotBlank(message = "来源不能为空")
-        private String sourceId;
+        @NotBlank(message = "物流商不能为空")
+        private String mainId;
 
 
-
-        /**
-         * 来源类型
-         *logisticsSupplier  物流商
-         * logisticsWarehouse 物流仓
-         */
-        @NotBlank(message = "来源类型为空")
-        private String sourceType;
 
         /**
          * 渠道名称
