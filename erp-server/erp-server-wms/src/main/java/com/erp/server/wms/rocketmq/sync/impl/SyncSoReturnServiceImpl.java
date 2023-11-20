@@ -186,7 +186,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 inOutStockDTO.setSourceId(entity.getId());
                 inOutStockDTO.setSourceCode(entity.getCode());
                 inOutStockDTO.setSourceDetailId(detailEntity.getId());
-                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setBillDate(entity.getBillDate());
                 inOutStockDTO.setSkuId(detailEntity.getSkuId());
                 inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
                 inOutStockDTO.setQty(detailEntity.getRealQty());
