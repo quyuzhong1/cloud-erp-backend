@@ -1,21 +1,18 @@
 package com.sdk.tms.yanwen.server;
 
 import com.common.core.utils.FileUtil;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
 import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
 import com.sdk.tms.yanwen.dto.response.YanWenGetLabel;
 import com.sdk.tms.yanwen.dto.response.YanWenResponse;
-import jodd.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;

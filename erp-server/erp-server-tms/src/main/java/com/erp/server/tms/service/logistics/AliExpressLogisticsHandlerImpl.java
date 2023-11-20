@@ -23,6 +23,7 @@ import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
 import com.erp.tms.aliexpress.model.label.request.WarehouseOrderQuery;
+import com.erp.tms.aliexpress.model.order.request.DeclareProduct;
 import com.erp.tms.aliexpress.model.order.request.OrderRequest;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
 import com.erp.tms.aliexpress.model.order.response.OrderResponse;
@@ -100,7 +101,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO) {
-        //收寄双方信息
+        //申报产品信息
+        List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
+
+//        //收寄双方信息
 //        List<ContactInfo> contactInfoList = new ArrayList<>(2);
 //        ContactInfo sender = LogisticsOrderConverter.INSTANCE.orderRequestSendUserByExpress(logisticsOrderVO);
 //        ContactInfo receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByExpress(logisticsOrderVO);
@@ -111,12 +115,11 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 //        //托寄物信息
 //        List<CargoDetail> cargoDetails = LogisticsOrderConverter.INSTANCE.orderRequestCargoDetailByExpress(logisticsOrderVO.getLogisticsProductVOList());
         OrderRequest orderRequest = OrderRequest.builder()
-//                .language("zh-CN")
-//                .orderId(logisticsOrderVO.getDeliveryNo())
-//                //报关信息
-//                .customsInfo(customsInfo)
-//                //托寄物信息
-//                .cargoDetails(cargoDetails)
+                .declareProducts(declareProducts)
+                .trade_order_id(logisticsOrderVO.getDeliveryNo())
+                .warehouse_carrier_service(logisticsOrderVO.getLogisticsSaleChannel().getCode())
+                //托寄物信息
+//                .address_d_t_os(cargoDetails)
 //                .cargoDesc(null)
 //                //增值服务
 //                .serviceList(null)
@@ -133,6 +136,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         return orderRequest;
     }
+
     /**
      * 查询订单(批量)
      *
@@ -155,10 +159,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsOrderOperateLogService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                             logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(iopResponse));
-                }else{
+                } else {
                     List<QueryResult> responses = JSONObject.parseArray(iopResponse.getBody(), QueryResult.class);
-                    if (CollectionUtils.isNotEmpty(responses)){
-                        responses.forEach(queryOrderResponse ->{
+                    if (CollectionUtils.isNotEmpty(responses)) {
+                        responses.forEach(queryOrderResponse -> {
                             LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
                                     .transportNo(queryOrderResponse.getInternational_logistics_num())
                                     .trackNo(queryOrderResponse.getLogistics_order_id())
@@ -228,7 +232,11 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success(responses);
             }
         } catch (ApiException e) {
-            throw new RuntimeException(e);
+            log.error("速卖通getLabelList接口调用失败：{}", e.getMessage());
+            logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                    logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
+            return failure(e.getMessage());
         }
     }
 
@@ -256,8 +264,12 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
                 return success(LogisticsChannelConverter.INSTANCE.channelConvertByAliExpress(chanelInfos));
             }
-        } catch (ApiException | InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("速卖通getChannel接口调用失败：{}", e.getMessage());
+            logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
         }
 
     }

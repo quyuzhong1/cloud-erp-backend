@@ -2,6 +2,7 @@ package com.erp.server.tms.schedule;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
@@ -13,6 +14,7 @@ import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.Resource;
 import java.util.List;
 
@@ -28,7 +30,7 @@ import java.util.List;
 @EnableScheduling
 public class LogisticsChannelJob {
 
-    private static  long pageSize = 100;
+    private static long pageSize = 100;
     @Resource
     private LogisticsBaseService logisticsBaseService;
     @Resource
@@ -42,6 +44,19 @@ public class LogisticsChannelJob {
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
         logisticsBaseService.syncAllLogisticsChannel();
+        log.info("====全部渠道同步开始=====");
+        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
+        for (LogisticsPlatformEnum platformEnum : platformEnums) {
+            XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
+            if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
+                ApiResult apiResult = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());
+                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(),apiResult.isSuccess());
+            } else {
+                ApiResult apiResult = logisticsBaseService.syncSingleChannel(platformEnum.getCode());
+                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(),apiResult.isSuccess());
+            }
+        }
+        log.info("=====渠道同步结束=====");
         XxlJobHelper.log("====同步渠道信息完成====");
         return ReturnT.SUCCESS;
     }
@@ -50,11 +65,11 @@ public class LogisticsChannelJob {
      * 同步物流轨迹
      */
     @XxlJob("synLogisticsTrack")
-    public ReturnT synLogisticsTrack(){
+    public ReturnT synLogisticsTrack() {
         XxlJobHelper.log("====开始同步物流轨迹====");
         long current = 1;
         //获取物流编号
-        LogisticsBillDetailQueryDTO query =LogisticsBillDetailQueryDTO.builder()
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
                 .current(current)
@@ -64,25 +79,26 @@ public class LogisticsChannelJob {
         return ReturnT.SUCCESS;
     }
 
-    private void getTrackData(LogisticsBillDetailQueryDTO query){
+    private void getTrackData(LogisticsBillDetailQueryDTO query) {
         IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
         //业务处理
         processTrackData(page.getRecords());
         long pages = page.getPages();
-        if (pages > page.getCurrent()){
+        if (pages > page.getCurrent()) {
             //下一页
             getTrackData(LogisticsBillDetailQueryDTO.builder()
                     .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                     .size(pageSize)
                     .current(page.getCurrent() + 1)
                     .build());
-        }else {
+        } else {
             //无数据
             log.info("========同步物流轨迹数据完成==========");
         }
     }
-    private void processTrackData(List<LogisticsBillDetailEntity> records){
-        if (CollectionUtils.isNotEmpty(records)){
+
+    private void processTrackData(List<LogisticsBillDetailEntity> records) {
+        if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
         }
     }

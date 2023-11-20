@@ -71,16 +71,16 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             //海关申报信息
             DeclareProductInfo productInfo = LogisticsOrderConverter.INSTANCE.dsfProductMapping(logisticsProductVO);
-            if (StringUtils.isEmpty(productInfo.getCountry_export())){
+            if (StringUtils.isEmpty(productInfo.getCountry_export())) {
                 productInfo.setCountry_export(logisticsOrderVO.getSenderInfo().getCountry());
             }
-            if (StringUtils.isEmpty(productInfo.getCountry_import())){
+            if (StringUtils.isEmpty(productInfo.getCountry_import())) {
                 productInfo.setCountry_import(logisticsOrderVO.getReceiverInfoVO().getCountry());
             }
-            if (StringUtils.isEmpty(productInfo.getCurrency_export())){
+            if (StringUtils.isEmpty(productInfo.getCurrency_export())) {
                 productInfo.setCurrency_export(logisticsOrderVO.getParceInfoVO().getCurrency());
             }
-            if (StringUtils.isEmpty(productInfo.getCurrency_import())){
+            if (StringUtils.isEmpty(productInfo.getCurrency_import())) {
                 productInfo.setCurrency_import(logisticsOrderVO.getParceInfoVO().getCurrency());
             }
             parcel.setDeclare_product_info(Collections.singletonList(productInfo));
@@ -231,10 +231,10 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOrderOperateLogService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responseMsg));
-            }else {
+            } else {
                 List<QueryOrderResponse> responses = JSONObject.parseArray(responseMsg.getData().toString(), QueryOrderResponse.class);
-                if (CollectionUtils.isNotEmpty(responses)){
-                    responses.forEach(queryOrderResponse ->{
+                if (CollectionUtils.isNotEmpty(responses)) {
+                    responses.forEach(queryOrderResponse -> {
                         LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
                                 .deliveryNo(queryOrderResponse.getConsignmentInfo().getRef_no())
                                 .trackNo(queryOrderResponse.getConsignmentInfo().getTrackingNo())
@@ -305,20 +305,29 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         ChanelRequest chanelRequest = ChanelRequest.builder()
                 .transport_mode("1")
                 .build();
-        ResponseMsg responseMsg = dsfShipperService.getChanelList(chanelQueryVO.getAuthMap(), chanelRequest);
-        //失败
-        if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
+        try {
+            ResponseMsg responseMsg = dsfShipperService.getChanelList(chanelQueryVO.getAuthMap(), chanelRequest);
+            //失败
+            if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
+                logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
+                return failure(responseMsg.getMsg());
+            } else {
+                List<ChanelInfo> chanelInfos = JSONObject.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
+                logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
+                return success(LogisticsChannelConverter.INSTANCE.channelConvertByDSF(chanelInfos));
+            }
+        } catch (Exception e) {
+            log.error("递四方渠道接口调用异常:{}", e.getMessage());
             logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
-            return failure(responseMsg.getMsg());
-        } else {
-            List<ChanelInfo> chanelInfos = JSONObject.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
-            logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
-                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
-                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
-            return success(LogisticsChannelConverter.INSTANCE.channelConvertByDSF(chanelInfos));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e.getMessage()));
+            return failure(e.getMessage());
         }
+
     }
 
     @Override
