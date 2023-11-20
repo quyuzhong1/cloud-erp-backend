@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.OmsPlatformEnum;
@@ -139,6 +140,20 @@ public class SkuMappingDTO implements Serializable {
 
         private String type;
 
+        /**
+         * 平台产品SPU编号或ID模糊搜索条件
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台SKU编号模糊搜索条件
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台SKU额外关联的FNSKU模糊搜索条件
+         */
+        private String fnSku;
 
         /**
          * 店铺id集合
@@ -189,6 +204,21 @@ public class SkuMappingDTO implements Serializable {
     public static class WarehousePagingParamDTO extends SortDTO {
 
         private String type;
+
+        /**
+         * 平台产品SPU编号或ID模糊搜索条件
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台SKU编号模糊搜索条件
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台SKU额外关联的FNSKU模糊搜索条件
+         */
+        private String fnSku;
 
         /**
          * 库存产品名称
@@ -490,6 +520,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformSpuName;
 
+        /**
+         * 平台SKU额外关联的FNSKU
+         */
+        private String fuSku;
 
     }
 
