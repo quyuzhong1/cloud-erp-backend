@@ -54,6 +54,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -831,29 +832,33 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public BatchResultDTO skuMappingBatch(String id) {
-        FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getById(id);
-        if (ObjectUtil.isEmpty(detailEntity)) {
+        FbaShipmentEntity entity = this.getById(id);
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
-        FbaShipmentEntity entity = this.getById(detailEntity.getMainId());
+        List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
         //根据平台sku查询Listing信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
+        listingInfoParamDTO.setPlatformSkuNoList(mskuList);
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-        SkuMappingDTO.SkuDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
-        //校验对照表是否有对照关系
-        if (ObjectUtil.isEmpty(skuDTO)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "更新失败，无对照关系！");
-        } else {
-            detailEntity.setSkuNo(skuDTO.getProductSkuNo());
-            detailEntity.setSkuId(skuDTO.getProductSkuId());
-            //添加日志
-            FbaShipmentEntity old = this.getById(detailEntity.getId());
-            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
-            fbaShipmentDetailService.updateById(detailEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+
+        for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
+            SkuMappingDTO.SkuDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
+            //校验对照表是否有对照关系
+            if (ObjectUtil.isNotEmpty(skuDTO)) {
+                detailEntity.setSkuNo(skuDTO.getProductSkuNo());
+                detailEntity.setSkuId(skuDTO.getProductSkuId());
+                //添加日志
+                FbaShipmentEntity old = this.getById(detailEntity.getId());
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
+                fbaShipmentDetailService.updateById(detailEntity);
+            } else {
+                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无对照关系！");
+            }
         }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
     }
 
     @Override

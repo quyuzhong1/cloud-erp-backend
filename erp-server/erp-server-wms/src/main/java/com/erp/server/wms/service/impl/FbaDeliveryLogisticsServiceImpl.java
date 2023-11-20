@@ -172,8 +172,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             BeanMapper.copy(deliveryLogisticsSave, entity);
             list.add(entity);
         }
-        boolean flag = this.saveOrUpdateBatch(list);
-
         //更新物流单信息
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
         for (FbaDeliveryLogisticsEntity deliveryLogisticsSave : dto) {
@@ -206,7 +204,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
             addDTO.setDetailList(detailList);
             addDTOList.add(addDTO);
         }
-        logisticsBillFeign.logisticsBillBatchSave(addDTOList);
-        return flag;
+        return logisticsBillFeign.logisticsBillBatchSave(addDTOList);
     }
 }
