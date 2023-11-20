@@ -103,4 +103,14 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-16
      */
     List<BaseDropDownDTO.DisabledDTO> listAll();
+
+
+    /**
+     * 根据供应商id 获取启用禁用的列表
+     *@parms supplierId
+     *@return
+     *@author yl
+     *@date 2023-11-20
+     */
+    List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId);
 }

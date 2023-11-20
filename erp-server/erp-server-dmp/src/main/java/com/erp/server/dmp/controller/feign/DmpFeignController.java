@@ -10,9 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -49,7 +47,8 @@ public class DmpFeignController extends BaseController {
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
     @Resource
     private PlatformService platformService;
@@ -212,6 +211,28 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/save/pull/task")
     public String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto) {
         return dmpPullTaskService.savePullTask(dto);
+    }
+
+    /**
+     * 记录拉取数据记录
+     *
+     * @param dmpPullTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("/saveOrUpdate/pull/task")
+    public String saveOrUpdateDmpPullTask(@RequestBody @Valid DmpPullTaskEntity dmpPullTaskEntity) {
+        return dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
+    }
+
+    /**
+     * 记录推送数据记录
+     *
+     * @param dmpPushTaskEntity 查询过滤条件
+     * @return
+     */
+    @PostMapping("/saveOrUpdate/push/task")
+    public String saveOrUpdateDmpPushTask(@RequestBody @Valid DmpPushTaskEntity dmpPushTaskEntity) {
+        return dmpPushTaskService.saveOrUpdateDmpSyncTask(dmpPushTaskEntity);
     }
 
     /**

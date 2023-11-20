@@ -261,8 +261,8 @@ public class PullAmazonJob {
         }
         XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务开始,size={}", size);
         // 根据状态查询未下载数据
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformAmazonFbaShipmentDTO> entityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, PlatformAmazonFbaShipmentDTO.class);
+        PlatformAmazonFbaShipmentDTO fbaShipmentDTO = PlatformAmazonFbaShipmentDTO.getByDownloadStatus(0);
+        List<PlatformAmazonFbaShipmentDTO> entityList = mongoService.findMongoData(fbaShipmentDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, PlatformAmazonFbaShipmentDTO.class);
         if (CollectionUtil.isEmpty(entityList)) {
             XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;

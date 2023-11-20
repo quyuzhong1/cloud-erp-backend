@@ -33,5 +33,7 @@ public class BaseIdDTO extends PermissionsDTO  {
 
         private String flagId;
 
+        private Boolean disabled;
+
     }
 }

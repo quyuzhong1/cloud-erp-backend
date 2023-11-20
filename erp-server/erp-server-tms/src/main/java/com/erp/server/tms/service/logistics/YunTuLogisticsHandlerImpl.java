@@ -49,13 +49,13 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         YunTuResponse<List<YunTuChannel>> yunTuResponse =  yunTuService.getAllChannel(chanelQueryVO.getAuthMap());
         if(isFailure(yunTuResponse.getCode())){
-            logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yunTuResponse));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage());
         }
         List<LogisticsSaleChannelEntity> response = LogisticsChannelConverter.INSTANCE.channelConvertByYunTu(yunTuResponse.getData());
-        logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                 RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yunTuResponse));
         return success(response);
@@ -71,13 +71,13 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(CollectionUtil.isNotEmpty(yunTuCreateOrders)){
                 remark = yunTuCreateOrders.get(0).getRemark();
             }
-            logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yunTuResponse));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yunTuResponse.getMessage()+remark);
         }
         YunTuCreateOrder yunTuCreateOrder = yunTuResponse.getData().get(0);
-        logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+        logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                 logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                 RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yunTuResponse));
         return success(LogisticsOrderResponseVO.builder()
@@ -101,7 +101,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             response.failure(getPlatForm().getName(),"all",yunTuResponse.getMessage());
             responseList.add(response);
-            logisticsOrderOperateLogService.addOperateLog(labelVO.get(0).getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pullOperateLog(labelVO.get(0).getAuthMap().get("id"),
                     UUID.randomUUID().toString(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(labelVO), JSONUtil.toJsonStr(yunTuResponse));
             return failure(responseList);
@@ -130,7 +130,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
             }
         }
-        logisticsOrderOperateLogService.addOperateLog(labelVO.get(0).getAuthMap().get("id"),
+        logisticsOrderOperateLogService.pullOperateLog(labelVO.get(0).getAuthMap().get("id"),
                 UUID.randomUUID().toString(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                 RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(labelVO), JSONUtil.toJsonStr(yunTuResponse));
         return isSuccess?success(responseList):failure(responseList);
@@ -154,13 +154,13 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             LogisticsOrderResponseVO response = new LogisticsOrderResponseVO();
             response.failure(getPlatForm().getName(),String.join(",", deliveryList),yunTuResponse.getMessage());
             responseList.add(response);
-            logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
                     UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yunTuResponse));
             return failure(responseList);
         }
         responseList = LogisticsOrderConverter.INSTANCE.orderQueryByYunTu(yunTuResponse.getData());
-        logisticsOrderOperateLogService.addOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+        logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
                 UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                 RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yunTuResponse));
         return success(responseList);
@@ -182,12 +182,12 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;
                 interceptResponseVO.failure(getPlatForm().getName(),interceptOrderVO.getDeliveryNo(),yunTuResponse.getMessage());
-                logisticsOrderOperateLogService.addOperateLog(interceptOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(interceptOrderVO.getAuthMap().get("id"),
                         interceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(interceptOrderVO), JSONUtil.toJsonStr(yunTuResponse));
             }else{
                 interceptResponseVO.success();
-                logisticsOrderOperateLogService.addOperateLog(interceptOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(interceptOrderVO.getAuthMap().get("id"),
                         interceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(interceptOrderVO), JSONUtil.toJsonStr(yunTuResponse));
             }
@@ -211,12 +211,12 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(isFailure(yunTuResponse.getCode())){
                 isSuccess = false;
                 cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),yunTuResponse.getMessage());
-                logisticsOrderOperateLogService.addOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
                         cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yunTuResponse));
             }else{
                 cancelResponseVO.success();
-                logisticsOrderOperateLogService.addOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
                         cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yunTuResponse));
             }

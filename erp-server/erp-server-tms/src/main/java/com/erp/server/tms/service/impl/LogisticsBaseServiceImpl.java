@@ -135,7 +135,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
     }
 
-    @Async("batchUpdateTrackInfo")
+    @Async("tmsExecutor")
     @Override
     public void batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
         if (CollectionUtils.isNotEmpty(logisticsBillDetailEntities)) {

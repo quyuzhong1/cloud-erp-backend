@@ -165,7 +165,9 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Override
     public List<LogisticsAddressDTO.ListDTO> listByType(String type) {
         List<LogisticsAddressEntity> addressList=this.lambdaQuery().
-                select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName).list();
+                select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName).
+                eq(LogisticsAddressEntity::getType,type).
+                list();
         return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
     }
 

@@ -168,7 +168,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
                 eq(LogisticsSaleChannelEntity::getChannelStatus, MathUtil.ZERO).list();
     }
 
-    @Async
+    @Async("tmsExecutor")
     @Override
     public void asyncUpdateSaleChannel(Map<String, String> authMap) {
         if (Objects.isNull(authMap)) return;
