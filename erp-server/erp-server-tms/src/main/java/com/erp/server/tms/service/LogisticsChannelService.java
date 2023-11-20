@@ -113,4 +113,11 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-20
      */
     List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId);
+
+    /**
+     * 根据地址id 获取对应渠道
+     * @param addressId
+     * @return
+     */
+    List<LogisticsChannelEntity> listByAddressId(String addressId);
 }

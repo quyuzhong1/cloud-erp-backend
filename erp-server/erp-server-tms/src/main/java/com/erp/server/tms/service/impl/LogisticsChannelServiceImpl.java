@@ -303,6 +303,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseMapper.listBySupplierId(supplierId);
     }
 
+    @Override
+    public List<LogisticsChannelEntity> listByAddressId(String addressId) {
+        return this.baseMapper.listByAddressId(addressId);
+    }
+
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();

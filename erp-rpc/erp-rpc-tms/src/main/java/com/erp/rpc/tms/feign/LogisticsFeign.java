@@ -29,7 +29,7 @@ public interface LogisticsFeign {
      * @param supplierId
      * @return
      */
-    @GetMapping("/feign/logistics/listBySupplierId")
+    @PostMapping("/feign/logistics/listBySupplierId")
     List<BaseIdDTO.CodeDTO> listBySupplierId(@RequestBody String supplierId);
 
     @GetMapping("/feign/logistics/updateDisabledBySupplierId")
