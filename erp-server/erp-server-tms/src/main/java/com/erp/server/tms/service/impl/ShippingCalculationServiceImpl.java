@@ -145,7 +145,7 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             //重量
             BigDecimal weight = params.getWeight().multiply(ratio);
             if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
-                weight = MathUtil.compareTo(volumeWeight, params.getWeight()) > MathUtil.ZERO ? volumeWeight : params.getWeight();
+                weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }
             if (ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = volumeWeight;

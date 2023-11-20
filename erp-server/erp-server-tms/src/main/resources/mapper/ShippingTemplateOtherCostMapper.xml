@@ -82,16 +82,16 @@
         <where>
             ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
             DAY' or st.expire_date is null)
-            <if test="params.weightUnit != null and params.weightUnit == 'kg'" >
+            <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
                 and case st.weight_unit when 'kg' then
                 #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
                    else
-                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+                #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
                 end
             </if>
-            <if test="params.weightUnit != null and params.weightUnit == 'g'" >
+            <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
                 and case st.weight_unit when 'kg' then
-                #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
+                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
                     else
                 #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
                 end
@@ -130,38 +130,53 @@
     <!-- 运费计算导出 -->
     <select id="listByExportExcel" resultMap="BaseResultMap">
         select
-            ls.supplier_name as logisticsName,
-            lc.name as channelName,
-            lc.fee_rule as feeRule,
-            st.id as templateId,
-            st.billing_method as billingMethod,
-            str.id as templateRuleId,
-            str.start_weight as startWeight,
-            str.end_weight as endWeight,
-            str.first_weight_shipping_cost as firstWeightShippingCost,
-            str.first_weight as firstWeight,
-            str.first_weight_shipping_cost as firstWeightShippingCost,
-            str.additional_unit_weight as additionalUnitWeight,
-            str.additional_price as additionalPrice,
-            str.shipping_price as shippingPrice,
-            str.registration_cost as registrationCost,
-            str.operating_cost as operatingCost,
-            str.min_cost as minCost,
-            str.to_country as toCountry,
-            str.to_warehouse_name as toWarehouseName,
-            str.region as region,
-            st.effective_date as  effectiveDate,
-            st.expire_date as  expireDate,
-            st.weight_unit as weightUnit,
-            st.volume_setting as volumeSetting,
-            st.currency
+        ls.supplier_name as logisticsName,
+        lc.name as channelName,
+        lc.fee_rule as feeRule,
+        st.id as templateId,
+        st.billing_method as billingMethod,
+        str.id as templateRuleId,
+        str.start_weight as startWeight,
+        str.end_weight as endWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.first_weight as firstWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.additional_unit_weight as additionalUnitWeight,
+        str.additional_price as additionalPrice,
+        str.shipping_price as shippingPrice,
+        str.registration_cost as registrationCost,
+        str.operating_cost as operatingCost,
+        str.min_cost as minCost,
+        str.to_country as toCountry,
+        str.to_warehouse_name as toWarehouseName,
+        str.region as region,
+        st.effective_date as  effectiveDate,
+        st.expire_date as  expireDate,
+        st.weight_unit as weightUnit,
+        st.volume_setting as volumeSetting,
+        st.currency
         from logistics_supplier ls
         inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
         inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
         inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
         inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
         <where>
-            ls.is_deleted = false and ls.disabled = false and st.disabled = false
+            ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
+            DAY' or st.expire_date is null)
+            <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
+                and case st.weight_unit when 'kg' then
+                #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
+                else
+                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+                end
+            </if>
+            <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
+                and case st.weight_unit when 'kg' then
+                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+                else
+                #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
+                end
+            </if>
             <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
                 and str.from_country in
                 <foreach collection="params.fromCountryList" open="(" close=")" separator="," item="item">
