@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -554,6 +555,38 @@ public class SoB2cDTO implements Serializable {
          * 总利润率
          */
         private String profitRate;
+
+        /**
+         * 平台费率
+         */
+        private BigDecimal platformRate;
+
+
+        /**
+         * vat 费率
+         */
+        private BigDecimal vatRate;
+
+
+        /**
+         * 转账费率
+         */
+        private BigDecimal transferRate;
+
+        /**
+         * 平台费类型
+         */
+        private String platformCostType;
+
+        /**
+         * 转账费类型
+         */
+        private String transferCostType;
+
+        /**
+         * VAT税费类型
+         */
+        private String vatCostType;
     }
 
     /**

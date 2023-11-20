@@ -426,7 +426,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
         // TODO 查询当前仓库的平台类型
-        String dictPlatform = skuMappingEntity.getPlatformName().contains("艾姆勒") ? OmsPlatformEnum.OMS_IML.getCode() : "";
+        String dictPlatform = skuMappingEntity.getWarehouseName().contains("艾姆勒") ? OmsPlatformEnum.OMS_IML.getCode() : "";
         skuMappingEntity.setDictPlatform(dictPlatform);
         skuMappingEntity.setHasMappingAll(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform) && dto.checkAndGetHasMappingAll());
         LocalDateTime now = LocalDateTime.now();

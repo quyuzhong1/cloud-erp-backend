@@ -101,12 +101,12 @@ public class SkuMappingDTO implements Serializable {
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
 
-        /**
-         * 平台类型: goodcang=谷仓，iml=艾姆勒
-         */
-        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
-        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
-        private String dictPlatform;
+//        /**
+//         * 平台类型: goodcang=谷仓，iml=艾姆勒
+//         */
+//        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
+//        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
+//        private String dictPlatform;
 
     }
 
