@@ -47,4 +47,29 @@ public interface LogisticsOrderOperateLogService extends SuperService<LogisticsO
      * @param responseParamJson
      */
     LogisticsOrderOperateLogEntity addOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+    /**
+     * 增加接口调用记录
+     *
+     * @param authId
+     * @param sourceId
+     * @param businessType
+     * @param logisticsPlatform
+     * @param status
+     * @param requestParamJson
+     * @param responseParamJson
+     */
+    String pullOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+    /**
+     * 增加接口调用记录
+     *
+     * @param authId
+     * @param sourceId
+     * @param businessType
+     * @param logisticsPlatform
+     * @param status
+     * @param requestParamJson
+     * @param responseParamJson
+     */
+    String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
+
 }

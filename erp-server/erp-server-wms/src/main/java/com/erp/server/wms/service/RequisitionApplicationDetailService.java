@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -19,18 +20,20 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
     * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
+    * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(RequisitionApplicationDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
     * @author Luo_WG
     * @date: 2023-11-16
     * @param dto
+    * @param mainId
     * @return
     */
-    Boolean update(RequisitionApplicationDetailDTO.UpdateDTO dto);
+    Boolean update(RequisitionApplicationDTO.UpdateDTO dto, String mainId);
 
 
 }

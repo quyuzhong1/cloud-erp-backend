@@ -78,12 +78,12 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.setTrackNo(orderResponse.getIntl_tracking_no());
                 success = true;
                 responseVO.success();
-                logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(response));
             } else {
                 responseVO.failure(getPlatForm().getName(), response.getCode(), response.getMessage());
-                logisticsOrderOperateLogService.addOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(response));
             }
@@ -152,7 +152,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 iopResponse = aliExpressShipperService.queryLogisticsOrder(logisticsQueryBaseVO.getAuthMap(), queryOrderRequest);
                 //失败
                 if (!StringUtils.isBlank(iopResponse.getCode()) && !Objects.equals("0", iopResponse.getCode())) {
-                    logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                    logisticsOrderOperateLogService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                             logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(iopResponse));
                 }else{
@@ -165,7 +165,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                                     .deliveryNo(queryOrderResponse.getTrade_order_id())
                                     .logisticsChannelNo(queryOrderResponse.getLogistics_service_list().get(0).getCode())
                                     .build();
-                            logisticsOrderOperateLogService.addOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
+                            logisticsOrderOperateLogService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                                     logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
                             list.add(orderResponseVO);
@@ -208,14 +208,14 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             //失败
             if (StringUtils.isBlank(labelList.getCode()) || !Objects.equals("0", labelList.getCode())) {
-                logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
                 response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), labelList.getCode(), labelList.getMessage());
                 responses.add(response);
                 return failure(responses);
             } else {
-                logisticsOrderOperateLogService.addOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
                 //TODO 结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
@@ -245,13 +245,13 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             IopResponse responseMsg = aliExpressShipperService.getChanelList(chanelQueryVO.getAuthMap());
             //失败
             if (StringUtils.isBlank(responseMsg.getCode()) || !Objects.equals("0", responseMsg.getCode())) {
-                logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
                 return failure(responseMsg.getMessage());
             } else {
                 List<ChannelResponse> chanelInfos = JSONObject.parseArray(responseMsg.getBody(), ChannelResponse.class);
-                logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
                 return success(LogisticsChannelConverter.INSTANCE.channelConvertByAliExpress(chanelInfos));

@@ -90,18 +90,18 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsTrackEntities.add(logisticsTrackEntity);
                     });
                 }
-                logisticsOrderOperateLogService.addOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return success(logisticsTrackEntities);
             } else {
-                logisticsOrderOperateLogService.addOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+                logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return failure(track.getMsg());
             }
         }catch (Exception e){
-            logisticsOrderOperateLogService.addOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                     UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(e.getMessage()));
             return failure(e.getMessage());

@@ -296,9 +296,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //Delete和Cancel状态的货件不允许下推发货单
         List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
                 .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
-                        || ShipmentStatus.CLOSED.getValue().equals(req.getPlatformShipmentStatus()))
+                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(collect)) {
+        if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
         }
 
@@ -343,9 +343,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //Delete和Cancel状态的货件不允许下推发货单
         List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
                 .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
-                        || ShipmentStatus.CLOSED.getValue().equals(req.getPlatformShipmentStatus()))
+                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(collect)) {
+        if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
         }
 

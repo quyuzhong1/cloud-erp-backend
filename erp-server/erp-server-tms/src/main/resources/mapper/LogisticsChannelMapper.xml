@@ -67,6 +67,18 @@
             </foreach>
         </if>
     </select>
+    <select id="listBySupplierId" resultType="com.common.business.dto.base.BaseIdDTO$CodeDTO">
+        SELECT
+            lc.id,
+            lc.name,
+            lc.code,
+            lc.disabled
+        FROM logistics_channel lc
+        INNER JOIN logistics_supplier ls
+        ON lc.source_id = ls.id and ls.is_deleted = false
+        WHERE lc.is_deleted=false
+        AND ls.supplier_id=#{supplierId}
+    </select>
 
 
 </mapper>

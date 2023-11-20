@@ -52,7 +52,6 @@ public class LogisticsSupplierDTO implements Serializable {
 
         /**
          * 物流商类型
-         *
          */
         @NotBlank(message = "物流类型不能为空")
         private String type;
@@ -75,30 +74,30 @@ public class LogisticsSupplierDTO implements Serializable {
         /**
          * 创建人
          */
-        private List<String>  createUserIdList;
+        private List<String> createUserIdList;
 
         /**
          * 创建时间
          */
-        private List<LocalDate>  createTimeList;
+        private List<LocalDate> createTimeList;
 
         /**
          * 更新时间
          */
-        private List<LocalDate>  updateTimeList;
+        private List<LocalDate> updateTimeList;
 
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO{
+    public static class ExportDTO extends PagingParamDTO {
         private List<String> ids;
     }
 
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO{
+    public static class PagingViewDTO {
         /**
          * id
          */
@@ -158,12 +157,7 @@ public class LogisticsSupplierDTO implements Serializable {
         /**
          * 最新授权时间
          */
-        private LocalDateTime  authTime;
-
-
-
-
-
+        private LocalDateTime authTime;
 
 
     }
@@ -171,7 +165,7 @@ public class LogisticsSupplierDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AuthDTO{
+    public static class AuthDTO {
         /**
          * 主键id
          */
@@ -216,11 +210,11 @@ public class LogisticsSupplierDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ChannelViewDTO{
+    public static class ChannelViewDTO {
         /**
          * 仓库id
          */
-         private String warehouseId;
+        private String warehouseId;
 
         /**
          * 仓库名
@@ -302,6 +296,20 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+    }
+
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDisabledDTO  {
+
+        private String supplierId;
+
+        private Boolean disabled;
 
     }
 

@@ -54,9 +54,9 @@ public enum ModuleTypeEnum {
     LOGISTICS_CHANNEL("51", "物流渠道"),
     SHIPPING_TEMPLATE("53", "运费模板"),
     LOGISTICS_BILL_COST("52", "自发货费用"),
+    THIRD_WAREHOUSE("53", "第三方仓"),
     OVERSEAS_DELIVERY_PLAN("54", "海外发货计划"),
-
-    THIRD_WAREHOUSE("53", "第三方仓")
+    REQUISITION_APPLICATION("55", "要货申请"),
     ;
 
 
