@@ -66,7 +66,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          /**
          * 产品编号
          */
-         private String skuNoList;
+         private List<String> skuNoList;
 
          /**
          * 审核状态
@@ -141,7 +141,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 作废状态中文名
+         * 作废状态
          */
         private Boolean invalidStatus;
 
@@ -178,7 +178,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 国家
          */
-        private String countryId;
+        private String country;
 
         /**
          * 国家中文名
@@ -280,14 +280,14 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String code;
 
         /**
-        * 状态
-        */
-        private String status;
+         * 审核状态
+         */
+        private String approveStatus;
 
         /**
-        * 状态中文名
-        */
-        private String statusName;
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 目的仓id
@@ -363,34 +363,9 @@ public class OverseasDeliveryPlanDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-
-        /**
-        * 发货状态
-        */
-        private String deliveryStatus;
-
-        /**
         * 目的仓id
         */
         private String toWarehouseId;
-
-        /**
-        * 目的仓中文名
-        */
-        private String toWarehouseName;
-
-        /**
-        * 国家二字码
-        */
-        private String country;
-
-        /**
-        * 国家中文名
-        */
-        private String countryName;
 
         /**
         * 计划发货时间
@@ -465,6 +440,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 要货类型
          */
         private String type;
@@ -523,6 +503,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 要货数量
          */
         private Integer requisitionQty;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
     }
 
     /**
@@ -573,11 +558,6 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String deliveryWarehouseId;
 
         /**
-         * 发货仓名称
-         */
-        private String deliveryWarehouseName;
-
-        /**
          * 目的仓id
          */
         private String toWarehouseId;
@@ -596,6 +576,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * ERP的SKU
          */
         private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
 
         /**
          * 产品名称

@@ -59,7 +59,11 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     */
     @TableField("picking_qty")
     private Integer pickingQty;
-
+    /**
+     * 来源详情id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
 
     public static final String MAIN_ID = "main_id";
 

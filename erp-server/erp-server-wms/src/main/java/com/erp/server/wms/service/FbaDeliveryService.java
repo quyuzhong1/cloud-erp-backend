@@ -207,7 +207,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+    List<FbaDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
 
     /**
      * 根据来源单号查询发货信息

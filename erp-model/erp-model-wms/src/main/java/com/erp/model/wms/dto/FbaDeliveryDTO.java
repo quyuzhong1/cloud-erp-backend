@@ -578,8 +578,6 @@ public class FbaDeliveryDTO implements Serializable {
         /**
         * 店铺id
         */
-        @NotBlank(message = "店铺id不能为空")
-        @Size(max = 64,message = "店铺id最大长度不能超过64位")
         private String shopId;
 
         /**
@@ -801,5 +799,33 @@ public class FbaDeliveryDTO implements Serializable {
          * bom版本
          */
         private String bomVersion;
+    }
+
+    /**
+     * 发货记录
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverRecordView {
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 发货状态编码
+         */
+        private String deliveryStatus;
+        /**
+         * 发货状态名称
+         */
+        private String deliveryStatusName;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 发货时间
+         */
+        private LocalDateTime deliveryTime;
     }
 }

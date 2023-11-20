@@ -52,4 +52,22 @@ public interface OverseasDeliveryPlanMapper extends BaseMapper<OverseasDeliveryP
     * @return
     */
     List<OverseasDeliveryPlanDTO.TabListDTO> tabList(@Param("params") OverseasDeliveryPlanDTO.PagingParamDTO searchParam);
+
+    /**
+     * 下推要货申请列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/17 16:19
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>
+     **/
+    List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
+
+    /**
+     * 下推发货单列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/20 10:17
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>
+     **/
+    List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 }

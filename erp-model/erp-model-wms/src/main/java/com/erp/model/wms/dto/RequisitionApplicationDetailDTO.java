@@ -111,7 +111,6 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -121,43 +120,34 @@ public class RequisitionApplicationDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
         * 产品id
         */
-        @NotBlank(message = "产品id不能为空")
-        @Size(max = 19,message = "产品id最大长度不能超过19位")
         private String skuId;
 
         /**
         * bom版本
         */
-        @NotBlank(message = "bom版本不能为空")
-        @Size(max = 255,message = "bom版本最大长度不能超过255位")
         private String bomVersion;
 
         /**
         * 要货数量
         */
-        @NotNull(message = "要货数量不能为空")
         private Integer requisitionQty;
 
         /**
         * 批准数量
         */
-        @NotNull(message = "批准数量不能为空")
         private Integer approveQty;
 
         /**
         * 拣货数量
         */
-        @NotNull(message = "拣货数量不能为空")
         private Integer pickingQty;
+
+        /**
+        * 来源详情id
+        */
+        private String sourceDetailId;
 
 
     }

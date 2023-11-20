@@ -32,5 +32,14 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     */
     Boolean update(OverseasProviderWarehouseDTO.UpdateDTO dto);
 
+    /**
+     * 根据仓库id查询绑定关系
+     * @Author Luo_WG
+     * @Date 2023/11/17 12:18
+     * @param warehouseId
+     * @return com.erp.model.wms.entity.OverseasProviderWarehouseEntity
+     **/
+    OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId);
+
 
 }

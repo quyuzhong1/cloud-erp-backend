@@ -146,4 +146,13 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO delete(String id);
+
+    /**
+     * 根据来源id查询要货单
+     * @Author Luo_WG
+     * @Date 2023/11/17 15:20
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.RequisitionApplicationEntity>
+     **/
+    List<RequisitionApplicationEntity> listBySourceIds(List<String> sourceIds);
 }

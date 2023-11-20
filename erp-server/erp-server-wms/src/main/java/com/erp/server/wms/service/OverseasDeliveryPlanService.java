@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -159,7 +160,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.DeliverRecordDTO>
      **/
-    List<OverseasDeliveryPlanDTO.DeliverRecordDTO> listDeliverRecord(String id);
+    List<FbaDeliveryDTO.DeliverRecordView> listDeliverRecord(String id);
 
     /**
      * 下推要货申请列表查询
@@ -180,6 +181,15 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
     Boolean generateRequisitionApplicationSave(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
+     * 发货计划下推要货申请保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/20 9:52
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateRequisitionApplicationSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list);
+
+    /**
      * 下推发货单列表查询
      * @Author Luo_WG
      * @Date 2023/11/16 18:09
@@ -196,4 +206,14 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @return java.lang.Boolean
      **/
     Boolean generateDeliverSave(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
+
+    /**
+     * 下推发货单保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/20 9:51
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateDeliverSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
+
 }
