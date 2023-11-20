@@ -11,11 +11,9 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -151,7 +149,8 @@ public class LogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateTrackInfo")
-    public ApiResult batchUpdateTrackInfo(@RequestParam(value = "details") List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
+    public ApiResult batchUpdateTrackInfo(@RequestBody List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
+        if (CollectionUtils.isEmpty(logisticsBillDetailEntities)) return failure("数据不能为空");
         logisticsBaseService.batchUpdateTrackInfo(logisticsBillDetailEntities);
         return success();
     }
