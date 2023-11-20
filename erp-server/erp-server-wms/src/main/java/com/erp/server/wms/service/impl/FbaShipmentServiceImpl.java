@@ -787,8 +787,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 saveOrUpdateReceiveList.add(e);
             } else {
                 // 修改
-                e.setId(receiveEntity.getId());
-                if (!e.toString().equals(receiveEntity.toString())) {
+                // 新增签收记录
+                if (!Objects.equals(e.getReceiveQty(), receiveEntity.getReceiveQty())) {
+                    // ERP当前签收数量 = 亚马逊当前签收数量 - ERP历史记录签收数量
+                    e.setReceiveQty(e.getReceiveQty() - receiveEntity.getReceiveQty());
                     saveOrUpdateReceiveList.add(e);
                 }
             }
