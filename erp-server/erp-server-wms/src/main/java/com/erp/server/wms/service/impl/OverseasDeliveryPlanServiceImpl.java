@@ -457,10 +457,11 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             return;
         }
         //获取sku信息
-        List<String> skuNoList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        List<String> skuIdList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取库存sku信息
+        List<String> skuNoList = detailEntityList.stream().map(OverseasDeliveryPlanDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
 
         //设置状态中文名称
@@ -469,6 +470,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         //明细信息
         List<OverseasDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, OverseasDeliveryPlanDetailDTO.ViewDTO.class);
         for (OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO : viewDTOS) {
+
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
@@ -542,7 +544,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
             //海外发货计划下推要货单要货类型默认是：海外仓
@@ -623,7 +625,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (OverseasDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : list) {
 
@@ -669,8 +671,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         //获取sku信息
-        List<String> skuNoList = list.stream().map(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuNoList);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         for (Map.Entry<String, List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> value = entry.getValue();
@@ -777,7 +778,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -787,7 +788,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         for(OverseasDeliveryPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryCode()));
+            data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryStatus()));
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(data.getSkuId())).collect(Collectors.toList());
