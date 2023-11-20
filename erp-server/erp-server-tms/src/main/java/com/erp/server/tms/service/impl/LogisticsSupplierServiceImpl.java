@@ -268,6 +268,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return resultList;
     }
 
+    @Override
+    public Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto) {
+        return this.lambdaUpdate().eq(LogisticsSupplierEntity::getSupplierId,dto.getSupplierId()).
+                set(LogisticsSupplierEntity::getDisabled,dto.getDisabled()).update();
+    }
+
 
     /**
      * 填充分页数据

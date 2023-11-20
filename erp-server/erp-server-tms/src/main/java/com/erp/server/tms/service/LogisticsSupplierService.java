@@ -97,4 +97,14 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return List<DisabledDTO>
      */
     List<BaseDropDownDTO.DisabledDTO> listAll();
+
+    /**
+     * 更改启用禁用状态
+     *
+     *@parms dto
+     *@return 
+     *@author yl
+     *@date 2023-11-20
+     */
+    Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto);
 }

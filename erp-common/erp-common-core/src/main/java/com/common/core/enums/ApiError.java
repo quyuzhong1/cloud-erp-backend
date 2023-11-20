@@ -976,7 +976,7 @@ public enum ApiError implements Serializable {
     ERROR_SHIPPING_PRICE_NOT_NULL(94021,"运费规则运费单价不能为空"),
     ERROR_CANCEL_CONDITION(94022,"只有已授权才能取消授权"),
     NOT_SYNC_BY_NOT_AUTH(94023,"未授权的物流商不能进行同步"),
-
+    ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST(94024,"存在未停用的物流渠道无法停用该物流商"),
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

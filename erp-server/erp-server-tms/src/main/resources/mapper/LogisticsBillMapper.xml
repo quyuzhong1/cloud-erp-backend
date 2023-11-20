@@ -69,6 +69,7 @@
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
+        WHERE is_deleted=false
         GROUP BY track_status
     </select>
     <!--分页列表-->

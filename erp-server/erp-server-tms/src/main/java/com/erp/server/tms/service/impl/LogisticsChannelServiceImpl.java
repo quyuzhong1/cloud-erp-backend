@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -295,6 +296,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list=this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         return resultList;
+    }
+
+    @Override
+    public List<BaseIdDTO.CodeDTO> listBySupplierId(String supplierId) {
+        return baseMapper.listBySupplierId(supplierId);
     }
 
     private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {

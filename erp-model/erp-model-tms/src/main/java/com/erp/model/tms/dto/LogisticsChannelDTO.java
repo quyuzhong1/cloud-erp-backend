@@ -368,7 +368,6 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 运费模板id
          */
-        @NotBlank(message = "运费模板不能为空")
         private String shippingTemplateId;
 
         /**
