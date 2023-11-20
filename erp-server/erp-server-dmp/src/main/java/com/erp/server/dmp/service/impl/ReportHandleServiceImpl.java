@@ -18,6 +18,7 @@ import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
@@ -51,7 +52,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -110,15 +110,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 .map(ReportFbaMyiAllInventoryMongoDTO::getSku)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, ListingInfoEntity> listingInfoMap;
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
         if (!CollectionUtils.isEmpty(sellerSkuList)) {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.list(paramDTO)
+            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
-                    .collect(Collectors.toMap(ListingInfoEntity::getSkuNo, Function.identity()));
+                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
         } else {
             listingInfoMap = new HashMap<>();
         }

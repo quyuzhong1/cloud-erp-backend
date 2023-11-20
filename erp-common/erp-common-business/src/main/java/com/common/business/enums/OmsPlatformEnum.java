@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.Getter;
 
 /**
  * 中转仓平台枚举类
@@ -8,6 +9,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
  * @Author Cloud
  * @Date 2023/4/6 14:49
  **/
+@Getter
 public enum OmsPlatformEnum {
 
     OMS_GOOD_CANG("goodcang","谷仓"),
@@ -16,20 +18,12 @@ public enum OmsPlatformEnum {
     ;
 
     @EnumValue
-    private String code;
-    private String name;
+    private final String code;
+    private final String name;
 
     OmsPlatformEnum(String code, String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public String getCode(){
-        return this.code;
-    }
-
-    public String getName(){
-        return this.name;
     }
 
     public static OmsPlatformEnum getByCode(String code) {

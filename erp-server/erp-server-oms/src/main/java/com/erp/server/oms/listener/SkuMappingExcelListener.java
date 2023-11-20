@@ -173,7 +173,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setId(listingId);
             addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
-            addListingInfoEntity.setPlatformProductName(platformProductName);
+            addListingInfoEntity.setPlatformSkuName(platformProductName);
             addListingInfoEntity.setMatchResult(Boolean.TRUE);
             addListingInfoEntityList.add(addListingInfoEntity);
         }

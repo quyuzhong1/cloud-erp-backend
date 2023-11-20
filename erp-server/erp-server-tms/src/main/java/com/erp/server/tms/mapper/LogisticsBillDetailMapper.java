@@ -1,8 +1,12 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetailEntity> {
 
+    IPage<LogisticsBillDetailEntity> getPage(@Param("page") Page<LogisticsBillDetailEntity> page, @Param("query") LogisticsBillDetailQueryDTO query);
 }

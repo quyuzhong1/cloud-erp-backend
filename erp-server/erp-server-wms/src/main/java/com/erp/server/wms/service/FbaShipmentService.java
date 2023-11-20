@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -124,7 +124,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @author Jim
      * @date 2023/11/10
      **/
-    void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
+    void checkAndSaveAll(FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
 
     /**
      * FBA货件相关更新
@@ -132,7 +132,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @author Jim
      * @date 2023/11/10
      **/
-    void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoEntity> listingInfoMap, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
+    void checkAndUpdateAll(FbaShipmentEntity oldEntity, FbaShipmentEntity entity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap, List<String> hasChildrenSkuIds, List<PlatformFbaShipmentReceiveDTO> receiveDTOList, List<PlatformFbaShipmentReceiveDTO> detailList);
 
     /**
      * 通过fbaShipmentId查询实体

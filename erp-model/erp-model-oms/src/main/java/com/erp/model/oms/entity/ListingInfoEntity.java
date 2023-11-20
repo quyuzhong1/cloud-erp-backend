@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -25,34 +24,28 @@ import java.time.LocalDateTime;
 public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
 
     /**
-     * sku no
-     */
-    @TableField("sku_no")
-    private String skuNo;
-
-    /**
-     * 产品名称
-     */
-    @TableField("product_name")
-    private String productName;
-
-    /**
-     * 平台产品(spu) no或id
-     */
-    @TableField("platform_product_no")
-    private String platformProductNo;
-
-    /**
      * 平台sku no
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
 
     /**
-     * 平台产品名称
+     * 平台产品Sku名称
      */
-    @TableField("platform_product_name")
-    private String platformProductName;
+    @TableField("platform_sku_name")
+    private String platformSkuName;
+
+    /**
+     * 平台产品(spu) no或id
+     */
+    @TableField("platform_spu_no")
+    private String platformSpuNo;
+
+    /**
+     * 平台产品SPU名称
+     */
+    @TableField("platform_spu_name")
+    private String platformSpuName;
 
     /**
      * 平台
@@ -122,8 +115,7 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @Override
     public String toString() {
         return "ListingInfoEntity{" +
-                ", productName='" + productName + '\'' +
-                ", platformProductName='" + platformProductName + '\'' +
+                ", platformSkuName='" + platformSkuName + '\'' +
                 ", productImageUrl='" + productImageUrl + '\'' +
                 ", productSpec='" + productSpec + '\'' +
                 ", productPacking='" + productPacking + '\'' +

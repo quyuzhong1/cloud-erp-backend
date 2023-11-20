@@ -4,6 +4,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
@@ -177,5 +178,14 @@ public class Track123LogisticsHandlerImplTest {
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<ConfirmResponseVO>> listApiResult = track123LogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
+    }
+
+    @Test
+    public void getTrack(){
+        LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
+        logisticsQueryVO.setTrackNos(Collections.singletonList("wj12345167721"));
+        logisticsQueryVO.setAuthMap(authMap);
+        ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getTrack(logisticsQueryVO);
+        System.out.println(track);
     }
 }

@@ -4,24 +4,26 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsService;
+import com.erp.server.tms.service.LogisticsTrackService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -39,6 +41,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private LogisticsRegistry logisticsRegistry;
     @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
 
     @Override
     public ApiResult syncLogisticsChannel(String platform) {
@@ -67,13 +71,13 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     @Override
     public List<LogisticsOrderResponseVO> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
         List<LogisticsOrderResponseVO> list = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(logisticsQueryVOList)){
+        if (CollectionUtils.isNotEmpty(logisticsQueryVOList)) {
             logisticsQueryVOList.forEach(logisticsQueryBaseVO -> {
                 Map<String, String> authMap = logisticsQueryBaseVO.getAuthMap();
-                if (Objects.nonNull(authMap.get("logisticsPlatform"))){
+                if (Objects.nonNull(authMap.get("logisticsPlatform"))) {
                     LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
                     ApiResult<List<LogisticsOrderResponseVO>> listApiResult = service.queryOrderList(logisticsQueryVOList);
-                    if (listApiResult.isSuccess()){
+                    if (listApiResult.isSuccess()) {
                         list.addAll(listApiResult.getData());
                     }
                 }
@@ -81,6 +85,50 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
 
         return list;
+    }
+
+    /**
+     * 根据平台类型获取物流轨迹
+     *
+     * @param platformType
+     * @param records
+     */
+    @Override
+    public void processTrackData(String platformType, List<LogisticsBillDetailEntity> records) {
+        LogisticsService service = logisticsRegistry.getHandler(platformType);
+        List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
+        if (CollectionUtils.isEmpty(mapList)) return;
+        LogisticsTrackVO logisticsTrackVO = LogisticsTrackVO.builder()
+                .authMap(mapList.get(0))
+                .trackNos(records.stream().map(LogisticsBillDetailEntity::getTrackNo).collect(Collectors.toList()))
+                .build();
+        ApiResult<List<LogisticsTrackEntity>> track = service.getTrack(logisticsTrackVO);
+        if (track.isSuccess()){
+            List<LogisticsTrackEntity> data = track.getData();
+            if (CollectionUtils.isNotEmpty(data)){
+                Map<String, List<LogisticsTrackEntity>> collect = data.stream().sorted(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).collect(Collectors.groupingBy(LogisticsTrackEntity::getTrackNo));
+                //根据记录进行更新物流信息
+                records.forEach(logisticsBillDetailEntity -> {
+                    //获取对应编号的轨迹
+                    List<LogisticsTrackEntity> logisticsTrackEntities = collect.get(logisticsBillDetailEntity.getTrackNo());
+                    //先物理删除  再新增
+                    if (CollectionUtils.isNotEmpty(logisticsTrackEntities)){
+                        //删除
+                        logisticsTrackService.deleteByTrackNo(logisticsBillDetailEntity.getTrackNo());
+                        //新增
+                        logisticsTrackService.saveBatch(logisticsTrackEntities);
+                        //TODO 根据记录最新状态修改订单状态
+                        //Student latest = Collections.max(studentList,
+                        //                                 Comparator.comparing(s -> s.getDate()));
+                        LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
+                        logisticsTrackService.checkTrackStatus(max);
+                    }
+                });
+                data.forEach(logisticsTrackEntity -> {
+                    logisticsTrackService.saveOrUpdate(logisticsTrackEntity);
+                });
+            }
+        }
     }
 
     private ApiResult syncSingleChannel(String platform) {
@@ -99,7 +147,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
             } else {
-                log.error("渠道查询异常：{}",channels.getMsg());
+                log.error("渠道查询异常：{}", channels.getMsg());
             }
         });
         log.info("{}渠道同步结束", platform);

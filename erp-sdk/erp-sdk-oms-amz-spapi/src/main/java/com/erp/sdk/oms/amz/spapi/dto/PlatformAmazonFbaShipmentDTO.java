@@ -57,6 +57,7 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
         this.platformUpdateTime = LocalDateTime.now(ZoneId.systemDefault());
         this.downloadStatus = 0;
         this.detailList = new InboundShipmentItemList();
+        super.setUniqueId(shipmentInfo.getShipmentId());
     }
 
     /**

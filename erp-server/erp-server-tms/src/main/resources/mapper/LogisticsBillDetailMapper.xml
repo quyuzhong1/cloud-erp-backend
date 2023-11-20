@@ -15,6 +15,9 @@
        <result column="main_id" property="mainId" />
        <result column="track_status" property="trackStatus" />
        <result column="track_no" property="trackNo" />
+       <result column="track_query_mode" property="trackQueryMode" />
+       <result column="track_time" property="trackTime" />
+       <result column="track_enable" property="trackEnable" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,8 +31,14 @@
         update_time,
         version,
         is_deleted,
-        main_id, track_status, track_no
+        main_id, track_status, track_no,track_time,track_query_mode,track_enable
     </sql>
 
+    <select id="getPage" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"></include>
+            from logistics_bill_detail
+        where track_status != 'sign' and is_deleted = false and track_query_mode = #{query.trackQueryMode}
+        order by track_time desc
+    </select>
 
 </mapper>

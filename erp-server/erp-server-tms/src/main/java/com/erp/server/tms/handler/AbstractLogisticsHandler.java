@@ -151,10 +151,10 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     /**
      * 轨迹查询
      *
-     * @param logisticsQueryBaseVOS
+     * @param logisticsTrackVO
      * @return
      */
-    public ApiResult<List<LogisticsTrackEntity>> getTrack(List<LogisticsQueryBaseVO> logisticsQueryBaseVOS) {
+    public ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 

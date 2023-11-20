@@ -1,7 +1,9 @@
 package com.erp.server.oms.convert;
 
 import com.common.business.dto.PlatformProductDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -35,4 +37,10 @@ public interface OmsListingConverter {
     })
     ListingInfoEntity listingDtoToEntity(PlatformProductDTO platformProductDTO);
 
+
+    @Mappings({
+            @Mapping(target = "matchResult", source = "listingInfoEntity.matchResult"),
+            @Mapping(target = "type", source = "listingInfoEntity.type"),
+    })
+    ListingInfoWithSkuMappingDTO listingAndSKuMappingToDTO(ListingInfoEntity listingInfoEntity, SkuMappingEntity skuMappingEntity);
 }

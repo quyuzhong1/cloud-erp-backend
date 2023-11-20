@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,33 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SkuMappingDTO implements Serializable {
+
+    /**
+     * 通用映射基础
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BaseMapping {
+
+        /**
+         * 对照关系是否映射到改服务商所有仓库(当前只有谷仓支持): f=否(), t=是
+         */
+        private Boolean hasMappingAll;
+
+        /**
+         * 检查和获取：
+         * 对照关系是否映射到改服务商所有仓库(当前只有谷仓支持): f=否(), t=是
+         */
+        public Boolean checkAndGetHasMappingAll() {
+            if (null == this.hasMappingAll){
+                return false;
+            }
+            return hasMappingAll;
+        }
+
+    }
+
+
 
 
     /**
@@ -56,7 +84,7 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddWarehouseSkuDTO{
+    public static class AddWarehouseSkuDTO extends BaseMapping {
 
         @NotBlank(message = "仓库id不能为空")
         private String warehouseId;
@@ -71,6 +99,13 @@ public class SkuMappingDTO implements Serializable {
 
         @NotBlank(message = "产品sku不能为空")
         private String productSkuId;
+
+        /**
+         * 平台类型: goodcang=谷仓，iml=艾姆勒
+         */
+        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
+        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
+        private String dictPlatform;
 
     }
 
@@ -268,7 +303,7 @@ public class SkuMappingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateWarehouseSkuDTO {
+    public static class UpdateWarehouseSkuDTO extends BaseMapping {
 
         /**
          * id
@@ -445,6 +480,16 @@ public class SkuMappingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 平台产品SPU编号
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台产品(SPU)名称
+         */
+        private String platformSpuName;
+
 
     }
 
@@ -530,7 +575,15 @@ public class SkuMappingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 平台
+         */
+        private String dictPlatform;
 
+        /**
+         * 平台名称
+         */
+        private String platformName;
     }
 
     @Data

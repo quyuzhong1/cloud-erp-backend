@@ -51,4 +51,16 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      *@date 2023-11-16
      */
     List<LogisticsTrackDTO.ViewDTO> listByTrackNo(String trackNo);
+
+    /**
+     * 根据跟踪单号进行物理删除
+     * @param trackNo
+     */
+    void deleteByTrackNo(String trackNo);
+
+    /**
+     * 同步修改订单状态
+     * @param logisticsTrackEntity
+     */
+    void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity);
 }

@@ -2,6 +2,7 @@ package com.erp.server.dmp.convert;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -47,8 +48,8 @@ public interface DmpFbaInventoryConverter {
             @Mapping(target = "version", ignore = true),
             // 其他记录信息
 //            @Mapping(target = "name", source = "shopInfoEntity.warehouseName"),
-            @Mapping(target = "skuNo", expression = "java(null == listingInfoEntity ? \"\":listingInfoEntity.getSkuNo())"),
-            @Mapping(target = "productName", expression = "java(null == listingInfoEntity ? \"\":listingInfoEntity.getProductName())"),
+            @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\":listingInfoWithSkuMappingDTO.getProductSkuNo())"),
+            @Mapping(target = "productName", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\":listingInfoWithSkuMappingDTO.getProductName())"),
             @Mapping(target = "dataStartTime", expression = "java(java.time.OffsetDateTime.parse(combineInventoryDTO.getDataStartTime()))"),
             @Mapping(target = "dataEndTime", expression = "java(java.time.OffsetDateTime.parse(combineInventoryDTO.getDataEndTime()))"),
             // 库存报告管理信息
@@ -84,7 +85,7 @@ public interface DmpFbaInventoryConverter {
             ReportReservedMongoDTO reservedMongoDTO,
             ReportFbaInventoryPlanningMongoDTO planningMongoDTO,
             ShopInfoEntity shopInfoEntity,
-            ListingInfoEntity listingInfoEntity
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO
     );
 
 

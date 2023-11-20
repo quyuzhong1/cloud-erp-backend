@@ -124,7 +124,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         String warehouseId = warehouse.getId();
         //库存sku
         String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getSkuNo().
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getPlatformSkuNo().
                 equals(warehouseSkuNo)).findFirst().orElse(null);
         String listingId = "";
         if (Objects.nonNull(listingInfoEntity)) {
@@ -179,8 +179,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
             addListingInfoEntity.setId(listingId);
             addListingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
-            addListingInfoEntity.setSkuNo(warehouseSkuNo);
-            addListingInfoEntity.setProductName(importExcelDTO.getWarehouseProductName());
+            addListingInfoEntity.setPlatformSkuNo(warehouseSkuNo);
+            addListingInfoEntity.setPlatformSkuName(importExcelDTO.getWarehouseProductName());
             addListingInfoEntity.setMatchResult(Boolean.TRUE);
             addListingInfoEntityList.add(addListingInfoEntity);
             listingInfoEntityList.add(addListingInfoEntity);

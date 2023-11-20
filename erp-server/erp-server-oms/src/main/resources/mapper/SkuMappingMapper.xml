@@ -22,6 +22,8 @@
         li.product_spec,
         li.product_packing,
         li.platform_update_time,
+        li.platform_spu_no,
+        li.platform_spu_name,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
@@ -204,7 +206,9 @@
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.dict_platform,
+        sm.platform_name
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
