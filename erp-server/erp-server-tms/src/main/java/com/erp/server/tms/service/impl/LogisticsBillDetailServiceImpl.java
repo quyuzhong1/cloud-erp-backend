@@ -2,12 +2,15 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -116,6 +119,21 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "状态变更");
         return BatchResultDTO.success(detailEntity.getId(), detailEntity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
 
+    }
+
+    @Override
+    public IPage<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
+        Page<LogisticsBillDetailEntity> page = new Page<>();
+        page.setSize(query.getSize());
+        page.setCurrent(query.getCurrent());
+        IPage<LogisticsBillDetailEntity> result = baseMapper.getPage(page, query);
+        return result;
+    }
+
+    @Override
+    public LogisticsBillDetailEntity getDetailByTrackNo(String trackNo) {
+        return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo,trackNo)
+                .eq(LogisticsBillDetailEntity::getIsDeleted, false).last("limit 1").one();
     }
 
 

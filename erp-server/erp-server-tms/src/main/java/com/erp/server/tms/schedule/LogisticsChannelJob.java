@@ -1,11 +1,18 @@
 package com.erp.server.tms.schedule;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author zdy
@@ -19,8 +26,11 @@ import javax.annotation.Resource;
 @EnableScheduling
 public class LogisticsChannelJob {
 
+    private static  long pageSize = 100;
     @Resource
     private LogisticsBaseService logisticsBaseService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
      * 同步物流渠道
@@ -30,4 +40,43 @@ public class LogisticsChannelJob {
     public void syncLogisticsChannel() {
         logisticsBaseService.syncAllLogisticsChannel();
     }
+
+    /**
+     * 同步物流轨迹
+     */
+    @XxlJob("synLogisticsTrack")
+    public void synLogisticsTrack(){
+        long current = 1;
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query =LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(pageSize)
+                .current(current)
+                .build();
+
+    }
+
+    private void getTrackData(LogisticsBillDetailQueryDTO query){
+        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        //业务处理
+        processTrackData(page.getRecords());
+        long pages = page.getPages();
+        if (pages > page.getCurrent()){
+            //下一页
+            getTrackData(LogisticsBillDetailQueryDTO.builder()
+                    .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                    .size(pageSize)
+                    .current(page.getCurrent() + 1)
+                    .build());
+        }else {
+            //无数据
+            log.info("========同步物流轨迹数据完成==========");
+        }
+    }
+    private void processTrackData(List<LogisticsBillDetailEntity> records){
+        if (CollectionUtils.isNotEmpty(records)){
+            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
+        }
+    }
+
 }

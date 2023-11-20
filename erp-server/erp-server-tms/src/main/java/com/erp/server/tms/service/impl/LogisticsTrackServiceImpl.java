@@ -3,9 +3,11 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
@@ -19,10 +21,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -39,6 +44,8 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -119,6 +126,42 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             item.setStatusName(statusName);
         }
         return resultList;
+    }
+
+    @Override
+    public void deleteByTrackNo(String trackNo) {
+        baseMapper.deleteByTrackNo(trackNo);
+    }
+
+    /**
+     *运输状态 状态
+     * notFind 查询不到
+     * waitCollect等待揽收
+     * trackIng运输途中
+     * arriveWaitTake到达待取
+     * deliveryIng派送途中
+     * deliveryFail投递失败
+     * sign 成功签收
+     * maybeException可能异常
+     * transportLong  运输过久
+     *
+     * @param logisticsTrackEntity
+     */
+    @Override
+    public void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity) {
+        if (Objects.isNull(logisticsTrackEntity)) return;
+        LogisticsBillDetailEntity detailByTrackNo = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
+        if (Objects.isNull(detailByTrackNo)) return;
+        //状态更新同步
+        if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+            detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
+            detailByTrackNo.setTrackTime(LocalDateTime.now());
+            logisticsBillDetailService.saveOrUpdate(detailByTrackNo);
+            if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())){
+                //TODO 同步订单状态
+
+            }
+        }
     }
 
 

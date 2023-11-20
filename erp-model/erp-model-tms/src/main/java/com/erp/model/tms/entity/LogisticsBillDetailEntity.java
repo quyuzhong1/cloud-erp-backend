@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -39,7 +41,21 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     */
     @TableField("track_no")
     private String trackNo;
-
+    /**
+    * 运单号
+    */
+    @TableField("track_query_mode")
+    private String trackQueryMode;
+    /**
+     * 上次查询轨迹时间
+     */
+    @TableField("track_time")
+    private LocalDateTime trackTime;
+    /**
+     * 上次查询轨迹时间
+     */
+    @TableField("track_enable")
+    private Boolean trackEnable;
 
     public static final String MAIN_ID = "main_id";
 
