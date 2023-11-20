@@ -962,7 +962,7 @@ public enum ApiError implements Serializable {
     ERROR_ADDITIONAL_UNIT_WEIGHT_NOT_NULL(94007,"运费规则续重单位重量不能为空"),
     ERROR_ADDITIONAL_PRICE_NOT_NULL(94008,"运费规则续重单价不能为空"),
     ERROR_SHIPPING_OTHER_COST_NOT_EXIST(94009,"运费模板其他费用"),
-    ERROR_SHIPPING_TEMPLATE_DISABLED(94010,"运费模板被渠道引用不支持停用"),
+    ERROR_SHIPPING_TEMPLATE_DISABLED(94010,"运费模板被渠道引用不支持停用/启用"),
     ERROR_SHIPPING_TEMPLATE_DELETE(94011,"运费模板被渠道引用不支持删除"),
     ERROR_SHIPPING_TEMPLATE_EXIST(94012,"运费模板已存在"),
     ERROR_SHIPPING_TEMPLATE_RULE_COUNTRY_REPEAT(94013,"起始国【{}】、目的国【{}】运费规则重量区间重叠"),
