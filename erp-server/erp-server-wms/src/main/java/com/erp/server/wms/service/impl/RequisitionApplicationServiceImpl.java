@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
@@ -61,8 +62,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         log.info("开始新增要货申请单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHJH);
         requisitionApplicationEntity.setCode(code);
         boolean save = super.save(requisitionApplicationEntity);
         if(!save) {
