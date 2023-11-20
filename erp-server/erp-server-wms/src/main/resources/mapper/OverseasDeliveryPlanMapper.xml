@@ -44,7 +44,107 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$ListDTO">
-
+        SELECT
+            odp.id,
+            odp.code,
+            odp.approve_status,
+            odp.invalid_status,
+            odp.delivery_status,
+            odp.to_warehouse_id,
+            odp.to_warehouse_name,
+            odp.country,
+            odp.country_name,
+            odpd.sku_id,
+            odpd.sku_no,
+            odpd.is_combination,
+            odpd.qty AS planQty,
+            odp.create_user_id,
+            odp.create_user_name,
+            odp.approve_user_id,
+            odp.approve_user_name,
+            odp.create_time,
+            odp.approve_time
+        FROM overseas_delivery_plan_detail odpd
+        INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <!--状态-->
+        <if test="params.tabFlag != null and params.tabFlag != ''">
+            AND odp.approve_status = #{params.tabFlag}
+        </if>
+        <!--单号-->
+        <if test="params.code != null and params.code != ''">
+            AND odp.code ILIKE concat('%',#{params.code},'%')
+        </if>
+        <!--sku编号-->
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            AND odpd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--审核状态-->
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            AND odp.approve_status in
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <!--发货状态-->
+        <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
+            AND odp.delivery_status in
+            <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
+                #{deliveryStatus}
+            </foreach>
+        </if>
+        <!--发货单号-->
+        <if test="params.deliveryCode != null and params.deliveryCode != ''">
+            AND odp.delivery_code ILIKE concat('%',#{params.deliveryCode},'%')
+        </if>
+        <!--目的仓库-->
+        <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
+            AND odp.to_warehouse_id in
+            <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" close=")" separator=",">
+                #{toWarehouseId}
+            </foreach>
+        </if>
+        <!--国家-->
+        <if test="params.countryList != null and params.countryList.size > 0">
+            AND odp.country in
+            <foreach collection="params.countryList" item="country" open="(" close=")" separator=",">
+                #{country}
+            </foreach>
+        </if>
+        <!--是否组合品-->
+        <if test="params.isCombination != null">
+            and odpd.is_combination = #{params.isCombination}
+        </if>
+        <!--操作人-->
+        <if test="params.updateUserIdList != null and params.updateUserIdList.size > 0">
+            AND odp.update_user_id in
+            <foreach collection="params.updateUserIdList" item="updateUserId" open="(" close=")" separator=",">
+                #{updateUserId}
+            </foreach>
+        </if>
+        <!--创建时间-->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND odp.create_time >= #{params.createTimeList[0]} and
+            (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.create_time
+        </if>
+        <!--审核时间-->
+        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+            AND odp.approve_time >= #{params.approveTimeList[0]} and
+            (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.approve_time
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        odp.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -52,7 +152,117 @@
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$ListDTO">
-
+        SELECT
+        odp.id,
+        odp.code,
+        odp.approve_status,
+        odp.invalid_status,
+        odp.delivery_status,
+        odp.to_warehouse_id,
+        odp.to_warehouse_name,
+        odp.country,
+        odp.country_name,
+        odpd.sku_id,
+        odpd.sku_no,
+        odpd.is_combination,
+        odpd.qty AS planQty,
+        odp.create_user_id,
+        odp.create_user_name,
+        odp.approve_user_id,
+        odp.approve_user_name,
+        odp.create_time,
+        odp.approve_time
+        FROM overseas_delivery_plan_detail odpd
+        INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0 ">
+                AND odp.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <!--状态-->
+                <if test="params.tabFlag != null and params.tabFlag != ''">
+                    AND odp.approve_status = #{params.tabFlag}
+                </if>
+                <!--单号-->
+                <if test="params.code != null and params.code != ''">
+                    AND odp.code ILIKE concat('%',#{params.code},'%')
+                </if>
+                <!--sku编号-->
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    AND odpd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--审核状态-->
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    AND odp.approve_status in
+                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" close=")" separator=",">
+                        #{approveStatus}
+                    </foreach>
+                </if>
+                <!--发货状态-->
+                <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
+                    AND odp.delivery_status in
+                    <foreach collection="params.deliveryStatusList" item="deliveryStatus" open="(" close=")" separator=",">
+                        #{deliveryStatus}
+                    </foreach>
+                </if>
+                <!--发货单号-->
+                <if test="params.deliveryCode != null and params.deliveryCode != ''">
+                    AND odp.delivery_code ILIKE concat('%',#{params.deliveryCode},'%')
+                </if>
+                <!--目的仓库-->
+                <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
+                    AND odp.to_warehouse_id in
+                    <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" close=")" separator=",">
+                        #{toWarehouseId}
+                    </foreach>
+                </if>
+                <!--国家-->
+                <if test="params.countryList != null and params.countryList.size > 0">
+                    AND odp.country in
+                    <foreach collection="params.countryList" item="country" open="(" close=")" separator=",">
+                        #{country}
+                    </foreach>
+                </if>
+                <!--是否组合品-->
+                <if test="params.isCombination != null">
+                    and odpd.is_combination = #{params.isCombination}
+                </if>
+                <!--操作人-->
+                <if test="params.updateUserIdList != null and params.updateUserIdList.size > 0">
+                    AND odp.update_user_id in
+                    <foreach collection="params.updateUserIdList" item="updateUserId" open="(" close=")" separator=",">
+                        #{updateUserId}
+                    </foreach>
+                </if>
+                <!--创建时间-->
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND odp.create_time >= #{params.createTimeList[0]} and
+                    (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.create_time
+                </if>
+                <!--审核时间-->
+                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+                    AND odp.approve_time >= #{params.approveTimeList[0]} and
+                    (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > odp.approve_time
+                </if>
+            </otherwise>
+        </choose>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        odp.create_time desc
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$TabListDTO">
         SELECT
@@ -60,10 +270,56 @@
         count(*)  AS count
         FROM  overseas_delivery_plan
         WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
-        </if>
         GROUP BY approve_status
     </select>
 
+    <!--下推要货申请列表查询-->
+    <select id="generateRequisitionApplicationView" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$GenerateRequisitionApplicationViewDTO">
+        SELECT
+            odp.id AS sourceId,
+            odpd.id AS sourceDetailId,
+            odp.code AS sourceCode,
+            odp.to_warehouse_id AS channelId,
+            odp.to_warehouse_name AS channelName,
+            odpd.sku_id,
+            odpd.sku_no,
+            odpd.is_combination,
+            odpd.qty AS planQty,
+            odpd.qty AS requisitionQty,
+        FROM overseas_delivery_plan_detail odpd
+        INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0 ">
+            AND odp.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <!--下推发货单列表查询-->
+    <select id="generateDeliverView" resultType="com.erp.model.wms.dto.OverseasDeliveryPlanDTO$GenerateDeliverViewDTO">
+        SELECT
+        odp.id AS sourceId,
+        odpd.id AS sourceDetailId,
+        odp.code AS sourceCode,
+        odp.country,
+        odp.country_name,
+        odp.to_warehouse_id,
+        odp.to_warehouse_name,
+        odpd.sku_id,
+        odpd.sku_no,
+        odpd.is_combination,
+        odpd.qty AS planQty,
+        odpd.qty AS deliveryQty
+        FROM overseas_delivery_plan_detail odpd
+        INNER JOIN overseas_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
+        WHERE odp.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0 ">
+            AND odp.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

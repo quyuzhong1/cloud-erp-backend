@@ -478,34 +478,6 @@ public class FbaShipmentDTO implements Serializable {
     }
 
     /**
-     * 发货记录
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DeliverRecordView {
-        /**
-         * 发货单号
-         */
-        private String deliveryCode;
-        /**
-         * 发货状态编码
-         */
-        private String deliveryStatus;
-        /**
-         * 发货状态名称
-         */
-        private String deliveryStatusName;
-        /**
-         * 发货数量
-         */
-        private Integer deliveryQty;
-        /**
-         * 发货时间
-         */
-        private LocalDateTime deliveryTime;
-    }
-
-    /**
      * 货件状态记录
      */
     @Data

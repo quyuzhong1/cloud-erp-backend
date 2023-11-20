@@ -165,6 +165,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return null;
     }
 
+    @Override
+    public List<RequisitionApplicationEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(RequisitionApplicationEntity::getSourceId, sourceIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */

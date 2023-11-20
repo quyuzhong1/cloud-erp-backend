@@ -168,7 +168,10 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 详情
+         */
+        private List<RequisitionApplicationDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -193,111 +196,76 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
         * 来源id
         */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
         private String sourceId;
 
         /**
         * 来源单号
         */
-        @NotBlank(message = "来源单号不能为空")
-        @Size(max = 50,message = "来源单号最大长度不能超过50位")
         private String sourceCode;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 50,message = "来源类型最大长度不能超过50位")
         private String sourceType;
 
         /**
         * 单据状态
         */
-        @NotBlank(message = "单据状态不能为空")
-        @Size(max = 255,message = "单据状态最大长度不能超过255位")
         private String status;
-
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
 
         /**
         * 类型
         */
-        @NotBlank(message = "类型不能为空")
-        @Size(max = 255,message = "类型最大长度不能超过255位")
         private String type;
 
         /**
         * 要货渠道id
         */
-        @NotBlank(message = "要货渠道id不能为空")
-        @Size(max = 19,message = "要货渠道id最大长度不能超过19位")
         private String channelId;
 
         /**
         * 要货渠道中文名
         */
-        @NotBlank(message = "要货渠道中文名不能为空")
-        @Size(max = 500,message = "要货渠道中文名最大长度不能超过500位")
         private String channelName;
 
         /**
         * 要货仓库id
         */
-        @NotBlank(message = "要货仓库id不能为空")
-        @Size(max = 19,message = "要货仓库id最大长度不能超过19位")
         private String requisitionWarehouseId;
 
         /**
         * 要货仓库中文名
         */
-        @NotBlank(message = "要货仓库中文名不能为空")
-        @Size(max = 255,message = "要货仓库中文名最大长度不能超过255位")
         private String requisitionWarehouseName;
 
         /**
         * 调入仓库id
         */
-        @NotBlank(message = "调入仓库id不能为空")
-        @Size(max = 19,message = "调入仓库id最大长度不能超过19位")
         private String toWarehouseId;
 
         /**
         * 调入仓库中文名
         */
-        @NotBlank(message = "调入仓库中文名不能为空")
-        @Size(max = 255,message = "调入仓库中文名最大长度不能超过255位")
         private String toWarehouseName;
 
         /**
         * 调出仓库id
         */
-        @NotBlank(message = "调出仓库id不能为空")
-        @Size(max = 19,message = "调出仓库id最大长度不能超过19位")
         private String fromWarehouseId;
 
         /**
         * 调出仓库中文名
         */
-        @NotBlank(message = "调出仓库中文名不能为空")
-        @Size(max = 255,message = "调出仓库中文名最大长度不能超过255位")
         private String fromWarehouseName;
 
         /**
         * 处理人id
         */
-        @NotBlank(message = "处理人id不能为空")
-        @Size(max = 19,message = "处理人id最大长度不能超过19位")
         private String handleUserId;
 
         /**
         * 处理人中文名
         */
-        @NotBlank(message = "处理人中文名不能为空")
-        @Size(max = 255,message = "处理人中文名最大长度不能超过255位")
         private String handleUserName;
 
         /**

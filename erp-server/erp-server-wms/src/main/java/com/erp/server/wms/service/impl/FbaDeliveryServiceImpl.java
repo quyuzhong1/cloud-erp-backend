@@ -98,8 +98,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Autowired
-    private OmsListingInfoFeign omsListingInfoFeign;
-    @Autowired
     private WarehouseLocationService warehouseLocationService;
     @Autowired
     private MachineInfoService machineInfoService;
@@ -115,8 +113,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
-    @Autowired
-    private InventoryTransCoreService inventoryTransCoreService;
     @Autowired
     private LogisticsBillFeign logisticsBillFeign;
     @Autowired
@@ -688,6 +684,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             .set(FbaDeliveryEntity::getApproveUserName, userInfo.getUserName())
             .set(FbaDeliveryEntity::getApproveStatus, approveStatus)
             .set(FbaDeliveryEntity::getApproveTime, LocalDateTime.now())
+            .set(FbaDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode())
             .update(new FbaDeliveryEntity());
      }
 
@@ -702,6 +699,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             .set(FbaDeliveryEntity::getApproveUserId, "")
             .set(FbaDeliveryEntity::getApproveUserName, "")
             .set(FbaDeliveryEntity::getApproveStatus, approveStatus)
+            .set(FbaDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.UN_SHIPPED.getCode())
             .set(FbaDeliveryEntity::getApproveTime, null)
             .update(new FbaDeliveryEntity());
         }
@@ -936,7 +934,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     @Override
-    public List<FbaShipmentDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
+    public List<FbaDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }

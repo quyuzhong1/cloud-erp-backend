@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -40,7 +39,6 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
@@ -78,8 +76,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Autowired
     private CommonService commonService;
     @Autowired
-    private DocNoGenHelper docNoGenHelper;
-    @Autowired
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Autowired
     private ShopInfoFeign shopInfoFeign;
@@ -93,8 +89,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FbaDeliveryDetailService fbaDeliveryDetailService;
     @Autowired
     private WarehouseService warehouseService;
-    @Autowired
-    private SysUserFeign sysUserFeign;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
     @Autowired
@@ -147,9 +141,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (flag) {
 
             detailEntity.setSkuNo(dto.getSkuNo());
+
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(dto.getSkuNo()));
 
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailEntity.setSkuId(skuVO.getSkuId());
             //根据sku查询拥有的子sku
             List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
 
@@ -189,8 +185,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public List<FbaShipmentDTO.DeliverRecordView> listDeliverRecord(String id) {
-        List<FbaShipmentDTO.DeliverRecordView> deliverRecordViews = fbaDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
+    public List<FbaDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
+        List<FbaDeliveryDTO.DeliverRecordView> deliverRecordViews = fbaDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
         return deliverRecordViews;
     }
 
@@ -300,7 +296,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //Delete和Cancel状态的货件不允许下推发货单
         List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
                 .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
-                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
+                        || ShipmentStatus.CLOSED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(collect)) {
             throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
@@ -316,9 +312,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据店铺id查询店铺信息
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(shopIds);
 
+        List<String> skuIdList = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         for (FbaShipmentDTO.GenerateDeliverView view : list) {
             //处理字段映射
-            generateDeliverViewFieldHandle(view, shopInfoEntities, skuVOList);
+            generateDeliverViewFieldHandle(view, shopInfoEntities, skuVOList, bomChildrenSkuDTOS);
         }
         return list;
     }
@@ -345,7 +343,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //Delete和Cancel状态的货件不允许下推发货单
         List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
                 .filter(req -> ShipmentStatus.DELETED.getValue().equals(req.getPlatformShipmentStatus())
-                        || ShipmentStatus.CANCELLED.getValue().equals(req.getPlatformShipmentStatus()))
+                        || ShipmentStatus.CLOSED.getValue().equals(req.getPlatformShipmentStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(collect)) {
             throw new ServiceException(ApiError.SHIPMENT_STATUS_CHECK_NOT_DELETE);
@@ -383,7 +381,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         //根据sku查询拥有的子sku
         List<String> skuIdList = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         //查询已发货的货件信息
         List<String> sourceDetailIdList = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -406,13 +403,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             detailDto.setStockSku(stockSku);
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                detailEntity.setIsCombination(Boolean.TRUE);
-            } else {
-                detailEntity.setIsCombination(Boolean.FALSE);
-            }
+
             //来源详情id
             detailDto.setSourceDetailId(detailEntity.getId());
             detailList.add(detailDto);
@@ -459,9 +450,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> skuNoList = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
-        //获取库存sku信息
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
-
         //根据货件单分组一个货件单生成一个发货单
         Map<String, List<FbaShipmentDTO.GenerateDeliverView>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateDeliverView::getMainId));
 
@@ -486,14 +474,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
                 //映射产品信息
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+                detailAdd.setSkuId(skuVO.getSkuId());
                 detailAdd.setNetWeight(skuVO.getNetWeight());
                 //拆分产品尺寸
                 String productSize = skuVO.getProductSize();
                 splitProductSize(detailAdd, productSize);
-                //库存sku
-                String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(generateDeliverView.getSkuNo())).distinct().findFirst()
-                        .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
-                detailAdd.setStockSku(stockSku);
+
                 detailAdd.setWarehouseLocation(generateDeliverView.getWarehouseLocation());
                 detailAdd.setSourceDetailId(generateDeliverView.getId());
                 detailAddList.add(detailAdd);
@@ -560,13 +546,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @param view             货件信息
      * @param shopInfoEntities 店铺信息
      * @param skuVOList        产品信息
+     * @param bomChildrenSkuDTOS        子件信息
      * @return com.erp.model.wms.dto.FbaShipmentDTO.GenerateDeliverView
      * @Author Luo_WG
      * @Date 2023/11/1 15:19
      **/
     private FbaShipmentDTO.GenerateDeliverView generateDeliverViewFieldHandle(FbaShipmentDTO.GenerateDeliverView view,
                                                                               List<ShopInfoEntity> shopInfoEntities,
-                                                                              List<SkuVO> skuVOList) {
+                                                                              List<SkuVO> skuVOList,
+                                                                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS) {
         //设置店铺的仓位为目的仓
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> view.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
         view.setDestWarehouseId(shopInfoEntity.getWarehouseId());
@@ -576,6 +564,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //产品名称
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).findFirst().orElse(new SkuVO());
         view.setProductName(skuVO.getSkuName());
+
+        //查询sku是否存在子SKU
+        List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(skuVO.getSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(sonSkuList)) {
+            view.setIsCombination(Boolean.TRUE);
+        } else {
+            view.setIsCombination(Boolean.FALSE);
+        }
+
         return view;
     }
 
