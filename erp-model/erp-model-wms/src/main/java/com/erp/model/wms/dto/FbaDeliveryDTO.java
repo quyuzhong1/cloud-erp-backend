@@ -54,7 +54,7 @@ public class FbaDeliveryDTO implements Serializable {
      /**
      * 分页列表查询参数
      */
-     @EqualsAndHashCode(callSuper = true)
+
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {

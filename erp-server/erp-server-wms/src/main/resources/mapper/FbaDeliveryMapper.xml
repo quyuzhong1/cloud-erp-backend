@@ -90,11 +90,11 @@
         </if>
         <!--单据编号-->
         <if test="params.code != null and params.code != ''">
-            AND fd.code ILIKE concat('%',#{params.code},'%')
+            AND fd.code ilike concat('%',#{params.code}::text,'%')
         </if>
         <!--来源单号-->
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            AND fd.source_code ILIKE concat('%',#{params.sourceCode},'%')
+            AND fd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <!--备货类型-->
         <if test="params.demandTypeList != null and params.demandTypeList.size > 0">

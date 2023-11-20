@@ -96,6 +96,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     private RequisitionApplicationService requisitionApplicationService;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private FbaDeliveryDetailService fbaDeliveryDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -773,6 +775,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        List<String> ids = list.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<String> detailIds = list.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
+        List<String> skuNos = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        //根据来源id查询发货单
+        List<FbaDeliveryEntity> fbaDeliveryEntities = fbaDeliveryService.listBySourceIds(ids);
+        //根据来源详情id查询发货详情
+        List<FbaDeliveryDetailEntity> fbaDeliveryDetailEntities = fbaDeliveryDetailService.listBySourceDetailIds(detailIds);
+
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -781,7 +791,6 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //根据单据id查询审核流程
-        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
         // 属性赋值
@@ -789,6 +798,16 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryStatus()));
+
+            //设置发货单号拿最新的一个发货单
+            List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FbaDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
+            }
+
+            //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+            Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(data.getDetailId())).mapToInt(FbaDeliveryDetailEntity::getDeliveryQty).sum();
+            data.setDeliveryQty(deliveryQty);
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(data.getSkuId())).collect(Collectors.toList());
