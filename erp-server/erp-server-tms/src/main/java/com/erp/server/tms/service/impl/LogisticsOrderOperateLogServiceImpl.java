@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.LogisticsOrderOperateLogEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.LogisticsOrderOperateLogMapper;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -22,6 +23,7 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.print.DocFlavor;
 
 /**
@@ -39,6 +41,8 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
