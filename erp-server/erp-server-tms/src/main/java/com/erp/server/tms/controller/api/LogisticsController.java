@@ -1,5 +1,6 @@
 package com.erp.server.tms.controller.api;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -149,9 +150,9 @@ public class LogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateTrackInfo")
-    public ApiResult batchUpdateTrackInfo(@RequestBody List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
+    public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
         if (CollectionUtils.isEmpty(logisticsBillDetailEntities)) return failure("数据不能为空");
-        logisticsBaseService.batchUpdateTrackInfo(logisticsBillDetailEntities);
-        return success();
+        List<BatchResultDTO> resultDTOS = logisticsBaseService.batchUpdateTrackInfo(logisticsBillDetailEntities);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

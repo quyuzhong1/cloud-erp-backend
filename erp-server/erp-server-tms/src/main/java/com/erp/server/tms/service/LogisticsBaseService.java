@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
@@ -42,7 +43,21 @@ public interface LogisticsBaseService {
      *
      * @param platformType
      */
-    void processTrackData(String platformType, List<LogisticsBillDetailEntity> records);
+    List<BatchResultDTO> processTrackData(String platformType, List<LogisticsBillDetailEntity> records);
 
-    void batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities);
+    List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities);
+
+    /**
+     * 同步虾皮渠道
+     * @param platform
+     * @return
+     */
+    ApiResult syncShoppeeChannel(String platform);
+
+    /**
+     * 同步单一渠道
+     * @param platform
+     * @return
+     */
+    ApiResult syncSingleChannel(String platform);
 }
