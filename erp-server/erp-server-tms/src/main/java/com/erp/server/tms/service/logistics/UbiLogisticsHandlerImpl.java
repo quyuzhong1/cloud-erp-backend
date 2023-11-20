@@ -66,12 +66,6 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         UbiOrder ubiOrder = LogisticsOrderConverter.INSTANCE.orderRequestByUBI(logisticsOrderVO);
         ubiOrder.setDescription(logisticsOrderVO.getLogisticsProductVOList().get(0).getDeclareEnglishName());
         ubiOrder.setNativeDescription(logisticsOrderVO.getLogisticsProductVOList().get(0).getDeclareChineseName());
-        ubiOrder.setWeight((double) ((int) logisticsOrderVO.getLogisticsProductVOList().get(0).getWeight() / 1000));
-        //TODO 货值(>=0.01)，与sum(itemCount * unitValue)的误差不能超过0.1
-//        BigDecimal price = logisticsOrderVO.getLogisticsProductVOList().get(0).getPrice();
-        ubiOrder.setVolume(Double.valueOf(0.1));
-        BigDecimal price = logisticsOrderVO.getParceInfoVO().getTotalPrice();
-        Integer quantity = logisticsOrderVO.getLogisticsProductVOList().get(0).getQuantity();
         ubiOrder.setInvoiceValue(logisticsOrderVO.getParceInfoVO().getTotalPrice().doubleValue());
         ubiOrder.setInvoiceCurrency(logisticsOrderVO.getParceInfoVO().getCurrency());
         ubiOrder.setSku(logisticsOrderVO.getLogisticsProductVOList().get(0).getSkuId());
