@@ -389,6 +389,7 @@
         fd.code,
         fdd.id,
         fdd.main_id,
+        fdd.sku_id,
         fdd.sku_no,
         fd.delivery_warehouse_id AS warehouseId,
         fd.delivery_warehouse_name AS warehouseName,

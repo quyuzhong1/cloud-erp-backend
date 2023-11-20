@@ -771,7 +771,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             List<FbaDeliveryDTO.SonItem> sonItemList = new ArrayList<>();
 
             //查询最新版本的sku子件信息
-            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(view.getSkuNo()) && req.getBomVersion().equals(String.valueOf(bomVersion))).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(view.getSkuId()) && req.getBomVersion().equals(String.valueOf(bomVersion))).collect(Collectors.toList());
             for (BomChildrenSkuDTO bomDTO : bomSonItemList) {
                 FbaDeliveryDTO.SonItem sonItem = new FbaDeliveryDTO.SonItem();
                 sonItem.setId(view.getId());
