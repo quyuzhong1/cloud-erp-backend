@@ -141,7 +141,6 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         return logisticsOrderOperateLogEntity;
     }
 
-    @Async("tmsExecutor")
     @Override
     public String pullOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
         DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
@@ -160,10 +159,15 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         dmpPullTaskEntity.setMqTag("");
         dmpPullTaskEntity.setMqData(requestParamJson);
         dmpPullTaskEntity.setReturnMsg(responseParamJson);
-        return dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+        String s = null;
+        try {
+            s = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+        }catch (Exception e){
+            log.error("saveOrUpdateDmpPullTask:记录操作日志失败");
+        }
+        return s;
     }
 
-    @Async("tmsExecutor")
     @Override
     public String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
@@ -182,7 +186,13 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         dmpPushTaskEntity.setMqTag("");
         dmpPushTaskEntity.setMqData(requestParamJson);
         dmpPushTaskEntity.setReturnMsg(responseParamJson);
-        return dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+        String s = null;
+        try {
+            s = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+        }catch (Exception e){
+            log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
+        }
+        return s;
     }
 
 

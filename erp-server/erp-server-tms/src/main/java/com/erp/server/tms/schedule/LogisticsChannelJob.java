@@ -6,6 +6,8 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,15 +39,19 @@ public class LogisticsChannelJob {
      */
 //     @Scheduled(cron = "*/5 * * * * ?")
     @XxlJob("syncLogisticsChannel")
-    public void syncLogisticsChannel() {
+    public ReturnT syncLogisticsChannel() {
+        XxlJobHelper.log("====开始同步渠道====");
         logisticsBaseService.syncAllLogisticsChannel();
+        XxlJobHelper.log("====同步渠道信息完成====");
+        return ReturnT.SUCCESS;
     }
 
     /**
      * 同步物流轨迹
      */
     @XxlJob("synLogisticsTrack")
-    public void synLogisticsTrack(){
+    public ReturnT synLogisticsTrack(){
+        XxlJobHelper.log("====开始同步物流轨迹====");
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query =LogisticsBillDetailQueryDTO.builder()
@@ -53,7 +59,9 @@ public class LogisticsChannelJob {
                 .size(pageSize)
                 .current(current)
                 .build();
-
+        getTrackData(query);
+        XxlJobHelper.log("====结束同步物流轨迹====");
+        return ReturnT.SUCCESS;
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query){
