@@ -107,11 +107,6 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id
-        */
-        private String mainId;
-
-        /**
         * 产品id
         */
         private String skuId;
@@ -125,11 +120,6 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         * 计划数量
         */
         private Integer qty;
-
-        /**
-        * 是否组合品
-        */
-        private Boolean isCombination;
 
     }
 

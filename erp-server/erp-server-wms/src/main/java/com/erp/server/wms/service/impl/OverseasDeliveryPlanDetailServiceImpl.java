@@ -123,10 +123,11 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //设置详情字段
         for (OverseasDeliveryPlanDetailEntity detailEntity : list) {
+            detailEntity.setMainId(mainId);
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
