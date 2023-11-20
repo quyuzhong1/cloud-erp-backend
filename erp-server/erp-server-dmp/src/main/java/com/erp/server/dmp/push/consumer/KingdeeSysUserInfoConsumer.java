@@ -65,6 +65,11 @@ public class KingdeeSysUserInfoConsumer<T extends DmpSyncTaskIdDTO> extends Abst
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
     public ApiResult<?> handle(Object ext) {
         Map<String, Object> map = JSONUtil.parseObj(ext);
         kingdeeSysUserInfoConsumerService.executeSysUserConsumer(map);

@@ -92,6 +92,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField(value = "platform_update_time")
     private LocalDateTime platformUpdateTime;
 
+    /**
+     * 平台SKU额外关联的FNSKU
+     */
+    @TableField("fn_sku")
+    private String fnSku;
+
 
     public static final String SKU_NO = "sku_no";
 

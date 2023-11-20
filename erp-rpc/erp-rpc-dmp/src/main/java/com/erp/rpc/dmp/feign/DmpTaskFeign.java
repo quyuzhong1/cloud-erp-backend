@@ -162,4 +162,10 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/remove/orderByIds")
     Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids);
+
+    /**
+     *
+     */
+    @PostMapping("feign/pull/sendWarnMsg")
+    Boolean sendWarnMsg(@RequestBody String syncTaskId);
 }

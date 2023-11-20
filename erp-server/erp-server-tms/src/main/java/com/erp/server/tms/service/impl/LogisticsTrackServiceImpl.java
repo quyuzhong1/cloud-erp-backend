@@ -46,6 +46,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private CommonService commonService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private LogisticsBillService logisticsBillService;
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

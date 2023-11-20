@@ -9,19 +9,18 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
-import com.erp.model.tms.dto.DictBasicDTO;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.entity.DictBasicEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
@@ -72,6 +71,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private LogisticsTrackService logisticsTrackService;
 
+    @Autowired
+    private LogisticsBillCostService logisticsBillCostService;
+
+    @Autowired
+    private SoB2cFeign soB2cFeign;
+
+    @Autowired
+    private ShippingTemplateService shippingTemplateService;
+
+    @Autowired
+    private ShippingCalculationService shippingCalculationService;
+
+    @Autowired
+    private ShippingTemplateRuleService shippingTemplateRuleService;
+
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
@@ -84,9 +99,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity.getId(), addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity.getId(),addDTO.getDetailList());
+
+        //新增物流费用单
+        addLogisticsBillCost(logisticsBillEntity);
         return save;
     }
+
 
     /**
      * 修改
@@ -306,6 +325,51 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             item.setSignTime(signTime);
 
         }
+    }
+
+    /**
+     * @description: 添加物流费用
+     * @author Will
+     * @date: 2023/11/20 12:27
+     * @param logisticsBillEntity
+     */
+    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity) {
+        LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+
+        //渠道关联模板
+        ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
+        if (ObjectUtil.isEmpty(shippingTemplateEntity)) {
+            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
+        }
+        //来源b2c销售订单
+        if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
+            //物流信息
+            List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(logisticsBillEntity.getSourceId()));
+            if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+            }
+            addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
+            BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
+                    .multiply(soB2cLogisticsList.get(0).getWeight())
+                    .multiply(soB2cLogisticsList.get(0).getLength());
+            addDTO.setVolumeWeight(MathUtil.divide(volume,new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
+        }
+        //计费重
+        BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(),addDTO.getVolumeWeight()) > MathUtil.ZERO
+                ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
+        //预估运费
+        ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
+        viewParamDTO.setWeight(addDTO.getActualWeight());
+        ShippingTemplateRuleEntity shippingTemplateRule = shippingTemplateRuleService.getShippingTemplateRule(viewParamDTO);
+        if (ObjectUtil.isNotEmpty(shippingTemplateRule)) {
+            BigDecimal shippingCost = shippingCalculationService.calculationShippingCost(shippingTemplateEntity, shippingTemplateRule, billingWeight);
+            addDTO.setEstimatedShippingCost(shippingCost);
+        }
+
+        addDTO.setCurrency(shippingTemplateEntity.getCurrency());
+        addDTO.setChannelId(logisticsBillEntity.getChannelId());
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        logisticsBillCostService.add(addDTO);
     }
 
 }

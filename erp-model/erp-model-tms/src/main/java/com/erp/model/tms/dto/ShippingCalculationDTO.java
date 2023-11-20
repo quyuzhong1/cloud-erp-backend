@@ -46,7 +46,7 @@ public class ShippingCalculationDTO {
         private List<String> toCountryList;
 
         /**
-         * 目的仓库
+         * 目的仓库 http://172.16.100.11:3002/project/128/interface/api/25567
          */
         private List<String> toWarehouseList;
 

@@ -24,6 +24,7 @@
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
+        li.fn_sku,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
@@ -44,6 +45,15 @@
         </if>
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
+        </if>
+        <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
+            AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+        </if>
+        <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
+            AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+        </if>
+        <if test="params.fnSku !=null and params.fnSku!=''">
+            AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
         </if>
         <if test="params.platformList !=null and params.platformList.size>0">
             AND sm.dict_platform IN
@@ -88,6 +98,9 @@
         li.product_image_url,
         li.product_spec,
         li.product_packing,
+        li.platform_spu_no,
+        li.platform_spu_name,
+        li.fn_sku,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
@@ -110,6 +123,15 @@
                 </if>
                 <if test="params.type !=null and params.type!=''">
                     AND sm.type =#{params.type}
+                </if>
+                <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
+                    AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+                </if>
+                <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
+                    AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+                </if>
+                <if test="params.fnSku !=null and params.fnSku!=''">
+                    AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
                 </if>
                 <if test="params.shopIdList !=null and params.shopIdList.size>0">
                     AND sm.shop_id IN
@@ -203,6 +225,9 @@
         li.sku_no AS warehouseSkuNo,
         li.product_name AS warehouseProductName,
         li.match_result,
+        li.platform_spu_no,
+        li.platform_spu_name,
+        li.fn_sku,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
@@ -225,6 +250,15 @@
         </if>
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
+        </if>
+        <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
+            AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+        </if>
+        <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
+            AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+        </if>
+        <if test="params.fnSku !=null and params.fnSku!=''">
+            AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
         </if>
         <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
             AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')

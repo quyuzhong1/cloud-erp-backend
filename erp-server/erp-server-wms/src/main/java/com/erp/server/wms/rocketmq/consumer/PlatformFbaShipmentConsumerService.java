@@ -81,6 +81,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformFbaShipmentDTO dto = JSONUtil.toBean(ext.toString(), PlatformFbaShipmentDTO.class);

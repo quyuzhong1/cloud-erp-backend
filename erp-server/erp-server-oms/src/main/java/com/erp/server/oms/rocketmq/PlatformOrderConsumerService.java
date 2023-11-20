@@ -63,6 +63,11 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId) {
+
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
