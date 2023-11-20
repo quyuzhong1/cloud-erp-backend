@@ -58,7 +58,6 @@ public class MachineInfoController extends BaseController {
         PagingVO<MachineInfoDTO.ListDTO> pagingVO = machineInfoService.paging(dto);
         return success(pagingVO);
     }
-
     /**
      * 列表数量
      * @author Will
@@ -332,5 +331,6 @@ public class MachineInfoController extends BaseController {
         Boolean flag = machineInfoService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
 
 }

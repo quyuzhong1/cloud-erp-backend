@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -79,13 +80,21 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     SoOutstockDTO.ViewDTO view(String id);
 
     /**
+     * 审核通过
+     * @param dto
+     * @param entity
+     * @return
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SoOutstockEntity entity);
+
+    /**
      * 审核
      * @author yl
      * @date 2023-05-19 11:42
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(SoOutstockEntity entity,ApproveOneDTO dto);
 
     /**
      * 反审核

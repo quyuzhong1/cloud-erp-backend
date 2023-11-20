@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -70,15 +71,21 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private List<Boolean> disabledList;
 
+
+        /**
+         * 创建人
+         */
+        private List<String>  createUserIdList;
+
         /**
          * 创建时间
          */
-        private List<LocalDateTime>  createTimeList;
+        private List<LocalDate>  createTimeList;
 
         /**
          * 更新时间
          */
-        private List<LocalDateTime>  updateTimeList;
+        private List<LocalDate>  updateTimeList;
 
 
     }

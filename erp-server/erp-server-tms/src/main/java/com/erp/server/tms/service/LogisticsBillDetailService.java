@@ -1,5 +1,4 @@
 package com.erp.server.tms.service;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
@@ -23,12 +22,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     /**
      * 新增
      *
-     * @param dto
+     * @param mainId
+     * @param list
      * @return
      * @author lambda
      * @date: 2023-11-09
      */
-    Boolean add(LogisticsBillDTO.AddDTO dto, String mainId);
+    Boolean add(String mainId,List<LogisticsBillDetailDTO.AddDTO> list );
 
     /**
      * 修改
