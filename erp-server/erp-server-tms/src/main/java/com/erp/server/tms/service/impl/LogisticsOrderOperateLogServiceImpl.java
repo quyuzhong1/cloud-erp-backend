@@ -2,8 +2,17 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.tms.entity.LogisticsOrderOperateLogEntity;
+import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.LogisticsOrderOperateLogMapper;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
@@ -11,6 +20,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,6 +139,50 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         }
         this.saveOrUpdate(logisticsOrderOperateLogEntity);
         return logisticsOrderOperateLogEntity;
+    }
+
+    @Async("tmsExecutor")
+    @Override
+    public String pullOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
+        dmpPullTaskEntity.setSourceType(businessType);
+        dmpPullTaskEntity.setSourceId(authId);
+        dmpPullTaskEntity.setSourceCode(sourceId);
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
+        //请求状态（0请求中 1请求成功 2请求失败）
+        if (RequestStatusEnums.SUCCESS.getCode().equals(status)){
+            dmpPullTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
+        }else {
+            dmpPullTaskEntity.setStatus(SyncStatusEnum.FAILED_SYNC.getCode());
+        }
+        dmpPullTaskEntity.setMqTopic("");
+        dmpPullTaskEntity.setMqTag("");
+        dmpPullTaskEntity.setMqData(requestParamJson);
+        dmpPullTaskEntity.setReturnMsg(responseParamJson);
+        return dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+    }
+
+    @Async("tmsExecutor")
+    @Override
+    public String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
+        DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
+        dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
+        dmpPushTaskEntity.setSourceType(businessType);
+        dmpPushTaskEntity.setSourceId(authId);
+        dmpPushTaskEntity.setSourceCode(sourceId);
+        dmpPushTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
+        //请求状态（0请求中 1请求成功 2请求失败）
+        if (RequestStatusEnums.SUCCESS.getCode().equals(status)){
+            dmpPushTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
+        }else {
+            dmpPushTaskEntity.setStatus(SyncStatusEnum.FAILED_SYNC.getCode());
+        }
+        dmpPushTaskEntity.setMqTopic("");
+        dmpPushTaskEntity.setMqTag("");
+        dmpPushTaskEntity.setMqData(requestParamJson);
+        dmpPushTaskEntity.setReturnMsg(responseParamJson);
+        return dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
     }
 
 

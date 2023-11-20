@@ -405,7 +405,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     /**
      * 新增或修改
      */
-    private String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
+    @Override
+    public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
         DmpPushTaskEntity found = getByParam(map);
         //存在则修改

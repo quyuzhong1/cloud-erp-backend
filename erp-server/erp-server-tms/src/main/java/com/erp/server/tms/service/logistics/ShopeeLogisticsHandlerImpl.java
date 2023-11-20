@@ -111,14 +111,14 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.setTransportNo(trackResponse.getTrackingNumber());
                 responseVO.setTrackNo(trackResponse.getTrackingNumber());
                 responseVO.success();
-                logisticsOrderOperateLogService.addOperateLog(authMap.get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(authMap.get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(baseResponse));
             } else {
                 isSuccess = false;
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
                 responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), "-1", baseResponse.getError());
-                logisticsOrderOperateLogService.addOperateLog(authMap.get("id"),
+                logisticsOrderOperateLogService.pushOperateLog(authMap.get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(baseResponse));
             }
@@ -144,7 +144,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
             return failure();
@@ -152,7 +152,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         JSONObject response = baseResponse.getResponse();
         String error = response.getString("error");
         if (StrUtil.isNotEmpty(error)) {
-            logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+            logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
             log.error("获取渠道列表异常：{}", error);
@@ -163,7 +163,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<LogisticsChannel> logisticsChannels = JSONObject.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
         //接口数据映射
         List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = LogisticsChannelConverter.INSTANCE.channelConvertByShopee(logisticsChannels);
-        logisticsOrderOperateLogService.addOperateLog(chanelQueryVO.getAuthMap().get("id"),
+        logisticsOrderOperateLogService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                 chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                 RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
         return success(logisticsSaleChannelEntities);
