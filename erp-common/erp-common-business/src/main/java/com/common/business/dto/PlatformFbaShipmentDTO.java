@@ -5,8 +5,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,4 +93,11 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
      * 货件详情(由物流签收信息合并）
      */
     List<PlatformFbaShipmentReceiveDTO> detailList;
+
+    public List<PlatformFbaShipmentReceiveDTO> checkAndGetDetailList(){
+        if (CollectionUtils.isEmpty(this.detailList)){
+            return Collections.emptyList();
+        }
+        return this.detailList;
+    }
 }

@@ -1,5 +1,7 @@
 package com.common.business.dto;
 
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +21,7 @@ public class UniqueDto extends DmpSyncTaskIdDTO implements Serializable {
     /**
      * 唯一标识 必填
      */
+    @Panno(findType = PannoEnum.EQ,field = "uniqueId")
     private String uniqueId;
 
     /**

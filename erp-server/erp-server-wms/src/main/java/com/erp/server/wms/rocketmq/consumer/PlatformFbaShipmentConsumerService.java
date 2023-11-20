@@ -131,10 +131,10 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentIdAndIsDelete(entity.getFbaShipmentId(), null);
         if (null == oldEntity){
             // 新增
-            fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds,   receiveDTOList, dto.getDetailList());
+            fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds,   receiveDTOList, dto.checkAndGetDetailList());
         } else {
             // 修改
-            fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds, receiveDTOList, dto.getDetailList());
+            fbaShipmentService.checkAndUpdateAll(oldEntity, entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds, receiveDTOList, dto.checkAndGetDetailList());
         }
 
         return ApiResult.success();

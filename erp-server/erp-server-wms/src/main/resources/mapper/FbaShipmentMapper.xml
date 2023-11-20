@@ -43,6 +43,81 @@
         code, name, shop_id, shop_name, country_id, country_name, fulfillment_center, delivery_status, platform_shipment_status, shipment_create_time, shipment_receive_time, label_type, pack_type, delivery_from_address, delivery_to_address
     </sql>
 
+    <update id="updateByIdWithoutIsDelete">
+        update fba_shipment
+        <set>
+            <if test="code != null">
+                code = #{code,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                "name" = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="shopId != null">
+                shop_id = #{shopId,jdbcType=VARCHAR},
+            </if>
+            <if test="shopName != null">
+                shop_name = #{shopName,jdbcType=VARCHAR},
+            </if>
+            <if test="countryId != null">
+                country_id = #{countryId,jdbcType=VARCHAR},
+            </if>
+            <if test="countryName != null">
+                country_name = #{countryName,jdbcType=VARCHAR},
+            </if>
+            <if test="fulfillmentCenter != null">
+                fulfillment_center = #{fulfillmentCenter,jdbcType=INTEGER},
+            </if>
+            <if test="deliveryStatus != null">
+                delivery_status = #{deliveryStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="platformShipmentStatus != null">
+                platform_shipment_status = #{platformShipmentStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="shipmentCreateTime != null">
+                shipment_create_time = #{shipmentCreateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="shipmentReceiveTime != null">
+                shipment_receive_time = #{shipmentReceiveTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="labelType != null">
+                label_type = #{labelType,jdbcType=VARCHAR},
+            </if>
+            <if test="packType != null">
+                pack_type = #{packType,jdbcType=VARCHAR},
+            </if>
+            <if test="deliveryFromAddress != null">
+                delivery_from_address = #{deliveryFromAddress,jdbcType=VARCHAR},
+            </if>
+            <if test="deliveryToAddress != null">
+                delivery_to_address = #{deliveryToAddress,jdbcType=VARCHAR},
+            </if>
+
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createUserId != null">
+                create_user_id = #{createUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateUserId != null">
+                update_user_id = #{updateUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="createUserName != null">
+                create_user_name = #{createUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="updateUserName != null">
+                update_user_name = #{updateUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted,jdbcType=BOOLEAN},
+            </if>
+            version = version + 1
+        </set>
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+
     <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
         SELECT

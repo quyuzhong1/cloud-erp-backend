@@ -703,12 +703,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         // 主表更新
         if (!oldEntity.toString().equalsIgnoreCase(entity.toString())){
-            if (entity.getIsDeleted()){
+            if (oldEntity.getIsDeleted()){
                 entity.setIsDeleted(false);
                 String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
                 operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), oldEntity.getId(), msg);
             }
-            if (!this.updateById(entity)){
+            entity = FbaShipmentConverter.INSTANCE.oldToNew(entity, oldEntity);
+            if (!this.getBaseMapper().updateByIdWithoutIsDelete(entity)){
                 throw new ServiceException("[FbaShipmentEntity] 更新失败: entity="+ JSONUtil.toJsonStr(entity));
             }
         }
@@ -719,11 +720,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .collect(Collectors.toMap(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()), Function.identity()));
         // 批量更新或保存详情列表
         List<FbaShipmentDetailEntity> saveOrUpdateDetailList = new LinkedList<>();
+
+        FbaShipmentEntity finalEntity = entity;
         // 新详情
         List<FbaShipmentDetailEntity> newDetailEntityList = detailList
                 .stream()
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToDetailEntity(e,
-                        entity,
+                        finalEntity,
                         listingInfoMap.get(e.getSellerSku())))
                 .collect(Collectors.toList());
         // 设置绑定的SKU和更新判断
@@ -759,7 +762,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         Map<String, FbaShipmentReceiveEntity> receiveEntityMap = oldReceiveEntitiyList.stream()
                 .collect(Collectors.toMap(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()), Function.identity()));
 
-        Map<String, String> detailIdMap = newDetailEntityList
+        Map<String, String> detailIdMap = saveOrUpdateDetailList
                 .stream()
                 .collect(Collectors.toMap(
                         e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()),
@@ -772,7 +775,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToReceiveEntity(
                         detailIdMap.get(StrUtil.format("{}_{}", e.getFnSku() + e.getSellerSku())),
                         e,
-                        entity,
+                        finalEntity,
                         listingInfoMap.get(e.getSellerSku())))
                 .collect(Collectors.toList());
         // 设置绑定的SKU

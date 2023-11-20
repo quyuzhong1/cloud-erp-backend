@@ -100,4 +100,35 @@ public interface FbaShipmentConverter {
             @Mapping(target = "deliveryQty", source = "declareQty"),
     })
     FbaDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
+
+
+    @Mappings({
+            @Mapping(target = "id", source = "oldEntity.id"),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "isDeleted", constant = "false"),
+            @Mapping(target = "code", source = "oldEntity.code"),
+            @Mapping(target = "fbaShipmentId", source = "oldEntity.fbaShipmentId"),
+            @Mapping(target = "shipmentReceiveTime", source = "oldEntity.shipmentReceiveTime"),
+            @Mapping(target = "name", source = "entity.name"),
+            @Mapping(target = "shopId", source = "entity.shopId"),
+            @Mapping(target = "shopName", source = "entity.shopName"),
+            @Mapping(target = "countryId", source = "entity.countryId"),
+            @Mapping(target = "countryName", source = "entity.countryName"),
+            @Mapping(target = "fulfillmentCenter", source = "entity.fulfillmentCenter"),
+            @Mapping(target = "deliveryStatus", source = "entity.deliveryStatus"),
+            @Mapping(target = "platformShipmentStatus", source = "entity.platformShipmentStatus"),
+            @Mapping(target = "shipmentCreateTime", source = "entity.shipmentCreateTime"),
+            @Mapping(target = "labelType", source = "entity.labelType"),
+            @Mapping(target = "packType", source = "entity.packType"),
+            @Mapping(target = "deliveryFromAddress", source = "entity.deliveryFromAddress"),
+            @Mapping(target = "deliveryToAddress", source = "entity.deliveryToAddress"),
+    })
+    FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);
+
 }
