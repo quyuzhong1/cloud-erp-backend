@@ -49,7 +49,7 @@ public class LogisticsFeignController {
      * @param supplierId
      * @return
      */
-    @GetMapping("/listBySupplierId")
+    @PostMapping("/listBySupplierId")
     public List<BaseIdDTO.CodeDTO> listBySupplierId(@RequestBody String supplierId){
         return logisticsChannelService.listBySupplierId(supplierId);
     }

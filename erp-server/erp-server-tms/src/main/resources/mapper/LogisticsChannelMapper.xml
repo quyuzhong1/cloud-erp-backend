@@ -79,6 +79,18 @@
         WHERE lc.is_deleted=false
         AND ls.supplier_id=#{supplierId}
     </select>
+    <select id="listByAddressId" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        SELECT
+            lc.id,
+            lc.name,
+            lc.code,
+            lc.disabled
+        FROM logistics_channel_address lca
+        INNER JOIN logistics_channel lc
+        ON lca.logistics_channel_id = lc.id and lc.is_deleted = false
+        WHERE lca.is_deleted=false
+          AND lca.address_id=#{addressId}
+    </select>
 
 
 </mapper>

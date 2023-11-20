@@ -13,14 +13,17 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.LogisticsAddressMapper;
 import com.erp.server.tms.service.LogisticsAddressService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +59,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -156,7 +163,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         LogisticsAddressEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("物流地址"));
-
+        List<LogisticsChannelEntity> channelList= logisticsChannelService.listByAddressId(id);
+        if(CollectionUtils.isNotEmpty(channelList)){
+               throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST,entity.getName());
+        }
         this.removeById(id);
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
 

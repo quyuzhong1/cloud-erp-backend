@@ -36,4 +36,13 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      *@date 2023-11-20
      */
     List<BaseIdDTO.CodeDTO> listBySupplierId(@Param("supplierId") String supplierId);
+
+    /** 根据地址id获取数据
+     *
+     *@parms addressId
+     *@return 
+     *@author yl
+     *@date 2023-11-20
+     */
+    List<LogisticsChannelEntity> listByAddressId(@Param("addressId") String addressId);
 }
