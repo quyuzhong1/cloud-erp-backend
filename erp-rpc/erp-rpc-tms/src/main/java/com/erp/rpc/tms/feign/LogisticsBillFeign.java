@@ -30,4 +30,15 @@ public interface LogisticsBillFeign {
      **/
     @PostMapping("feign/logisticsBill/listLogisticsBillVoBySourceIds")
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoBySourceIds(@RequestBody List<String> sourceIdList);
+
+
+    /**
+     * 添加物流单
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-11-20
+     */
+    @PostMapping("feign/logisticsBill/addLogisticsBill")
+    void addLogisticsBill(@RequestBody LogisticsBillDTO.AddDTO addDTO);
 }

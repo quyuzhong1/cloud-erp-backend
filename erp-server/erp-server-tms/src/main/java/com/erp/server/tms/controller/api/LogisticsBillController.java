@@ -119,8 +119,8 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/getTrackInfo")
-    public ApiResult<List<LogisticsTrackDTO.ViewDTO>> listTrack(@RequestParam(value = "trackNo") String trackNo) {
-        List<LogisticsTrackDTO.ViewDTO> list = logisticsTrackService.listByTrackNo(trackNo);
+    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "trackNo") String trackNo) {
+        LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(trackNo);
         return success(list);
 
     }

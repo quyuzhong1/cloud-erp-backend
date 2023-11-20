@@ -39,6 +39,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -52,6 +53,7 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
@@ -134,6 +136,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -596,12 +602,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         addDTO.setOutstockCode(entity.getCode());
         addDTO.setSourceCode(entity.getSoCode());
         String soId = entity.getSoId();
-        addDTO.setSourceId(entity.getSoId());
+        addDTO.setSourceId(soId);
         SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
-        if(Objects.nonNull(soInfo)){
+        String salesPlatform = PlatformDictEnum.B2B_FOREIGN.getCode();
+        if (Objects.nonNull(soInfo)) {
             addDTO.setShopId(soInfo.getCustomerId());
+            addDTO.setShopName(soInfo.getCustomerName());
+            addDTO.setOrderTime(soInfo.getCreateTime());
+            addDTO.setSalesPlatform(salesPlatform);
+            addDTO.setSourceType(soInfo.getOrderType());
+            addDTO.setSourceTypeName(soInfo.getOrderTypeName());
+            addDTO.setSourceCode(soInfo.getCode());
         }
-
+        addDTO.setOutstockId(entity.getId());
+        addDTO.setOutstockCode(entity.getCode());
+        //发货时间
+        addDTO.setDeliveryTime(entity.getActualDeliveryDate());
+        //轨迹单号
+        String trackNo = entity.getTrackNo();
+        List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>(10);
+        if (StringUtils.isNotBlank(trackNo)) {
+            for (String no : trackNo.split(",")) {
+                if (StringUtils.isNotBlank(no)) {
+                    LogisticsBillDetailDTO.AddDTO addDetail = new LogisticsBillDetailDTO.AddDTO();
+                    addDetail.setTrackNo(no);
+                    detailList.add(addDetail);
+                }
+            }
+        }
+        addDTO.setDetailList(detailList);
+        logisticsBillFeign.addLogisticsBill(addDTO);
     }
 
 
