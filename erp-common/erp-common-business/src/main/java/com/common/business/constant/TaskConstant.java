@@ -27,4 +27,10 @@ public interface TaskConstant {
     String IML_PULL_DATA_TASK = "IML_PULL_DATA_TASK";
 
     String MABANG = "马帮";
+
+
+    /**
+     * 谷仓任务名称
+     */
+    String GOODCANG_PULL_DATA_TASK = "GOODCANG_PULL_DATA_TASK";
 }

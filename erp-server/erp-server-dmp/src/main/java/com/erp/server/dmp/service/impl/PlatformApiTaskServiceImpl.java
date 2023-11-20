@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
@@ -8,17 +9,22 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -168,4 +174,58 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
                 .set(PlatformApiTaskEntity::getDisabled, dto.getDisabled())
                 .update(new PlatformApiTaskEntity());
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean createThirdWarehouseTask(ThirdWarehouseTaskDTO.AddDTO dto) {
+        List<PlatformApiEntity> entityList = platformApiService.listByPlatform(dto.getDictPlatform());
+        if (CollectionUtil.isEmpty(entityList)) {
+            return Boolean.TRUE;
+        }
+        // 根据授权id查询
+        List<PlatformApiTaskEntity> taskEntity = lambdaQuery()
+                .eq(PlatformApiTaskEntity::getShopId, dto.getAuthKey())
+                .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
+                .list();
+        Set<String> existApiIds = taskEntity.stream().map(PlatformApiTaskEntity::getPlatformApiId).collect(Collectors.toSet());
+        // 需要添加的任务
+        List<PlatformApiEntity> notExistApiList = entityList
+                .stream()
+                .filter(item -> !existApiIds.contains(item.getId()))
+                .collect(Collectors.toList());
+
+        List<PlatformApiTaskEntity> insertEntityList = notExistApiList.stream()
+                .map(task -> getThirdWarehouseApiTaskEntity(dto, task))
+                .collect(Collectors.toList());
+        if (CollectionUtil.isNotEmpty(insertEntityList)) {
+            this.saveBatch(insertEntityList);
+        }
+        return Boolean.TRUE;
+    }
+
+    private static PlatformApiTaskEntity getThirdWarehouseApiTaskEntity(ThirdWarehouseTaskDTO.AddDTO dto, PlatformApiEntity task) {
+        PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
+        entity.setShopId(dto.getAuthKey());
+        entity.setShopName("");
+        Map<String, Object> a = new HashMap<>();
+        a.put("test","test");
+        entity.setApiParam(a);
+        entity.setDictPlatform(dto.getDictPlatform());
+        entity.setApiCode(task.getApiCode());
+        entity.setApiName(task.getApiName());
+        entity.setIntervalTime(task.getIntervalTime());
+        entity.setLastTime(LocalDateTime.now());
+        entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
+        entity.setStatus(1);
+        entity.setRetryTimes(0);
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setUpdateTime(LocalDateTime.now());
+        entity.setPlatformApiId(task.getId());
+        entity.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
+        entity.setSyncOperate(task.getSyncOperate());
+        entity.setBillType(task.getBillType());
+        entity.setOperateType(task.getOperateType());
+        return entity;
+    }
+
 }

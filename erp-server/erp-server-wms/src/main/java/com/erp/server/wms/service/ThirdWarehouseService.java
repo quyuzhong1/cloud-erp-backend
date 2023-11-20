@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import cn.hutool.json.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -21,7 +22,7 @@ public interface ThirdWarehouseService {
     /**
      * 仓库服务商授权
      */
-    Boolean authorize(JSONObject authJson);
+    Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     /**
      * 入库单创建接口对接

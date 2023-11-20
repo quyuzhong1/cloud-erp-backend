@@ -134,6 +134,11 @@ public interface MongoTableNameContant {
     String ORIGINAL_GC_INBOUND_ORDER = "original_gc_inbound_order";
 
     /**
+     * 谷仓产品数据
+     */
+    String ORIGINAL_GC_PRODUCT = "original_gc_product";
+
+    /**
      * 艾姆勒入库单
      */
     String ORIGINAL_IML_INBOUND_ORDER = "original_iml_inbound_order";

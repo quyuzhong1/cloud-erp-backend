@@ -5,10 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.KingdeeDTO;
-import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -202,4 +199,12 @@ public interface DmpTaskFeign {
      */
     @PostMapping("/saveOrUpdate/push/task")
     String saveOrUpdateDmpPushTask(@RequestBody @Valid DmpPushTaskEntity dmpPushTaskEntity);
+
+    /**
+     * 创建第三方仓任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/dmp/createThirdWarehouseTask")
+    Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto);
 }

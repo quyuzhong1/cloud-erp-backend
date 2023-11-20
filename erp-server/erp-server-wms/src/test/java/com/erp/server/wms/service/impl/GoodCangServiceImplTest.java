@@ -27,7 +27,6 @@ public class GoodCangServiceImplTest {
         JSONObject authJson = new JSONObject();
         authJson.set("appToken","7013991264f611e98ea200e01b680258");
         authJson.set("appKey","6ff50abf64f611e98ea200e01b680258");
-        System.out.println(warehouseService.authorize(authJson));
     }
 
 }

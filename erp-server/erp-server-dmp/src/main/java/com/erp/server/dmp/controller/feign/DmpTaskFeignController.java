@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,5 +42,11 @@ public class DmpTaskFeignController {
     public Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO disabledDTO){
         return platformApiTaskService.disabledPlatformTask(disabledDTO);
     }
+
+    @PostMapping("/createThirdWarehouseTask")
+    public Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto){
+        return platformApiTaskService.createThirdWarehouseTask(dto);
+    }
+
 
 }
