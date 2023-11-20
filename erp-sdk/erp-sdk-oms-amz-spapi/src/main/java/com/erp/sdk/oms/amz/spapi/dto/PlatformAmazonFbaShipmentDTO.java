@@ -1,6 +1,8 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.business.dto.CleanBaseDTO;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentInfo;
@@ -42,12 +44,23 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
 
     /**
      * 明细
      */
     private InboundShipmentItemList detailList;
+
+    /**
+     * 包装类型
+     */
+    public String convertPackType(){
+        if(null != this.shipmentInfo) {
+            return this.shipmentInfo.getAreCasesRequired() ? "原厂包装" : "混装";
+        }
+        return "";
+    }
 
     public static PlatformAmazonFbaShipmentDTO getByDownloadStatus(Integer status) {
         PlatformAmazonFbaShipmentDTO mongoDTO = new PlatformAmazonFbaShipmentDTO();

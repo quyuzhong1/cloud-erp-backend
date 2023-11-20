@@ -17,6 +17,8 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.io.IOException;
 
@@ -24,23 +26,19 @@ import java.io.IOException;
  * The type of label preparation that is required for the inbound shipment.
  */
 @JsonAdapter(LabelPrepType.Adapter.class)
+@Getter
+@AllArgsConstructor
 public enum LabelPrepType {
   
-  NO_LABEL("NO_LABEL"),
+  NO_LABEL("NO_LABEL","无标签"),
   
-  SELLER_LABEL("SELLER_LABEL"),
+  SELLER_LABEL("SELLER_LABEL","卖家标签"),
   
-  AMAZON_LABEL("AMAZON_LABEL");
+  AMAZON_LABEL("AMAZON_LABEL","亚马逊标签");
 
-  private String value;
+  private final String value;
+  private final String desc;
 
-  LabelPrepType(String value) {
-    this.value = value;
-  }
-
-  public String getValue() {
-    return value;
-  }
 
   @Override
   public String toString() {
