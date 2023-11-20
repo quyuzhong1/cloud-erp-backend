@@ -5,14 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
@@ -47,7 +46,13 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     private LogisticsSupplierService logisticsSupplierService;
 
     @Autowired
+    private LogisticsChannelService logisticsChannelService;
+
+    @Autowired
     private LogisticsAuthFieldService logisticsAuthFieldService;
+
+    @Autowired
+    private LogisticsWarehouseService logisticsWarehouseService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -108,7 +113,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public LogisticsAuthDTO.ViewDTO view(String mainId) {
-        LogisticsAuthEntity authEntity = this.getByMainId("",mainId);
+        LogisticsAuthEntity authEntity = this.getByMainId("", mainId);
         if (Objects.isNull(authEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
         }
@@ -123,8 +128,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return view;
     }
 
-    private LogisticsAuthEntity getByMainId(String id,String mainId) {
-        return this.lambdaQuery().ne(StringUtils.isNotBlank(id),LogisticsAuthEntity::getId,id).eq(LogisticsAuthEntity::getMainId,mainId).last("LIMIT 1").one();
+    private LogisticsAuthEntity getByMainId(String id, String mainId) {
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
     }
 
     @Override
@@ -138,8 +143,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (Objects.isNull(supplierEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
-        String  authStatus=supplierEntity.getAuthStatus();
-        if(!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)){
+        String authStatus = supplierEntity.getAuthStatus();
+        if (!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
             throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
         }
         this.removeById(id);
@@ -147,6 +152,27 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         logisticsSupplierService.updateById(supplierEntity);
         return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
 
+    }
+
+    @Override
+    public LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId) {
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
+        String supplierCode = SourceTypeEnum.LOGISTICS_SUPPLIER.getCode();
+        if (Objects.nonNull(channelEntity)) {
+            String sourceId = channelEntity.getSourceId();
+            String sourceType = channelEntity.getSourceType();
+            if (supplierCode.equals(sourceType)) {
+                return this.view(sourceId);
+            } else {
+                LogisticsWarehouseEntity logisticsWarehouse = logisticsWarehouseService.getById(sourceId);
+                if(Objects.nonNull(logisticsWarehouse)){
+                    return this.view(logisticsWarehouse.getMainId());
+                }
+            }
+
+        }
+
+        return  new LogisticsAuthDTO.ViewDTO();
     }
 
 

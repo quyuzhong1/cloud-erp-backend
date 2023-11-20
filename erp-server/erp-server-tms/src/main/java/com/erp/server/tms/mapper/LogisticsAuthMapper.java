@@ -1,8 +1,10 @@
 package com.erp.server.tms.mapper;
+import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**

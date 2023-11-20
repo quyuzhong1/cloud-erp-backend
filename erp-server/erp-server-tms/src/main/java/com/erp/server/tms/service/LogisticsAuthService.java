@@ -18,30 +18,25 @@ import java.util.Map;
 public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> {
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return
-     * @author Lambda
-     * @date: 2023-11-02
-     */
+    * 新增
+    * @author Lambda
+    * @date: 2023-11-02
+    * @param dto
+    * @return
+    */
     BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO dto);
 
     /**
-     * 修改
-     *
-     * @param dto
-     * @return
-     * @author Lambda
-     * @date: 2023-11-02
-     */
+    * 修改
+    * @author Lambda
+    * @date: 2023-11-02
+    * @param dto
+    * @return
+    */
     Boolean update(LogisticsAuthDTO.UpdateDTO dto);
 
     /**
      * 获取到授权详情
-     *
-     * @param id
-     * @return
      * @author yl
      * @date 2023-11-10 17:50
      */
@@ -49,13 +44,21 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
 
     /**
      * 取消授权
-     *
-     * @return
-     * @parms id
-     * @author yl
-     * @date 2023-11-15
+     *@parms id
+     *@return
+     *@author yl
+     *@date 2023-11-15
      */
     BatchResultDTO cancel(String id);
+
+    /**
+     * 根据渠道id 获取授权信息
+     *@parms channelId
+     *@return
+     *@author yl
+     *@date 2023-11-20
+     */
+    LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId);
 
     /**
      * 根据授权id组装授权信息

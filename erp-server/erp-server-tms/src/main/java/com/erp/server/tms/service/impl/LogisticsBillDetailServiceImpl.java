@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -17,6 +18,7 @@ import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
+import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.tms.service.OperateLogService;
@@ -53,12 +55,21 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private LogisticsAuthService logisticsAuthService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(String mainId, List<LogisticsBillDetailDTO.AddDTO> detailList) {
+    public Boolean add(LogisticsBillEntity billEntity, List<LogisticsBillDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isNotEmpty(detailList)) {
+            String mainId = billEntity.getId();
+            String channelId = billEntity.getChannelId();
+            LogisticsAuthDTO.ViewDTO view = logisticsAuthService.getViewByChannelId(channelId);
             List<LogisticsBillDetailEntity> list = BeanMapper.copyList(detailList, LogisticsBillDetailEntity.class);
-            list.forEach(l -> l.setMainId(mainId));
+            list.forEach(l -> {
+                l.setMainId(mainId);
+                l.setLogisticsAuthId(view.getId());
+            });
             //批量新增
             return this.saveBatch(list);
         }
@@ -132,7 +143,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Override
     public LogisticsBillDetailEntity getDetailByTrackNo(String trackNo) {
-        return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo,trackNo)
+        return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
                 .eq(LogisticsBillDetailEntity::getIsDeleted, false).last("limit 1").one();
     }
 
