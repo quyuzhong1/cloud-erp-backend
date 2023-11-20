@@ -24,7 +24,7 @@
         li.platform_update_time,
         li.platform_spu_no,
         li.platform_spu_name,
-        li.fn_sku,
+        li.platform_fn_sku,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
@@ -100,7 +100,7 @@
         li.product_packing,
         li.platform_spu_no,
         li.platform_spu_name,
-        li.fn_sku,
+        li.platform_fn_sku,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
@@ -227,7 +227,7 @@
         li.match_result,
         li.platform_spu_no,
         li.platform_spu_name,
-        li.fn_sku,
+        li.platform_fn_sku,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
