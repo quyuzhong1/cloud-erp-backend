@@ -44,11 +44,11 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<LogisticsChannelDTO.ListSelectDTO> listLogisticsChannel(List<String> logisticsSupplierIds);
 
     /**
-     * 根据来源id 获取渠道列表
+     * 物流商id 获取渠道列表
      * @param sourceIdList
      * @return
      */
-    List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList);
+    List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> sourceIdList);
 
     /**
      * 详情
@@ -84,7 +84,7 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@author yl
      *@date 2023-11-15
      */
-    void removeBySourceIdList(List<String> sourceIdList);
+    void removeByMainIdList(List<String> sourceIdList);
 
     /**
      * 复制渠道

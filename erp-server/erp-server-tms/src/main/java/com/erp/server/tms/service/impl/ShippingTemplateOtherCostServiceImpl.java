@@ -4,9 +4,12 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
@@ -112,6 +115,16 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
             return Collections.EMPTY_LIST;
         }
         return  lambdaQuery().in(ShippingTemplateOtherCostEntity::getMainId,mainIdList).list();
+    }
+
+    @Override
+    public IPage<ShippingCalculationDTO.ListDTO> paging(Page query, ShippingCalculationDTO.PagingParamDTO params) {
+        return baseMapper.paging(query,params);
+    }
+
+    @Override
+    public List<ShippingCalculationDTO.ListDTO> listByExportExcel(ShippingCalculationDTO.PagingParamDTO params) {
+        return baseMapper.listByExportExcel(params);
     }
 
     @Override

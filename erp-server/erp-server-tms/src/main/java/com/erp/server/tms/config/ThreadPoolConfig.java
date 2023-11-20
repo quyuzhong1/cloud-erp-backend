@@ -13,8 +13,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 public class ThreadPoolConfig {
-
-
     @Bean("tmsExecutor")
     public ThreadPoolTaskExecutor  threadPoolExecutor() {
         ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();

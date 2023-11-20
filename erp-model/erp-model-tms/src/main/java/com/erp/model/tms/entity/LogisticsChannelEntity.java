@@ -27,8 +27,6 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
 
     /**
     * 来源id
-     * 物流商(logistics_supplier)id
-     * 或者
      * 物流仓库表id logistics_warehouse'
     */
     @TableField("source_id")
@@ -36,10 +34,14 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
 
     /**
      * 来源类型
-     * logisticsWarehouse  logisticsSupplier
+     * logisticsWarehouse
      */
     @TableField("source_type")
     private String sourceType;
+
+
+    @TableField("main_id")
+    private String mainId;
     /**
     * 渠道名称
     */

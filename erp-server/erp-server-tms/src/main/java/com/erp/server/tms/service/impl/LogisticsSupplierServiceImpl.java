@@ -154,11 +154,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
-        List<String> sourceIdList = new ArrayList<>(10);
-        sourceIdList.add(id);
-        List<String> logisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
-        sourceIdList.addAll(logisticsWarehouseIdList);
-        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseBySourceIdList(sourceIdList);
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id));
         List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
@@ -173,8 +169,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
             channelView.setWarehouseId("");
             channelView.setWarehouseName("");
-            List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> c.getSourceId().equals(id)).collect(Collectors.toList());
-            channelView.setChannelList(channelList);
+            channelView.setChannelList(allChannelList);
             viewList.add(channelView);
         }
         return viewList;
@@ -188,15 +183,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         //TODO 检查订单是否引用
         this.removeById(id);
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
-        List<String> sourceIdList = new ArrayList<>(10);
-        sourceIdList.add(id);
+        List<String> mainIdList = new ArrayList<>(10);
+        mainIdList.add(id);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
-            sourceIdList.addAll(logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList()));
             List<String> LogisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
             logisticsWarehouseService.removeByIds(LogisticsWarehouseIdList);
         }
         //删除渠道根据来源id
-        logisticsChannelService.removeBySourceIdList(sourceIdList);
+        logisticsChannelService.removeByMainIdList(mainIdList);
         return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
 
     }
@@ -227,7 +221,6 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (CollectionUtils.isNotEmpty(saleChannelList)) {
             List<LogisticsChannelEntity> addList = LogisticsChannelConverter.INSTANCE.channelConvertBySaleChannel(saleChannelList);
             addList.forEach(a -> {
-                a.setSourceId(id);
                 a.setSourceType(sourceType);
             });
             logisticsChannelService.saveBatch(addList);

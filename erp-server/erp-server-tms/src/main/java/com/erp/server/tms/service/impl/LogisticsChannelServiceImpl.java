@@ -134,8 +134,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseBySourceIdList(List<String> sourceIdList) {
-        List<LogisticsChannelEntity> list = this.listDbBySourceIdList(sourceIdList);
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList) {
+        List<LogisticsChannelEntity> list = this.listDbByMainIdList(mainIdList);
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
@@ -145,7 +145,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             base.setDisabled(item.getDisabled());
             base.setId(item.getId());
             base.setName(item.getName());
-            base.setSourceId(item.getSourceId());
+            base.setMainId(item.getMainId());
             base.setSortingCode(item.getSortingCode());
             String effectiveTime = item.getEffectiveTime();
             String timeUnit = item.getEffectiveTimeUnit();
@@ -249,8 +249,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void removeBySourceIdList(List<String> sourceIdList) {
-        List<LogisticsChannelEntity> channelList = this.listDbBySourceIdList(sourceIdList);
+    public void removeByMainIdList(List<String> mainIdList) {
+        List<LogisticsChannelEntity> channelList = this.listDbByMainIdList(mainIdList);
         List<String> channelIdList = channelList.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(channelIdList)) {
             this.removeByIds(channelIdList);
@@ -303,24 +303,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return baseMapper.listBySupplierId(supplierId);
     }
 
-    private List<LogisticsChannelEntity> listDbBySourceIdList(List<String> sourceIdList) {
-        if (CollectionUtils.isEmpty(sourceIdList)) {
+    private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(LogisticsChannelEntity::getSourceId, sourceIdList).list();
+        return this.lambdaQuery().in(LogisticsChannelEntity::getMainId, mainIdList).list();
     }
 
-    private List<LogisticsChannelEntity> listDbBySourceId(String sourceId) {
-        return this.lambdaQuery().eq(LogisticsChannelEntity::getSourceId, sourceId).orderByDesc(LogisticsChannelEntity::getCreateTime).list();
-    }
+
 
 
     /**
      * 新增修改处理数据
      */
     private void handleData(LogisticsChannelEntity logisticsChannelEntity) {
-        String sourceId = logisticsChannelEntity.getSourceId();
-        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(sourceId);
+        String mainId=logisticsChannelEntity.getMainId();
+        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(logisticsSupplier)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
