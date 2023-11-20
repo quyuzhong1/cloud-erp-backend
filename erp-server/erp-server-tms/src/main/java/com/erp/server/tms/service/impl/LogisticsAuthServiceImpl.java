@@ -16,6 +16,7 @@ import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
+import io.seata.common.util.CollectionUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -179,5 +180,24 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 eq(LogisticsAuthEntity::getMainId, mainId).
                 eq(LogisticsAuthEntity::getLogisticsPlatform, logisticsPlatform).
                 last("LIMIT 1").one();
+    }
+
+    @Override
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        Map<String, String> map = new HashMap<>();
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (StringUtils.isNoneBlank(authId)) {
+            map.put("id", authId);
+            LogisticsAuthEntity authEntity = this.getById(authId);
+            if (Objects.isNull(authEntity)) return null;
+            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        }
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
     }
 }
