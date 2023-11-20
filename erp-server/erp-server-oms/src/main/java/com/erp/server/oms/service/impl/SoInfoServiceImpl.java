@@ -2556,8 +2556,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soPi.setCustomerName(customerName);
 
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
-        CustomerAddressDTO.ViewDTO address = addressList.stream().filter(a -> a.getIsDefault()).findFirst().orElse(null);
-        if (!Objects.isNull(address)) {
+        if (CollectionUtils.isNotEmpty(addressList)) {
+            CustomerAddressDTO.ViewDTO address = addressList.get(0);
             soPi.setAddress(address.getAddress());
             soPi.setEmail(address.getEmail());
             soPi.setTelNumber(address.getTelNumber());
