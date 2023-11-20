@@ -3,7 +3,11 @@ package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.stream.Stream;
 
 /**
  * @author Lambda
@@ -12,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  * @Date 2023-08-18 11:00
  * @Created by yl
  */
+@Getter
 public enum RuleTypeEnum implements EnumMessage {
     PLATFORM("platform","平台"),
     WAREHOUSE("warehouse","仓库"),
@@ -28,11 +33,11 @@ public enum RuleTypeEnum implements EnumMessage {
      */
     @EnumValue
     @JsonValue
-    public String code;
+    public final String code;
     /**
      * 名称
      */
-    private String name;
+    private final String name;
 
     @Override
     public String getCode() {
@@ -42,6 +47,16 @@ public enum RuleTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * 通过code查询
+     */
+    public static RuleTypeEnum getByCode(String code){
+        return Stream.of(RuleTypeEnum.values())
+                .filter(typeEnum -> typeEnum.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
     }
 
     public static String getName(String code) {
