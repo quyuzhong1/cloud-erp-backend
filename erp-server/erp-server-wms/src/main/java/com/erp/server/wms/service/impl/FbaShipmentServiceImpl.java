@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -626,7 +627,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException("[FbaShipmentEntity] 保存失败: entity=" + JSONUtil.toJsonStr(entity));
         }
         String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
-        operateLogService.addModuleOperateLogByObj(entity, entity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "新增FBA货件");
 
         // 记录货件状态
         fbaShipmentStatusService.saveByFbaShipment(entity);
@@ -701,8 +702,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (!oldEntity.toString().equalsIgnoreCase(entity.toString())){
             if (oldEntity.getIsDeleted()){
                 entity.setIsDeleted(false);
-                String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
-                operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), oldEntity.getId(), msg);
+                String msg = StrUtil.format("重新添加FBA货件【{}】",entity.getFbaShipmentId());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "重新添加FBA货件");
             }
             entity = FbaShipmentConverter.INSTANCE.oldToNew(entity, oldEntity);
             if (!this.getBaseMapper().updateByIdWithoutIsDelete(entity)){
@@ -744,8 +745,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         });
 
-        if (!fbaShipmentDetailService.saveOrUpdateBatch(saveOrUpdateDetailList)) {
-            throw new ServiceException("【FbaShipmentDetailEntity】批量更新或保存失败");
+        if (CollectionUtils.isNotEmpty(saveOrUpdateDetailList)){
+            if (!fbaShipmentDetailService.saveOrUpdateBatch(saveOrUpdateDetailList)) {
+                throw new ServiceException("【FbaShipmentDetailEntity】批量更新或保存失败");
+            }
         }
 
         // 批量更新或保存签收列表
@@ -794,8 +797,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         });
 
-        if (!fbaShipmentReceiveService.saveOrUpdateBatch(saveOrUpdateReceiveList)) {
-            throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
+        if (CollectionUtils.isNotEmpty(saveOrUpdateReceiveList)){
+            if (!fbaShipmentReceiveService.saveOrUpdateBatch(saveOrUpdateReceiveList)) {
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
+            }
         }
     }
 
