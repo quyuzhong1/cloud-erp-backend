@@ -705,7 +705,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
             //库存sku
             String stockSku = listStockSkuNoByProductSkuNoViews.stream()
-                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct()
+                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())
+                            && data.getDeliveryWarehouseId().equals(req.getWarehouseId()))
+                    .distinct()
                     .findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             fbaDeliveryDetailEntity.setStockSku(stockSku);
