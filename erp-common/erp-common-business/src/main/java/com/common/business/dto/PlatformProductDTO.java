@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -96,4 +95,9 @@ public class PlatformProductDTO extends UniqueDto {
      * ERP系统店铺ID
      */
     private String shopId;
+
+    /**
+     * 匹配结果
+     */
+    private Boolean matchResult;
 }

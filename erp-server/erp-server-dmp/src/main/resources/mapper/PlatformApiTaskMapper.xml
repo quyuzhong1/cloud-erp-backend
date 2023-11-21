@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.dmp.mapper.PlatformApiTaskMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.PlatformApiTaskEntity">
+    <resultMap id="BaseJobResultMap" type="com.common.business.dto.JobTaskDTO">
         <result column="api_param" jdbcType="OTHER" property="apiParam" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
@@ -15,7 +15,7 @@
         create_time
     </sql>
 
-    <select id="selectApiTask" resultType="com.common.business.dto.JobTaskDTO">
+    <select id="selectApiTask" resultMap="BaseJobResultMap">
         SELECT
         pat.id,
         pat.dict_platform,
