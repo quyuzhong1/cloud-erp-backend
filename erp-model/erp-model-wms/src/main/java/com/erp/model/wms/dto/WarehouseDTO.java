@@ -223,6 +223,11 @@ public class WarehouseDTO implements Serializable {
          */
         private List<String> orgIdList;
 
+        /**
+         * 平台类型
+         */
+        private String dictPlatform;
+
     }
 
 
