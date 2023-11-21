@@ -418,12 +418,12 @@ public class RequisitionApplicationDTO implements Serializable {
         private String channelName;
 
         /**
-         * 审核状态
+         * 状态
          */
         private String status;
 
         /**
-         * 审核状态名称
+         * 状态名称
          */
         private String statusName;
 

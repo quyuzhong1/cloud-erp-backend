@@ -12,11 +12,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.erp.server.wms.service.RequisitionApplicationService;
@@ -25,8 +27,6 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +60,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -213,6 +215,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @param list
      */
     private void fillList(List<RequisitionApplicationDTO.ListDTO> list) {
-
+        //查询产品信息
+        List<String> skuNoList = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        for (RequisitionApplicationDTO.ListDTO listDTO : list) {
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(listDTO.getSkuNo())).findFirst().orElse(new SkuVO());
+            listDTO.setProductName(skuVO.getSkuName());
+            //状态中文
+            listDTO.setStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getStatus()));
+            //要货类型中文
+            listDTO.setTypeName(RequisitionApplicationTypeEnum.getName(listDTO.getType()));
+        }
     }
 }

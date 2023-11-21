@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum RequisitionTypeEnum implements EnumMessage {
+public enum RequisitionApplicationTypeEnum implements EnumMessage {
     SALES_PLATFORM("salesPlatform", "销售平台"),
     OVERSEAS_WAREHOUSE("overseasWarehouse", "海外仓");
 
@@ -19,7 +19,7 @@ public enum RequisitionTypeEnum implements EnumMessage {
      */
     private String name;
 
-    RequisitionTypeEnum(String code, String name) {
+    RequisitionApplicationTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -33,7 +33,7 @@ public enum RequisitionTypeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        for (RequisitionTypeEnum typeEnum : RequisitionTypeEnum.values()) {
+        for (RequisitionApplicationTypeEnum typeEnum : RequisitionApplicationTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
             }
