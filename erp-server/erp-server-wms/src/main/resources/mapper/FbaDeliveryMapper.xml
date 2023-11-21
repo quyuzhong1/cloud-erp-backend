@@ -399,6 +399,7 @@
         INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
+        AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">
             AND fd.id IN
             <foreach collection="ids" item="id" open="(" close=")" separator=",">

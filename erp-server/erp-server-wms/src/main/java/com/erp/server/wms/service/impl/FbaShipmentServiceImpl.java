@@ -876,6 +876,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return null;
     }
 
+    @Override
+    public Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus) {
+        return lambdaUpdate().in(FbaShipmentEntity::getId, ids).set(FbaShipmentEntity::getDeliveryStatus, deliveryStatus).update();
+    }
+
     /**
      * 拆分产品尺寸长宽高存入数据集
      *

@@ -177,4 +177,14 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
 
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:22
+     * @param ids
+     * @param deliveryStatus 发货状态
+     * @return java.lang.Boolean
+     **/
+    Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
+
 }
