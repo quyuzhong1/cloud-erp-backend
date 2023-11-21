@@ -125,4 +125,13 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return
      */
     List<DmpShopInfoEntity> listByNames(List<String> shopNameList);
+
+    /**
+     * 获取店铺信息 根据 非空的店铺标识
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-11-21
+     */
+    List<DmpShopInfoEntity> listByStoreSign();
 }
