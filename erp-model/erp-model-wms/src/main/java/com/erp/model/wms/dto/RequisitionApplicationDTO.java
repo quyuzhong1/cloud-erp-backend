@@ -91,8 +91,10 @@ public class RequisitionApplicationDTO implements Serializable {
         private LocalDateTime invalidTime;
 
         /**
-        * 类型
-        */
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * salesPlatform：销售平台
+         * overseasWarehouse：海外仓
+         */
         private String type;
 
         /**
@@ -214,8 +216,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private String status;
 
         /**
-        * 类型
-        */
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * salesPlatform：销售平台
+         * overseasWarehouse：海外仓
+         */
+        @NotBlank(message = "单据类型不能为空")
         private String type;
 
         /**
@@ -231,6 +236,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
         * 要货仓库id
         */
+        @NotBlank(message = "要货仓库不能为空")
         private String requisitionWarehouseId;
 
         /**
@@ -382,7 +388,9 @@ public class RequisitionApplicationDTO implements Serializable {
         private String code;
 
         /**
-         * 要货类型
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * salesPlatform：销售平台
+         * overseasWarehouse：海外仓
          */
         private String type;
 
