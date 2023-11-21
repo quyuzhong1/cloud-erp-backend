@@ -24,7 +24,7 @@ public class PullGoodCangJob {
     /**
      * 拉取goodCang任务
      */
-    @XxlJob("goodCangExecute")
+    @XxlJob("pullGoodCangExecute")
     public void execute() {
         threadPoolTaskExecutor.execute(() -> platformDataThread.executeTask(PlatformDictEnum.GOOD_CANG.getCode()));
     }

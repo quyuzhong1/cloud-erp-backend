@@ -1,6 +1,8 @@
 package com.erp.server.dmp.pull.schedule;
 
 import com.common.business.constant.TaskConstant;
+import com.common.business.enums.PlatformDictEnum;
+import com.erp.server.dmp.pull.thread.PlatformDataThread;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,7 @@ import javax.annotation.Resource;
 @EnableScheduling
 public class PullImlJob {
     @Resource
-    private PullErpDateThread pullErpDateThread;
+    private PlatformDataThread platformDataThread;
 
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
@@ -23,10 +25,10 @@ public class PullImlJob {
     /**
      * 拉取艾姆勒数据任务
      */
-    @XxlJob("omsImlExecute")
+    @XxlJob("pullImlExecute")
     public void execute() {
         threadPoolTaskExecutor.execute(()->{
-            pullErpDateThread.executeTask(TaskConstant.IML_PULL_DATA_TASK);
+            threadPoolTaskExecutor.execute(() -> platformDataThread.executeTask(PlatformDictEnum.IML.getCode()));
         });
     }
 }
