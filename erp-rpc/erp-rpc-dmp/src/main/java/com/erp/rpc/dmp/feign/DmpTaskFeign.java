@@ -188,8 +188,8 @@ public interface DmpTaskFeign {
      * @param dmpPullTaskEntity 查询过滤条件
      * @return
      */
-    @PostMapping("feign/dmp/saveOrUpdate/pull/task")
-    String saveOrUpdateDmpPullTask(@RequestBody @Valid DmpPullTaskEntity dmpPullTaskEntity);
+    @PostMapping("feign/saveOrUpdate/pull/task")
+    String saveOrUpdateDmpPullTask(@RequestBody DmpPullTaskEntity dmpPullTaskEntity);
 
     /**
      * 记录推送数据记录
@@ -197,8 +197,8 @@ public interface DmpTaskFeign {
      * @param dmpPushTaskEntity 查询过滤条件
      * @return
      */
-    @PostMapping("feign/dmp/saveOrUpdate/push/task")
-    String saveOrUpdateDmpPushTask(@RequestBody @Valid DmpPushTaskEntity dmpPushTaskEntity);
+    @PostMapping("feign/saveOrUpdate/push/task")
+    String saveOrUpdateDmpPushTask(@RequestBody DmpPushTaskEntity dmpPushTaskEntity);
 
     /**
      * 创建第三方仓任务
