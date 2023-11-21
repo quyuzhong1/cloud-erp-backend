@@ -637,7 +637,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException("[FbaShipmentEntity] 保存失败: entity=" + JSONUtil.toJsonStr(entity));
         }
         String msg = StrUtil.format("新增了FBA货件【{}】",entity.getFbaShipmentId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "新增FBA货件");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "新增FBA货件");
 
         // 记录货件状态
         fbaShipmentStatusService.saveByFbaShipment(entity);
@@ -713,7 +713,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (oldEntity.getIsDeleted()){
                 entity.setIsDeleted(false);
                 String msg = StrUtil.format("重新添加FBA货件【{}】",entity.getFbaShipmentId());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "重新添加FBA货件");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "重新添加FBA货件");
             }
             entity = FbaShipmentConverter.INSTANCE.oldToNew(entity, oldEntity);
             if (!this.getBaseMapper().updateByIdWithoutIsDelete(entity)){
@@ -768,8 +768,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> oldDetailIds = oldfbaShipmentDetailEntityList.stream().map(FbaShipmentDetailEntity::getId).collect(Collectors.toList());
         List<FbaShipmentReceiveEntity> oldReceiveEntitiyList = fbaShipmentReceiveService.listByDetailIds(oldDetailIds);
 
-        Map<String, FbaShipmentReceiveEntity> receiveEntityMap = oldReceiveEntitiyList.stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()), Function.identity()));
+        Map<String, List<FbaShipmentReceiveEntity>> receiveEntityMap = oldReceiveEntitiyList.stream()
+                .collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku())));
 
         Map<String, String> detailIdMap = saveOrUpdateDetailList
                 .stream()
@@ -791,17 +791,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         newReceiveEntityList.forEach(e -> {
             // 详情Key
             String entityKey = StrUtil.format("{}_{}", e.getFnSku() + e.getMsku());
-            FbaShipmentReceiveEntity receiveEntity = receiveEntityMap.get(entityKey);
-            // 新增
-            if (null == receiveEntity) {
+            List<FbaShipmentReceiveEntity> receiveEntityList = receiveEntityMap.get(entityKey);
+
+            if (CollectionUtils.isEmpty(receiveEntityList)) {
+                // 新增
                 e = FbaShipmentConsumerConverter.INSTANCE.receiveSetSkuMappingInfo(e, listingInfoMap.get(e.getMsku()));
                 saveOrUpdateReceiveList.add(e);
             } else {
-                // 修改
-                // 新增签收记录
-                if (!Objects.equals(e.getReceiveQty(), receiveEntity.getReceiveQty())) {
+                int historyReceiveQty = receiveEntityList.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+                // 判断历史数量是否相同
+                if (e.getReceiveQty() != historyReceiveQty) {
+                    // 新增签收记录
                     // ERP当前签收数量 = 亚马逊当前签收数量 - ERP历史记录签收数量
-                    e.setReceiveQty(e.getReceiveQty() - receiveEntity.getReceiveQty());
+                    e.setReceiveQty(e.getReceiveQty() - historyReceiveQty);
                     saveOrUpdateReceiveList.add(e);
                 }
             }
