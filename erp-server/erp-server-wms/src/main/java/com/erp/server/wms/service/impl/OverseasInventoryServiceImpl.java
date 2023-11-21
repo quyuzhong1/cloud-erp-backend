@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
+import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OverseasInventoryService;
@@ -124,8 +126,14 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        // TODO 导出
-        return true;
+        //  导出
+        String fileName = "海外仓库数据";
+        try {
+            ExcelUtil.export(fileName, "海外仓库数据", list, ExportOverseasInventoryExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015 + e.getMessage());
+        }
+        return Boolean.TRUE;
     }
 
 }
