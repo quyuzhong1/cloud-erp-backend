@@ -20,5 +20,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetailEntity> {
 
-    IPage<LogisticsBillDetailEntity> getPage(@Param("page") Page<LogisticsBillDetailEntity> page, @Param("query") LogisticsBillDetailQueryDTO query);
+    IPage<LogisticsBillDetailEntity> getTrackPage(@Param("page") Page<LogisticsBillDetailEntity> page, @Param("query") LogisticsBillDetailQueryDTO query);
 }

@@ -32,7 +32,7 @@
         track_no, track_time, status, content
     </sql>
     <delete id="deleteByTrackNo">
-        delete from logistics_track where tack_no = #{trackNo}
+        delete from logistics_track where track_no = #{trackNo}
     </delete>
 
 

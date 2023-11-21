@@ -90,7 +90,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVO
      * @return
      */
-    @Override
     public ApiResult<List<ConfirmResponseVO>> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO) {
         return ApiResult.error(-1, "功能未开放");
     }
@@ -133,7 +132,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param logisticsQueryVOList
      * @return
      */
-    @Override
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
         return ApiResult.error(-1, "功能未开放");
     }
@@ -165,6 +163,16 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 物流单注册
+     *
+     * @param registerTrackVO
+     * @return
+     */
+    public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
         return ApiResult.error(-1, "功能未开放");
     }
 

@@ -37,23 +37,45 @@ public class LogisticsChannelJob {
     private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
+     * 注册物流单号
+     *
+     * @return
+     */
+    @XxlJob("registerLogisticsNumber")
+    public ReturnT registerLogisticsNumber() {
+
+        XxlJobHelper.log("====开始注册物流单号====");
+        long current = 1;
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(pageSize)
+                .current(current)
+                .registerStatus(0)
+                .trackEnable(true)
+                .build();
+        getRegisterData(query);
+        XxlJobHelper.log("====结束注册物流单号====");
+        return ReturnT.SUCCESS;
+    }
+    /**
      * 同步物流渠道
      */
 //     @Scheduled(cron = "*/5 * * * * ?")
     @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
-        logisticsBaseService.syncAllLogisticsChannel();
+//        logisticsBaseService.syncAllLogisticsChannel();
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
             if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
                 ApiResult apiResult = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(),apiResult.isSuccess());
+                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(), apiResult.isSuccess());
             } else {
                 ApiResult apiResult = logisticsBaseService.syncSingleChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(),apiResult.isSuccess());
+                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(), apiResult.isSuccess());
             }
         }
         log.info("=====渠道同步结束=====");
@@ -73,6 +95,8 @@ public class LogisticsChannelJob {
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
                 .current(current)
+                .registerStatus(1)
+                .trackEnable(true)
                 .build();
         getTrackData(query);
         XxlJobHelper.log("====结束同步物流轨迹====");
@@ -86,21 +110,36 @@ public class LogisticsChannelJob {
         long pages = page.getPages();
         if (pages > page.getCurrent()) {
             //下一页
-            getTrackData(LogisticsBillDetailQueryDTO.builder()
-                    .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
-                    .size(pageSize)
-                    .current(page.getCurrent() + 1)
-                    .build());
+            query.setCurrent(page.getCurrent() + 1);
+            getTrackData(query);
         } else {
             //无数据
             log.info("========同步物流轨迹数据完成==========");
         }
     }
 
+    private void getRegisterData(LogisticsBillDetailQueryDTO query) {
+        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        //业务处理
+        processRegisterData(page.getRecords());
+        long pages = page.getPages();
+        if (pages > page.getCurrent()) {
+            //下一页
+            query.setCurrent(page.getCurrent() + 1);
+            getRegisterData(query);
+        } else {
+            //无数据
+            log.info("========同步物流轨迹数据完成==========");
+        }
+    }
     private void processTrackData(List<LogisticsBillDetailEntity> records) {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
         }
     }
-
+    private void processRegisterData(List<LogisticsBillDetailEntity> records) {
+        if (CollectionUtils.isNotEmpty(records)) {
+            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records);
+        }
+    }
 }

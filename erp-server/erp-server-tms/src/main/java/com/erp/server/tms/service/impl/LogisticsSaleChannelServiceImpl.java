@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -122,11 +123,13 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getShipmentMethod())){
             queryWrapper.eq(LogisticsSaleChannelEntity::getShipmentMethod, logisticsSaleChannelEntity.getShipmentMethod());
         }
+        queryWrapper.eq(LogisticsSaleChannelEntity::getIsDeleted, false);
         queryWrapper.last("limit 1");
         LogisticsSaleChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
         if (Objects.nonNull(one)){
             logisticsSaleChannelEntity.setId(one.getId());
+            logisticsSaleChannelEntity.setUpdateTime(LocalDateTime.now());
             return this.updateById(logisticsSaleChannelEntity);
         }
         return this.save(logisticsSaleChannelEntity);

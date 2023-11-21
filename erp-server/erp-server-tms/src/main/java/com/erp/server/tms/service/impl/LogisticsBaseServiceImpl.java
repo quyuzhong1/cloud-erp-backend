@@ -9,16 +9,13 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
-import com.erp.model.tms.vo.request.LogisticsTrackVO;
+import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.service.LogisticsBaseService;
-import com.erp.server.tms.service.LogisticsSaleChannelService;
-import com.erp.server.tms.service.LogisticsService;
-import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
@@ -27,7 +24,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +47,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private LogisticsSaleChannelService logisticsSaleChannelService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
+
 
     @Override
     public ApiResult syncLogisticsChannel(String platform) {
@@ -153,6 +155,74 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
+    public List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsBillDetailEntity> records) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(records.size());
+        LogisticsService service = logisticsRegistry.getHandler(platformType);
+        List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
+        if (CollectionUtils.isEmpty(mapList)) return Collections.emptyList();
+        if (CollectionUtils.isEmpty(records)) return Collections.emptyList();
+        RegisterTrackVO registerTrackVO = RegisterTrackVO.builder()
+                .authMap(mapList.get(0))
+                .logisticsRegisterVOS(convertRegisterData(records))
+                .build();
+        ApiResult<List<RegisterResponseVO>> listApiResult = service.registerLogisticsNumber(registerTrackVO);
+        if (listApiResult.isSuccess()) {
+            List<RegisterResponseVO> data = listApiResult.getData();
+            if (CollectionUtils.isNotEmpty(data)) {
+                Map<String, LogisticsBillDetailEntity> collect = records.stream().collect(Collectors.toMap(LogisticsBillDetailEntity::getTrackNo, Function.identity()));
+                data.forEach(registerResponseVO -> {
+                    BatchResultDTO dto = new BatchResultDTO();
+                    LogisticsBillDetailEntity logisticsBillDetailEntity = collect.get(registerResponseVO.getTrackNo());
+                    if (registerResponseVO.getTrackStatus()) {
+                        logisticsBillDetailEntity.setRegisterStatus(1);
+                        dto.setSuccess(true);
+                    } else {
+                        //已注册
+                        if (registerResponseVO.getCode().equalsIgnoreCase("A0400")) {
+                            dto.setSuccess(true);
+                            logisticsBillDetailEntity.setRegisterStatus(1);
+                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
+                        } else {
+                            dto.setSuccess(false);
+                            logisticsBillDetailEntity.setRegisterStatus(-1);
+                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
+                        }
+                    }
+                    dto.setId(logisticsBillDetailEntity.getId());
+                    dto.setCode(logisticsBillDetailEntity.getTrackNo());
+                    dto.setMsg(registerResponseVO.getMsg());
+                    resultDTOS.add(dto);
+                    logisticsBillDetailEntity.setUpdateTime(LocalDateTime.now());
+                    logisticsBillDetailService.updateById(logisticsBillDetailEntity);
+                });
+            }
+        } else {
+            records.forEach(logisticsBillDetailEntity -> {
+                BatchResultDTO dto = new BatchResultDTO();
+                dto.setId(logisticsBillDetailEntity.getId());
+                dto.setCode(logisticsBillDetailEntity.getTrackNo());
+                dto.setSuccess(false);
+                dto.setMsg(listApiResult.getMsg());
+                resultDTOS.add(dto);
+            });
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 数据转换
+     *
+     * @param records
+     * @return
+     */
+    private List<LogisticsRegisterVO> convertRegisterData(List<LogisticsBillDetailEntity> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return Collections.emptyList();
+        }
+        return LogisticsChannelConverter.INSTANCE.convertRegisterDataByTrack123(records);
+    }
+
+    @Override
     public List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities) {
         if (CollectionUtils.isNotEmpty(logisticsBillDetailEntities)) {
             List<BatchResultDTO> dtoList = new ArrayList<>(logisticsBillDetailEntities.size());
@@ -198,8 +268,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     public ApiResult syncShoppeeChannel(String platform) {
         log.info("{}渠道同步开始", platform);
-        ApiResult<List<ShopAuthEntity>> result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
-        if (result.isSuccess()) {
+        ApiResult<List<ShopAuthEntity>> result = null;
+        try {
+            result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
+        }catch (Exception e){
+            log.error("erp-oms服务接口getShopeeShopList异常：{}",e.getMessage());
+        }
+
+        if (Objects.nonNull(result) && result.isSuccess()) {
             LogisticsService service = logisticsRegistry.getHandler(platform);
             result.getData().forEach(shopAuthEntity -> {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();

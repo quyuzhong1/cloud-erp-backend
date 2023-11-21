@@ -31,13 +31,23 @@
         update_time,
         version,
         is_deleted,
-        main_id, track_status, track_no,track_time,track_query_mode,track_enable
+        main_id, track_status, track_no,track_time,track_query_mode,track_enable,logistics_auth_id,register_status,register_result
     </sql>
 
-    <select id="getPage" resultMap="BaseResultMap">
+    <select id="getTrackPage" resultMap="BaseResultMap">
         select <include refid="Base_Column_List"></include>
             from logistics_bill_detail
-        where track_status != 'sign' and is_deleted = false and track_query_mode = #{query.trackQueryMode}
+        where track_status != 'sign'
+        and is_deleted = false
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and track_enable = #{query.trackEnable}
+        </if>
         order by track_time desc
     </select>
 

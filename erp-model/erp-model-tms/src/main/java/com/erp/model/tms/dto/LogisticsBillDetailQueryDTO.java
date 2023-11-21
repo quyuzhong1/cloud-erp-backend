@@ -33,4 +33,12 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 查询方式
      */
     private String trackQueryMode;
+    /**
+     * 注册状态
+     */
+    private Integer registerStatus;
+    /**
+     * 是否需要查询物流轨迹
+     */
+    private Boolean trackEnable;
 }

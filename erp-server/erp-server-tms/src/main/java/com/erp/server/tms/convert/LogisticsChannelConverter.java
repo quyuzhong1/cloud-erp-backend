@@ -2,12 +2,15 @@ package com.erp.server.tms.convert;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.tongyou.dto.response.TongYouChannel;
+import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
@@ -143,4 +146,9 @@ public interface LogisticsChannelConverter {
     LogisticsSaleChannelEntity channelConvertByAliExpress(ChannelResponse chanelInfo);
     List<LogisticsSaleChannelEntity> channelConvertByAliExpress(List<ChannelResponse> chanelInfos);
 
+
+    RegisterRequest registerTrackNoByTrack123(LogisticsRegisterVO logisticsRegisterVO);
+    List<RegisterRequest> registerTrackNoByTrack123(List<LogisticsRegisterVO> logisticsRegisterVOS);
+    @Mapping(target = "trackNo",source = "trackNo")
+    List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsBillDetailEntity> records);
 }
