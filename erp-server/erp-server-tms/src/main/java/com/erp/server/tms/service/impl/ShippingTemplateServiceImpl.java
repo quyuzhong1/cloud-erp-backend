@@ -689,8 +689,16 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         for (ShippingTemplateDTO.ListDTO listDTO : records) {
             //模板类型名称
             listDTO.setTypeName(ShippingTemplateTypeEnum.getName(listDTO.getType()));
+
+            //物流商id
+            List<String> logisticsSupplierIdList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+            listDTO.setLogisticsSupplierIdList(logisticsSupplierIdList);
+            //渠道id
+            List<String> logisticsChannelIdList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+            listDTO.setChannelIdList(logisticsChannelIdList);
+
             //渠道名称
-            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).collect(Collectors.toList());
+            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).distinct().collect(Collectors.toList());
             listDTO.setChannelNameList(channelNameList);
             listDTO.setChannelNames(StrUtil.join(",",channelNameList));
             //是否禁用

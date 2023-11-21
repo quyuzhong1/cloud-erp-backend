@@ -126,6 +126,17 @@ public class ShippingTemplateDTO implements Serializable {
          * 失效日期
          */
         private LocalDate expireDate;
+
+        /**
+         * 物流商id集合
+         */
+        private List<String> logisticsSupplierIdList;
+
+        /**
+         * 渠道id集合
+         */
+        private List<String> channelIdList;
+
         /**
          * 应用渠道
          */
