@@ -3,20 +3,22 @@
 <mapper namespace="com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.tms.dto.ShippingCalculationDTO$ListDTO">
-       <result column="logisticsName" property="logisticsName" />
-       <result column="channelName" property="channelName" />
-       <result column="feeRule" property="feeRule" />
-       <result column="toCountry" property="toCountry" />
-       <result column="toWarehouseName" property="toWarehouseName" />
-       <result column="region" property="region" />
-       <result column="effectiveDate" property="effectiveDate" />
-       <result column="expireDate" property="expireDate" />
-       <result column="weightUnit" property="weightUnit" />
-       <result column="volumeSetting" property="volumeSetting" />
-       <result column="currency" property="currency" />
+        <result column="logisticsName" property="logisticsName" />
+        <result column="channelName" property="channelName" />
+        <result column="feeRule" property="feeRule" />
+        <result column="isApiSign" property="isApiSign" />
+        <result column="isApiInsurance" property="isApiInsurance" />
+        <result column="toCountry" property="toCountry" />
+        <result column="toWarehouseName" property="toWarehouseName" />
+        <result column="region" property="region" />
+        <result column="effectiveDate" property="effectiveDate" />
+        <result column="expireDate" property="expireDate" />
+        <result column="weightUnit" property="weightUnit" />
+        <result column="volumeSetting" property="volumeSetting" />
+        <result column="currency" property="currency" />
         <result column="templateId" property="templateId"  />
-       <result column="billingMethod" property="billingMethod" />
-       <result column="priceBinary" property="priceBinary" />
+        <result column="billingMethod" property="billingMethod" />
+        <result column="priceBinary" property="priceBinary" />
         <result column="templateRuleId" property="templateRuleId"  />
         <result column="startWeight" property="startWeight" />
         <result column="endWeight" property="endWeight" />
@@ -49,6 +51,8 @@
             ls.supplier_name as logisticsName,
             lc.name as channelName,
             lc.fee_rule as feeRule,
+            lc.is_api_sign as isApiSign,
+            lc.is_api_insurance as isApiInsurance,
             st.id as templateId,
             st.billing_method as billingMethod,
             str.id as templateRuleId,

@@ -112,6 +112,16 @@ public class ShippingCalculationDTO {
         private String feeRule;
 
         /**
+         * 是否签名
+         */
+        private Boolean isApiSign;
+
+        /**
+         * 是否保险
+         */
+        private Boolean isApiInsurance;
+
+        /**
          * 目的仓库
          */
         private String toWarehouseName;

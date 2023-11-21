@@ -109,7 +109,7 @@ public class PullAmazonJob {
     /**
      * 拉取亚马逊报表任务
      */
-    @XxlJob("amazonReportDownload")
+//    @XxlJob("amazonReportDownload")
     public ReturnT<String> reportExecute() {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         OffsetDateTime yesterday = now.minusDays(1);
@@ -437,7 +437,9 @@ public class PullAmazonJob {
             XxlJobHelper.log("[亚马逊请求创建报表] 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
         }
-        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+                .withMinute(0)
+                .withSecond(0);
 
         reportScheduleEntityList.forEach(reportSchedule -> {
             try {
