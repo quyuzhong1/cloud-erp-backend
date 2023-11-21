@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -134,4 +135,18 @@ public class ListingInfoWithSkuMappingDTO {
      * 平台最后修改时间
      */
     private LocalDateTime platformUpdateTime;
+
+    public String checkAndGetProductSkuId() {
+        if (StringUtils.isNotBlank(this.productSkuId)){
+            return this.productSkuId;
+        }
+        return "";
+    }
+
+    public String checkAndGetProductSkuNo() {
+        if (StringUtils.isNotBlank(this.productSkuNo)){
+            return this.productSkuNo;
+        }
+        return "";
+    }
 }

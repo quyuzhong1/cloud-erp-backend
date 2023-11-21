@@ -35,6 +35,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,6 +95,15 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
         // 签收信息
         List<PlatformFbaShipmentReceiveDTO> receiveDTOList = dto.getReceiveDTOList();
+
+        // 填充最新签收时间
+        if (!CollectionUtils.isEmpty(receiveDTOList)){
+            LocalDateTime maxReceiveTime = receiveDTOList.stream()
+                    .map(PlatformFbaShipmentReceiveDTO::getReceiveDate)
+                    .max(LocalDateTime::compareTo)
+                    .get();
+            entity.setShipmentReceiveTime(maxReceiveTime);
+        }
 
         // 卖家SKU列表
         List<String> sellerSkuList = receiveDTOList.stream().map(PlatformFbaShipmentReceiveDTO::getSellerSku).distinct().collect(Collectors.toList());

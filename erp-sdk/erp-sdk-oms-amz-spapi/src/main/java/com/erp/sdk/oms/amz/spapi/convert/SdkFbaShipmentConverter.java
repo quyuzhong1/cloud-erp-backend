@@ -47,9 +47,9 @@ public interface SdkFbaShipmentConverter {
     @Mappings({
             @Mapping(target = "sellerSku", source = "sellerSKU"),
             @Mapping(target = "fnSku", source = "fulfillmentNetworkSKU"),
-            @Mapping(target = "declareQty", source = "quantityReceived"),
+            @Mapping(target = "declareQty", source = "quantityShipped"),
             @Mapping(target = "receiveQty", source = "quantityReceived"),
-            @Mapping(target = "deliveryQty", source = "quantityShipped"),
+            @Mapping(target = "deliveryQty", constant = "0"),
             @Mapping(target = "fbaShipmentId", source = "shipmentId"),
             @Mapping(target = "receiveDate", expression = "java(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()))")
     })

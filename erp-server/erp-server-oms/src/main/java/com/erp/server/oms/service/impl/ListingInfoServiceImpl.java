@@ -125,7 +125,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
         // 组合
         return list.stream()
-                .map(e -> OmsListingConverter.INSTANCE.listingAndSKuMappingToDTO(e, skuMappingEntityMap.get(e.getId()).stream().findFirst().orElse(null)))
+                .map(e -> OmsListingConverter.INSTANCE.listingAndSKuMappingToDTO(e,
+                        skuMappingEntityMap.getOrDefault(e.getId(), Collections.emptyList()).stream().findFirst().orElse(null))
+                )
                 .collect(Collectors.toList());
     }
 
