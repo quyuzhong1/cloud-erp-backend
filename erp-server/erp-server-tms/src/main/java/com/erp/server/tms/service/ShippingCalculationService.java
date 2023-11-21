@@ -70,7 +70,7 @@ public interface ShippingCalculationService {
      * @param otherCostList
      * @return BigDecimal
      */
-    BigDecimal calculationSignatureCost(List<ShippingTemplateOtherCostEntity> otherCostList);
+    BigDecimal calculationSignatureCost(List<ShippingTemplateOtherCostEntity> otherCostList,Boolean isApiSign);
     /**
      * @description: 保险费
      * @author Will
@@ -78,7 +78,7 @@ public interface ShippingCalculationService {
      * @param otherCostList
      * @return BigDecimal
      */
-    BigDecimal calculationPremiumCost(List<ShippingTemplateOtherCostEntity> otherCostList);
+    BigDecimal calculationPremiumCost(List<ShippingTemplateOtherCostEntity> otherCostList,Boolean isApiInsurance);
     /**
      * @description: 超尺寸附加费
      * @author Will
