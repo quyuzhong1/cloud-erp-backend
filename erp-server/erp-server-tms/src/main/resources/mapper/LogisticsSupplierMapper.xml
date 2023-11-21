@@ -196,7 +196,6 @@
             ls.update_time,
             ls.supplier_id,
             ls.supplier_name,
-            ls.supplier_name,
             ls.type,
             ls.disabled,
             ls.auth_status,
@@ -204,7 +203,7 @@
             la.logistics_platform,
             la.id AS authId
         FROM logistics_supplier ls
-        INNER JOIN logistics_auth la
+        LEFT JOIN logistics_auth la
         ON ls.id=la.main_id and la.is_deleted=false
         where la.is_deleted=false AND ls.id=#{id}
     </select>

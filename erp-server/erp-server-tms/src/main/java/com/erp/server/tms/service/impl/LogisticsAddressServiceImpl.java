@@ -25,6 +25,7 @@ import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ import javax.servlet.http.HttpServletResponse;
 public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddressMapper, LogisticsAddressEntity> implements LogisticsAddressService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -62,6 +64,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
 
     @Autowired
+    @Lazy
     private LogisticsChannelService logisticsChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
