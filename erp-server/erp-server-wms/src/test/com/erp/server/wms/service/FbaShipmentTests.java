@@ -24,7 +24,7 @@ public class FbaShipmentTests {
 
     @Test
     public void delFind() {
-        FbaShipmentEntity entity = fbaShipmentService.getByFbaShipmentIdAndIsDelete("FBA16GQW2VDC", null);
+        FbaShipmentEntity entity = fbaShipmentService.getByFbaShipmentId("FBA16GQW2VDC");
         System.out.println(JSONUtil.toJsonStr(entity));
     }
 

@@ -42,13 +42,6 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
 
 
     /**
-     * 通过fbaShipmentId和isDelete查询实体
-     * @author  Jim
-     * @date 2023/11/17
-     */
-    FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId, Boolean isDelete);
-
-    /**
      * 忽略isDelete通过id更新
      * @author  Jim
      * @date 2023/11/20

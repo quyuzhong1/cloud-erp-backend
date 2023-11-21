@@ -13,7 +13,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -143,7 +142,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         entity.setCountryName(null != countryEntity ? countryEntity.getNameCn() : "");
 
         // 新增或更新
-        FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentIdAndIsDelete(entity.getFbaShipmentId(), null);
+        FbaShipmentEntity oldEntity = fbaShipmentService.getByFbaShipmentId(entity.getFbaShipmentId());
         if (null == oldEntity){
             // 新增
             fbaShipmentService.checkAndSaveAll(entity, listingInfoWithSkuMappingDTOMap, hasChildrenSkuIds,   receiveDTOList, dto.checkAndGetDetailList());
