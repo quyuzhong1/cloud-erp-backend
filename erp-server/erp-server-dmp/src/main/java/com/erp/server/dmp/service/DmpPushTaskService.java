@@ -125,4 +125,12 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return
      */
     String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity);
+    /**
+     * @description: 判断
+     * @author Will
+     * @date: 2023/11/21 10:21
+     * @param entity
+     * @return Boolean
+     */
+    Boolean isSendParentBillTask (DmpPushTaskEntity entity);
 }
