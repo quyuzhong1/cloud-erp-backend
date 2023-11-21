@@ -178,15 +178,15 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         dto.setSuccess(true);
                     } else {
                         //已注册
-                        if (registerResponseVO.getCode().equalsIgnoreCase("A0400")) {
-                            dto.setSuccess(true);
-                            logisticsBillDetailEntity.setRegisterStatus(1);
-                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
-                        } else {
+//                        if (registerResponseVO.getCode().equalsIgnoreCase("A0400")) {
+//                            dto.setSuccess(true);
+//                            logisticsBillDetailEntity.setRegisterStatus(1);
+//                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
+//                        } else {
                             dto.setSuccess(false);
                             logisticsBillDetailEntity.setRegisterStatus(-1);
                             logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
-                        }
+//                        }
                     }
                     dto.setId(logisticsBillDetailEntity.getId());
                     dto.setCode(logisticsBillDetailEntity.getTrackNo());
