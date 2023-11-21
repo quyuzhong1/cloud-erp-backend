@@ -6,10 +6,12 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
@@ -29,6 +31,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -109,8 +113,22 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public List<RequisitionApplicationDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return null;
+    public List<RequisitionApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
+        FbaDeliveryDTO.PagingParamDTO searchParam = new FbaDeliveryDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<RequisitionApplicationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<String> statusList = ApproveStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(RequisitionApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        statusList.parallelStream().forEach(status -> {
+            if(!existStatusList.contains(status)) {
+                list.add(new RequisitionApplicationDTO.TabListDTO(status, 0));
+            }
+        });
+        list.add(new RequisitionApplicationDTO.TabListDTO("all", list.stream().mapToInt(RequisitionApplicationDTO.TabListDTO::getCount).sum()));
+        // 计算合计数量
+        return list;
     }
 
     @Override

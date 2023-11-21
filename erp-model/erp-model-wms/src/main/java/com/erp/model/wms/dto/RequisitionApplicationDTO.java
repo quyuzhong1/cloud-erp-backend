@@ -2,6 +2,10 @@ package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -285,10 +289,14 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型
+         * 标识：wms/common/enumDropDown?type=RequisitionApplicationStatus
+         * 描述：waitSubmit:待提交, waitHandle:待处理, handleIng:处理中, handle:已审核
          */
+        @StateEnumValue(clazz = RequisitionApplicationStatusEnum.class, message = "tab类型有误")
+        @NotBlank(message = "tab不能为空")
         private String tabFlag;
 
         /**
