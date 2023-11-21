@@ -34,8 +34,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id
-        ,
+        id,
         create_time,
         update_time,
         create_user_name,
@@ -94,7 +93,6 @@
         <where>
             <include refid="conditionSql"/>
         </where>
-        ORDER BY oi.id DESC
     </select>
 
     <select id="queryParamsTotal" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListTotalDTO">
@@ -121,7 +119,6 @@
         <where>
             <include refid="conditionSql"/>
         </where>
-        ORDER BY oi.id DESC
     </select>
 
 
