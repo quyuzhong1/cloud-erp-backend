@@ -759,8 +759,25 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
+            // TODO 查询仓库关联服务商
+            //平台
+            String dictPlatform = "";
+            //平台名称
+            String platformName = "";
+            if (listDTO.getName().contains("艾姆勒")){
+                dictPlatform = OmsPlatformEnum.OMS_IML.getCode();
+                platformName = OmsPlatformEnum.OMS_IML.getName();
+            } else if (listDTO.getName().contains("谷仓")){
+                dictPlatform = OmsPlatformEnum.OMS_GOOD_CANG.getCode();
+                platformName = OmsPlatformEnum.OMS_GOOD_CANG.getName();
+            }
+            listDTO.setDictPlatform(dictPlatform);
+            listDTO.setPlatformName(platformName);
         }
-        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+        return resultList.stream()
+                .filter(e-> StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
+                .collect(Collectors.toList());
     }
 
     @Override
