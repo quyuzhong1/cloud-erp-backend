@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
@@ -43,7 +44,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@AuthSaveData(method = PlatformDictEnum.WALMART)
+@AuthSaveData(method = PlatformDictEnum.ALI_EXPRESS)
 public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private ShopInfoService shopInfoService;
@@ -62,6 +63,19 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_AUTHORIZE;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if(Objects.isNull(cfgAppClient)){
+           throw new ServiceException("该类型店铺尚未配置开发者账号");
+        }
         return null;
     }
 
@@ -193,24 +207,5 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         return result;
     }
 
-    /**
-     * shopInfo Entity 转换DTO
-     */
-    private ShopifyShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, String accessToken) {
-        return new ShopifyShopInfoDTO()
-                // 店铺ID
-                .setId(shopInfo.getId())
-                // 访问token
-                .setAccessToken(accessToken)
-                // 店铺名称
-                .setName(shopInfo.getName())
-                // 区域id
-                .setDictAreaCode(shopInfo.getDictAreaCode())
-                // 国家id
-                .setDictCountryCode(shopInfo.getDictCountryCode())
-                // 负责人id
-                .setChargeId(shopInfo.getChargeId())
-                // 店铺全域名: SHOP_NAME.myshopify.com
-                .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
-    }
+
 }

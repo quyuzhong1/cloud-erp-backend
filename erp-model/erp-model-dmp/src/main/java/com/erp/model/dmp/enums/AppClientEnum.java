@@ -20,6 +20,7 @@ public enum AppClientEnum  {
     WALMART_AUTHORIZE("walmartAuthorize","sales","Walmart"),
     WALMART_ACCESS_TOKEN("walmartAccessToken","sales","Walmart"),
     SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
+    ALI_EXPRESS_AUTHORIZE("aliExpressAuthorize","sales","AliExpress"),
 
 
     ;

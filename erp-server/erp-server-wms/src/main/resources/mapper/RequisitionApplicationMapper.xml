@@ -48,5 +48,13 @@
         code, source_id, source_code, source_type, status, invalid_status, invalid_remark, invalid_time, type, channel_id, channel_name, requisition_warehouse_id, requisition_warehouse_name, to_warehouse_id, to_warehouse_name, from_warehouse_id, from_warehouse_name, handle_user_id, handle_user_name, handle_time
     </sql>
 
-
+    <!--获取状态统计-->
+    <select id="tabList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$TabListDTO">
+        SELECT
+        status AS tabFlag,
+        count(*)  AS count
+        FROM  requisition_application
+        WHERE is_deleted=FALSE
+        GROUP BY status
+    </select>
 </mapper>
