@@ -280,7 +280,7 @@ public class FbaInboundApiTest {
         String marketplaceId = "ATVPDKIKX0DER";
         List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
         List<String> shipmentIdList = null;
-        LocalDateTime startTime = LocalDateTime.of(2023, 10, 31, 0, 0, 0);
+        LocalDateTime startTime = LocalDateTime.of(2023, 11, 13, 0, 0, 0);
         LocalDateTime now = LocalDateTime.now();
         String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
         String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
