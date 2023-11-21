@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OverseasInventoryService;
@@ -16,7 +14,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +24,9 @@ import com.erp.model.wms.dto.OverseasInventoryDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 海外仓库存 服务实现类
@@ -109,6 +110,22 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public OverseasInventoryDTO.ListTotalDTO queryParamsTotal(OverseasInventoryDTO.PagingParamDTO params) {
+        return baseMapper.queryParamsTotal(params);
+    }
+
+    @Override
+    public Boolean exportExcel(OverseasInventoryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        //查询所有数据
+        List<OverseasInventoryDTO.ListDTO> list = baseMapper.listByParams(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        // TODO 导出
+        return true;
     }
 
 }

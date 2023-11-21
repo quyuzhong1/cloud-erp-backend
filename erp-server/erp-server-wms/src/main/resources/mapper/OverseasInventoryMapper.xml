@@ -3,38 +3,39 @@
 <mapper namespace="com.erp.server.wms.mapper.OverseasInventoryMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasInventoryEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="platform_inventory_id" property="platformInventoryId" />
-       <result column="dict_platform" property="dictPlatform" />
-       <result column="name" property="name" />
-       <result column="platform_sku" property="platformSku" />
-       <result column="platform_sku_name" property="platformSkuName" />
-       <result column="product_name" property="productName" />
-       <result column="sku_no" property="skuNo" />
-       <result column="sku_id" property="skuId" />
-       <result column="deliver_onway_qty" property="deliverOnwayQty" />
-       <result column="pending_qty" property="pendingQty" />
-       <result column="sellable_qty" property="sellableQty" />
-       <result column="unsellable_qty" property="unsellableQty" />
-       <result column="reserved_qty" property="reservedQty" />
-       <result column="onway_qty" property="onwayQty" />
-       <result column="lack_qty" property="lackQty" />
-       <result column="frozen_qty" property="frozenQty" />
-       <result column="shipped_qty" property="shippedQty" />
-       <result column="download_time" property="downloadTime" />
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="platform_inventory_id" property="platformInventoryId"/>
+        <result column="dict_platform" property="dictPlatform"/>
+        <result column="name" property="name"/>
+        <result column="platform_sku" property="platformSku"/>
+        <result column="platform_sku_name" property="platformSkuName"/>
+        <result column="product_name" property="productName"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="deliver_onway_qty" property="deliverOnwayQty"/>
+        <result column="pending_qty" property="pendingQty"/>
+        <result column="sellable_qty" property="sellableQty"/>
+        <result column="unsellable_qty" property="unsellableQty"/>
+        <result column="reserved_qty" property="reservedQty"/>
+        <result column="onway_qty" property="onwayQty"/>
+        <result column="lack_qty" property="lackQty"/>
+        <result column="frozen_qty" property="frozenQty"/>
+        <result column="shipped_qty" property="shippedQty"/>
+        <result column="download_time" property="downloadTime"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
+        id
+        ,
         create_time,
         update_time,
         create_user_name,
@@ -46,12 +47,9 @@
         platform_inventory_id, dict_platform, name, platform_sku, platform_sku_name, product_name, sku_no, sku_id, deliver_onway_qty, pending_qty, sellable_qty, unsellable_qty, reserved_qty, onway_qty, lack_qty, frozen_qty, shipped_qty, download_time
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
-        SELECT
-        oi.*
-        FROM  overseas_inventory as oi
-        WHERE oi.is_deleted = false
-        <if test="params.skuNoList!=null and params.skuNoList.size>0">
+    <sql id="conditionSql">
+        oi.is_deleted = false
+        <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
             <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
@@ -70,10 +68,59 @@
         <if test="params.name !=null and params.name!=''">
             AND oi.name ILIKE concat('%', #{params.name}::text ,'%')
         </if>
+        <!--不显示0库存-->
+        <if test="params.hasNotZero !=null and params.hasNotZero ">
+            AND oi.deliver_onway_qty = 0
+            AND oi.pending_qty = 0
+            AND oi.sellable_qty = 0
+            AND oi.unsellable_qty = 0
+            AND oi.reserved_qty = 0
+            AND oi.onway_qty = 0
+            AND oi.lack_qty = 0
+            AND oi.frozen_qty = 0
+            AND oi.shipped_qty = 0
+        </if>
+
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
+        SELECT
+        oi.*
+        FROM overseas_inventory as oi
+        <where>
+            <include refid="conditionSql"/>
+        </where>
+        ORDER BY oi.id DESC
+    </select>
+
+    <select id="queryParamsTotal" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListTotalDTO">
+        SELECT
+        COALESCE(SUM(oi.deliver_onway_qty),0) as deliverOnwayQty,
+        COALESCE(SUM(oi.pending_qty),0) as pendingQty,
+        COALESCE(SUM(oi.sellable_qty),0) as sellableQty,
+        COALESCE(SUM(oi.unsellable_qty),0) as unsellableQty,
+        COALESCE(SUM(oi.reserved_qty),0) as reservedQty,
+        COALESCE(SUM(oi.onway_qty),0) as onwayQty,
+        COALESCE(SUM(oi.lack_qty),0) as lackQty,
+        COALESCE(SUM(oi.frozen_qty),0) as frozenQty,
+        COALESCE(SUM(oi.shipped_qty),0) as shippedQty
+        FROM overseas_inventory as oi
+        <where>
+            <include refid="conditionSql"/>
+        </where>
+    </select>
+
+    <select id="listByParams" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
+        SELECT
+        oi.*
+        FROM overseas_inventory as oi
+        <where>
+            <include refid="conditionSql"/>
+        </where>
         ORDER BY oi.id DESC
     </select>
 
