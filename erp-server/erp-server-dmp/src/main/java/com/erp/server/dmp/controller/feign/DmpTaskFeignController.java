@@ -47,6 +47,4 @@ public class DmpTaskFeignController {
     public Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto){
         return platformApiTaskService.createThirdWarehouseTask(dto);
     }
-
-
 }

@@ -50,14 +50,14 @@
         oi.is_deleted = false
         <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
-            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo,jdbcType=VARCHAR}
             </foreach>
         </if>
         <if test="params.platformSkuNoList!=null and params.platformSkuNoList.size>0">
-            AND oi.platform_sku_no IN
-            <foreach collection="platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
-                #{platformSkuNo}
+            AND oi.platform_sku IN
+            <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo,jdbcType=VARCHAR}
             </foreach>
         </if>
         <if test="params.updateTimeList != null and params.updateTimeList.size > 0">

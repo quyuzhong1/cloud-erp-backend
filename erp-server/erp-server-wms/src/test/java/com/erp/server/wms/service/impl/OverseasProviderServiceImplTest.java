@@ -6,6 +6,7 @@ import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.OverseasProviderService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 

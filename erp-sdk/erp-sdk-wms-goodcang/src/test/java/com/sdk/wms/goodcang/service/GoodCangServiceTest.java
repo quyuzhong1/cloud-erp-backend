@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.service;
 
 
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetInventoryReq;
@@ -13,9 +14,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=GoodCangService.class)
@@ -24,6 +28,12 @@ public class GoodCangServiceTest {
     @Resource
     private GoodCangService goodCangService;
 
+    public GoodCangServiceTest(){
+        Map<String,String> authMap = new HashMap<>();
+        authMap.put("appToken","7013991264f611e98ea200e01b680258");
+        authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
+        ThirdWarehouseContext.setAuthMap(authMap);
+    }
 
     @Test
     public void authorizationTest() {
@@ -34,6 +44,7 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(200)
+                .productUpdateTimeFrom("2020-10-01 00:00:00")
                 .build();
         GoodCangResponse<List<GoodCangSkuResp>> response = goodCangService.getSkuList(goodCangGetSkuReq);
         System.out.println(response);

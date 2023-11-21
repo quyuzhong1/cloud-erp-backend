@@ -206,10 +206,8 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     private static PlatformApiTaskEntity getThirdWarehouseApiTaskEntity(ThirdWarehouseTaskDTO.AddDTO dto, PlatformApiEntity task) {
         PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
         entity.setShopId(dto.getAuthKey());
-        entity.setShopName("");
-        Map<String, Object> a = new HashMap<>();
-        a.put("test","test");
-        entity.setApiParam(a);
+        entity.setShopName(task.getDictPlatform());
+        entity.setApiParam(dto.getAuthInfo());
         entity.setDictPlatform(dto.getDictPlatform());
         entity.setApiCode(task.getApiCode());
         entity.setApiName(task.getApiName());

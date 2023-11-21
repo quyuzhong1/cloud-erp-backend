@@ -1,8 +1,11 @@
 package com.common.business.dto;
 
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.annotation.Transient;
 
 import java.time.LocalDateTime;
@@ -14,6 +17,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
+@ToString
 public class JobTaskDTO {
     /**
      * 主键id
@@ -53,6 +57,7 @@ public class JobTaskDTO {
     /**
      * 创建时间
      */
+
     private LocalDateTime createTime;
     /**
      * 更新时间
@@ -96,6 +101,7 @@ public class JobTaskDTO {
     /**
      * 任务名称
      */
+    @TableField(value = "api_param", typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> apiParam;
 
     /**
