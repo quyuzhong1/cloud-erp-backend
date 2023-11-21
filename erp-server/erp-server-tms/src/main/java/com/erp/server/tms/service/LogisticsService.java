@@ -98,6 +98,13 @@ public interface LogisticsService {
     ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO);
 
     /**
+     * 物流单号注册
+     * @param registerTrackVO
+     * @return
+     */
+    ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO);
+
+    /**
      * 渠道查询
      *
      * @return

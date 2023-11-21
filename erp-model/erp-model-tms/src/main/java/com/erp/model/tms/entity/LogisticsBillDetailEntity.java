@@ -63,6 +63,18 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
     @TableField("logistics_auth_id")
     private String logisticsAuthId;
 
+    /**
+     * 注册状态（0未注册1注册成功-1注册失败）
+     */
+    @TableField("register_status")
+    private Integer registerStatus;
+
+    /**
+     * 注册结果
+     */
+    @TableField("register_result")
+    private String registerResult;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String TRACK_STATUS = "track_status";

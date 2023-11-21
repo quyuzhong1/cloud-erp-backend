@@ -18,5 +18,5 @@ public class LocalLogisticsInfo implements Serializable {
     private String courierNameCN;
     private String courierNameEN;
     private String courierHomePage;
-    private List<TrackingDetail> TrackingDetails;
+    private List<TrackingDetail> trackingDetails;
 }

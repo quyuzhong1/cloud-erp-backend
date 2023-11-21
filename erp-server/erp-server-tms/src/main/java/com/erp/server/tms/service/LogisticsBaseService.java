@@ -45,6 +45,14 @@ public interface LogisticsBaseService {
      */
     List<BatchResultDTO> processTrackData(String platformType, List<LogisticsBillDetailEntity> records);
 
+    /**
+     * 注册物流单号
+     * @param platformType
+     * @param records
+     * @return
+     */
+    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsBillDetailEntity> records);
+
     List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsBillDetailEntity> logisticsBillDetailEntities);
 
     /**

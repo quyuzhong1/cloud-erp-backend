@@ -23,9 +23,7 @@ import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
 import com.erp.tms.aliexpress.model.label.request.WarehouseOrderQuery;
-import com.erp.tms.aliexpress.model.order.request.DeclareProduct;
-import com.erp.tms.aliexpress.model.order.request.OrderRequest;
-import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
+import com.erp.tms.aliexpress.model.order.request.*;
 import com.erp.tms.aliexpress.model.order.response.OrderResponse;
 import com.erp.tms.aliexpress.model.order.response.QueryResult;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
@@ -103,9 +101,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private OrderRequest processCreateOrderData(LogisticsOrderVO logisticsOrderVO) {
         //申报产品信息
         List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
-
-//        //收寄双方信息
-//        List<ContactInfo> contactInfoList = new ArrayList<>(2);
+        //收寄信息
+        AddressDTO addressDTO = new AddressDTO();
+        Address refund = new Address();
 //        ContactInfo sender = LogisticsOrderConverter.INSTANCE.orderRequestSendUserByExpress(logisticsOrderVO);
 //        ContactInfo receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByExpress(logisticsOrderVO);
 //        contactInfoList.add(sender);

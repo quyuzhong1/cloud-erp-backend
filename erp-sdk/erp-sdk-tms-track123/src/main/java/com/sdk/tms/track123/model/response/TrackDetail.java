@@ -13,6 +13,7 @@ import java.io.Serializable;
  */
 @Data
 public class TrackDetail implements Serializable {
+    private String id;
     private String trackNo;
     private String createTime;
     private String nextUpdateTime;
@@ -28,7 +29,8 @@ public class TrackDetail implements Serializable {
     private String receiptTime;
     private String deliveredTime;
     private String lastTrackingTime;
-    private Integer receiptDays;
+    private Integer transitDays;
+    private Integer stayDays;
     private Integer deliveredDays;
     private String remark;
     //当地物流

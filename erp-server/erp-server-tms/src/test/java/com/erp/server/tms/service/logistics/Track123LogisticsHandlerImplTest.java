@@ -37,7 +37,7 @@ public class Track123LogisticsHandlerImplTest {
 
     public Track123LogisticsHandlerImplTest(){
         String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
+        String CHECK_WORD = "9fa500686633410a84ff0b00daed555e";//此处替换为您在丰桥平台获取的校验码
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
@@ -53,137 +53,31 @@ public class Track123LogisticsHandlerImplTest {
     }
 
     @Test
-    public void getChannel() {
-        ApiResult<List<LogisticsSaleChannelEntity>> channel = track123LogisticsHandler.getChannel(ChanelQueryVO.builder().authMap(authMap).build());
-        System.out.println(channel);
-    }
-
-    @Test
-    public void createOrder(){
-        SenderInfo senderInfo = new SenderInfo();
-        senderInfo.setAddressFirst("address");
-        senderInfo.setContact("contact");
-        senderInfo.setCityName("newyork");
-        senderInfo.setCompanyName("componeny");
-        senderInfo.setName("name");
-        senderInfo.setProvinceName("shenzhen");
-        senderInfo.setTelNumber("12345678");
-        senderInfo.setEmail("321546");
-        senderInfo.setCountry("CN");
-        senderInfo.setZipCode("515800");
-        LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
-        logisticsProductVO.setId("12121232");
-        logisticsProductVO.setSkuId("123456");
-        logisticsProductVO.setEnglishUsage("materi");
-        logisticsProductVO.setDeclareChineseName("物流");
-        logisticsProductVO.setDeclareEnglishName("mta");
-        logisticsProductVO.setPrice(new BigDecimal("12"));
-        logisticsProductVO.setWeight(1999);
-        logisticsProductVO.setQuantity(10);
-        logisticsProductVO.setSourceCountry("CN");
-        LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
-        logisticsChannel.setCode("UBI.CA2US.CAPOST");
-        //DDU/DDP
-        logisticsChannel.setTaxModel("DDU");
-
-        LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("UBI.CA2US.CAPOST");
-        logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("1725040739275055105");
-
-        final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
-                .authMap(authMap)
-//                .channelCode("")
-//                .channelId("1725040739275055105")
-                .orderSource("ERP")
-//                .facility("can")
-                .deliveryNo("wj12345167721")
-                .receiverInfoVO(ReceiverInfoVO.builder()
-                        .addressFirst("address")
-                        .email("123@q.con")
-                        .city("shenz")
-                        .name("mark")
-                        .companyName("componey")
-                        .contact("mark")
-                        .country("US")
-                        .zipCode("11510")
-                        .province("state")
-                        .telNumber("123456789")
-                        .build())
-                .senderInfo(senderInfo)
-                .parceInfoVO(ParceInfoVO.builder()
-                        .currency("USD")
-                        .height(1)
-                        .hasBattery(true)
-                        .totalPrice(new BigDecimal("120"))
-                        .totalQuantity(10)
-                        .totalWeight(1999)
-                        .length(1)
-                        .totalWeight(123)
-                        .width(123)
-                        .build())
-                .logisticsProductVOList(Arrays.asList(
-                        logisticsProductVO
-                ))
-                .logisticsChannelEntity(logisticsChannel)
+    public void registerLogisticsNumber(){
+        List<LogisticsRegisterVO> registerVOS = new ArrayList<>();
+        LogisticsRegisterVO vo = LogisticsRegisterVO.builder()
+                .trackNo("UJ076562757YP")
                 .build();
-        ApiResult<LogisticsOrderResponseVO> order = track123LogisticsHandler.createOrder(logisticsOrderVO);
-        System.out.println(order);
-    }
-
-    @Test
-    public void queryOrderList(){
-        LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<LogisticsOrderResponseVO>> listApiResult = track123LogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
-        System.out.println(listApiResult);
-    }
-
-    @Test
-    public void getLabelList() throws IOException {
-        LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167721");
-        logisticsQueryVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsPrintLabelResponse>> labelList = track123LogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
-        System.out.println(labelList);
-    }
-
-    @Test
-    public void interceptOrder(){
-        LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList2.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> listApiResult = track123LogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
-        System.out.println(listApiResult);
-    }
-
-    @Test
-    public void cancelOrder(){
-        LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
-        logisticsQueryVOList.setTrackNo("LM000002721CA");
-        logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> listApiResult = track123LogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
-        System.out.println(listApiResult);
-    }
-
-    @Test
-    public void confirmOrder(){
-        LogisticsQueryBaseVO logisticsQueryVO = new LogisticsCancelOrderVO();
-        logisticsQueryVO.setDeliveryNo("wj12345167721");
-        logisticsQueryVO.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
-        logisticsQueryVO.setTrackNo("LM000002721CA");
-        logisticsQueryVO.setAuthMap(authMap);
-        ApiResult<List<ConfirmResponseVO>> listApiResult = track123LogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
+        registerVOS.add(vo);
+//        LogisticsRegisterVO vo1 = LogisticsRegisterVO.builder()
+//                .trackNo("00369744292706509832")
+//                .build();
+//        registerVOS.add(vo1);
+        RegisterTrackVO registerTrackVO = RegisterTrackVO.builder()
+                .authMap(authMap)
+                .logisticsRegisterVOS(registerVOS)
+                .build();
+        ApiResult<List<RegisterResponseVO>> listApiResult = track123LogisticsHandler.registerLogisticsNumber(registerTrackVO);
         System.out.println(listApiResult);
     }
 
     @Test
     public void getTrack(){
         LogisticsTrackVO logisticsQueryVO = new LogisticsTrackVO();
-        logisticsQueryVO.setTrackNos(Collections.singletonList("wj12345167721"));
+        List<String> trackNos = new ArrayList<>();
+        trackNos.add("UJ076562757YP");
+//        trackNos.add("00369744292706509832");
+        logisticsQueryVO.setTrackNos(trackNos);
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getTrack(logisticsQueryVO);
         System.out.println(track);

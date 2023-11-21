@@ -137,7 +137,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         Page<LogisticsBillDetailEntity> page = new Page<>();
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
-        IPage<LogisticsBillDetailEntity> result = baseMapper.getPage(page, query);
+        IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
         return result;
     }
 

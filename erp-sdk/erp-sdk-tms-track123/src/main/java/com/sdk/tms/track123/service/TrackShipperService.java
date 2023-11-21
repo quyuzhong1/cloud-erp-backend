@@ -3,7 +3,11 @@ package com.sdk.tms.track123.service;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.track123.constant.PathConstants;
+import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
+import com.sdk.tms.track123.model.response.RegisterResponse;
+import com.sdk.tms.track123.model.response.RegisterResult;
+import com.sdk.tms.track123.model.response.ResponseData;
 import com.sdk.tms.track123.model.response.TrackResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -85,6 +89,16 @@ public class TrackShipperService {
         return JSONUtil.toBean(result, TrackResponse.class);
     }
 
+    public RegisterResult registerLogisticsNumber(String token, List<RegisterRequest> registerRequests){
+        long timestamp = System.currentTimeMillis();
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("Content-Type", "application/json;charset=utf-8");
+        headers.put("Track123-Api-Secret", token);
+        headers.put("timestamp", String.valueOf(timestamp));
+        String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
+        System.out.println(result);
+        return JSONUtil.toBean(result, RegisterResult.class);
+    }
 
     private static byte[] calculateHmacSHA256(String message, String secretKey)
             throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {

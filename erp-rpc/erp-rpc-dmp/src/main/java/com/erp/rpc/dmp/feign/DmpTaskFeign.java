@@ -188,7 +188,7 @@ public interface DmpTaskFeign {
      * @param dmpPullTaskEntity 查询过滤条件
      * @return
      */
-    @PostMapping("/saveOrUpdate/pull/task")
+    @PostMapping("feign/dmp/saveOrUpdate/pull/task")
     String saveOrUpdateDmpPullTask(@RequestBody @Valid DmpPullTaskEntity dmpPullTaskEntity);
 
     /**
@@ -197,7 +197,7 @@ public interface DmpTaskFeign {
      * @param dmpPushTaskEntity 查询过滤条件
      * @return
      */
-    @PostMapping("/saveOrUpdate/push/task")
+    @PostMapping("feign/dmp/saveOrUpdate/push/task")
     String saveOrUpdateDmpPushTask(@RequestBody @Valid DmpPushTaskEntity dmpPushTaskEntity);
 
     /**
