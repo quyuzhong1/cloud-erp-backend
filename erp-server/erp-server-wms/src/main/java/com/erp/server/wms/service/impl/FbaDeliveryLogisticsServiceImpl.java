@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -137,9 +138,15 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     @Override
     public List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids) {
         List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> viewList = new ArrayList<>();
-        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillFeign.listLogisticsBillVoBySourceIds(ids);
-
         List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = this.listByMainIds(ids);
+
+        List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryService.listByIds(ids);
+        List<FbaDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deliveryEntityList)) {
+            throw new ServiceException(ApiError.NOT_APPROVE_NOT_UPDATE_LOGISTICS);
+        }
+
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillFeign.listLogisticsBillVoBySourceIds(ids);
         for (FbaDeliveryLogisticsEntity logisticsEntity : fbaDeliveryLogisticsEntities) {
             FbaDeliveryLogisticsDTO.DeliveryLogisticsView view = new FbaDeliveryLogisticsDTO.DeliveryLogisticsView();
             BeanMapper.copy(logisticsEntity, view);
