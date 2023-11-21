@@ -5,6 +5,7 @@ import com.common.business.mapper.NumberMapperWork;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
+import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.model.order.request.DeclareProduct;
 import com.sdk.tms.disifang.model.order.request.DeclareProductInfo;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -489,4 +490,30 @@ public interface LogisticsOrderConverter {
     })
     DeclareProduct orderRequestProductByAliExpress(LogisticsProductVO logisticsProductVO);
     List<DeclareProduct> orderRequestProductByAliExpress(List<LogisticsProductVO> logisticsProductVOList);
+
+    @Mappings({
+            @Mapping(target = "country",source = "senderInfo.country"),
+            @Mapping(target = "province",source = "senderInfo.provinceName"),
+            @Mapping(target = "city",source = "senderInfo.cityName"),
+            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "street_address",source = "senderInfo.addressFirst"),
+            @Mapping(target = "post_code",source = "senderInfo.zipCode"),
+            @Mapping(target = "name",source = "senderInfo.name"),
+            @Mapping(target = "phone",source = "senderInfo.telNumber"),
+            @Mapping(target = "email",source = "senderInfo.email")
+    })
+    Address orderRequestSendUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
+            @Mapping(target = "country" ,source = "receiverInfoVO.country"),
+            @Mapping(target = "province",source = "receiverInfoVO.province"),
+            @Mapping(target = "city",source = "receiverInfoVO.city"),
+            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "street_address",source = "receiverInfoVO.addressFirst"),
+            @Mapping(target = "email",source = "receiverInfoVO.email"),
+            @Mapping(target = "post_code",source = "receiverInfoVO.zipCode"),
+            @Mapping(target = "name",source = "receiverInfoVO.name"),
+            @Mapping(target = "phone",source = "receiverInfoVO.telNumber")
+    })
+    Address orderRequestReceiverUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 }

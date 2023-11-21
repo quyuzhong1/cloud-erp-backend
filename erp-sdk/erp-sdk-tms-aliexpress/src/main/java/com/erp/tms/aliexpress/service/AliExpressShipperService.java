@@ -1,6 +1,7 @@
 package com.erp.tms.aliexpress.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.UUID;
 import com.erp.tms.aliexpress.api.IopClient;
 import com.erp.tms.aliexpress.api.IopClientImpl;
 import com.erp.tms.aliexpress.api.IopRequest;
@@ -109,5 +110,31 @@ public class AliExpressShipperService {
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return response;
+    }
+
+    public void getToken() throws ApiException {
+        IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
+        IopRequest request = new IopRequest();
+        request.setApiName("/auth/token/security/create");
+        request.addApiParameter("code", "3_502978_37f6TTJYzrCAqQnuq5s3bLbC5894");
+        request.addApiParameter("uuid", UUID.randomUUID().toString());
+        IopResponse response = client.execute(request, Protocol.GOP);
+        System.out.println(response.getBody());
+    }
+
+    public void generateToken(String code) throws ApiException {
+        IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
+        IopRequest request = new IopRequest();
+        request.setApiName("/auth/token/create");
+        request.addApiParameter("code", code);
+        request.addApiParameter("uuid", UUID.randomUUID().toString());
+        IopResponse response = client.execute(request, Protocol.GOP);
+        System.out.println(response.getBody());
+    }
+
+    public static void main(String[] args) throws ApiException {
+        AliExpressShipperService service = new AliExpressShipperService();
+        String code = "3_502978_pIFIJPtCDcMdWJue87R93fmH8003";
+        service.generateToken(code);
     }
 }

@@ -7,6 +7,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
+import com.erp.server.tms.service.LogisticsSaleChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,22 +32,25 @@ import java.util.*;
 public class ExpressLogisticsHandlerImplTest {
     @Resource
     private ExpressLogisticsHandlerImpl expressLogisticsHandler;
+    @Resource
+    private LogisticsSaleChannelService logisticsSaleChannelService;
 
     private Map<String, String> authMap = new HashMap<>();
 
-    public ExpressLogisticsHandlerImplTest(){
+    public ExpressLogisticsHandlerImplTest() {
         String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
         String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        authMap.put("clientId",CLIENT_CODE);
-        authMap.put("clientSecret",CHECK_WORD);
+        authMap.put("clientId", CLIENT_CODE);
+        authMap.put("clientSecret", CHECK_WORD);
     }
 
-    public Map<String, String> getLogisticsAuthConfig(){
+    public Map<String, String> getLogisticsAuthConfig() {
         Map<String, String> logisticsAuthConfig = expressLogisticsHandler.getLogisticsAuthConfig("");
         return logisticsAuthConfig;
     }
-    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(){
+
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform() {
         List<Map<String, String>> logisticsAuthConfigByPlatform = expressLogisticsHandler.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
         return logisticsAuthConfigByPlatform;
     }
@@ -58,7 +62,28 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     @Test
-    public void createOrder(){
+    public void createChannelData() {
+        List<LogisticsSaleChannelEntity> entityList = new ArrayList<>();
+        entityList.add(new LogisticsSaleChannelEntity().setCode("1").setPlatformChannelId("1").setAging("T4").setCnName("顺丰特快"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("2").setPlatformChannelId("2").setAging("T6").setCnName("顺丰标快"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("6").setPlatformChannelId("6").setAging("T104").setCnName("顺丰即日"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("10").setPlatformChannelId("10").setAging("T14").setCnName("国际小包"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("23").setPlatformChannelId("23").setAging("T9").setCnName("顺丰国际特惠(文件)"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("24").setPlatformChannelId("24").setAging("T9").setCnName("顺丰国际特惠(包裹)"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("26").setPlatformChannelId("26").setAging("T7").setCnName("国际大件"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("60").setPlatformChannelId("60").setAging("T4").setCnName("顺丰特快（文件）"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("99").setPlatformChannelId("99").setAging("T4").setCnName("顺丰国际标快(文件)"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("100").setPlatformChannelId("100").setAging("T4").setCnName("顺丰国际标快(包裹)"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("242").setPlatformChannelId("242").setAging("T77").setCnName("丰网速运"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("247").setPlatformChannelId("247").setAging("T68").setCnName("电商标快"));
+        entityList.forEach(logisticsSaleChannelEntity -> {
+            logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+        });
+
+    }
+
+    @Test
+    public void createOrder() {
         SenderInfo senderInfo = new SenderInfo();
         senderInfo.setAddressFirst("address");
         senderInfo.setContact("contact");
@@ -131,7 +156,7 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     @Test
-    public void queryOrderList(){
+    public void queryOrderList() {
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setAuthMap(authMap);
@@ -149,7 +174,7 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     @Test
-    public void interceptOrder(){
+    public void interceptOrder() {
         LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
         logisticsQueryVOList2.setDeliveryNo("wj12345167721");
         logisticsQueryVOList2.setAuthMap(authMap);
@@ -158,7 +183,7 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     @Test
-    public void cancelOrder(){
+    public void cancelOrder() {
         LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
         logisticsQueryVOList.setDeliveryNo("wj12345167721");
         logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
@@ -169,7 +194,7 @@ public class ExpressLogisticsHandlerImplTest {
     }
 
     @Test
-    public void confirmOrder(){
+    public void confirmOrder() {
         LogisticsQueryBaseVO logisticsQueryVO = new LogisticsCancelOrderVO();
         logisticsQueryVO.setDeliveryNo("wj12345167721");
         logisticsQueryVO.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
