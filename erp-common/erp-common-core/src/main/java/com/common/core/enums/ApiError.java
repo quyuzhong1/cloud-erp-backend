@@ -80,6 +80,7 @@ public enum ApiError implements Serializable {
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"单据提交失败"),
+    ERROR_1043(1043,"只有待提交数据支持删除"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -818,6 +819,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_OVERSEAS_DELIVERY_PLAN(99112,"未找到发货计划单"),
     EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE(99113,"已下推FBA发货单不允许反审核"),
     EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE(99114,"已下要货申请不允许反审核"),
+    NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有已审核的发货单可以更新物流信息"),
 
 
 
