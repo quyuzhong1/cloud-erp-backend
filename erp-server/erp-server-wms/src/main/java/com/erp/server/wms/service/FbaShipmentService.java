@@ -1,10 +1,8 @@
 package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -139,7 +137,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @author  Jim
      * @date 2023/11/2
      */
-    FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId, Boolean isDelete);
+    FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId);
 
     /**
      * 删除

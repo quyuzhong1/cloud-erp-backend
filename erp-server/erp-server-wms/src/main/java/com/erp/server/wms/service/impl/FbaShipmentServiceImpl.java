@@ -706,17 +706,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 记录货件状态
         entity.setId(oldEntity.getId());
         if (!oldEntity.getPlatformShipmentStatus().equalsIgnoreCase(entity.getPlatformShipmentStatus())) {
+            String msg = StrUtil.format("FBA货件【{}】平台状态由【{}】变更为【{}】",
+                    entity.getFbaShipmentId(),
+                    oldEntity.getPlatformShipmentStatus(),
+                    entity.getPlatformShipmentStatus()
+            );
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "FBA货件状态变更");
             fbaShipmentStatusService.saveByFbaShipment(entity);
         }
         // 主表更新
         if (!oldEntity.toString().equalsIgnoreCase(entity.toString())){
-            if (oldEntity.getIsDeleted()){
-                entity.setIsDeleted(false);
-                String msg = StrUtil.format("重新添加FBA货件【{}】",entity.getFbaShipmentId());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "重新添加FBA货件");
-            }
+//            if (oldEntity.getIsDeleted()){
+//                entity.setIsDeleted(false);
+//                String msg = StrUtil.format("重新添加FBA货件【{}】",entity.getFbaShipmentId());
+//                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "重新添加FBA货件");
+//            }
             entity = FbaShipmentConverter.INSTANCE.oldToNew(entity, oldEntity);
-            if (!this.getBaseMapper().updateByIdWithoutIsDelete(entity)){
+            if (!this.updateById(entity)){
                 throw new ServiceException("[FbaShipmentEntity] 更新失败: entity="+ JSONUtil.toJsonStr(entity));
             }
         }
@@ -787,6 +793,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         finalEntity,
                         listingInfoMap.get(e.getSellerSku())))
                 .collect(Collectors.toList());
+
         // 设置绑定的SKU
         newReceiveEntityList.forEach(e -> {
             // 详情Key
@@ -801,6 +808,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 int historyReceiveQty = receiveEntityList.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
                 // 判断历史数量是否相同
                 if (e.getReceiveQty() != historyReceiveQty) {
+                    String msg = StrUtil.format("FBA货件【{}】,平台SKU【{}】签收数量由【{}】变更为【{}】",
+                            finalEntity.getFbaShipmentId(),
+                            e.getMsku(),
+                            historyReceiveQty,
+                            e.getReceiveQty()
+                    );
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), finalEntity.getId(), "FBA签收数量变更");
+
                     // 新增签收记录
                     // ERP当前签收数量 = 亚马逊当前签收数量 - ERP历史记录签收数量
                     e.setReceiveQty(e.getReceiveQty() - historyReceiveQty);
@@ -817,8 +832,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public FbaShipmentEntity getByFbaShipmentIdAndIsDelete(String fbaShipmentId, Boolean isDelete) {
-        return this.baseMapper.getByFbaShipmentIdAndIsDelete(fbaShipmentId, isDelete);
+    public FbaShipmentEntity getByFbaShipmentId(String fbaShipmentId) {
+        return lambdaQuery()
+                .eq(FbaShipmentEntity::getFbaShipmentId, fbaShipmentId)
+                .last("LIMIT 1")
+                .one();
     }
 
 
