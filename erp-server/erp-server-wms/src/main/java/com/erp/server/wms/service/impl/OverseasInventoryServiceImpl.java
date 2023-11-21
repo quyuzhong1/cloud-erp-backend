@@ -2,7 +2,13 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OverseasInventoryService;
@@ -10,6 +16,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,4 +101,14 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private void handleData(OverseasInventoryEntity overseasInventoryEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public PagingVO<OverseasInventoryDTO.ListDTO> paging(PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
+        OverseasInventoryDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
+    }
+
 }

@@ -46,5 +46,36 @@
         platform_inventory_id, dict_platform, name, platform_sku, platform_sku_name, product_name, sku_no, sku_id, deliver_onway_qty, pending_qty, sellable_qty, unsellable_qty, reserved_qty, onway_qty, lack_qty, frozen_qty, shipped_qty, download_time
     </sql>
 
+    <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
+        SELECT
+        oi.*
+        FROM  overseas_inventory as oi
+        WHERE oi.is_deleted = false
+        <if test="params.skuNoList!=null and params.skuNoList.size>0">
+            AND oi.sku_no IN
+            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.platformSkuNoList!=null and params.platformSkuNoList.size>0">
+            AND oi.platform_sku_no IN
+            <foreach collection="platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo}
+            </foreach>
+        </if>
+        <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
+            AND oi.download_time >= #{params.updateTimeList[0]}
+            AND oi.download_time &lt;= #{params.updateTimeList[1]}
+        </if>
+        <if test="params.name !=null and params.name!=''">
+            AND oi.name ILIKE concat('%', #{params.name}::text ,'%')
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY oi.id DESC
+    </select>
+
 
 </mapper>

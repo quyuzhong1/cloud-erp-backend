@@ -1,10 +1,15 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -22,7 +27,141 @@ import javax.validation.constraints.Size;
 public class OverseasInventoryDTO implements Serializable {
 
 
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 仓库名称
+         */
+        private String name;
 
+        /**
+         * ERP SKU列表
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 库存SKU列表
+         */
+        private List<String> platformSkuNoList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDateTime> updateTimeList;
+
+        /**
+         * 是否不显示0库存: true=不显示0库存, false=显示0库存
+         */
+        private Boolean hasNotZero;
+    }
+
+
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 平台库存唯一id
+         */
+        private String platformInventoryId;
+
+        /**
+         * 平台类型: goodcang=谷仓，iml=艾姆勒
+         */
+        private String dictPlatform;
+
+        /**
+         * 仓库名称
+         */
+        private String name;
+
+        /**
+         * 库存sku
+         */
+        private String platformSku;
+
+        /**
+         * 库存产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * ERP系统产品名称
+         */
+        private String productName;
+
+        /**
+         * ERP的SKU
+         */
+        private String skuNo;
+
+        /**
+         * ERP的SKU ID
+         */
+        private String skuId;
+
+        /**
+         * 发货在途数量
+         */
+        private Integer deliverOnwayQty;
+
+        /**
+         * 待上架数量
+         */
+        private Integer pendingQty;
+
+        /**
+         * 可售数量
+         */
+        private Integer sellableQty;
+
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
+
+        /**
+         * 待出库数量
+         */
+        private Integer reservedQty;
+
+        /**
+         * 尾程在途
+         */
+        private Integer onwayQty;
+
+        /**
+         * 缺货数量
+         */
+        private Integer lackQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 历史出库数量
+         */
+        private Integer shippedQty;
+
+        /**
+         * 平台下载更新时间 (更新时间)
+         */
+        private LocalDateTime downloadTime;
+    }
 
     /**
     * 详情
