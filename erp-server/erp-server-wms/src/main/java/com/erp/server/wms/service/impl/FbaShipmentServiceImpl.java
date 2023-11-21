@@ -522,12 +522,22 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
+
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-            Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(record.getDetailId())).mapToInt(FbaDeliveryDetailEntity::getDeliveryQty).sum();
+            Integer deliveryQty = fbaDeliveryDetailEntities.stream()
+                    .filter(req -> req.getSourceDetailId().equals(record.getDetailId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
+                    .sum();
             record.setDeliveryQty(deliveryQty);
+
             //签收数量 QuantityReceived
-            Integer receiveQty = fbaShipmentReceiveEntities.stream().filter(req -> req.getDetailId().equals(record.getDetailId())).mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+            Integer receiveQty = fbaShipmentReceiveEntities.stream()
+                    .filter(req -> req.getDetailId().equals(record.getDetailId()))
+                    .mapToInt(FbaShipmentReceiveEntity::getReceiveQty)
+                    .sum();
             record.setReceiveQty(receiveQty);
+
             //发货数量-QuantityReceived，签收量大于等于发货量时，在途为0
             if (receiveQty >= deliveryQty) {
                 record.setTransportQty(0);

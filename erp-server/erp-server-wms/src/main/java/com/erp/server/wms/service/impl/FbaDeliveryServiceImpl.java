@@ -468,7 +468,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         FbaDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_1043);
         }
         // 删除物流信息
         fbaDeliveryLogisticsService.removeByMainIds(Arrays.asList(id));
@@ -555,7 +555,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (ApproveType.PASS.equals(dto.getType())) {
             //如果是FBA货件来源，审核通过修改货件发货状态为已发货
             if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
-                fbaShipmentService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+                FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(shipmentEntity) && FbaDeliveryStatusEnum.UN_SHIPPED.getCode().equals(shipmentEntity.getDeliveryStatus())) {
+                    fbaShipmentService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
+                }
             }
 
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));

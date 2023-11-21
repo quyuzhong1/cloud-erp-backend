@@ -105,12 +105,12 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
             operateLogService.batchAddModuleOperateLog("删除了一个起始地区间【%s】", ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        //新增城市分区
-        addOrUpdateShippingRegionCity(list);
         //处理明细id及操作日志
         doOpHandleDetails(list,mainId,Boolean.FALSE);
         //新增或修改
         this.saveOrUpdateBatch(list);
+        //新增城市分区
+        addOrUpdateShippingRegionCity(list);
         return Boolean.TRUE;
     }
 
