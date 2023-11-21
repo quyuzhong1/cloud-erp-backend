@@ -20,6 +20,8 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.impl.RedisService;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.StateEnumValue;
@@ -29,6 +31,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -44,6 +47,9 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -72,6 +78,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -202,8 +209,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+
     @Resource
     private ProductRefLabelService productRefLabelService;
+
+    @Resource
+    private RedisUtil redisUtil;
+
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -3822,12 +3834,38 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateOccupyStatus(List<String> skuIds) {
-        return lambdaUpdate()
-                .set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE)
-                .in(ProductDetailEntity::getId, skuIds)
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Boolean.TRUE;
+        }
+        List<String> updateSkuIds = new ArrayList<>();
+        for (String skuId : skuIds) {
+            //查询redis缓存
+            String redisKey = StrUtil.format(RedisKeyConstant.SKU_OCCUPY_CODE,skuId,Boolean.TRUE);
+            Collection<String> keys = redisUtil.keys(redisKey);
+            if (CollectionUtils.isNotEmpty(keys)) {
+                continue;
+            }
+            //没查到则插入redis
+            log.info("从redis缓存中查询到产品信息，skuId:{}，内容为空", skuId);
+            updateSkuIds.add(skuId);
+        }
+        if (CollectionUtils.isEmpty(updateSkuIds)) {
+            return Boolean.TRUE;
+        }
+        //更新数据库数据
+         lambdaUpdate().set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE)
+                .in(ProductDetailEntity::getId, updateSkuIds)
                 .eq(ProductDetailEntity::getOccupyStatus, Boolean.FALSE)
                 .update();
+        //更新缓存数据
+        for (String skuId : updateSkuIds) {
+            //添加缓存
+            String redisKey = StrUtil.format(RedisKeyConstant.SKU_OCCUPY_CODE,skuId,Boolean.TRUE);
+            redisUtil.set(redisKey, skuId,RedisService.ONE_DAY_CACHE_TIME);
+        }
+        return Boolean.TRUE;
     }
+
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
