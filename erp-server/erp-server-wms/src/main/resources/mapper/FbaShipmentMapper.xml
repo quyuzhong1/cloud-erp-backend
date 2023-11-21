@@ -147,7 +147,7 @@
         WHERE fs.is_deleted = FALSE
         <!--单据编号-->
         <if test="params.code != null and params.code != ''">
-            AND fs.code ILIKE concat('%',#{params.code},'%')
+            AND fs.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <!--sku编号-->
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
@@ -172,7 +172,7 @@
         </if>
         <!--平台物流中心-->
         <if test="params.fulfillmentCenter != null and params.fulfillmentCenter != ''">
-            AND fs.fulfillment_center ILIKE concat('%',#{params.fulfillmentCenter},'%')
+            AND fs.fulfillment_center ILIKE concat('%',#{params.fulfillmentCenter}::text,'%')
         </if>
         <!--发货状态-->
         <if test="params.deliveryStatusList != null and params.deliveryStatusList.size > 0">
@@ -191,15 +191,15 @@
         </if>
         <!--平台sku-->
         <if test="params.asin != null and params.asin != ''">
-            AND fsd.asin ILIKE concat('%',#{params.asin},'%')
+            AND fsd.asin ILIKE concat('%',#{params.asin}::text,'%')
         </if>
         <!--fnSku-->
         <if test="params.fnSku != null and params.fnSku != ''">
-            AND fsd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+            AND fsd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
         </if>
         <!--卖家sku-->
         <if test="params.msku != null and params.msku != ''">
-            AND fsd.msku ILIKE concat('%',#{params.msku},'%')
+            AND fsd.msku ILIKE concat('%',#{params.msku}::text,'%')
         </if>
 
         <if test="params.isCombination != null">
