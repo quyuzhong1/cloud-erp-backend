@@ -359,6 +359,9 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         if (ObjectUtil.isEmpty(length) && ObjectUtil.isEmpty(width) && ObjectUtil.isEmpty(height)) {
             return BigDecimal.ZERO;
         }
+        length = ObjectUtil.isEmpty(length) ? BigDecimal.ZERO : length;
+        width = ObjectUtil.isEmpty(width) ? BigDecimal.ZERO : width;
+        height = ObjectUtil.isEmpty(height) ? BigDecimal.ZERO : height;
         //超尺寸附加费
         ShippingTemplateOtherCostEntity otherCostEntity = otherCostList.stream().filter(obj -> obj.getDictCode().equals(ShippingCostNameEnum.OVERSIZE_SURCHARGE_COST.getCode()))
                 .findFirst().orElse(new ShippingTemplateOtherCostEntity());
