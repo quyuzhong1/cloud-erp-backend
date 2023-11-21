@@ -20,9 +20,11 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -51,8 +53,10 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Autowired
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
-    @Autowired
-    private LogisticsWarehouseService logisticsWarehouseService;
+    @Resource
+    private LogisticsSaleChannelService  logisticsSaleChannelService;
+
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -128,18 +132,23 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return view;
     }
 
-    private LogisticsAuthEntity getByMainId(String id, String mainId) {
+    @Override
+    public LogisticsAuthEntity getByMainId(String id, String mainId) {
         return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+    }
+
+    public LogisticsAuthEntity getDbByMainId(String mainId){
+        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancel(String id) {
-        LogisticsAuthEntity entity = this.getById(id);
+    public BatchResultDTO cancel(String mainId) {
+        LogisticsAuthEntity entity = this.getDbByMainId(mainId);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
         }
-        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(entity.getMainId());
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(supplierEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
@@ -147,8 +156,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
             throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
         }
-        this.removeById(id);
-        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.CANCEL.getCode());
+        this.removeById(entity.getId());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.NOT.getCode());
         logisticsSupplierService.updateById(supplierEntity);
         return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
 
@@ -172,7 +181,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     private void handleData(LogisticsAuthEntity logisticsAuthEntity) {
         // TODO 验证数据 & 数据赋值
         String mainId = logisticsAuthEntity.getMainId();
-        String logisticsPlatform = logisticsAuthEntity.getLogisticsPlatform();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         LogisticsAuthEntity authEntity = this.getByMainId(logisticsAuthEntity.getId(), mainId);
         if (Objects.nonNull(authEntity)) {
@@ -215,5 +223,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             });
         }
         return map;
+    }
+
+    @Override
+    public void syncUpdateSaleChannel(String authId) {
+        Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId);
+        logisticsSaleChannelService.asyncUpdateSaleChannel(authConfig);
     }
 }

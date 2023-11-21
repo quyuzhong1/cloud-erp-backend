@@ -104,8 +104,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     @Autowired
     private InventoryService inventoryService;
     @Autowired
-    private TransferOutService transferOutService;
-    @Autowired
     private FbaShipmentService fbaShipmentService;
     @Autowired
     private FbaShipmentDetailService fbaShipmentDetailService;
@@ -117,6 +115,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private LogisticsBillFeign logisticsBillFeign;
     @Autowired
     private ShopInfoFeign shopInfoFeign;
+    @Autowired
+    private TransferInfoService transferInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -342,10 +342,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     }
 
     private String generateTransferOut(FbaDeliveryEntity entity, List<FbaDeliveryDetailEntity> detailEntityList) {
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getDestWarehouseId(), entity.getDeliveryWarehouseId()));
         //获取sku信息
         List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
-        TransferOutDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaDeliveryEntityToTransferOutAdd(entity);
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认类型：组织内调拨
         addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         //默认来源类型：FBA货件
@@ -354,17 +355,36 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调入组织
+        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        addDTO.setInOrgId(destWarehouse.getOrgId());
+        //调出组织
+        WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        addDTO.setSourceId(entity.getSourceId());
+        addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
-        List<TransferOutDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+
+        //详情信息
+        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (FbaDeliveryDetailEntity detailEntity : detailEntityList) {
             //映射产品信息
-            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+//            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);
+//            TransferInfoDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferInfoDetailAdd(detailEntity);
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
             detailAddDto.setSkuId(skuVO.getSkuId());
+            detailAddDto.setSkuNo(skuVO.getSkuNo());
+            detailAddDto.setQty(detailEntity.getDeliveryQty());
+            detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
+            detailAddDto.setInWarehouseId(entity.getDestWarehouseId());
+            detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+            detailAddDto.setInWarehouseLocation(detailEntity.getWarehouseLocation());
+            detailAddDto.setSourceDetailId(detailEntity.getId());
             detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
-        return transferOutService.add(addDTO);
+        return transferInfoService.add(addDTO);
     }
 
     /**
@@ -412,21 +432,21 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         }
 
         //查找发货单下推的分步式调出单自动反审并删除
-        List<TransferOutEntity> transferOutEntities = transferOutService.listBySourceIds(Arrays.asList(id));
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
         //分步式调出单已审核先反审核
-        List<String> approveTransferOutIds = transferOutEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
+        List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
-            transferOutService.disApprove(approveTransferOutIds);
+            transferInfoService.disApprove(approveTransferOutIds, Boolean.TRUE);
         }
         //分步式调出单审核中先撤销
-        List<String> approveIngTransferOutIds = transferOutEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
+        List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveIngTransferOutIds)) {
-            transferOutService.cancel(approveIngTransferOutIds);
+            transferInfoService.cancelProcess(approveIngTransferOutIds);
         }
         //分步式调出单删除
-        List<String> deletedTransferOutIds = transferOutEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> deletedTransferOutIds = transferInfoEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deletedTransferOutIds)) {
-            transferOutService.delete(deletedTransferOutIds);
+            transferInfoService.delete(deletedTransferOutIds);
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
@@ -534,17 +554,17 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         * */
         if (ApproveType.PASS.equals(dto.getType())) {
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
-
+            //新增分布式调拨单
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
 
                 //提交
-                transferOutService.submit(Arrays.asList(transferOutId));
+                transferInfoService.submit(Arrays.asList(transferOutId));
                 //审核
                 BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
                 baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
                 baseApproveParamDTO.setType(ApproveType.PASS);
-                transferOutService.approve(baseApproveParamDTO);
+                transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }
@@ -1000,7 +1020,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     * 新增修改处理数据
     */
     private void handleData(FbaDeliveryEntity fbaDeliveryEntity) {
-        if (StringUtils.isNotBlank(fbaDeliveryEntity.getSourceId())) {
+        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(fbaDeliveryEntity.getSourceType())) {
             FbaShipmentEntity entity = fbaShipmentService.getById(fbaDeliveryEntity.getSourceId());
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);

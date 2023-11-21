@@ -46,6 +46,10 @@ public interface OverseasDeliveryPlanConverter {
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
 
+    @Mappings({
+            @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
+            @Mapping(target = "destWarehouseName", source = "toWarehouseName")
+    })
     FbaDeliveryDTO.AddDTO generateDeliverFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);
 
     FbaDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO dto);

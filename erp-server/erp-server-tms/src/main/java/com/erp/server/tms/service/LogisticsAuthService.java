@@ -49,7 +49,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      *@author yl
      *@date 2023-11-15
      */
-    BatchResultDTO cancel(String id);
+    BatchResultDTO cancel(String mainId);
 
     /**
      * 根据渠道id 获取授权信息
@@ -67,4 +67,19 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     Map<String, String> getLogisticsAuthConfig(String authId);
+
+    /**
+     * 授权完成后 同步销售渠道
+     * @param authId
+     */
+    void syncUpdateSaleChannel(String authId);
+
+    /**
+     * 根据供应商id 获取信息
+     * @param id
+     * @param mainId
+     * @return
+     */
+    LogisticsAuthEntity getByMainId(String id, String mainId);
+
 }

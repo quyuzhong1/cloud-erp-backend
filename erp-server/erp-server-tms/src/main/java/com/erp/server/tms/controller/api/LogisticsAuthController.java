@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,12 @@ public class LogisticsAuthController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流授权表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
-        return success(logisticsAuthService.add(dto));
+        BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
+        String id = result.getId();
+        if(StringUtils.isNotBlank(id)){
+            logisticsAuthService.syncUpdateSaleChannel(id);
+        }
+        return success(result);
     }
 
 
@@ -101,12 +107,12 @@ public class LogisticsAuthController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult=logisticsAuthService.cancel(id);
-            }catch (Exception e){
-                log.error("物流商取消授权失败{}",e);
+                cancelResult = logisticsAuthService.cancel(id);
+            } catch (Exception e) {
+                log.error("物流商取消授权失败{}", e);
                 LogisticsAuthEntity entity = logisticsAuthService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "物流授权不存在, 取消授权失败");
+                if (!ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, entity.getName(), "物流授权不存在, 取消授权失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }

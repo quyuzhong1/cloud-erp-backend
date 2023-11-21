@@ -21,10 +21,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.LogisticsWarehouseEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
@@ -40,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +59,7 @@ import java.util.stream.Collectors;
 public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupplierMapper, LogisticsSupplierEntity> implements LogisticsSupplierService {
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -78,11 +77,17 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     private LogisticsChannelService logisticsChannelService;
 
     @Autowired
+    @Lazy
     private LogisticsSaleChannelService logisticsSaleChannelService;
 
 
     @Autowired
     private WmsFbaOverseasFeign wmsFbaOverseasFeign;
+
+
+    @Autowired
+    private LogisticsAuthService logisticsAuthService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -214,16 +219,20 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(String id) {
-        LogisticsSupplierDTO.AuthDTO logisticsSupplier = baseMapper.getLogisticsSupplierAuthById(id);
+        LogisticsSupplierEntity logisticsSupplier=this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         String authStatus = logisticsSupplier.getAuthStatus();
         String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
         if (!alreadyCode.equals(authStatus)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
-        String authId = logisticsSupplier.getAuthId();
+        LogisticsAuthEntity  authEntity=logisticsAuthService.getByMainId("",id);
+        if(Objects.isNull(authEntity)){
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+        String authId = authEntity.getId();
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId, Boolean.FALSE);
 
         //这个是海外仓物流

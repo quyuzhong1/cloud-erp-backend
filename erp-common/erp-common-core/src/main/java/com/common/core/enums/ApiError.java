@@ -975,7 +975,7 @@ public enum ApiError implements Serializable {
     ERROR_RULE_WEIGHT_COMPARE(94020,"开始重量不能大于结束重量"),
     ERROR_SHIPPING_PRICE_NOT_NULL(94021,"运费规则运费单价不能为空"),
     ERROR_CANCEL_CONDITION(94022,"只有已授权才能取消授权"),
-    NOT_SYNC_BY_NOT_AUTH(94023,"未授权的物流商不能进行同步"),
+    NOT_SYNC_BY_NOT_AUTH(94023,"物流商未授权,不可同步渠道"),
     ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST(94024,"存在未停用的物流渠道,无法停用该物流商"),
     ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST(94025,"【{}】地址已在渠道引用,无法删除"),
 

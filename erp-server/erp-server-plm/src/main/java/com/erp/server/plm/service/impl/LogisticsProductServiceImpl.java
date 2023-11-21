@@ -26,6 +26,7 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
@@ -33,6 +34,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
@@ -84,6 +86,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private BasicCategoryService basicCategoryService;
 
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -103,20 +111,42 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         LogisticsProductDTO.ViewDTO result = new LogisticsProductDTO.ViewDTO();
         LogisticsProductDTO.ProductBaseInfoDTO productBaseInfo = baseMapper.getProductBaseInfo(skuId);
         String cny = CurrencyEnum.CNY.getCurrencySymbol();
-        //含税成本
-        String actualTaxCostStr = productBaseInfo.getActualTaxCost();
-        if (StringUtils.isBlank(actualTaxCostStr)) {
-            actualTaxCostStr = "0";
+        ProductPurchaseEntity productPurchase = productPurchaseService.getBySkuId(skuId);
+        String mainSupplierId = "";
+        if (Objects.nonNull(productPurchase)) {
+            mainSupplierId = productPurchase.getMainSupplier();
         }
-        BigDecimal actualTaxCost = new BigDecimal(actualTaxCostStr);
-        productBaseInfo.setActualTaxCost(cny.concat(actualTaxCostStr));
+        List<String> supplierIdList = new ArrayList<>(1);
+        if(StringUtils.isNotBlank(mainSupplierId)){
+            supplierIdList.add(mainSupplierId);
+        }
+        //不含税
+        BigDecimal actualNoTaxCost=BigDecimal.ZERO;
+        //含税
+        BigDecimal actualTaxCost=BigDecimal.ZERO;
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList =CollectionUtils.isNotEmpty(supplierIdList)? scmTaskFeign.listSupplierSkuPrice(supplierIdList):Collections.emptyList();
+        if(CollectionUtils.isNotEmpty(supplierSkuPriceList)){
+            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req ->  req.getSkuId().equals(skuId)).findFirst().orElse(null);
 
-        //不含税成本
-        String actualNoTaxCost = productBaseInfo.getActualNoTaxCost();
-        if (StringUtils.isBlank(actualNoTaxCost)) {
-            actualNoTaxCost = "0";
+            //不含税价=含税价÷（1+税率）
+            actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
+            actualTaxCost=supplierSkuPrice.getTaxPrice();
+        }else{
+            //含税成本
+            String actualTaxCostStr = productBaseInfo.getActualTaxCost();
+            if (StringUtils.isNotBlank(actualTaxCostStr)) {
+                actualTaxCost=new BigDecimal(actualTaxCostStr);
+            }
+            //不含税成本
+            String actualNoTaxCostStr = productBaseInfo.getActualNoTaxCost();
+            if (StringUtils.isNotBlank(actualNoTaxCostStr)) {
+                actualNoTaxCost = new BigDecimal(actualNoTaxCostStr);
+            }
         }
-        productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost));
+
+
+        productBaseInfo.setActualTaxCost(cny.concat(actualTaxCost.toString()));
+        productBaseInfo.setActualNoTaxCost(cny.concat(actualNoTaxCost.toString()));
 
         List<String> skuNoList = Arrays.asList(productBaseInfo.getSkuNo());
         List<BomInfoEntity> bomSkuList = bomSkuService.listAllBomByParentSkuNos(skuNoList);
@@ -530,7 +560,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
             String combinationDeclareType = item.getCombinationDeclareType();
-            String combinationDeclareTypeStr=CombinationDeclareTypeEnums.getName(combinationDeclareType);
+            String combinationDeclareTypeStr = CombinationDeclareTypeEnums.getName(combinationDeclareType);
             item.setCombinationDeclareType(combinationDeclareTypeStr);
         }
     }

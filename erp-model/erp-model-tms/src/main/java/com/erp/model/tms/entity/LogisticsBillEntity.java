@@ -2,6 +2,8 @@ package com.erp.model.tms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -79,7 +81,7 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     * 发货时间
     */
     @TableField("delivery_time")
-    private LocalDateTime deliveryTime;
+    private LocalDate deliveryTime;
     /**
     * 运输单号
     */

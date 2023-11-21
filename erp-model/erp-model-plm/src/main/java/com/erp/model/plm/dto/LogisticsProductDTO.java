@@ -476,6 +476,8 @@ public class LogisticsProductDTO {
          */
         private String ean;
 
+
+
         /**
          * 不含税成本
          */

@@ -65,22 +65,6 @@ public interface FbaShipmentConverter {
     FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 
     @Mappings({
-            @Mapping(target = "sourceId", source = "id"),
-            @Mapping(target = "sourceCode", source = "code"),
-            @Mapping(target = "outWarehouseId", source = "deliveryWarehouseId"),
-            @Mapping(target = "inWarehouseId", source = "destWarehouseId"),
-    })
-    TransferOutDTO.AddDTO fbaDeliveryEntityToTransferOutAdd(FbaDeliveryEntity entity);
-
-    @Mappings({
-            @Mapping(target = "outWarehouseLocation", source = "warehouseLocation"),
-            @Mapping(target = "qty", source = "deliveryQty"),
-            @Mapping(target = "sourceDetailId", source = "id")
-    })
-    TransferOutDetailDTO.AddDTO fbaDeliveryDetailEntityToTransferOutDetailAdd(FbaDeliveryDetailEntity detailEntity);
-
-
-    @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "code", ignore = true),
             @Mapping(target = "sourceId", source = "id"),
