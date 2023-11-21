@@ -1,10 +1,13 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -28,4 +31,14 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.TabListDTO>
      **/
     List<RequisitionApplicationDTO.TabListDTO> tabList(FbaDeliveryDTO.PagingParamDTO searchParam);
+
+    /**
+     * 分页查询
+     * @Author Luo_WG
+     * @Date 2023/11/21 19:04
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaDeliveryDTO.ListDTO>
+     **/
+    IPage<RequisitionApplicationDTO.ListDTO> paging(Page query, @Param("params") RequisitionApplicationDTO.PagingParamDTO params);
 }
