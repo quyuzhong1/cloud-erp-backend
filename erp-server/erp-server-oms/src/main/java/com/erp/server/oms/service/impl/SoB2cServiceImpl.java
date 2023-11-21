@@ -2288,7 +2288,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else if (ObjectUtils.isNotEmpty(dictVatOption) && ShopVATCostEnum.DIVISION_ADD_MULTIPLY_VAT_RATE.getCode().equals(dictVatOption.getValue())) {
             vatCost =  MathUtil.divide(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),MathUtil.add(BigDecimal.ONE,vatRate)).multiply(vatRate);
         }
-        financialInfoDTO.setVatCostType(dictVatOption.getValue());
+        if (ObjectUtils.isNotEmpty(dictVatOption)) {
+           financialInfoDTO.setVatCostType(dictVatOption.getValue());
+        }
         financialInfoDTO.setVatRate(vatRate);
 
         //平台费,店铺计算
