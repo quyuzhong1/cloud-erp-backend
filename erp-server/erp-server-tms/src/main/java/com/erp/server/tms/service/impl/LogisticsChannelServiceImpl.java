@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -109,6 +110,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         LogisticsChannelEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道单"));
         LogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(LogisticsChannelEntity.class, updateDTO);
+        handleData(logisticsChannelEntity);
         boolean save = super.updateById(logisticsChannelEntity);
         if (!save) {
             throw new ServiceException("物流渠道更新失败");
@@ -293,7 +295,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listAll() {
-        List<LogisticsChannelEntity> list=this.list();
+        List<LogisticsChannelEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         return resultList;
     }
@@ -316,13 +318,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
 
-
-
     /**
      * 新增修改处理数据
      */
     private void handleData(LogisticsChannelEntity logisticsChannelEntity) {
-        String mainId=logisticsChannelEntity.getMainId();
+        String mainId = logisticsChannelEntity.getMainId();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         if (Objects.isNull(logisticsSupplier)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
@@ -334,6 +334,21 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             logisticsChannelEntity.setPaperLength(paperSizeEnum.getLength());
             logisticsChannelEntity.setPaperWidth(paperSizeEnum.getWidth());
         }
-
+        BigDecimal zero = BigDecimal.ZERO;
+        BigDecimal maxCustomsAmount = logisticsChannelEntity.getMaxCustomsAmount();
+        if (Objects.isNull(maxCustomsAmount)) {
+            maxCustomsAmount = zero;
+        }
+        logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
+        BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();
+        if (Objects.isNull(minCustomsAmount)) {
+            minCustomsAmount = zero;
+        }
+        logisticsChannelEntity.setMinCustomsAmount(minCustomsAmount);
+        BigDecimal maxWeight = logisticsChannelEntity.getMaxWeight();
+        if (Objects.isNull(maxWeight)) {
+            maxWeight = zero;
+        }
+        logisticsChannelEntity.setMaxWeight(maxWeight);
     }
 }
