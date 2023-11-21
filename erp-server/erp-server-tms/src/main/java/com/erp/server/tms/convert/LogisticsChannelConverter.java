@@ -36,6 +36,7 @@ public interface LogisticsChannelConverter {
 
     @Mappings({
             @Mapping(target = "platformChannelId", source = "id"),
+            @Mapping(target = "code", source = "id"),
             @Mapping(target = "cnName", source = "nameCh"),
             @Mapping(target = "enName", source = "nameEn"),
             @Mapping(target = "logisticsPlatform", constant = "YanWen"),
