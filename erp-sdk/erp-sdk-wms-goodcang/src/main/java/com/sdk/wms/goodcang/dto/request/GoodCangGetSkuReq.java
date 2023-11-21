@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -31,12 +32,12 @@ public class GoodCangGetSkuReq extends GoodCangBaseRequest {
     @JSONField(name = "product_sku_arr")
     private List<String> productSkuArr;
 
-    //修改开始时间
+    //修改开始时间 格式：2020-10-01 00:00:00"
     @JSONField(name = "product_update_time_from")
-    private Date productUpdateTimeFrom;
+    private String productUpdateTimeFrom;
 
-    //修改结束时间
+    //修改结束时间 格式：2020-10-01 00:00:00"
     @JSONField(name = "product_update_time_to")
-    private Date productUpdateTimeTo;
+    private String productUpdateTimeTo;
 
 }

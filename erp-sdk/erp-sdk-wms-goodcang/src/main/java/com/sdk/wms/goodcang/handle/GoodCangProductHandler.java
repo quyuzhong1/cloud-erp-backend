@@ -4,19 +4,24 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.ThirdWarehouseProductDTO;
+import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractOrderHandler;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.utils.MD5Util;
+import com.common.core.exception.ServiceException;
+import com.sdk.wms.goodcang.convert.GoodCangConverter;
+import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
+import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,33 +31,62 @@ import java.util.List;
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.GOOD_CANG)
-@BusinessType(BusinessTypeEnum.THIRD_WAREHOUSE_PRODUCT)
-public class GoodCangProductHandler extends AbstractOrderHandler<GoodCangSkuResp, ThirdWarehouseProductDTO> {
+@BusinessType(BusinessTypeEnum.PRODUCT)
+public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCangSkuResp, PlatformProductDTO> {
+
+    @Resource
+    private GoodCangService goodCangService;
 
     @Override
     public List<GoodCangSkuResp> download(JobTaskDTO data) {
         LocalDateTime lastTime = data.getLastTime();
-        long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
         LocalDateTime nextTime = data.getNextTime();
         if (lastTime.isEqual(nextTime)){
-            //nextTime +1天
-            nextTime = lastTime.plusDays(1);
+            //nextTime +30分钟
+            nextTime = lastTime.plusMinutes(30);
         }
-        long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
-        //获取授权信息
-        //设置threadlocal
+
         //查询数据
-        // 返回下载源数据
-        return null;
+        GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
+        goodCangGetSkuReq.setProductUpdateTimeFrom(lastTime.format(formatter));
+        goodCangGetSkuReq.setProductUpdateTimeTo(nextTime.format(formatter));
+        //最大页码200，从第一页开始查询
+        goodCangGetSkuReq.setPageSize(200);
+
+        List<GoodCangSkuResp> respList = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            goodCangGetSkuReq.setPage(page);
+            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
+            checkResponse(goodCangResponse);
+            respList.addAll(goodCangResponse.getData());
+            if (goodCangResponse.getCount() <= page * 200) {
+                break;
+            }
+            page++;
+        }
+        respList.forEach(v->v.setUniqueId(MD5Util.toMD5("goodcang"+v.getProductSku())));
+        return respList;
+    }
+
+    private void checkResponse(GoodCangResponse<?> response) {
+        if (!isSuccess(response.getAsk())) {
+            log.error("谷仓查询产品数据失败," + response.getMessage());
+            throw new ServiceException("谷仓查询产品数据失败," + response.getMessage());
+        }
     }
 
     @Override
-    public List<ThirdWarehouseProductDTO> convert(List<GoodCangSkuResp> sourceDataList) {
-        return null;
+    public List<PlatformProductDTO> convert(List<GoodCangSkuResp> sourceDataList) {
+        return GoodCangConverter.INSTANCE.productConversion(sourceDataList);
     }
 
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.GOOD_CANG.getCode();
+    }
+
+    public boolean isSuccess(String ask){
+        return "Success".equals(ask);
     }
 }

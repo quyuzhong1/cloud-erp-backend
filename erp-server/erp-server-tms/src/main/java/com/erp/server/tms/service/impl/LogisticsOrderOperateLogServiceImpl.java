@@ -147,7 +147,7 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPullTaskEntity.setSourceType(businessType);
         dmpPullTaskEntity.setSourceId(authId);
-        dmpPullTaskEntity.setSourceCode(sourceId);
+        dmpPullTaskEntity.setSourceCode(logisticsPlatform);
         dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)){
@@ -174,7 +174,7 @@ public class LogisticsOrderOperateLogServiceImpl extends SuperServiceImpl<Logist
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType);
         dmpPushTaskEntity.setSourceId(authId);
-        dmpPushTaskEntity.setSourceCode(sourceId);
+        dmpPushTaskEntity.setSourceCode(logisticsPlatform);
         dmpPushTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)){

@@ -22,7 +22,7 @@ public interface LogisticsBaseService {
      * @param platform
      * @return
      */
-    ApiResult syncLogisticsChannel(String platform);
+    List<BatchResultDTO> syncLogisticsChannel(String platform);
 
     /**
      * 同步所有渠道
@@ -60,12 +60,12 @@ public interface LogisticsBaseService {
      * @param platform
      * @return
      */
-    ApiResult syncShoppeeChannel(String platform);
+    List<BatchResultDTO> syncShoppeeChannel(String platform);
 
     /**
      * 同步单一渠道
      * @param platform
      * @return
      */
-    ApiResult syncSingleChannel(String platform);
+    List<BatchResultDTO> syncSingleChannel(String platform);
 }

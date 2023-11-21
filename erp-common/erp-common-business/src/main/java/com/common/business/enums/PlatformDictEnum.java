@@ -14,7 +14,7 @@ public enum PlatformDictEnum implements EnumMessage {
     OFFLINECELEBRITY("Offlinecelebrity","线下发网红","","023"),
     AMAZON("Amazon", "Amazon", "亚马逊", "100"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004"),
-    ALI_EXPRESS("AliExpress", "AliExpress", "AliExpress", "002"),
+    ALI_EXPRESS("AliExpress", "速卖通", "无忧物流[速卖通]", "002"),
     SHOPEE("Shopee", "Shopee", "虾皮", "003"),
     NASDAQ_JD("JD", "京东", "京东", "007"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018"),
@@ -39,8 +39,8 @@ public enum PlatformDictEnum implements EnumMessage {
     YUN_TU("YunTu", "云途(新)", "云途(新)", "47"),
     TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "48"),
     //第三方仓
-    GOOD_CANG("GoodCang", "谷仓", "谷仓", "49"),
-    IML("Iml", "艾姆勒", "艾姆勒", "50"),
+    GOOD_CANG("goodcang", "谷仓", "谷仓", "49"),
+    IML("iml", "艾姆勒", "艾姆勒", "50"),
         ;
 
 

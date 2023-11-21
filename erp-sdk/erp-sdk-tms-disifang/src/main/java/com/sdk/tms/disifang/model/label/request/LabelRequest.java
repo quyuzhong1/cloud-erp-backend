@@ -27,6 +27,9 @@ public class LabelRequest implements Serializable {
      */
     @JSONField(name = "logistics_product_code")
     private String logisticsProductCode;
+
+    @JSONField(name = "label_size")
+    private String labelSize;
     /**
      * 是否打印当前时间（Y：打印；N：不打印） 默认为N；
      */
