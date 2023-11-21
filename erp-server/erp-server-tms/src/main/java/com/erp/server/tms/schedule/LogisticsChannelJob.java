@@ -44,7 +44,7 @@ public class LogisticsChannelJob {
     @XxlJob("registerLogisticsNumber")
     public ReturnT registerLogisticsNumber() {
 
-        XxlJobHelper.log("====开始同步物流轨迹====");
+        XxlJobHelper.log("====开始注册物流单号====");
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
@@ -55,7 +55,7 @@ public class LogisticsChannelJob {
                 .trackEnable(true)
                 .build();
         getRegisterData(query);
-        XxlJobHelper.log("====结束同步物流轨迹====");
+        XxlJobHelper.log("====结束注册物流单号====");
         return ReturnT.SUCCESS;
     }
     /**
