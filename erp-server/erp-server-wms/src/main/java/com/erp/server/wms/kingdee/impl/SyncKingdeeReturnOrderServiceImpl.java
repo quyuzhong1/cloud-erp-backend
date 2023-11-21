@@ -276,6 +276,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpSyncTaskDTO.setParentId(entity.getPurchaseOrderId());
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }
