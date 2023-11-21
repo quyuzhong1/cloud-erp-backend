@@ -11,6 +11,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
@@ -68,11 +69,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if (!listingInfoService.save(entity)) {
                 throw new ServiceException("Listing 产品保存失败");
             }
-            // 添加到映射
-            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-            if (!skuMappingService.save(skuMappingEntity)) {
-                throw new ServiceException("SkuMapping保存失败");
+            // 添加到映射（第三方仓不需要添加映射）
+            if(!RuleTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
+                SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
+                if (!skuMappingService.save(skuMappingEntity)) {
+                    throw new ServiceException("SkuMapping保存失败");
+                }
             }
+
         } else {
             // 是否修改
             if (!oldEntity.toString().equals(entity.toString())) {
