@@ -694,11 +694,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             List<String> logisticsSupplierIdList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
             listDTO.setLogisticsSupplierIdList(logisticsSupplierIdList);
             //渠道id
-            List<String> logisticsChannelIdList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+            List<String> logisticsChannelIdList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelId).collect(Collectors.toList());
             listDTO.setChannelIdList(logisticsChannelIdList);
 
             //渠道名称
-            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).distinct().collect(Collectors.toList());
+            List<String> channelNameList = refList.stream().filter(obj -> obj.getMainId().equals(listDTO.getId())).map(ShippingTemplateRefChannelDTO.ViewDTO::getLogisticsChannelName).collect(Collectors.toList());
             listDTO.setChannelNameList(channelNameList);
             listDTO.setChannelNames(StrUtil.join(",",channelNameList));
             //是否禁用
