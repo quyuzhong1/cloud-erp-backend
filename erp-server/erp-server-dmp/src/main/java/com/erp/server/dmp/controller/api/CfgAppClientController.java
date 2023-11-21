@@ -48,11 +48,6 @@ public class CfgAppClientController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:cfgAppClient:update",
-        serviceClass = CfgAppClientService.class,
-        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated CfgAppClientDTO.UpdateDTO dto) {
         cfgAppClientService.update(dto);
         return success();
