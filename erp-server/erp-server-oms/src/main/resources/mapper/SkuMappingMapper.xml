@@ -422,6 +422,8 @@
             sm.id,
             sm.product_sku_id,
             sm.product_sku_no,
+            sm.warehouse_id,
+            sm.warehouse_name,
             li.sku_no AS warehouseSkuNo,
             li.product_name AS warehouseProductName
         FROM sku_mapping sm
@@ -434,7 +436,6 @@
             <foreach collection="productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
                 #{productSkuNo}
             </foreach>
-
         </if>
     </select>
 </mapper>

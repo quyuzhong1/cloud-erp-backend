@@ -1,6 +1,9 @@
 package com.erp.server.tms.schedule;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
@@ -71,11 +74,11 @@ public class LogisticsChannelJob {
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
             if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
-                ApiResult apiResult = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(), apiResult.isSuccess());
+                List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());
+                XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));
             } else {
-                ApiResult apiResult = logisticsBaseService.syncSingleChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:是否成功{}", platformEnum.getName(), apiResult.isSuccess());
+                List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncSingleChannel(platformEnum.getCode());
+                XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));
             }
         }
         log.info("=====渠道同步结束=====");

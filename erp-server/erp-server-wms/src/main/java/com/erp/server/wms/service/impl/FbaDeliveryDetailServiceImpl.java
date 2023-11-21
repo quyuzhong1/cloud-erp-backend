@@ -140,7 +140,9 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
             fbaDeliveryDetailEntity.setWarehouseLocation(fbaDeliveryDetailEntity.getWarehouseLocation());
 
             //库存sku
-            String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct().findFirst()
+            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
+                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct()
+                    .findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             fbaDeliveryDetailEntity.setStockSku(stockSku);
 

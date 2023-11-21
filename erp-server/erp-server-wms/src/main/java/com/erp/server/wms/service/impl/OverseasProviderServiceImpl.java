@@ -1,11 +1,15 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
@@ -119,8 +123,23 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
-    public PagingVO<OverseasProviderDTO.ListDTO> paging(PagingDTO<OverseasProviderDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<OverseasProviderDTO.ListDTO> paging(PagingDTO<OverseasProviderDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<OverseasProviderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<OverseasProviderDTO.ListDTO> list) {
+        for (OverseasProviderDTO.ListDTO listDTO : list) {
+            listDTO.setAuthStatusName(AuthStatusEnum.getName(listDTO.getAuthStatus()));
+        }
     }
 
     @Override

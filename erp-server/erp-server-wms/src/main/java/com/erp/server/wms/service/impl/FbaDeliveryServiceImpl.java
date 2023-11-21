@@ -10,6 +10,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
@@ -117,6 +118,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private ShopInfoFeign shopInfoFeign;
     @Autowired
     private TransferInfoService transferInfoService;
+    @Autowired
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -591,7 +594,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(id));
         // 数据填充处理
         fillOne(data, fbaDeliveryLogisticsEntity, detailEntityList);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -629,6 +631,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+
         //获取sku信息
         List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
@@ -655,12 +658,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //映射物流信息
         FbaDeliveryLogisticsDTO.ViewDTO logisticsViewDTO = new FbaDeliveryLogisticsDTO.ViewDTO();
         BeanMapper.copy(logisticsEntity, logisticsViewDTO);
+
         //物流方式名称
         logisticsViewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()));
         logisticsViewDTO.setLogisticsRemark(logisticsEntity.getRemark());
         List<String> trackNoList = logisticsBillVos.stream().filter(req -> req.getSourceId().equals(data.getId())).map(req -> req.getTrackNo()).collect(Collectors.toList());
         logisticsViewDTO.setTrackingNoList(trackNoList);
         data.setLogisticsView(logisticsViewDTO);
+
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(data.getId()));
         List<String> attachmentUrlList = attachmentList.stream().
@@ -675,6 +680,9 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //查询已发货的货件信息
         List<String> sourceDetailIdList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
+
+        //获取库存sku信息
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
 
         //明细信息
         List<FbaDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
@@ -694,6 +702,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                     .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
                     .sum();
             detailVie.setUseDeliveryQty(useDeliveryQty);
+
+            //库存sku
+            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
+                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct()
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+            fbaDeliveryDetailEntity.setStockSku(stockSku);
+
             detailViews.add(detailVie);
         }
         data.setDetailList(detailViews);

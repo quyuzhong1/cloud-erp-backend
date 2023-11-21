@@ -147,7 +147,7 @@ public class OverseasProviderDTO implements Serializable {
         /**
          * 更新人
          */
-        private String updateUserIdList;
+        private List<String> updateUserIdList;
 
         /**
          * 更新时间

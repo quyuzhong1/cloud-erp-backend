@@ -35,11 +35,13 @@ public class AliExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
-        String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
+        String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
+        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
+        String token = "";
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
+        authMap.put("token",token);
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
