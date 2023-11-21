@@ -1961,7 +1961,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIdList);
 
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         List<JSONObject> jsonList = new ArrayList<>();
+        //仓库数量
+        long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
         for (SoB2cDetailEntity detailEntity : detailList) {
             JSONObject jsonObject= new  JSONObject();
             jsonObject.set("payTime",soB2cEntity.getPayTime());
@@ -1981,7 +1986,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             jsonObject.set("dictLogisticsMethod",logisticsEntity.getDictLogisticsMethod());
             jsonObject.set("dictPlatform",soB2cEntity.getDictPlatform());
             //是否买家留言
-            jsonObject.set("isHavebuyerRemark",null);
+            jsonObject.set("isHavebuyerRemark",soB2cEntity.getBuyerRemark());
 
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
@@ -2005,7 +2010,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     jsonObject.set("isAmazonFBA",Boolean.TRUE);
                 }
             }
-            jsonObject.set("isCombinationOrder",null);
+            //是否是组合SKU
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())).count();
+                if (count > 0) {
+                    jsonObject.set("isCombinationOrder",Boolean.TRUE);
+                }
+            }
+
 
             ProductDetailDTO.ProductDTO productDTO = productList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDTO)) {
@@ -2015,7 +2027,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             jsonObject.set("deliveryWarehouseId",detailEntity.getWarehouseId());
             jsonObject.set("deliveryWarehouseLocation",detailEntity.getWarehouseLocation());
             jsonObject.set("packageWidth",logisticsEntity.getWidth());
-            jsonObject.set("deliveryWarehouseQty",null);
+            jsonObject.set("deliveryWarehouseQty",warehouseCount);
             jsonObject.set("sellerLogistics",logisticsEntity.getName());
             jsonObject.set("destCountry",receiverEntity.getCountry());
             jsonObject.set("destCity",receiverEntity.getCityName());
