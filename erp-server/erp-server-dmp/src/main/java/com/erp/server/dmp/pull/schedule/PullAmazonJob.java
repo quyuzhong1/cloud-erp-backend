@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.*;
 import com.common.business.enums.BusinessTypeEnum;
@@ -270,7 +271,14 @@ public class PullAmazonJob {
         entityList.forEach(dto -> {
             try {
                 // 下载和处理详情
-                PlatformAmazonFbaShipmentDTO newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
+                PlatformAmazonFbaShipmentDTO newDto;
+                // 非线上支持手动
+                if (!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")){
+                    newDto = dto;
+                } else {
+                    newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
+                }
+
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
