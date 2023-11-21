@@ -685,6 +685,11 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             //来源类型
             addDTO.setSourceType(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
 
+            //物流信息
+            FbaDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FbaDeliveryLogisticsDTO.AddDTO();
+            logisticsAddDTO.setLogisticsRemark("");
+            logisticsAddDTO.setTrackingNoList(new ArrayList<>());
+
             //映射详情信息
             List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (OverseasDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
@@ -704,7 +709,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 }
 
                 //映射产品信息
-                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(skuVO)) {
                     detailAddDto.setSkuNo(skuVO.getSkuNo());
                     detailAddDto.setNetWeight(skuVO.getNetWeight());
@@ -720,6 +725,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                 detailAddList.add(detailAddDto);
             }
             addDTO.setDetailList(detailAddList);
+            addDTO.setLogisticsView(logisticsAddDTO);
 
             BaseResultDTO.AddDTO add = fbaDeliveryService.add(addDTO);
             if (isSubmit) {

@@ -460,8 +460,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FbaDeliveryDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryAdd(shipmentList.get(0));
             FbaDeliveryLogisticsDTO.AddDTO logisticsAddDTO = new FbaDeliveryLogisticsDTO.AddDTO();
             logisticsAddDTO.setLogisticsRemark("");
-            logisticsAddDTO.setDeliveryCode(shipmentList.get(0).getCode());
-            logisticsAddDTO.setMainId(shipmentList.get(0).getId());
             logisticsAddDTO.setTrackingNoList(new ArrayList<>());
             addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
             addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
