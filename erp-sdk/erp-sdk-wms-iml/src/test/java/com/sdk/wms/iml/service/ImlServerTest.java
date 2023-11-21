@@ -2,6 +2,7 @@ package com.sdk.wms.iml.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.iml.dto.request.*;
 import com.sdk.wms.iml.dto.response.*;
 import org.junit.Test;
@@ -11,7 +12,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= ImlService.class)
@@ -20,6 +23,14 @@ public class ImlServerTest {
     @Resource
     private ImlService imlServer;
 
+    public ImlServerTest(){
+        Map<String,String> authMap = new HashMap<>();
+        authMap.put("appToken","44ac3ae1211d416a080858e57833cc14");
+        authMap.put("appKey","fa0c90d7dbb434fa2160209756db677c");
+        ThirdWarehouseContext.setAuthMap(authMap);
+    }
+
+
     @Test
     public void getSkuList() {
         ImlGetProductReq imlProductReq = ImlGetProductReq.builder()
@@ -27,8 +38,6 @@ public class ImlServerTest {
                 .pageSize(50)
 //                .productSku("0044")
 //                .productSkuArr(Arrays.asList("0044"))
-                .startTime("2023-01-01 11:11:11")
-                .endTime("2024-01-01 11:11:11")
                 .updateStartTime("2023-05-01 11:11:11")
                 .updateEndTime("2024-01-01 11:11:11")
                 .build();

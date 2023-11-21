@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -61,6 +62,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .pageSize(1)
                         .page(1)
                 .build());
+        if(!isSuccess(response.getAsk())){
+            throw new ServiceException("授权失败,"+response.getMessage());
+        }
         return isSuccess(response.getAsk());
     }
 

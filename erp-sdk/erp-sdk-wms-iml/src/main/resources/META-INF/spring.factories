@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.wms.iml.service.ImlService
+   com.sdk.wms.iml.service.ImlService,\
+   com.sdk.wms.iml.handle.ImlProductHandler
