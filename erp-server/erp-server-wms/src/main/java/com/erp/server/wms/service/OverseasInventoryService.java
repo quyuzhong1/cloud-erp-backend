@@ -1,10 +1,11 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -43,4 +44,22 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
      * @return
      */
     PagingVO<OverseasInventoryDTO.ListDTO> paging(PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto);
+
+    /**
+     * 列表合计
+     * @author Jim
+     * @date: 2023-11-21
+     * @param dto
+     * @return
+     */
+    OverseasInventoryDTO.ListTotalDTO queryParamsTotal(OverseasInventoryDTO.PagingParamDTO dto);
+
+    /**
+     * 导出海外仓
+     * @author Jim
+     * @date: 2023-11-21
+     * @param dto
+     * @return
+     */
+    Boolean exportExcel(OverseasInventoryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

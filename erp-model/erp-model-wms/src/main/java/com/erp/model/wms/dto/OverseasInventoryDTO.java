@@ -163,6 +163,60 @@ public class OverseasInventoryDTO implements Serializable {
         private LocalDateTime downloadTime;
     }
 
+
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListTotalDTO {
+
+        /**
+         * 发货在途数量
+         */
+        private Integer deliverOnwayQty;
+
+        /**
+         * 待上架数量
+         */
+        private Integer pendingQty;
+
+        /**
+         * 可售数量
+         */
+        private Integer sellableQty;
+
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
+
+        /**
+         * 待出库数量
+         */
+        private Integer reservedQty;
+
+        /**
+         * 尾程在途
+         */
+        private Integer onwayQty;
+
+        /**
+         * 缺货数量
+         */
+        private Integer lackQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 历史出库数量
+         */
+        private Integer shippedQty;
+    }
+
     /**
     * 详情
     */
