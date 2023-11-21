@@ -268,8 +268,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     public ApiResult syncShoppeeChannel(String platform) {
         log.info("{}渠道同步开始", platform);
-        ApiResult<List<ShopAuthEntity>> result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
-        if (result.isSuccess()) {
+        ApiResult<List<ShopAuthEntity>> result = null;
+        try {
+            result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
+        }catch (Exception e){
+            log.error("erp-oms服务接口getShopeeShopList异常：{}",e.getMessage());
+        }
+
+        if (Objects.nonNull(result) && result.isSuccess()) {
             LogisticsService service = logisticsRegistry.getHandler(platform);
             result.getData().forEach(shopAuthEntity -> {
                 ChanelQueryVO chanelQueryVO = new ChanelQueryVO();

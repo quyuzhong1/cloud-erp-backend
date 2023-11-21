@@ -65,7 +65,7 @@ public class LogisticsChannelJob {
     @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
-        logisticsBaseService.syncAllLogisticsChannel();
+//        logisticsBaseService.syncAllLogisticsChannel();
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
