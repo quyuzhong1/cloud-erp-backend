@@ -104,7 +104,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg));
         } else {
             apiResult.setCode(200);
-            OrderResponse orderResponse = JSONUtil.toBean(JSONUtil.parseObj(responseMsg.getData()), OrderResponse.class);
+            OrderResponse orderResponse = JSONObject.parseObject(JSONObject.toJSONString(responseMsg.getData()), OrderResponse.class);
             apiResult.setData(LogisticsOrderResponseVO.builder()
                     .transportNo(orderResponse.getRef_no())
                     .trackNo(orderResponse.getTracking_no())
@@ -183,6 +183,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             try {
                 OrderInterceptRequest orderInterceptRequest = OrderInterceptRequest.builder()
                         .request_no(logisticsQueryVO.getDeliveryNo())
+                        .is_hold("Y")
                         .holdReason(StringUtils.isBlank(logisticsQueryVO.getInterceptReason()) ? "订单拦截" : logisticsQueryVO.getInterceptReason())
                         .build();
                 ResponseMsg orderResponse = dsfShipperService.interceptOrder(logisticsQueryVO.getAuthMap(), orderInterceptRequest);
@@ -227,7 +228,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .build();
             ResponseMsg responseMsg = dsfShipperService.queryOrder(logisticsQueryBaseVO.getAuthMap(), orderQueryRequest);
             //失败
-            if (!StringUtils.isBlank(responseMsg.getResult()) && Objects.equals("1", responseMsg.getResult())) {
+            if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
                 logisticsOrderOperateLogService.pushOperateLog(logisticsQueryBaseVO.getAuthMap().get("id"),
                         logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responseMsg));
@@ -266,6 +267,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         assert logisticsGetLabelVO != null;
         LabelRequest labelRequest = LabelRequest.builder()
+                .labelSize("label_100x150")
                 .requestNo(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
                 .logisticsProductCode(logisticsGetLabelVO.getLogisticsSaleChannelEntity().getCode())
                 .build();

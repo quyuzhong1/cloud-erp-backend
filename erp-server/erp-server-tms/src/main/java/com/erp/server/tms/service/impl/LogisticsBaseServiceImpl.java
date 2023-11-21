@@ -20,12 +20,12 @@ import com.google.common.collect.Lists;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -52,7 +52,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
 
     @Override
-    public ApiResult syncLogisticsChannel(String platform) {
+    public List<BatchResultDTO> syncLogisticsChannel(String platform) {
         if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
             return syncShoppeeChannel(platform);
         } else {
@@ -243,12 +243,13 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public ApiResult syncSingleChannel(String platform) {
+    public List<BatchResultDTO> syncSingleChannel(String platform) {
         log.info("{}渠道同步开始", platform);
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         LogisticsService service = logisticsRegistry.getHandler(platform);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platform);
-        if (CollectionUtils.isEmpty(mapList)) return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR);
+        if (CollectionUtils.isEmpty(mapList)) return Collections.emptyList();
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>(mapList.size());
         mapList.forEach(map -> {
             chanelQueryVO.setAuthMap(map);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
@@ -258,15 +259,17 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     logisticsSaleChannelEntity.setAuthId(map.get("id"));
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
+                batchResultDTOS.add(BatchResultDTO.success(map.get("id"),String.valueOf(channels.getCode()),"同步成功"));
             } else {
+                batchResultDTOS.add(BatchResultDTO.fail(map.get("id"),String.valueOf(channels.getCode()),channels.getMsg()));
                 log.error("渠道查询异常：{}", channels.getMsg());
             }
         });
         log.info("{}渠道同步结束", platform);
-        return ApiResult.success();
+        return batchResultDTOS;
     }
 
-    public ApiResult syncShoppeeChannel(String platform) {
+    public List<BatchResultDTO> syncShoppeeChannel(String platform) {
         log.info("{}渠道同步开始", platform);
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
@@ -274,7 +277,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }catch (Exception e){
             log.error("erp-oms服务接口getShopeeShopList异常：{}",e.getMessage());
         }
-
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
         if (Objects.nonNull(result) && result.isSuccess()) {
             LogisticsService service = logisticsRegistry.getHandler(platform);
             result.getData().forEach(shopAuthEntity -> {
@@ -287,13 +290,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                         logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
-
+                    batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()),"同步成功"));
                 } else {
+                    batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()),channels.getMsg()));
                     log.error(channels.getMsg());
                 }
             });
         }
         log.info("{}渠道同步结束", platform);
-        return ApiResult.success();
+        return batchResultDTOS;
     }
 }

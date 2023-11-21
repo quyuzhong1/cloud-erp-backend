@@ -26,12 +26,12 @@ public class LogisticsServiceInfo implements Serializable {
      * 单独报关（Y：单独报关；N：不单独报关） 默认值：N
      */
     @JSONField(name = "customs_service")
-    private String customsService = "N";
+    private String customsService;
     /**
      * 签名服务（Y/N)；默认值：N
      */
     @JSONField(name = "signature_service")
-    private String signatureService = "N";
+    private String signatureService;
     /**
      * 	其他服务（待完善)
      */
