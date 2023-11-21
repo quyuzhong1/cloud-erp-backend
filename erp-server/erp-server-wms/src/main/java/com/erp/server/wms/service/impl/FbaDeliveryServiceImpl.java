@@ -553,6 +553,11 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
               调出单备注：发货单【发货单号】审核通过自动创建
         * */
         if (ApproveType.PASS.equals(dto.getType())) {
+            //如果是FBA货件来源，审核通过修改货件发货状态为已发货
+            if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
+                fbaShipmentService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+            }
+
             List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
             //新增分布式调拨单
             String transferOutId = generateTransferOut(entity, detailEntityList);
@@ -784,7 +789,10 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             view.setWarehouseLocationName(warehouseLocationEntity.getName());
 
             //获取到最新的版本
-            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(new ProductBomInfoDTO.skuBomVersion());
+            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(bomVersionObj)) {
+                continue;
+            }
             List<Integer> bomVersionList = bomVersionObj.getBomVersionList().stream().map(req -> Integer.valueOf(req)).collect(Collectors.toList());
             Integer bomVersion = Collections.max(bomVersionList);
             view.setBomVersion(String.valueOf(bomVersion));
