@@ -61,7 +61,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@author yl
      *@date 2023-11-14
      */
-    List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id);
+    List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id,String name);
 
     /**
      * 删除物流商

@@ -15,8 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum LogisticsAuthStatusEnum implements EnumMessage {
 
     ALREADY("already", "已授权"),
-    NOT("not", "未授权"),
-    CANCEL("cancel","取消授权")
+    NOT("not", "未授权")
     ;
 
     /**

@@ -22,6 +22,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -136,8 +137,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList) {
-        List<LogisticsChannelEntity> list = this.listDbByMainIdList(mainIdList);
+    public List<LogisticsChannelDTO.BaseDTO> listBaseByMainIdList(List<String> mainIdList, String name) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsChannelEntity> list= this.lambdaQuery().
+                in(LogisticsChannelEntity::getMainId, mainIdList).
+                like(StringUtils.isNotBlank(name),LogisticsChannelEntity::getName,name).
+                list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
