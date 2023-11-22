@@ -136,9 +136,14 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                     ratio = new BigDecimal(0.001);
                 }
             }
+            //体积重转换比例（体积重固定千克单位）
+            BigDecimal volumeRatio = BigDecimal.ONE;
+            if (!"kg".equals(listDTO.getWeightUnit())) {
+                volumeRatio = new BigDecimal(1000);
+            }
 
             //体积重
-            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWeight()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting()));
+            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWidth()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting())).multiply(volumeRatio);
             //重量
             BigDecimal weight = params.getWeight().multiply(ratio);
             if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
