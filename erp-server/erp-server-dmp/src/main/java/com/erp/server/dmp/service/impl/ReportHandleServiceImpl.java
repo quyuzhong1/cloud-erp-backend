@@ -285,7 +285,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
                 .toLocalDateTime();
         reportSchedule.setFirstNextReportCreationTime(nextTime);
-        if (reportScheduleService.updateById(reportSchedule)){
+        if (!reportScheduleService.updateById(reportSchedule)){
             throw new ServiceException("[reportSchedule] 更新失败");
         }
 
