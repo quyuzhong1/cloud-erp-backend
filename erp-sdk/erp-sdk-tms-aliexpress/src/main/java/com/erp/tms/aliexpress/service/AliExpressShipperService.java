@@ -113,24 +113,17 @@ public class AliExpressShipperService {
         return response;
     }
 
-    public void getToken() throws ApiException {
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
-        IopRequest request = new IopRequest();
-        request.setApiName("/auth/token/security/create");
-        request.addApiParameter("code", "3_502978_37f6TTJYzrCAqQnuq5s3bLbC5894");
-        request.addApiParameter("uuid", UUID.randomUUID().toString());
-        IopResponse response = client.execute(request, Protocol.GOP);
-        System.out.println(response.getBody());
-    }
 
-    public void generateToken(String code) throws ApiException {
+
+    public JSONObject generateToken(String code) throws ApiException {
         IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
         IopRequest request = new IopRequest();
         request.setApiName("/auth/token/create");
         request.addApiParameter("code", code);
 //        request.addApiParameter("uuid", UUID.randomUUID().toString());
         IopResponse response = client.execute(request, Protocol.GOP);
-        System.out.println(response.getBody());
+        return JSONObject.parseObject(response.getBody());
+
     }
 
     public static void main(String[] args) throws ApiException {

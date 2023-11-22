@@ -16,6 +16,7 @@ import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.AuthSaveData;
 import com.erp.server.oms.service.IShopAuthorizeService;
@@ -59,6 +60,9 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
+
     /**
      * 获取授权地址
      */
@@ -98,8 +102,8 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
         }
         String code = dto.getCode();
-        if(StringUtils.isBlank(code)){
-
+        if (StringUtils.isBlank(code)) {
+            throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
         }
         AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -110,119 +114,52 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
         }
-
-
         try {
+
+        }catch (Exception e){
+
+        }
+
+
+
+            return Boolean.FALSE;
+        }
+
+        /**
+         * 取消授权
+         *
+         * @param dto
+         */
+        @Override
+        public Boolean cancelAuthorize (CancelAuthorizeDTO dto){
+            String shopId = dto.getShopId();
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-            //根据店铺id 获取到授权信息
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
-            if (Objects.isNull(shopAuth)) {
-                shopAuth = new ShopAuthEntity();
+            if (Objects.isNull(shopInfo)) {
+                throw new ServiceException("店铺不存在");
             }
-            //获取地址
-            String url = WalmartStaticKey.baseUrl + "token";
-
-            WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
-            WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
-            if (ObjectUtil.isEmpty(walmartTokenDTO)) {
-                return Boolean.FALSE;
+            //授权状态
+            String authStatus = shopInfo.getAuthStatus();
+            if (!AuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
+                throw new ServiceException("该店铺未授权,无需取消授权");
             }
-
-            String appClientId = shopAuth.getAppClientId();
-            //判断是否有授权过，如果没有就新增保存店铺秘钥信息，如果有就修改秘钥信息重新授权
-            if (StringUtils.isBlank(shopAuth.getAppClientId())) {
-                CfgAppClientDTO.AddDTO addDTO = new CfgAppClientDTO.AddDTO();
-                addDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
-                addDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
-                addDTO.setDictPlatform(dto.getPlatformCode());
-                addDTO.setClientId(dto.getClientId());
-                addDTO.setClientSecret(dto.getClientSecret());
-                appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
-                // 授权后添加任务
-                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
-            } else {
-                CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
-                updateDTO.setId(appClientId);
-                updateDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
-                updateDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
-                updateDTO.setDictPlatform(dto.getPlatformCode());
-                updateDTO.setClientId(dto.getClientId());
-                updateDTO.setClientSecret(dto.getClientSecret());
-                dmpTaskFeign.updateCfgAppClient(updateDTO);
+            shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+            Boolean result = shopInfoService.updateById(shopInfo);
+            if (result) {
+                shopAuthService.removeByShopId(shopId);
+                // 删除授权
+                dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+                shopInfo.setIsGenTask(Boolean.FALSE);
+                shopInfoService.updateShopInfoById(shopInfo);
             }
-            shopAuth.setShopId(shopId);
-            shopAuth.setExpiresIn(Integer.valueOf(walmartTokenDTO.getExpiresIn()));
-            shopAuth.setAppClientId(appClientId);
-            shopAuth.setAccessToken(walmartTokenDTO.getAccessToken());
-            shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-            shopInfo.setAuthTime(LocalDateTime.now());
-            shopAuthService.saveOrUpdate(shopAuth);
-            boolean result = shopInfoService.updateById(shopInfo);
-            shopInfo.setIsGenTask(Boolean.TRUE);
-            shopInfoService.updateShopInfoById(shopInfo);
-            // 添加到缓存redis
-            WalmartShopInfoDTO shopInfoDTO = new WalmartShopInfoDTO()
-                    // 店铺ID
-                    .setId(shopInfo.getId())
-                    // 访问token
-                    .setAccessToken(walmartTokenDTO.getAccessToken())
-                    // 店铺名称
-                    .setName(shopInfo.getName())
-                    // 区域id
-                    .setDictAreaCode(shopInfo.getDictAreaCode())
-                    // 国家id
-                    .setDictCountryCode(shopInfo.getDictCountryCode())
-                    // 负责人id
-                    .setChargeId(shopInfo.getChargeId())
-                    //平台账户id
-                    .setClientId(dto.getClientId())
-                    //平台店铺秘钥
-                    .setClientSecret(dto.getClientSecret());
+            // 移除缓存
             // platform-token:平台名称:店铺ID
-            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopId);
-            redisUtil.set(tokenKey, shopInfoDTO);
+            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopInfo.getId());
+            Object shopInfoObj = redisUtil.get(tokenKey);
+            if (null != shopInfoObj) {
+                redisUtil.del(tokenKey);
+            }
             return result;
-        } catch (Exception e) {
-            log.error("沃尔玛平台店铺授权出错了===> bodyStr==>{} e==>{}", dto, e);
         }
-        return Boolean.FALSE;
+
+
     }
-
-    /**
-     * 取消授权
-     *
-     * @param dto
-     */
-    @Override
-    public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
-        String shopId = dto.getShopId();
-        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfo)) {
-            throw new ServiceException("店铺不存在");
-        }
-        //授权状态
-        String authStatus = shopInfo.getAuthStatus();
-        if (!AuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
-            throw new ServiceException("该店铺未授权,无需取消授权");
-        }
-        shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
-        Boolean result = shopInfoService.updateById(shopInfo);
-        if (result) {
-            shopAuthService.removeByShopId(shopId);
-            // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
-            shopInfo.setIsGenTask(Boolean.FALSE);
-            shopInfoService.updateShopInfoById(shopInfo);
-        }
-        // 移除缓存
-        // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopInfo.getId());
-        Object shopInfoObj = redisUtil.get(tokenKey);
-        if (null != shopInfoObj) {
-            redisUtil.del(tokenKey);
-        }
-        return result;
-    }
-
-
-}
