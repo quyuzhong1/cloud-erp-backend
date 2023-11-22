@@ -2,10 +2,12 @@ package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -48,4 +50,13 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return
      */
     List<PurchaseOrderDetailEntity> getLatestByCrtTime(@Param(value = "skuIds") List<String> skuIds);
+
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:46
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
+     **/
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
 }

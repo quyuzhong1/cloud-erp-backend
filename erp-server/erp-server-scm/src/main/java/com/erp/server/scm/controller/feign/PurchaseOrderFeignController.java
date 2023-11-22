@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -334,5 +336,17 @@ public class PurchaseOrderFeignController {
     @PostMapping("/getLatestByCrtTime")
     public List<PurchaseOrderDetailEntity> getLatestByCrtTime(@RequestBody List<String> skuIds) {
         return purchaseOrderDetailService.getLatestByCrtTime(skuIds);
+    }
+
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:21
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    @PostMapping("/listPurchaseOrderByPurchaseDate")
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList) {
+        return purchaseOrderDetailService.listPurchaseOrderByPurchaseDate(purchaseDateList);
     }
 }

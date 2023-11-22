@@ -3,8 +3,10 @@ package com.erp.server.scm.service;
 import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -165,7 +167,14 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      **/
     List<String> listPoIdBySkuNo(String skuNo);
 
-
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:21
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
 
 
 }
