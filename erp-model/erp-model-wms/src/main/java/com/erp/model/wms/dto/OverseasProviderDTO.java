@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import javax.json.JsonObject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -125,7 +128,8 @@ public class OverseasProviderDTO implements Serializable {
         /**
         * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
         */
-        private String authJson;
+        @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
+        private Map<String, String> authJson;
     }
 
     /**
@@ -216,6 +220,6 @@ public class OverseasProviderDTO implements Serializable {
          * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
          */
         @NotNull(message = "授权的信息不能为空")
-        private JSONObject authJson;
+        private Map<String, String> authJson;
     }
 }

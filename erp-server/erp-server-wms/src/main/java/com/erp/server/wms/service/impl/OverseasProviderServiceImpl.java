@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
@@ -90,13 +91,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(!save) {
             throw new ServiceException("海外物流商保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        //修改明细数据
+        overseasProviderWarehouseService.update(updateDTO, overseasProviderEntity.getId());
         // 记录主单操作日志
             log.info("编辑 开始记录海外物流商日志数据，单号：【{}】", overseasProviderEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderEntity.getCode(), "海外物流商");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, overseasProviderEntity, null, overseasProviderEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, overseasProviderEntity, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -146,11 +146,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(getPlatFormCodeById(dto.getId()));
         boolean result = thirdWarehouseService.authorize(dto);
         if(result){
+            OverseasProviderEntity entity = this.getById(dto.getId());
             OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
-            updateDTO.setId(dto.getId());
-            updateDTO.setAuthTime(LocalDateTime.now());
-            updateDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-            updateDTO.setAuthJson(dto.getAuthJson().toString());
+            entity.setId(dto.getId());
+            entity.setAuthTime(LocalDateTime.now());
+            entity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+            entity.setAuthJson(dto.getAuthJson());
             this.update(updateDTO);
         }
         return result;
@@ -165,7 +166,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         updateDTO.setId(id);
         updateDTO.setAuthTime(null);
         updateDTO.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
-        updateDTO.setAuthJson("{}");
         this.update(updateDTO);
         //删除数据同步任务
         String platformCode = this.getPlatFormCodeById(id);

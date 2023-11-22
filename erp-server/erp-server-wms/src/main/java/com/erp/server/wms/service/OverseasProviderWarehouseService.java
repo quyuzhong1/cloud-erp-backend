@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -23,7 +24,7 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     * @param dto
     * @return
     */
-    Boolean update(OverseasProviderWarehouseDTO.UpdateDTO dto);
+    Boolean update(OverseasProviderDTO.UpdateDTO dto, String mainId);
 
     /**
      * 根据仓库id查询绑定关系
