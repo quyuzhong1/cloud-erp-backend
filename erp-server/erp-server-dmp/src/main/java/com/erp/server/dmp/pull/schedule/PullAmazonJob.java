@@ -279,16 +279,17 @@ public class PullAmazonJob {
                 } else {
                     newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
                 }
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 下载完：{}", JSONUtil.toJsonStr(dto));
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
                 newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 主体转换前：{}", JSONUtil.toJsonStr(newDto));
                 // 转换
                 PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
                 InboundShipmentItemList sourceDetailList = newDto.getDetailList();
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 详情转换前：{}", JSONUtil.toJsonStr(newDto));
                 List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
                         .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
                         .collect(Collectors.toList());
@@ -303,8 +304,9 @@ public class PullAmazonJob {
                         .values()
                 );
                 shipmentDTO.setDetailList(detailListDTO);
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
                 businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送后：{}", JSONUtil.toJsonStr(newDto));
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
