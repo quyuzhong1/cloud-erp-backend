@@ -51,12 +51,6 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
         if(!save) {
             throw new ServiceException("FBA拣货明细单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA拣货明细单" , fbaShipmentDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, fbaShipmentDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
         return fbaShipmentDetailEntity.getId();
     }
 
@@ -77,13 +71,6 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
         if(!save) {
             throw new ServiceException("FBA拣货明细单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录FBA拣货明细单日志数据，id：【{}】", fbaShipmentDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaShipmentDetailEntity.getId(), "FBA拣货明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, fbaShipmentDetailEntity, null, fbaShipmentDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -92,7 +79,6 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     * 新增修改处理数据
     */
     private void handleData(FbaShipmentDetailEntity fbaShipmentDetailEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 
     @Override
