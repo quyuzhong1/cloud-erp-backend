@@ -194,6 +194,10 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 详情
+         */
+        private List<RequisitionApplicationDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -613,7 +617,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 是否组合品
          */
-        private String isCombination;
+        private Boolean isCombination;
         /**
          * 产品名称
          */

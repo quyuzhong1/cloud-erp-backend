@@ -57,6 +57,7 @@ public enum ModuleTypeEnum {
     THIRD_WAREHOUSE("53", "第三方仓"),
     OVERSEAS_DELIVERY_PLAN("54", "海外发货计划"),
     REQUISITION_APPLICATION("55", "要货申请"),
+    OVERSEAS_PROVIDER("56", "仓库设置"),
     ;
 
 

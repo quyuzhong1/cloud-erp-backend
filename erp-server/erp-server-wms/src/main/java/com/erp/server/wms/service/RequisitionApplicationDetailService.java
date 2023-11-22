@@ -23,7 +23,7 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
     * @param mainId
     * @return
     */
-    BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO dto, String mainId);
+    void add(RequisitionApplicationDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -33,7 +33,7 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
     * @param mainId
     * @return
     */
-    Boolean update(RequisitionApplicationDTO.UpdateDTO dto, String mainId);
+    void update(RequisitionApplicationDTO.UpdateDTO dto, String mainId);
 
 
 }
