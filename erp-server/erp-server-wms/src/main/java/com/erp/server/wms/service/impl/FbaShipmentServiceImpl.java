@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
@@ -250,6 +251,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finishShipment(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -267,9 +269,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
 
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = fbaShipmentEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("完结了一个货件单【%s】", ModuleTypeEnum.FBA_SHIPMENT.getCode(), pairList, "完结操作");
-
         return flag;
     }
 
@@ -462,6 +463,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据货件单分组一个货件单生成一个发货单
         Map<String, List<FbaShipmentDTO.GenerateDeliverView>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateDeliverView::getMainId));
 
+        //查询已发货的货件信息
+        List<String> sourceDetailIdList = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
+
         for (Map.Entry<String, List<FbaShipmentDTO.GenerateDeliverView>> entry : map.entrySet()) {
             List<FbaShipmentDTO.GenerateDeliverView> shipmentList = entry.getValue();
             //映射字段
@@ -474,9 +479,24 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //设置仓库名称
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(addDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseEntity());
             addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
+
+
             //详情信息
             List<FbaDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDTO.GenerateDeliverView generateDeliverView : shipmentList) {
+
+                //获取已出库数量（排除此单出库数量）
+                Integer useDeliveryQty = entities.stream()
+                        .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                                && req.getSourceDetailId().equals(generateDeliverView.getId())
+                                && !req.getId().equals(generateDeliverView.getId()))
+                        .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
+                        .sum();
+                //发货数量大于申报数量
+                if (useDeliveryQty > generateDeliverView.getDeclareQty()) {
+                    throw new ServiceException(ApiError.DELIVERY_QTY_EXCEED_DECLAREQTY, generateDeliverView.getSkuNo());
+                }
+
                 //映射字段
                 FbaDeliveryDetailDTO.AddDTO detailAdd = FbaShipmentConverter.INSTANCE.fbaGenerateDeliverViewToDeliveryDetailAdd(generateDeliverView);
 
@@ -848,6 +868,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         FbaShipmentEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA货件单数据"));
         // 只有未发货数据允许删除
@@ -868,17 +889,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 删除日志数据
         log.info("删除 开始删除FBA货件单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA货件单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getCode(), "删除FBA货件单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "删除FBA货件单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO skuMappingBatch(String id) {
         FbaShipmentEntity entity = this.getById(id);
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
+
         List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
         //根据平台sku查询Listing信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -892,9 +915,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (ObjectUtil.isNotEmpty(skuDTO)) {
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
-                //添加日志
-                FbaShipmentEntity old = this.getById(detailEntity.getId());
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(), detailEntity.getId(), "", "");
+
+                FbaShipmentDetailEntity old = fbaShipmentDetailEntities.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+                }
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.FBA_SHIPMENT.getCode(),detailEntity.getMainId(),"",String.format("【%s】",old.getSkuNo()));
+
                 fbaShipmentDetailService.updateById(detailEntity);
             } else {
                 return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无对照关系！");
@@ -932,11 +959,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                     .mapToInt(req -> req.getDeliveryQty())
                     .sum();
-            FbaDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(new FbaDeliveryDetailEntity());
-            //发货数量=总发货数量+本次发货数量
-            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty + detailEntity.getDeliveryQty());
-            //收发差异=收货数量-总发货数量-本次发货数量
-            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty - detailEntity.getDeliveryQty());
+            FbaDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(detailEntity)) {
+                //发货数量=总发货数量
+                fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
+                //收发差异=收货数量-总发货数量
+                fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
+            }
         }
         //完结不修改状态
         if (!FbaDeliveryStatusEnum.IS_OVER.getCode().equals(shipmentEntity.getDeliveryStatus())) {
@@ -964,11 +993,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                     .mapToInt(req -> req.getDeliveryQty())
                     .sum();
-            FbaDeliveryDetailEntity deliveryDetailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(new FbaDeliveryDetailEntity());
-            //发货数量=总发货数量-本次反审的数量
-            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty - deliveryDetailEntity.getDeliveryQty());
-            //收发差异=收货数量-总发货数量+本次反审的发货数量
-            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty + deliveryDetailEntity.getDeliveryQty());
+            FbaDeliveryDetailEntity deliveryDetailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(deliveryDetailEntity)) {
+                //发货数量=总发货数量
+                fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
+                //收发差异=收货数量-总发货数量+本次反审的发货数量
+                fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty);
+            }
         }
         List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryService.listBySourceIds(Arrays.asList(shipmentEntity.getId()));
         long count = deliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();

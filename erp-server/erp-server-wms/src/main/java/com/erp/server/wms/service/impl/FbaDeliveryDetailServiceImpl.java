@@ -129,6 +129,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        List<FbaDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
 
         //获取库存sku信息
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
@@ -148,7 +149,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(fbaDeliveryDetailEntity.getId())) {
-                FbaDeliveryDetailEntity old = list.stream().filter(obj -> obj.getId().equals(fbaDeliveryDetailEntity.getId())).findFirst().orElse(null);
+                FbaDeliveryDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(fbaDeliveryDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
                 }

@@ -183,7 +183,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
         TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
-        wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
+        wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
 
         //新增物流信息
         fbaDeliveryLogisticsService.update(updateDTO.getLogisticsView(), fbaDeliveryEntity.getId());
@@ -330,7 +330,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
                 Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(entity.getDeliveryWarehouseId(), skuVO.getSkuId(), fbaDeliveryDetailEntity.getWarehouseLocation());
                 if (fbaDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
-                    throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, entity.getCode());
+                    throw new ServiceException(ApiError.FBA_DELIVERY_INVENTORY_INSUFFICIENT, fbaDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
                 }
             }
         }

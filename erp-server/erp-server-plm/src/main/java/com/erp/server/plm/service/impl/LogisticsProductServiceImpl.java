@@ -576,15 +576,43 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 dictIdList.add(dictId);
             }
         }
+        List<String> skuIdList = list.stream().map(LogisticsProductDTO.ExportInfoDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        List<ProductPurchaseEntity> productPurchaseList = productPurchaseService.listBySkuIds(skuIdList);
+        List<String> supplierIdList = productPurchaseList.stream().filter(s -> StringUtils.isNotBlank(s.getMainSupplier())).map(ProductPurchaseEntity::getMainSupplier).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isNotEmpty(supplierIdList) ? scmTaskFeign.listSupplierSkuPrice(supplierIdList) : Collections.emptyList();
+
         dictIdList = dictIdList.stream().distinct().collect(Collectors.toList());
         List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
         BigDecimal zero = BigDecimal.ZERO;
+
+        String usdCode = CurrencyEnum.USD.getCurrencyCode();
+        String nowDay = LocalDate.now().toString();
+        //汇率
+        BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
+        if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
+            rate = new BigDecimal("7.13");
+        }
+
+
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
+            String skuId = item.getSkuId();
             //含税成本
             BigDecimal actualTaxCost = item.getActualTaxCost();
             if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {
-
+                Map<String, BigDecimal> map = getSkuCost(supplierSkuPriceList, skuId);
+                actualTaxCost=map.get("actualTaxCost");
+                item.setActualTaxCost(actualTaxCost);
+                item.setActualNoTaxCost(map.get("actualNoTaxCost"));
             }
+            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
+            //目的国申报价
+            BigDecimal destDeclarePrice = item.getDestDeclarePrice();
+            if (Objects.isNull(destDeclarePrice)||destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
+                item.setDestDeclarePrice(resultDestDeclarePrice);
+            }
+
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
@@ -599,8 +627,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String propertyName = dictList.stream().filter(d -> propertyIds.contains(d.getId())).map(BasicDictEntity::getName).
                         collect(Collectors.joining(","));
                 item.setLogisticsPropertyName(propertyName);
-
             }
+
 
         }
     }
@@ -617,8 +645,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             actualTaxCost = supplierSkuPrice.getTaxPrice();
         }
         Map<String, BigDecimal> map = new HashMap<>();
-        map.put("actualTaxCost",actualTaxCost);
-        map.put("actualNoTaxCost",actualNoTaxCost);
+        map.put("actualTaxCost", actualTaxCost);
+        map.put("actualNoTaxCost", actualNoTaxCost);
         return map;
     }
 }

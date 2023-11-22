@@ -806,7 +806,7 @@ public enum ApiError implements Serializable {
     WAIT_SUBMIT_GENERATE_MACHINE(99101,"只有单据为待审核状态允许下推加工单"),
     EXIST_GENERATE_MACHINE_INFO(99102,"已下推加工单"),
     IS_GENERATE_MACHINE(99103,"发货单【{}】包含组合产品，请先下推加工单并且审核通过后重试"),
-    FBA_DELIVERY_INVENTORY_INSUFFICIENT(99104,"提示：SKU【】发货仓【】可用库存不足，无法审核发货单"),
+    FBA_DELIVERY_INVENTORY_INSUFFICIENT(99104,"提示：SKU【{}】发货仓【{}】可用库存不足，无法审核发货单"),
     ERROR_GENERATE_TRANSFER_OUT(99105,"生成分步式调出单失败!"),
     FBA_SHIPMENT_RECEIVE_EXIST(99106,"已经有货件签收数量的发货单不允许反审核!"),
     IS_DELIVERY_FINISH(99107,"只有已发货的货件才能完结!"),
@@ -820,6 +820,7 @@ public enum ApiError implements Serializable {
     EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE(99113,"已下推FBA发货单不允许反审核"),
     EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE(99114,"已下要货申请不允许反审核"),
     NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有已审核的发货单可以更新物流信息"),
+    DELIVERY_QTY_EXCEED_DECLAREQTY(99115,"sku【{}】发货数量超过申报数量不允许下推"),
 
 
 
