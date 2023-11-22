@@ -44,7 +44,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         boolean result;
         try {
             //调用获取仓库接口，有数据返回则授权成功
-            ThirdWarehouseContext.setAuthMap(dto.getAuthJson().toBean(Map.class));
+            ThirdWarehouseContext.setAuthMap(dto.getAuthJson());
             result = this.hasWarehouse();
             if(result){
                 // 授权成功添加数据同步任务

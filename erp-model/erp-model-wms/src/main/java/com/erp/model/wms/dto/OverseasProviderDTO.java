@@ -129,7 +129,7 @@ public class OverseasProviderDTO implements Serializable {
         * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
         */
         @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
-        private Map<String, String> authJson;
+        private Map<String, Object> authJson;
     }
 
     /**
@@ -220,6 +220,6 @@ public class OverseasProviderDTO implements Serializable {
          * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
          */
         @NotNull(message = "授权的信息不能为空")
-        private Map<String, String> authJson;
+        private Map<String, Object> authJson;
     }
 }

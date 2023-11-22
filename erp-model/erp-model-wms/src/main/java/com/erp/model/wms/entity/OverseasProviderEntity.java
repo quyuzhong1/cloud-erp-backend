@@ -53,7 +53,7 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
     * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
     */
     @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
-    private Map<String, String> authJson;
+    private Map<String, Object> authJson;
 
 
     public static final String CODE = "code";
