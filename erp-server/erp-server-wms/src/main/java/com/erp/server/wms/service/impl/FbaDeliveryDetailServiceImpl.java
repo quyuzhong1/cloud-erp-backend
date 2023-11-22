@@ -62,7 +62,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         //映射字段
         List<FbaDeliveryDetailEntity> list = BeanMapperUtils.copyList(FbaDeliveryDetailEntity.class, detailList);
         //处理明细数据
-        handleData(list, mainId, Boolean.FALSE);
+        handleData(list, mainId, Boolean.FALSE, addDTO.getDeliveryWarehouseId());
         //批量新增
         this.saveBatch(list);
     }
@@ -87,7 +87,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
         //映射字段
         List<FbaDeliveryDetailEntity> list = BeanMapperUtils.copyList(FbaDeliveryDetailEntity.class, detailList);
         //处理明细数据
-        handleData(list, mainId, Boolean.FALSE);
+        handleData(list, mainId, Boolean.FALSE, updateDTO.getDeliveryWarehouseId());
 
         //新增或修改明细
         this.saveOrUpdateBatch(list);
@@ -118,7 +118,7 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<FbaDeliveryDetailEntity> list, String mainId, Boolean isUpdate) {
+    private void handleData(List<FbaDeliveryDetailEntity> list, String mainId, Boolean isUpdate, String deliveryWarehouseId) {
         //需要新增的数据
         List<FbaDeliveryDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -142,7 +142,9 @@ public class FbaDeliveryDetailServiceImpl extends SuperServiceImpl<FbaDeliveryDe
 
             //库存sku
             String stockSku = listStockSkuNoByProductSkuNoViews.stream()
-                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())).distinct()
+                    .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())
+                            && req.getWarehouseId().equals(deliveryWarehouseId))
+                    .distinct()
                     .findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
             fbaDeliveryDetailEntity.setStockSku(stockSku);
