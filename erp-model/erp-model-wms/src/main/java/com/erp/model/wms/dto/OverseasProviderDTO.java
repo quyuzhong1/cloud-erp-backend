@@ -124,12 +124,6 @@ public class OverseasProviderDTO implements Serializable {
         * 授权时间
         */
         private LocalDateTime authTime;
-
-        /**
-        * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
-        */
-        @TableField(value = "auth_json", typeHandler = JacksonTypeHandler.class)
-        private Map<String, Object> authJson;
     }
 
     /**

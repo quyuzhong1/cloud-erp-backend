@@ -94,8 +94,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         //修改明细数据
         overseasProviderWarehouseService.update(updateDTO, overseasProviderEntity.getId());
         // 记录主单操作日志
-            log.info("编辑 开始记录海外物流商日志数据，单号：【{}】", overseasProviderEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderEntity.getCode(), "海外物流商");
+        log.info("编辑 开始记录海外物流商日志数据，单号：【{}】", overseasProviderEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderEntity.getCode(), "海外物流商");
         operateLogService.addModuleOperateLogByObj(old, overseasProviderEntity, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -105,7 +105,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     * 新增修改处理数据
     */
     private void handleData(OverseasProviderEntity overseasProviderEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 
     @Override
@@ -162,11 +161,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean cancelAuthorize(String id) {
         //清空授权信息
-        OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
-        updateDTO.setId(id);
-        updateDTO.setAuthTime(null);
-        updateDTO.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
-        this.update(updateDTO);
+        OverseasProviderEntity entity = this.getById(id);
+        entity.setAuthTime(null);
+        entity.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+        this.updateById(entity);
         //删除数据同步任务
         String platformCode = this.getPlatFormCodeById(id);
         dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));
