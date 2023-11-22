@@ -3,6 +3,7 @@ import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.entity.FbaDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -176,13 +177,21 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
-     * 修改发货状态
+     * 发货更新状态和发货数量
      * @Author Luo_WG
      * @Date 2023/11/17 11:22
-     * @param ids
-     * @param deliveryStatus 发货状态
+     * @param deliveryEntity
      * @return java.lang.Boolean
      **/
-    Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
+    Boolean deliveryStatus(FbaDeliveryEntity deliveryEntity);
+
+    /**
+     * 发货单反审核修改发货数量和状态
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:22
+     * @param deliveryEntity
+     * @return java.lang.Boolean
+     **/
+    Boolean deliveryDisApprove(FbaDeliveryEntity deliveryEntity);
 
 }

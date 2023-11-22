@@ -37,7 +37,7 @@ public class AliExpressLogisticsHandlerImplTest {
     public AliExpressLogisticsHandlerImplTest(){
         String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
-        String token = "";
+        String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
         //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
@@ -62,14 +62,14 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void createOrder(){
         SenderInfo senderInfo = new SenderInfo();
-        senderInfo.setAddressFirst("address");
+        senderInfo.setAddressFirst("caifugang 4PX 25-26");
         senderInfo.setContact("contact");
-        senderInfo.setCityName("newyork");
-        senderInfo.setCompanyName("componeny");
-        senderInfo.setName("name");
-        senderInfo.setProvinceName("shenzhen");
-        senderInfo.setTelNumber("12345678");
-        senderInfo.setEmail("321546");
+        senderInfo.setCityName("Shengzhen");
+        senderInfo.setCompanyName("4PX");
+        senderInfo.setName("Wu Rao");
+        senderInfo.setProvinceName("GuangDong");
+        senderInfo.setTelNumber("13000000000");
+        senderInfo.setEmail("123@q.con");
         senderInfo.setCountry("CN");
         senderInfo.setZipCode("515800");
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
@@ -82,41 +82,43 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(10);
         logisticsProductVO.setSourceCountry("CN");
-        LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
-        logisticsChannel.setCode("UBI.CA2US.CAPOST");
-        //DDU/DDP
-        logisticsChannel.setTaxModel("DDU");
+        logisticsProductVO.setIsElectric(false);
+        logisticsProductVO.setDeclarePrice(BigDecimal.valueOf(2));
+        logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("UBI.CA2US.CAPOST");
+        logisticsSaleChannel.setCode("OTHER_US");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("1725040739275055105");
-
+        logisticsSaleChannel.setPlatformChannelId("155");
+        logisticsSaleChannel.setSupplierName("OTHER_US");
+        LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
+//        logisticsChannel.setCode("S832");
+        logisticsChannel.setId("1724614809662599171");
+        //DDU/DDP
+        logisticsChannel.setTaxModel("DDU");
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
-//                .channelCode("")
-//                .channelId("1725040739275055105")
                 .orderSource("ERP")
 //                .facility("can")
-                .deliveryNo("wj12345167721")
+                .deliveryNo("66715700375804")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
-                        .email("123@q.con")
-                        .city("shenz")
-                        .name("mark")
-                        .companyName("componey")
-                        .contact("mark")
+                        .email("965656546@qq.con")
+                        .city("Auburn")
+                        .name("zhang san")
+                        .companyName("")
+                        .contact("zhang san")
                         .country("US")
-                        .zipCode("11510")
-                        .province("state")
-                        .telNumber("123456789")
+                        .zipCode("13021")
+                        .province("NY")
+                        .telNumber("1234567890")
                         .build())
                 .senderInfo(senderInfo)
                 .parceInfoVO(ParceInfoVO.builder()
                         .currency("USD")
                         .height(1)
                         .hasBattery(true)
-                        .totalPrice(new BigDecimal("120"))
+                        .totalPrice(new BigDecimal("20"))
                         .totalQuantity(10)
                         .totalWeight(1999)
                         .length(1)
@@ -127,6 +129,7 @@ public class AliExpressLogisticsHandlerImplTest {
                         logisticsProductVO
                 ))
                 .logisticsChannelEntity(logisticsChannel)
+                .logisticsSaleChannel(logisticsSaleChannel)
                 .build();
         ApiResult<LogisticsOrderResponseVO> order = aliExpressLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(order);

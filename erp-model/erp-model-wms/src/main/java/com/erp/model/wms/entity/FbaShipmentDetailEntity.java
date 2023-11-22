@@ -83,6 +83,12 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("receive_date")
     private LocalDateTime receiveDate;
 
+    /**
+     * 发货数量
+     */
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
+
 
     public static final String MAIN_ID = "main_id";
 

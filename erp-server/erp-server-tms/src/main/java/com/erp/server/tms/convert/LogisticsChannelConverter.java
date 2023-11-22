@@ -142,7 +142,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "supplierName", source = "logisticsCompany"),
             @Mapping(target = "isTrack", constant = "true"),
             @Mapping(target = "aging", source = ".", qualifiedByName = "convertAging"),
-            @Mapping(target = "logisticsPlatform", constant = "ALI_EXPRESS"),
+            @Mapping(target = "logisticsPlatform", constant = "AliExpress"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByAliExpress(ChannelResponse chanelInfo);

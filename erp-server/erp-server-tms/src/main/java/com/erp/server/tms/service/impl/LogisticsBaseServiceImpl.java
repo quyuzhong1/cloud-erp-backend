@@ -5,6 +5,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -253,10 +254,12 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         mapList.forEach(map -> {
             chanelQueryVO.setAuthMap(map);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+            logisticsSaleChannelService.updateSaleChannelByAuthId(map.get("id"), platform, MathUtil.ONE);
             //把结果存储数据库
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
                     logisticsSaleChannelEntity.setAuthId(map.get("id"));
+                    logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
                 batchResultDTOS.add(BatchResultDTO.success(map.get("id"),String.valueOf(channels.getCode()),"同步成功"));
@@ -285,9 +288,12 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
                 chanelQueryVO.setAuthMap(map);
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+                //先暂停该渠道数据，然后进行更新动作
+                logisticsSaleChannelService.updateSaleChannelByAuthId(shopAuthEntity.getShopId(), platform, MathUtil.ONE);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
                         logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
+                        logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
                     batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()),"同步成功"));

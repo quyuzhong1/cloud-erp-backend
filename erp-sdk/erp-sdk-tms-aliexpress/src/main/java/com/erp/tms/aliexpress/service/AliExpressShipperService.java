@@ -8,9 +8,11 @@ import com.erp.tms.aliexpress.api.IopRequest;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.constants.PathConstants;
 import com.erp.tms.aliexpress.domain.Protocol;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
 import com.erp.tms.aliexpress.model.order.request.OrderRequest;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
+import com.erp.tms.aliexpress.model.order.response.OrderResult;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,7 +29,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class AliExpressShipperService {
-    public IopResponse getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
+    public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -36,10 +38,10 @@ public class AliExpressShipperService {
         request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
-        return response;
+        return JSONObject.parseObject(response.getBody(), ChannelResult.class);
     }
 
-    public IopResponse createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws ApiException, InterruptedException {
+    public OrderResult createOrder(Map<String, String> authMap, OrderRequest orderRequest) throws ApiException, InterruptedException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -61,8 +63,7 @@ public class AliExpressShipperService {
         request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
-        Thread.sleep(10);
-        return response;
+        return JSONObject.parseObject(response.getBody(), OrderResult.class);
     }
 
     public IopResponse logisticsCompany(Map<String, String> authMap) throws ApiException {
@@ -127,14 +128,14 @@ public class AliExpressShipperService {
         IopRequest request = new IopRequest();
         request.setApiName("/auth/token/create");
         request.addApiParameter("code", code);
-        request.addApiParameter("uuid", UUID.randomUUID().toString());
+//        request.addApiParameter("uuid", UUID.randomUUID().toString());
         IopResponse response = client.execute(request, Protocol.GOP);
         System.out.println(response.getBody());
     }
 
     public static void main(String[] args) throws ApiException {
         AliExpressShipperService service = new AliExpressShipperService();
-        String code = "3_502978_pIFIJPtCDcMdWJue87R93fmH8003";
+        String code = "3_502978_F2ZeTUjueN7NNh6uow4mU1365978";
         service.generateToken(code);
     }
 }
