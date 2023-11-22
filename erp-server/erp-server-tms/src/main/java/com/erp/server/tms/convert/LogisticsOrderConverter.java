@@ -500,7 +500,8 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "post_code",source = "senderInfo.zipCode"),
             @Mapping(target = "name",source = "senderInfo.name"),
             @Mapping(target = "phone",source = "senderInfo.telNumber"),
-            @Mapping(target = "address_id",constant = "1000"),
+            @Mapping(target = "address_id",source = "senderInfo.id"),
+            @Mapping(target = "member_type",constant = "sender"),
             @Mapping(target = "email",source = "senderInfo.email")
     })
     Address orderRequestSendUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
