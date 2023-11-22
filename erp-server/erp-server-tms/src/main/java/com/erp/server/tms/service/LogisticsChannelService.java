@@ -121,4 +121,13 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return
      */
     List<LogisticsChannelEntity> listByAddressId(String addressId);
+
+    /**
+     * 根据同步的来源id 获取数据
+     *@parms syncSourceIdList 同步的来源ud
+     *@return
+     *@author yl
+     *@date 2023-11-22
+     */
+    List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList);
 }

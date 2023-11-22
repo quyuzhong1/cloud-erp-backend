@@ -171,15 +171,13 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     /**
      *
      * @param authId
-     * @param isSync
+     *
      * @return
      */
     @Override
-    public List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync) {
+    public List<LogisticsSaleChannelEntity> listByAuthId(String authId) {
 
-        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getAuthId,authId).
-                eq(LogisticsSaleChannelEntity::getIsSync,isSync).
-                eq(LogisticsSaleChannelEntity::getChannelStatus, MathUtil.ZERO).list();
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getAuthId,authId).list();
     }
 
     @Async("tmsExecutor")

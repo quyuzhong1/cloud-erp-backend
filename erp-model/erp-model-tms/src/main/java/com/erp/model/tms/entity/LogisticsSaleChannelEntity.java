@@ -101,12 +101,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("auth_id")
     private String authId;
 
-    /**
-     * 是否已同步
-     * false 未同步
-     */
-    @TableField("is_sync")
-    private Boolean isSync;
+
 
     /**
      * 海外仓id

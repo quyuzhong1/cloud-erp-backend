@@ -69,7 +69,7 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @date: 2023-11-08
      * @return
      */
-    List<LogisticsSaleChannelEntity> listByAuthId(String authId, Boolean isSync);
+    List<LogisticsSaleChannelEntity> listByAuthId(String authId);
 
     /**
      * 异步拉取销售渠道数据

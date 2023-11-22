@@ -119,6 +119,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "name", source = "cnName"),
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "effectiveTime", source = "aging"),
+            @Mapping(target = "syncSourceId",source = "id"),
             @Mapping(target = "disabled",constant = "true"),
             @Mapping(target = "id", ignore = true),
     })
