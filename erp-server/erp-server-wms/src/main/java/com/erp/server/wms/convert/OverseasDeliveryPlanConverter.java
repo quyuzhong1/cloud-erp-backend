@@ -31,7 +31,6 @@ public interface OverseasDeliveryPlanConverter {
             @Mapping(target = "fromWarehouseName", constant = ""),
             @Mapping(target = "handleUserId", constant = ""),
             @Mapping(target = "detailList", ignore = true),
-            @Mapping(target = "handleTime", constant = ""),
             @Mapping(target = "handleUserName", constant = ""),
             @Mapping(target = "requisitionWarehouseName", constant = ""),
             @Mapping(target = "status", constant = "")
