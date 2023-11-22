@@ -38,8 +38,9 @@ import java.util.Objects;
 
 /**
  * 速卖通授权
- *@author yl
- *@date 2023-11-21
+ *
+ * @author yl
+ * @date 2023-11-21
  */
 
 @Slf4j
@@ -73,14 +74,20 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         findDTO.setDictPlatform(appClient.getPlatform());
         findDTO.setPlatformType(appClient.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        if(Objects.isNull(cfgAppClient)){
-           throw new ServiceException("该类型店铺尚未配置开发者账号");
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("该类型店铺尚未配置开发者账号");
         }
-        return null;
+        String url = cfgAppClient.getUrl();
+        //回调地址
+        String redirectUrl = cfgAppClient.getRedirectUrl();
+        String clientId = cfgAppClient.getClientId();
+        String path = String.format(url, redirectUrl, clientId);
+        return path;
     }
 
     /**
      * 授权
+     *
      * @param dto
      * @return
      */
@@ -88,14 +95,23 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
-            throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
+            throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
         }
-        if (StringUtils.isBlank(dto.getClientId())) {
-            throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_ID_NOT_NULL);
+        String code = dto.getCode();
+        if(StringUtils.isBlank(code)){
+
         }
-        if (StringUtils.isBlank(dto.getClientSecret())) {
-            throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_SECRET_NOT_NULL);
+        AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_TOKEN;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("该类型店铺尚未配置开发者账号");
         }
+
+
         try {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             //根据店铺id 获取到授权信息
@@ -123,7 +139,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 addDTO.setClientSecret(dto.getClientSecret());
                 appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
                 // 授权后添加任务
-                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
             } else {
                 CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
                 updateDTO.setId(appClientId);
@@ -174,6 +190,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
 
     /**
      * 取消授权
+     *
      * @param dto
      */
     @Override
@@ -193,7 +210,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (result) {
             shopAuthService.removeByShopId(shopId);
             // 删除授权
-            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             shopInfoService.updateShopInfoById(shopInfo);
         }

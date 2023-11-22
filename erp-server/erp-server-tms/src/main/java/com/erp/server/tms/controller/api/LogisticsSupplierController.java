@@ -118,9 +118,9 @@ public class LogisticsSupplierController extends BaseController {
     /**
      * 分页列表详情
      */
-    @GetMapping("channelView")
-    public ApiResult<List<LogisticsSupplierDTO.ChannelViewDTO>> channelView(@RequestParam(value = "id")String id,@RequestParam(value = "name")String name){
-       List<LogisticsSupplierDTO.ChannelViewDTO> channelViewList=logisticsSupplierService.listChannelView(id,name);
+    @PostMapping("channelView")
+    public ApiResult<List<LogisticsSupplierDTO.ChannelViewDTO>> channelView(@RequestBody BaseIdDTO dto){
+       List<LogisticsSupplierDTO.ChannelViewDTO> channelViewList=logisticsSupplierService.listChannelView(dto.getId(),dto.getName());
        return success(channelViewList);
     }
 
