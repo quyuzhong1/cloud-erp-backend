@@ -20,6 +20,9 @@ public class BusinessCommonConstants {
     // Spring 环境
     private static String SPRING_PROFILES_ACTIVE;
 
+    // 开发环境
+    public static final String DEV = "dev";
+
     @Value("${spring.profiles.active:dev}")
     private void setSpringProfilesActive(String springProfilesActive) {
         BusinessCommonConstants.SPRING_PROFILES_ACTIVE = springProfilesActive;
