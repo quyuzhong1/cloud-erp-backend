@@ -128,7 +128,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     public OverseasProviderDTO.ViewDTO view(String id) {
         OverseasProviderEntity entity = this.getById(id);
         OverseasProviderDTO.ViewDTO viewDTO = new OverseasProviderDTO.ViewDTO();
-        BeanMapperUtils.copy(viewDTO, entity);
+        BeanMapperUtils.copy(entity, viewDTO);
         viewDTO.setAuthStatusName(AuthStatusEnum.getName(viewDTO.getAuthStatus()));
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Arrays.asList(id));
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
