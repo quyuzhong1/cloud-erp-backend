@@ -119,11 +119,15 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
 
     @Override
     public IPage<ShippingCalculationDTO.ListDTO> paging(Page query, ShippingCalculationDTO.PagingParamDTO params) {
+        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
+        params.setVolume(volume);
         return baseMapper.paging(query,params);
     }
 
     @Override
     public List<ShippingCalculationDTO.ListDTO> listByExportExcel(ShippingCalculationDTO.PagingParamDTO params) {
+        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
+        params.setVolume(volume);
         return baseMapper.listByExportExcel(params);
     }
 

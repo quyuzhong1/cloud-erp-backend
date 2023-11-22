@@ -87,6 +87,11 @@ public class ShippingCalculationDTO {
          * 高
          */
         private BigDecimal height;
+
+        /**
+         * 体积
+         */
+        private BigDecimal volume;
     }
 
     /**
