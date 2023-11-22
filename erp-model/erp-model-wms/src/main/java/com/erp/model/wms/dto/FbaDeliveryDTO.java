@@ -253,7 +253,7 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 是否组合产品
          */
-        private String isCombination;
+        private Boolean isCombination;
 
         /**
          * 产品名称

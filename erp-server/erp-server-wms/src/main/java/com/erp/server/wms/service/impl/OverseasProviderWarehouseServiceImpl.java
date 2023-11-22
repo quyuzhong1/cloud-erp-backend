@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
@@ -53,9 +54,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外物流商仓库" , overseasProviderWarehouseEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, overseasProviderWarehouseEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderWarehouseEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(overseasProviderWarehouseEntity.getId(), overseasProviderWarehouseEntity.getId());
     }
@@ -77,13 +76,11 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if(!save) {
             throw new ServiceException("海外物流商仓库保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录海外物流商仓库日志数据，id：【{}】", overseasProviderWarehouseEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderWarehouseEntity.getId(), "海外物流商仓库");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, overseasProviderWarehouseEntity, null, overseasProviderWarehouseEntity.getId(), msg);
+        log.info("编辑 开始记录海外物流商仓库日志数据，id：【{}】", overseasProviderWarehouseEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderWarehouseEntity.getId(), "海外物流商仓库");
+        operateLogService.addModuleOperateLogByObj(old, overseasProviderWarehouseEntity, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

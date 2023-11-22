@@ -2,8 +2,12 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
@@ -11,6 +15,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +24,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -39,26 +47,18 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO addDTO, String mainId) {
-        RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = new RequisitionApplicationDetailEntity();
-        BeanMapperUtils.copy(addDTO, requisitionApplicationDetailEntity);
+    public void add(RequisitionApplicationDTO.AddDTO addDTO, String mainId) {
+        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
 
         // 数据处理
-        handleData(requisitionApplicationDetailEntity);
+        handleData(list, mainId, Boolean.FALSE);
 
         log.info("开始新增要货申请单明细单");
-        boolean save = super.save(requisitionApplicationDetailEntity);
+        boolean save = super.saveBatch(list);
         if(!save) {
             throw new ServiceException("要货申请单明细单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "要货申请单明细单" , requisitionApplicationDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, requisitionApplicationDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(requisitionApplicationDetailEntity.getId(), requisitionApplicationDetailEntity.getId());
     }
 
     /**
@@ -66,33 +66,42 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
-        RequisitionApplicationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单明细单"));
-        RequisitionApplicationDetailEntity requisitionApplicationDetailEntity =  BeanMapperUtils.map(RequisitionApplicationDetailEntity.class, updateDTO);
+    public void update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
+        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
 
         // 数据处理
-        handleData(requisitionApplicationDetailEntity);
-        log.info("编辑 开始修改要货申请单明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(requisitionApplicationDetailEntity);
+        handleData(list, mainId, Boolean.FALSE);
+
+        boolean save = super.updateBatchById(list);
         if(!save) {
             throw new ServiceException("要货申请单明细单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录要货申请单明细单日志数据，id：【{}】", requisitionApplicationDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), requisitionApplicationDetailEntity.getId(), "要货申请单明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, null, requisitionApplicationDetailEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(RequisitionApplicationDetailEntity requisitionApplicationDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<RequisitionApplicationDetailEntity> list, String mainId, Boolean isUpdate) {
+        //需要新增的数据
+        List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : list) {
+            requisitionApplicationDetailEntity.setMainId(mainId);
+
+            //校验是否是修改，如果是就新增修改日志
+            if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
+                RequisitionApplicationDetailEntity old = list.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                }
+                operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationDetailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
+            }
+        }
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), addPairList, "编辑操作");
+        }
     }
 }
