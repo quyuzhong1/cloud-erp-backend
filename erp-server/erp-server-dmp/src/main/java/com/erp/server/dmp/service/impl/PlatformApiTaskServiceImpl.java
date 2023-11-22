@@ -1,13 +1,12 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
@@ -15,16 +14,12 @@ import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
 import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -203,6 +198,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         return Boolean.TRUE;
     }
 
+
     private static PlatformApiTaskEntity getThirdWarehouseApiTaskEntity(ThirdWarehouseTaskDTO.AddDTO dto, PlatformApiEntity task) {
         PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
         entity.setShopId(dto.getAuthKey());
@@ -212,8 +208,14 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setApiCode(task.getApiCode());
         entity.setApiName(task.getApiName());
         entity.setIntervalTime(task.getIntervalTime());
-        entity.setLastTime(LocalDateTime.now());
-        entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
+        //间隔一天，从0点开始执行
+        if(task.getIntervalTime().equals(86400)){
+            entity.setLastTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()));
+            entity.setNextTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()).plusSeconds(task.getIntervalTime()));
+        }else{
+            entity.setLastTime(LocalDateTime.now());
+            entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
+        }
         entity.setStatus(1);
         entity.setRetryTimes(0);
         entity.setCreateTime(LocalDateTime.now());

@@ -133,4 +133,20 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
         this.expireTime = this.effectiveTime.plusYears(MathUtil.NUMBER_100);
         this.isExpire = false;
     }
+
+    public SkuMappingEntity(ListingInfoEntity entity, String shopId,PlatformDictEnum platformDictEnum,RuleTypeEnum ruleTypeEnum) {
+        this.shopId = shopId;
+        this.dictPlatform = platformDictEnum.getCode();
+        this.platformName = platformDictEnum.getName();
+        this.productSkuId = "";
+        this.productSkuNo = "";
+        this.productName = "";
+        this.type = ruleTypeEnum;
+        this.listingId = entity.getId();
+        this.warehouseId = "";
+        this.warehouseName = "";
+        this.effectiveTime = LocalDateTime.now(ZoneId.systemDefault());
+        this.expireTime = this.effectiveTime.plusYears(MathUtil.NUMBER_100);
+        this.isExpire = false;
+    }
 }
