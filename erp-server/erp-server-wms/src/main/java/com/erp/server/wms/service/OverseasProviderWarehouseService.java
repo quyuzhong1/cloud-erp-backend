@@ -41,5 +41,8 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      **/
     OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId);
 
-
+    /**
+     * 根据第三方仓库信息查询
+     **/
+    OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode);
 }

@@ -21,6 +21,27 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequest implements Serializable {
+    /**
+     *是否同意升级逆向高货值保险
+     */
+    @JSONField(name = "is_agree_upgrade_reverse_parcel_insure")
+    private Boolean is_agree_upgrade_reverse_parcel_insure;
+    /**
+     *订单对应收货地址OAID
+     */
+    @JSONField(name = "oaid")
+    private String oaid;
+    /**
+     *发货方式：上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND
+     */
+    @JSONField(name = "pickup_type")
+    private String pickup_type;
+
+    /**
+     *addresses
+     */
+    @JSONField(name = "address_d_t_os")
+    private AddressDTO address_d_t_os;
 
     /**
      *国内快递公司名称,物流公司Id为-1时,必填
@@ -72,11 +93,7 @@ public class OrderRequest implements Serializable {
      */
     @JSONField(name = "warehouse_carrier_service")
     private String warehouse_carrier_service;
-    /**
-     *addresses
-     */
-    @JSONField(name = "address_d_t_os")
-    private AddressDTO address_d_t_os;
+
     /**
      *发票号（可空）
      */
@@ -92,10 +109,6 @@ public class OrderRequest implements Serializable {
      * 包裹保额
      */
     @JSONField(name = "insurance_coverage")
-    private String insurance_coverage;
-    /**
-     *是否同意升级逆向高货值保险
-     */
-    @JSONField(name = "is_agree_upgrade_reverse_parcel_insure")
-    private Boolean is_agree_upgrade_reverse_parcel_insure;
+    private InsuranceCoverage insuranceCoverage;
+
 }

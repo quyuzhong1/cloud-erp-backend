@@ -1115,6 +1115,7 @@
             pl.exemption AS exemption,
             pl.combination_declare_type AS combinationDeclareType,
             pl.customs_code AS customsCode,
+            pl.product_property_id AS propertyId,
             pl. product_property AS logisticsPropertyName,
             ps.sale_state AS salesStatus,
             pp.product_size,

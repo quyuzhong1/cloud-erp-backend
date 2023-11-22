@@ -65,7 +65,7 @@ public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCa
             }
             page++;
         }
-        respList.forEach(v->v.setUniqueId(MD5Util.toMD5("goodcang"+v.getProductSku())));
+        respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+v.getProductSku())));
         return respList;
     }
 

@@ -20,8 +20,8 @@ public abstract class AbstractThirdWarehouseHandler<T extends CleanBaseDTO, R ex
     protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public PlatformDataDTO<T, R> pullHandle(JobTaskDTO data) {
-        //设置thread-local
         try {
+            //设置thread-local
             Map<String, String> authMap = data.getApiParam().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
             ThirdWarehouseContext.setAuthMap(authMap);
             // 调用数据下载功能

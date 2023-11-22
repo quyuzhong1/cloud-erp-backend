@@ -948,7 +948,7 @@ public enum ApiError implements Serializable {
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),
 
-
+    ERROR_AUTHORIZE_CODE_NOT_NULL(92107,"授权code不能为空"),
 
     /**
      * TMS 错误

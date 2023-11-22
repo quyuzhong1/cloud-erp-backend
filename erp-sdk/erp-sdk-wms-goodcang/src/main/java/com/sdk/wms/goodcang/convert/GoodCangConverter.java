@@ -1,10 +1,14 @@
 package com.sdk.wms.goodcang.convert;
 
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.dto.PlatformWarehouseDTO;
+import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.utils.MD5Util;
 import com.common.core.utils.Md5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -21,7 +25,6 @@ public interface GoodCangConverter {
 
     GoodCangConverter INSTANCE = Mappers.getMapper(GoodCangConverter.class);
 
-
     @Mappings({
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
@@ -34,7 +37,7 @@ public interface GoodCangConverter {
             @Mapping(target = "downloadTime", expression = "java(GoodCangConverter.getNowTime())"),
             @Mapping(target = "uniqueId", expression = "java(GoodCangConverter.getUniqueKey(sourceData))"),
             @Mapping(target = "matchResult", constant = "false"),
-            @Mapping(target = "platform", constant = "goodcang")
+            @Mapping(target = "platform", expression = "java(GoodCangConverter.getProvider())")
     })
     PlatformProductDTO productConversion(GoodCangSkuResp sourceData);
 
@@ -50,6 +53,25 @@ public interface GoodCangConverter {
     }
 
     static String getUniqueKey(GoodCangSkuResp sourceData){
-        return MD5Util.toMD5("goodcang"+sourceData.getProductSku());
+        return MD5Util.toMD5(getProvider()+sourceData.getProductSku());
     }
+
+    static String getProvider(){
+        return OmsPlatformEnum.OMS_GOOD_CANG.getCode();
+    }
+
+    static String getWarehousePlatformType(){
+        return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
+    }
+
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "warehouseName",  source = "warehouseName"),
+            @Mapping(target = "countryCode",  source = "countryCode"),
+            @Mapping(target = "providerErpId",  source = "authId")
+    })
+    PlatformWarehouseDTO warehouseConversion(GoodCangWarehouseResp sourceData);
+    List<PlatformWarehouseDTO> warehouseConversion(List<GoodCangWarehouseResp> sourceDataList);
 }
