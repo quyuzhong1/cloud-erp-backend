@@ -21,14 +21,14 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.ImlDictCityDTO;
 
 /**
- * 城市字典表
+ * 艾姆勒城市字典表
  *
  * @author lrp
  * @since 2023-11-22
  */
 @Slf4j
 @RestController
-@LogSystemModule("城市字典表")
+@LogSystemModule("艾姆勒城市字典表")
 @RequestMapping("/imlDictCity")
 public class ImlDictCityController extends BaseController {
 

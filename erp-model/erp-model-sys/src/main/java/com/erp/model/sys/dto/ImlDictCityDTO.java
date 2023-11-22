@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * 城市字典表请求响应实体
+ * 艾姆勒城市字典表请求响应实体
  * </p>
  *
  * @author lrp

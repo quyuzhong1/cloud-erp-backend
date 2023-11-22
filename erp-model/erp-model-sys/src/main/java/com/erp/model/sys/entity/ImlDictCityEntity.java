@@ -12,7 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 城市字典表
+ * 艾姆勒城市字典表
  * </p>
  *
  * @author lrp

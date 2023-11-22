@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 城市字典表 Mapper 接口
+ * 艾姆勒城市字典表 Mapper 接口
  * </p>
  *
  * @author lrp

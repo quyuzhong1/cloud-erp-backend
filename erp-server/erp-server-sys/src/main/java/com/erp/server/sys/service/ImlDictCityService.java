@@ -6,7 +6,7 @@ import com.erp.model.sys.dto.ImlDictCityDTO;
 
 /**
  * <p>
- * 城市字典表 服务类
+ * 艾姆勒城市字典表 服务类
  * </p>
  *
  * @author lrp
