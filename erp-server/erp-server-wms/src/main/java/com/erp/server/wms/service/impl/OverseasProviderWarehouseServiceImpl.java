@@ -95,6 +95,15 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .one();
     }
 
+    @Override
+    public OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode) {
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
+                .eq(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, platformWarehouseCode)
+                .last("LIMIT 1")
+                .one();
+    }
+
     /**
     * 新增修改处理数据
     */

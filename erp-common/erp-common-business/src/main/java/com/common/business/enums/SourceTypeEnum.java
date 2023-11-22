@@ -89,6 +89,7 @@ public enum SourceTypeEnum {
     LOGISTICS_SUPPLIER("logisticsSupplier","物流商",""),
     LOGISTICS_WAREHOUSE("logisticsWarehouse","物流仓库",""),
 
+    THIRD_WAREHOUSE("thirdWarehouse","第三方仓库","")
     ;
 
     /**
