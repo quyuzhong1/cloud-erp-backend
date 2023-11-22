@@ -6,19 +6,18 @@ import lombok.Getter;
 
 /**
  * <p>
- * 亚马逊报告计划订阅状态
+ * 亚马逊报告计划订阅类型
  * </p>
  *
  * @author Jim
- * @since 2023-11-08
+ * @since 2023-11-22
  */
 @Getter
 @AllArgsConstructor
-public enum ReportScheduleCancelStatusEnum {
+public enum ReportScheduleSubscribedTypeEnum {
 
-    NONE("none", "未取消"),
-    WAIT("wait", "待取消"),
-    ALREADY("cancel", "已取消"),
+    AMAZON("amazon", "亚马逊报告计划"),
+    MANUAL("manual", "手动(定时任务amazonReportJob)"),
     ;
 
     /**

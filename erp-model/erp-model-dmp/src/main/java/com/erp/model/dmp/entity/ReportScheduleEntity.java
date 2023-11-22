@@ -3,7 +3,6 @@ package com.erp.model.dmp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import lombok.Data;
@@ -46,6 +45,7 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
     private String shopId;
     /**
      * 报告生成间隔时间
+     * {@link com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification.PeriodEnum}
      */
     @TableField("period")
     private String period;
@@ -66,11 +66,17 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
     @TableField("subscribed_status")
     private String subscribedStatus;
     /**
-     * 取消状态:none=无(无需取消), wait=待取消, already=已取消(店铺取消授权)
+     * 取消状态:none=无(无需取消), wait=待取消, cancel=已取消(店铺取消授权)
      * {@link com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum}
      */
     @TableField("cancel_status")
     private String cancelStatus;
+    /**
+     * 订阅类型:amazon=亚马逊报告计划,manual=手动(定时任务amazonReportJob)
+     * {@link com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum}
+     */
+    @TableField("subscribed_type")
+    private String subscribedType;
 
 
     public static final String REPORT_SCHEDULE_ID = "report_schedule_id";
@@ -97,7 +103,7 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
         this.shopId = shopId;
         // CreateReportScheduleSpecification.PeriodEnum
         this.period = "PT15M";
-        this.firstNextReportCreationTime = LocalDateTime.of(1970,1,1,0,0,0);
+        this.firstNextReportCreationTime = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
         this.reportType = reportType;
         this.subscribedStatus = ReportScheduleSubscribedStatusEnum.WAIT.getCode();
         this.cancelStatus = ReportScheduleCancelStatusEnum.NONE.getCode();

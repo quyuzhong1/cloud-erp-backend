@@ -44,7 +44,7 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-11-10
      **/
-    void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime);
+    void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception;
 
     /**
      * 推送到处理器
