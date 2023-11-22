@@ -13,8 +13,8 @@ public class ImlUtils {
     public static String callService(String service, Object obj){
         Ec_Service ecService = new Ec_Service();
         Ec ec = ecService.getEcSOAP();
-        String appToken = ThirdWarehouseContext.getAuthMap().get("appToken");
-        String appKey = ThirdWarehouseContext.getAuthMap().get("appKey");
+        String appToken = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appToken"));
+        String appKey = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appKey"));
         if(StringUtil.isBlank(appKey) || StringUtil.isBlank(appToken)){
             throw new ServiceException("获取不到授权值，正确授权值为：appToken,appKey");
         }

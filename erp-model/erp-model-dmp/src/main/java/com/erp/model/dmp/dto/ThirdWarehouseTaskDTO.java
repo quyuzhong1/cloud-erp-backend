@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.Map;
 
 /**
  * 第三方仓任务
@@ -30,7 +31,7 @@ public class ThirdWarehouseTaskDTO {
          * 授权信息
          */
         @NotEmpty(message = "授权信息不能为空")
-        private JSONObject authInfo;
+        private Map<String, Object> authInfo;
 
         /**
          * 平台编码

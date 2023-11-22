@@ -22,7 +22,7 @@ public abstract class AbstractThirdWarehouseHandler<T extends CleanBaseDTO, R ex
     public PlatformDataDTO<T, R> pullHandle(JobTaskDTO data) {
         try {
             //设置thread-local
-            Map<String, String> authMap = data.getApiParam().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+            Map<String, Object> authMap = data.getApiParam().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
             ThirdWarehouseContext.setAuthMap(authMap);
             // 调用数据下载功能
             List<T> sourceDataList = download(data);

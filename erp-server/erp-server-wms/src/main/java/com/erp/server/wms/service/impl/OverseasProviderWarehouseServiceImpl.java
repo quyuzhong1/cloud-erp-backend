@@ -1,9 +1,16 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
@@ -11,6 +18,9 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +28,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -35,29 +47,25 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private WarehouseService warehouseService;
 
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(OverseasProviderWarehouseDTO.UpdateDTO updateDTO) {
-        OverseasProviderWarehouseEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外物流商仓库"));
-        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity =  BeanMapperUtils.map(OverseasProviderWarehouseEntity.class, updateDTO);
-
+    public Boolean update(OverseasProviderDTO.UpdateDTO updateDTO, String mainId) {
+        List<OverseasProviderWarehouseDTO.UpdateDTO> detailList = updateDTO.getDetailList();
+        //映射字段
+        List<OverseasProviderWarehouseEntity> list = BeanMapperUtils.copyList(OverseasProviderWarehouseEntity.class, detailList);
         // 数据处理
-        handleData(overseasProviderWarehouseEntity);
-        log.info("编辑 开始修改海外物流商仓库数据，id：【{}】", old.getId());
-        boolean save = super.updateById(overseasProviderWarehouseEntity);
+        handleData(list, mainId);
+        boolean save = this.updateBatchById(list);
         if(!save) {
             throw new ServiceException("海外物流商仓库保存失败");
         }
 
-        // 记录主单操作日志
-        log.info("编辑 开始记录海外物流商仓库日志数据，id：【{}】", overseasProviderWarehouseEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasProviderWarehouseEntity.getId(), "海外物流商仓库");
-        operateLogService.addModuleOperateLogByObj(old, overseasProviderWarehouseEntity, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -86,7 +94,28 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     /**
     * 新增修改处理数据
     */
-    private void handleData(OverseasProviderWarehouseEntity overseasProviderWarehouseEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
+
+        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+
+        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
+        for (OverseasProviderWarehouseEntity detailEntity : list) {
+            detailEntity.setMainId(mainId);
+            WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(updateDTO)) {
+                detailEntity.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
+                detailEntity.setWarehouseName(updateDTO.getName());
+            }
+            //校验是否是修改，如果是就新增修改日志
+            if (StringUtils.isNotBlank(detailEntity.getId())) {
+                OverseasProviderWarehouseEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
+                }
+                operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getWarehouseName()));
+            }
+        }
+
     }
 }
