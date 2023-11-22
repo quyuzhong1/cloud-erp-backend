@@ -1038,9 +1038,21 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
+        //获取库存sku信息
+        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+
         // 属性赋值
         for(FbaDeliveryDTO.ListDTO data : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
+
+            //库存sku
+            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
+                    .filter(req -> req.getProductSkuNo().equals(data.getSkuNo())
+                            && req.getWarehouseId().equals(data.getDeliveryWarehouseId()))
+                    .distinct()
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+            data.setStockSku(stockSku);
 
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
