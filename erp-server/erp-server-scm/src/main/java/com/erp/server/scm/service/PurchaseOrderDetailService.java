@@ -3,8 +3,10 @@ package com.erp.server.scm.service;
 import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -164,8 +166,6 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return java.util.List<java.lang.String>
      **/
     List<String> listPoIdBySkuNo(String skuNo);
-
-
 
 
 }

@@ -2,10 +2,12 @@ package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**

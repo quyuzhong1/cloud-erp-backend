@@ -56,6 +56,18 @@ public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
     @TableField("cost_price")
     private BigDecimal costPrice;
 
+    /**
+     * 最近的采购日期3个月前的日期
+     */
+    @TableField("three_months_ago_date")
+    private LocalDate threeMonthsAgoDate;
+
+    /**
+     * 最近的采购日期
+     */
+    @TableField("latest_purchase_date")
+    private LocalDate latestPurchaseDate;
+
 
     public static final String SKU_NO = "sku_no";
 

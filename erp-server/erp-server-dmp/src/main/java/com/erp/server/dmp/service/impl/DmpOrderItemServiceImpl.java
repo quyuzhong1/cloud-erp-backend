@@ -385,8 +385,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<SplitSkuDTO> itemListAll = new ArrayList<>();
         List<BomChildrenSkuDTO> bomList = null;
         DmpBomEntity dmpBomEntity = null;
+        String skuNo = splitSkuDTO.getSkuNo();
+        skuNo = StrUtil.isNotBlank(skuNo) ? skuNo : "";
         if (PlatformEnum.MABANG.getDesc().equals(splitSkuDTO.getPlatformSign())) {
-            dmpBomEntity = machining.stream().filter(req -> req.getParentSku().equals(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo())).limit(1).findFirst().orElse(null);
+            String finalMabangSkuNo = skuNo;
+            dmpBomEntity = machining.stream().filter(req -> req.getParentSku().equals(finalMabangSkuNo)).limit(1).findFirst().orElse(null);
             //如果财务编码不存在记录错误日志
             if (ObjectUtil.isEmpty(dmpBomEntity)) {
                 itemListAll.add(splitSkuDTO);
@@ -394,8 +397,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 errorLogEntity.setBomId("");
                 errorLogEntity.setItemId(splitSkuDTO.getId());
                 errorLogEntity.setFinancialCode("");
-                errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
-                errorLogEntity.setMsg(String.format(ApiError.MABANG_BOM_EXIST.msg, splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo()));
+                errorLogEntity.setSkuNo(skuNo);
+                errorLogEntity.setMsg(String.format(ApiError.MABANG_BOM_EXIST.msg, skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
                 return itemListAll;
             }
@@ -407,8 +410,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 errorLogEntity.setBomId(dmpBomEntity.getId());
                 errorLogEntity.setItemId(splitSkuDTO.getId());
                 errorLogEntity.setFinancialCode(dmpBomEntity.getFinancialCode());
-                errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
-                errorLogEntity.setMsg(String.format(ApiError.CLEAN_SPLIT_FINANCIAL_EXIST.msg, splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo()));
+                errorLogEntity.setSkuNo(skuNo);
+                errorLogEntity.setMsg(String.format(ApiError.CLEAN_SPLIT_FINANCIAL_EXIST.msg, skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
                 return itemListAll;
             }
@@ -417,11 +420,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalDmpBomEntity.getFinancialCode())).collect(Collectors.toList());
         } else {
             //不是马帮的直接SKU匹配ERP的bom
-            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo())).collect(Collectors.toList());
+            String finalOtherSkuNo = skuNo;
+            bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalOtherSkuNo)).collect(Collectors.toList());
         }
 
         //如果sku能直接匹配成本，那么就不拆单直接返回
-        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo())).collect(Collectors.toList());
+        String finalSkuNo = skuNo;
+        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(finalSkuNo)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(costEntities)) {
             itemListAll.add(splitSkuDTO);
             return itemListAll;
@@ -431,11 +436,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         if (CollectionUtils.isEmpty(bomList)) {
             itemListAll.add(splitSkuDTO);
             DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();
-            errorLogEntity.setBomId(ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getId());
+            errorLogEntity.setBomId(ObjectUtil.isNotEmpty(dmpBomEntity) ? dmpBomEntity.getId() : "");
             errorLogEntity.setItemId(splitSkuDTO.getId());
-            errorLogEntity.setFinancialCode(ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode());
-            errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
-            errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode()));
+            errorLogEntity.setFinancialCode(ObjectUtil.isNotEmpty(dmpBomEntity) ? dmpBomEntity.getFinancialCode() : "");
+            errorLogEntity.setSkuNo(skuNo);
+            errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isNotEmpty(dmpBomEntity) ? dmpBomEntity.getFinancialCode() : ""));
             dmpSplitErrorLogService.save(errorLogEntity);
             return itemListAll;
         }
@@ -466,7 +471,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                     SplitSkuDTO itemEntity = new SplitSkuDTO();
                     BeanMapper.copy(splitSkuDTO, itemEntity);
                     itemEntity.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    itemEntity.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
+                    String skuNo = splitSkuDTO.getSkuNo();
+                    skuNo = StrUtil.isNotBlank(skuNo) ? skuNo : "";
+                    itemEntity.setOriginalSkuNo(skuNo);
                     itemEntity.setCleanCostPrice(BigDecimal.ZERO);
                     itemEntity.setIsGift(1);
                     itemEntity.setIsSplitSku(1);

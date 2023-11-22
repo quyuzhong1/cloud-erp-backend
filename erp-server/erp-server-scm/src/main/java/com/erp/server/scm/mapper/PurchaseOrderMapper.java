@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.FirstPlaceOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -124,4 +126,13 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
+
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:46
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
+     **/
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
 }
