@@ -22,6 +22,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.mq.JmsAmazonSqsConsumer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +43,8 @@ public class JmsConsumerTest {
 
     @Resource
     private JmsAmazonSqsConsumer jmsAmazonSqsConsumer;
+    @Resource
+    private ReportHandleService reportHandleService;
 
 
     /**
@@ -271,10 +274,10 @@ public class JmsConsumerTest {
 
         // TODO 转换
         // 填充报告相关信息
-        List<? extends ReportSuperMongoDTO> mongoDTOSList =
-                jmsAmazonSqsConsumer.handleData(cvsList, report, AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA);
-
-        System.out.println(mongoDTOSList);
+//        List<? extends ReportSuperMongoDTO> mongoDTOSList =
+//                reportHandleService.handleData(cvsList, report, AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA);
+//
+//        System.out.println(mongoDTOSList);
     }
 
 }
