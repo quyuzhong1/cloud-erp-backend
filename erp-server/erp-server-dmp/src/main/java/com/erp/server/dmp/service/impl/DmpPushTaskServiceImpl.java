@@ -239,7 +239,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 String mqData = dmpSyncMqDTO.getMqData();
                 JSONObject jsonObject = JSONUtil.parseObj(mqData);
                 jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
-                SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), JSONUtil.toJsonStr(jsonObject), dmpPushTaskEntity.getSourceId());
                 //查询来源上级单据
                 Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
                 //判断是否存在上级单据，并且推送成功
