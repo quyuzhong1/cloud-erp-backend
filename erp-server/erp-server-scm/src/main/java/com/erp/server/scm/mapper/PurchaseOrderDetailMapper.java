@@ -50,13 +50,4 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return
      */
     List<PurchaseOrderDetailEntity> getLatestByCrtTime(@Param(value = "skuIds") List<String> skuIds);
-
-    /**
-     * 根据采购日期查询采购采购单
-     * @Author Luo_WG
-     * @Date 2023/9/13 18:46
-     * @param purchaseDateList
-     * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
-     **/
-    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
 }

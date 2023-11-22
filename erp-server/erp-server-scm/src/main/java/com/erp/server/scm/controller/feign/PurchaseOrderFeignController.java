@@ -347,6 +347,7 @@ public class PurchaseOrderFeignController {
      **/
     @PostMapping("/listPurchaseOrderByPurchaseDate")
     public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList) {
-        return purchaseOrderDetailService.listPurchaseOrderByPurchaseDate(purchaseDateList);
+        return purchaseOrderService.listPurchaseOrderByPurchaseDate(purchaseDateList);
     }
+
 }

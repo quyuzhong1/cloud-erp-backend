@@ -167,14 +167,5 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      **/
     List<String> listPoIdBySkuNo(String skuNo);
 
-    /**
-     * 根据采购日期查询采购采购单
-     * @Author Luo_WG
-     * @Date 2023/9/13 18:21
-     * @param purchaseDateList
-     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
-     **/
-    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
-
 
 }

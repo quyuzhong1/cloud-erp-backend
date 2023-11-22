@@ -567,9 +567,4 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
         return listObjs(queryWrapper, Object::toString);
     }
-
-    @Override
-    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
-        return baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
-    }
 }
