@@ -29,7 +29,7 @@ public class GoodCangServiceTest {
     private GoodCangService goodCangService;
 
     public GoodCangServiceTest(){
-        Map<String,String> authMap = new HashMap<>();
+        Map<String,Object> authMap = new HashMap<>();
         authMap.put("appToken","7013991264f611e98ea200e01b680258");
         authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
         ThirdWarehouseContext.setAuthMap(authMap);
