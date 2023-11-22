@@ -36,19 +36,6 @@ public class OverseasProviderWarehouseController extends BaseController {
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date:  2023-11-16
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "海外物流商仓库新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated OverseasProviderWarehouseDTO.AddDTO dto) {
-        return success(overseasProviderWarehouseService.add(dto));
-    }
-
-    /**
     * 修改
     * @author Luo_WG
     * @date:  2023-11-16

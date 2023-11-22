@@ -153,6 +153,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 物流商同步的source id 来源 logistics_sale_channel 表id
+     */
+    @TableField("sync_source_id")
+    private String syncSourceId;
+
 
     public static final String MAIN_ID = "main_id";
 

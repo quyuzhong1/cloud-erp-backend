@@ -144,6 +144,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list= this.lambdaQuery().
                 in(LogisticsChannelEntity::getMainId, mainIdList).
                 like(StringUtils.isNotBlank(name),LogisticsChannelEntity::getName,name).
+                orderByDesc(LogisticsChannelEntity::getCreateTime).
                 list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
@@ -315,6 +316,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Override
     public List<LogisticsChannelEntity> listByAddressId(String addressId) {
         return this.baseMapper.listByAddressId(addressId);
+    }
+
+    @Override
+    public List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList) {
+        if(CollectionUtils.isEmpty(syncSourceIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelEntity::getSyncSourceId,syncSourceIdList).list();
     }
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {

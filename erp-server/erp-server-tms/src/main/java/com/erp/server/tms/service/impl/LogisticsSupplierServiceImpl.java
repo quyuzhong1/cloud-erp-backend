@@ -14,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -162,11 +163,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
-    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id,String name) {
+    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id, String name) {
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
-        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id),name);
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id), name);
         List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
@@ -219,7 +220,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO sync(String id) {
-        LogisticsSupplierEntity logisticsSupplier=this.getById(id);
+        LogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
@@ -228,31 +229,51 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (!alreadyCode.equals(authStatus)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
-        LogisticsAuthEntity  authEntity=logisticsAuthService.getByMainId("",id);
-        if(Objects.isNull(authEntity)){
+        LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
+        if (Objects.isNull(authEntity)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String authId = authEntity.getId();
-        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId, Boolean.FALSE);
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId);
+        List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList);
 
         //这个是海外仓物流
         List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseLogisticsList)) {
-            syncWarehouseLogistics(id, warehouseLogisticsList);
+            syncWarehouseLogistics(id, warehouseLogisticsList, channelList);
         }
+        Boolean trueFlag = Boolean.TRUE;
+        Integer zeroFlag = MathUtil.ZERO;
+
         //这个不是海外仓物流
         List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId())).collect(Collectors.toList());
-        Boolean yesSync = Boolean.TRUE;
         if (CollectionUtils.isNotEmpty(logisticsList)) {
-            List<LogisticsChannelEntity> addList = LogisticsChannelConverter.INSTANCE.channelConvertBySaleChannel(logisticsList);
-            addList.forEach(a -> {
-                a.setMainId(id);
-            });
-            logisticsChannelService.saveBatch(addList);
-            logisticsList.forEach(s -> {
-                s.setIsSync(yesSync);
-            });
-            logisticsSaleChannelService.updateBatchById(logisticsList);
+            List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
+            for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
+                String syncSourceId = saleChannel.getId();
+                LogisticsChannelEntity channelEntity = channelList.stream().filter(c -> c.getSyncSourceId().equals(syncSourceId)).
+                        findFirst().orElse(new LogisticsChannelEntity());
+                channelEntity.setSyncSourceId(syncSourceId);
+                channelEntity.setCode(saleChannel.getCode());
+                channelEntity.setMainId(id);
+                channelEntity.setName(saleChannel.getCnName());
+                channelEntity.setEffectiveTime(saleChannel.getAging());
+                String channelId = channelEntity.getId();
+                //表示新增
+                if (StringUtils.isBlank(channelId)) {
+                    channelEntity.setDisabled(trueFlag);
+                } else {
+                    //表示修改
+                    if (!zeroFlag.equals(saleChannel.getChannelStatus())) {
+                        channelEntity.setDisabled(trueFlag);
+                    }
+                }
+                saveOrUpdateList.add(channelEntity);
+            }
+
+            logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
+
         }
 
 
@@ -266,14 +287,15 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      *
      * @param warehouseLogisticsList
      */
-    public void syncWarehouseLogistics(String logisticsSupplierId, List<LogisticsSaleChannelEntity> warehouseLogisticsList) {
+    public void syncWarehouseLogistics(String logisticsSupplierId, List<LogisticsSaleChannelEntity> warehouseLogisticsList, List<LogisticsChannelEntity> channelList) {
         //海外仓库id
         List<String> overseasWarehouseIdList = warehouseLogisticsList.stream().
                 map(LogisticsSaleChannelEntity::getOverseasWarehouseId).distinct().collect(Collectors.toList());
         List<OverseasProviderWarehouseEntity> overseasWarehouseList = wmsFbaOverseasFeign.listWarehouseByIds(overseasWarehouseIdList);
-        String sourceType=SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode();
-        Boolean yesSync = Boolean.TRUE;
+        String sourceType = SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode();
         Map<String, List<LogisticsSaleChannelEntity>> map = warehouseLogisticsList.stream().collect(Collectors.groupingBy(LogisticsSaleChannelEntity::getOverseasWarehouseId));
+        Boolean trueFlag = Boolean.TRUE;
+        Integer zeroFlag = MathUtil.ZERO;
         for (Map.Entry<String, List<LogisticsSaleChannelEntity>> item : map.entrySet()) {
             String overseasWarehouseId = item.getKey();
             OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasWarehouseList.stream().
@@ -289,19 +311,34 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             }
             logisticsWarehouseService.save(logisticsWarehouse);
             List<LogisticsSaleChannelEntity> saleChannelList = item.getValue();
-            List<LogisticsChannelEntity> addList = LogisticsChannelConverter.INSTANCE.channelConvertBySaleChannel(saleChannelList);
-            if (CollectionUtils.isNotEmpty(addList)) {
-                addList.forEach(a -> {
-                    a.setSourceType(sourceType);
-                    a.setSourceId(id);
-                    a.setMainId(logisticsSupplierId);
-                });
-                logisticsChannelService.saveBatch(addList);
+            if (CollectionUtils.isNotEmpty(saleChannelList)) {
+                List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(saleChannelList.size());
+                for (LogisticsSaleChannelEntity saleChannel : saleChannelList) {
+                    String syncSourceId = saleChannel.getId();
+                    LogisticsChannelEntity channelEntity = channelList.stream().filter(c -> c.getSyncSourceId().equals(syncSourceId)).
+                            findFirst().orElse(new LogisticsChannelEntity());
+                    channelEntity.setSyncSourceId(syncSourceId);
+                    channelEntity.setCode(saleChannel.getCode());
+                    channelEntity.setMainId(id);
+                    channelEntity.setSourceType(sourceType);
+                    channelEntity.setSourceId(id);
+                    channelEntity.setName(saleChannel.getCnName());
+                    channelEntity.setEffectiveTime(saleChannel.getAging());
+                    String channelId = channelEntity.getId();
+                    //表示新增
+                    if (StringUtils.isBlank(channelId)) {
+                        channelEntity.setDisabled(trueFlag);
+                    } else {
+                        //表示修改
+                        if (!zeroFlag.equals(saleChannel.getChannelStatus())) {
+                            channelEntity.setDisabled(trueFlag);
+                        }
+                    }
+                    saveOrUpdateList.add(channelEntity);
+                }
+                logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
             }
-            saleChannelList.forEach(s -> {
-                s.setIsSync(yesSync);
-            });
-            logisticsSaleChannelService.updateBatchById(saleChannelList);
+
 
         }
 

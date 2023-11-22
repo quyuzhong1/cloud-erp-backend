@@ -36,29 +36,6 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Autowired
     private CommonService commonService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(OverseasProviderWarehouseDTO.AddDTO addDTO) {
-        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
-        BeanMapperUtils.copy(addDTO, overseasProviderWarehouseEntity);
-
-        // 数据处理
-        handleData(overseasProviderWarehouseEntity);
-
-        log.info("开始新增海外物流商仓库");
-        boolean save = super.save(overseasProviderWarehouseEntity);
-        if(!save) {
-            throw new ServiceException("海外物流商仓库保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外物流商仓库" , overseasProviderWarehouseEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), overseasProviderWarehouseEntity.getId(), "新增操作");
-
-        return new BaseResultDTO.AddDTO(overseasProviderWarehouseEntity.getId(), overseasProviderWarehouseEntity.getId());
-    }
-
     /**
     * 修改
     */
