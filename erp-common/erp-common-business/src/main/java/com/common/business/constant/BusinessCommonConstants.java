@@ -3,6 +3,7 @@ package com.common.business.constant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneOffset;
 import java.util.stream.Stream;
 
 /**
@@ -13,6 +14,8 @@ import java.util.stream.Stream;
  */
 @Component
 public class BusinessCommonConstants {
+
+    public static ZoneOffset systemZoneOffset =ZoneOffset.of("+8");
 
     // Spring 环境
     private static String SPRING_PROFILES_ACTIVE;

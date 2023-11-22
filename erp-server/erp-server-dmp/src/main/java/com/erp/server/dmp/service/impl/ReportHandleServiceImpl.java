@@ -4,6 +4,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
@@ -14,12 +15,12 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -36,8 +37,10 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsRespon
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
+import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportSpecification;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
@@ -52,6 +55,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -228,38 +232,8 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Transactional(rollbackFor = Exception.class)
     public void createReportSchedule(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
-        // TODO 支持切换时间间隔
-        OffsetDateTime roundedOffsetDateTime = currentDateTime;
-        // 15分钟
-        if (CreateReportScheduleSpecification.PeriodEnum.PT15M.equals(periodEnum)) {
-            // 获取当前分钟数
-            int currentMinute = currentDateTime.getMinute();
-            // 计算最接近的 15 分钟的整数
-            int closestFifteenMinute = ((currentMinute + 7) / 15) * 15;
-            int finialClosestFifteenMinute = 60 == closestFifteenMinute ? 0 : closestFifteenMinute;
-            // 设置当前分钟数为最接近的 15 分钟的整数
-            roundedOffsetDateTime = currentDateTime.withMinute(finialClosestFifteenMinute)
-                    .withSecond(0)
-                    .withNano(0);
-        }
-        // 30分钟
-        if (CreateReportScheduleSpecification.PeriodEnum.PT30M.equals(periodEnum)) {
-            // 获取当前分钟数
-            int currentMinute = currentDateTime.getMinute();
-            // 计算最接近的 30 分钟的整数
-            int closestThirtyMinute = ((currentMinute + 15) / 30) * 30;
-            int finialClosestThirtyMinute = 60 == closestThirtyMinute ? 0 : closestThirtyMinute;
-            // 设置当前分钟数为最接近的 15 分钟的整数
-            roundedOffsetDateTime = currentDateTime.withMinute(finialClosestThirtyMinute)
-                    .withSecond(0)
-                    .withNano(0);
-        }
-        if (CreateReportScheduleSpecification.PeriodEnum.PT30M.equals(periodEnum) || CreateReportScheduleSpecification.PeriodEnum.PT15M.equals(periodEnum)){
-            roundedOffsetDateTime = currentDateTime.withMinute(0)
-                    .withSecond(0)
-                    .withNano(0);
-        }
-
+        // 支持切换时间间隔
+        OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
 
         String[] marketplaceIdArray = reportSchedule.getMarketplaceIds().split(",");
         // 当前市场ID
@@ -292,7 +266,44 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) {
+    public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
+        // 校验MarketplaceId
+        String[] marketplaceSplit = reportSchedule.getMarketplaceIds().split(",");
+        if (marketplaceSplit.length == 0) {
+            throw new ServiceException("未找到MarketplaceId,reportScheduleId=" + reportSchedule.getId());
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceSplit[0]);
+        if (null == marketplaceEnum){
+            String msg = StrUtil.format("未找到Marketplace枚举类型,reportScheduleId={}, marketplaceId={}", reportSchedule.getId(), reportSchedule.getMarketplaceIds());
+            throw new ServiceException(msg);
+        }
+        CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
+        // 支持切换时间间隔
+        // 修改下次创建时间
+        OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
+        LocalDateTime nextTime = roundedOffsetDateTime
+                .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
+                .toLocalDateTime();
+        reportSchedule.setFirstNextReportCreationTime(nextTime);
+        if (reportScheduleService.updateById(reportSchedule)){
+            throw new ServiceException("[reportSchedule] 更新失败");
+        }
+
+        // 请求亚马逊接口
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
+        CreateReportSpecification body = new CreateReportSpecification();
+        body.setReportType(reportSchedule.getReportType());
+        body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
+        CreateReportResponse reportResponse = reportsApi.createReport(body);
+        String reportId = reportResponse.getReportId();
+        if (null == reportId){
+            throw new ServiceException("请求亚马逊创建报告失败：body=" + JSONUtil.toJsonStr(reportResponse));
+        }
+        ReportInfoMongoDTO reportInfoMongoDTO = new ReportInfoMongoDTO();
+        reportInfoMongoDTO.setReportId(reportId);
+        reportInfoMongoDTO.setReportType(reportSchedule.getReportType());
+        // 报告保存
+        mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
 
     }
 
@@ -316,7 +327,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         jobTaskDTO.setOperateType("pull");
         jobTaskDTO.setMongoDataList(mongoDTOSList);
         // 事务处理
-        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
+        businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(), jobTaskDTO.getBillType(), jobTaskDTO);
 
     }
 }

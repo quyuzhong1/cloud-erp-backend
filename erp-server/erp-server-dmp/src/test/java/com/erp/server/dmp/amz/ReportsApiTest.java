@@ -33,6 +33,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * API tests for ReportsApi
@@ -85,7 +87,10 @@ public class ReportsApiTest {
     public void cancelReportScheduleTest() throws ApiException {
         // 正式环境参数
 //        String reportScheduleId = "50003019648";
-        String reportScheduleId = "50004019668";
+//        String reportScheduleId = "50004019668";
+//        String reportScheduleId = "50007019671";
+//        String reportScheduleId = "50006019671";
+        String reportScheduleId = "50005019671";
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         api.cancelReportSchedule(reportScheduleId);
 
@@ -257,13 +262,19 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportSchedulesTest() throws ApiException {
-        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
+                .map(AmazonReportRecordTypeEnum::getRecordType)
+                .collect(Collectors.toList());
+
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         ReportScheduleList response = api.getReportSchedules(reportTypes);
         System.out.println("getReportSchedulesTest");
         System.out.println(JSON.toJsonStr(response));
         // {"reportSchedules":[{"reportScheduleId":"50003019648","reportType":"GET_MERCHANT_LISTINGS_DATA","marketplaceIds":["A1AM78C64UM0Y8"],"period":"PT1H","nextReportCreationTime":"2023-10-18T04:06:25Z"}]}
         // TODO: test validations
+        // {"reportSchedules":[{"reportScheduleId":"50007019671","reportType":"GET_MERCHANT_LISTINGS_DATA","marketplaceIds":["ATVPDKIKX0DER"],"period":"PT15M","nextReportCreationTime":"2023-11-22T02:58:30Z"}]}
+        // {"reportSchedules":[{"reportScheduleId":"50001018714","reportType":"GET_FBA_MYI_ALL_INVENTORY_DATA","period":"PT24H","nextReportCreationTime":"2023-11-22T16:00:00Z"},{"reportScheduleId":"50006019671","reportType":"GET_RESERVED_INVENTORY_DATA","marketplaceIds":["ATVPDKIKX0DER"],"period":"PT15M","nextReportCreationTime":"2023-11-22T03:00:00Z"},{"reportScheduleId":"50005019671","reportType":"GET_FBA_MYI_ALL_INVENTORY_DATA","marketplaceIds":["ATVPDKIKX0DER"],"period":"PT15M","nextReportCreationTime":"2023-11-22T03:00:00Z"}]}
     }
 
     /**

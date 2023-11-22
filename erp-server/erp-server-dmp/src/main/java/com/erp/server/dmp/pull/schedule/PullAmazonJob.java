@@ -15,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
@@ -278,16 +279,17 @@ public class PullAmazonJob {
                 } else {
                     newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
                 }
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 下载完：{}", JSONUtil.toJsonStr(dto));
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
                 newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 主体转换前：{}", JSONUtil.toJsonStr(newDto));
                 // 转换
                 PlatformFbaShipmentDTO shipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(newDto);
                 InboundShipmentItemList sourceDetailList = newDto.getDetailList();
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 详情转换前：{}", JSONUtil.toJsonStr(newDto));
                 List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
                         .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
                         .collect(Collectors.toList());
@@ -302,8 +304,9 @@ public class PullAmazonJob {
                         .values()
                 );
                 shipmentDTO.setDetailList(detailListDTO);
-
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
                 businessService.pullDetailProcess(newDto, shipmentDTO, category, platform, business);
+                XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送后：{}", JSONUtil.toJsonStr(newDto));
             } catch (Exception e) {
                 XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
@@ -410,50 +413,54 @@ public class PullAmazonJob {
     }
 
     /**
-     * 亚马逊请求创建报表
+     * 创建【亚马逊报告】亚马逊-ERP
      */
     @XxlJob("amazonReportJob")
     public ReturnT<String> amazonReportJob() {
-        Integer size = 1;
+        Integer size = 10;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
         }
         // 根据报告ID和状态获取reportDocumentId
-        XxlJobHelper.log("[亚马逊请求创建报表] 任务开始 size={}", size);
+        XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务开始 size={}", size);
+        // TODO 记录请求
         // 根据状态查询未请求的数据
         List<ReportScheduleEntity> reportScheduleEntityList = reportScheduleService.lambdaQuery()
+                // 已订阅
+                .eq(ReportScheduleEntity::getReportScheduleId, "")
+                // 已订阅
                 .eq(ReportScheduleEntity::getSubscribedStatus, ReportScheduleSubscribedStatusEnum.ALREADY.getCode())
+                // 未取消
                 .eq(ReportScheduleEntity::getCancelStatus, ReportScheduleCancelStatusEnum.NONE.getCode())
-                .in(ReportScheduleEntity::getReportType,
-                        Arrays.asList(AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType())
-                )
+                // 手动类型
+                .eq(ReportScheduleEntity::getSubscribedType, ReportScheduleSubscribedTypeEnum.MANUAL.getCode())
+                // 下次创建时间小于等于当前
+                .le(ReportScheduleEntity::getFirstNextReportCreationTime, LocalDateTime.now(ZoneId.systemDefault()))
                 .orderByAsc(ReportScheduleEntity::getId)
                 .last(" LIMIT " + size)
                 .list()
                 ;
         if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
-            XxlJobHelper.log("[亚马逊请求创建报表] 任务结束,无需要更新的信息");
+            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
         }
-        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC)
-                .withMinute(0)
-                .withSecond(0);
+        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
 
         reportScheduleEntityList.forEach(reportSchedule -> {
             try {
                 reportHandleService.createReport(reportSchedule, currentDateTime);
             } catch (Exception e) {
                 String errorMsg = JSONUtil.toJsonStr(e);
-                XxlJobHelper.log("[亚马逊请求创建报表] 创建亚马逊报表计划失败：reportId={}, error={}",
+                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 创建亚马逊报表计划失败：reportId={}, error={}",
                         reportSchedule.getReportScheduleId(),
                         errorMsg
                 );
-                throw new ServiceException("亚马逊请求创建报表:error=" + errorMsg);
+                throw new ServiceException("创建【亚马逊报告】亚马逊-ERP:error=" + errorMsg);
             }
         });
-        XxlJobHelper.log("[亚马逊请求创建报表] 任务结束");
+        XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束");
         return ReturnT.SUCCESS;
     }
 

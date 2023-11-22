@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonWriter;
 
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +85,7 @@ public class CreateReportScheduleSpecification {
 
         private String value;
 
+
         PeriodEnum(String value) {
             this.value = value;
         }
@@ -112,6 +114,79 @@ public class CreateReportScheduleSpecification {
                 }
             }
             return null;
+        }
+
+        public OffsetDateTime plusPeriod(OffsetDateTime currentDateTime){
+            switch (this){
+                case PT5M:
+                    return currentDateTime.plusMinutes(5);
+                case PT15M:
+                    return currentDateTime.plusMinutes(15);
+                case PT30M:
+                    return currentDateTime.plusMinutes(30);
+                case PT1H:
+                    return currentDateTime.plusHours(1);
+                case PT2H:
+                    return currentDateTime.plusHours(2);
+                case PT4H:
+                    return currentDateTime.plusHours(4);
+                case PT8H:
+                    return currentDateTime.plusHours(8);
+                case PT12H:
+                    return currentDateTime.plusHours(12);
+                case P1D:
+                    return currentDateTime.plusDays(1);
+                case P2D:
+                    return currentDateTime.plusDays(2);
+                case P3D:
+                    return currentDateTime.plusDays(3);
+                case PT84H:
+                    return currentDateTime.plusHours(84);
+                case P7D:
+                    return currentDateTime.plusDays(7);
+                case P14D:
+                    return currentDateTime.plusDays(14);
+                case P15D:
+                    return currentDateTime.plusDays(15);
+                case P18D:
+                    return currentDateTime.plusDays(18);
+                case P30D:
+                    return currentDateTime.plusDays(30);
+                case P1M:
+                    return currentDateTime.plusMinutes(1);
+            }
+            throw new ServiceException("未找到对应时区");
+        }
+
+        public OffsetDateTime formatTime(OffsetDateTime currentDateTime) {
+            // 15分钟
+            if (CreateReportScheduleSpecification.PeriodEnum.PT15M.equals(this)) {
+                // 获取当前分钟数
+                int currentMinute = currentDateTime.getMinute();
+                // 计算最接近的 15 分钟的整数
+                int closestFifteenMinute = ((currentMinute + 7) / 15) * 15;
+                int finialClosestFifteenMinute = 60 == closestFifteenMinute ? 0 : closestFifteenMinute;
+                // 设置当前分钟数为最接近的 15 分钟的整数
+                return currentDateTime.withMinute(finialClosestFifteenMinute)
+                        .withSecond(0)
+                        .withNano(0);
+            }
+            // 30分钟
+            if (CreateReportScheduleSpecification.PeriodEnum.PT30M.equals(this)) {
+                // 获取当前分钟数
+                int currentMinute = currentDateTime.getMinute();
+                // 计算最接近的 30 分钟的整数
+                int closestThirtyMinute = ((currentMinute + 15) / 30) * 30;
+                int finialClosestThirtyMinute = 60 == closestThirtyMinute ? 0 : closestThirtyMinute;
+                // 设置当前分钟数为最接近的 15 分钟的整数
+                return currentDateTime.withMinute(finialClosestThirtyMinute)
+                        .withSecond(0)
+                        .withNano(0);
+            }
+            // 其他时间取整
+            return currentDateTime.withMinute(0)
+                        .withSecond(0)
+                        .withNano(0);
         }
 
         public static class Adapter extends TypeAdapter<PeriodEnum> {
