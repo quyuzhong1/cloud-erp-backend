@@ -12,6 +12,7 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
@@ -28,6 +29,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -120,6 +122,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
     private TransferInfoService transferInfoService;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -691,11 +695,23 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<FbaDeliveryDetailEntity> entities = fbaDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
 
         //获取库存sku信息
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+//        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listBySkuNoList(skuNoList);
+        List<SkuMappingDTO.ListSkuParamDTO> paramDTOList = new ArrayList<>();
+        for (FbaDeliveryDetailEntity detailEntity : detailEntityList) {
+            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
+            paramDTO.setSkuNo(detailEntity.getSkuNo());
+            paramDTO.setWarehouseId(data.getDeliveryWarehouseId());
+            paramDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+            paramDTOList.add(paramDTO);
+        }
+
+        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(paramDTOList);
 
         //明细信息
         List<FbaDeliveryDetailDTO.ViewDTO> detailViews = new ArrayList<>();
         for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : detailEntityList) {
+
+
             FbaDeliveryDetailDTO.ViewDTO detailVie = BeanMapperUtils.map(FbaDeliveryDetailDTO.ViewDTO.class, fbaDeliveryDetailEntity);
 
             //映射产品信息
@@ -713,7 +729,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             detailVie.setUseDeliveryQty(useDeliveryQty);
 
             //库存sku
-            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
+            String stockSku = listSkuDTOS.stream()
                     .filter(req -> req.getProductSkuNo().equals(fbaDeliveryDetailEntity.getSkuNo())
                             && data.getDeliveryWarehouseId().equals(req.getWarehouseId()))
                     .distinct()

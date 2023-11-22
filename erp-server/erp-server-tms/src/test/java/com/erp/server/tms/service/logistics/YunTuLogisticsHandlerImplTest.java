@@ -33,8 +33,11 @@ public class YunTuLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public YunTuLogisticsHandlerImplTest(){
-        authMap.put("clientId","ITC0893791");
-        authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
+//        authMap.put("clientId","ITC0893791");
+//        authMap.put("clientSecret","axzc2utvPbfc9UbJDOh+7w==");
+        //正式环境
+        authMap.put("clientId","CN19564");
+        authMap.put("clientSecret","rBM7VwsVHRE=");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = yunTuLogisticsHandler.getLogisticsAuthConfig("");

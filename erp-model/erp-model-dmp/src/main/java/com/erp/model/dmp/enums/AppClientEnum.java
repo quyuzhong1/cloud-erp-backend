@@ -22,6 +22,7 @@ public enum AppClientEnum  {
     SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
     ALI_EXPRESS_AUTHORIZE("aliExpressAuthorize","sales","AliExpress"),
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
+    TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
 
 
 

@@ -71,9 +71,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
-    @Resource
-    private RedisUtil redisUtil;
-
     /**
     * 修改
     */
@@ -146,12 +143,11 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         boolean result = thirdWarehouseService.authorize(dto);
         if(result){
             OverseasProviderEntity entity = this.getById(dto.getId());
-            OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
             entity.setId(dto.getId());
             entity.setAuthTime(LocalDateTime.now());
             entity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             entity.setAuthJson(dto.getAuthJson());
-            this.update(updateDTO);
+            this.updateById(entity);
         }
         return result;
     }

@@ -53,6 +53,8 @@ public class LogisticsOrderVO implements Serializable {
 
     //护照号
     private String passportNumber;
+    //发货方式
+    private String pickupType;
 
     /**
      * 发货单号
