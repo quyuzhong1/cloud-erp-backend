@@ -129,11 +129,8 @@ public class OverseasProviderController extends BaseController {
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = overseasProviderService.cancelAuthorize(dto.getIds());
+    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
         return flag ? success() : failure();
     }
-
-
-
 }

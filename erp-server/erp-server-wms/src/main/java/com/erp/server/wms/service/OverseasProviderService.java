@@ -57,8 +57,8 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * 取消授权
      * @Author Luo_WG
      * @Date 2023/11/16 16:44
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      **/
-    Boolean cancelAuthorize(List<String> ids);
+    Boolean cancelAuthorize(String id);
 }

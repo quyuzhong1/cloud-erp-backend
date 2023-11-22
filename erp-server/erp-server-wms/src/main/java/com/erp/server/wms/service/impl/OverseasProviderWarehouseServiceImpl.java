@@ -78,6 +78,11 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .one();
     }
 
+    @Override
+    public List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(OverseasProviderWarehouseEntity::getMainId, mainIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */

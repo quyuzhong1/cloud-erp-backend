@@ -154,7 +154,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-                    responseVO.failure(LogisticsPlatformEnum.DSF.getName(), "-1", orderResponse.getMsg());
+                    responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getMsg());
                 }
                 responseVOS.add(responseVO);
             } catch (Exception e) {
@@ -200,7 +200,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-                    responseVO.failure(LogisticsPlatformEnum.DSF.getName(), "-1", orderResponse.getMsg());
+                    responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getMsg());
                 }
                 responseVOS.add(responseVO);
             } catch (Exception e) {
@@ -278,7 +278,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                     logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
-            response.failure(LogisticsPlatformEnum.DSF.getName(), responseMsg.getResult(), responseMsg.getMsg());
+            response.failure(LogisticsPlatformEnum.DSF.getName(),String.join(",",labelRequest.getRequestNo()), responseMsg.getMsg());
             responses.add(response);
             return failure(responses);
         } else {

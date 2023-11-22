@@ -3,25 +3,31 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
-import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.wms.service.ThirdWarehouseService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +62,16 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
+
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
     * 修改
@@ -115,7 +130,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderDTO.ViewDTO view(String id) {
-        return null;
+        OverseasProviderEntity entity = this.getById(id);
+        OverseasProviderDTO.ViewDTO viewDTO = new OverseasProviderDTO.ViewDTO();
+        BeanMapperUtils.copy(viewDTO, entity);
+        viewDTO.setAuthStatusName(AuthStatusEnum.getName(viewDTO.getAuthStatus()));
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Arrays.asList(id));
+        List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
+        viewDTO.setDetailList(warehouseList);
+        return viewDTO;
     }
 
     @Override
@@ -135,8 +157,20 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
-    public Boolean cancelAuthorize(List<String> ids) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean cancelAuthorize(String id) {
+        //清空授权信息
+        OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
+        updateDTO.setId(id);
+        updateDTO.setAuthTime(null);
+        updateDTO.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+        updateDTO.setAuthJson("{}");
+        this.update(updateDTO);
+        //删除数据同步任务
+        String platformCode = this.getPlatFormCodeById(id);
+        dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));
+        return true;
     }
 
     public String getPlatFormCodeById(String id){

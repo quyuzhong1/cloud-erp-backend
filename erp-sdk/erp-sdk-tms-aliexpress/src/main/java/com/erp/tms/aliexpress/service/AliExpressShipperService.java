@@ -13,6 +13,7 @@ import com.erp.tms.aliexpress.model.label.request.LabelRequest;
 import com.erp.tms.aliexpress.model.label.response.LabelResult;
 import com.erp.tms.aliexpress.model.order.request.OrderRequest;
 import com.erp.tms.aliexpress.model.order.request.QueryOrderRequest;
+import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.OrderResult;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,7 @@ public class AliExpressShipperService {
         request.addApiParameter("invoice_number", orderRequest.getInvoice_number());
         request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
         request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
+        request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return JSONObject.parseObject(response.getBody(), OrderResult.class);
@@ -90,6 +92,7 @@ public class AliExpressShipperService {
         request.addApiParameter("top_user_key", orderRequest.getTop_user_key());
         request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
+        request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return JSONObject.parseObject(response.getBody(), OrderResult.class);
@@ -123,7 +126,7 @@ public class AliExpressShipperService {
         return JSONObject.parseObject(response.getBody(), LabelResult.class);
     }
 
-    public IopResponse queryLogisticsOrder(Map<String, String> authMap, QueryOrderRequest queryOrderRequest) throws ApiException {
+    public BaseResult queryLogisticsOrder(Map<String, String> authMap, QueryOrderRequest queryOrderRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
@@ -142,7 +145,7 @@ public class AliExpressShipperService {
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
-        return response;
+        return JSONObject.parseObject(response.getBody(), BaseResult.class);
     }
     public void generateToken(String code) throws ApiException {
         IopClient client = new IopClientImpl(PathConstants.BASE_URL, PathConstants.APP_KEY, PathConstants.APP_SECRET);
