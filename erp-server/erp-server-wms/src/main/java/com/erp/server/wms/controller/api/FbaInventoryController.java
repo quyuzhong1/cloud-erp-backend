@@ -71,8 +71,8 @@ public class FbaInventoryController extends BaseController {
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
-    public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated FbaInventoryDTO.PagingParamDTO dto) {
-        FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(dto);
+    public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
+        FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(pagingParamDTO);
         return success(result);
     }
 

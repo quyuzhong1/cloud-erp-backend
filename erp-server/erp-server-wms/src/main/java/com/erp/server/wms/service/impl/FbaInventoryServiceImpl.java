@@ -75,9 +75,9 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
 
     @Override
-    public FbaInventoryDTO.SummaryNumber summaryNumber(FbaInventoryDTO.PagingParamDTO pagingParamDTO) {
+    public FbaInventoryDTO.SummaryNumber summaryNumber(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
-        FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO);
+        FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO.getParams());
         return summaryNumber;
     }
     @GlobalTransactional(rollbackFor = Exception.class)
