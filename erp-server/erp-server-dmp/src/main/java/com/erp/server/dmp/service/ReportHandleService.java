@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service;
 
+import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.sdk.oms.amz.spapi.dto.*;
@@ -53,4 +54,12 @@ public interface ReportHandleService {
      * @since 2023-11-10
      **/
     void pullBusinessHandler(String shopId, String reportId, List<? extends ReportSuperMongoDTO> mongoDTOSList);
+
+    /**
+     * 亚马逊报告通知处理
+     *
+     * @Author Jim
+     * @since 2023-11-22
+     **/
+    void handlerNotifications(SQSTextMessage textMessage) throws Exception;
 }
