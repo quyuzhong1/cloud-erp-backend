@@ -35,38 +35,5 @@ public class ImlDictCityController extends BaseController {
     @Resource
     private ImlDictCityService imlDictCityService;
 
-    /**
-    * 新增
-    * @author lrp
-    * @date:  2023-11-22
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "城市字典表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ImlDictCityDTO.AddDTO dto) {
-        return success(imlDictCityService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author lrp
-    * @date:  2023-11-22
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "城市字典表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:imlDictCity:update",
-        serviceClass = ImlDictCityService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated ImlDictCityDTO.UpdateDTO dto) {
-        imlDictCityService.update(dto);
-        return success();
-    }
-
-
 
 }
