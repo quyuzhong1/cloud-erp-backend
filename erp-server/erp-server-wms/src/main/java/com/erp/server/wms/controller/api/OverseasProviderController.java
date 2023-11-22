@@ -41,19 +41,6 @@ public class OverseasProviderController extends BaseController {
     private OverseasProviderService overseasProviderService;
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date:  2023-11-16
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "海外物流商新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated OverseasProviderDTO.AddDTO dto) {
-        return success(overseasProviderService.add(dto));
-    }
-
-    /**
     * 修改
     * @author Luo_WG
     * @date:  2023-11-16

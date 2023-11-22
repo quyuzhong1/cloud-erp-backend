@@ -18,15 +18,6 @@ import java.util.List;
 public interface OverseasProviderService extends SuperService<OverseasProviderEntity> {
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(OverseasProviderDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author Luo_WG
     * @date: 2023-11-16

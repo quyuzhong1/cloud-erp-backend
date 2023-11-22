@@ -58,35 +58,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(OverseasProviderDTO.AddDTO addDTO) {
-        OverseasProviderEntity overseasProviderEntity = new OverseasProviderEntity();
-        BeanMapperUtils.copy(addDTO, overseasProviderEntity);
-
-        // 数据处理
-        handleData(overseasProviderEntity);
-
-        log.info("开始新增海外物流商");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        overseasProviderEntity.setCode(code);
-        boolean save = super.save(overseasProviderEntity);
-        if(!save) {
-            throw new ServiceException("海外物流商保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "海外物流商" , overseasProviderEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, overseasProviderEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(overseasProviderEntity.getId(), code);
-    }
-
     /**
     * 修改
     */
