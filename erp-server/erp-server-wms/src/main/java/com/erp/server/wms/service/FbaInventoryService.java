@@ -69,10 +69,10 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * 列表汇总数量
      * @Author Luo_WG
      * @Date 2023/11/9 11:42
-     * @param dto
+     * @param pagingParamDTO
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
      **/
-    FbaInventoryDTO.SummaryNumber summaryNumber(FbaInventoryDTO.PagingParamDTO dto);
+    FbaInventoryDTO.SummaryNumber summaryNumber(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO);
 
     /**
      * 批量保存FBA库存信息和预留明细

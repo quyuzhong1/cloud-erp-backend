@@ -202,7 +202,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FbaShipmentDTO.ShipmentStatusRecordView shipmentStatusRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentStatusEntityToView(fbaShipmentReceiveEntity);
             list.add(shipmentStatusRecordView);
         }
-        return list;
+        List<FbaShipmentDTO.ShipmentStatusRecordView> listSort = list.stream().sorted(Comparator.comparing(FbaShipmentDTO.ShipmentStatusRecordView::getUpdateTime).reversed()).collect(Collectors.toList());
+        return listSort;
     }
 
     @Override

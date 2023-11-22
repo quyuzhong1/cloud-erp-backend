@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -69,14 +70,18 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if (!listingInfoService.save(entity)) {
                 throw new ServiceException("Listing 产品保存失败");
             }
-            // 添加到映射（第三方仓不需要添加映射）
-            if(!RuleTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
-                SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-                if (!skuMappingService.save(skuMappingEntity)) {
-                    throw new ServiceException("SkuMapping保存失败");
-                }
+            // 添加到映射
+            SkuMappingEntity skuMappingEntity;
+            if(RuleTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
+                PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(entity.getPlatform());
+                RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(entity.getType());
+                skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId(),platformDictEnum,ruleTypeEnum);
+            }else{
+                skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
             }
-
+            if (!skuMappingService.save(skuMappingEntity)) {
+                throw new ServiceException("SkuMapping保存失败");
+            }
         } else {
             // 是否修改
             if (!oldEntity.toString().equals(entity.toString())) {

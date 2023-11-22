@@ -822,6 +822,7 @@ public enum ApiError implements Serializable {
     NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有已审核的发货单可以更新物流信息"),
     DELIVERY_QTY_EXCEED_DECLAREQTY(99115,"sku【{}】发货数量超过申报数量不允许下推"),
     ERROR_NOT_REQUISITION_APPLICATION(99116,"未找到要货申请单"),
+    ERROR_NOT_WAREHOUSE(99117,"请匹配系统仓库后启用"),
 
 
     /**
@@ -950,6 +951,9 @@ public enum ApiError implements Serializable {
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),
 
     ERROR_AUTHORIZE_CODE_NOT_NULL(92107,"授权code不能为空"),
+    ERROR_AUTHORIZE_FAIL(92108,"授权失败【】"),
+
+
 
     /**
      * TMS 错误

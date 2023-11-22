@@ -157,7 +157,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fs.code, fs.create_time DESC, fsd.id
+        fs.create_time DESC
     </select>
 
     <select id="generateDeliverView" resultType="com.erp.model.wms.dto.FbaShipmentDTO$GenerateDeliverView">

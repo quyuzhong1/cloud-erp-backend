@@ -62,7 +62,7 @@ public class FbaInventoryController extends BaseController {
      * 列表汇总数量
      * @Author Luo_WG
      * @Date 2023/11/9 11:42
-     * @param dto
+     * @param pagingParamDTO
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
      **/
     @PostMapping("/summaryNumber")
@@ -71,8 +71,8 @@ public class FbaInventoryController extends BaseController {
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
-    public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated FbaInventoryDTO.PagingParamDTO dto) {
-        FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(dto);
+    public ApiResult<FbaInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
+        FbaInventoryDTO.SummaryNumber result = fbaInventoryService.summaryNumber(pagingParamDTO);
         return success(result);
     }
 

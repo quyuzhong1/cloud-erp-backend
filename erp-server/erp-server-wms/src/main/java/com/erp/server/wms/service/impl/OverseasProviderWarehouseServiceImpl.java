@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -101,6 +102,9 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
         for (OverseasProviderWarehouseEntity detailEntity : list) {
+            if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
+                throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
+            }
             detailEntity.setMainId(mainId);
             WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(updateDTO)) {
