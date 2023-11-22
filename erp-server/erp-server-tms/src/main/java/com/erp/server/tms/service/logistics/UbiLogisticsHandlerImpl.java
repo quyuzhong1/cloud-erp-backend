@@ -124,7 +124,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                             RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(orderResponse));
-                    responseVO.failure(LogisticsPlatformEnum.UBI.getName(), "-1", orderResponse.getErrors());
+                    responseVO.failure(LogisticsPlatformEnum.UBI.getName(), logisticsQueryVO.getDeliveryNo(), orderResponse.getErrors());
                     responseVO.setDeliveryNo(orderResponse.getReferenceNo());
                 }
                 responseVOS.add(responseVO);

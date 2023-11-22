@@ -13,32 +13,27 @@ import java.io.Serializable;
  * @version: 1.0
  */
 @Data
-public class OrderResponse implements Serializable {
-    /**
-     * LP单号
-     */
-    @JSONField(name = "out_order_code")
-    private String outOrderCode;
+public class WareHouseOrderResponse implements Serializable {
     /**
      * 创建时错误码(1表示无错误)
      */
     @JSONField(name = "error_code")
-    private String errorCode;
+    private String error_code;
     /**
      * 创建时错误信息
      */
     @JSONField(name = "error_desc")
-    private String errorDesc;
+    private String error_desc;
     /**
      * 国际运单号
      */
     @JSONField(name = "intl_tracking_no")
-    private String intlTrackingNo;
+    private String intl_tracking_no;
     /**
      * 外部订单号
      */
     @JSONField(name = "out_order_id")
-    private String outOrderId;
+    private String out_order_id;
     /**
      *
      * 创建订单是否成功
@@ -49,16 +44,16 @@ public class OrderResponse implements Serializable {
      * 订单来源
      */
     @JSONField(name = "trade_order_from")
-    private String tradeOrderFrom;
+    private String trade_order_from;
     /**
      * 交易订单号
      */
     @JSONField(name = "trade_order_id")
-    private String tradeOrderId;
+    private String trade_order_id;
     /**
      * 物流订单号
      */
     @JSONField(name = "warehouse_order_id")
-    private String warehouseOrderId;
+    private String warehouse_order_id;
 
 }

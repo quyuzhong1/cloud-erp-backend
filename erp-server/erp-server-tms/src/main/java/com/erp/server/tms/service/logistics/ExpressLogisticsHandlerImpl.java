@@ -89,7 +89,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 success = true;
                 responseVO.success();
             } else {
-                responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), baseResult.getErrorMsg());
             }
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -178,15 +178,15 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         responseVO.success();
                     } else {
                         isSuccess = false;
-                        responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                        responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
                     }
                 } else {
                     isSuccess = false;
-                    responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                    responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
                 }
             } catch (Exception e) {
                 isSuccess = false;
-                responseVO.failure(getPlatForm().getName(), String.valueOf(-1), e.getMessage());
+                responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
                 logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
@@ -231,15 +231,15 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         responseVO.success();
                     } else {
                         isSuccess = false;
-                        responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                        responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
                     }
                 } else {
                     isSuccess = false;
-                    responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                    responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
                 }
             } catch (Exception e) {
                 isSuccess = false;
-                responseVO.failure(getPlatForm().getName(), String.valueOf(-1), e.getMessage());
+                responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
                 logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
@@ -310,10 +310,10 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOrderResponseVO.success();
                 success = true;
             } else {
-                logisticsOrderResponseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                logisticsOrderResponseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), baseResult.getErrorMsg());
             }
         } catch (UnsupportedEncodingException e) {
-            logisticsOrderResponseVO.failure(getPlatForm().getName(), String.valueOf(-1), e.getMessage());
+            logisticsOrderResponseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             log.error("查询订单异常：{}", e.getMessage());
         }
         if (success) {
@@ -380,11 +380,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     success = true;
                 } else {
                     isSuccess = false;
-                    responseVO.failure(getPlatForm().getName(), baseResult.getErrorCode(), baseResult.getErrorMsg());
+                    responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), baseResult.getErrorMsg());
                 }
             } catch (Exception e) {
                 isSuccess = false;
-                responseVO.failure(getPlatForm().getName(), String.valueOf(-1), e.getMessage());
+                responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
                 logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),

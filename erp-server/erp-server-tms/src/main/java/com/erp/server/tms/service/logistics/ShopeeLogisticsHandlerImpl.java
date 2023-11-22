@@ -118,7 +118,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             } else {
                 isSuccess = false;
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
-                responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), "-1", baseResponse.getError());
+                responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), logisticsQueryVO.getDeliveryNo(), baseResponse.getError());
                 logisticsOrderOperateLogService.pushOperateLog(authMap.get("id"),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(baseResponse));
