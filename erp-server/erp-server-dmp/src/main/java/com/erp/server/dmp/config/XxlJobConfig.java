@@ -1,5 +1,6 @@
 package com.erp.server.dmp.config;
 
+import com.common.business.constant.BusinessCommonConstants;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,9 +41,17 @@ public class XxlJobConfig {
     @Value("${xxl.job.executor.logretentiondays}")
     private int logRetentionDays;
 
+    @Value("${spring.cloud.nacos.discovery.namespace}")
+    private String namespace;
+
+
 
     @Bean
     public XxlJobSpringExecutor xxlJobExecutor() {
+        // 开发环境命名空间忽略注入
+        if (BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
+            return null;
+        }
         log.info(">>>>>>>>>>> xxl-job config init.");
         log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessToken]={}",adminAddresses,appname,accessToken);
         XxlJobSpringExecutor xxlJobSpringExecutor = new XxlJobSpringExecutor();
@@ -54,7 +63,6 @@ public class XxlJobConfig {
         xxlJobSpringExecutor.setAccessToken(accessToken);
         xxlJobSpringExecutor.setLogPath(logPath);
         xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
-
         return xxlJobSpringExecutor;
     }
 }
