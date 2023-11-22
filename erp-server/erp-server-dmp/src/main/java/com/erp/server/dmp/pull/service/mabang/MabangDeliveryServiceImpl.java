@@ -10,6 +10,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -91,7 +93,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDeliveryNo(entity.getDelivery_no());
             List<DeliveryEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now().toString());
+            entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
 
             // 拉取下来的数据在mongodb中不存在，新增到mongodb，并推送到mq
             if(CollectionUtil.isEmpty(mongoData)){
@@ -158,7 +160,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         }
         for (DeliveryEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }

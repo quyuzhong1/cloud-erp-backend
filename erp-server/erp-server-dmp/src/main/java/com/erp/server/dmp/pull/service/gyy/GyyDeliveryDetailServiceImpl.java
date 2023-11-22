@@ -8,7 +8,9 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -113,7 +115,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         }
         deliveryEntity.setDownloadStatus(1);
         deliveryEntity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-        deliveryEntity.setDownloadTime(LocalDateTime.now().toString());
+        deliveryEntity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         deliveryEntity.set_id(gyyOrderEntity.get_id());
         // 修改数据
         updateAndSaveDb(deliveryEntity);
@@ -153,7 +155,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         }
         for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
 
