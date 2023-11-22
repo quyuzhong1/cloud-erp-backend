@@ -8,8 +8,6 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;

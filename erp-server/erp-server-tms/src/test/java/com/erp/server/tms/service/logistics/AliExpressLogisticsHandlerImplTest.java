@@ -101,7 +101,7 @@ public class AliExpressLogisticsHandlerImplTest {
                 .authMap(authMap)
                 .orderSource("ERP")
 //                .facility("can")
-                .deliveryNo("66715700375804")
+                .deliveryNo("8179975303466962")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("965656546@qq.con")
@@ -139,7 +139,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("RE700150389CN");
+        logisticsQueryVOList.setDeliveryNo("8179975303466962");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
@@ -148,40 +148,9 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setTransportNo("RE700150389CN");
+        logisticsQueryVO2.setTransportNo("8179975303466962");
         logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
-    }
-
-    @Test
-    public void interceptOrder(){
-        LogisticsInterceptOrderVO logisticsQueryVOList2 = new LogisticsInterceptOrderVO();
-        logisticsQueryVOList2.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> listApiResult = aliExpressLogisticsHandler.interceptOrder(Collections.singletonList(logisticsQueryVOList2));
-        System.out.println(listApiResult);
-    }
-
-    @Test
-    public void cancelOrder(){
-        LogisticsCancelOrderVO logisticsQueryVOList = new LogisticsCancelOrderVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
-        logisticsQueryVOList.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
-        logisticsQueryVOList.setTrackNo("LM000002721CA");
-        logisticsQueryVOList.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> listApiResult = aliExpressLogisticsHandler.cancelOrder(Collections.singletonList(logisticsQueryVOList));
-        System.out.println(listApiResult);
-    }
-
-    @Test
-    public void confirmOrder(){
-        LogisticsQueryBaseVO logisticsQueryVO = new LogisticsCancelOrderVO();
-        logisticsQueryVO.setDeliveryNo("wj12345167721");
-        logisticsQueryVO.setTransportNo("lBK4IuWt-IlRQrfmJhnniA");
-        logisticsQueryVO.setTrackNo("LM000002721CA");
-        logisticsQueryVO.setAuthMap(authMap);
-        ApiResult<List<ConfirmResponseVO>> listApiResult = aliExpressLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
-        System.out.println(listApiResult);
     }
 }

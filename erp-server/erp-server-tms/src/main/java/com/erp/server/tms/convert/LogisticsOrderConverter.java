@@ -493,6 +493,7 @@ public interface LogisticsOrderConverter {
 
     @Mappings({
             @Mapping(target = "country",source = "senderInfo.country"),
+            @Mapping(target = "member_type",constant = "sender"),
             @Mapping(target = "province",source = "senderInfo.provinceName"),
             @Mapping(target = "city",source = "senderInfo.cityName"),
             @Mapping(target = "county",source = "senderInfo.districtName"),
@@ -501,13 +502,28 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "name",source = "senderInfo.name"),
             @Mapping(target = "phone",source = "senderInfo.telNumber"),
             @Mapping(target = "address_id",source = "senderInfo.id"),
-            @Mapping(target = "member_type",constant = "sender"),
             @Mapping(target = "email",source = "senderInfo.email")
     })
     Address orderRequestSendUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
 
     @Mappings({
+            @Mapping(target = "country",source = "senderInfo.country"),
+            @Mapping(target = "member_type",constant = "pickup"),
+            @Mapping(target = "province",source = "senderInfo.provinceName"),
+            @Mapping(target = "city",source = "senderInfo.cityName"),
+            @Mapping(target = "county",source = "senderInfo.districtName"),
+            @Mapping(target = "street_address",source = "senderInfo.addressFirst"),
+            @Mapping(target = "post_code",source = "senderInfo.zipCode"),
+            @Mapping(target = "name",source = "senderInfo.name"),
+            @Mapping(target = "phone",source = "senderInfo.telNumber"),
+            @Mapping(target = "address_id",source = "senderInfo.id"),
+            @Mapping(target = "email",source = "senderInfo.email")
+    })
+    Address orderRequestPickUpUserByAliExpress(LogisticsOrderVO logisticsOrderVO);
+
+    @Mappings({
             @Mapping(target = "country" ,source = "receiverInfoVO.country"),
+            @Mapping(target = "member_type",constant = "receiver"),
             @Mapping(target = "province",source = "receiverInfoVO.province"),
             @Mapping(target = "city",source = "receiverInfoVO.city"),
             @Mapping(target = "county",source = "senderInfo.districtName"),
