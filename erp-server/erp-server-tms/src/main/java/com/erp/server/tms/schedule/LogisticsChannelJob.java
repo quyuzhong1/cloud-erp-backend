@@ -72,6 +72,11 @@ public class LogisticsChannelJob {
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
+            //跳过track123
+            if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;
+            //顺丰没有渠道 只支持手动写入
+            if (platformEnum.getCode().equals(LogisticsPlatformEnum.SF_EXPRESS.getCode())) continue;
+
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
             if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
                 List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());

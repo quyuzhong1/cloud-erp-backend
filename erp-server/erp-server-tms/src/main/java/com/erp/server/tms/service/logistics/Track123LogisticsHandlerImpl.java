@@ -5,6 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -14,6 +18,7 @@ import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
@@ -44,7 +49,9 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.TRACK123)
 public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
-    TrackShipperService trackShipperService;
+    private TrackShipperService trackShipperService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
 
@@ -200,6 +207,23 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         return LogisticTrackStatusEnum.NOT_FIND.getCode();
     }
 
+    @Override
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
+        if (org.apache.commons.lang3.StringUtils.isBlank(platform)) return Collections.emptyList();
+        //获取商铺配置信息
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.TRACK123_AUTHORIZE;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        Map<String, String> map = new HashMap<>();
+        map.put("id", cfgAppClient.getId());
+        map.put("logisticsPlatform", getPlatForm().getCode());
+        map.put("clientSecret", cfgAppClient.getClientSecret());
+        map.put("clientId", cfgAppClient.getClientId());
+        return Collections.singletonList(map);
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.TRACK123;
