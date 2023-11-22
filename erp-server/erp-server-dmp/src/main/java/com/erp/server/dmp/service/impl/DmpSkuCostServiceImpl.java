@@ -44,11 +44,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncPurchaseOrderSkuCost(String flag, List<LocalDate> localDateList) {
-        if (flag.equals("now")) {
-            localDateList = new ArrayList<>();
-            localDateList.add(LocalDate.now());
-        }
+    public void syncPurchaseOrderSkuCost(List<LocalDate> localDateList) {
         List<SkuCostDTO> skuCostDTOS = scmTaskFeign.listPurchaseOrderByPurchaseDate(localDateList);
         List<DmpSkuCostEntity> dmpSkuCostEntities = BeanMapper.copyList(skuCostDTOS, DmpSkuCostEntity.class);
         List<String> skuNoList = dmpSkuCostEntities.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
