@@ -251,6 +251,11 @@ public class FbaDeliveryDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 是否组合产品
+         */
+        private String isCombination;
+
+        /**
          * 产品名称
          */
         private String productName;

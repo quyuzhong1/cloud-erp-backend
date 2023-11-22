@@ -75,6 +75,7 @@
         fdd.stock_sku,
         fdd.plan_qty,
         fdd.delivery_qty,
+        fdd.is_combination,
         fd.remark,
         fd.create_user_name,
         fd.create_time,
