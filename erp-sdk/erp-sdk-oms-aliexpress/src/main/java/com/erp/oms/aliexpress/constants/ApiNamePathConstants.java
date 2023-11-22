@@ -10,4 +10,7 @@ public interface ApiNamePathConstants {
     
     String TOKEN_CREATE = "/auth/token/create";
 
+
+    String SUCCESS_CODE="0";
+
 }

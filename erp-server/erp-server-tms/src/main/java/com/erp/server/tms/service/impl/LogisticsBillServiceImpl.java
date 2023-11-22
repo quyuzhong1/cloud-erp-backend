@@ -339,9 +339,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //渠道关联模板
         ShippingTemplateEntity shippingTemplateEntity = shippingTemplateService.getByChannelId(logisticsBillEntity.getChannelId());
-        if (ObjectUtil.isEmpty(shippingTemplateEntity)) {
-            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
+//        if (ObjectUtil.isEmpty(shippingTemplateEntity)) {
+//            throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_NOT_EXIST);
+//        }
+        String currency="CNY";
+        if(Objects.nonNull(shippingTemplateEntity)){
+            currency=shippingTemplateEntity.getCurrency();
         }
+
         //来源b2c销售订单
         if (SourceTypeEnum.SO_B2C.getCode().equals(logisticsBillEntity.getSourceType())) {
             //物流信息
@@ -367,7 +372,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             addDTO.setEstimatedShippingCost(shippingCost);
         }
 
-        addDTO.setCurrency(shippingTemplateEntity.getCurrency());
+        addDTO.setCurrency(currency);
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         logisticsBillCostService.add(addDTO);

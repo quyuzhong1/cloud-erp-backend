@@ -13,35 +13,59 @@ import com.erp.oms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * 速卖通订单服务
- *@author yl
- *@date 2023-11-22
+ *
+ * @author yl
+ * @date 2023-11-22
  */
 @Slf4j
 @Component
 public class AliExpressOrderService {
 
 
-    public JSONObject generateToken(Map<String,String> map) throws ApiException {
-        String appKey=map.getOrDefault("clientId","");
-        String appSecret=map.getOrDefault("clientSecret","");
-        String code=map.getOrDefault("code","");
-        String baseUrl=map.getOrDefault("baseUrl","");
-        IopClient client = new IopClientImpl(baseUrl,appKey,appSecret);
+    /**
+     * 拉取订单
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-22
+     */
+    public void listOrder(Map<String, String> map) throws ApiException {
+
+        String appKey = map.getOrDefault("clientId", "");
+        String appSecret = map.getOrDefault("clientSecret", "");
+
+        String baseUrl = map.getOrDefault("baseUrl", "");
+
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
-        request.setApiName(ApiNamePathConstants.TOKEN_CREATE);
-        request.addApiParameter("code", code);
-        request.addApiParameter("uuid", UUID.randomUUID().toString());
-        IopResponse response = client.execute(request, Protocol.GOP);
-        return JSONObject.parseObject(response.getBody());
+        request.setApiName("aliexpress.trade.seller.orderlist.get");
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("current_page", 1);
+        paramMap.put("page_size", 20);
+        paramMap.put("create_date_start","2023-11-01 00:00:00");
+        paramMap.put("create_date_end","2023-11-03 00:00:00");
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("param_aeop_order_query", JSONObject.toJSONString(paramMap));
+        String token = "50000201347txAyeuenSZSrh8BiTAsWVDfFNIWkzSnFXkuwgvw4IUHrpU3L15038533N";
+
+        IopResponse response = client.execute(request,token, Protocol.TOP);
+
+        System.out.println("response===>" + response.getBody());
 
     }
 
     public static void main(String[] args) throws ApiException {
-        AliExpressOrderService service = new AliExpressOrderService();
-        String code = "3_502978_pIFIJPtCDcMdWJue87R93fmH8003";
+        AliExpressOrderService orderService = new AliExpressOrderService();
+        Map<String, String> map = new HashMap<>();
+        map.put("clientId","502978");
+        map.put("clientSecret","DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY");
+        map.put("baseUrl","https://api-sg.aliexpress.com");
+        orderService.listOrder(map);
     }
 }
