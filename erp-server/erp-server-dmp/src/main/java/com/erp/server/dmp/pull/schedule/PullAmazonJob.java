@@ -166,7 +166,6 @@ public class PullAmazonJob {
     }
 
 
-
     /**
      * 拉取亚马逊订单详情任务
      */
@@ -275,7 +274,7 @@ public class PullAmazonJob {
                 // 下载和处理详情
                 PlatformAmazonFbaShipmentDTO newDto;
                 // 非线上支持手动
-                if (!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")){
+                if (!BusinessCommonConstants.hasProfile("prod") && dto.getUniqueId().contains("手动测试")) {
                     newDto = dto;
                 } else {
                     newDto = amazonFbaShipmentHandler.downloadDetail(dto, null);
@@ -298,11 +297,11 @@ public class PullAmazonJob {
                 // 合并成详情
                 List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
                         receiveDTOList.stream()
-                        .collect(Collectors.toMap(
-                                shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
-                                shipment -> shipment,
-                                PlatformFbaShipmentReceiveDTO::merge))
-                        .values()
+                                .collect(Collectors.toMap(
+                                        shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
+                                        shipment -> shipment,
+                                        PlatformFbaShipmentReceiveDTO::merge))
+                                .values()
                 );
                 shipmentDTO.setDetailList(detailListDTO);
                 XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] 推送前：{}", JSONUtil.toJsonStr(newDto));
@@ -329,44 +328,63 @@ public class PullAmazonJob {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
             size = jobParam.getInteger("size");
         }
-        // 根据报告ID和状态获取reportDocumentId
         XxlJobHelper.log("[亚马逊组合库存信息任务] 任务开始 size={}", size);
-        // 查询所有店铺是否有最新生成的报告文档url
 
-        ReportInventoryCombineMongoDTO queryCombineInventoryDTO = ReportInventoryCombineMongoDTO.canCombineStatus();
-        List<ReportInventoryCombineMongoDTO> mongoData = mongoService.findMongoData(queryCombineInventoryDTO, 0, size, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
-        if (CollectionUtils.isEmpty(mongoData)){
+        // 查询库存管理报告
+        ReportInfoMongoDTO queryDTO = ReportInfoMongoDTO.reportHandleStatusAndDone();
+
+        List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(queryDTO, 0, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+        if (CollectionUtils.isEmpty(mongoData)) {
             XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,无需要组合的库存主记录");
             return ReturnT.SUCCESS;
         }
-        // 库存组合数据记录
-        ReportInventoryCombineMongoDTO combineInventoryDTO = mongoData.stream().findFirst().orElseThrow(() -> new ServiceException("库存主记录不存在"));
+        // 过滤非库存报告
+        List<ReportInfoMongoDTO> invertoryMongoDTOList = mongoData.stream().filter(
+                e -> AmazonReportRecordTypeEnum.getInventoryReportList().contains(e.getReportType())
+        ).collect(Collectors.toList());
 
-        if (StringUtils.isBlank(combineInventoryDTO.getInventoryPlanningReportId())
-                || StringUtils.isBlank(combineInventoryDTO.getMyiAllInventoryReportId())
-                || StringUtils.isBlank(combineInventoryDTO.getReservedReportId())){
-            XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,无需要报告ID都不为空的库存主记录");
-            return ReturnT.SUCCESS;
-        }
-        // 查询库存数据
-        // 库存管理数据
-        ReportFbaMyiAllInventoryMongoDTO queryMyiAllInventoryMongoDTO = ReportFbaMyiAllInventoryMongoDTO.queryReportId(combineInventoryDTO.getMyiAllInventoryReportId());
-        List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList = mongoService.findMongoData(queryMyiAllInventoryMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryMongoDTO.class);
-        if (CollectionUtils.isEmpty(fbaMyiAllInventoryMongoDTOList)){
-            XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束,库存管理数据为空异常,ReportCombineInventoryMongoDTO={}", JSONUtil.toJsonStr(fbaMyiAllInventoryMongoDTOList));
-            return ReturnT.FAIL;
-        }
+        invertoryMongoDTOList.forEach(mongoDTO -> {
+            try {
+                if (AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA.getRecordType().equalsIgnoreCase(mongoDTO.getReportType())) {
+                    // 库存管理数据
+                    ReportFbaMyiAllInventoryMongoDTO queryMyiAllInventoryMongoDTO = ReportFbaMyiAllInventoryMongoDTO.queryReportId(mongoDTO.getReportId());
+                    List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList = mongoService.findMongoData(queryMyiAllInventoryMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_MYI_ALL_INVENTORY, ReportFbaMyiAllInventoryMongoDTO.class);
+                    if (CollectionUtils.isEmpty(fbaMyiAllInventoryMongoDTOList)) {
+                        XxlJobHelper.log("[亚马逊组合库存信息任务] 库存管理数据为空异常,ReportFbaMyiAllInventoryMongoDTO={}", JSONUtil.toJsonStr(fbaMyiAllInventoryMongoDTOList));
+                        return;
+                    }
+                    // 保存或更新
+                    reportHandleService.saveOrUpdateAllReportFbaMyiAllInventory(mongoDTO, fbaMyiAllInventoryMongoDTOList);
+                }
+                if (AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType().equalsIgnoreCase(mongoDTO.getReportType())) {
+                    // 库存预留数据
+                    ReportReservedMongoDTO queryReservedMongoDTO = ReportReservedMongoDTO.queryReportId(mongoDTO.getReportId());
+                    List<ReportReservedMongoDTO> reportReservedMongoDTOList = mongoService.findMongoData(queryReservedMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedMongoDTO.class);
+                    if (CollectionUtils.isEmpty(reportReservedMongoDTOList)) {
+                        XxlJobHelper.log("[亚马逊组合库存信息任务] 库存预留数据为空异常,ReportReservedMongoDTO={}", JSONUtil.toJsonStr(reportReservedMongoDTOList));
+                        return;
+                    }
+                    // 保存或更新
+                    reportHandleService.saveOrUpdateAllReportReserved(mongoDTO, reportReservedMongoDTOList);
+                }
 
-        // 库存预留数据
-        ReportReservedMongoDTO queryReservedMongoDTO = ReportReservedMongoDTO.queryReportId(combineInventoryDTO.getReservedReportId());
-        List<ReportReservedMongoDTO> reportReservedMongoDTOList = mongoService.findMongoData(queryReservedMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_RESERVED, ReportReservedMongoDTO.class);
-
-        // 库存状况数据
-        ReportFbaInventoryPlanningMongoDTO queryPlanningMongoDTO = ReportFbaInventoryPlanningMongoDTO.queryReportId(combineInventoryDTO.getInventoryPlanningReportId());
-        List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList = mongoService.findMongoData(queryPlanningMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningMongoDTO.class);
-
-        // 合并处理
-        reportHandleService.combineInventory(combineInventoryDTO,fbaMyiAllInventoryMongoDTOList, reportReservedMongoDTOList, planningMongoDTOList);
+                if (AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType().equalsIgnoreCase(mongoDTO.getReportType())) {
+                    // 库存状况数据
+                    ReportFbaInventoryPlanningMongoDTO queryPlanningMongoDTO = ReportFbaInventoryPlanningMongoDTO.queryReportId(mongoDTO.getReportId());
+                    List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList = mongoService.findMongoData(queryPlanningMongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_FBA_INVENTORY_PLANNING, ReportFbaInventoryPlanningMongoDTO.class);
+                    if (CollectionUtils.isEmpty(planningMongoDTOList)) {
+                        XxlJobHelper.log("[亚马逊组合库存信息任务] 库存状况数据为空异常,ReportFbaInventoryPlanningMongoDTO={}", JSONUtil.toJsonStr(planningMongoDTOList));
+                        return;
+                    }
+                    // 保存或更新
+                    reportHandleService.saveOrUpdateAllReportFbaInventoryPlanning(mongoDTO, planningMongoDTOList);
+                }
+            } catch (Exception e) {
+                String jsonStr = JSONUtil.toJsonStr(mongoDTO);
+                log.error("[亚马逊组合库存信息任务] 保存或更新异常,MongoDTO={}, error={}", jsonStr, e.getMessage());
+                XxlJobHelper.log("[亚马逊组合库存信息任务] 保存或更新异常,MongoDTO={}, error={}", jsonStr, e.getMessage());
+            }
+        });
 
         XxlJobHelper.log("[亚马逊组合库存信息任务] 任务结束");
         return ReturnT.SUCCESS;
@@ -441,8 +459,7 @@ public class PullAmazonJob {
                 .le(ReportScheduleEntity::getFirstNextReportCreationTime, LocalDateTime.now(ZoneId.systemDefault()))
                 .orderByAsc(ReportScheduleEntity::getId)
                 .last(" LIMIT " + size)
-                .list()
-                ;
+                .list();
         if (CollectionUtil.isEmpty(reportScheduleEntityList)) {
             XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;

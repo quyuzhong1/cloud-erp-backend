@@ -15,6 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class ReportInfoMongoDTO {
 
+    @Panno(findType = PannoEnum.EQ,field = "_id")
+    private String id;
+
     @Panno(findType = PannoEnum.IN, field = "marketplaceIds")
     private List<String> marketplaceIds;
 
@@ -30,6 +33,9 @@ public class ReportInfoMongoDTO {
     @Panno(findType = PannoEnum.EQ, field = "dataEndTime")
     private String dataEndTime;
 
+    /**
+     * 亚马逊报告计划ID
+     */
     @Panno(findType = PannoEnum.EQ, field = "reportScheduleId")
     private String reportScheduleId;
 
@@ -63,6 +69,18 @@ public class ReportInfoMongoDTO {
     @Panno(findType = PannoEnum.EQ, field = "reportCancelStatus")
     private Integer reportCancelStatus;
 
+    /**
+     * 主表report_schedule_id
+     */
+    @Panno(findType = PannoEnum.EQ, field = "mainId")
+    private String mainId;
+
+    /**
+     * 店铺ID
+     */
+    @Panno(findType = PannoEnum.EQ, field = "shopId")
+    private String shopId;
+
     public ReportInfoMongoDTO(String reportId) {
         this.reportId = reportId;
     }
@@ -71,6 +89,25 @@ public class ReportInfoMongoDTO {
         ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
         reportMongoDTO.setReportId(reportId);
         return reportMongoDTO;
+    }
+
+    public static ReportInfoMongoDTO getId(String id) {
+        ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
+        reportMongoDTO.setId(id);
+        return reportMongoDTO;
+    }
+
+    public static ReportInfoMongoDTO reportHandleStatus(Integer reportHandleStatus) {
+        ReportInfoMongoDTO reportMongoDTO = new ReportInfoMongoDTO();
+        reportMongoDTO.setReportHandleStatus(reportHandleStatus);
+        return reportMongoDTO;
+    }
+
+    public static ReportInfoMongoDTO reportHandleStatusAndDone() {
+        ReportInfoMongoDTO mongoDTO = new ReportInfoMongoDTO();
+        mongoDTO.setReportHandleStatus(0);
+        mongoDTO.setProcessingStatus("DONE");
+        return mongoDTO;
     }
 
 }

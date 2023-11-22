@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,6 +18,7 @@ import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.FbaInventoryReservedEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
 import com.erp.server.wms.service.FbaInventoryReservedService;
 import com.erp.server.wms.service.FbaInventoryService;
@@ -24,12 +26,14 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaInventoryDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,7 +69,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<FbaInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
@@ -80,6 +84,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO.getParams());
         return summaryNumber;
     }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -92,12 +97,12 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
         log.info("开始新增FBA库存");
         boolean save = super.save(fbaInventoryEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("FBA库存保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA库存" , fbaInventoryEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA库存", fbaInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, fbaInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -105,27 +110,27 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(FbaInventoryDTO.UpdateDTO updateDTO) {
         FbaInventoryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存"));
-        FbaInventoryEntity fbaInventoryEntity =  BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存"));
+        FbaInventoryEntity fbaInventoryEntity = BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
 
         // 数据处理
         handleData(fbaInventoryEntity);
         log.info("编辑 开始修改FBA库存数据，id：【{}】", old.getId());
         boolean save = super.updateById(fbaInventoryEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("FBA库存保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录FBA库存日志数据，id：【{}】", fbaInventoryEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
+        log.info("编辑 开始记录FBA库存日志数据，id：【{}】", fbaInventoryEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, fbaInventoryEntity, null, fbaInventoryEntity.getId(), msg);
         return Boolean.TRUE;
@@ -133,16 +138,16 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(FbaInventoryEntity fbaInventoryEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 
     @Override
     public void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response) {
         List<FbaInventoryDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         // 数据处理
@@ -189,11 +194,57 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList) {
-        boolean result = this.saveBatch(inventoryEntityList);
-        if (!result){
-            throw new ServiceException("【FbaInventoryEntity】批量保存失败");
+        // 新增的列表
+        List<FbaInventoryEntity> newSaveBatch = new LinkedList<>();
+        // 更新的列表
+        List<FbaInventoryEntity> newUpdateBatch = new LinkedList<>();
+
+        for (FbaInventoryEntity newEntity : inventoryEntityList) {
+            FbaInventoryEntity oldEntity = this.getByAttribute(newEntity.getAsin(), newEntity.getMsku(), newEntity.getFnSku());
+            if (null == oldEntity) {
+                newSaveBatch.add(newEntity);
+            } else {
+                // 时间数据滞后忽略更新
+                if (newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
+                    log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
+                    continue;
+                }
+                FbaInventoryEntity updateEntity = WmsFbaInventoryConverter.INSTANCE.newCombineOld(oldEntity, newEntity);
+                newUpdateBatch.add(updateEntity);
+            }
         }
+
+        // 批量保存
+        if (!CollectionUtils.isEmpty(newSaveBatch)){
+            boolean result = this.saveBatch(newSaveBatch);
+            if (!result) {
+                throw new ServiceException("【FbaInventoryEntity】批量保存失败");
+            }
+        }
+
+        // 批量更新
+        if (!CollectionUtils.isEmpty(newUpdateBatch)){
+            boolean result = this.updateBatchById(newUpdateBatch);
+            if (!result) {
+                throw new ServiceException("【FbaInventoryEntity】批量更新失败");
+            }
+        }
+
         return true;
+    }
+
+    @Override
+    public FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku) {
+        if (StringUtils.isBlank(asin) || StringUtils.isBlank(mSku) || StringUtils.isBlank(fnSku)) {
+            String msg = StrUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}", asin, mSku, fnSku);
+            throw new ServiceException(msg);
+        }
+        return lambdaQuery()
+                .eq(FbaInventoryEntity::getAsin, asin)
+                .eq(FbaInventoryEntity::getMsku, mSku)
+                .eq(FbaInventoryEntity::getFnSku, fnSku)
+                .last("LIMIT 1")
+                .one();
     }
 
 }

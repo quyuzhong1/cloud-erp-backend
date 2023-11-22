@@ -200,10 +200,6 @@ public interface MongoTableNameContant {
      */
     String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
 
-    /**
-     * 亚马逊库存组合主记录表
-     */
-    String REPORT_AMAZON_COMBINE_INVENTORY = "report_amazon_combine_inventory";
 
     /**
      * 根据任务 key 获取表名
