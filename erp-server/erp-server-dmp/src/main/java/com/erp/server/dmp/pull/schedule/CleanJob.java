@@ -42,20 +42,21 @@ public class CleanJob {
     public ReturnT skuCostClean(){
         String jobParam = XxlJobHelper.getJobParam();
         //默认now表示用当前时间，不是now就用第二个参数的日期
-        String flag = "now";
-        List<LocalDate> localDateList = new ArrayList<>();
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now();
         if(StrUtil.isNotBlank(jobParam)){
             XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
-            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
-            flag = jsonParam.getStr("flag", "now");
-            JSONArray listDate = jsonParam.getJSONArray("listDate");
-            for (Object o : listDate) {
-                LocalDate ldt = LocalDate.parse(o.toString());
-                localDateList.add(ldt);
+            String[] listDateArray = jobParam.split(",");
+            if (1 == listDateArray.length) {
+                startDate = LocalDate.parse(listDateArray[0]);
+            }
+            if (listDateArray.length > 1) {
+                startDate = LocalDate.parse(listDateArray[0]);
+                endDate = LocalDate.parse(listDateArray[1]);
             }
         }
-
-        dmpSkuCostService.syncPurchaseOrderSkuCost(flag, localDateList);
+        List<LocalDate> localDateList = Arrays.asList(startDate, endDate);
+        dmpSkuCostService.syncPurchaseOrderSkuCost(localDateList);
         return ReturnT.SUCCESS;
     }
 

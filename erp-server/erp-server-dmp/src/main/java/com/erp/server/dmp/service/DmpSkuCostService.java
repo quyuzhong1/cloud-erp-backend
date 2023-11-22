@@ -22,7 +22,7 @@ public interface DmpSkuCostService extends SuperService<DmpSkuCostEntity> {
      * @Date 2023/9/13 18:30
      * @return void
      **/
-    void syncPurchaseOrderSkuCost(String flag, List<LocalDate> localDateList);
+    void syncPurchaseOrderSkuCost(List<LocalDate> localDateList);
 
     /**
      * @description: 根据sku编码集合清洗成本数据
