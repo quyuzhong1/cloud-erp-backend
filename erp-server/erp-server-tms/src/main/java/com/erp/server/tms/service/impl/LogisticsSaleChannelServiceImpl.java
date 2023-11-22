@@ -136,6 +136,16 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     }
 
     @Override
+    public void updateSaleChannelByAuthId(String authId,String logisticsPlatform,Integer channelStatus) {
+        if (Objects.nonNull(channelStatus) && StringUtils.isNotEmpty(authId) && StringUtils.isNotEmpty(logisticsPlatform)){
+            lambdaUpdate().eq(LogisticsSaleChannelEntity::getAuthId, authId)
+                    .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsPlatform)
+                    .eq(LogisticsSaleChannelEntity::getIsDeleted,false)
+                    .set(LogisticsSaleChannelEntity::getChannelStatus, channelStatus).update();
+        }
+    }
+
+    @Override
     public List<SaleChannelDTO> listByType(String platformType) {
         return baseMapper.listByType(platformType);
     }

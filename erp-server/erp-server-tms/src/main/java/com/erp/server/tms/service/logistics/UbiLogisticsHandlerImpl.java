@@ -5,6 +5,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticsPlatformResultEnum;
@@ -285,7 +286,7 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                                                     .setSupplierCode(serviceCataLog.getServiceProviderCode())
                                                     .setSupplierName(serviceCataLog.getServiceProvider())
                                                     .setLogisticsPlatform(LogisticsPlatformEnum.UBI.getCode())
-                                                    .setChannelStatus(0)
+                                                    .setChannelStatus(MathUtil.ZERO)
                                                     .setDestinationCountry(destination.getCountry())
                                                     .setOriginCountry(origin.getCountry())
                                                     .setShipmentMethod(serviceOption);

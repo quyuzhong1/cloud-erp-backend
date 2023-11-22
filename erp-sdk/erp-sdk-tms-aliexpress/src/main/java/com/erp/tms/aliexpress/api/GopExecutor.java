@@ -35,6 +35,7 @@ public class GopExecutor extends BaseExecutor{
         commonParams.put("sign_method", this.signMethod);
         commonParams.put("access_token", accessToken);
         commonParams.put("partner_id", this.sdkVersion);
+        commonParams.put("simplify", Boolean.TRUE.toString());
         if (isDebugEnabled())
             commonParams.put("debug", Boolean.valueOf(true));
         requestContext.setCommonParams(commonParams);
