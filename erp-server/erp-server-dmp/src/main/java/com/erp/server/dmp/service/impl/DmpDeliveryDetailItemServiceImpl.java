@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -124,6 +125,9 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             splitSkuDTO.setAmountAfter(dmpDeliveryDetailItemEntity.getAmount());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
+            if (CollectionUtil.isEmpty(splitSkuDTOS)){
+                continue;
+            }
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpDeliveryDetailItemEntity entity = new DmpDeliveryDetailItemEntity();
                 BeanMapper.copy(dmpDeliveryDetailItemEntity, entity);
