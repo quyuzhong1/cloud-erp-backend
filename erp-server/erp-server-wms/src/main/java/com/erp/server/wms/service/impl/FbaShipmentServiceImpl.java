@@ -396,9 +396,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
             detailDto.setProductName(skuVO.getSkuName());
             detailDto.setNetWeight(skuVO.getNetWeight());
-            //已发货数量
-            Integer useDeliveryQty = entities.stream().filter(req -> req.getSourceDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
+
+            //获取已出库数量（排除此单出库数量）
+            Integer useDeliveryQty = entities.stream()
+                    .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                            && req.getSourceDetailId().equals(detailEntity.getId())
+                            && !req.getId().equals(detailEntity.getId()))
+                    .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
+                    .sum();
             detailDto.setUseDeliveryQty(useDeliveryQty);
+
             //拆分产品尺寸
             splitProductSizeView(detailDto, skuVO.getProductSize());
             //库存sku
