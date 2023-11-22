@@ -15,4 +15,12 @@ import java.io.Serializable;
 @Data
 public class LabelResponse implements Serializable {
     private String errorDesc;
+    @JSONField(name = "Content-Disposition")
+    private String content;
+    @JSONField(name = "body")
+    private String body;
+    @JSONField(name = "StatusCode")
+    private String statusCode;
+    @JSONField(name = "Content-Type")
+    private String contentType;
 }

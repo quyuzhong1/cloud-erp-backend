@@ -29,8 +29,12 @@ public class YanWenLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public YanWenLogisticsHandlerImplTest(){
-        authMap.put("clientId","100000");
-        authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
+        //测试环境账号
+//        authMap.put("clientId","100000");
+//        authMap.put("clientSecret","D6140AA383FD8515B09028C586493DDB");
+        //正式环境账号
+        authMap.put("clientId","30114979");
+        authMap.put("clientSecret","62854821B3B261983589ACFE94C7D652");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = yanWenLogisticsHandler.getLogisticsAuthConfig("");

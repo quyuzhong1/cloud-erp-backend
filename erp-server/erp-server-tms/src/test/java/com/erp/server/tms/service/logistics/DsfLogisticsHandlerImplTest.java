@@ -35,8 +35,10 @@ public class DsfLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public DsfLogisticsHandlerImplTest(){
-        authMap.put("clientId","5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d");
-        authMap.put("clientSecret","b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad");
+//        authMap.put("clientId","5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d");
+//        authMap.put("clientSecret","b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad");
+        authMap.put("clientId","fad2854e-93a7-4598-95ff-cb60557dbc0a");
+        authMap.put("clientSecret","0e91ca81-22f8-4fce-95d1-18ed6269604b");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){

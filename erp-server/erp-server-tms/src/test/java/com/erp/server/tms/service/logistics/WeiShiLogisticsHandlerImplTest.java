@@ -31,8 +31,12 @@ public class WeiShiLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public WeiShiLogisticsHandlerImplTest(){
-        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
-        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        //测试环境账号
+//        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+//        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        //正式环境账号
+        authMap.put("clientId","d7d0bfc63ecd2fc453092e64a373292d");
+        authMap.put("clientSecret","d7d0bfc63ecd2fc453092e64a373292d6b14e5ecef56ee35aeffee5cd96930a8");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){

@@ -115,7 +115,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 //        addressDTO.setRefund(addressDTO.getSender());
         addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         OrderRequest orderRequest = OrderRequest.builder()
-                .pickup_type("DOOR_PICKUP")
+                .pickup_type(logisticsOrderVO.getPickupType())
                 .declareProducts(declareProducts)
                 .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
                 .domestic_logistics_company_id(-1L)
@@ -222,10 +222,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
                 //TODO 结果："http://bss-fss.i4px.com/fpx-print-label-e1298724-0b8d-4be3-8238-bd7a96d9874b.pdf" 需要考虑 pdf转图片
-
+                String prefix = "data:application/pdf;base64,";
                 response = LogisticsPrintLabelResponse.builder()
                         .transportNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getTransportNo).collect(Collectors.toList()))
-                        .base64(labelResponse.getErrorDesc()).build();
+                        .base64(prefix + labelResponse.getBody()).build();
                 response.success();
                 responses.add(response);
                 return success(responses);

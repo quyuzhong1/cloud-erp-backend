@@ -100,8 +100,9 @@ public class AliExpressLogisticsHandlerImplTest {
         final LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder()
                 .authMap(authMap)
                 .orderSource("ERP")
+                .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("8179975303466962")
+                .deliveryNo("580555992124")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("965656546@qq.con")
@@ -139,7 +140,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("8179975303466962");
+        logisticsQueryVOList.setDeliveryNo("580555992124");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
@@ -148,7 +149,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setTransportNo("8179975303466962");
+        logisticsQueryVO2.setTransportNo("580555992124");
         logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);

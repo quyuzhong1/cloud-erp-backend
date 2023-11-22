@@ -35,9 +35,12 @@ public class UBILogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public UBILogisticsHandlerImplTest(){
-        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
-        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+//        //测试环境账号
+//        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
+//        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+        //正式环境账号
+        authMap.put("clientId","pcloTVPCXZCD5G-RRlhBfR");
+        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfig("");
