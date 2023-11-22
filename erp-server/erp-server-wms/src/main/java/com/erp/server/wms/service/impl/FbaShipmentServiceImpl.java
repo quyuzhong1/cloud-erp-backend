@@ -379,8 +379,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<String> skuNoList = fbaShipmentDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
 
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
-        //获取库存sku信息
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
 
         //根据sku查询拥有的子sku
         List<String> skuIdList = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -409,10 +407,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             //拆分产品尺寸
             splitProductSizeView(detailDto, skuVO.getProductSize());
-            //库存sku
-            String stockSku = listStockSkuNoByProductSkuNoViews.stream().filter(req -> req.getProductSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
-            detailDto.setStockSku(stockSku);
+
+
 
             //来源详情id
             detailDto.setSourceDetailId(detailEntity.getId());
@@ -897,6 +893,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO skuMappingBatch(String id) {
         FbaShipmentEntity entity = this.getById(id);
+        List<FbaShipmentDetailEntity> oldList = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
@@ -916,7 +913,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
 
-                FbaShipmentDetailEntity old = fbaShipmentDetailEntities.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+                FbaShipmentDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
                 }

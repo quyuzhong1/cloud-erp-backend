@@ -248,7 +248,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 throw new ServiceException(ApiError.ERROR_SHIPPING_CITY_NOT_NULL);
             }
 
-            Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getRegion())));
+            Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToCountry()).concat(obj.getRegion())));
             for (Map.Entry<String, List<ShippingTemplateRuleEntity>> entry : map.entrySet()) {
                 List<ShippingTemplateRuleEntity> value = entry.getValue();
                 //国家名称

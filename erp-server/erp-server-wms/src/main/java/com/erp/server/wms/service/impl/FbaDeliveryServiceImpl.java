@@ -183,7 +183,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
         TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
-        wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
+        wmsAttachmentService.batchSaveNotDel(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
 
         //新增物流信息
         fbaDeliveryLogisticsService.update(updateDTO.getLogisticsView(), fbaDeliveryEntity.getId());
