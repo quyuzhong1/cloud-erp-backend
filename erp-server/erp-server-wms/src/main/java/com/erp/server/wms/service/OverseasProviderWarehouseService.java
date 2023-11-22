@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外物流商仓库 服务类
@@ -36,4 +38,13 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * 根据第三方仓库信息查询
      **/
     OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode);
+
+    /**
+     * 根据主表id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/22 15:52
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.OverseasProviderWarehouseEntity>
+     **/
+    List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds);
 }
