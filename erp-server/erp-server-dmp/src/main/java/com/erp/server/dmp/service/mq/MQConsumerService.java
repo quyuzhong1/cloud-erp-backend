@@ -72,9 +72,6 @@ public class MQConsumerService {
     @Resource
     private DmpPullTaskService dmpPullTaskService;
 
-    @Resource
-    private MQProducerService mqProducerService;
-
     @Autowired
     private DmpFbaDeliveryService dmpFbaDeliveryService;
 
@@ -98,22 +95,26 @@ public class MQConsumerService {
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
         public void onMessage(DmpOrderInfoEntity ext) {
-            log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpOrderInfoService.checkOrder(ext);
-            MapUtil mapUtil = getMapParam();
+            try{
+                log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
+                // 调用订单写入与更新
+                dmpOrderInfoService.checkOrder(ext);
+                MapUtil mapUtil = getMapParam();
 
-            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getSalesRecordNumber());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-            }
-            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
-            }
-            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+                if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getSalesRecordNumber());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+                }
+                if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+                }
+                if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+                }
+            }catch (Exception e){
+                log.error("rocketmq 监听到销售订单消息异常：entity={}", JSONUtil.toJsonStr(ext), e);
             }
         }
     }
@@ -161,21 +162,25 @@ public class MQConsumerService {
     public class ConsumerErpRefundOrder implements RocketMQListener<DmpRefundInfoEntity> {
         @Override
         public void onMessage(DmpRefundInfoEntity ext) {
-            log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpRefundInfoService.checkOrder(ext);
-            MapUtil mapUtil = getMapParam();
-            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
-            }
-            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
-            }
-            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getRefundCode());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
+            try{
+                log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
+                // 调用订单写入与更新
+                dmpRefundInfoService.checkOrder(ext);
+                MapUtil mapUtil = getMapParam();
+                if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+                }
+                if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = new OrderMongoDTO(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
+                }
+                if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getRefundCode());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
+                }
+            }catch (Exception e){
+                log.error("rocketmq 监听到退款订单消息异常：param ={}", JSONUtil.toJsonStr(ext), e);
             }
         }
     }
