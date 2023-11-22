@@ -45,6 +45,42 @@
         is_deleted,
         main_id, dict_code, dict_name, calculation_method, calculation_unit, cost_setting_value, extend_json, remark
     </sql>
+    
+    <!-- 体积重-->
+    <sql id="volume_weight_sql">
+        <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.volume} / st.volume_setting > str.start_weight and str.end_weight >= #{params.volume} / st.volume_setting
+            else
+            #{params.volume} / st.volume_setting * 1000 > str.start_weight and str.end_weight >= #{params.volume} / st.volume_setting * 1000
+            end
+        </if>
+        <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.volume} / st.volume_setting / 1000 > str.start_weight and str.end_weight >= #{params.volume} / st.volume_setting / 1000
+            else
+            #{params.volume} / st.volume_setting  > str.start_weight and str.end_weight >= #{params.volume} / st.volume_setting
+            end
+        </if>
+    </sql>
+    <!-- 实重-->
+    <sql id="net_weight_sql">
+        <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
+            else
+            #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
+            end
+        </if>
+        <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+            else
+            #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
+            end
+        </if>
+    </sql>
+
     <!-- 运费计算列表 -->
     <select id="paging" resultMap="BaseResultMap">
         select
@@ -84,20 +120,17 @@
         <where>
             ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
             DAY' or st.expire_date is null)
-            <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
-                and case st.weight_unit when 'kg' then
-                #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
-                   else
-                #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
-                end
-            </if>
-            <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
-                and case st.weight_unit when 'kg' then
-                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
-                    else
-                #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
-                end
-            </if>
+            and case lc.fee_rule when 'billingWeight' then
+                case when #{params.volume} / st.volume_setting > #{params.weight}   then
+                        <include refid="volume_weight_sql"></include>
+                     else
+                        <include refid="net_weight_sql"></include>
+                     end
+                     when 'netWeight' then
+                        <include refid="net_weight_sql"></include>
+                     when 'volumeWeight' then
+                        <include refid="volume_weight_sql"></include>
+                     end
             <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
                 and str.from_country in
                 <foreach collection="params.fromCountryList" open="(" close=")" separator="," item="item">
@@ -135,6 +168,8 @@
         ls.supplier_name as logisticsName,
         lc.name as channelName,
         lc.fee_rule as feeRule,
+        lc.is_api_sign as isApiSign,
+        lc.is_api_insurance as isApiInsurance,
         st.id as templateId,
         st.billing_method as billingMethod,
         str.id as templateRuleId,
@@ -166,20 +201,17 @@
         <where>
             ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
             DAY' or st.expire_date is null)
-            <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
-                and case st.weight_unit when 'kg' then
-                #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
-                else
-                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
-                end
-            </if>
-            <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
-                and case st.weight_unit when 'kg' then
-                #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
-                else
-                #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
-                end
-            </if>
+            and case lc.fee_rule when 'billingWeight' then
+            case when #{params.volume} / st.volume_setting > #{params.weight}   then
+            <include refid="volume_weight_sql"></include>
+            else
+            <include refid="net_weight_sql"></include>
+            end
+            when 'netWeight' then
+            <include refid="net_weight_sql"></include>
+            when 'volumeWeight' then
+            <include refid="volume_weight_sql"></include>
+            end
             <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
                 and str.from_country in
                 <foreach collection="params.fromCountryList" open="(" close=")" separator="," item="item">

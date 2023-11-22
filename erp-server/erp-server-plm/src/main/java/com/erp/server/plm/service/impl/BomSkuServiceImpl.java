@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * bom 与sku关系表(BomRefSku)表服务实现类
@@ -78,6 +79,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         if (CollectionUtils.isNotEmpty(saveBatchList)) {
             this.saveBatch(saveBatchList);
+            //标记SKU
+            List<String> skuIds = saveBatchList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+            productDetailService.updateOccupyStatus(skuIds);
         }
 
     }

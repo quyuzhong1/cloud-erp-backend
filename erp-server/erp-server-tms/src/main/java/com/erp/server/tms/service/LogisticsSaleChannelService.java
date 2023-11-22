@@ -40,6 +40,13 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
     Boolean saveOrUpdateSaleChannel(LogisticsSaleChannelEntity logisticsSaleChannelEntity);
 
     /**
+     * 根据授权和平台类型更新数据启用状态
+     * @param authId
+     * @param logisticsPlatform
+     * @param channelStatus
+     */
+    void updateSaleChannelByAuthId(String authId,String logisticsPlatform,Integer channelStatus);
+    /**
      * 根据类型获取列表
      * @param platformType
      * @return

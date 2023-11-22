@@ -396,9 +396,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
             detailDto.setProductName(skuVO.getSkuName());
             detailDto.setNetWeight(skuVO.getNetWeight());
-            //已发货数量
-            Integer useDeliveryQty = entities.stream().filter(req -> req.getSourceDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getDeliveryQty()).sum();
+
+            //获取已出库数量（排除此单出库数量）
+            Integer useDeliveryQty = entities.stream()
+                    .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                            && req.getSourceDetailId().equals(detailEntity.getId())
+                            && !req.getId().equals(detailEntity.getId()))
+                    .mapToInt(FbaDeliveryDetailEntity::getDeliveryQty)
+                    .sum();
             detailDto.setUseDeliveryQty(useDeliveryQty);
+
             //拆分产品尺寸
             splitProductSizeView(detailDto, skuVO.getProductSize());
             //库存sku
@@ -907,8 +914,69 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus) {
-        return lambdaUpdate().in(FbaShipmentEntity::getId, ids).set(FbaShipmentEntity::getDeliveryStatus, deliveryStatus).update();
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deliveryStatus(FbaDeliveryEntity deliveryEntity) {
+        FbaShipmentEntity shipmentEntity = this.getById(deliveryEntity.getSourceId());
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(deliveryEntity.getSourceId()));
+        //查询本次发货数量
+        List<FbaDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+
+        //查询所有关联的发货单
+        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listBySourceDetailIds(detailIds);
+
+        //数量计算
+        for (FbaShipmentDetailEntity fbaShipmentDetailEntity : fbaShipmentDetailEntities) {
+            int sumDeliveryQty = detailEntityList.stream()
+                    .filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .mapToInt(req -> req.getDeliveryQty())
+                    .sum();
+            FbaDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(new FbaDeliveryDetailEntity());
+            //发货数量=总发货数量+本次发货数量
+            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty + detailEntity.getDeliveryQty());
+            //收发差异=收货数量-总发货数量-本次发货数量
+            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty - detailEntity.getDeliveryQty());
+        }
+        //完结不修改状态
+        if (!FbaDeliveryStatusEnum.IS_OVER.getCode().equals(shipmentEntity.getDeliveryStatus())) {
+            lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.SHIPPED.getCode()).update();
+        }
+        return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deliveryDisApprove(FbaDeliveryEntity deliveryEntity) {
+        FbaShipmentEntity shipmentEntity = this.getById(deliveryEntity.getSourceId());
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(deliveryEntity.getSourceId()));
+        //查询本次发货数量
+        List<FbaDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailService.listByMainIds(Arrays.asList(deliveryEntity.getId()));
+
+        //查询所有关联的发货单
+        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<FbaDeliveryDetailEntity> detailEntityList = fbaDeliveryDetailService.listBySourceDetailIds(detailIds);
+
+        //数量计算
+        for (FbaShipmentDetailEntity fbaShipmentDetailEntity : fbaShipmentDetailEntities) {
+            int sumDeliveryQty = detailEntityList.stream()
+                    .filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())
+                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .mapToInt(req -> req.getDeliveryQty())
+                    .sum();
+            FbaDeliveryDetailEntity deliveryDetailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(new FbaDeliveryDetailEntity());
+            //发货数量=总发货数量-本次反审的数量
+            fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty - deliveryDetailEntity.getDeliveryQty());
+            //收发差异=收货数量-总发货数量+本次反审的发货数量
+            fbaShipmentDetailEntity.setDiffQty(fbaShipmentDetailEntity.getReceiveQty() - sumDeliveryQty + deliveryDetailEntity.getDeliveryQty());
+        }
+        List<FbaDeliveryEntity> deliveryEntities = fbaDeliveryService.listBySourceIds(Arrays.asList(shipmentEntity.getId()));
+        long count = deliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        //完结不修改状态
+        if (!FbaDeliveryStatusEnum.IS_OVER.getCode().equals(shipmentEntity.getDeliveryStatus()) && count <= 1) {
+            lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.UN_SHIPPED.getCode()).update();
+        }
+        return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
     }
 
     /**

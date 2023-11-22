@@ -393,21 +393,21 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
                 break;
             }
             if (ShippingSideEnum.LONGEST_EDGE.getCode().equals(costSettingEntity.getCode())) {
-                isFlag =  MathUtil.compareTo(cost,longestEdge) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
+                isFlag =  MathUtil.compareTo(longestEdge,cost) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
                 continue;
             }
             if (ShippingSideEnum.MINOR_EDGE.getCode().equals(costSettingEntity.getCode())) {
-                isFlag =  MathUtil.compareTo(cost,minorEdge) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
+                isFlag =  MathUtil.compareTo(minorEdge,cost) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
                 continue;
             }
             if (ShippingSideEnum.EDGEL_SUM.getCode().equals(costSettingEntity.getCode())) {
-                isFlag =  MathUtil.compareTo(cost,edgelSum) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
+                isFlag =  MathUtil.compareTo(edgelSum,cost) > MathUtil.ZERO ? Boolean.TRUE :Boolean.FALSE;
                 continue;
             }
             if (ShippingSideEnum.ANY_EDGE.getCode().equals(costSettingEntity.getCode())) {
-                isFlag =  (MathUtil.compareTo(cost,length) > MathUtil.ZERO
-                            || MathUtil.compareTo(cost,width) > MathUtil.ZERO
-                            || MathUtil.compareTo(cost,height) > MathUtil.ZERO) ? Boolean.TRUE :Boolean.FALSE;
+                isFlag =  (MathUtil.compareTo(length,cost) > MathUtil.ZERO
+                            || MathUtil.compareTo(width,cost) > MathUtil.ZERO
+                            || MathUtil.compareTo(height,cost) > MathUtil.ZERO) ? Boolean.TRUE :Boolean.FALSE;
                 continue;
             }
         }

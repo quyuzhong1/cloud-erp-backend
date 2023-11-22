@@ -426,12 +426,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        //已经有签收数量的发货单不允许反审核
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
-        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
-        if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
+
+        //如果是FBA货件来源，反审核修改货件发货状态和发货数量
+        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
+            FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(shipmentEntity)) {
+                fbaShipmentService.deliveryDisApprove(entity);
+            }
         }
 
         //查找发货单下推的分步式调出单自动反审并删除
@@ -462,6 +463,14 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        //已经有签收数量的发货单不允许反审核
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
+        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
+        if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
+            throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
+        }
+
         return true;
     }
 
@@ -559,8 +568,8 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             //如果是FBA货件来源，审核通过修改货件发货状态为已发货
             if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
                 FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(shipmentEntity) && FbaDeliveryStatusEnum.UN_SHIPPED.getCode().equals(shipmentEntity.getDeliveryStatus())) {
-                    fbaShipmentService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
+                if (ObjectUtil.isNotEmpty(shipmentEntity)) {
+                    fbaShipmentService.deliveryStatus(entity);
                 }
             }
 
@@ -710,7 +719,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                     .distinct()
                     .findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
-            fbaDeliveryDetailEntity.setStockSku(stockSku);
+            detailVie.setStockSku(stockSku);
 
             detailViews.add(detailVie);
         }

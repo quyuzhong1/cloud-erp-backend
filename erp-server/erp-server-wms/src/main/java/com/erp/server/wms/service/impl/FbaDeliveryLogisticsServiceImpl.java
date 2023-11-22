@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -75,10 +77,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         if(!save) {
             throw new ServiceException("FBA发货单物流信息单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单物流信息单" , fbaDeliveryLogisticsEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryLogisticsEntity.getId(), "新增操作");
         return fbaDeliveryLogisticsEntity.getId();
     }
 
@@ -99,11 +97,6 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
         if(!save) {
             throw new ServiceException("FBA发货单物流信息单保存失败");
         }
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录FBA发货单物流信息单日志数据，id：【{}】", fbaDeliveryLogisticsEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), fbaDeliveryLogisticsEntity.getId(), "FBA发货单物流信息单");
-        operateLogService.addModuleOperateLogByObj(old, fbaDeliveryLogisticsEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(), fbaDeliveryLogisticsEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -131,6 +124,13 @@ public class FbaDeliveryLogisticsServiceImpl extends SuperServiceImpl<FbaDeliver
     private void handleData(FbaDeliveryLogisticsEntity fbaDeliveryLogisticsEntity, String mainId, String code) {
         fbaDeliveryLogisticsEntity.setMainId(mainId);
         fbaDeliveryLogisticsEntity.setDeliveryCode(code);
+
+        //修改操作日志
+        if (StringUtils.isNotBlank(fbaDeliveryLogisticsEntity.getId())) {
+            FbaDeliveryLogisticsEntity old = this.getById(fbaDeliveryLogisticsEntity.getId());
+            operateLogService.addModuleOperateLogByObj(old,fbaDeliveryLogisticsEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getDeliveryCode()));
+        }
+
         //更新物流信息
         this.saveUpdateLogistics(Arrays.asList(fbaDeliveryLogisticsEntity));
     }

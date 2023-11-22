@@ -5,6 +5,7 @@ import com.erp.tms.aliexpress.util.IopHashMap;
 import com.erp.tms.aliexpress.util.IopUtils;
 import com.erp.tms.aliexpress.util.RequestContext;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author zdy
@@ -35,9 +36,13 @@ public class TopExecutor extends BaseExecutor{
         commonParams.put("session", accessToken);
         commonParams.put("partner_id", this.sdkVersion);
         commonParams.put("sign_method", this.signMethod);
-        String simplify = (String)params.get("simplify");
-        if (Boolean.TRUE.toString().equals(simplify))
+        if (Objects.nonNull(params)){
+            String simplify = (String)params.get("simplify");
+            if (Boolean.TRUE.toString().equals(simplify))
+                commonParams.put("simplify", Boolean.TRUE.toString());
+        }else {
             commonParams.put("simplify", Boolean.TRUE.toString());
+        }
         if (isDebugEnabled())
             commonParams.put("debug", Boolean.valueOf(true));
         requestContext.setCommonParams(commonParams);

@@ -49,7 +49,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     * 渠道状态0正常1.暂停2.已关闭（默认0）
     */
     @TableField("channel_status")
-    private Integer channelStatus = 0;
+    private Integer channelStatus;
     /**
     * 渠道供应商名称
     */
