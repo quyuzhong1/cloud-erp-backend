@@ -269,6 +269,7 @@ public class PullAmazonJob {
             XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
         }
+        XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 下载开始");
         entityList.forEach(dto -> {
             try {
                 // 下载和处理详情
