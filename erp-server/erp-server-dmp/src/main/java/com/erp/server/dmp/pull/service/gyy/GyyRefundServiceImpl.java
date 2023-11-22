@@ -9,7 +9,9 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -153,7 +155,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         }
         for (GyyRefundEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }

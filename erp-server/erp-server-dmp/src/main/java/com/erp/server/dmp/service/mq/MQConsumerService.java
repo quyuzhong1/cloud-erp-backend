@@ -1,5 +1,8 @@
 package com.erp.server.dmp.service.mq;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
@@ -34,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -114,7 +118,7 @@ public class MQConsumerService {
                     finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
                 }
             }catch (Exception e){
-                log.error("rocketmq 监听到销售订单消息异常：entity={}", JSONUtil.toJsonStr(ext), e);
+                log.error("rocketmq 监听到销售订单消息异常：", e);
             }
         }
     }
@@ -180,7 +184,7 @@ public class MQConsumerService {
                     finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
                 }
             }catch (Exception e){
-                log.error("rocketmq 监听到退款订单消息异常：param ={}", JSONUtil.toJsonStr(ext), e);
+                log.error("rocketmq 监听到退款订单消息异常", e);
             }
         }
     }
@@ -427,6 +431,7 @@ public class MQConsumerService {
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
+            log.warn("mongo暂未写入数据, 请稍后重试");
             return;
 //            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
         }
@@ -438,7 +443,7 @@ public class MQConsumerService {
     private static MapUtil getMapParam() {
         CleanBaseDTO updateParam = new CleanBaseDTO();
         updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
-        updateParam.setLastPushTime(LocalDateTime.now().toString());
+        updateParam.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
         return mapUtil;
     }

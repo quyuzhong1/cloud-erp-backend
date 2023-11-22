@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -95,7 +97,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
             List<GyySkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_SKU, GyySkuInfoEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now().toString());
+            entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -130,7 +132,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
         }
         for (GyySkuInfoEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }

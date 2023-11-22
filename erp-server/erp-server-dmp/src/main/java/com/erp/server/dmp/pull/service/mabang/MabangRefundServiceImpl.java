@@ -7,7 +7,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -109,7 +111,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
             List<RefundOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now().toString());
+            entity.setDownloadTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -160,7 +162,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         }
         for (RefundOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
+            mongoDatum.setLastPushTime(LocalDateUtil.formatTime(LocalDateTime.now(), DateUtil.fmt));
             updateAndSaveDb(mongoDatum);
         }
     }
