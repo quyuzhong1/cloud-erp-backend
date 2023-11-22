@@ -57,4 +57,122 @@
         WHERE is_deleted=FALSE
         GROUP BY status
     </select>
+
+    <!--分页查询-->
+    <select id="paging" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$ListDTO">
+        SELECT
+            ra.id,
+            ra.code,
+            ra.type,
+            ra.channel_id,
+            ra.channel_name,
+            ra.status,
+            ra.source_code,
+            rad.sku_id,
+            rad.sku_no,
+            rad.requisition_qty,
+            rad.approve_qty,
+            rad.picking_qty,
+            ra.requisition_warehouse_id,
+            ra.requisition_warehouse_name,
+            ra.from_warehouse_id,
+            ra.from_warehouse_name,
+            ra.to_warehouse_id,
+            ra.to_warehouse_name,
+            ra.handle_user_name,
+            ra.handle_time,
+            ra.create_time
+        FROM requisition_application_detail rad
+        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        WHERE ra.is_deleted = FALSE
+        <!--状态-->
+        <if test="params.tabFlag != null and params.tabFlag != ''">
+            AND ra.status = #{params.tabFlag}
+        </if>
+        <!--单据编号-->
+        <if test="params.code != null and params.code != ''">
+            AND ra.code ilike concat('%',#{params.code}::text,'%')
+        </if>
+        <!--产品编号-->
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND rad.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND rad.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <!--要货类型-->
+        <if test="params.typeList !=null and params.typeList.size>0">
+            AND ra.type IN
+            <foreach collection="params.typeList" item="type" open="(" separator="," close=")">
+                #{type}
+            </foreach>
+        </if>
+        <!--单据编号-->
+        <if test="params.channelName != null and params.channelName != ''">
+            AND ra.channel_name ilike concat('%',#{params.channelName}::text,'%')
+        </if>
+        <!--审核状态-->
+        <if test="params.statusList !=null and params.statusList.size>0">
+            AND ra.status IN
+            <foreach collection="params.statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        <!--单据编号-->
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            AND ra.source_code ilike concat('%',#{params.sourceCode}::text,'%')
+        </if>
+        <!--调出仓库id-->
+        <if test="params.fromWarehouseIdList !=null and params.fromWarehouseIdList.size>0">
+            AND ra.from_warehouse_id IN
+            <foreach collection="params.fromWarehouseIdList" item="fromWarehouseId" open="(" separator="," close=")">
+                #{fromWarehouseId}
+            </foreach>
+        </if>
+        <!--调出仓库id-->
+        <if test="params.toWarehouseIdList !=null and params.toWarehouseIdList.size>0">
+            AND ra.to_warehouse_id IN
+            <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" separator="," close=")">
+                #{toWarehouseId}
+            </foreach>
+        </if>
+        <!--创建人-->
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND ra.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <!--处理人-->
+        <if test="params.handleUserIdList !=null and params.handleUserIdList.size>0">
+            AND ra.handle_user_id IN
+            <foreach collection="params.handleUserIdList" item="handleUserId" open="(" separator="," close=")">
+                #{handleUserId}
+            </foreach>
+        </if>
+        <!--创建时间-->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            and ra.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ra.create_time
+        </if>
+        <!--处理时间-->
+        <if test="params.handleTimeList !=null and params.handleTimeList.size>0">
+            and ra.handle_time >= #{params.handleTimeList[0]} and  (#{params.handleTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ra.handle_time
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ra.create_time desc
+    </select>
 </mapper>

@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
@@ -310,7 +311,7 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 类型
          */
@@ -339,7 +340,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 审核状态
          */
-        private List<String> approveStatusList;
+        private List<String> statusList;
 
         /**
          * 来源单号
@@ -384,7 +385,6 @@ public class RequisitionApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
         /**
          * 主键id
          */
@@ -418,14 +418,14 @@ public class RequisitionApplicationDTO implements Serializable {
         private String channelName;
 
         /**
-         * 审核状态
+         * 状态
          */
-        private String approveStatus;
+        private String status;
 
         /**
-         * 审核状态名称
+         * 状态名称
          */
-        private String approveStatusName;
+        private String statusName;
 
         /**
          * 来源单号

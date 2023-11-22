@@ -61,7 +61,7 @@ public class JmsAmazonSqsConsumer {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.debug("接收到亚马逊SQS通知:{}", textMessage.getText());
         if (BusinessCommonConstants.hasProfile("dev")){
-            // TODO 开发环境暂时过滤
+            // 开发环境暂时过滤
             return ;
         }
 
@@ -89,11 +89,13 @@ public class JmsAmazonSqsConsumer {
             }
             // 查询报告计划ID是否已存在
             ReportScheduleEntity reportScheduleEntity = reportScheduleService.getByReportScheduleId(reportScheduleId);
-//            ReportScheduleEntity reportScheduleEntity = reportScheduleService.getById("1722786406251237379");
-            if (null == reportScheduleEntity) {
-                // 不存在跳过
+            // 非库龄报告的的计划任务不允许为空
+            if (null == reportScheduleEntity &&
+                    !AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
+                // 不存在指定计划任务跳过
                 return;
             }
+
             // 校验报告是否已存在？
             ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
             List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
@@ -137,7 +139,7 @@ public class JmsAmazonSqsConsumer {
         }
 
         //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
-//        message.acknowledge();
+        message.acknowledge();
     }
 
 
@@ -189,12 +191,15 @@ public class JmsAmazonSqsConsumer {
                 oldCombineInventoryDTO.setReservedReportId(report.getReportId());
             }
             // 检查是否存在所有报告IDS
+
             if (StringUtils.isNotBlank(oldCombineInventoryDTO.getMyiAllInventoryReportId()) &&
                     StringUtils.isNotBlank(oldCombineInventoryDTO.getInventoryPlanningReportId()) &&
                     StringUtils.isNotBlank(oldCombineInventoryDTO.getReservedReportId())
             ) {
                 oldCombineInventoryDTO.setCombineStatus(1);
             }
+            // 00:00 非分秒为0的数据时间允许库龄报告为空
+
             // 修改数据
             MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(oldCombineInventoryDTO), MapUtil.class);
             mongoService.updateMongoData(combineInventoryDTO, mapUtil, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
