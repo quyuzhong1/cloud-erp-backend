@@ -62,16 +62,17 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void createOrder(){
         SenderInfo senderInfo = new SenderInfo();
-        senderInfo.setAddressFirst("caifugang 4PX 25-26");
+        senderInfo.setId("440174196461");
+        senderInfo.setAddressFirst("5-8#lift 9th floor buliding 205 xinyang street xintaiyang Industrial Park lin village");
         senderInfo.setContact("contact");
-        senderInfo.setCityName("Shengzhen");
+        senderInfo.setCityName("Dongguan");
         senderInfo.setCompanyName("4PX");
-        senderInfo.setName("Wu Rao");
-        senderInfo.setProvinceName("GuangDong");
-        senderInfo.setTelNumber("13000000000");
-        senderInfo.setEmail("123@q.con");
-        senderInfo.setCountry("CN");
-        senderInfo.setZipCode("515800");
+        senderInfo.setName("chenxuli");
+        senderInfo.setProvinceName("Guangdong Province");
+        senderInfo.setTelNumber("17191087538");
+        senderInfo.setEmail("dhphoto@aliyun.com");
+        senderInfo.setCountry("China");
+        senderInfo.setZipCode("523000");
         LogisticsProductVO logisticsProductVO = new LogisticsProductVO();
         logisticsProductVO.setId("12121232");
         logisticsProductVO.setSkuId("123456");
@@ -87,10 +88,10 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("OTHER_US");
+        logisticsSaleChannel.setCode("CAINIAO_EXPEDITED_ECONOMY");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("155");
-        logisticsSaleChannel.setSupplierName("OTHER_US");
+        logisticsSaleChannel.setSupplierName("CAINIAONNRM");
         LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
 //        logisticsChannel.setCode("S832");
         logisticsChannel.setId("1724614809662599171");
@@ -138,7 +139,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("wj12345167721");
+        logisticsQueryVOList.setDeliveryNo("RE700150389CN");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println(listApiResult);
@@ -147,7 +148,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("wj12345167721");
+        logisticsQueryVO2.setTransportNo("RE700150389CN");
         logisticsQueryVO2.setAuthMap(authMap);
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);

@@ -24,11 +24,11 @@ public class OverseasProviderServiceImplTest {
     @Test
     public void authorizeTest() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.set("appToken","44ac3ae1211d416a080858e57833cc14");
-        jsonObject.set("appKey","fa0c90d7dbb434fa2160209756db677c");
+        jsonObject.set("appToken","7013991264f611e98ea200e01b680258");
+        jsonObject.set("appKey","6ff50abf64f611e98ea200e01b680258");
         OverseasProviderDTO.AuthorizeParamDTO dto = new OverseasProviderDTO.AuthorizeParamDTO();
         dto.setAuthJson(jsonObject);
-        dto.setId("1726457716430561281");
+        dto.setId("1726456935660867586");
         boolean result = overseasProviderService.authorize(dto);
         System.out.println(result);
     }

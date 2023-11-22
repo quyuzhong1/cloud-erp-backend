@@ -24,6 +24,8 @@ import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.erp.tms.aliexpress.model.label.request.LabelRequest;
 import com.erp.tms.aliexpress.model.label.request.WarehouseOrderQuery;
+import com.erp.tms.aliexpress.model.label.response.LabelResponse;
+import com.erp.tms.aliexpress.model.label.response.LabelResult;
 import com.erp.tms.aliexpress.model.order.request.*;
 import com.erp.tms.aliexpress.model.order.response.OrderResponse;
 import com.erp.tms.aliexpress.model.order.response.OrderResult;
@@ -114,13 +116,15 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 //        addressDTO.setRefund(addressDTO.getSender());
         addressDTO.setReceiver(LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO));
         OrderRequest orderRequest = OrderRequest.builder()
+                .pickup_type("DOOR_PICKUP")
                 .declareProducts(declareProducts)
                 .domestic_logistics_company(logisticsOrderVO.getLogisticsSaleChannel().getSupplierName())
                 .domestic_logistics_company_id(-1L)
-                .domestic_tracking_no(logisticsOrderVO.getDeliveryNo())
+//                .domestic_tracking_no(logisticsOrderVO.getDeliveryNo())
                 .package_num(logisticsOrderVO.getParceInfoVO().getTotalQuantity())
                 .trade_order_from(logisticsOrderVO.getOrderSource())
                 .trade_order_id(logisticsOrderVO.getDeliveryNo())
+                .undeliverable_decision("0")
                 .warehouse_carrier_service(logisticsOrderVO.getLogisticsSaleChannel().getCode())
                 //托寄物信息
                 .address_d_t_os(addressDTO)
@@ -195,19 +199,21 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             warehouseOrderQueries.add(warehouseOrderQuery);
         });
         LabelRequest labelRequest = LabelRequest.builder()
-                .print_detail(false)
+                .print_detail(true)
                 .warehouseOrderQueries(warehouseOrderQueries)
                 .build();
-        IopResponse labelList = null;
+        LabelResult labelList = null;
         try {
             labelList = aliExpressShipperService.getLabelList(logisticsGetLabelVO.getAuthMap(), labelRequest);
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            String result = labelList.getResult();
+            LabelResponse labelResponse = JSONObject.parseObject(result, LabelResponse.class);
             //失败
-            if (StringUtils.isBlank(labelList.getCode()) || !Objects.equals("0", labelList.getCode())) {
+            if (Objects.isNull(labelList.getResult()) || Objects.isNull(labelResponse) || !StringUtils.isBlank(labelResponse.getErrorDesc())) {
                 logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(labelList));
-                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), labelList.getCode(), labelList.getMessage());
+                response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), "-1", labelResponse.getErrorDesc());
                 responses.add(response);
                 return failure(responses);
             } else {
@@ -218,7 +224,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
                 response = LogisticsPrintLabelResponse.builder()
                         .transportNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getTransportNo).collect(Collectors.toList()))
-                        .base64(labelList.getBody()).build();
+                        .base64(labelResponse.getErrorDesc()).build();
                 response.success();
                 responses.add(response);
                 return success(responses);

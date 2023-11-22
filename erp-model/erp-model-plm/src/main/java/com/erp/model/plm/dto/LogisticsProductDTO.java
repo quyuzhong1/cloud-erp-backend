@@ -719,9 +719,9 @@ public class LogisticsProductDTO {
         private String salesStatusName;
 
         /**
-         * ENA 吗
+         * EAN 吗
          */
-        private String ena;
+        private String ean;
 
         /**
          * 不含税成本
@@ -862,6 +862,11 @@ public class LogisticsProductDTO {
          */
         private BigDecimal taxRate;
 
+
+        /**
+         * 属性id
+         */
+        private String propertyId;
         /**
          * 物流属性 对应属性
          */

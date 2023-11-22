@@ -15,6 +15,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
@@ -92,6 +93,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Resource
+    private BasicDictService basicDictService;
+
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -117,25 +121,25 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             mainSupplierId = productPurchase.getMainSupplier();
         }
         List<String> supplierIdList = new ArrayList<>(1);
-        if(StringUtils.isNotBlank(mainSupplierId)){
+        if (StringUtils.isNotBlank(mainSupplierId)) {
             supplierIdList.add(mainSupplierId);
         }
         //不含税
-        BigDecimal actualNoTaxCost=BigDecimal.ZERO;
+        BigDecimal actualNoTaxCost = BigDecimal.ZERO;
         //含税
-        BigDecimal actualTaxCost=BigDecimal.ZERO;
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList =CollectionUtils.isNotEmpty(supplierIdList)? scmTaskFeign.listSupplierSkuPrice(supplierIdList):Collections.emptyList();
-        if(CollectionUtils.isNotEmpty(supplierSkuPriceList)){
-            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req ->  req.getSkuId().equals(skuId)).findFirst().orElse(null);
+        BigDecimal actualTaxCost = BigDecimal.ZERO;
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = CollectionUtils.isNotEmpty(supplierIdList) ? scmTaskFeign.listSupplierSkuPrice(supplierIdList) : Collections.emptyList();
+        if (CollectionUtils.isNotEmpty(supplierSkuPriceList)) {
+            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
 
             //不含税价=含税价÷（1+税率）
             actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-            actualTaxCost=supplierSkuPrice.getTaxPrice();
-        }else{
+            actualTaxCost = supplierSkuPrice.getTaxPrice();
+        } else {
             //含税成本
             String actualTaxCostStr = productBaseInfo.getActualTaxCost();
             if (StringUtils.isNotBlank(actualTaxCostStr)) {
-                actualTaxCost=new BigDecimal(actualTaxCostStr);
+                actualTaxCost = new BigDecimal(actualTaxCostStr);
             }
             //不含税成本
             String actualNoTaxCostStr = productBaseInfo.getActualNoTaxCost();
@@ -182,8 +186,17 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
             BeanMapper.copy(productLogistics, declareInfo);
         }
+        //这个是属性id 可能多个逗号分割
+        String propertyId = productLogistics.getProductPropertyId();
+        String propertyName = "";
+        if (StringUtils.isNotBlank(propertyId)) {
+            List<String> dictIdList = Arrays.asList(propertyId.split(","));
+            List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
+            propertyName = dictList.stream().map(BasicDictEntity::getName).collect(Collectors.joining(","));
+
+        }
         //物流属性
-        productBaseInfo.setLogisticsPropertyName(productLogistics.getProductProperty());
+        productBaseInfo.setLogisticsPropertyName(propertyName);
 
         result.setDeclareInfo(declareInfo);
         List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
@@ -555,13 +568,57 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<String> dictIdList = new ArrayList<>(20);
+        List<String> propertyIdList = list.stream().filter(l -> StringUtils.isNotBlank(l.getPropertyId())).
+                map(LogisticsProductDTO.ExportInfoDTO::getPropertyId).collect(Collectors.toList());
+        for (String propertyId : propertyIdList) {
+            for (String dictId : propertyId.split(",")) {
+                dictIdList.add(dictId);
+            }
+        }
+        dictIdList = dictIdList.stream().distinct().collect(Collectors.toList());
+        List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
+        BigDecimal zero = BigDecimal.ZERO;
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
+            //含税成本
+            BigDecimal actualTaxCost = item.getActualTaxCost();
+            if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {
+
+            }
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
             String combinationDeclareType = item.getCombinationDeclareType();
             String combinationDeclareTypeStr = CombinationDeclareTypeEnums.getName(combinationDeclareType);
             item.setCombinationDeclareType(combinationDeclareTypeStr);
+            String propertyId = item.getPropertyId();
+            if (StringUtils.isBlank(propertyId)) {
+                item.setLogisticsPropertyName("");
+            } else {
+                List<String> propertyIds = Arrays.asList(propertyId.split(","));
+                String propertyName = dictList.stream().filter(d -> propertyIds.contains(d.getId())).map(BasicDictEntity::getName).
+                        collect(Collectors.joining(","));
+                item.setLogisticsPropertyName(propertyName);
+
+            }
+
         }
+    }
+
+
+    public Map<String, BigDecimal> getSkuCost(List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList, String skuId) {
+        PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+
+        BigDecimal actualNoTaxCost = BigDecimal.ZERO;
+        BigDecimal actualTaxCost = BigDecimal.ZERO;
+        if (Objects.nonNull(supplierSkuPrice)) {
+            //不含税价=含税价÷（1+税率）
+            actualNoTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
+            actualTaxCost = supplierSkuPrice.getTaxPrice();
+        }
+        Map<String, BigDecimal> map = new HashMap<>();
+        map.put("actualTaxCost",actualTaxCost);
+        map.put("actualNoTaxCost",actualNoTaxCost);
+        return map;
     }
 }

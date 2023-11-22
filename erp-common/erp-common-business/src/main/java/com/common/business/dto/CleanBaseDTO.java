@@ -26,4 +26,9 @@ public class CleanBaseDTO extends UniqueDto {
      * 数据下载时间
      */
     private String downloadTime;
+
+    /**
+     * erp授权Id
+     */
+    private String authId;
 }
