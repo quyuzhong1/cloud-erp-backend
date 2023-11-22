@@ -1,39 +1,17 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.common.business.constant.BusinessCommonConstants;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.entity.ReportScheduleEntity;
-import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
-import com.erp.sdk.oms.amz.spapi.dto.NotificationSQSEntity;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportInventoryCombineMongoDTO;
-import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
-import com.erp.sdk.oms.amz.spapi.model.reports.Report;
-import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
-import com.erp.server.dmp.service.ReportScheduleService;
-import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.jms.Message;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 亚马逊SQS消息监听
@@ -56,18 +34,22 @@ public class JmsAmazonSqsConsumer {
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.debug("接收到亚马逊SQS通知:{}", textMessage.getText());
-        if (BusinessCommonConstants.hasProfile("dev")){
-            // 开发环境暂时过滤
-            return ;
-        }
+//        if (BusinessCommonConstants.hasProfile("dev")){
+//            // 开发环境暂时过滤
+//            return ;
+//        }
 
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(new JSONObject(textMessage.getText()).getStr("notificationType"))) {
             reportHandleService.handlerNotifications(textMessage);
         }
 
-        //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
-        message.acknowledge();
+        // TODO 查询处理
+        if (!BusinessCommonConstants.hasProfile("dev")){
+            //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
+            message.acknowledge();
+        }
+
     }
 
 
