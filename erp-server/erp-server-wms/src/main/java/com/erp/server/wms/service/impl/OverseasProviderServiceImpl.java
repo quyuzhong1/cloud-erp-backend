@@ -5,12 +5,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.OverseasProviderService;
@@ -56,7 +62,13 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
     * 修改
@@ -135,8 +147,20 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
-    public Boolean cancelAuthorize(List<String> ids) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean cancelAuthorize(String id) {
+        //清空授权信息
+        OverseasProviderDTO.UpdateDTO updateDTO = new OverseasProviderDTO.UpdateDTO();
+        updateDTO.setId(id);
+        updateDTO.setAuthTime(null);
+        updateDTO.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
+        updateDTO.setAuthJson("{}");
+        this.update(updateDTO);
+        //删除数据同步任务
+        String platformCode = this.getPlatFormCodeById(id);
+        dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));
+        return true;
     }
 
     public String getPlatFormCodeById(String id){

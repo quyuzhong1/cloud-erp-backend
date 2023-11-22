@@ -1,9 +1,13 @@
 package com.sdk.wms.iml.convert;
 
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.dto.PlatformWarehouseDTO;
+import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.utils.MD5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.iml.dto.response.ImlProductResp;
+import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -19,7 +23,6 @@ import java.util.List;
 public interface ImlConverter {
 
     ImlConverter INSTANCE = Mappers.getMapper(ImlConverter.class);
-
 
     @Mappings({
             @Mapping(target = "platformType", constant = "warehouse"),
@@ -51,4 +54,23 @@ public interface ImlConverter {
     static String getUniqueKey(ImlProductResp sourceData){
         return MD5Util.toMD5("iml"+sourceData.getProductSku());
     }
+
+    static String getProvider(){
+        return OmsPlatformEnum.OMS_IML.getCode();
+    }
+
+    static String getWarehousePlatformType(){
+        return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
+    }
+
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(ImlConverter.getWarehousePlatformType())"),
+            @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "warehouseName",  source = "warehouseName"),
+            @Mapping(target = "countryCode",  source = "countryCode"),
+            @Mapping(target = "providerErpId",  source = "authId")
+    })
+    PlatformWarehouseDTO warehouseConversion(ImlWarehouseResp sourceData);
+    List<PlatformWarehouseDTO> warehouseConversion(List<ImlWarehouseResp> sourceDataList);
 }
