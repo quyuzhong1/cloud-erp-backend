@@ -719,7 +719,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
                     .distinct()
                     .findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
-            fbaDeliveryDetailEntity.setStockSku(stockSku);
+            detailVie.setStockSku(stockSku);
 
             detailViews.add(detailVie);
         }
