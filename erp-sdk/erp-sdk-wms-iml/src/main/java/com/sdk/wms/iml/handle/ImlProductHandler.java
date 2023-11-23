@@ -4,6 +4,7 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformCityDictDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
@@ -25,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 谷仓拉取产品数据
+ * 艾姆勒拉取产品数据
  **/
 @Slf4j
 @Component
@@ -65,7 +66,7 @@ public class ImlProductHandler extends AbstractThirdWarehouseHandler<ImlProductR
             }
             page++;
         }
-        respList.forEach(v->v.setUniqueId(MD5Util.toMD5("iml"+v.getProductSku())));
+        respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+v.getProductSku())));
         return respList;
     }
 

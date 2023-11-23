@@ -14,5 +14,5 @@ import com.erp.model.sys.dto.ImlDictCityDTO;
  */
 public interface ImlDictCityService extends SuperService<ImlDictCityEntity> {
 
-
+    boolean saveOrUpdateByRegionId(ImlDictCityEntity entity);
 }

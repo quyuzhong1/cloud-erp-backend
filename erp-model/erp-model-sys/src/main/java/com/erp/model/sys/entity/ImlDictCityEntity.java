@@ -1,5 +1,6 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -52,7 +53,7 @@ public class ImlDictCityEntity extends BaseEntity<ImlDictCityEntity> {
     /**
     * 系统字典表id
     */
-    @TableField("dict_city_id")
+    @TableField(value = "dict_city_id",updateStrategy = FieldStrategy.IGNORED)
     private String dictCityId;
     /**
     * 城市id

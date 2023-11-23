@@ -3,7 +3,9 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +26,8 @@ public class ShopInfoFeignController extends BaseController {
 
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private ShopAuthService shopAuthService;
     /**
      * 获取店铺列表
      *
@@ -36,6 +39,16 @@ public class ShopInfoFeignController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 获取店铺授权列表
+     *
+     * @return
+     */
+    @PostMapping("/getAuthShopByPlatformType")
+    public ApiResult<List<ShopAuthEntity>> getAuthShopByPlatformType(@RequestParam("platformType") String platformType) {
+        List<ShopAuthEntity> list = shopAuthService.getAuthShopByPlatformType(platformType);
+        return success(list);
+    }
     /**
      * 更新店铺信息
      *

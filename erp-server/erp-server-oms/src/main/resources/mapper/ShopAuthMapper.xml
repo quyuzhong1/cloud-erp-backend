@@ -49,4 +49,15 @@
         </if>
 
     </select>
+    <select id="getAuthShopByPlatformType" resultType="com.erp.model.oms.entity.ShopAuthEntity">
+        SELECT
+            auth.*
+        FROM
+            shop_auth auth
+                LEFT JOIN shop_info info ON auth.shop_id = info."id" and info.auth_status = 'already'
+        WHERE
+            auth.is_deleted = FALSE
+            and info.is_deleted = FALSE
+            and dict_platform = #{platformType}
+    </select>
 </mapper>

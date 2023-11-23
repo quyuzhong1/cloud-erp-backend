@@ -37,10 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * <p>
@@ -190,6 +187,12 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         //获取已授权店铺配置
         return baseMapper.getShopeeShopList(type,stauts);
 //        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
+    }
+
+    @Override
+    public List<ShopAuthEntity> getAuthShopByPlatformType(String platformType) {
+        if (StringUtils.isBlank(platformType)) return Collections.emptyList();
+        return baseMapper.getAuthShopByPlatformType(platformType);
     }
 
     @Override

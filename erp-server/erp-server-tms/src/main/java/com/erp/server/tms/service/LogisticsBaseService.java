@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -24,12 +25,6 @@ public interface LogisticsBaseService {
      */
     List<BatchResultDTO> syncLogisticsChannel(String platform);
 
-    /**
-     * 同步所有渠道
-     *
-     * @return
-     */
-    ApiResult syncAllLogisticsChannel();
 
     /**
      * 查询订单信息
@@ -61,6 +56,13 @@ public interface LogisticsBaseService {
      * @return
      */
     List<BatchResultDTO> syncShoppeeChannel(String platform);
+    /**
+     * 同步虾皮渠道
+     * @param platform
+     * @param authEntityList
+     * @return
+     */
+    List<BatchResultDTO> syncMutilChannel(List<ShopAuthEntity> authEntityList, String platform);
 
     /**
      * 同步单一渠道

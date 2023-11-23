@@ -19,4 +19,6 @@ import java.util.List;
 @Mapper
 public interface ShopAuthMapper extends BaseMapper<ShopAuthEntity> {
     List<ShopAuthEntity> getShopeeShopList(@Param("type") String type,@Param("status") String status);
+
+    List<ShopAuthEntity> getAuthShopByPlatformType(@Param("platformType") String platformType);
 }

@@ -6,6 +6,12 @@ import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
@@ -15,9 +21,12 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
+import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
@@ -38,9 +47,7 @@ import org.springframework.util.IdGenerator;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -55,9 +62,46 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.ALI_EXPRESS)
 public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private LogisticsAuthService logisticsAuthService;
+    @Resource
     private AliExpressShipperService aliExpressShipperService;
     @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+    @Resource
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+
+    /**
+     * 虾皮  authId 需要是店铺 shopId
+     *
+     * @param authId
+     * @return
+     */
+    @Override
+    public Map<String, String> getLogisticsAuthConfig(String authId) {
+        if (org.apache.commons.lang3.StringUtils.isBlank(authId)) return null;
+        ApiResult<List<ShopAuthEntity>> authShops = shopInfoFeign.getAuthShopByPlatformType(getPlatForm().getCode());
+        if (!authShops.isSuccess() || CollectionUtils.isEmpty(authShops.getData())) return Collections.EMPTY_MAP;
+        ShopAuthEntity shopAuthEntity = authShops.getData().stream().filter(e -> !StringUtils.isBlank(e.getToken())).findFirst().orElse(null);
+        if (Objects.isNull(shopAuthEntity)) return Collections.EMPTY_MAP;
+        Map<String, String> map = new HashMap<>();
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (org.apache.commons.lang3.StringUtils.isNoneBlank(authId)) {
+            map.put("id", authId);
+            LogisticsAuthEntity authEntity = logisticsAuthService.getById(authId);
+            if (Objects.isNull(authEntity)) return null;
+            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+            map.put("token", shopAuthEntity.getToken());
+            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+        }
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+            });
+        }
+        return map;
+    }
 
     /**
      * 创建订单

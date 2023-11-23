@@ -1,7 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -10,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 订单DTO 所有平台订单通用数据，转换为此类后发送mq统一消费处理

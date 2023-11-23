@@ -41,11 +41,10 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
 
     /**
      * 根据授权和平台类型更新数据启用状态
-     * @param authId
      * @param logisticsPlatform
      * @param channelStatus
      */
-    void updateSaleChannelByAuthId(String authId,String logisticsPlatform,Integer channelStatus);
+    void updateSaleChannelByPlatform(String logisticsPlatform,Integer channelStatus);
     /**
      * 根据类型获取列表
      * @param platformType
@@ -65,11 +64,10 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @author yl
      *
      * @param authId
-     * @param isSync
      * @date: 2023-11-08
      * @return
      */
-    List<LogisticsSaleChannelEntity> listByAuthId(String authId);
+    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String authId);
 
     /**
      * 异步拉取销售渠道数据
