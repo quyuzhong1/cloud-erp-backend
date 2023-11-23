@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service;
 
+import cn.hutool.json.JSONObject;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
@@ -60,7 +61,7 @@ public interface ReportHandleService {
      * @Author Jim
      * @since 2023-11-22
      **/
-    void handlerNotifications(SQSTextMessage textMessage) throws Exception;
+    void handlerNotifications(JSONObject textMessage) throws Exception;
 
     /**
      * 保存亚马逊报告信息并处理
