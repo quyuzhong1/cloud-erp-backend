@@ -375,6 +375,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (FbaDeliveryDetailEntity detailEntity : detailEntityList) {
+            // TODO 是否需要拆分为子件
             //映射产品信息
             TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
 //            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);

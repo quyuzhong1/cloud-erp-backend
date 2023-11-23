@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
@@ -8,6 +10,8 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
@@ -19,6 +23,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
+import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
 import com.erp.server.wms.mapper.OverseasDeliveryPlanMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -46,6 +51,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -53,6 +60,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * <p>
  * 发货计划 服务实现类
@@ -648,6 +657,46 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Override
     public Boolean generateDeliverSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list) {
         return generateDeliver(list, Boolean.TRUE);
+    }
+
+    @Override
+    public OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
+        return null;
+        /*//查询所有审核通过的sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+
+
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(skuList, skuIds);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SalesDemandImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<SalesDemandImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        SalesDemandDetailDTO.ImportDTO importDTO = new SalesDemandDetailDTO.ImportDTO();
+        //导入数据处理
+        List<SalesDemandDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<SalesDemandImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "备货申请错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SalesDemandImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;*/
     }
 
     private Boolean generateDeliver(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
