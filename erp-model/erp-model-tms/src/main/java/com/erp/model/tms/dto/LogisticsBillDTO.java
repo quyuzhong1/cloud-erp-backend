@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -480,6 +481,169 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
+    }
+
+
+    /**
+     * 生成物流单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateBillDTO{
+
+       private String token;
+
+
+        @NotBlank(message = "渠道不能为空")
+        private String channelId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        private String orderId;
+
+        private String orderCode;
+
+
+        /**
+         * 收货人
+         */
+        private ReceiverDTO receiver;
+
+        /**
+         * 包裹信息
+         */
+        private PackageDTO packageInfo;
+
+        /**
+         * sku Id list
+         */
+        @Size(min = 1,message = "sku信息不能为空")
+        @NotNull(message = "sku信息不能为空L")
+        private List<SkuDTO> skuList;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReceiverDTO{
+
+        /**
+         * 买价id
+         */
+        private String customerId;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 收货人名
+         */
+        private String receiverName;
+
+        /**
+         * 收货人电话号码
+         */
+        private String receiverTelNumber;
+
+
+        /**
+         * 街道详细地址
+         */
+        private String fullAddress;
+
+        /**
+         * 邮编
+         */
+        private String postCode;
+
+
+        /**
+         * 国家
+         */
+        private String country;
+
+        /**
+         * 国家名
+         */
+        private String countryName;
+
+        /**
+         * 省名
+         */
+        private String provinceName;
+
+        /**
+         * 城市名
+         */
+        private String cityName;
+
+        /**
+         * 区名
+         */
+        private String districtName;
+
+        /**
+         * 收货第一地址
+         */
+        private String firstAddress;
+
+        /**
+         * 收货第二地址
+         */
+        private String secondAddress;
+
+    }
+
+
+    /**
+     * 产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO{
+
+        private String skuId;
+
+        private String skuNo;
+
+        private Integer qty;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PackageDTO{
+
+        /**
+         * 重量 单位 g
+         */
+        private BigDecimal weight;
+
+        /**
+         * 包裹长(单位:cm)
+         */
+        private BigDecimal length;
+
+        /**
+         * 包裹宽(单位:cm)
+         */
+        private BigDecimal width;
+
+        /**
+         * 包裹高(单位:cm)
+         */
+        private BigDecimal height;
+
+
+
+
     }
 
     /**

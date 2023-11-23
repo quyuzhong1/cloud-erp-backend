@@ -1,5 +1,6 @@
 package com.erp.server.tms.mapper;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -18,4 +19,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface LogisticsAuthMapper extends BaseMapper<LogisticsAuthEntity> {
 
+    LogisticsSupplierDTO.AuthDTO getAuthByChannelId(@Param("channelId") String channelId);
 }

@@ -79,4 +79,13 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      *@date 2023-11-13
      */
     List<LogisticsAddressDTO.ListDTO> listByType(String type);
+
+
+    /**
+     * 根据渠道和 类型获取到地址信息
+     * @param type
+     * @param channelId
+     * @return
+     */
+    List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId);
 }

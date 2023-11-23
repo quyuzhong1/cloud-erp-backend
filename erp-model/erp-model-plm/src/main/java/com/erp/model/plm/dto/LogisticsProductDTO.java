@@ -877,4 +877,29 @@ public class LogisticsProductDTO {
 
 
     }
+
+
+    /**
+     * 产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDTO{
+
+        /**
+         * 报关申报价
+         */
+        private BigDecimal declarePrice;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 是否带电
+         */
+        private Boolean isElectric;
+
+    }
 }

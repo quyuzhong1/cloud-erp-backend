@@ -73,4 +73,11 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * 异步拉取销售渠道数据
      */
     void asyncUpdateSaleChannel(Map<String, String> authMap);
+
+    /**
+     * 根据物流平台获取 到原始渠道信息
+     * @param logisticsPlatform
+     * @return
+     */
+    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform);
 }

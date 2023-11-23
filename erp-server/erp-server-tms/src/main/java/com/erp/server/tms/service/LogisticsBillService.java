@@ -106,5 +106,5 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@author yl
      *@date 2023-11-23
      */
-    void generateBill(LogisticsBillDTO.AddDTO dto);
+    void generateBill(LogisticsBillDTO.GenerateBillDTO dto);
 }

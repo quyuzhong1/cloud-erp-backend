@@ -31,4 +31,12 @@ public interface LogisticsAddressMapper extends BaseMapper<LogisticsAddressEntit
      * @return java.util.List<com.erp.model.tms.dto.LogisticsAddressDTO.PagingViewDTO>
      */
     List<LogisticsAddressDTO.PagingViewDTO> listExport(@Param("params")LogisticsAddressDTO.ExportDTO dto);
+
+    /**
+     * 查询地址信息
+     * @param deliverType
+     * @param channelId
+     * @return
+     */
+    List<LogisticsAddressEntity> listByTypeAndChannelId(@Param("deliverType") String deliverType,@Param("channelId") String channelId);
 }

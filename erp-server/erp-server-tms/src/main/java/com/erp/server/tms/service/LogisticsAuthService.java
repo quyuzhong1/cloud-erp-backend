@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -91,4 +92,12 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      */
     LogisticsAuthEntity getByMainId(String id, String mainId);
 
+    /**
+     * 根据id获取授权信息
+     *@parms channelId
+     *@return 
+     *@author yl
+     *@date 2023-11-23
+     */
+    LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 }

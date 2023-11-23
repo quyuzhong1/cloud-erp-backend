@@ -989,6 +989,8 @@ public enum ApiError implements Serializable {
     NOT_SYNC_BY_NOT_AUTH(94023,"物流商未授权,不可同步渠道"),
     ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST(94024,"存在未停用的物流渠道,无法停用该物流商"),
     ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST(94025,"【{}】地址已在渠道引用,无法删除"),
+    ERROR_LOGISTICS_CHANNEL_NOT_EXIST(94026,"物流渠道不存在"),
+    ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【】渠道,【】类型的地址为空"),
 
 
 
