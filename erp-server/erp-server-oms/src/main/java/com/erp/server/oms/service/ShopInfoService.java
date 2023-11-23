@@ -181,4 +181,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @since 2023-11-09
      */
     boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus);
+
+    /**
+     * 根据仓库id查询店铺
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:03
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    List<ShopInfoEntity> listShopInfoByWarehouseIds(List<String> warehouseIds);
 }

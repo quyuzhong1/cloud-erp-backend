@@ -79,4 +79,16 @@ public class ShopInfoFeignController extends BaseController {
     public List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids) {
         return shopInfoService.listByIds(ids);
     }
+
+    /**
+     * 根据仓库id查询店铺
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:03
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    @PostMapping("/listShopInfoByWarehouseIds")
+    public List<ShopInfoEntity> listShopInfoByWarehouseIds(@RequestBody List<String> warehouseIds) {
+        return shopInfoService.listShopInfoByWarehouseIds(warehouseIds);
+    }
 }
