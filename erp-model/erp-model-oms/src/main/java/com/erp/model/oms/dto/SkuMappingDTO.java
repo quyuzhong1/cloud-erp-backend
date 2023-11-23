@@ -143,17 +143,17 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台产品SPU编号或ID模糊搜索条件
          */
-        private String platformSpuNo;
+        private List<String> platformSpuNoList;
 
         /**
          * 平台SKU编号模糊搜索条件
          */
-        private String platformSkuNo;
+        private List<String> platformSkuNoList;
 
         /**
          * 平台SKU额外关联的FNSKU模糊搜索条件
          */
-        private String fnSku;
+        private List<String> fnSkuList;
 
         /**
          * 店铺id集合
@@ -208,17 +208,17 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台产品SPU编号或ID模糊搜索条件
          */
-        private String platformSpuNo;
+        private List<String> platformSpuNoList;
 
         /**
          * 平台SKU编号模糊搜索条件
          */
-        private String platformSkuNo;
+        private List<String> platformSkuNoList;
 
         /**
          * 平台SKU额外关联的FNSKU模糊搜索条件
          */
-        private String fnSku;
+        private List<String> fnSkuList;
 
         /**
          * 库存产品名称
@@ -243,6 +243,11 @@ public class SkuMappingDTO implements Serializable {
         private List<String> productSkuNoList;
 
         /**
+         * 平台code 集合
+         */
+        private List<String> platformList;
+
+        /**
          * sku id list
          */
         private List<String> skuIdList;
@@ -262,10 +267,6 @@ public class SkuMappingDTO implements Serializable {
         @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String tabFlag;
-
-
-
-
 
         /**
          * 创建人 id 集合

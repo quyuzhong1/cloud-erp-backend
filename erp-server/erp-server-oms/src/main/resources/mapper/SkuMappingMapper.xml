@@ -14,7 +14,7 @@
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no,
-        li.platform_product_name,
+        li.platform_sku_name AS platformProductName,
         li.sku_no AS sellerSkuNo,
         li.product_name AS sellerProductName,
         li.match_result,
@@ -28,9 +28,9 @@
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
-        INNER JOIN shop_info si
+        LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
-        INNER JOIN listing_info li
+        LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
@@ -46,15 +46,27 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
-            AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+        <if test="params.platformSpuNo !=null and params.platformSpuNo.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNo" item="platformSpuNoItem" open="(" separator="," close=")">
+                #{platformSpuNoItem}
+            </foreach>
         </if>
-        <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
-            AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+
+        <if test="params.platformSkuNo !=null and params.platformSkuNo.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNo" item="platformSkuNoItem" open="(" separator="," close=")">
+                #{platformSkuNoItem}
+            </foreach>
         </if>
-        <if test="params.fnSku !=null and params.fnSku!=''">
-            AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
+
+        <if test="params.fnSku !=null and params.fnSku.size>0">
+            AND li.platform_fn_sku IN
+            <foreach collection="params.fnSku" item="fnSkuItem" open="(" separator="," close=")">
+                #{fnSkuItem}
+            </foreach>
         </if>
+
         <if test="params.platformList !=null and params.platformList.size>0">
             AND sm.dict_platform IN
             <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
@@ -235,7 +247,7 @@
         sm.dict_platform,
         sm.platform_name
         FROM sku_mapping sm
-        INNER JOIN listing_info li
+        LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
@@ -251,15 +263,35 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
-            AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
+                #{platformSpuNoItem}
+            </foreach>
         </if>
-        <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
-            AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
+                #{platformSkuNoItem}
+            </foreach>
         </if>
-        <if test="params.fnSku !=null and params.fnSku!=''">
-            AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
+
+        <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
+            AND li.platform_fn_sku IN
+            <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
+                #{fnSkuItem}
+            </foreach>
         </if>
+
+        <if test="params.platformList !=null and params.platformList.size>0">
+            AND sm.dict_platform IN
+            <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+
         <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
             AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
         </if>
