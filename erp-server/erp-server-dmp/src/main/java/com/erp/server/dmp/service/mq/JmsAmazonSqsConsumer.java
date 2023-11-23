@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,9 @@ public class JmsAmazonSqsConsumer {
     @Resource
     private ReportHandleService reportHandleService;
 
+    @Value("${spring.cloud.nacos.discovery.namespace}")
+    private String namespace;
+
     /**
      * 监听接收消息
      * 如果有多个Factory 需要手动指定
@@ -34,7 +38,7 @@ public class JmsAmazonSqsConsumer {
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.debug("接收到亚马逊SQS通知:{}", textMessage.getText());
-        if (BusinessCommonConstants.hasProfile("dev")){
+        if (BusinessCommonConstants.hasProfile("dev") || BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
             // 开发环境暂时过滤
             return ;
         }
