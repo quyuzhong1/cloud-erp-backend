@@ -37,7 +37,7 @@ public interface ShopInfoFeign {
      * @param platformType
      * @return
      */
-    @PostMapping("feign/shop/getAuthShopByPlatformType")
+    @PostMapping("/feign/shop/getAuthShopByPlatformType")
     ApiResult<List<ShopAuthEntity>> getAuthShopByPlatformType(@RequestParam("platformType") String platformType);
 
     /**

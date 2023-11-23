@@ -226,6 +226,28 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
+    public List<Map<String, String>> getLogisticsAuthByPlatform(String platform) {
+        if (StringUtils.isBlank(platform)) return Collections.emptyList();
+        List<LogisticsAuthEntity> list = lambdaQuery().eq(LogisticsAuthEntity::getLogisticsPlatform, platform)
+                .eq(LogisticsAuthEntity::getIsDeleted, false).list();
+        if (CollectionUtils.isEmpty(list)) return Collections.emptyList();
+        List<Map<String, String>> mapList = new ArrayList<>(list.size());
+        list.forEach(logisticsAuthEntity -> {
+            Map<String, String> map = new HashMap<>();
+            map.put("id", logisticsAuthEntity.getId());
+            map.put("logisticsPlatform", platform);
+            List<LogisticsAuthFieldEntity> fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
+            if (CollectionUtils.isNotEmpty(fieldEntities)) {
+                fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+                });
+                mapList.add(map);
+            }
+        });
+        return mapList;
+    }
+
+    @Override
     public void syncUpdateSaleChannel(String authId) {
         Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId);
         logisticsSaleChannelService.asyncUpdateSaleChannel(authConfig);

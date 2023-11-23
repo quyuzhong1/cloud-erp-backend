@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,6 +68,14 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     Map<String, String> getLogisticsAuthConfig(String authId);
+
+    /**
+     * 根据授权id组装授权信息
+     *
+     * @param platform
+     * @return
+     */
+    List<Map<String, String>> getLogisticsAuthByPlatform(String platform);
 
     /**
      * 授权完成后 同步销售渠道

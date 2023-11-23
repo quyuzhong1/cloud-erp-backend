@@ -35,7 +35,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.redefining.listlogisticsservice");
         request.addApiParameter("simplify", "true");
@@ -48,7 +49,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.order.createorder");
         request.addApiParameter("is_agree_upgrade_reverse_parcel_insure", String.valueOf(orderRequest.getIs_agree_upgrade_reverse_parcel_insure()));
@@ -76,7 +78,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.createwarehouseorder");
         request.addApiParameter("declare_product_d_t_os", JSONObject.toJSONString(orderRequest.getDeclareProducts()));
@@ -102,7 +105,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.redefining.qureywlbdomesticlogisticscompany");
         request.addApiParameter("simplify", "true");
@@ -115,7 +119,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.redefining.getprintinfos");
         request.addApiParameter("simplify", "true");
@@ -130,7 +135,8 @@ public class AliExpressShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");
-        IopClient client = new IopClientImpl(PathConstants.BASE_URL, appKey, appSecret);
+        String url = authMap.get("url");
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("aliexpress.logistics.querylogisticsorderdetail");
         request.addApiParameter("current_page", String.valueOf(queryOrderRequest.getCurrent_page()));

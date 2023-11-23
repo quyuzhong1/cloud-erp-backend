@@ -200,7 +200,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
         addDTO.setOutstockId("");
         addDTO.setOutstockCode("");
-        addDTO.setChannelId(entity.getDictLogisticsMethod());
+        addDTO.setChannelId(entity.getLogisticsChannelId());
         return addDTO;
     }
 

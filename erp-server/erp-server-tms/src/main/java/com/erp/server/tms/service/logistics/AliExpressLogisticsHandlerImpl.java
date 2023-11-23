@@ -21,6 +21,7 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
@@ -62,6 +63,8 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.ALI_EXPRESS)
 public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private LogisticsAuthService logisticsAuthService;
@@ -73,33 +76,70 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
 
     /**
-     * 虾皮  authId 需要是店铺 shopId
+     * 根据平台获取授权列表
+     *
+     * @param platform
+     * @return
+     */
+    @Override
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
+        ApiResult<List<ShopAuthEntity>> authShops = shopInfoFeign.getAuthShopByPlatformType(getPlatForm().getCode());
+        if (!authShops.isSuccess() || CollectionUtils.isEmpty(authShops.getData())) return Collections.emptyList();
+        //获取商铺配置信息
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        } catch (Exception e) {
+            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
+            return Collections.emptyList();
+        }
+        List<Map<String, String>> mapList = new ArrayList<>(authShops.getData().size());
+        CfgAppClientEntity finalCfgAppClient = cfgAppClient;
+        authShops.getData().forEach(shopAuthEntity -> {
+            Map<String, String> map = new HashMap<>();
+            map.put("id", finalCfgAppClient.getId());
+            map.put("logisticsPlatform", getPlatForm().getCode());
+            map.put("clientSecret", finalCfgAppClient.getClientSecret());
+            map.put("clientId", finalCfgAppClient.getClientId());
+            map.put("url", finalCfgAppClient.getUrl());
+            map.put("token", shopAuthEntity.getToken());
+            mapList.add(map);
+        });
+        return mapList;
+    }
+
+    /**
+     * 速卖通  authId 需要是店铺 shopId
      *
      * @param authId
      * @return
      */
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        if (org.apache.commons.lang3.StringUtils.isBlank(authId)) return null;
-        ApiResult<List<ShopAuthEntity>> authShops = shopInfoFeign.getAuthShopByPlatformType(getPlatForm().getCode());
-        if (!authShops.isSuccess() || CollectionUtils.isEmpty(authShops.getData())) return Collections.EMPTY_MAP;
-        ShopAuthEntity shopAuthEntity = authShops.getData().stream().filter(e -> !StringUtils.isBlank(e.getToken())).findFirst().orElse(null);
-        if (Objects.isNull(shopAuthEntity)) return Collections.EMPTY_MAP;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        } catch (Exception e) {
+            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
+            return Collections.EMPTY_MAP;
+        }
+        if (Objects.isNull(cfgAppClient)) return Collections.EMPTY_MAP;
         Map<String, String> map = new HashMap<>();
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(authId)) {
-            map.put("id", authId);
-            LogisticsAuthEntity authEntity = logisticsAuthService.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
-            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-            map.put("token", shopAuthEntity.getToken());
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
+        map.put("id", cfgAppClient.getId());
+        map.put("logisticsPlatform", getPlatForm().getCode());
+        map.put("clientSecret", cfgAppClient.getClientSecret());
+        map.put("clientId", cfgAppClient.getClientId());
+        map.put("url", cfgAppClient.getUrl());
         return map;
     }
 
