@@ -7,7 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -17,17 +16,12 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.ExtendJsonDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.ShippingRegionCityMapper;
-import com.erp.server.tms.mapper.ShippingTemplateMapper;
-import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
-import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
@@ -39,7 +33,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,9 +136,9 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
             }
 
             //体积重
-            BigDecimal volumeWeight = MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWidth()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting())).multiply(volumeRatio);
+            BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(),params.getWidth()),params.getHeight()),new BigDecimal(listDTO.getVolumeSetting())),volumeRatio,4);
             //重量
-            BigDecimal weight = params.getWeight().multiply(ratio);
+            BigDecimal weight = MathUtil.multiply(params.getWeight(),ratio,4);
             if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }
@@ -202,7 +195,10 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
-        String excelPath = "excel/shippingCalculation.xlsx";
+        String excelPath = "excel/shippingCalculation_self.xlsx";
+        if ("first".equals(params.getShipmentMethod())) {
+            excelPath = "excel/shippingCalculation_first.xlsx";
+        }
         try {
             new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
         } catch (IOException e) {
