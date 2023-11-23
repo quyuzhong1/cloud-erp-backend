@@ -175,4 +175,8 @@ public class SoB2cLogisticsDTO implements Serializable {
     }
 
 
+
+
+
+
 }

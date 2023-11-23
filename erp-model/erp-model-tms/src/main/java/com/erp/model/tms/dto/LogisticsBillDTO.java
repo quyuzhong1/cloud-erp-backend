@@ -432,6 +432,14 @@ public class LogisticsBillDTO implements Serializable {
         private String transportNo;
 
 
+        /**
+         * 币别
+         */
+        private String currency;
+
+        private String orderType;
+
+
     }
 
     /**
