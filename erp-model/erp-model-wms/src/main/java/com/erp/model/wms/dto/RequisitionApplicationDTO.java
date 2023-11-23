@@ -12,9 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -561,32 +559,28 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 批准数量
          */
+        @NotNull(message = "批准数量不能为空")
+        @Min(value = 1, message = "批准数量最小值为0")
+        @Max(value = 999999999, message = "批准数量最大值为999999999")
         private Integer approveQty;
         /**
          * 调出仓库Id
          */
+        @NotBlank(message = "调出仓库不能为空")
         private String fromWarehouseId;
-
         /**
          * 调出仓库中文
          */
         private String fromWarehouseName;
         /**
-         * 调出仓库组织Id
-         */
-        private String fromWarehouseOrgId;
-        /**
          * 调入仓库id
          */
+        @NotBlank(message = "调入仓库不能为空")
         private String toWarehouseId;
         /**
          * 调入仓库中文
          */
         private String toWarehouseName;
-        /**
-         * 调入仓库组织id
-         */
-        private String toWarehouseOrgId;
     }
 
     /**
