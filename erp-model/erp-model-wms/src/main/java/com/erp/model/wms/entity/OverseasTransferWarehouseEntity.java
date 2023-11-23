@@ -44,7 +44,27 @@ public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransfer
     */
     @TableField("platform_status")
     private String platformStatus;
+    /**
+     * 目的仓库ID
+     */
+    @TableField("dest_warehouse_id")
+    private String destWarehouseId;
+    /**
+     * 目的仓库名称
+     */
+    @TableField("dest_warehouse_name")
+    private String destWarehouseName;
+    /**
+     * 平台海外仓状态
+     */
+    @TableField("logistics_product_code")
+    private String logisticsProductCode;
 
+    /**
+     * 物流产品名称
+     */
+    @TableField("logistics_product_name")
+    private String logisticsProductName;
 
     public static final String DICT_PLATFORM = "dict_platform";
 
