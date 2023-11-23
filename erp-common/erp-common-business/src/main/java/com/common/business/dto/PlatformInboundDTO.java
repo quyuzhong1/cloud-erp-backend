@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,11 @@ import java.util.List;
 @NoArgsConstructor
 public class PlatformInboundDTO extends UniqueDto {
 
+    /**
+     * 仓库平台类型
+     * {@link WarehousePlatformTypeEnum}
+     */
+    private String warehousePlatformType;
     /**
      * 供应商
      * {@link OmsPlatformEnum}

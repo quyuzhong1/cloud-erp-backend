@@ -43,29 +43,7 @@ public interface ImlConverter {
             @Mapping(target = "platform", constant = "iml")
     })
     PlatformProductDTO productConversion(ImlProductResp sourceData);
-
     List<PlatformProductDTO> productConversion(List<ImlProductResp> sourceDataList);
-
-    static String getNowTime(){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.now().format(formatter);
-    }
-
-    static String getType(){
-        return RuleTypeEnum.THIRD_WAREHOUSE.getCode();
-    }
-
-    static String getUniqueKey(ImlProductResp sourceData){
-        return MD5Util.toMD5("iml"+sourceData.getProductSku());
-    }
-
-    static String getProvider(){
-        return OmsPlatformEnum.OMS_IML.getCode();
-    }
-
-    static String getWarehousePlatformType(){
-        return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
-    }
 
     @Mappings({
             @Mapping(target = "warehousePlatformType", expression = "java(ImlConverter.getWarehousePlatformType())"),
@@ -91,6 +69,7 @@ public interface ImlConverter {
     List<PlatformCityDictDTO> regionConversion(List<ImlRegionResp> sourceDataList);
 
     @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(ImlConverter.getWarehousePlatformType())"),
             @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "receivingCode",  source = "receivingCode"),
@@ -107,4 +86,27 @@ public interface ImlConverter {
             @Mapping(target = "boxNo",  source = "boxNo"),
     })
     PlatformInboundDTO.Item inboundConversion(ImlReceiptResp.Item item);
+
+
+    static String getNowTime(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return LocalDateTime.now().format(formatter);
+    }
+
+    static String getType(){
+        return RuleTypeEnum.THIRD_WAREHOUSE.getCode();
+    }
+
+    static String getUniqueKey(ImlProductResp sourceData){
+        return MD5Util.toMD5("iml"+sourceData.getProductSku());
+    }
+
+    static String getProvider(){
+        return OmsPlatformEnum.OMS_IML.getCode();
+    }
+
+    static String getWarehousePlatformType(){
+        return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
+    }
+
 }

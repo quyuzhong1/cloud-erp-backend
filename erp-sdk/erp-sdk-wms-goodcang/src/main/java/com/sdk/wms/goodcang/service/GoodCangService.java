@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetInventoryReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
+import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
 import org.springframework.stereotype.Component;
@@ -55,7 +52,7 @@ public class GoodCangService {
      */
     public GoodCangResponse<GoodCangReceiptBatchResp> getReceiptBatch(@Valid @NotEmpty String receivingCode){
         Map<String,Object> paramsMap = new HashMap<>();
-        paramsMap.put("receiving_code",receivingCode);
+//        paramsMap.put("receiving_code",receivingCode);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT_BATCH,paramsMap);
         GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
         //重新赋值，方便后面转换
@@ -66,6 +63,14 @@ public class GoodCangService {
         return respDto;
     }
 
+    /**
+     * 获取收货批次
+     */
+    public String getReceipt(@Valid GoodCangBaseRequest goodCangBaseRequest){
+        String json = JSON.toJSONString(goodCangBaseRequest);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT,json);
+        return response;
+    }
     /**
      * 获取物流产品与目的仓中转仓
      */

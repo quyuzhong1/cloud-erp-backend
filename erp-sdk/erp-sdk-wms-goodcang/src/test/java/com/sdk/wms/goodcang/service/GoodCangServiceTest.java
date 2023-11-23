@@ -2,10 +2,7 @@ package com.sdk.wms.goodcang.service;
 
 
 import com.common.business.threadlocal.ThirdWarehouseContext;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetInventoryReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
+import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,7 +57,14 @@ public class GoodCangServiceTest {
         GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-231113-000");
         System.out.println(response);
     }
-
+    @Test
+    public void getReceiptTest() {
+        GoodCangBaseRequest goodCangBaseRequest = new GoodCangGetSkuReq();
+        goodCangBaseRequest.setPage(1);
+        goodCangBaseRequest.setPageSize(20);
+        String response = goodCangService.getReceipt(goodCangBaseRequest);
+        System.out.println(response);
+    }
     @Test
     public void getSmCodeTwcToWarehouseTest() {
         GoodCangResponse<GoodCangLogisticsAndWarehouseResp> response = goodCangService.getSmCodeTwcToWarehouse();

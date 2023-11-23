@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
@@ -94,6 +95,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundEntity, null, overseasWarehouseInboundEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public OverseasWarehouseInboundEntity getByCode(String receivingCode) {
+        return  lambdaQuery().eq(OverseasWarehouseInboundEntity::getCode,receivingCode).one();
     }
 
 
