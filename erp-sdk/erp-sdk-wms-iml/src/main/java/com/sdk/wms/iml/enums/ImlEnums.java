@@ -1,6 +1,10 @@
 package com.sdk.wms.iml.enums;
 
+import com.common.business.enums.InstockStatusEnum;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 @Getter
 public enum ImlEnums {
@@ -58,23 +62,34 @@ public enum ImlEnums {
      */
     @Getter
     public enum ReceivingStatusEnum {
-        NEW("C","新建"),
-        FIRST_JOURNEY_ON_THE_WAY("W","头程在途"),
-        INITIAL_RECEIVING("P","头程收货中"),
-        IN_TRANSIT("Z","转运中"),
-        RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中"),
-        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成"),
-        COMPLETE_LISTING("E","完成上架"),
-        ABANDONMENT("X","废弃")
+        NEW("C","新建",InstockStatusEnum.TO_BE_SHIPPED),
+        FIRST_JOURNEY_ON_THE_WAY("W","头程在途",InstockStatusEnum.TO_BE_SIGNED),
+        INITIAL_RECEIVING("P","头程收货中",InstockStatusEnum.TO_BE_SIGNED),
+        IN_TRANSIT("Z","转运中",InstockStatusEnum.TO_BE_SIGNED),
+        RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中",InstockStatusEnum.PARTIAL_SIGNED),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成",InstockStatusEnum.SIGNED),
+        COMPLETE_LISTING("E","完成上架",InstockStatusEnum.SIGNED),
+        ABANDONMENT("X","废弃",InstockStatusEnum.CANCELED)
         ;
         private final String code;
         private final String name;
-        ReceivingStatusEnum(String code, String name) {
+        private final InstockStatusEnum instockStatusEnum;
+        ReceivingStatusEnum(String code, String name, InstockStatusEnum instockStatusEnum) {
             this.code = code;
             this.name = name;
+            this.instockStatusEnum = instockStatusEnum;
         }
-    }
 
+        public static String getInstockByCode(String code){
+            return Arrays.stream(ReceivingStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(ReceivingStatusEnum::getInstockStatusEnum)
+                    .map(InstockStatusEnum::getCode)
+                    .orElse(code);
+        }
+
+    }
     /**
      * 取消订单结果
      */

@@ -1,6 +1,7 @@
 package com.sdk.wms.iml.convert;
 
 import com.common.business.dto.PlatformCityDictDTO;
+import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.OmsPlatformEnum;
@@ -8,6 +9,7 @@ import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.utils.MD5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.iml.dto.response.ImlProductResp;
+import com.sdk.wms.iml.dto.response.ImlReceiptResp;
 import com.sdk.wms.iml.dto.response.ImlRegionResp;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import org.mapstruct.Mapper;
@@ -85,6 +87,24 @@ public interface ImlConverter {
             @Mapping(target = "regionLevel",  source = "regionLevel"),
             @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())")
     })
-    PlatformCityDictDTO regionConversion(ImlRegionResp sourceDataList);
+    PlatformCityDictDTO regionConversion(ImlRegionResp sourceData);
     List<PlatformCityDictDTO> regionConversion(List<ImlRegionResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())"),
+            @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
+            @Mapping(target = "receivingCode",  source = "receivingCode"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "items",  source = "items"),
+    })
+    PlatformInboundDTO inboundConversion(ImlReceiptResp sourceData);
+    List<PlatformInboundDTO> inboundConversion(List<ImlReceiptResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "productSku",  source = "productSku"),
+            @Mapping(target = "receivedQuantity",  source = "receivedQuantity"),
+            @Mapping(target = "putawayQuantity",  source = "putawayQuantity"),
+            @Mapping(target = "boxNo",  source = "boxNo"),
+    })
+    PlatformInboundDTO.Item inboundConversion(ImlReceiptResp.Item item);
 }
