@@ -48,8 +48,8 @@ public class JmsAmazonSqsConsumer {
             reportHandleService.handlerNotifications(textMessage);
         }
 
-        // TODO 查询处理
-        if (!BusinessCommonConstants.hasProfile("dev")){
+        // 开发环境忽略处理
+        if (!BusinessCommonConstants.hasProfile("dev") && !BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
             //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
             message.acknowledge();
         }
