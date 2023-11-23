@@ -226,7 +226,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public Boolean handleSave(List<RequisitionApplicationDTO.handleListDTO> list) {
 
         //一个发货计划单，生成一个要发货单
-//        Map<String, List<RequisitionApplicationDTO.handleListDTO>> map = list.stream().collect(Collectors.groupingBy(req -> req.getFromWarehouseId().contains(",")));
+        Map<String, List<RequisitionApplicationDTO.handleListDTO>> map = list.stream().collect(Collectors.groupingBy(req -> req.getFromWarehouseId().concat(req.getToWarehouseId())));
         List<String> ids = new ArrayList<>();
 
         return null;

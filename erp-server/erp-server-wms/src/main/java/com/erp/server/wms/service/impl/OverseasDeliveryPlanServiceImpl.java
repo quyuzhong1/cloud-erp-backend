@@ -182,9 +182,9 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(OverseasDeliveryPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new OverseasDeliveryPlanDTO.TabListDTO(status, 0));
-        }
+            if (!existStatusList.contains(status)) {
+                list.add(new OverseasDeliveryPlanDTO.TabListDTO(status, 0));
+            }
         });
         list.add(new OverseasDeliveryPlanDTO.TabListDTO("all", list.stream().mapToInt(OverseasDeliveryPlanDTO.TabListDTO::getCount).sum()));
         // 计算合计数量

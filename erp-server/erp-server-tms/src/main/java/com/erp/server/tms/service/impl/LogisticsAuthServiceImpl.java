@@ -11,6 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
@@ -135,6 +136,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Override
     public LogisticsAuthEntity getByMainId(String id, String mainId) {
         return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+    }
+
+    @Override
+    public LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId) {
+        return baseMapper.getAuthByChannelId(channelId);
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){
