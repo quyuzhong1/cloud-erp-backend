@@ -272,11 +272,11 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     public void handlerNotifications(SQSTextMessage textMessage) throws Exception {
-        if (BusinessCommonConstants.hasProfile("test")) {
+//        if (BusinessCommonConstants.hasProfile("test")) {
             // 测试环境暂时过滤
             log.warn("监听到亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessage));
-            return;
-        }
+//            return;
+//        }
 
         NotificationSQSEntity sqsEntity = JSONUtil.toBean(textMessage.getText(), NotificationSQSEntity.class);
         String processingStatus = sqsEntity.getPayload().getReportProcessingFinishedNotification().getProcessingStatus();
