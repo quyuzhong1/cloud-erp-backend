@@ -228,7 +228,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/logisticsBillCostError";
+            String excelPath = "excel/logisticsBillCostError.xlsx";
             String name = "logisticsBillCostError";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);

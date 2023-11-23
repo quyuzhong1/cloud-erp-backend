@@ -87,9 +87,9 @@
         ) lbd on lb.id = lbd.main_id
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
-            lc.is_deleted = false
+            lbc.is_deleted = false
             <if test="params.sourceType != null and params.sourceType != ''">
-                and lb.source_type =#{params.sourceType}
+                and lb.source_type = #{params.sourceType}
             </if>
             <if test="params.remark != null and params.remark != ''">
                 and lbc.remark ilike concat('%',#{params.remark},'%')
@@ -97,12 +97,6 @@
             <if test="params.codeList != null and params.codeList.size > 0">
                 and lbc.transport_no in
                 <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size > 0">
-                and lbc.reconciliation_status in
-                <foreach collection="params.reconciliationStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -131,7 +125,7 @@
                 </foreach>
             </if>
             <if test="params.transportStatusList != null and params.transportStatusList.size > 0">
-                and lbd.track_status in
+                and lbd.transportStatus in
                 <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -189,11 +183,13 @@
             lb.source_id as sourceId,
             lb.source_code as sourceCode,
             lb.outstock_code as outstockCode,
-            lbc.to_country as toCountry,
+            lb.to_country as toCountry,
             lbc.customer_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
-            lbc.remark
+            lbc.remark,
+            lbc.weight_unit as weightUnit,
+            lbc.currency
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (
@@ -210,7 +206,7 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.sourceType != null and params.sourceType != ''">
-                    and lb.source_type =#{params.sourceType}
+                    and lb.source_type = #{params.sourceType}
                 </if>
                 <if test="params.remark != null and params.remark != ''">
                     and lbc.remark ilike concat('%',#{params.remark},'%')
@@ -218,12 +214,6 @@
                 <if test="params.codeList != null and params.codeList.size > 0">
                     and lbc.transport_no in
                     <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
-                </if>
-                <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size > 0">
-                    and lbc.reconciliation_status in
-                    <foreach collection="params.reconciliationStatusList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
@@ -252,14 +242,14 @@
                     </foreach>
                 </if>
                 <if test="params.transportStatusList != null and params.transportStatusList.size > 0">
-                    and lbd.track_status in
+                    and lbd.transportStatus in
                     <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
                 <if test="params.diffOptionList != null and params.diffOptionList.size > 0">
                     and
-                    <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator="or">
+                    <foreach collection="params.diffOptionList" item="item" open="(" close=")" separator="or">
                         <if test="item == 'greater'">
                             lbc.diff_shipping_cost > 0
                         </if>

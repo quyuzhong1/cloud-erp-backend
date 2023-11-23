@@ -84,7 +84,7 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportExcelParamDTO extends ShippingTemplateDTO.PagingParamDTO {
+    public static class ExportExcelParamDTO extends PagingParamDTO {
 
         /**
          * 主键ids
