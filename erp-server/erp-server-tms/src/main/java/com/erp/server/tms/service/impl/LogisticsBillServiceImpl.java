@@ -291,6 +291,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     }
 
+    @Override
+    public void generateBill(LogisticsBillDTO.AddDTO dto) {
+
+    }
+
     private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
