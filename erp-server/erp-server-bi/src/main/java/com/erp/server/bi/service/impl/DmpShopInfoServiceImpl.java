@@ -282,6 +282,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         return this.lambdaQuery().in(DmpShopInfoEntity::getName,shopNameList).list();
     }
 
+    @Override
+    public List<DmpShopInfoEntity> listByStoreSign() {
+        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign,"").list();
+    }
+
     private List<DmpShopInfoEntity> getSiteShopList() {
         LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.ne(DmpShopInfoEntity::getSite, "")

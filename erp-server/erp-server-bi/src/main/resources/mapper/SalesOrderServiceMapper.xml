@@ -1687,33 +1687,34 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        country_name_cn AS name FROM
-        dmp_order_item i LEFT JOIN dmp_order_info o
+        shop_no AS name FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o
         ON i.order_id = o.ID
-        WHERE (country_name_cn!=null or country_name_cn!='')
-        <if test="params.timeType!=null and params.timeType==0">
-            <if test="params.startTime !=null">
-                AND platform_create_time &gt;= #{params.startTime}
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    AND o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
             </if>
-            <if test="params.endTime !=null">
-                AND platform_create_time &lt; #{params.endTime}
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
             </if>
-        </if>
-        <!-- 发货时间 -->
-        <if test="params.timeType!=null and params.timeType==1">
-            <if test="params.startTime !=null">
-                AND delivery_time &gt;= #{params.startTime}
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
-            <if test="params.endTime !=null">
-                AND delivery_time &lt; #{params.endTime}
-            </if>
-        </if>
-        <!-- 权限 -->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-
-        GROUP BY country_name_cn
+        </where>
+        GROUP BY shop_no
     </select>
 
     <select id="byPeople" resultType="com.erp.model.bi.vo.SalesBaseVO">
