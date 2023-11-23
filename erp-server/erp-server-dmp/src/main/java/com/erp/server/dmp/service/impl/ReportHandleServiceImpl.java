@@ -4,6 +4,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
@@ -16,10 +17,11 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
+import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -39,6 +41,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
+import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
@@ -51,12 +54,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,76 +90,6 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Resource
     private ReportScheduleService reportScheduleService;
 
-
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
-    public void combineInventory(ReportInventoryCombineMongoDTO combineInventoryDTO,
-                                 List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList,
-                                 List<ReportReservedMongoDTO> reportReservedMongoDTOList,
-                                 List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList
-    ) {
-        // 报告组合状态: 0=未组合，1=可组合, 2=已组合, 必须是可组合的记录
-        if (1 != combineInventoryDTO.getCombineStatus()) {
-            return;
-        }
-        // 修改记录为已组合
-        // 修改数据
-        combineInventoryDTO.setCombineStatus(2);
-        MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(combineInventoryDTO), MapUtil.class);
-        ReportInventoryCombineMongoDTO queryCombineInventoryDTO = new ReportInventoryCombineMongoDTO(combineInventoryDTO.getDataStartTime(), combineInventoryDTO.getDataEndTime(), combineInventoryDTO.getMarketplaceIds());
-        mongoService.updateMongoData(queryCombineInventoryDTO, mapUtil, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
-
-        // 查询当前店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(combineInventoryDTO.getShopId());
-        // 查询SKU绑定的信息
-        List<String> sellerSkuList = fbaMyiAllInventoryMongoDTOList
-                .stream()
-                .map(ReportFbaMyiAllInventoryMongoDTO::getSku)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
-        if (!CollectionUtils.isEmpty(sellerSkuList)) {
-            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-            paramDTO.setPlatformSkuNoList(sellerSkuList);
-            paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
-                    .stream()
-                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
-        } else {
-            listingInfoMap = new HashMap<>();
-        }
-
-        // 转换
-        Map<String, ReportFbaMyiAllInventoryMongoDTO> myiAllInventoryMap = fbaMyiAllInventoryMongoDTOList
-                .stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}", e.getAsin(), e.getFnsku(), e.getSku()), Function.identity()));
-
-        Map<String, ReportReservedMongoDTO> reservedMap = reportReservedMongoDTOList
-                .stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}", e.getAsin(), e.getFnsku(), e.getSku()), Function.identity()));
-
-        Map<String, ReportFbaInventoryPlanningMongoDTO> planningMap = planningMongoDTOList
-                .stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}", e.getAsin(), e.getFnsku(), e.getSku()), Function.identity()));
-
-        // 转换实体
-        List<FbaInventoryEntity> fbaInventoryEntityList = myiAllInventoryMap
-                .entrySet()
-                .stream()
-                .map(e -> DmpFbaInventoryConverter.INSTANCE.mergeToFbaInventoryEntity(combineInventoryDTO,
-                        e.getValue(),
-                        reservedMap.get(e.getKey()),
-                        planningMap.get(e.getKey()),
-                        shopInfoEntity,
-                        listingInfoMap.get(e.getValue().getSku())))
-                .collect(Collectors.toList());
-        // TODO 防止低时间数据修改校验？
-
-        // 保存到WMS
-        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -267,13 +201,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createReport(ReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime) throws Exception {
+        // 间隔
+        Thread.sleep(20000);
         // 校验MarketplaceId
         String[] marketplaceSplit = reportSchedule.getMarketplaceIds().split(",");
         if (marketplaceSplit.length == 0) {
             throw new ServiceException("未找到MarketplaceId,reportScheduleId=" + reportSchedule.getId());
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceSplit[0]);
-        if (null == marketplaceEnum){
+        if (null == marketplaceEnum) {
             String msg = StrUtil.format("未找到Marketplace枚举类型,reportScheduleId={}, marketplaceId={}", reportSchedule.getId(), reportSchedule.getMarketplaceIds());
             throw new ServiceException(msg);
         }
@@ -281,11 +217,11 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 支持切换时间间隔
         // 修改下次创建时间
         OffsetDateTime roundedOffsetDateTime = periodEnum.formatTime(currentDateTime);
-        LocalDateTime nextTime = roundedOffsetDateTime
+        LocalDateTime nextTime = periodEnum.plusPeriod(roundedOffsetDateTime)
                 .withOffsetSameInstant(BusinessCommonConstants.systemZoneOffset)
                 .toLocalDateTime();
         reportSchedule.setFirstNextReportCreationTime(nextTime);
-        if (!reportScheduleService.updateById(reportSchedule)){
+        if (!reportScheduleService.updateById(reportSchedule)) {
             throw new ServiceException("[reportSchedule] 更新失败");
         }
 
@@ -296,12 +232,15 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
         CreateReportResponse reportResponse = reportsApi.createReport(body);
         String reportId = reportResponse.getReportId();
-        if (null == reportId){
+        if (null == reportId) {
             throw new ServiceException("请求亚马逊创建报告失败：body=" + JSONUtil.toJsonStr(reportResponse));
         }
         ReportInfoMongoDTO reportInfoMongoDTO = new ReportInfoMongoDTO();
         reportInfoMongoDTO.setReportId(reportId);
         reportInfoMongoDTO.setReportType(reportSchedule.getReportType());
+        reportInfoMongoDTO.setMainId(reportSchedule.getId());
+        reportInfoMongoDTO.setCreatedTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+        reportInfoMongoDTO.setShopId(reportSchedule.getShopId());
         // 报告保存
         mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
 
@@ -333,11 +272,11 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
     @Override
     public void handlerNotifications(SQSTextMessage textMessage) throws Exception {
-        if (BusinessCommonConstants.hasProfile("test")){
+//        if (BusinessCommonConstants.hasProfile("test")) {
             // 测试环境暂时过滤
             log.warn("监听到亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessage));
-            return ;
-        }
+//            return;
+//        }
 
         NotificationSQSEntity sqsEntity = JSONUtil.toBean(textMessage.getText(), NotificationSQSEntity.class);
         String processingStatus = sqsEntity.getPayload().getReportProcessingFinishedNotification().getProcessingStatus();
@@ -354,49 +293,69 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportId());
+        if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())){
+            log.error("报告状态未完成：{}",JSONUtil.toJsonStr(report));
+            // 未完成也更新
+            ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
+            List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+            ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
+            // 转换
+            ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, null, report);
+            // 更新报告保存
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(reportInfoMongoDTO), MapUtil.class);
+            ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(reportInfoMongoDTO.getId());
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+            return;
+        }
 
+        // 报告计划
         String reportScheduleId = report.getReportScheduleId();
-        if (StringUtils.isBlank(reportScheduleId)) {
-            return;
+        ReportScheduleEntity reportScheduleEntity = null;
+        // 报告计划任务
+        if (StringUtils.isNotBlank(reportScheduleId)) {
+            // 查询报告计划ID是否已存在
+            reportScheduleEntity = reportScheduleService.getByReportScheduleId(reportScheduleId);
         }
-        // 查询报告计划ID是否已存在
-        ReportScheduleEntity reportScheduleEntity = reportScheduleService.getByReportScheduleId(reportScheduleId);
-        // 非库龄报告的的计划任务不允许为空
-        if (null == reportScheduleEntity &&
-                !AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-            // 不存在指定计划任务跳过
-            return;
-        }
-
-        // 校验报告是否已存在？
+        
+        // 校验报告
         ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
         List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-        if (!CollectionUtils.isEmpty(mongoData)) {
-            // 存在跳过
+        // 报告计划存在, 报告记录存在忽略
+        if (null != reportScheduleEntity) {
+            if (!CollectionUtils.isEmpty(mongoData)){
+                // 存在跳过
+                return;
+            } else {
+                // 查询报告当前链接
+                ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
+                // 转换
+                ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.newReportInfoMongoDTO(report, reportDocument, reportScheduleEntity);
+                // 保存并处理
+                this.saveMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
+                return;
+            }
+        }
+
+        // 报告计划不存在, 报告记录为空忽略
+        if (CollectionUtils.isEmpty(mongoData)){
             return;
         }
-        // 保存报告
-        ReportInfoMongoDTO reportInfoMongoDTO = new ReportInfoMongoDTO();
-        // TODO 转换
-        BeanUtils.copyProperties(report, reportInfoMongoDTO);
+        ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
         // 查询报告当前链接
         ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
-        reportInfoMongoDTO.setReportDocumentUrl(reportDocument.getUrl());
-        reportInfoMongoDTO.setReportHandleStatus(0);
-        reportInfoMongoDTO.setReportCancelStatus(0);
-        reportInfoMongoDTO.setDataStartTime(report.getDataStartTime().toString());
-        reportInfoMongoDTO.setDataEndTime(report.getDataEndTime().toString());
-        reportInfoMongoDTO.setProcessingStartTime(report.getProcessingStartTime().toString());
-        reportInfoMongoDTO.setProcessingEndTime(report.getProcessingEndTime().toString());
-        reportInfoMongoDTO.setProcessingStatus(report.getProcessingStatus().getValue());
+        // 转换
+        ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, reportDocument, report);
+        // 更新并处理
+        this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
+        
 
+    }
+
+    @Override
+    public void saveMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException {
         List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
-        // TODO 转换
         // 填充报告相关信息
         List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
-
-        //判断是否添加库存主表
-        this.checkAndSaveMainInventory(report, reportScheduleEntity);
 
         // 报告保存
         mongoService.saveMongoData(reportInfoMongoDTO, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT);
@@ -410,69 +369,158 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         }
     }
 
-    /**
-     * 保存主表
-     */
-    private void checkAndSaveMainInventory(Report report, ReportScheduleEntity reportScheduleEntity) {
-        if (!AmazonReportRecordTypeEnum.getInventoryReportList().contains(report.getReportType())) {
-            // 不属于库存报告
-            return;
-        }
+    @Override
+    public void updateMongoAndHandle(ReportDocument reportDocument, AmazonReportRecordTypeEnum recordTypeEnum, Report report, ReportScheduleEntity reportScheduleEntity, ReportInfoMongoDTO reportInfoMongoDTO) throws IOException {
+        List<?> cvsList = AmazonSpApiReportUtils.downloadAndParse(reportDocument.getUrl(), recordTypeEnum.getCvsClass());
+        // 填充报告相关信息
+        List<? extends ReportSuperMongoDTO> mongoDTOSList = handleData(cvsList, report, recordTypeEnum);
 
-        // TODO 使用redisson锁
-        // 根据数据开始时间和结束时间,校验是否已存在？
-        ReportInventoryCombineMongoDTO combineInventoryDTO = new ReportInventoryCombineMongoDTO(report.getDataStartTime().toString(), report.getDataEndTime().toString(), report.getMarketplaceIds());
-        List<ReportInventoryCombineMongoDTO> mongoData = mongoService.findMongoData(combineInventoryDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
-        if (CollectionUtils.isEmpty(mongoData)) {
-            // 新增
-            ReportInventoryCombineMongoDTO newCombineInventoryDTO = new ReportInventoryCombineMongoDTO();
-            // TODO 转换
-            BeanUtils.copyProperties(report, newCombineInventoryDTO);
-            newCombineInventoryDTO.setDataStartTime(report.getDataStartTime().toString());
-            newCombineInventoryDTO.setDataEndTime(report.getDataEndTime().toString());
-            newCombineInventoryDTO.setMarketplaceIds(report.getMarketplaceIds());
-            newCombineInventoryDTO.setShopId(reportScheduleEntity.getShopId());
-            mongoService.saveMongoData(newCombineInventoryDTO, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY);
+        // 更新报告保存
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(reportInfoMongoDTO), MapUtil.class);
+        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(reportInfoMongoDTO.getId());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+
+        // 填充报告来源信息
+        mongoService.saveMongoDataMult(mongoDTOSList, recordTypeEnum.getMongoTableName());
+
+        // TODO 扩展
+        if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
+            this.pullBusinessHandler(reportScheduleEntity.getShopId(), report.getReportId(), mongoDTOSList);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void saveOrUpdateAllReportFbaMyiAllInventory(ReportInfoMongoDTO mongoDTO, List<ReportFbaMyiAllInventoryMongoDTO> fbaMyiAllInventoryMongoDTOList) {
+        // 报告保存已处理
+        mongoDTO.setReportHandleStatus(1);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
+        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+
+        // TODO 优化效率
+        // 查询当前店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
+        // 查询SKU绑定的信息
+        List<String> sellerSkuList = fbaMyiAllInventoryMongoDTOList
+                .stream()
+                .map(ReportFbaMyiAllInventoryMongoDTO::getSku)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
+        if (!CollectionUtils.isEmpty(sellerSkuList)) {
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+            paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setMatchResult(true);
+            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+                    .stream()
+                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
         } else {
-            // 修改
-            ReportInventoryCombineMongoDTO oldCombineInventoryDTO = mongoData.stream().findFirst().orElseThrow(() -> new ServiceException("ReportAmazonCombineInventory 不存在"));
-            if (AmazonReportRecordTypeEnum.GET_FBA_MYI_ALL_INVENTORY_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-                String myiAllInventoryReportId = oldCombineInventoryDTO.getMyiAllInventoryReportId();
-                if (StringUtils.isNotBlank(myiAllInventoryReportId)) {
-                    throw new ServiceException("ReportAmazonCombineInventory 更新异常：myiAllInventoryReportId已存在");
-                }
-                oldCombineInventoryDTO.setMyiAllInventoryReportId(report.getReportId());
-            }
-            if (AmazonReportRecordTypeEnum.GET_FBA_INVENTORY_PLANNING_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-                String inventoryPlanningReportId = oldCombineInventoryDTO.getInventoryPlanningReportId();
-                if (StringUtils.isNotBlank(inventoryPlanningReportId)) {
-                    throw new ServiceException("ReportAmazonCombineInventory 更新异常：inventoryPlanningReportId已存在");
-                }
-                oldCombineInventoryDTO.setInventoryPlanningReportId(report.getReportId());
-            }
-            if (AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-                String reservedReportId = oldCombineInventoryDTO.getReservedReportId();
-                if (StringUtils.isNotBlank(reservedReportId)) {
-                    throw new ServiceException("ReportAmazonCombineInventory 更新异常：reservedReportId已存在");
-                }
-                oldCombineInventoryDTO.setReservedReportId(report.getReportId());
-            }
-            // 检查是否存在所有报告IDS
-
-            if (StringUtils.isNotBlank(oldCombineInventoryDTO.getMyiAllInventoryReportId()) &&
-                    StringUtils.isNotBlank(oldCombineInventoryDTO.getInventoryPlanningReportId()) &&
-                    StringUtils.isNotBlank(oldCombineInventoryDTO.getReservedReportId())
-            ) {
-                oldCombineInventoryDTO.setCombineStatus(1);
-            }
-            // 00:00 非分秒为0的数据时间允许库龄报告为空
-
-            // 修改数据
-            MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(oldCombineInventoryDTO), MapUtil.class);
-            mongoService.updateMongoData(combineInventoryDTO, mapUtil, MongoTableNameContant.REPORT_AMAZON_COMBINE_INVENTORY, ReportInventoryCombineMongoDTO.class);
+            listingInfoMap = new HashMap<>();
         }
+
+        // 转换实体
+        List<FbaInventoryEntity> fbaInventoryEntityList = fbaMyiAllInventoryMongoDTOList
+                .stream()
+                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportFbaMyiAllInventoryToEntity(e,
+                        shopInfoEntity,
+                        listingInfoMap.get(e.getSku())))
+                .collect(Collectors.toList());
+
+        // 保存到WMS
+        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
 
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void saveOrUpdateAllReportReserved(ReportInfoMongoDTO mongoDTO, List<ReportReservedMongoDTO> reportReservedMongoDTOList) {
+        // 报告保存已处理
+        mongoDTO.setReportHandleStatus(1);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
+        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+
+        // TODO 优化效率
+        // 查询当前店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
+
+        // 查询SKU绑定的信息
+        List<String> sellerSkuList = reportReservedMongoDTOList
+                .stream()
+                .map(ReportReservedMongoDTO::getSku)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
+        if (!CollectionUtils.isEmpty(sellerSkuList)) {
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+            paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setMatchResult(true);
+            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+                    .stream()
+                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
+        } else {
+            listingInfoMap = new HashMap<>();
+        }
+
+        // 转换实体
+        List<FbaInventoryEntity> fbaInventoryEntityList = reportReservedMongoDTOList
+                .stream()
+                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportReservedToEntity(e,
+                        shopInfoEntity,
+                        listingInfoMap.get(e.getSku())))
+                .collect(Collectors.toList());
+
+        // 保存到WMS
+        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void saveOrUpdateAllReportFbaInventoryPlanning(ReportInfoMongoDTO mongoDTO, List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList) {
+        // 报告保存已处理
+        mongoDTO.setReportHandleStatus(1);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDTO), MapUtil.class);
+        ReportInfoMongoDTO updateDto = ReportInfoMongoDTO.getId(mongoDTO.getId());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+
+        // TODO 优化效率
+        // 查询当前店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(mongoDTO.getShopId());
+        // 查询SKU绑定的信息
+        List<String> sellerSkuList = planningMongoDTOList
+                .stream()
+                .map(ReportFbaInventoryPlanningMongoDTO::getSku)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoMap;
+        if (!CollectionUtils.isEmpty(sellerSkuList)) {
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+            paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setMatchResult(true);
+            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+                    .stream()
+                    .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
+        } else {
+            listingInfoMap = new HashMap<>();
+        }
+
+        // 转换实体
+        List<FbaInventoryEntity> fbaInventoryEntityList = planningMongoDTOList
+                .stream()
+                .map(e -> DmpFbaInventoryConverter.INSTANCE.reportFbaInventoryPlanningToEntity(e,
+                        shopInfoEntity,
+                        listingInfoMap.get(e.getSku())))
+                .collect(Collectors.toList());
+
+        // 保存到WMS
+        wmsFbaInventoryFeign.allBatchSave(fbaInventoryEntityList);
+    }
+
+
 
     public List<? extends ReportSuperMongoDTO> handleData(List<?> cvsList, Report report, AmazonReportRecordTypeEnum recordTypeEnum) {
         return cvsList.stream().map(o -> {

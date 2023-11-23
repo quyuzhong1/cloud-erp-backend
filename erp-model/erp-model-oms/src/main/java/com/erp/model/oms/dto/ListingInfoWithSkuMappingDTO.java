@@ -149,4 +149,11 @@ public class ListingInfoWithSkuMappingDTO {
         }
         return "";
     }
+
+    public String checkAndGetProductName() {
+        if (StringUtils.isNotBlank(this.productName)){
+            return this.productName;
+        }
+        return "";
+    }
 }

@@ -62,7 +62,7 @@ public class FbaInventoryController extends BaseController {
      * 列表汇总数量
      * @Author Luo_WG
      * @Date 2023/11/9 11:42
-     * @param dto
+     * @param pagingParamDTO
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
      **/
     @PostMapping("/summaryNumber")

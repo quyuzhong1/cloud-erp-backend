@@ -286,10 +286,10 @@ public class ReportsApiTest {
     public void getReportsTest() throws Exception {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
-                .map(AmazonReportRecordTypeEnum::getRecordType)
-                .collect(Collectors.toList());
+        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
+//        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
+//                .map(AmazonReportRecordTypeEnum::getRecordType)
+//                .collect(Collectors.toList());
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
         Integer pageSize = 100;

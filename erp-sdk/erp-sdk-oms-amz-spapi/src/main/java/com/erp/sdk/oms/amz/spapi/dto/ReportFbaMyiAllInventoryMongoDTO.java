@@ -90,11 +90,11 @@ public class ReportFbaMyiAllInventoryMongoDTO extends ReportSuperMongoDTO {
      * 配送渠道：mfn-listing-exists=true为卖家自配送；afn-listing-exists=true为亚马逊配送
      */
     public String switchDeliveryChannels(){
-        if (Boolean.TRUE.toString().equalsIgnoreCase(this.mfnListingExists)){
-            return "卖家自配送";
+        if ("YES".equalsIgnoreCase(this.mfnListingExists)){
+            return "selfDelivery";
         }
-        if (Boolean.TRUE.toString().equalsIgnoreCase(this.afnListingExists)){
-            return "亚马逊配送";
+        if ("YES".equalsIgnoreCase(this.afnListingExists)){
+            return "amazonDelivery";
         }
         return "";
     }
