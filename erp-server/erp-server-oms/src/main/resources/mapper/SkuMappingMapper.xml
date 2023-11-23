@@ -46,23 +46,23 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        <if test="params.platformSpuNo !=null and params.platformSpuNo.size>0">
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
             AND li.platform_spu_no IN
-            <foreach collection="params.platformSpuNo" item="platformSpuNoItem" open="(" separator="," close=")">
+            <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
                 #{platformSpuNoItem}
             </foreach>
         </if>
 
-        <if test="params.platformSkuNo !=null and params.platformSkuNo.size>0">
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
-            <foreach collection="params.platformSkuNo" item="platformSkuNoItem" open="(" separator="," close=")">
+            <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
                 #{platformSkuNoItem}
             </foreach>
         </if>
 
-        <if test="params.fnSku !=null and params.fnSku.size>0">
+        <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
             AND li.platform_fn_sku IN
-            <foreach collection="params.fnSku" item="fnSkuItem" open="(" separator="," close=")">
+            <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
                 #{fnSkuItem}
             </foreach>
         </if>
