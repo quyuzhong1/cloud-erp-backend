@@ -20,6 +20,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -894,8 +895,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO skuMappingBatch(String id) {
         FbaShipmentEntity entity = this.getById(id);
-        List<FbaShipmentDetailEntity> oldList = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
+
         if (ObjectUtil.isEmpty(fbaShipmentDetailEntities)) {
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
@@ -908,13 +910,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
         for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
+
+            FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
+            BeanMapper.copy(detailEntity, old);
+
             SkuMappingDTO.SkuDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
 
-                FbaShipmentDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
                 }
