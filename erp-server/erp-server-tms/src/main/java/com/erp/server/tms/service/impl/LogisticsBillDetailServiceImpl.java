@@ -5,9 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -15,8 +15,6 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
-import com.erp.model.wms.dto.FbaDeliveryDetailDTO;
-import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
@@ -29,7 +27,6 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 
@@ -133,12 +130,12 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
-    public IPage<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
+    public PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
         Page<LogisticsBillDetailEntity> page = new Page<>();
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
         IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return result;
+        return new PagingVO(result);
     }
 
     @Override

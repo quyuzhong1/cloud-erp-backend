@@ -1,5 +1,5 @@
 package com.erp.server.tms.service;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -77,7 +77,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param query
      * @return
      */
-    IPage<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
+    PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
 
     LogisticsBillDetailEntity getDetailByTrackNo(String trackNo);
 }

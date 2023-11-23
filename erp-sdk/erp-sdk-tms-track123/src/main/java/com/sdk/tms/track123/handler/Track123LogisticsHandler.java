@@ -1,32 +1,24 @@
 package com.sdk.tms.track123.handler;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.sdk.tms.track123.convert.TrackDataConverter;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
 import com.sdk.tms.track123.model.request.TrackRequest;
@@ -98,16 +90,16 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
-        IPage<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
-        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getRecords())) return;
-        ResponseData responseData = processTrackData(page.getRecords(), cfgAppClient);
+        PagingVO<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
+        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) return;
+        ResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
         if (Objects.isNull(responseData)) return;
         //业务处理
         responseDataList.add(responseData);
-        long pages = page.getPages();
-        if (pages > page.getCurrent()) {
+        long pages = page.getTotalPage();
+        if (pages > page.getCurrPage()) {
             //下一页
-            query.setCurrent(page.getCurrent() + 1);
+            query.setCurrent(page.getCurrPage() + 1);
             getTrackData(query, responseDataList, cfgAppClient);
         } else {
             //无数据
