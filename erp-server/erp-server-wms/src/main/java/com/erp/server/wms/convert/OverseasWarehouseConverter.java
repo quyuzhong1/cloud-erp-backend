@@ -1,10 +1,12 @@
 package com.erp.server.wms.convert;
 
+import com.common.business.dto.PlatformTransferWarehouseDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.MD5Util;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
@@ -37,4 +39,15 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "warehouseName",  ignore = true)
     })
     OverseasProviderWarehouseEntity mqDtoToDbDto(PlatformWarehouseDTO dto);
+
+    @Mappings({
+            @Mapping(target = "dictPlatform", source = "provider"),
+            @Mapping(target = "platformWarehouseCode", source = "transferWarehouseCode"),
+            @Mapping(target = "name", source = "transferWarehouseName"),
+            @Mapping(target = "platformToWarehouseCode", source = "destinationWarehouseCode"),
+            @Mapping(target = "platformToWarehouseName", source = "destinationWarehouseName"),
+            @Mapping(target = "logisticsProductCode", source = "logisticsChannelCode"),
+            @Mapping(target = "logisticsProductName", source = "logisticsChannelName")
+    })
+    OverseasTransferWarehouseEntity transferDtoConvert(PlatformTransferWarehouseDTO dto);
 }

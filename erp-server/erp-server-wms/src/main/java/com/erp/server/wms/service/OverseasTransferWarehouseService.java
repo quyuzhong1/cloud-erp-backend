@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -33,4 +34,5 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
     Boolean update(OverseasTransferWarehouseDTO.UpdateDTO dto);
 
 
+    Boolean saveOrUpdateByPlatform(OverseasTransferWarehouseEntity mqEntity);
 }
