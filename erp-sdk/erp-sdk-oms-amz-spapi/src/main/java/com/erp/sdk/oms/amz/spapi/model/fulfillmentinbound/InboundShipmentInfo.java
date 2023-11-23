@@ -41,7 +41,7 @@ public class InboundShipmentInfo {
   private String destinationFulfillmentCenterId = null;
 
   @SerializedName("ShipmentStatus")
-  private ShipmentStatus shipmentStatus = null;
+  private String shipmentStatus = null;
 
   @SerializedName("LabelPrepType")
   private LabelPrepType labelPrepType = null;
@@ -130,7 +130,7 @@ public class InboundShipmentInfo {
     this.destinationFulfillmentCenterId = destinationFulfillmentCenterId;
   }
 
-  public InboundShipmentInfo shipmentStatus(ShipmentStatus shipmentStatus) {
+  public InboundShipmentInfo shipmentStatus(String shipmentStatus) {
     this.shipmentStatus = shipmentStatus;
     return this;
   }
@@ -140,11 +140,11 @@ public class InboundShipmentInfo {
    * @return shipmentStatus
   **/
 
-  public ShipmentStatus getShipmentStatus() {
+  public String getShipmentStatus() {
     return shipmentStatus;
   }
 
-  public void setShipmentStatus(ShipmentStatus shipmentStatus) {
+  public void setShipmentStatus(String shipmentStatus) {
     this.shipmentStatus = shipmentStatus;
   }
 

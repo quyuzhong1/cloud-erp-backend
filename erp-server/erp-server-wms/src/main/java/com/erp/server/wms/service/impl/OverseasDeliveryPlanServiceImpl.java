@@ -14,6 +14,7 @@ import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
@@ -467,7 +468,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
 
         //设置状态中文名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
 
         //明细信息
         List<OverseasDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, OverseasDeliveryPlanDetailDTO.ViewDTO.class);
@@ -661,14 +662,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
     @Override
     public OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
-        return null;
-        /*//查询所有审核通过的sku
+        //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
-
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(skuList, skuIds);
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(skuList, skuIds, bomChildrenSkuList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), SalesDemandImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -677,26 +678,26 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             throw new ServiceException(ApiError.ERROR_1016);
         }
         //验证导入数据是否为空
-        List<SalesDemandImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        List<DeliveryPlanDetailExportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        SalesDemandDetailDTO.ImportDTO importDTO = new SalesDemandDetailDTO.ImportDTO();
+        OverseasDeliveryPlanDetailDTO.ImportDTO importDTO = new OverseasDeliveryPlanDetailDTO.ImportDTO();
         //导入数据处理
-        List<SalesDemandDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
+        List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
-        List<SalesDemandImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "备货申请错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, SalesDemandImportExcelDTO.class);
+            String fileName = "海外发货计划错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
         importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
-        return importDTO;*/
+        return importDTO;
     }
 
     private Boolean generateDeliver(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {

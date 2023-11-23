@@ -216,4 +216,40 @@ public class OverseasProviderDTO implements Serializable {
         @NotNull(message = "授权的信息不能为空")
         private Map<String, Object> authJson;
     }
+
+    /**
+     * 仓库信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseDTO {
+        /**
+         * ERP仓库id
+         */
+        private String warehouseId;
+        /**
+         * ERP仓库名称
+         */
+        private String warehouseName;
+        /**
+         * ERP仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 第三方平台仓库编码
+         */
+        private String platformWarehouseCode;
+        /**
+         * 第三方平台仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 所属国家二字码
+         */
+        private String country;
+        /**
+         * 国家中文
+         */
+        private String countryName;
+    }
 }

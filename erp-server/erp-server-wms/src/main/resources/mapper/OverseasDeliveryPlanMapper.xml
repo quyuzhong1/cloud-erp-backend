@@ -74,7 +74,7 @@
         </if>
         <!--单号-->
         <if test="params.code != null and params.code != ''">
-            AND odp.code ILIKE concat('%',#{params.code},'%')
+            AND odp.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <!--sku编号-->
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
@@ -190,7 +190,7 @@
                 </if>
                 <!--单号-->
                 <if test="params.code != null and params.code != ''">
-                    AND odp.code ILIKE concat('%',#{params.code},'%')
+                    AND odp.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <!--sku编号-->
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">

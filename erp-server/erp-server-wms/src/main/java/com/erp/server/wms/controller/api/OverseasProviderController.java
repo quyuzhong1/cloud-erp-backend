@@ -25,6 +25,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 
+import java.util.List;
+
 /**
  * 海外物流商
  *
@@ -133,4 +135,19 @@ public class OverseasProviderController extends BaseController {
         Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
         return flag ? success() : failure();
     }
+
+    /**
+     * 根据ERP仓库id查询绑定的海外仓信息
+     * @Author Luo_WG
+     * @Date 2023/11/23 15:27
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/listProviderWarehouseByIds")
+    public ApiResult<List<OverseasProviderDTO.WarehouseDTO>> listProviderWarehouseByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<OverseasProviderDTO.WarehouseDTO> list = overseasProviderService.listProviderWarehouseByIds(dto.getIds());
+        return success(list);
+    }
+
+
 }
