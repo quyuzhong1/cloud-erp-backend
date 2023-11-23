@@ -920,7 +920,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
 
-
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
                 }
