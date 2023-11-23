@@ -148,13 +148,13 @@ public class ItemDimensionsByMarketplace {
 
 //    （重量统一换算成KG，pounds=lb=0.453KG，1oz=0.028KG；尺寸统一换算成CM，inches=2.54CM）
         String resultStr = StrUtil.format("高度:{};\n" +
-                        "        长度:{};\n" +
-                        "        重量:{};\n" +
-                        "        宽度:{};",
-                height.getValue().multiply(new BigDecimal("2.54")).stripTrailingZeros() + "CM",
-                length.getValue().multiply(new BigDecimal("2.54")).stripTrailingZeros() + "CM",
-                this.weightKg(weight).stripTrailingZeros() + "KG",
-                width.getValue().multiply(new BigDecimal("2.54")).stripTrailingZeros() + "CM"
+                        "长度:{};\n" +
+                        "重量:{};\n" +
+                        "宽度:{};",
+                height.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM",
+                length.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM",
+                this.weightKg(weight).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "KG",
+                width.getValue().multiply(new BigDecimal("2.54")).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros() + "CM"
         );
         return resultStr;
     }

@@ -1,5 +1,7 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -13,10 +15,16 @@ import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
+import com.netflix.client.IResponse;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -24,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -94,41 +103,36 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
 
         // 产品规格信息
-        String productSpec = "";
+        String productSpec;
         // 包装信息
-        String packing = "";
-//        try {
-            // 查询商品详情
-            // TODO
-//            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum.getEndpointsEnum(), false);
-//            String asin = dto.getProductId();
-//            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
-//            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
-//            Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
-//            ItemAttributes attributes = response.getAttributes();
-//            if (null != attributes) {
-//                Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
-//                if (!tempMap.isEmpty()) {
-//                    productSpec = tempMap.entrySet().stream()
-//                            .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
-//                            .collect(Collectors.joining(","));
-//                }
-//            }
-//            ItemDimensions dimensions = response.getDimensions();
-//            if (null != dimensions) {
-//                packing = dimensions.stream()
-//                        .map(ItemDimensionsByMarketplace::combineStr)
-//                        .filter(StringUtils::isNotBlank)
-//                        .collect(Collectors.joining(","));
-//            }
-//        } catch (ApiException e) {
-//            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
-//        }
-        // TODO
+        String packing;
+        // 图片
+        String imageUrl;
+        try {
+             //查询商品详情
+            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum.getEndpointsEnum(), false);
+            String asin = dto.getAsin1();
+            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
+            Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
+            // 拼接产品规格信息
+            productSpec = response.combineProductSpec(marketPlaceEnum.getMarketplaceId());
+            // 拼接包装信息
+            packing = response.combinePacking(marketPlaceEnum.getMarketplaceId());
+            // 找出第一张图片信息
+            imageUrl = response.combineImage(marketPlaceEnum.getMarketplaceId());
+            // 源信息
+            dto.setDetail(response);
+        } catch (ApiException e) {
+            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
+        }
+
         // 产品规格信息
         dto.setProductSpec(productSpec);
         // 产品包装信息
         dto.setProductPacking(packing);
+        // 产品图片
+        dto.setImageUrl(imageUrl);
 
         return dto;
     }
