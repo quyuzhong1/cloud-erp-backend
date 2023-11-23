@@ -1,7 +1,13 @@
 package com.erp.server.tms.controller.feign;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +25,8 @@ import java.util.List;
 public class LogisticsBillFeignController {
     @Resource
     private LogisticsBillService logisticsBillService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     /**
      * 新增物流单
@@ -72,5 +80,16 @@ public class LogisticsBillFeignController {
     @PostMapping("/generateBill")
     public void  generateBill(@RequestBody LogisticsBillDTO.AddDTO  dto){
         logisticsBillService.generateBill(dto);
+    }
+
+    /**
+     * 获取物流单数据 用于查询轨迹
+     * @param query
+     * @return
+     */
+    @PostMapping("/getLogisticsBillDetails")
+    public IPage<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query){
+        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        return page;
     }
 }

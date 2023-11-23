@@ -12,9 +12,7 @@ import com.sdk.oms.shopee.dto.order.response.RecipientAddress;
 import com.sdk.oms.shopee.dto.product.response.ImageInfo;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
 import io.seata.common.util.CollectionUtils;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -34,8 +32,8 @@ import java.util.stream.Collectors;
  * @Date 2023/8/31 16:01
  **/
 @Slf4j
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Setter
+@Getter
 @NoArgsConstructor
 public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 
@@ -297,4 +295,11 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         return detailDTO;
     }
 
+    @Override
+    public String toString() {
+        return "PlatformShopeeOrderDTO{" +
+                "orderDetail=" + orderDetail +
+                ", shopId='" + shopId + '\'' +
+                '}';
+    }
 }
