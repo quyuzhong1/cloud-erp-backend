@@ -83,10 +83,10 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
     Boolean allBatchSave(List<FbaInventoryEntity> inventoryEntityList);
 
     /**
-     * 根据asin，mSku，fnSku查询
+     * 根据asin，mSku，fnSku, warehouseId查询
      *
      * @Author Jim
      * @Date 2023-11-22
      **/
-    FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku);
+    FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku, String warehouseId);
 }

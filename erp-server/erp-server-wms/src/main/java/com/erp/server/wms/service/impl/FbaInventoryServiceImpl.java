@@ -200,7 +200,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         List<FbaInventoryEntity> newUpdateBatch = new LinkedList<>();
 
         for (FbaInventoryEntity newEntity : inventoryEntityList) {
-            FbaInventoryEntity oldEntity = this.getByAttribute(newEntity.getAsin(), newEntity.getMsku(), newEntity.getFnSku());
+            FbaInventoryEntity oldEntity = this.getByAttribute(newEntity.getAsin(), newEntity.getMsku(), newEntity.getFnSku(), newEntity.getWarehouseId());
             if (null == oldEntity) {
                 newSaveBatch.add(newEntity);
             } else {
@@ -234,9 +234,9 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     }
 
     @Override
-    public FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku) {
-        if (StringUtils.isBlank(asin) || StringUtils.isBlank(mSku) || StringUtils.isBlank(fnSku)) {
-            String msg = StrUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}", asin, mSku, fnSku);
+    public FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku, String warehouseId) {
+        if (StringUtils.isBlank(asin) || StringUtils.isBlank(mSku) || StringUtils.isBlank(fnSku) || StringUtils.isBlank(warehouseId)) {
+            String msg = StrUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}, warehouseId={}", asin, mSku, fnSku, warehouseId);
             throw new ServiceException(msg);
         }
         return lambdaQuery()
