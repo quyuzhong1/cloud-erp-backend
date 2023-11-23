@@ -288,7 +288,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     */
     private void handleData(LogisticsBillCostEntity entity) {
         //运费差异
-        BigDecimal diffShippingCost = MathUtil.subtract(entity.getLactualShippingCost(), entity.getEstimatedShippingCost());
+        BigDecimal diffShippingCost = MathUtil.subtract(entity.getActualShippingCost(), entity.getEstimatedShippingCost());
         entity.setDiffShippingCost(diffShippingCost);
 
         //计费重
@@ -365,7 +365,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(excelDTO.getBillingWeightLogistics()));
-            updateDataDTO.setLactualShippingCost(new BigDecimal(excelDTO.getLactualShippingCost()));
+            updateDataDTO.setActualShippingCost(new BigDecimal(excelDTO.getActualShippingCost()));
             this.update(updateDataDTO);
         }
     }

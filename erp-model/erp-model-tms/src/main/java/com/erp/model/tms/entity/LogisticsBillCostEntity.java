@@ -88,8 +88,8 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     /**
     * 实际运费（物流商）
     */
-    @TableField("lactual_shipping_cost")
-    private BigDecimal lactualShippingCost;
+    @TableField("actual_shipping_cost")
+    private BigDecimal actualShippingCost;
 
     /**
     * 运费差异
