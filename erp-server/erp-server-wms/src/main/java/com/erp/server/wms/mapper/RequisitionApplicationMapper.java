@@ -41,4 +41,13 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaDeliveryDTO.ListDTO>
      **/
     IPage<RequisitionApplicationDTO.ListDTO> paging(Page query, @Param("params") RequisitionApplicationDTO.PagingParamDTO params);
+
+    /**
+     * 处理列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:24
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>
+     **/
+    List<RequisitionApplicationDTO.handleListDTO> handleList(@Param("ids") List<String> ids);
 }

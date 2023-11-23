@@ -700,6 +700,14 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         return importDTO;
     }
 
+    /**
+     * 下推发货单处理
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:33
+     * @param list 数据集
+     * @param isSubmit 是否提交
+     * @return java.lang.Boolean
+     **/
     private Boolean generateDeliver(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list, Boolean isSubmit) {
         //一个发货计划单，生成一个要发货单
         Map<String, List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO>> map = list.stream().collect(Collectors.groupingBy(OverseasDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceId));
@@ -758,11 +766,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
                     String productSize = skuVO.getProductSize();
                     splitProductSize(detailAddDto, productSize);
                 }
-
                 //暂无仓位
                 detailAddDto.setWarehouseLocation("");
-
-
                 detailAddList.add(detailAddDto);
             }
             addDTO.setDetailList(detailAddList);
