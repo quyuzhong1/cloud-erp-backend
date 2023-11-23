@@ -55,4 +55,14 @@ public interface ShopInfoFeign {
      **/
     @PostMapping("feign/shop/listShopInfoByIds")
     List<ShopInfoEntity> listShopInfoByIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据仓库id查询店铺
+     * @Author Luo_WG
+     * @Date 2023/11/23 16:03
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    @PostMapping("feign/shop/listShopInfoByWarehouseIds")
+    List<ShopInfoEntity> listShopInfoByWarehouseIds(@RequestBody List<String> warehouseIds);
 }

@@ -18,10 +18,8 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -31,6 +29,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.constant.WmsConstant;
@@ -85,8 +84,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Autowired
     private RedisService redisService;
+
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
 
 
@@ -369,6 +372,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //发送金蝶
         if (dto.getState()) {
+            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
+            }
             syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_DISABLE.getCode());
         } else {
             syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_ENABLE.getCode());
@@ -449,6 +456,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99003);
         }
+
+        //仓库已绑定店铺不允许反审核
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(warehouseIds);
+        for (WarehouseEntity warehouseEntity : list) {
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(warehouseEntity.getId())).distinct().findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName());
+            }
+        }
+
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
         //反审核后发送金蝶
