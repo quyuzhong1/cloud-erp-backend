@@ -30,7 +30,7 @@ public interface SdkFbaShipmentConverter {
 //            @Mapping(target = "countryName", source = "shipmentInfo.countryName"),
             @Mapping(target = "fulfillmentCenter", source = "shipmentInfo.destinationFulfillmentCenterId"),
 //            @Mapping(target = "shipmentStatus", source = "shipmentInfo.shipmentStatus.value"),
-            @Mapping(target = "platformShipmentStatus", source = "shipmentInfo.shipmentStatus.value"),
+            @Mapping(target = "platformShipmentStatus", source = "shipmentInfo.shipmentStatus"),
             @Mapping(target = "shipmentCreateTime", expression = "java(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()))"),
             @Mapping(target = "labelType", source = "shipmentInfo.labelPrepType.desc"),
             @Mapping(target = "packType", expression = "java(dto.convertPackType())"),

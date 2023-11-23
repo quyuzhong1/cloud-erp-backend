@@ -44,7 +44,10 @@ public enum ShipmentStatus {
   
   DELIVERED("DELIVERED"),
   
-  CHECKED_IN("CHECKED_IN");
+  CHECKED_IN("CHECKED_IN"),
+
+  READY_TO_SHIP("READY_TO_SHIP"),
+  ;
 
   private String value;
 
