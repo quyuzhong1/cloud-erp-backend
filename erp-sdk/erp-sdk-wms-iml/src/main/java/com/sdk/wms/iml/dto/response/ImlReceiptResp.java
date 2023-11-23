@@ -1,6 +1,7 @@
 package com.sdk.wms.iml.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.dto.CleanBaseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class ImlReceiptResp implements Serializable {
+public class ImlReceiptResp extends CleanBaseDTO implements Serializable {
 
     //入库单号
     @JSONField(name = "receiving_code")

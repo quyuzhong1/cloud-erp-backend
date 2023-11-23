@@ -41,7 +41,7 @@ public class ImlWarehouseHandler extends AbstractThirdWarehouseHandler<ImlWareho
         checkResponse(response);
         List<ImlWarehouseResp> imlWarehouseData = response.getData();
         imlWarehouseData.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+v.getWarehouseCode()));
+            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.WAREHOUSE.getCode()+v.getWarehouseCode()));
             v.setAuthId(data.getShopId());
         });
         return imlWarehouseData;
