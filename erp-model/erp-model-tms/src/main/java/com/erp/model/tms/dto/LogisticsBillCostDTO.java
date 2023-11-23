@@ -317,7 +317,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
         * 实际运费（物流商）
         */
-        private BigDecimal lactualShippingCost;
+        private BigDecimal actualShippingCost;
 
         /**
         * 运费差异
@@ -369,7 +369,7 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际运费（物流商）
          */
         @Digits(integer = 12, fraction = 4, message = "实际运费（物流商）整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal lactualShippingCost;
+        private BigDecimal actualShippingCost;
 
         /**
          * 备注
@@ -448,7 +448,7 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 实际运费[物流商]
          */
-        private BigDecimal lactualShippingCost;
+        private BigDecimal actualShippingCost;
 
         /**
          * 币种
