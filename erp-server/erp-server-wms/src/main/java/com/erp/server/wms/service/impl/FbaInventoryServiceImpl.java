@@ -243,6 +243,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 .eq(FbaInventoryEntity::getAsin, asin)
                 .eq(FbaInventoryEntity::getMsku, mSku)
                 .eq(FbaInventoryEntity::getFnSku, fnSku)
+                .eq(FbaInventoryEntity::getWarehouseId, warehouseId)
                 .last("LIMIT 1")
                 .one();
     }
