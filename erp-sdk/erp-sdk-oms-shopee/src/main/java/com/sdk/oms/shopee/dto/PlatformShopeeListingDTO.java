@@ -10,7 +10,10 @@ import com.sdk.oms.shopee.dto.product.response.Dimension;
 import com.sdk.oms.shopee.dto.product.response.Image;
 import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -24,7 +27,9 @@ import java.util.Objects;
  * @Author Cloud
  * @Date 2023/8/31 16:01
  **/
-@Data
+@Slf4j
+@Setter
+@Getter
 @NoArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
@@ -88,5 +93,12 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
             return "";
         }
         return StrUtil.format("长度:{};宽度:{};高度:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight());
+    }
+
+    @Override
+    public String toString() {
+        return "PlatformShopeeListingDTO{" +
+                "itemInfo=" + itemInfo +
+                '}';
     }
 }

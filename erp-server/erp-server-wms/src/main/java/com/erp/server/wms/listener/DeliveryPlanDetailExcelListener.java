@@ -101,7 +101,6 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
                         } else {
                             viewDTO.setIsCombination(Boolean.FALSE);
                         }
-                        successList.add(viewDTO);
                     }
                 }
             }

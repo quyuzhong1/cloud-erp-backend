@@ -184,6 +184,11 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         return BeanMapperUtils.copyList(LogisticsAddressDTO.ListDTO.class,addressList);
     }
 
+    @Override
+    public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId) {
+        return baseMapper.listByTypeAndChannelId(type,channelId);
+    }
+
 
     /**
      * 新增修改处理数据

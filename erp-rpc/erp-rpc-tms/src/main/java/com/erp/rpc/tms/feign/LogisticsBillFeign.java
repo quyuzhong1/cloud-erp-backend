@@ -1,6 +1,9 @@
 package com.erp.rpc.tms.feign;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,4 +44,12 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("feign/logisticsBill/addLogisticsBill")
     void addLogisticsBill(@RequestBody LogisticsBillDTO.AddDTO addDTO);
+
+    /**
+     * 获取物流单数据 用于查询轨迹
+     * @param query
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/getLogisticsBillDetails")
+    IPage<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
 }

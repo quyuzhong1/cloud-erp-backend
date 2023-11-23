@@ -199,6 +199,11 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         }
     }
 
+    @Override
+    public List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform) {
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getLogisticsPlatform,logisticsPlatform).list();
+    }
+
     /**
     * 新增修改处理数据
     */

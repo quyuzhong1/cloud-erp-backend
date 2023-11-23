@@ -171,6 +171,12 @@ public class LogisticsSupplierDTO implements Serializable {
          */
         private String id;
 
+
+        /**
+         * 物流商id
+         */
+        private String mainId;
+
         /**
          * 供应商id
          */

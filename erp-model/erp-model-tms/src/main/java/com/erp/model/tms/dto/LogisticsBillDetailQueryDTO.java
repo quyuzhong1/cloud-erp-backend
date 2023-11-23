@@ -41,4 +41,8 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 是否需要查询物流轨迹
      */
     private Boolean trackEnable;
+    /**
+     * 店铺id
+     */
+    private String shopId;
 }

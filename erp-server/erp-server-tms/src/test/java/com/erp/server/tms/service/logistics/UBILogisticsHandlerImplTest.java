@@ -36,11 +36,11 @@ public class UBILogisticsHandlerImplTest {
 
     public UBILogisticsHandlerImplTest(){
 //        //测试环境账号
-//        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
-//        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
+        authMap.put("clientId","test5AdbzO5OEeOpvgAVXUFE0A");
+        authMap.put("clientSecret","79db9e5OEeOpvgAVXUFWSD");
         //正式环境账号
-        authMap.put("clientId","pcloTVPCXZCD5G-RRlhBfR");
-        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
+//        authMap.put("clientId","pcloTVPCXZCD5G-RRlhBfR");
+//        authMap.put("clientSecret","N1S3O3OlKKRDRfcfYFONqg");
     }
     public Map<String, String> getLogisticsAuthConfig(){
         Map<String, String> logisticsAuthConfig = ubiLogisticsHandler.getLogisticsAuthConfig("");

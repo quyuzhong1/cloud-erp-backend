@@ -11,17 +11,24 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.constant.TmsConstant;
+import com.erp.server.tms.convert.LogisticsBillConverter;
+import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -44,6 +51,7 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
@@ -87,6 +95,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Autowired
     private ShippingTemplateRuleService shippingTemplateRuleService;
 
+    @Autowired
+    private LogisticsAuthService logisticsAuthService;
+
+    @Autowired
+    private LogisticsRegistry logisticsRegistry;
+
+    @Autowired
+    private LogisticsAddressService logisticsAddressService;
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -100,7 +119,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity,addDTO.getDetailList());
+        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
 
         //新增物流费用单
         addLogisticsBillCost(logisticsBillEntity);
@@ -291,8 +310,45 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     }
 
+    /**
+     * 生成物流单
+     *
+     * @param dto
+     */
     @Override
-    public void generateBill(LogisticsBillDTO.AddDTO dto) {
+    public void generateBill(LogisticsBillDTO.GenerateBillDTO dto) {
+        String channelId = dto.getChannelId();
+        LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
+        if (Objects.isNull(logisticsChannel)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        String deliverType = LogisticsAddressTypeEnum.DELIVER.getCode();
+        //发货人信息
+        List<LogisticsAddressEntity> deliverList = logisticsAddressService.listByTypeAndChannelId(deliverType, channelId);
+        if (CollectionUtils.isEmpty(deliverList)) {
+            throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
+        }
+        //发货人信息
+        SenderInfo senderInfo = new SenderInfo();
+        BeanMapperUtils.copy(deliverList.get(0), senderInfo);
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId());
+        //平台
+        String logisticsPlatform = auth.getLogisticsPlatform();
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        authMap.put("token", dto.getToken());
+        //来源
+        String sourceType = dto.getSourceType();
+        //收货人
+        LogisticsBillDTO.ReceiverDTO receiverDTO = dto.getReceiver();
+        //转化成收货人
+        ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
+        List<LogisticsBillDTO.SkuDTO> skuList=dto.getSkuList();
+        List<String> skuIdList=skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
+        List<LogisticsProductDTO.dd>
 
     }
 
@@ -334,10 +390,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     /**
+     * @param logisticsBillEntity
      * @description: 添加物流费用
      * @author Will
      * @date: 2023/11/20 12:27
-     * @param logisticsBillEntity
      */
     private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity) {
         LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
@@ -355,15 +411,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             addDTO.setActualWeight(soB2cLogisticsList.get(0).getWeight());
             //存在模板时计算体积重
             if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
-            BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
-                    .multiply(soB2cLogisticsList.get(0).getWeight())
-                    .multiply(soB2cLogisticsList.get(0).getLength());
-                addDTO.setVolumeWeight(MathUtil.divide(volume,new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
+                BigDecimal volume = soB2cLogisticsList.get(0).getHeight()
+                        .multiply(soB2cLogisticsList.get(0).getWeight())
+                        .multiply(soB2cLogisticsList.get(0).getLength());
+                addDTO.setVolumeWeight(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())));
             }
         }
         if (ObjectUtil.isNotEmpty(shippingTemplateEntity)) {
             //计费重
-            BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(),addDTO.getVolumeWeight()) > MathUtil.ZERO
+            BigDecimal billingWeight = MathUtil.compareTo(addDTO.getActualWeight(), addDTO.getVolumeWeight()) > MathUtil.ZERO
                     ? addDTO.getActualWeight() : addDTO.getVolumeWeight();
             //预估运费
             ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();
