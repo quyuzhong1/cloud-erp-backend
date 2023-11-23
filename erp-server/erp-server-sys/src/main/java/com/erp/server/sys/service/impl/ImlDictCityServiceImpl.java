@@ -13,16 +13,10 @@ import org.springframework.stereotype.Service;
  * </p>
  *
  * @author lrp
- * @since 2023-11-22
+ * @since 2023-11-23
  */
 @Slf4j
 @Service
 public class ImlDictCityServiceImpl extends SuperServiceImpl<ImlDictCityMapper, ImlDictCityEntity> implements ImlDictCityService {
 
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(ImlDictCityEntity imlDictCityEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }
