@@ -1,18 +1,12 @@
 package com.erp.sdk.oms.amz.spapi.dto;
 
-import cn.hutool.core.date.DatePattern;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
-import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -84,8 +78,10 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private String fulfillmentChannel;
 
     private String merchantShippingGroup;
-    
-    
+
+    /**
+     * 店铺ID
+     */
     private String shopId;
 
     /**
@@ -116,6 +112,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private Item detail;
 
     /**
+     * 亚马逊关联的库存SKU
+     */
+    private String platformFnSku;
+
+    /**
      * 转换目标实体:PlatformProductDTO
      */
     public static PlatformProductDTO convertDTO(PlatformAmazonListingDTO sourceEntity) {
@@ -141,6 +142,8 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 .setPlatformUpdateTime(sourceEntity.getPlatformUpdateTime())
                 // 店铺ID
                 .setShopId(sourceEntity.getShopId())
+                // 亚马逊关联的库存SKU
+                .setPlatformFnSku(sourceEntity.getPlatformFnSku())
                 ;
 
         // 平台

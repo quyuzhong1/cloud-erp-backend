@@ -121,7 +121,7 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     public SkuMappingEntity(ListingInfoEntity entity, String shopId) {
         this.shopId = shopId;
         this.dictPlatform = PlatformDictEnum.AMAZON.getCode();
-        this.platformName = PlatformDictEnum.AMAZON.getName();
+        this.platformName = PlatformDictEnum.AMAZON.getDesc();
         this.productSkuId = "";
         this.productSkuNo = "";
         this.productName = "";
