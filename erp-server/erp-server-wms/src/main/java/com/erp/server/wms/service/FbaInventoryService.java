@@ -89,4 +89,12 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @Date 2023-11-22
      **/
     FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku, String warehouseId);
+
+    /**
+     * 查询FBA库存信息和预留明细列表
+     *
+     * @Author Jim
+     * @Date 2023-11-23
+     **/
+    List<FbaInventoryEntity> findList(List<String> sellerSkuList);
 }

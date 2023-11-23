@@ -248,4 +248,14 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 .one();
     }
 
+    @Override
+    public List<FbaInventoryEntity> findList(List<String> sellerSkuList) {
+        if (CollectionUtils.isEmpty(sellerSkuList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(FbaInventoryEntity::getMsku, sellerSkuList)
+                .list();
+    }
+
 }

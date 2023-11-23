@@ -16,9 +16,10 @@ import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -93,6 +94,9 @@ public class PullAmazonJob {
 
     @Resource
     private ReportScheduleService reportScheduleService;
+
+    @Resource
+    private WmsFbaInventoryFeign wmsFbaInventoryFeign;
 
     /**
      * 拉取亚马逊任务
@@ -222,19 +226,38 @@ public class PullAmazonJob {
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformAmazonListingDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
-        if (CollectionUtil.isEmpty(orderEntityList)) {
+        List<PlatformAmazonListingDTO> list = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
+        if (CollectionUtil.isEmpty(list)) {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;
         }
-        orderEntityList.forEach(dto -> {
+        // 查询关联的FNSKU
+        List<String> sellerSkuList = list.stream()
+                .map(PlatformAmazonListingDTO::getSellerSku)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<FbaInventoryEntity> fbaInventoryEntityList =  wmsFbaInventoryFeign.findList(sellerSkuList);
+        // TODO msku绑定的fnSku是否唯一?
+        Map<String, List<FbaInventoryEntity>> fnSkuRelationMap = fbaInventoryEntityList
+                .stream()
+                .collect(Collectors.groupingBy(FbaInventoryEntity::getMsku));
+
+        list.forEach(dto -> {
             try {
+                // 关联FNSKU信息
+                FbaInventoryEntity fbaInventoryEntity = fnSkuRelationMap.getOrDefault(dto.getSellerSku(), Collections.emptyList())
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
+
                 // 下载和处理详情
                 PlatformAmazonListingDTO newDto = amazonListingHandler.downloadDetail(dto, new JSONObject());
                 String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.PRODUCT.getCode();
                 List<PlatformProductDTO> convertDto = amazonListingHandler.convert(Collections.singletonList(newDto));
+                newDto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
                 newDto.setDownloadStatus(1);
                 newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 businessService.pullDetailProcess(newDto, convertDto.get(0), category, platform, business);

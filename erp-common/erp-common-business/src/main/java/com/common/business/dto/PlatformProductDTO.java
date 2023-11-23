@@ -20,16 +20,6 @@ import java.time.LocalDateTime;
 public class PlatformProductDTO extends UniqueDto {
 
     /**
-     * sku no
-     */
-//    private String skuNo;
-
-    /**
-     * 产品名称
-     */
-//    private String productName;
-
-    /**
      * 类型 platform 平台  warehouse 仓库
      */
     private String platformType;
@@ -100,4 +90,9 @@ public class PlatformProductDTO extends UniqueDto {
      * 匹配结果
      */
     private Boolean matchResult;
+
+    /**
+     * 亚马逊关联的SKU
+     */
+    private String platformFnSku;
 }

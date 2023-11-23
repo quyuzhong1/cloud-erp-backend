@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -68,19 +69,23 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
         if (null == oldEntity) {
             if (!listingInfoService.save(entity)) {
-                throw new ServiceException("Listing 产品保存失败");
+                throw new ServiceException("【listing消费】Listing 产品保存失败");
             }
             // 添加到映射
             SkuMappingEntity skuMappingEntity;
             if(RuleTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
                 PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(entity.getPlatform());
+                if (null == platformDictEnum){
+                    String msg = StrUtil.format("【listing消费】未找到对应平台枚举：Platform={}, UniqueId={}", dto.getPlatform(), dto.getUniqueId());
+                    throw new ServiceException(msg);
+                }
                 RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(entity.getType());
                 skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId(),platformDictEnum,ruleTypeEnum);
             }else{
                 skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
             }
             if (!skuMappingService.save(skuMappingEntity)) {
-                throw new ServiceException("SkuMapping保存失败");
+                throw new ServiceException("【listing消费】SkuMapping保存失败");
             }
         } else {
             // 是否修改
@@ -90,6 +95,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 oldEntity.setProductSpec(entity.getProductSpec());
                 oldEntity.setProductPacking(entity.getProductPacking());
                 oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
+                oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
                 if (!listingInfoService.updateById(oldEntity)) {
                     throw new ServiceException("Listing 产品更新失败");
                 }

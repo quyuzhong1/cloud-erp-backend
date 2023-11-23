@@ -38,6 +38,15 @@ public class FbaInventoryFeignController extends BaseController {
        return fbaInventoryService.allBatchSave(inventoryEntityList);
     }
 
-
+    /**
+     * 查询FBA库存信息和预留明细列表
+     *
+     * @Author Jim
+     * @Date 2023-11-23
+     **/
+    @PostMapping("/list")
+    public List<FbaInventoryEntity> findList(@RequestBody List<String> sellerSkuList) {
+        return fbaInventoryService.findList(sellerSkuList);
+    }
 
 }
