@@ -1,10 +1,7 @@
 package com.sdk.wms.goodcang.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,13 +12,20 @@ import java.util.List;
 @AllArgsConstructor
 public class GoodCangLogisticsAndWarehouseResp implements Serializable {
 
+    public static abstract class Base {
+        public abstract String getSmCode();
+        public abstract String getSmCodeName();
+        public abstract List<TwcToWarehouse> getTwcToWarehouseList();
+    }
+
     //空运
     @JSONField(name = "AIR")
     private List<AIR> airList;
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class AIR {
+    public static class AIR  extends Base{
 
         //物流产品
         @JSONField(name = "sm_code")
@@ -41,9 +45,10 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
     @JSONField(name = "LCL")
     private List<LCL> lclList;
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class LCL {
+    public static class LCL extends Base{
 
         //物流产品
         @JSONField(name = "sm_code")
@@ -62,9 +67,10 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
     @JSONField(name = "EXPRESS")
     private List<EXPRESS> expressList;
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class EXPRESS {
+    public static class EXPRESS extends Base{
         //物流产品
         @JSONField(name = "sm_code")
         private String smCode;

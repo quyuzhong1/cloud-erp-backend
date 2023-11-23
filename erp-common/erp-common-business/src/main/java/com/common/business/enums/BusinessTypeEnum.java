@@ -29,7 +29,8 @@ public enum BusinessTypeEnum implements EnumMessage {
     FBA_SHIPMENT("fba_shipment","亚马逊FBA货件", SourceTypeEnum.FBA_SHIPMENT),
     FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
     WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE),
-    CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE)
+    CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE),
+    TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE)
     ;
 
     @JsonValue

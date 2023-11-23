@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
@@ -85,6 +87,16 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasTransferWarehouseEntity, null, overseasTransferWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean saveOrUpdateByPlatform(OverseasTransferWarehouseEntity entity) {
+        LambdaUpdateWrapper<OverseasTransferWarehouseEntity> updateWrapper = new LambdaUpdateWrapper<OverseasTransferWarehouseEntity>()
+                .eq(OverseasTransferWarehouseEntity::getDictPlatform, entity.getDictPlatform())
+                .eq(OverseasTransferWarehouseEntity::getLogisticsProductCode, entity.getLogisticsProductCode())
+                .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, entity.getPlatformWarehouseCode())
+                .eq(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode, entity.getPlatformToWarehouseCode());
+        return this.saveOrUpdate(entity, updateWrapper);
     }
 
 

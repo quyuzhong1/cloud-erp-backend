@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.convert;
 
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.dto.PlatformTransferWarehouseDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
@@ -8,6 +9,7 @@ import com.common.business.utils.MD5Util;
 import com.common.core.utils.Md5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangTransferWarehouseResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -40,8 +42,26 @@ public interface GoodCangConverter {
             @Mapping(target = "platform", expression = "java(GoodCangConverter.getProvider())")
     })
     PlatformProductDTO productConversion(GoodCangSkuResp sourceData);
-
     List<PlatformProductDTO> productConversion(List<GoodCangSkuResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "warehouseName",  source = "warehouseName"),
+            @Mapping(target = "countryCode",  source = "countryCode"),
+            @Mapping(target = "providerErpId",  source = "authId")
+    })
+    PlatformWarehouseDTO warehouseConversion(GoodCangWarehouseResp sourceData);
+    List<PlatformWarehouseDTO> warehouseConversion(List<GoodCangWarehouseResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "providerErpId",  source = "authId")
+    })
+    PlatformTransferWarehouseDTO transferWarehouseConversion(GoodCangTransferWarehouseResp sourceDataList);
+    List<PlatformTransferWarehouseDTO> transferWarehouseConversion(List<GoodCangTransferWarehouseResp> sourceDataList);
 
     static String getNowTime(){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -64,14 +84,4 @@ public interface GoodCangConverter {
         return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
     }
 
-    @Mappings({
-            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
-            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
-            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
-            @Mapping(target = "warehouseName",  source = "warehouseName"),
-            @Mapping(target = "countryCode",  source = "countryCode"),
-            @Mapping(target = "providerErpId",  source = "authId")
-    })
-    PlatformWarehouseDTO warehouseConversion(GoodCangWarehouseResp sourceData);
-    List<PlatformWarehouseDTO> warehouseConversion(List<GoodCangWarehouseResp> sourceDataList);
 }

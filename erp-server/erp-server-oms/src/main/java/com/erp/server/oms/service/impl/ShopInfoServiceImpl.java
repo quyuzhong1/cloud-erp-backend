@@ -302,6 +302,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+
         for (String countryCode : countryCodeList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryCode)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
@@ -314,6 +316,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shop.setCountryName(countryName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+                shop.setWarehouseName(updateDTO.getName());
                 addList.add(shop);
             }
 
@@ -859,4 +863,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return count > 0;
     }
 
+    @Override
+    public List<ShopInfoEntity> listShopInfoByWarehouseIds(List<String> warehouseIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(ShopInfoEntity::getWarehouseId, warehouseIds).list();
+    }
 }
