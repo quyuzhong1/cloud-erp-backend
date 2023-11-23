@@ -326,8 +326,7 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
             List<String> skuNos = isCombinationList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
             List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-            //查询历史子件信息
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
             //校验组合SKU库存量是否满足调出，否则无法审核通过，提示：SKU【SKU编码】【发货仓】可用库存不足，无法审核发货单
             for (FbaDeliveryDetailEntity fbaDeliveryDetailEntity : isCombinationList) {
                 //及时库存

@@ -61,4 +61,13 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * @return java.lang.Boolean
      **/
     Boolean cancelAuthorize(String id);
+
+    /**
+     * 根据ERP仓库id查询绑定的海外仓信息
+     * @Author Luo_WG
+     * @Date 2023/11/23 15:29
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.wms.dto.OverseasProviderDTO.WarehouseDTO>
+     **/
+    List<OverseasProviderDTO.WarehouseDTO> listProviderWarehouseByIds(List<String> warehouseIds);
 }

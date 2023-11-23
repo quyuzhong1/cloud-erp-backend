@@ -69,15 +69,15 @@
         </if>
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
-            AND oi.deliver_onway_qty = 0
-            AND oi.pending_qty = 0
-            AND oi.sellable_qty = 0
-            AND oi.unsellable_qty = 0
-            AND oi.reserved_qty = 0
-            AND oi.onway_qty = 0
-            AND oi.lack_qty = 0
-            AND oi.frozen_qty = 0
-            AND oi.shipped_qty = 0
+            AND oi.deliver_onway_qty > 0
+            AND oi.pending_qty > 0
+            AND oi.sellable_qty > 0
+            AND oi.unsellable_qty > 0
+            AND oi.reserved_qty > 0
+            AND oi.onway_qty > 0
+            AND oi.lack_qty > 0
+            AND oi.frozen_qty > 0
+            AND oi.shipped_qty > 0
         </if>
 
         <!--权限-->
