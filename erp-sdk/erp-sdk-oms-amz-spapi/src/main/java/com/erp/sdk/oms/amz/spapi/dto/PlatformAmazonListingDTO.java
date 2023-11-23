@@ -7,6 +7,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -110,6 +111,11 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
     private Integer downloadStatus;
 
     /**
+     * 产品详情
+     */
+    private Item detail;
+
+    /**
      * 转换目标实体:PlatformProductDTO
      */
     public static PlatformProductDTO convertDTO(PlatformAmazonListingDTO sourceEntity) {
@@ -118,7 +124,7 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
         // 时间
         PlatformProductDTO resultDto = new PlatformProductDTO()
                 // 平台spu no
-                .setPlatformProductNo(sourceEntity.getProductId())
+                .setPlatformProductNo(sourceEntity.getAsin1())
                 // 平台sku no
                 .setPlatformSkuNo(sourceEntity.getSellerSku())
                 // 平台产品名称
@@ -127,6 +133,10 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 .setPlatformType("platform")
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
+                // 包装
+                .setProductPacking(sourceEntity.getProductPacking())
+                // 规格
+                .setProductSpec(sourceEntity.getProductSpec())
                 // 平台最后修改时间
                 .setPlatformUpdateTime(sourceEntity.getPlatformUpdateTime())
                 // 店铺ID

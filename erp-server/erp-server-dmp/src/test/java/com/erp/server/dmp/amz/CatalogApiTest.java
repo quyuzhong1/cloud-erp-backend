@@ -47,7 +47,7 @@ public class CatalogApiTest {
      */
     @Test
     public void getCatalogItemTest() throws ApiException {
-        String asin = "B08F7T3N5G";
+        String asin = "B08LZ58T2L";
         List<String> marketplaceIds = Arrays.asList("A1AM78C64UM0Y8");
 //        String asin = "B07N4M94X4";
 //        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
@@ -55,7 +55,7 @@ public class CatalogApiTest {
 //        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships","vendorDetails");
 //        List<String> includedData = null;
         String locale = null;
-        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), false);
         Item response = api.getCatalogItem(asin, marketplaceIds, includedData, locale);
         System.out.println("Catalog信息");
         System.out.println(JSONUtil.toJsonStr(response));

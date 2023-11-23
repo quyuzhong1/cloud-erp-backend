@@ -213,7 +213,7 @@ public class PullAmazonJob {
      */
     @XxlJob("amazonProductDetailDownload")
     public ReturnT<String> amazonProductDetail() {
-        Integer size = 1000;
+        Integer size = 100;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);
