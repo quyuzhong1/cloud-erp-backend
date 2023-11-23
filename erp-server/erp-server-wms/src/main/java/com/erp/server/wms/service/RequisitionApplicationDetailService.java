@@ -1,9 +1,13 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -35,5 +39,12 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
     */
     void update(RequisitionApplicationDTO.UpdateDTO dto, String mainId);
 
-
+    /**
+     * 根据主表id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/22 19:52
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.RequisitionApplicationDetailEntity>
+     **/
+    List<RequisitionApplicationDetailEntity> listByMainIds(List<String> mainIds);
 }

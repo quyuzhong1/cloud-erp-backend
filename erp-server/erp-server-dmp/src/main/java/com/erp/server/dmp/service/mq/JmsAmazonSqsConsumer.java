@@ -44,11 +44,12 @@ public class JmsAmazonSqsConsumer {
 //            return ;
 //        }
 
-        JSONObject textObj = new JSONObject(textMessage.getText()).getJSONObject("text");
-        if (null == textObj){
-            log.error("接收到亚马逊SQS通知异常：text为空，textObj={}", JSONUtil.toJsonStr(textObj));
-            return;
-        }
+        JSONObject textObj = new JSONObject(textMessage.getText());
+//        JSONObject textObj = new JSONObject(textMessage.getText()).getJSONObject("text");
+//        if (null == textObj){
+//            log.error("接收到亚马逊SQS通知异常：text为空，textObj={}", JSONUtil.toJsonStr(textObj));
+//            return;
+//        }
 
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(textObj.getStr("notificationType"))) {

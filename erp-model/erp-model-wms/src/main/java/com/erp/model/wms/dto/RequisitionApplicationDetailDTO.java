@@ -1,12 +1,12 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -125,6 +125,11 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         private String skuId;
 
         /**
+        * 产品编码
+        */
+        private String skuNo;
+
+        /**
         * bom版本
         */
         private String bomVersion;
@@ -132,6 +137,9 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         /**
         * 要货数量
         */
+        @NotNull(message = "要货数量不能为空")
+        @DecimalMax(value = "999999999", message = "最大值为999999999")
+        @DecimalMin(value = "1", message = "要货数量必须大于0")
         private Integer requisitionQty;
 
         /**
