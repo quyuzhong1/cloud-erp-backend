@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +70,26 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
             return Collections.emptyList();
         }
         return baseMapper.listByIdList(idList);
+    }
+
+    @Override
+    public DictCityEntity getReginByName(String reginName,Integer level) {
+        List<DictCityEntity> dictCityEntities = this.lambdaQuery().eq(DictCityEntity::getName, reginName).eq(DictCityEntity :: getLevel ,level).list();
+        if(dictCityEntities.size() > 1){
+            //查到多个，特殊判断，白云区取广州的,其他的返回null，避免设置错误
+            if(reginName.equals("白云区")){
+                List<String> parentIds = dictCityEntities.stream().map(DictCityEntity :: getParentId).collect(Collectors.toList());
+                List<DictCityEntity> parentEntiyList =  listByIdList(parentIds);
+                Optional<DictCityEntity> guangzhouEntity = parentEntiyList.stream().filter(v->v.getName().equals("广州")).findFirst();
+                if(guangzhouEntity.isPresent()){
+                    String guangzhouId = guangzhouEntity.get().getId();
+                    return dictCityEntities.stream().filter(v->v.getParentId().equals(guangzhouId)).findFirst().orElse(null);
+                }
+            }
+            return null;
+        }else {
+            return dictCityEntities.isEmpty() ? null : dictCityEntities.get(0);
+        }
     }
 
 

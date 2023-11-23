@@ -35,5 +35,4 @@ public class ImlDictCityController extends BaseController {
     @Resource
     private ImlDictCityService imlDictCityService;
 
-
 }

@@ -1,5 +1,7 @@
 package com.common.business.dto;
 
+import com.common.business.enums.OmsPlatformEnum;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -17,6 +19,12 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class PlatformCityDictDTO extends UniqueDto {
+
+    /**
+     * 供应商
+     * {@link OmsPlatformEnum}
+     */
+    private String provider;
 
     /**
      *  区域id

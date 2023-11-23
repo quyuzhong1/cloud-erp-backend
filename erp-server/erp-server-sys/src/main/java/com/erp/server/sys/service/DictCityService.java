@@ -34,4 +34,11 @@ public interface DictCityService extends SuperService<DictCityEntity> {
      * @return
      */
     List<DictCityEntity> listByIdList(List<String> idList);
+
+
+    /**
+     * 获取指定区名称
+     * @return
+     */
+    DictCityEntity getReginByName(String reginName,Integer level);
 }
