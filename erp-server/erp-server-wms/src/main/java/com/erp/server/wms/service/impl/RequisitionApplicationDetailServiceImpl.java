@@ -5,10 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -43,6 +45,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -67,6 +71,17 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
+        //原明细数据
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(updateDTO.getId()));
+        List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<RequisitionApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
         List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
 
         // 数据处理
@@ -78,6 +93,13 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         }
     }
 
+    @Override
+    public List<RequisitionApplicationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(RequisitionApplicationDetailEntity::getMainId, mainIds).list();
+    }
 
     /**
     * 新增修改处理数据
@@ -86,8 +108,15 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         //需要新增的数据
         List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
+        //获取sku信息
+        List<String> skuIdList = list.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : list) {
             requisitionApplicationDetailEntity.setMainId(mainId);
+
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+            requisitionApplicationDetailEntity.setSkuNo(skuVO.getSkuNo());
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
@@ -103,5 +132,13 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), addPairList, "编辑操作");
         }
+    }
+
+    private List<String> getDeleteIds(List<RequisitionApplicationDetailDTO.UpdateDTO> newList, List<RequisitionApplicationDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> org.apache.commons.lang3.StringUtils.isNotBlank(g.getId())).
+                map(RequisitionApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(RequisitionApplicationDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 }

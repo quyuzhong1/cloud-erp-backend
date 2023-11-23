@@ -119,6 +119,18 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("allow_negative_inventory")
     private Boolean allowNegativeInventory;
 
+    /**
+     * 在途仓库id
+     */
+    @TableField("onway_warehouse_id")
+    private String onwayWarehouseId;
+
+    /**
+     * 在途仓库名称
+     */
+    @TableField("onway_warehouse_name")
+    private String onwayWarehouseName;
+
 
     @Override
     public Serializable pkVal() {
