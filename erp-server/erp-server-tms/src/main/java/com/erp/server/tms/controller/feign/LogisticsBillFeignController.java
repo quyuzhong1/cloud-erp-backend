@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 @Slf4j
@@ -78,7 +79,7 @@ public class LogisticsBillFeignController {
      *@date 2023-11-23
      */
     @PostMapping("/generateBill")
-    public void  generateBill(@RequestBody LogisticsBillDTO.AddDTO  dto){
+    public void  generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO  dto){
         logisticsBillService.generateBill(dto);
     }
 

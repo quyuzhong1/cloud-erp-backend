@@ -30,8 +30,9 @@ public enum BusinessTypeEnum implements EnumMessage {
     FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
     WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE),
     CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE),
-    TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE),
     GET_TRACK("getTrack","物流轨迹", SourceTypeEnum.LOGISTICS_SUPPLIER),
+    TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE),
+    INBOUND("inbound","第三方仓获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE)
     ;
 
     @JsonValue

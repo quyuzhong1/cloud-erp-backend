@@ -64,10 +64,10 @@ public class ImlServerTest {
     @Test
     public void getReceiptBatchTest() {
         ImlGetReceiptReq imlGetReceiptReq = ImlGetReceiptReq.builder()
-                .page(1)
+                .page(3)
                 .pageSize(100)
 //                .receivingCode("RV86526-230919-0005")
-                .receivingCodeArr(Arrays.asList("RV86526-230919-0005","RV86526-231107-0001"))
+//                .receivingCodeArr(Arrays.asList("RV86526-230919-0005","RV86526-231107-0001"))
                 .build();
         ImlResponse<List<ImlReceiptResp>> response = imlServer.getReceiptBatch(imlGetReceiptReq);
         System.out.println(response);

@@ -59,15 +59,7 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      */
     List<LogisticsSaleChannelEntity> listByDataSource(String platformType,String overseasWarehouseId,Integer status);
 
-    /**
-     *  根据授权状态和同步状态查询数据
-     * @author yl
-     *
-     * @param authId
-     * @date: 2023-11-08
-     * @return
-     */
-    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String authId);
+
 
     /**
      * 异步拉取销售渠道数据

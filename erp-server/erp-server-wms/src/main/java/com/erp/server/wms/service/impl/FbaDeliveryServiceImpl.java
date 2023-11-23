@@ -353,8 +353,6 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         List<String> skuNoList = detailEntityList.stream().map(FbaDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //默认类型：组织内调拨
-        addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         //默认来源类型：FBA货件
         addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
         //默认调出日期：当前日期
@@ -367,6 +365,13 @@ public class FbaDeliveryServiceImpl extends SuperServiceImpl<FbaDeliveryMapper, 
         //调出组织
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        //调拨类型
+        if (destWarehouse.getOrgId().equals(deliveryWarehouse.getOrgId()))  {
+            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        } else {
+            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+
         addDTO.setSourceId(entity.getSourceId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));

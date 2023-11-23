@@ -26,6 +26,7 @@ import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
@@ -75,7 +76,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Autowired
     private DictBasicService dictBasicService;
-
+    @Autowired
+    private LogisticsProductFeign logisticsProductFeign;
 
     @Autowired
     private LogisticsTrackService logisticsTrackService;
@@ -348,7 +350,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
         List<LogisticsBillDTO.SkuDTO> skuList=dto.getSkuList();
         List<String> skuIdList=skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
-        List<LogisticsProductDTO.dd>
+    //    List<LogisticsProductDTO.ProductDTO>  skuInfo=logisticsProductFeign.listBySkuIdList(skuIdList);
 
     }
 
