@@ -3,6 +3,7 @@ package com.erp.server.oms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -67,10 +68,16 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
      */
     private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
+
     /**
      * 导入错误数据
      */
     private List<SkuMappingImportExcelDTO> errorList = new ArrayList<>(10);
+
+    /**
+     * 更新的信息
+     */
+    private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
 
     public SkuMappingExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                    List<ShopInfoEntity> shopList, List<SkuMappingEntity> skuMappingList,
@@ -153,8 +160,18 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         ).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(excelList)) {
+//            errorMsgList.add("相同平台sku只能对应一个平台sku");
+            // 修改对应关系
+            SkuMappingEntity skuMappingEntity = excelList.stream().findFirst().orElse(null);
+            if (null != skuMappingEntity){
+                skuMappingEntity.setProductSkuId(sku.getSkuId());
+                skuMappingEntity.setProductSkuNo(sku.getSkuNo());
+                updateSkuMappingList.add(skuMappingEntity);
+                return;
+            }
             errorMsgList.add("相同平台sku只能对应一个平台sku");
         }
+
         long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(finalListingId) &&
                 dictPlatform.equals(a.getDictPlatform())).count();
         if (count > 0) {
@@ -202,6 +219,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
             listingInfoService.saveBatch(addListingInfoEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
+            if (!skuMappingService.updateBatchById(updateSkuMappingList)){
+                throw new ServiceException("映射关系更新异常");
+            }
         }
     }
 
