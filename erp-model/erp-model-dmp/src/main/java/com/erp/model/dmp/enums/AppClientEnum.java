@@ -23,6 +23,7 @@ public enum AppClientEnum  {
     ALI_EXPRESS_AUTHORIZE("aliExpressAuthorize","sales","AliExpress"),
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
+    ALI_EXPRESS_LOGISTICS("aliExpressAuthorize","logistics","AliExpress"),
 
 
 

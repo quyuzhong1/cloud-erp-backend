@@ -59,10 +59,9 @@ public interface LogisticsBaseService {
     /**
      * 同步虾皮渠道
      * @param platform
-     * @param authEntityList
      * @return
      */
-    List<BatchResultDTO> syncMutilChannel(List<ShopAuthEntity> authEntityList, String platform);
+    List<BatchResultDTO> syncAliExpressChannel(String platform);
 
     /**
      * 同步单一渠道
