@@ -280,4 +280,39 @@ public class JmsConsumerTest {
 //        System.out.println(mongoDTOSList);
     }
 
+
+
+    /**
+     * 实时消费
+     */
+    @Test
+    public void consumer5Test() throws Exception {
+        SQSTextMessage sqsTextMessage = new SQSTextMessage();
+        sqsTextMessage.setText("{\n" +
+                "    \"text\": {\n" +
+                "        \"notificationVersion\": \"2020-09-04\",\n" +
+                "        \"notificationType\": \"REPORT_PROCESSING_FINISHED\",\n" +
+                "        \"payloadVersion\": \"1.0\",\n" +
+                "        \"eventTime\": \"2023-11-23T01:46:24.595Z\",\n" +
+                "        \"payload\": {\n" +
+                "            \"reportProcessingFinishedNotification\": {\n" +
+                "                \"sellerId\": \"AZFY4CTNEDLZX\",\n" +
+                "                \"reportId\": \"737997019684\",\n" +
+                "                \"reportType\": \"GET_RESERVED_INVENTORY_DATA\",\n" +
+                "                \"processingStatus\": \"FATAL\"\n" +
+                "            }\n" +
+                "        },\n" +
+                "        \"notificationMetadata\": {\n" +
+                "            \"applicationId\": \"amzn1.sp.solution.c49ad2b8-5338-493f-b312-550e59f0b2b4\",\n" +
+                "            \"subscriptionId\": \"f80d1da5-c932-4e1f-a36d-e434bca8deb6\",\n" +
+                "            \"publishTime\": \"2023-11-23T01:46:24.640Z\",\n" +
+                "            \"notificationId\": \"e530e81f-dafe-4177-8dae-09c6a54d20f8\"\n" +
+                "        }\n" +
+                "    },\n" +
+                "    \"sqsMessageID\": \"5347b6d0-98bc-423b-94c2-310f3778509b\",\n" +
+                "    \"queueUrl\": \"https://sqs.us-east-1.amazonaws.com/700518745840/erpNotifications\",\n" +
+                "    \"receiptHandle\": \"AQEBnamXijcgsRCU/kmWRWz0Hqo/XN5a+pvULbnK/9ZJ5DHdhlpaLc+IYpkGV3YJKyJtVapfJI5uhjxGjCxJnMn52bXhSz6vlWtEM1fRB7t2CqDQowcfcYEjo0dlpTbguOAkZqF92ZuSkVWI35ydwmZeyW4oBZxMOkeyMh68gA9convnJDWWK8tnXMY9Cu57B/xK6tLeMmEkZ+YtI6qmQdIQmFe6o5+pKFIain8hTA1w76A9Gp06We97pE2baodKPBWBnLKlauUX7/Z9ONb3mWG9ZsQFz+j5EAlDSfocNLa6BLOC1+D+BUw9MLH4C7g7kyL5NZjyANeWsWWkWULUhdqAKjrjRypGO1b35WDI0SNYdIbv17EK6IUQVycvlzu/iEW1t5IpTjoj/QlTq2B7WavVTw==\"\n" +
+                "}");
+        jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
+    }
 }
