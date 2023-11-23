@@ -95,13 +95,6 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
      */
     @TableField("destination_country")
     private String destinationCountry;
-    /**
-     * 授权表ID
-     */
-    @TableField("auth_id")
-    private String authId;
-
-
 
     /**
      * 海外仓id

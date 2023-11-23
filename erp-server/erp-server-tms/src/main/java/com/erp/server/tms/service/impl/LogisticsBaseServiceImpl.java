@@ -13,6 +13,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
@@ -43,6 +44,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     @Resource
     private ShopeeFeign shopeeFeign;
     @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
     private LogisticsRegistry logisticsRegistry;
     @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
@@ -54,26 +57,34 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
+        List<BatchResultDTO> batchResultDTOS = null;
+        ApiResult<List<ShopAuthEntity>> shopeeShopList = null;
         if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
-            return syncShoppeeChannel(platform);
+            try {
+                shopeeShopList = shopeeFeign.getShopeeShopList("shopee_shop", "already");
+            }catch (Exception e){
+                log.error("erp-oms接口shopeeFeign.getShopeeShopList服务异常：{}",e.getMessage());
+            }
+            if (Objects.nonNull(shopeeShopList) && shopeeShopList.isSuccess()){
+                //多店铺模式
+                batchResultDTOS = syncMutilChannel(shopeeShopList.getData(), platform);
+            }
+            return batchResultDTOS;
+        }
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)) {
+            ApiResult<List<ShopAuthEntity>> authShopByPlatformType = null;
+            try {
+                authShopByPlatformType = shopInfoFeign.getAuthShopByPlatformType(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
+            }catch (Exception e){
+                log.error("erp-oms接口shopeeFeign.getShopeeShopList服务异常：{}",e.getMessage());
+            }
+            if (Objects.nonNull(authShopByPlatformType) && authShopByPlatformType.isSuccess()){
+                batchResultDTOS = syncMutilChannel(authShopByPlatformType.getData(), platform);
+            }
+            return batchResultDTOS;
         } else {
             return syncSingleChannel(platform);
         }
-    }
-
-    @Override
-    public ApiResult syncAllLogisticsChannel() {
-        log.info("====全部渠道同步开始=====");
-        LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
-        for (LogisticsPlatformEnum platformEnum : platformEnums) {
-            if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
-                syncShoppeeChannel(platformEnum.getCode());
-            } else {
-                syncSingleChannel(platformEnum.getCode());
-            }
-        }
-        log.info("=====渠道同步结束=====");
-        return ApiResult.success();
     }
 
     @Override
@@ -184,9 +195,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 //                            logisticsBillDetailEntity.setRegisterStatus(1);
 //                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
 //                        } else {
-                            dto.setSuccess(false);
-                            logisticsBillDetailEntity.setRegisterStatus(-1);
-                            logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
+                        dto.setSuccess(false);
+                        logisticsBillDetailEntity.setRegisterStatus(-1);
+                        logisticsBillDetailEntity.setRegisterResult(registerResponseVO.getMsg());
 //                        }
                     }
                     dto.setId(logisticsBillDetailEntity.getId());
@@ -254,17 +265,17 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         mapList.forEach(map -> {
             chanelQueryVO.setAuthMap(map);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-            logisticsSaleChannelService.updateSaleChannelByAuthId(map.get("id"), platform, MathUtil.ONE);
+            logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
             //把结果存储数据库
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
-                    logisticsSaleChannelEntity.setAuthId(map.get("id"));
+//                    logisticsSaleChannelEntity.setAuthId(map.get("id"));
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                 });
-                batchResultDTOS.add(BatchResultDTO.success(map.get("id"),String.valueOf(channels.getCode()),"同步成功"));
+                batchResultDTOS.add(BatchResultDTO.success(map.get("id"), String.valueOf(channels.getCode()), "同步成功"));
             } else {
-                batchResultDTOS.add(BatchResultDTO.fail(map.get("id"),String.valueOf(channels.getCode()),channels.getMsg()));
+                batchResultDTOS.add(BatchResultDTO.fail(map.get("id"), String.valueOf(channels.getCode()), channels.getMsg()));
                 log.error("渠道查询异常：{}", channels.getMsg());
             }
         });
@@ -272,13 +283,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         return batchResultDTOS;
     }
 
+    @Override
     public List<BatchResultDTO> syncShoppeeChannel(String platform) {
         log.info("{}渠道同步开始", platform);
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
             result = shopeeFeign.getShopeeShopList("shopee_shop", "already");
-        }catch (Exception e){
-            log.error("erp-oms服务接口getShopeeShopList异常：{}",e.getMessage());
+        } catch (Exception e) {
+            log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
         }
         List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
         if (Objects.nonNull(result) && result.isSuccess()) {
@@ -289,20 +301,48 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 chanelQueryVO.setAuthMap(map);
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 //先暂停该渠道数据，然后进行更新动作
-                logisticsSaleChannelService.updateSaleChannelByAuthId(shopAuthEntity.getShopId(), platform, MathUtil.ONE);
+                logisticsSaleChannelService.updateSaleChannelByPlatform(platform, MathUtil.ONE);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
+//                        logisticsSaleChannelEntity.setAuthId(shopAuthEntity.getShopId());
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
                         logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
                     });
-                    batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()),"同步成功"));
+                    batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), "同步成功"));
                 } else {
-                    batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()),channels.getMsg()));
+                    batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), channels.getMsg()));
                     log.error(channels.getMsg());
                 }
             });
         }
+        log.info("{}渠道同步结束", platform);
+        return batchResultDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> syncMutilChannel(List<ShopAuthEntity> authEntityList, String platform) {
+        log.info("{}渠道同步开始", platform);
+        if (CollectionUtils.isEmpty(authEntityList)) return Collections.emptyList();
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
+        LogisticsService service = logisticsRegistry.getHandler(platform);
+        authEntityList.forEach(shopAuthEntity -> {
+            ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
+            Map<String, String> map = service.getLogisticsAuthConfig(shopAuthEntity.getShopId());
+            chanelQueryVO.setAuthMap(map);
+            ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
+            //先暂停该渠道数据，然后进行更新动作
+            logisticsSaleChannelService.updateSaleChannelByPlatform( platform, MathUtil.ONE);
+            if (channels.isSuccess()) {
+                channels.getData().forEach(logisticsSaleChannelEntity -> {
+                    logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
+                    logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+                });
+                batchResultDTOS.add(BatchResultDTO.success(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), "同步成功"));
+            } else {
+                batchResultDTOS.add(BatchResultDTO.fail(shopAuthEntity.getShopId(), String.valueOf(channels.getCode()), channels.getMsg()));
+                log.error(channels.getMsg());
+            }
+        });
         log.info("{}渠道同步结束", platform);
         return batchResultDTOS;
     }

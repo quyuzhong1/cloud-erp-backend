@@ -3,7 +3,6 @@ package com.common.business.config;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.FeignServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import feign.Response;

@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,14 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/updateShopInfoById")
     Boolean updateShopInfoById(@RequestBody ShopInfoEntity shopInfoEntity);
+    /**
+     * 获取店铺授权列表
+     *
+     * @param platformType
+     * @return
+     */
+    @PostMapping("feign/shop/getAuthShopByPlatformType")
+    ApiResult<List<ShopAuthEntity>> getAuthShopByPlatformType(@RequestParam("platformType") String platformType);
 
     /**
      * 通过ID查询店铺信息

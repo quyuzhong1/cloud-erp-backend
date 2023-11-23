@@ -136,9 +136,9 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     }
 
     @Override
-    public void updateSaleChannelByAuthId(String authId,String logisticsPlatform,Integer channelStatus) {
-        if (Objects.nonNull(channelStatus) && StringUtils.isNotEmpty(authId) && StringUtils.isNotEmpty(logisticsPlatform)){
-            lambdaUpdate().eq(LogisticsSaleChannelEntity::getAuthId, authId)
+    public void updateSaleChannelByPlatform(String logisticsPlatform,Integer channelStatus) {
+        if (Objects.nonNull(channelStatus) && StringUtils.isNotEmpty(logisticsPlatform)){
+            lambdaUpdate()
                     .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsPlatform)
                     .eq(LogisticsSaleChannelEntity::getIsDeleted,false)
                     .set(LogisticsSaleChannelEntity::getChannelStatus, channelStatus).update();
@@ -170,14 +170,14 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
 
     /**
      *
-     * @param authId
+     * @param logisticsPlatform
      *
      * @return
      */
     @Override
-    public List<LogisticsSaleChannelEntity> listByAuthId(String authId) {
+    public List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform) {
 
-        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getAuthId,authId).list();
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getLogisticsPlatform,logisticsPlatform).list();
     }
 
     @Async("tmsExecutor")
@@ -191,7 +191,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
         if (channels.isSuccess()) {
             channels.getData().forEach(logisticsSaleChannelEntity -> {
-                logisticsSaleChannelEntity.setAuthId(authMap.get("id"));
+//                logisticsSaleChannelEntity.setAuthId(authMap.get("id"));
                 this.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
             });
         } else {

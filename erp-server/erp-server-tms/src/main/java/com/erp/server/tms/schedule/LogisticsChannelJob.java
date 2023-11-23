@@ -61,6 +61,7 @@ public class LogisticsChannelJob {
         XxlJobHelper.log("====结束注册物流单号====");
         return ReturnT.SUCCESS;
     }
+
     /**
      * 同步物流渠道
      */
@@ -68,7 +69,6 @@ public class LogisticsChannelJob {
     @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
-//        logisticsBaseService.syncAllLogisticsChannel();
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
@@ -76,15 +76,9 @@ public class LogisticsChannelJob {
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;
             //顺丰没有渠道 只支持手动写入
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.SF_EXPRESS.getCode())) continue;
-
             XxlJobHelper.log("物流商{}开始同步渠道", platformEnum.getName());
-            if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platformEnum.getCode())) {
-                List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncShoppeeChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));
-            } else {
-                List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncSingleChannel(platformEnum.getCode());
-                XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));
-            }
+            List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncLogisticsChannel(platformEnum.getCode());
+            XxlJobHelper.log("物流商{}同步渠道结果:同步结果详情{}", platformEnum.getName(), JSONUtil.toJsonStr(batchResultDTOS));
         }
         log.info("=====渠道同步结束=====");
         XxlJobHelper.log("====同步渠道信息完成====");
@@ -140,11 +134,13 @@ public class LogisticsChannelJob {
             log.info("========同步物流轨迹数据完成==========");
         }
     }
+
     private void processTrackData(List<LogisticsBillDetailEntity> records) {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(), records);
         }
     }
+
     private void processRegisterData(List<LogisticsBillDetailEntity> records) {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records);

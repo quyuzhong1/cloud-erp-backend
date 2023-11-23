@@ -233,8 +233,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (Objects.isNull(authEntity)) {
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
-        String authId = authEntity.getId();
-        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByAuthId(authId);
+        String logisticsPlatform = authEntity.getLogisticsPlatform();
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList);
 
