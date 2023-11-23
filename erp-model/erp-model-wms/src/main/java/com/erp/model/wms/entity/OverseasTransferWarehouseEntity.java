@@ -45,15 +45,15 @@ public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransfer
     @TableField("platform_status")
     private String platformStatus;
     /**
-     * 目的仓库ID
+     * 海外目的仓库代号
      */
-    @TableField("to_warehouse_id")
-    private String toWarehouseId;
+    @TableField("platform_to_warehouse_code")
+    private String platformToWarehouseCode;
     /**
-     * 目的仓库名称
+     * 海外目的仓库名称
      */
-    @TableField("to_warehouse_name")
-    private String toWarehouseName;
+    @TableField("platform_to_warehouse_name")
+    private String platformToWarehouseName;
     /**
      * 平台海外仓状态
      */
