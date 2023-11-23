@@ -42,10 +42,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("name")
     private String name;
     /**
-    * 物流方式
+    * 物流渠道名称
     */
-    @TableField("dict_logistics_method")
-    private String dictLogisticsMethod;
+    @TableField("logistics_channel_name")
+    private String logisticsChannelName;
+
+    /**
+     * 物流渠道id
+     */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
+
     /**
     * 发货时间
     */

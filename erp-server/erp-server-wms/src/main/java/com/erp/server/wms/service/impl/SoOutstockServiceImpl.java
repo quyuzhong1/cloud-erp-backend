@@ -613,6 +613,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setSourceType(soInfo.getOrderType());
             addDTO.setSourceTypeName(soInfo.getOrderTypeName());
             addDTO.setSourceCode(soInfo.getCode());
+            addDTO.setCurrency(soInfo.getCurrency());
         }
         addDTO.setOutstockId(entity.getId());
         addDTO.setOutstockCode(entity.getCode());

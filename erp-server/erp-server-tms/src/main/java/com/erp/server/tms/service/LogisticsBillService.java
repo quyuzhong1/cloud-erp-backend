@@ -98,4 +98,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@date 2023-11-16
      */
     Boolean exportExcel(LogisticsBillDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 生成物流单
+     *@parms dto
+     *@return
+     *@author yl
+     *@date 2023-11-23
+     */
+    void generateBill(LogisticsBillDTO.AddDTO dto);
 }

@@ -798,13 +798,13 @@ public class SoB2cDTO implements Serializable {
          */
         private String warehouseNames;
         /**
-         * 物流方式
+         * 物流渠道id
          */
-        private String logisticsMethod;
+        private String logisticsChannelId;
         /**
          * 物流方式名称
          */
-        private String logisticsMethodName;
+        private String logisticsChannelName;
         /**
          * 物流单号
          */
@@ -829,10 +829,10 @@ public class SoB2cDTO implements Serializable {
         private Boolean isCover;
 
         /**
-         * 物流方式
+         * 物流渠道id
          */
-        @NotBlank(message = "物流方式不能为空")
-        private String dictLogisticsMethod;
+        @NotBlank(message = "物流渠道不能为空")
+        private String logisticsChannelId;
 
         /**
          * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930

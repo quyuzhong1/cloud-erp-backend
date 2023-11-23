@@ -52,13 +52,13 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     /**
     * 物流供应商
     */
-    @TableField("supplier")
-    private String supplier;
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
     /**
-    * 物流方式
+    * 物流渠道id
     */
-    @TableField("mode")
-    private String mode;
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
     /**
     * 是否自动获取物流单号 
     */
@@ -78,7 +78,6 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
 
     public static final String LOGISTICS_SUPPLIER = "logistics_supplier";
 
-    public static final String MODE = "mode";
 
     public static final String AUTO_GET_TRACK_NO = "auto_get_track_no";
 

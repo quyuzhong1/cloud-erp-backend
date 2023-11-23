@@ -61,4 +61,16 @@ public class LogisticsBillFeignController {
         List<LogisticsBillDTO.LogisticsBillVo> flag = logisticsBillService.listLogisticsBillVoBySourceIds(sourceIdList);
         return flag;
     }
+
+    /**
+     * 生成物流单
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-11-23
+     */
+    @PostMapping("/generateBill")
+    public void  generateBill(@RequestBody LogisticsBillDTO.AddDTO  dto){
+        logisticsBillService.generateBill(dto);
+    }
 }
