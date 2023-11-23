@@ -114,6 +114,8 @@ public enum PlatformApiEnum {
     BD_RATE(25,"BD_Rate", MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, TaskConstant.KINGDEE_PULL_DATA_TASK),
 
     GOODCANG_PRODUCT(26,"GOODCANG_PRODUCT", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
+
+    TRACK123_GET_TRACK(27,"getTask", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
     ;
 
     /** 状态码 */

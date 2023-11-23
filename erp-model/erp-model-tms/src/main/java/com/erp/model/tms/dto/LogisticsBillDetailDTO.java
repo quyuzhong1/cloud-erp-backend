@@ -79,6 +79,22 @@ public class LogisticsBillDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class QueryDTO extends CommonDTO{
+
+        /**
+         * 查询方式  TRACK123，api，notQuery
+         */
+        private String trackQueryMode;
+
+        /**
+         * 注册状态（0未注册1注册成功-1注册失败）
+         */
+        private String registerStatus;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class CommonDTO {
 
         /**
