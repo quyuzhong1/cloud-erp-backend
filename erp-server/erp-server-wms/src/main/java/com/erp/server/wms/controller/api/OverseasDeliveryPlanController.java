@@ -2,11 +2,20 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.validator.ValidList;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.scm.dto.ExcelImportDTO;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -25,7 +34,11 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 
@@ -485,5 +498,50 @@ public class OverseasDeliveryPlanController extends BaseController {
     public ApiResult generateDeliverSaveAndSubmit(@RequestBody @Validated ValidList<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> dto) {
         Boolean flag = overseasDeliveryPlanService.generateDeliverSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
+    }
+
+    /**
+     * 导入详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/23 14:17
+     * @param excelImportDTO
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
+     **/
+    @PostMapping("/importFile")
+    public ApiResult<OverseasDeliveryPlanDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
+        OverseasDeliveryPlanDetailDTO.ImportDTO list = overseasDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
+        return success(list);
+    }
+
+    /**
+     * 下载模板
+     * @author Will
+     * @date: 22023/3/15 18:22
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板备货申请单")
+    @GetMapping("/exportTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/salesDemandTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
     }
 }

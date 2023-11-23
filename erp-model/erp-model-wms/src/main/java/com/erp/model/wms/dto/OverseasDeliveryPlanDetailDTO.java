@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -123,5 +124,17 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<OverseasDeliveryPlanDetailDTO.ViewDTO> successList;
 
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
 }

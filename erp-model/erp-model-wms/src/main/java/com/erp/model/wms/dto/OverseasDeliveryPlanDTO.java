@@ -321,7 +321,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 备注
         */
-        private LocalDate remark;
+        private String remark;
 
         /**
         * 详情
@@ -601,4 +601,6 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          */
         private Integer deliveryQty;
     }
+
+
 }

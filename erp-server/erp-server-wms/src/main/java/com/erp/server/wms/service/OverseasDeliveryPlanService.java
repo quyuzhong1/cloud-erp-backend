@@ -1,10 +1,13 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -216,4 +219,14 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      **/
     Boolean generateDeliverSaveAndSubmit(List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list);
 
+    /**
+     * 导入详情信息
+     * @Author Luo_WG
+     * @Date 2023/11/23 14:17
+     * @param excelFile
+     * @param skuIds
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
+     **/
+    OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
 }
