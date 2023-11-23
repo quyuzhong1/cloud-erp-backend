@@ -10,7 +10,9 @@ import com.erp.model.sys.dto.ImlDictCityDTO;
  * </p>
  *
  * @author lrp
- * @since 2023-11-22
+ * @since 2023-11-23
  */
 public interface ImlDictCityService extends SuperService<ImlDictCityEntity> {
+
+
 }
