@@ -824,6 +824,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_REQUISITION_APPLICATION(99116,"未找到要货申请单"),
     ERROR_NOT_WAREHOUSE(99117,"请匹配系统仓库后启用"),
     ERROR_ONWAY_WAREHOUSE_NOT_EXIST(99118,"在途归属仓库不存在"),
+    IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
 
 
     /**

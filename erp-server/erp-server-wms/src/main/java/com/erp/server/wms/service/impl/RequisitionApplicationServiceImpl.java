@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -168,11 +170,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public BatchResultDTO submit(String id) {
-        return null;
+        RequisitionApplicationEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到要货申请数据");
+        }
+        validateSubmit(entity);
+        // 更新单据审核状态
+        log.info("提交 开始修改要货申请状态数据，id：【{}】", id);
+
+        this.updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
+
+        // 记录操作日志
+        log.info("提交 开始记录要货申请日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
+
 
     @Override
     public List<RequisitionApplicationDTO.handleListDTO> handleList(List<String> ids) {
+
         return null;
     }
 
@@ -284,4 +302,26 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             listDTO.setTypeName(RequisitionApplicationTypeEnum.getName(listDTO.getType()));
         }
     }
+
+    /**
+     * 提交状态校验
+     */
+    private void validateSubmit(RequisitionApplicationEntity entity) {
+        // 待提交允许提交
+        if(entity.getStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) ) {
+            throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
+        }
+        return;
+    }
+
+    /**
+     * 更新状态
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(String id, String status) {
+        lambdaUpdate().eq(RequisitionApplicationEntity::getId, id)
+                .set(RequisitionApplicationEntity::getStatus, status)
+                .update(new RequisitionApplicationEntity());
+    }
+
 }
