@@ -321,20 +321,28 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         // 校验报告
         ReportInfoMongoDTO reportMongoDTO = ReportInfoMongoDTO.getReportId(report.getReportId());
         List<ReportInfoMongoDTO> mongoData = mongoService.findMongoData(reportMongoDTO, 0, 0, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
-        // 报告计划存在, 报告记录存在忽略
         if (null != reportScheduleEntity) {
-            if (!CollectionUtils.isEmpty(mongoData)){
-                // 存在跳过
-                return;
-            } else {
+            // 报告计划存在, 报告记录存在忽略
+            if (CollectionUtils.isEmpty(mongoData)) {
                 // 查询报告当前链接
                 ReportDocument reportDocument = reportsApi.getReportDocument(report.getReportDocumentId());
                 // 转换
                 ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.newReportInfoMongoDTO(report, reportDocument, reportScheduleEntity);
                 // 保存并处理
                 this.saveMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
-                return;
             }
+            return;
+        } else {
+            // 非报价计划从报告信息的主表ID 获取reportSchedule
+            if (!CollectionUtils.isEmpty(mongoData)){
+                ReportInfoMongoDTO oldReportInfoMongoDTO = mongoData.get(0);
+                reportScheduleEntity = reportScheduleService.getById(oldReportInfoMongoDTO.getMainId());
+            }
+        }
+
+        if (null == reportScheduleEntity){
+            log.info("非系统请求的报告ID,忽略:ReportId={}", report.getReportId());
+            return;
         }
 
         // 报告计划不存在, 报告记录为空忽略
@@ -348,7 +356,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         ReportInfoMongoDTO reportInfoMongoDTO = DmpReportConverter.INSTANCE.updateReportInfoMongoDTO(oldReportInfoMongoDTO, reportDocument, report);
         // 更新并处理
         this.updateMongoAndHandle(reportDocument, recordTypeEnum, report, reportScheduleEntity, reportInfoMongoDTO);
-        
+
 
     }
 
