@@ -63,6 +63,9 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
     @Override
     public void invoke(DeliveryPlanDetailExportExcelDTO deliveryPlanDetailExportExcelDTO, AnalysisContext analysisContext) {
         OverseasDeliveryPlanDetailDTO.ViewDTO viewDTO = new OverseasDeliveryPlanDetailDTO.ViewDTO();
+        //添加数据用于判断是否为空
+        allList.add(deliveryPlanDetailExportExcelDTO);
+
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
         List<String> msgList = FieldValidUtil.fieldValid(deliveryPlanDetailExportExcelDTO);

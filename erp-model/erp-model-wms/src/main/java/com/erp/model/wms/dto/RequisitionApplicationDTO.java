@@ -566,10 +566,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调出仓库Id
          */
         private String fromWarehouseId;
+
         /**
          * 调出仓库中文
          */
         private String fromWarehouseName;
+        /**
+         * 调出仓库组织Id
+         */
+        private String fromWarehouseOrgId;
         /**
          * 调入仓库id
          */
@@ -578,6 +583,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调入仓库中文
          */
         private String toWarehouseName;
+        /**
+         * 调入仓库组织id
+         */
+        private String toWarehouseOrgId;
     }
 
     /**

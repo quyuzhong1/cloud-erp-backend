@@ -175,4 +175,27 @@
         </if>
         ra.create_time desc
     </select>
+
+    <!--处理列表查询-->
+    <select id="handleList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$handleListDTO">
+        SELECT
+            ra.id AS sourceId,
+            ra.code AS sourceCode,
+            rad.id AS sourceDetailId,
+            ra.requisition_warehouse_id AS requisitionWarehouseId,
+            ra.requisition_warehouse_name AS requisitionWarehouseName,
+            rad.sku_id,
+            rad.sku_no,
+            rad.requisition_qty AS requisitionQty,
+            rad.approve_qty AS approveQty
+        FROM requisition_application_detail rad
+        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        WHERE ra.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND ra.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>
