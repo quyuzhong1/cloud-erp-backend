@@ -21,6 +21,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
 import com.sdk.tms.track123.service.TrackShipperService;
@@ -51,8 +52,6 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     private static long pageSize = 100;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
@@ -136,26 +135,34 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
             if (Objects.nonNull(accepted)){
                 if (CollectionUtils.isEmpty(accepted.getContent())) continue;
                 for (TrackDetail trackDetail : accepted.getContent()) {
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
                     LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
                     if (CollectionUtils.isEmpty(localLogisticsInfo.getTrackingDetails())) continue;
+                    List<PlatformTrackDetail> details = new ArrayList<>();
                     for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
-                        PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                        acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
-                        acceptedToSaveDto.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                        PlatformTrackDetail detail = new PlatformTrackDetail();
+                        detail.setTrackNo(trackDetail.getTrackNo());
+                        detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
                         LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                        acceptedToSaveDto.setTrackTime(eventTime);
-                        acceptedToSaveDto.setContent(trackingDetail.getEventDetail());
-                        resultList.add(acceptedToSaveDto);
+                        detail.setTrackTime(eventTime);
+                        detail.setContent(trackingDetail.getEventDetail());
+                        details.add(detail);
                     }
+                    acceptedToSaveDto.setDetails(details);
+                    resultList.add(acceptedToSaveDto);
                 }
             }
             if (CollectionUtils.isEmpty(sourceDto.getRejected())) continue;
             for (Rejected rejected : sourceDto.getRejected()) {
                 PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
                 acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
-                acceptedToSaveDto.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-                acceptedToSaveDto.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
-                acceptedToSaveDto.setTrackTime(LocalDateTime.now());
+                PlatformTrackDetail detail = new PlatformTrackDetail();
+                detail.setTrackNo(rejected.getTrackNo());
+                detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                detail.setTrackTime(LocalDateTime.now());
+                acceptedToSaveDto.setDetails(Collections.singletonList(detail));
                 resultList.add(acceptedToSaveDto);
             }
         }

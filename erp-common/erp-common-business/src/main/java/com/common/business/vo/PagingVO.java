@@ -1,6 +1,9 @@
 package com.common.business.vo;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,6 +14,9 @@ import java.util.List;
  * @Date 2022-07-12 11:19
  * @Created by yl
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PagingVO<T> implements Serializable {
 
     /**
