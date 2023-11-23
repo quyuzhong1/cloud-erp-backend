@@ -39,10 +39,10 @@ public class JmsAmazonSqsConsumer {
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.warn("接收到亚马逊SQS通知:{}", textMessage.getText());
-        if (BusinessCommonConstants.hasProfile("dev") || BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
-            // 开发环境暂时过滤
-            return ;
-        }
+//        if (BusinessCommonConstants.hasProfile("dev") || BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
+//            // 开发环境暂时过滤
+//            return ;
+//        }
 
         JSONObject textObj = new JSONObject(textMessage.getText()).getJSONObject("text");
         if (null == textObj){
@@ -52,7 +52,7 @@ public class JmsAmazonSqsConsumer {
 
         // 处理报告完成队列
         if ("REPORT_PROCESSING_FINISHED".equalsIgnoreCase(textObj.getStr("notificationType"))) {
-            reportHandleService.handlerNotifications(textMessage);
+            reportHandleService.handlerNotifications(textObj);
         }
 
         // 开发环境忽略处理

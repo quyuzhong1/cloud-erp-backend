@@ -271,22 +271,23 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     }
 
     @Override
-    public void handlerNotifications(SQSTextMessage textMessage) throws Exception {
+    public void handlerNotifications(cn.hutool.json.JSONObject textMessageObj) throws Exception {
+        log.warn("处理亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessageObj));
 //        if (BusinessCommonConstants.hasProfile("test")) {
             // 测试环境暂时过滤
-            log.warn("监听到亚马逊报告通知：{}", JSONUtil.toJsonStr(textMessage));
 //            return;
 //        }
 
-        NotificationSQSEntity sqsEntity = JSONUtil.toBean(textMessage.getText(), NotificationSQSEntity.class);
-        String processingStatus = sqsEntity.getPayload().getReportProcessingFinishedNotification().getProcessingStatus();
-        // 非已完成的报表
-        if (!"DONE".equalsIgnoreCase(processingStatus)) {
-            return;
-        }
+        NotificationSQSEntity sqsEntity = JSONUtil.toBean(textMessageObj, NotificationSQSEntity.class);
+//        String processingStatus = sqsEntity.getPayload().getReportProcessingFinishedNotification().getProcessingStatus();
+//        // 非已完成的报表
+//        if (!"DONE".equalsIgnoreCase(processingStatus)) {
+//            return;
+//        }
         // 是否是需要记录的类型
         AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.getByRecordType(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportType());
         if (null == recordTypeEnum) {
+            log.info("未支持亚马逊报告通知忽略：{}", JSONUtil.toJsonStr(textMessageObj));
             return;
         }
         // 根据不同地区区分
@@ -385,7 +386,9 @@ public class ReportHandleServiceImpl implements ReportHandleService {
 
         // TODO 扩展
         if (AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType().equalsIgnoreCase(report.getReportType())) {
-            this.pullBusinessHandler(reportScheduleEntity.getShopId(), report.getReportId(), mongoDTOSList);
+            this.pullBusinessHandler(reportScheduleEntity.getShopId(),
+                    report.getReportId(),
+                    mongoDTOSList);
         }
     }
 
