@@ -96,7 +96,7 @@ public class RequisitionApplicationDTO implements Serializable {
         private LocalDateTime invalidTime;
 
         /**
-         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionApplicationTypeEnum
          * salesPlatform：销售平台
          * overseasWarehouse：海外仓
          */
@@ -225,7 +225,7 @@ public class RequisitionApplicationDTO implements Serializable {
         private String status;
 
         /**
-         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionApplicationTypeEnum
          * salesPlatform：销售平台
          * overseasWarehouse：海外仓
          */
@@ -400,7 +400,7 @@ public class RequisitionApplicationDTO implements Serializable {
         private String code;
 
         /**
-         * 要货类型：/wms/common/enumDropDown?type=RequisitionType
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionApplicationTypeEnum
          * salesPlatform：销售平台
          * overseasWarehouse：海外仓
          */

@@ -32,6 +32,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
@@ -223,6 +224,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode("", dto.getKingdeeWarehouseCode());
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(dto, warehouse);
+
+        //如果设置了在途仓，获取匹配在途仓名称
+        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+            WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+            }
+            warehouse.setOnwayWarehouseName(entity.getName());
+        }
+
+
         Boolean result = this.save(warehouse);
         if (result) {
             return warehouse.getId();
@@ -255,6 +267,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
         BeanMapper.copy(dto, warehouse);
+
+        //如果设置了在途仓，获取匹配在途仓名称
+        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+            WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+            }
+            warehouse.setOnwayWarehouseName(entity.getName());
+        }
+
         Boolean result = this.updateById(warehouse);
         if (result) {
             return warehouseId;
