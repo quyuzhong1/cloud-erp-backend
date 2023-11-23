@@ -99,7 +99,7 @@
         </if>
         <!--发货单号-->
         <if test="params.deliveryCode != null and params.deliveryCode != ''">
-            AND odp.delivery_code ILIKE concat('%',#{params.deliveryCode},'%')
+            AND EXISTS (SELECT id FROM fba_delivery fd WHERE fd.source_id = odp.id AND fd.code ILIKE concat('%',#{params.deliveryCode}::text,'%'))
         </if>
         <!--目的仓库-->
         <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
