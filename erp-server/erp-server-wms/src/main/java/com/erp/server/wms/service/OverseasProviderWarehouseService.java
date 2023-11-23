@@ -36,6 +36,15 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId);
 
     /**
+     * 根据仓库ids查询绑定关系
+     * @Author Luo_WG
+     * @Date 2023/11/17 12:18
+     * @param warehouseIds
+     * @return com.erp.model.wms.entity.OverseasProviderWarehouseEntity
+     **/
+    List<OverseasProviderWarehouseEntity> listByWarehouseIds(List<String> warehouseIds);
+
+    /**
      * 根据第三方仓库信息查询
      **/
     OverseasProviderWarehouseEntity getByPlatform(String mainId,String platformWarehouseCode);

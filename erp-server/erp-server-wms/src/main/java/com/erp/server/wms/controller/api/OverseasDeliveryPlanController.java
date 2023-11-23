@@ -508,7 +508,7 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @param response
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
      **/
-    @PostMapping("/importFile")
+    @PostMapping("/importDetailFile")
     public ApiResult<OverseasDeliveryPlanDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
         OverseasDeliveryPlanDetailDTO.ImportDTO list = overseasDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
         return success(list);
@@ -521,10 +521,9 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @param request
      * @param response
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板备货申请单")
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/salesDemandTemplate.xlsx";
+        String path = "classpath:excel/deliveryPlanDetailTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

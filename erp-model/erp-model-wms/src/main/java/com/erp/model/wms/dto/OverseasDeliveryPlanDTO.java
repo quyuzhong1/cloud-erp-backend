@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -286,7 +288,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
          * 审核状态
          */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
          * 审核状态名称
