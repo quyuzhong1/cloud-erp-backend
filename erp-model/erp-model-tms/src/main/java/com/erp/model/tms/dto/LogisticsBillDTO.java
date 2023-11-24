@@ -333,6 +333,15 @@ public class LogisticsBillDTO implements Serializable {
          */
         private List<LogisticsBillDetailDTO.AddDTO> detailList;
     }
+    @Data
+    @NoArgsConstructor
+    public static class RemoveDTO{
+
+        @NotNull(message = "出库单不能为空")
+        @Size(min = 1,message = "出库单不能为空")
+        private List<String> outstockIdList;
+
+    }
 
     /**
      * 修改
