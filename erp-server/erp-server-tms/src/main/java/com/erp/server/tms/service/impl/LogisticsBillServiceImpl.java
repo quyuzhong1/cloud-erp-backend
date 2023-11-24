@@ -124,7 +124,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
 
         //新增物流费用单
-        addLogisticsBillCost(logisticsBillEntity);
+        addLogisticsBillCost(logisticsBillEntity,addDTO.getCurrency());
         return save;
     }
 
@@ -350,7 +350,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
         List<LogisticsBillDTO.SkuDTO> skuList=dto.getSkuList();
         List<String> skuIdList=skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
-    //    List<LogisticsProductDTO.ProductDTO>  skuInfo=logisticsProductFeign.listBySkuIdList(skuIdList);
+        List<LogisticsProductDTO.ProductDTO>  skuInfo=logisticsProductFeign.listBySkuIdList(skuIdList);
 
     }
 
@@ -397,7 +397,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @author Will
      * @date: 2023/11/20 12:27
      */
-    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity) {
+    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,String currency) {
         LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
 
         //渠道关联模板
@@ -433,7 +433,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 addDTO.setEstimatedShippingCost(shippingCost);
             }
         }
-        addDTO.setCurrency("CNY");
+        addDTO.setCurrency(currency);
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         logisticsBillCostService.add(addDTO);

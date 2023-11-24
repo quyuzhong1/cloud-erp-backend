@@ -32,6 +32,6 @@ import java.util.Set;
 @FeignClient(name = "erp-plm",contextId = "logisticsProductFeign")
 public interface LogisticsProductFeign {
 
-
-   // List<LogisticsProductDTO.ProductDTO> listBySkuIdList(@RequestBody List<String> skuIdList);
+    @PostMapping("product/detail/productDetailProcessPass")
+    List<LogisticsProductDTO.ProductDTO> listBySkuIdList(@RequestBody List<String> skuIdList);
 }

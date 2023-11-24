@@ -46,6 +46,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -610,15 +611,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setShopName(soInfo.getCustomerName());
             addDTO.setOrderTime(soInfo.getCreateTime());
             addDTO.setSalesPlatform(salesPlatform);
-            addDTO.setSourceType(soInfo.getOrderType());
-            addDTO.setSourceTypeName(soInfo.getOrderTypeName());
+            addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+            addDTO.setSourceTypeName(SourceTypeEnum.SO_INFO.getName());
             addDTO.setSourceCode(soInfo.getCode());
             addDTO.setCurrency(soInfo.getCurrency());
+            addDTO.setOrderType(OrderTypeEnum.B2B.getCode());
         }
         addDTO.setOutstockId(entity.getId());
         addDTO.setOutstockCode(entity.getCode());
+        LocalDate actualDeliveryDate=entity.getActualDeliveryDate();
+        if(Objects.isNull(actualDeliveryDate)){
+            actualDeliveryDate=entity.getBillDate();
+        }
         //发货时间
-        addDTO.setDeliveryTime(entity.getActualDeliveryDate());
+        addDTO.setDeliveryTime(actualDeliveryDate);
         //轨迹单号
         String trackNo = entity.getTrackNo();
         List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>(10);
