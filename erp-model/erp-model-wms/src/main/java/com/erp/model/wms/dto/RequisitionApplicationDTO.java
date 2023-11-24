@@ -515,7 +515,7 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class handleListDTO {
+    public static class HandleListDTO {
         /**
          * 主表id
          */
@@ -573,10 +573,6 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "调出仓库不能为空")
         private String fromWarehouseId;
         /**
-         * 调出仓库中文
-         */
-        private String fromWarehouseName;
-        /**
          * 调出仓库仓位
          */
         private String fromWarehouseLocation;
@@ -585,10 +581,6 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "调入仓库不能为空")
         private String toWarehouseId;
-        /**
-         * 调入仓库中文
-         */
-        private String toWarehouseName;
         /**
          * 调入仓库仓位
          */
@@ -600,7 +592,7 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class finishListDTO {
+    public static class FinishListDTO {
         /**
          * 主表id
          */
@@ -622,6 +614,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String requisitionWarehouseName;
         /**
+         * 要货仓位
+         */
+        private String requisitionWarehouseLocation;
+        /**
          * 产品id
          */
         private String skuId;
@@ -629,6 +625,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 产品编号
          */
         private String skuNo;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
         /**
          * 是否组合品
          */
@@ -649,6 +649,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货仓库中文
          */
         private String pickingWarehouseName;
+        /**
+         * 拣货仓仓位
+         */
+        private String pickingWarehouseLocation;
         /**
          * 拣货数量
          */

@@ -1,7 +1,5 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -81,7 +79,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>
      **/
-    List<RequisitionApplicationDTO.handleListDTO> handleList(List<String> ids);
+    List<RequisitionApplicationDTO.HandleListDTO> handleList(List<String> ids);
 
     /**
      * 处理保存
@@ -90,7 +88,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean handleSave(List<RequisitionApplicationDTO.handleListDTO> list);
+    Boolean handleSave(List<RequisitionApplicationDTO.HandleListDTO> list);
 
     /**
      * 完成功能列表查询
@@ -99,7 +97,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.finishListDTO>
      **/
-    List<RequisitionApplicationDTO.finishListDTO> finishList(List<String> ids);
+    List<RequisitionApplicationDTO.FinishListDTO> finishList(List<String> ids);
 
     /**
      * 完成保存
@@ -108,7 +106,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean finishSave(List<RequisitionApplicationDTO.finishListDTO> list);
+    Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list);
 
     /**
      * 打印拣货单预览
