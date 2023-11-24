@@ -62,13 +62,13 @@
         <where>
             pc.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and pcd.product_name iLIKE concat('%',#{params.productName}::text,'%')
+                and pcd.product_name ilike concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and pc.code iLIKE concat('%',#{params.code}::text,'%')
+                and pc.code ilike concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and po.code iLIKE concat('%',#{params.purchaseOrderCode}::text,'%')
+                and po.code ilike concat('%',#{params.purchaseOrderCode}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and pc.invalid_status = #{params.invalidStatus}

@@ -33,7 +33,7 @@
         inner join dmp_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
-                and droi.return_code iLIKE concat('%',#{params.returnOrderId}::text,'%')
+                and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
@@ -82,7 +82,7 @@
         inner join dmp_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
-                and droi.return_code iLIKE concat('%',#{params.returnOrderId}::text,'%')
+                and droi.return_code ilike concat('%',#{params.returnOrderId}::text,'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
