@@ -987,11 +987,11 @@
         </if>
         <!--品名-->
         <if test="params.productName!=null and params.productName!=''">
-            AND pd.name ILIKE concat('%',#{params.productName},'%')
+            AND pd.name ILIKE concat('%',#{params.productName}::text,'%')
         </if>
         <!--中文报关名-->
         <if test="params.declareNameCn!=null and params.declareNameCn!=''">
-            AND pl.declare_chinese_name ILIKE concat('%',#{params.declareNameCn},'%')
+            AND pl.declare_chinese_name ILIKE concat('%',#{params.declareNameCn}::text,'%')
         </if>
         <!--产品属性-->
         <if test="params.productPropertyIdList!=null and params.productPropertyIdList.size>0">
@@ -1002,19 +1002,19 @@
         </if>
         <!--原产国-->
         <if test="params.sourceCountry!=null and params.sourceCountry!=''">
-            AND pl.source_country ILIKE concat('%',#{params.sourceCountry},'%')
+            AND pl.source_country ILIKE concat('%',#{params.sourceCountry}::text,'%')
         </if>
         <!--spu no-->
         <if test="params.spuNo!=null and params.spuNo!=''">
-            AND pi.spu_no ILIKE concat('%',#{params.spuNo},'%')
+            AND pi.spu_no ILIKE concat('%',#{params.spuNo}::text,'%')
         </if>
         <!--报关型号-->
         <if test="params.declareModel!=null and params.declareModel!=''">
-            AND pl.declare_model ILIKE concat('%',#{params.declareModel},'%')
+            AND pl.declare_model ILIKE concat('%',#{params.declareModel}::text,'%')
         </if>
         <!--报关要素-->
         <if test="params.declareElement!=null and params.declareElement!=''">
-            AND pl.declare_element ILIKE concat('%',#{params.declareElement},'%')
+            AND pl.declare_element ILIKE concat('%',#{params.declareElement}::text,'%')
         </if>
         <!--产品经理-->
         <if test="params.productChargeIdList!=null and params.productChargeIdList.size>0">
@@ -1166,11 +1166,11 @@
                 </if>
                 <!--品名-->
                 <if test="params.productName!=null and params.productName!=''">
-                    AND pd.name ILIKE concat('%',#{params.productName},'%')
+                    AND pd.name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <!--中文报关名-->
                 <if test="params.declareNameCn!=null and params.declareNameCn!=''">
-                    AND pl.declare_chinese_name ILIKE concat('%',#{params.declareNameCn},'%')
+                    AND pl.declare_chinese_name ILIKE concat('%',#{params.declareNameCn}::text,'%')
                 </if>
                 <!--产品属性-->
                 <if test="params.productPropertyIdList!=null and params.productPropertyIdList.size>0">
@@ -1181,19 +1181,19 @@
                 </if>
                 <!--原产国-->
                 <if test="params.sourceCountry!=null and params.sourceCountry!=''">
-                    AND pl.source_country ILIKE concat('%',#{params.sourceCountry},'%')
+                    AND pl.source_country ILIKE concat('%',#{params.sourceCountry}::text,'%')
                 </if>
                 <!--spu no-->
                 <if test="params.spuNo!=null and params.spuNo!=''">
-                    AND pi.spu_no ILIKE concat('%',#{params.spuNo},'%')
+                    AND pi.spu_no ILIKE concat('%',#{params.spuNo}::text,'%')
                 </if>
                 <!--报关型号-->
                 <if test="params.declareModel!=null and params.declareModel!=''">
-                    AND pl.declare_model ILIKE concat('%',#{params.declareModel},'%')
+                    AND pl.declare_model ILIKE concat('%',#{params.declareModel}::text,'%')
                 </if>
                 <!--报关要素-->
                 <if test="params.declareElement!=null and params.declareElement!=''">
-                    AND pl.declare_element ILIKE concat('%',#{params.declareElement},'%')
+                    AND pl.declare_element ILIKE concat('%',#{params.declareElement}::text,'%')
                 </if>
                 <!--产品经理-->
                 <if test="params.productChargeIdList!=null and params.productChargeIdList.size>0">
@@ -1269,19 +1269,19 @@
         </if>
         <!--spu no-->
         <if test="params.spuNo!=null and params.spuNo!=''">
-            AND pi.spu_no ILIKE concat('%',#{params.spuNo},'%')
+            AND pi.spu_no ILIKE concat('%',#{params.spuNo}::text,'%')
         </if>
         <!--操作项-->
         <if test="params.operate!=null and params.operate!=''">
-            AND sl.operation ILIKE concat('%',#{params.operate},'%')
+            AND sl.operation ILIKE concat('%',#{params.operate}::text,'%')
         </if>
         <!--品名-->
         <if test="params.productName!=null and params.productName!=''">
-            AND pd.name ILIKE concat('%',#{params.productName},'%')
+            AND pd.name ILIKE concat('%',#{params.productName}::text,'%')
         </if>
         <!--操作内容-->
         <if test="params.operateContent!=null and params.operateContent!=''">
-            AND sl.content ILIKE concat('%',#{params.operateContent},'%')
+            AND sl.content ILIKE concat('%',#{params.operateContent}::text,'%')
         </if>
         <!--操作人-->
         <if test="params.operateUserId!=null and params.operateUserId!=''">

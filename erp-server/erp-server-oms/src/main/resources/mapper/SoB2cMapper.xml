@@ -114,19 +114,19 @@
         <where>
             sb2c.is_deleted = false
             <if test="params.code != null and params.code != '' ">
-                and sb2c.code ilike concat('%',#{params.code},'%')
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.platformCode != null and params.platformCode != '' ">
-                and sb2c.platform_code ilike concat('%',#{params.platformCode},'%')
+                and sb2c.platform_code iLIKE concat('%',#{params.platformCode}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and sb2c.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
-                and sb2cd.platform_sku_no ilike concat('%',#{params.platformSkuNo},'%')
+                and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
             </if>
             <if test="params.sellerSkuNo != null and params.sellerSkuNo != '' ">
-                and sb2cd.seller_sku_no ilike concat('%',#{params.sellerSkuNo},'%')
+                and sb2cd.seller_sku_no iLIKE concat('%',#{params.sellerSkuNo}::text,'%')
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
@@ -277,17 +277,17 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             <if test="params.code != null and params.code != '' ">
-                and sb2c.code ilike concat('%',#{params.code},'%')
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.buyerName != null and params.buyerName != '' ">
-                and sb2cr.name ilike concat('%',#{params.buyerName},'%')
+                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
             </if>
             <if test="params.receiverName != null and params.receiverName != '' ">
-                and sb2cr.receiver_name ilike concat('%',#{params.receiverName},'%')
+                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
             </if>
             <if test="params.address != null and params.address != '' ">
-                and (sb2cr.first_address ilike concat('%',#{params.address},'%') or sb2cr.second_address ilike
-                concat('%',#{params.address},'%') or sb2cr.full_address ilike concat('%',#{params.address},'%'))
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
+                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
@@ -329,17 +329,17 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             <if test="params.code != null and params.code != '' ">
-                and sb2c.code ilike concat('%',#{params.code},'%')
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.buyerName != null and params.buyerName != '' ">
-                and sb2cr.name ilike concat('%',#{params.buyerName},'%')
+                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
             </if>
             <if test="params.receiverName != null and params.receiverName != '' ">
-                and sb2cr.receiver_name ilike concat('%',#{params.receiverName},'%')
+                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
             </if>
             <if test="params.address != null and params.address != '' ">
-                and (sb2cr.first_address ilike concat('%',#{params.address},'%') or sb2cr.second_address ilike
-                concat('%',#{params.address},'%') or sb2cr.full_address ilike concat('%',#{params.address},'%'))
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
+                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
             </if>
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
@@ -483,12 +483,12 @@
         sb.is_deleted = FALSE
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
-            sbd.sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ) OR (
-            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
-            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ))
         </if>
         <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
@@ -535,12 +535,12 @@
         sb.is_deleted = FALSE
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
-            sbd.sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ) OR (
-            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
-            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ))
         </if>
         <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">

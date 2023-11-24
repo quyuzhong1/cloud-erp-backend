@@ -92,7 +92,7 @@
                 and lb.source_type = #{params.sourceType}
             </if>
             <if test="params.remark != null and params.remark != ''">
-                and lbc.remark ilike concat('%',#{params.remark},'%')
+                and lbc.remark iLIKE concat('%',#{params.remark}::text,'%')
             </if>
             <if test="params.codeList != null and params.codeList.size > 0">
                 and lbc.transport_no in
@@ -209,7 +209,7 @@
                     and lb.source_type = #{params.sourceType}
                 </if>
                 <if test="params.remark != null and params.remark != ''">
-                    and lbc.remark ilike concat('%',#{params.remark},'%')
+                    and lbc.remark iLIKE concat('%',#{params.remark}::text,'%')
                 </if>
                 <if test="params.codeList != null and params.codeList.size > 0">
                     and lbc.transport_no in
