@@ -9,7 +9,7 @@
         AND is_deleted=false
         AND state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND name LIKE concat('%',#{searchKeyword},'%')
+            AND name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
         <if test="findIdList!=null and findIdList.size>0">
             AND id IN
@@ -26,7 +26,7 @@
         AND is_deleted=false
         AND state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND name LIKE concat('%',#{searchKeyword},'%')
+            AND name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 
@@ -36,7 +36,7 @@
         update_time,share_flag,is_frequently,state
         FROM bi_subject WHERE is_deleted=false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -62,7 +62,7 @@
           </foreach>
         </if>
         <if test="searchKeyword!=null and searchKeyword!=''">
-            AND name LIKE concat('%',#{searchKeyword},'%')
+            AND name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
 
         ORDER BY create_time DESC
@@ -80,7 +80,7 @@
             </foreach>
         </if>
         <if test="searchKeyword!=null and searchKeyword!=''">
-            AND name LIKE concat('%',#{searchKeyword},'%')
+            AND name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
 
         ORDER BY create_time DESC

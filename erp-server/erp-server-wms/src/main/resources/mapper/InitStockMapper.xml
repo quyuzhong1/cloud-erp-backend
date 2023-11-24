@@ -49,7 +49,7 @@
             left join product_sale ps on ps.sku_id = pd.id
             where isd.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and ism.code ilike concat('%',#{params.code},'%')
+                and ism.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and isd.sku_no in

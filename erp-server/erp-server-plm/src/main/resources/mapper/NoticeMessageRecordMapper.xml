@@ -11,7 +11,7 @@
          charge_id,charge_name FROM notice_message_log
          WHERE notice_user_id=#{params.flagId} AND is_deleted = FALSE
          <if test="params.searchKeyword!=null and   params.searchKeyword !='' ">
-          AND product_name LIKE concat('%',#{params.searchKeyword},'%'))
+          AND product_name ILIKE concat('%',#{params.searchKeyword}::text,'%'))
          </if>
          ORDER BY create_time DESC
 

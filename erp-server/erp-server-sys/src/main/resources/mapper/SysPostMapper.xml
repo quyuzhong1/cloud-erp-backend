@@ -7,7 +7,7 @@
         FROM sys_post sp
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                AND sp.post_name LIKE concat('%',#{params.searchKeyword},'%')
+                AND sp.post_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             </if>
         </where>
 

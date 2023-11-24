@@ -20,10 +20,10 @@
         <where>
             ttd.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-               and ttd.name like concat('%', #{params.searchKeyword} ,'%')
+               and ttd.name ILIKE concat('%', #{params.searchKeyword}::text ,'%')
             </if>
             <if test="params.templateId != '' and params.templateId != null">
-                and  ttd.template_id like concat('%', #{params.templateId} ,'%')
+                and  ttd.template_id ILIKE concat('%', #{params.templateId}::text ,'%')
             </if>
         </where>
         ORDER BY ttd.create_time DESC

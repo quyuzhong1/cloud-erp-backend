@@ -174,13 +174,13 @@
         left join dmp_order_item doi2 on doi.id = doi2.order_id
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
-                and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+                and doi.platform_order_id ILIKE concat('%',#{params.platformOrderId}::text,'%')
             </if>
             <if test="params.shopName != null and params.shopName != ''">
-                and doi.shop_name like concat('%',#{params.shopName},'%')
+                and doi.shop_name ILIKE concat('%',#{params.shopName}::text,'%')
             </if>
             <if test="params.platformName != null and params.platformName != ''">
-                and doi.platform_order_id like concat('%',#{params.platformName},'%')
+                and doi.platform_order_id ILIKE concat('%',#{params.platformName}::text,'%')
             </if>
             <if test="params.orderState != null and params.orderState != ''">
                 and doi.order_state = #{params.orderState}

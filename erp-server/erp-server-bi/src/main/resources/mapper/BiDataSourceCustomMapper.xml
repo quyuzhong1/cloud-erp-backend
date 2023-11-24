@@ -19,7 +19,7 @@
                 and bdsc.type = #{params.type}
             </if>
             <if test="params.targetName != null and params.targetName != ''">
-                and bdsc.target_name like concat('%',#{params.targetName},'%')
+                and bdsc.target_name ILIKE concat('%',#{params.targetName}::text,'%')
             </if>
             <if test="params.createTime_begin != null ">
                 and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
@@ -56,7 +56,7 @@
                 and bdsc.type = #{params.type}
             </if>
             <if test="params.targetName != null and params.targetName != ''">
-                and bdsc.target_name like concat('%',#{params.targetName},'%')
+                and bdsc.target_name ILIKE concat('%',#{params.targetName}::text,'%')
             </if>
             <if test="params.createTime_begin != null ">
                 and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
@@ -96,7 +96,7 @@
                 and bdsc.year = #{params.year}
             </if>
             <if test="params.targetType != null and params.targetType != ''">
-                and bdsc.target_type like concat('%',#{params.targetType},'%')
+                and bdsc.target_type ILIKE concat('%',#{params.targetType}::text,'%')
             </if>
         </where>
     </select>

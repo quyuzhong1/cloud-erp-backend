@@ -40,7 +40,7 @@
             <where>
                 pt.is_deleted = FALSE
                 <if test="params.searchKeyword != '' and params.searchKeyword != null">
-                   AND pt.name LIKE concat('%', #{params.searchKeyword} ,'%')
+                   AND pt.name ILIKE concat('%', #{params.searchKeyword}::text ,'%')
                 </if>
             </where>
             ORDER BY pt.create_time asc

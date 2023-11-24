@@ -42,7 +42,7 @@
         <where>
             pt.is_deleted = FALSE
             <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
-               and (pi."name" like concat('%',#{params.searchKeyword} ,'%') or pi.spu_no like concat('%',#{params.searchKeyword} ,'%'))
+               and (pi."name" ILIKE concat('%',#{params.searchKeyword}::text ,'%') or pi.spu_no ILIKE concat('%',#{params.searchKeyword}::text ,'%'))
             </if>
             <if test="null != params and null != params.startDate  and null != params.endDate">
                 and pttr.reality_end_time >= #{params.startDate}

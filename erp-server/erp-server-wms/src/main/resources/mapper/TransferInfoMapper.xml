@@ -62,7 +62,7 @@
                 AND ti.approve_status = #{params.searchType}
             </if>
             <if test="params.code != null and params.code != ''">
-                and ti.code like concat('%',#{params.code},'%')
+                and ti.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and ti.invalid_status = #{params.invalidStatus}
@@ -179,7 +179,7 @@
                     AND ti.approve_status = #{params.searchType}
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and ti.code like concat('%',#{params.code},'%')
+                    and ti.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and ti.invalid_status = #{params.invalidStatus}

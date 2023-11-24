@@ -57,10 +57,10 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND si.code ILIKE concat('%', #{params.code} ,'%')
+            AND si.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
@@ -122,7 +122,7 @@
             </foreach>
         </if>
         <if test="params.remark !=null and params.remark!=''">
-            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+            AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
         </if>
         <if test="params.salesOrgId != null and params.salesOrgId != '' ">
             AND si.sales_org_id = #{params.salesOrgId}
@@ -171,10 +171,10 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND si.code ILIKE concat('%', #{params.code} ,'%')
+            AND si.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
@@ -236,7 +236,7 @@
             </foreach>
         </if>
         <if test="params.remark !=null and params.remark!=''">
-            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+            AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
         </if>
         <if test="params.salesOrgId != null and params.salesOrgId != '' ">
             AND si.sales_org_id = #{params.salesOrgId}
@@ -345,10 +345,10 @@
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND si.code ILIKE concat('%', #{params.code} ,'%')
+                    AND si.code ILIKE concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-                    AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+                    AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND si.order_type=#{params.orderType}
@@ -412,7 +412,7 @@
                     </foreach>
                 </if>
                 <if test="params.remark !=null and params.remark!=''">
-                    AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+                    AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
                 </if>
                 <if test="params.salesOrgId != null and params.salesOrgId != '' ">
                     AND si.sales_org_id = #{params.salesOrgId}

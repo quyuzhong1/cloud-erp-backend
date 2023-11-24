@@ -38,7 +38,7 @@
         </if>
 
         <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="userId !=null and userId!=''">
             AND string_to_array( pt.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')
@@ -51,7 +51,7 @@
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -136,7 +136,7 @@
                 </if>
 
                 <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-                    AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                 </if>
                 <if test="userId !=null and userId!=''">
                     AND string_to_array( pt.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')
@@ -149,7 +149,7 @@
                 </if>
                 <if test="params.taskSearchDTO !=null ">
                     <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
                     </if>
                     <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                         AND pt.priority in
@@ -263,7 +263,7 @@
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -302,7 +302,7 @@
             ${params.permissionSql}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -353,7 +353,7 @@
                 </if>
 
                 <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-                    AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                 </if>
 
                 <if test="params.statusList != null and params.statusList.size > 0">
@@ -364,7 +364,7 @@
                 </if>
                 <if test="params.taskSearchDTO !=null ">
                     <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
                     </if>
                     <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                         AND pt.priority in
@@ -464,7 +464,7 @@
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -503,7 +503,7 @@
             ${params.permissionSql}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -557,7 +557,7 @@
                 </if>
 
                 <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-                    AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                 </if>
 
                 <if test="params.statusList != null and params.statusList.size > 0">
@@ -568,7 +568,7 @@
                 </if>
                 <if test="params.taskSearchDTO !=null ">
                     <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
                     </if>
                     <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                         AND pt.priority in
@@ -760,7 +760,7 @@
             AND pt.phase_id = #{params.phaseId}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.statusList !=null and params.statusList.size>0">
             AND pt.status IN
@@ -770,7 +770,7 @@
         </if>
         <if test="params.taskSearchDTO !=null">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -857,7 +857,7 @@
                     AND pt.phase_id = #{params.phaseId}
                 </if>
                 <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                    AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                 </if>
                 <if test="params.statusList !=null and params.statusList.size>0">
                     AND pt.status IN
@@ -867,7 +867,7 @@
                 </if>
                 <if test="params.taskSearchDTO !=null">
                     <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                        AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                        AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
                     </if>
                     <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                         AND pt.priority in
@@ -1206,8 +1206,8 @@
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword!=''">
             AND (
-            pt.name ILIKE concat('%',#{params.searchKeyword},'%') OR
-            pdi.name ILIKE concat('%',#{params.searchKeyword},'%')
+            pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            pdi.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
@@ -1222,7 +1222,7 @@
         </if>
         <if test="params.taskSearchDTO != null">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -1621,7 +1621,7 @@
             AND string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{dto.taskChargeId},',')
         </if>
         <if test="dto.searchKeyword !=null and dto.searchKeyword!=''">
-            AND pt.name LIKE concat('%',#{dto.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{dto.searchKeyword}::text,'%')
         </if>
         <if test="dto.planStartTime !=null ">
             AND pt.plan_start_time &gt;= #{dto.planStartTime}
@@ -1685,7 +1685,7 @@
                     AND string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{dto.taskChargeId},',')
                 </if>
                 <if test="dto.searchKeyword !=null and dto.searchKeyword!=''">
-                    AND pt.name LIKE concat('%',#{dto.searchKeyword},'%')
+                    AND pt.name ILIKE concat('%',#{dto.searchKeyword}::text,'%')
                 </if>
                 <if test="dto.planStartTime !=null ">
                     AND pt.plan_start_time &gt;= #{dto.planStartTime}

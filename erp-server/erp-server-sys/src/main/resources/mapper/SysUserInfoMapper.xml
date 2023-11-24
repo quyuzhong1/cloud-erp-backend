@@ -7,8 +7,8 @@
         FROM sys_user_info
         WHERE delete_state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND user_name LIKE concat('%',#{searchKeyword},'%') OR
-            real_name LIKE concat('%',#{searchKeyword},'%')
+            AND user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
+            real_name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
 
     </select>
@@ -34,7 +34,7 @@
             AND sui.user_state=#{params.state}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword}::text,'%')
+            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.startTime!=null">
             AND last_login_time &gt;=#{params.startTime}
@@ -64,8 +64,8 @@
         FROM sys_user_info sui
         WHERE sui.delete_state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
-            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 
@@ -77,8 +77,8 @@
         FROM sys_user_info sui
         WHERE sui.delete_state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
-            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 
@@ -90,8 +90,8 @@
         FROM sys_user_info sui
         WHERE sui.delete_state=1
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
-            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+            AND sui.user_name ILIKE concat('%',#{searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 

@@ -64,10 +64,10 @@
         FROM  stocktaking_plan
         WHERE is_deleted=FALSE
         <if test="params.code!=null and params.code!=''">
-            AND code LIKE CONCAT('%',#{params.code},'%')
+            AND code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <if test="params.name!=null and params.name!=''">
-            AND name LIKE CONCAT('%',#{params.name},'%')
+            AND name ILIKE concat('%',#{params.name}::text,'%')
         </if>
         <if test="params.approveStatusList!=null and params.approveStatusList.size > 0">
             AND approve_status in

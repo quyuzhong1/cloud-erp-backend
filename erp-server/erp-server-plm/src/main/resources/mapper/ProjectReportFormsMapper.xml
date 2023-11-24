@@ -109,9 +109,9 @@
         </if>
 
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            AND (pi."name" ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword}::text ,'%') GROUP BY product_id)
             )
         </if>
 
@@ -282,9 +282,9 @@
         </if>
 
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            AND (pi."name" ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword}::text ,'%') GROUP BY product_id)
             )
         </if>
 
@@ -355,7 +355,7 @@
         </if>
 
         <if test="params.taskName != null and params.taskName != ''">
-            AND pot.name ILIKE concat('%', #{params.taskName}, '%')
+            AND pot.name ILIKE concat('%', #{params.taskName}::text, '%')
         </if>
 
         <if test="params.taskState != null and params.taskState == 4">

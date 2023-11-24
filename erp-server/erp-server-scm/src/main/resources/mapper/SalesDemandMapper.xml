@@ -54,10 +54,10 @@
         <where>
             sd.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and sd.code like concat('%',#{params.code},'%')
+                and sd.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.productName != null and params.productName != ''">
-                and sdd.product_name like concat('%',#{params.productName},'%')
+                and sdd.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and sdd.is_urgent = #{params.isUrgent}
@@ -153,10 +153,10 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and sd.code like concat('%',#{params.code},'%')
+                    and sd.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.productName != null and params.productName != ''">
-                    and sdd.product_name like concat('%',#{params.productName},'%')
+                    and sdd.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and sd.is_urgent = #{params.isUrgent}

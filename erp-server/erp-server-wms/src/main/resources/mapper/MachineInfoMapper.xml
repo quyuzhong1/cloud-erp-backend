@@ -59,7 +59,7 @@
                 AND mi.approve_status = #{params.searchType}
             </if>
             <if test="params.code != null and params.code != ''">
-                and mi.code like concat('%',#{params.code},'%')
+                and mi.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and mi.invalid_status = #{params.invalidStatus}
@@ -159,7 +159,7 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and mi.code like concat('%',#{params.code},'%')
+                    and mi.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and mi.invalid_status = #{params.invalidStatus}
