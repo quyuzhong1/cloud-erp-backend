@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -43,7 +44,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         dmpPullTaskEntity.setSourceType(businessType);
         dmpPullTaskEntity.setSourceId("");
         dmpPullTaskEntity.setSourceCode(logisticsPlatform);
-        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
+        dmpPullTaskEntity.setTargetPlatformName(LogisticsPlatformEnum.getByCode(logisticsPlatform).getName());
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
             dmpPullTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
@@ -58,8 +59,11 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
             //增加异常预警
-            dmpPullTaskEntity.setId(id);
-            this.sendPullWarnMsg(dmpPullTaskEntity);
+            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+                dmpPullTaskEntity.setId(id);
+                this.sendPullWarnMsg(dmpPullTaskEntity);
+            }
+
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPullTask:记录操作日志失败");
         }
@@ -73,7 +77,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         dmpPushTaskEntity.setSourceType(businessType);
         dmpPushTaskEntity.setSourceId("");
         dmpPushTaskEntity.setSourceCode(logisticsPlatform);
-        dmpPushTaskEntity.setTargetPlatformName(PlatformEnum.ERP_TMS.getDesc());
+        dmpPushTaskEntity.setTargetPlatformName(LogisticsPlatformEnum.getByCode(logisticsPlatform).getName());
         //请求状态（0请求中 1请求成功 2请求失败）
         if (RequestStatusEnums.SUCCESS.getCode().equals(status)) {
             dmpPushTaskEntity.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
@@ -88,8 +92,10 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
-            dmpPushTaskEntity.setId(id);
-            this.sendPushWarnMsg(dmpPushTaskEntity);
+            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+                dmpPushTaskEntity.setId(id);
+                this.sendPushWarnMsg(dmpPushTaskEntity);
+            }
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
         }
