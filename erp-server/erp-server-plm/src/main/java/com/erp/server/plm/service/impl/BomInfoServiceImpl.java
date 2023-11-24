@@ -945,7 +945,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 17:04
      */
     @Override
-    public void checkIfChange(String sourceId,String detailsJson) {
+    public void checkIfChange(String sourceId, String detailsJson) {
         BomInfoEntity infoEntity = this.getById(sourceId);
         if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95095);
@@ -960,7 +960,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95113);
         }
         BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
-        UpdateBomDTO updateBom=new UpdateBomDTO();
+        UpdateBomDTO updateBom = new UpdateBomDTO();
         updateBom.setId(bom.getId());
         updateBom.setSkuList(bom.getSkuList());
         checkRepeatBomSku(updateBom);
@@ -1354,15 +1354,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     private void checkRepeatBomSku(UpdateBomDTO dto) {
         List<BomSkuDTO> skuList = dto.getSkuList();
+        List<String> parentSkuNoList = skuList.stream().map(BomSkuDTO::getSkuNo).collect(Collectors.toList());
         List<String> childrenSkuIdList = new ArrayList<>(10);
         for (BomSkuDTO item : skuList) {
             List<String> childrenSkuIds = item.getChildren().stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
             childrenSkuIdList.addAll(childrenSkuIds);
         }
-        childrenSkuIdList = childrenSkuIdList.stream().distinct().collect(Collectors.toList());
-        //这个是以子集sku当做父级sku 对应的bom 信息
-        List<BomChildrenSkuDTO> parentSkuList = bomSkuService.listAllBomChildBySkuIds(childrenSkuIdList);
-
+        checkChildrenIsParent(parentSkuNoList, childrenSkuIdList);
         List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
         for (BomSkuDTO bomSkuDTO : skuList) {
@@ -1372,16 +1370,41 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_BOM_PARENT_SKU_REPEAT, bomSkuDTO.getSkuNo());
             }
+
+        }
+    }
+
+    /**
+     * @return
+     * @parms 检查子集是否有父级的sku
+     * @author yl
+     * @date 2023-11-24
+     */
+    private void checkChildrenIsParent(List<String> parentSkuNoList, List<String> skuIdList) {
+        List<BomDTO.BomSku> bomSkuList = bomSkuService.listBySkuIds(skuIdList);
+        for (String skuNo : parentSkuNoList) {
+            String bomCode = bomSkuList.stream().filter(b -> skuNo.equals(b.getSkuNo())).
+                    map(BomDTO.BomSku::getSerialNumber).
+                    collect(Collectors.joining(","));
             /**
              * 这个表示 bomSkuDTO 的子的sku  为bomm 的父级sku 而该Bom 的子sku 有为bomSkuDTO 的父级
              * 这样就会有问题
              */
-            List<String> bomCodeList = parentSkuList.stream().filter(p -> p.getSkuId().equals(parentSkuId)).map(BomChildrenSkuDTO::getSerialNumber).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(bomCodeList)) {
-                throw new ServiceException(ApiError.ERROR_BOM_CONTAIN, bomCodeList.stream().collect(Collectors.joining(",")),bomSkuDTO.getSkuNo());
+            if (StringUtils.isNotEmpty(bomCode)) {
+                throw new ServiceException(ApiError.ERROR_BOM_CONTAIN, bomCode, skuNo);
             }
         }
+        List<String> skuNoList = bomSkuList.stream().map(BomDTO.BomSku::getParentSkuNo).collect(Collectors.toList());
+        List<String> newSkuNOList=new ArrayList<>(10);
+        newSkuNOList.addAll(parentSkuNoList);
+        newSkuNOList.addAll(skuNoList);
+        for (BomDTO.BomSku item : bomSkuList) {
+            String childrenSkuId = item.getSkuId();
+            checkChildrenIsParent(newSkuNOList, Arrays.asList(childrenSkuId));
+        }
+
     }
+
 
     /**
      * @description: 处理导入数据

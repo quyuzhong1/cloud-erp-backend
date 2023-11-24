@@ -102,4 +102,5 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @return PagingVO<List<ListDTO>>
      */
     PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
+
 }

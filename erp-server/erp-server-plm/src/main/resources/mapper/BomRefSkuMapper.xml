@@ -165,4 +165,24 @@
             </foreach>
         </where>
     </select>
+
+    <select id="listBySkuIds" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
+        select
+        pbs.parent_sku_id ,
+        pbs.parent_sku_no ,
+        pbi.serial_number,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pbs.quantity as qty
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            and pbs.parent_sku_id in
+            <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
 </mapper>

@@ -56,4 +56,25 @@ public class BomDTO implements Serializable {
     private String createUserId;
 
     private String createUserName;
+
+    @Data
+    @NoArgsConstructor
+    public static class BomSku{
+
+
+        private String parentSkuId;
+
+        private String parentSkuNo;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String serialNumber;
+
+        private Integer qty;
+
+
+
+    }
 }

@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -255,7 +256,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Override
     public List<BomSkuEntity> listBomSkuByBomId(String bomId) {
-        return this.lambdaQuery().eq(BomSkuEntity::getBomId,bomId).list();
+        return this.lambdaQuery().eq(BomSkuEntity::getBomId, bomId).list();
+    }
+
+    @Override
+    public List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySkuIds(skuIdList);
     }
 
     @Override
