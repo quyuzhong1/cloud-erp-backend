@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -14,6 +15,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
@@ -41,6 +43,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -218,44 +221,87 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 handleListDTO.setIsCombination(Boolean.FALSE);
             }
+
+            //如果没有仓位用空仓位
+            handleListDTO.setFromWarehouseLocation(StringUtils.isBlank(handleListDTO.getFromWarehouseLocation()) ? "" : handleListDTO.getFromWarehouseLocation());
+            handleListDTO.setToWarehouseLocation(StringUtils.isBlank(handleListDTO.getToWarehouseLocation()) ? "" : handleListDTO.getToWarehouseLocation());
         }
         return list;
     }
 
     @Override
     public Boolean handleSave(List<RequisitionApplicationDTO.handleListDTO> list) {
+        //根据调出调入仓id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getFromWarehouseId()).collect(Collectors.toList());
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         warehouseIds.addAll(toWarehouseIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
 
+        //查询产品信息
+        List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.handleListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
+        List<String> transferInfoIdList = new ArrayList<>();
         //调出仓库和调入仓库不一致的单据
         Map<String, List<RequisitionApplicationDTO.handleListDTO>> map = list.stream().filter(req -> !req.getFromWarehouseId().equals(req.getToWarehouseId())).collect(Collectors.groupingBy(req -> req.getFromWarehouseId().concat(",").concat(req.getToWarehouseId())));
         for (Map.Entry<String, List<RequisitionApplicationDTO.handleListDTO>> dto : map.entrySet()) {
-
             List<RequisitionApplicationDTO.handleListDTO> value = dto.getValue();
 
-            generateHandleToTransferInfo(value, warehouseList);
+            //生成调拨单
+            String transferInfoId = generateHandleToTransferInfo(value, skuVOList, warehouseList, bomChildrenSkuList);
 
+            //存储调拨单新增后生成的id
+            transferInfoIdList.add(transferInfoId);
         }
-        List<String> ids = new ArrayList<>();
 
-        return null;
+        //提交调拨单,需求要生成待审核的调拨单
+        if (CollectionUtils.isNotEmpty(transferInfoIdList)) {
+            transferInfoService.submit(transferInfoIdList);
+        }
+
+        //修改处理人信息
+        List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        Boolean flag = updateHandleUserDate(raIds);
+        return flag;
+    }
+
+    /**
+     * 修改处理人信息
+     * @Author Luo_WG
+     * @Date 2023/11/24 10:52
+     * @param raIds 要货申请表id
+     * @return java.lang.Boolean
+     **/
+    private Boolean updateHandleUserDate(List<String> raIds) {
+        LoginUser userInfo = commonService.getUserInfo();
+        return lambdaUpdate().set(RequisitionApplicationEntity::getHandleUserId, userInfo.getUid())
+                .set(RequisitionApplicationEntity::getHandleUserName, userInfo.getUserName())
+                .set(RequisitionApplicationEntity::getHandleTime, LocalDateTime.now())
+                .in(RequisitionApplicationEntity::getId, raIds)
+                .update();
     }
 
     /**
      * 要货申请处理生成调拨单
-     * @param detailEntityList
-     * @return
-     */
-    private String generateHandleToTransferInfo(List<RequisitionApplicationDTO.handleListDTO> detailEntityList, List<WarehouseDTO.UpdateDTO> warehouseList) {
-        //获取sku信息
-        List<String> skuNoList = detailEntityList.stream().map(RequisitionApplicationDTO.handleListDTO::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+     * @Author Luo_WG
+     * @Date 2023/11/24 10:35
+     * @param detailEntityList 调出仓库和调入仓库不一致的单据详情
+     * @param skuVOList 单据的产品信息
+     * @param warehouseList 仓库信息（包含调出仓和调入仓）
+     * @param bomChildrenSkuList 子件信息
+     * @return java.lang.String
+     **/
+    private String generateHandleToTransferInfo(List<RequisitionApplicationDTO.handleListDTO> detailEntityList,
+                                                List<SkuVO> skuVOList,
+                                                List<WarehouseDTO.UpdateDTO> warehouseList,
+                                                List<BomChildrenSkuDTO> bomChildrenSkuList
+    ) {
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+
+        //默认来源类型：海外发货计划
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
@@ -273,6 +319,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
+
+        //根据调出仓库和调入仓库的库存组织分组，相同组的SKU合并生成一张调拨单。合并以后无法设置来源单号和id
         addDTO.setSourceId("");
         addDTO.setSourceCode("");
         addDTO.setRemark("");
@@ -281,24 +329,39 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (RequisitionApplicationDTO.handleListDTO detailEntity : detailEntityList) {
 
-            // TODO 是否需要拆分为子件
-            //映射产品信息
-            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-//            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);
-//            TransferInfoDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferInfoDetailAdd(detailEntity);
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-            detailAddDto.setSkuId(skuVO.getSkuId());
-            detailAddDto.setSkuNo(skuVO.getSkuNo());
-            detailAddDto.setQty(detailEntity.getApproveQty());
-            detailAddDto.setOutWarehouseId(detailEntity.getFromWarehouseId());
-            detailAddDto.setInWarehouseId(detailEntity.getToWarehouseId());
-//            detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-//            detailAddDto.setInWarehouseLocation(detailEntity.getWarehouseLocation());
-//            detailAddDto.setSourceDetailId(detailEntity.getId());
-            detailAddDtoList.add(detailAddDto);
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())
+                            && req.getBomVersion().equals(detailEntity.getBomVersion()))
+                    .collect(Collectors.toList());
+
+            // 子件需要拆分
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                for (BomChildrenSkuDTO bomChildrenSku : sonSkuList) {
+                    //映射信息
+                    TransferInfoDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.radHandleListToTransferInfoDetail(detailEntity);
+                    detailAddDto.setSkuId(bomChildrenSku.getSkuId());
+                    detailAddDto.setSkuNo(bomChildrenSku.getSkuNo());
+                    detailAddDto.setQty(detailEntity.getApproveQty() * bomChildrenSku.getQuantity());
+                    detailAddDtoList.add(detailAddDto);
+                }
+            } else {
+                //映射信息
+                TransferInfoDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.radHandleListToTransferInfoDetail(detailEntity);
+                //匹配sku信息
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
+                detailAddDto.setSkuId(skuVO.getSkuId());
+                detailAddDto.setSkuNo(skuVO.getSkuNo());
+                detailAddDto.setQty(detailEntity.getApproveQty());
+                detailAddDtoList.add(detailAddDto);
+            }
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
+    }
+
+    private void TransferInfoDetailFieldHandle() {
+
     }
 
 

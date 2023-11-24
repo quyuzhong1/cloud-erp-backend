@@ -371,6 +371,7 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         /**
         * 目的仓id
         */
+        @NotBlank(message = "目的仓不能为空")
         private String toWarehouseId;
 
         /**
