@@ -52,4 +52,11 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/getLogisticsBillDetails")
     PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 删除物流单
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/removeLogisticsBill")
+    Boolean removeLogisticsBill(@RequestBody LogisticsBillDTO.RemoveDTO dto);
 }

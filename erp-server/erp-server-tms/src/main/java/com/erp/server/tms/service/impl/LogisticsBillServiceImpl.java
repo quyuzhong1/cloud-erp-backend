@@ -124,7 +124,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList());
 
         //新增物流费用单
-        addLogisticsBillCost(logisticsBillEntity,addDTO.getCurrency());
+        addLogisticsBillCost(logisticsBillEntity, addDTO.getCurrency());
         return save;
     }
 
@@ -141,17 +141,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         // 数据处理
         handleData(logisticsBillEntity);
-        log.info("编辑 开始修改物流单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsBillEntity);
         if (!save) {
             throw new ServiceException("物流单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         logisticsBillDetailService.update(updateDTO, logisticsBillEntity.getId());
         // 记录主单操作日志
-        log.info("编辑 开始记录物流单日志数据，id：【{}】", logisticsBillEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsBillEntity.getId(), "物流单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -161,20 +157,31 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
     }
 
+    @Override
+    public Boolean remove(LogisticsBillDTO.RemoveDTO dto) {
+        List<String> outstockIdList = dto.getOutstockIdList();
+        List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
+        if (CollectionUtils.isNotEmpty(billEntityList)) {
+            List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+            logisticsBillDetailService.removeByMainIds(ids);
+            return this.removeByIds(ids);
+        }
+        return Boolean.FALSE;
+    }
+
 
     /**
      * 新增修改处理数据
      */
     private void handleData(LogisticsBillEntity logisticsBillEntity) {
-        String outstockId = logisticsBillEntity.getOutstockId();
-        LogisticsBillEntity entity = this.getByOutstockId(outstockId);
-        if (Objects.nonNull(entity)) {
-            logisticsBillEntity.setId(entity.getId());
-        }
+
     }
 
-    public LogisticsBillEntity getByOutstockId(String outstockId) {
-        return this.lambdaQuery().eq(LogisticsBillEntity::getOutstockId, outstockId).last("LIMIT 1").one();
+    public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
+        if(CollectionUtils.isEmpty(outstockIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsBillEntity::getOutstockId, outstockIds).list();
 
     }
 
@@ -348,9 +355,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsBillDTO.ReceiverDTO receiverDTO = dto.getReceiver();
         //转化成收货人
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
-        List<LogisticsBillDTO.SkuDTO> skuList=dto.getSkuList();
-        List<String> skuIdList=skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
-        List<LogisticsProductDTO.ProductDTO>  skuInfo=logisticsProductFeign.listBySkuIdList(skuIdList);
+        List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
+        List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
+        List<LogisticsProductDTO.ProductDTO> skuInfo = logisticsProductFeign.listBySkuIdList(skuIdList);
 
     }
 
@@ -397,7 +404,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @author Will
      * @date: 2023/11/20 12:27
      */
-    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity,String currency) {
+    private void addLogisticsBillCost(LogisticsBillEntity logisticsBillEntity, String currency) {
         LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
 
         //渠道关联模板
