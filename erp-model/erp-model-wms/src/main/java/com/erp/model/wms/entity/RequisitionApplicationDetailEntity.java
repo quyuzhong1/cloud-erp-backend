@@ -64,6 +64,31 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+    /**
+     * 调入仓库id
+     */
+    @TableField("to_warehouse_id")
+    private String toWarehouseId;
+    /**
+     * 调入仓库中文名
+     */
+    @TableField("to_warehouse_name")
+    private String toWarehouseName;
+    /**
+     * 调出仓库id
+     */
+    @TableField("from_warehouse_id")
+    private String fromWarehouseId;
+    /**
+     * 调出仓库中文名
+     */
+    @TableField("from_warehouse_name")
+    private String fromWarehouseName;
+    /**
+     * 要货仓位
+     */
+    @TableField("requisition_warehouse_location")
+    private String requisitionWarehouseLocation;
 
     public static final String MAIN_ID = "main_id";
 

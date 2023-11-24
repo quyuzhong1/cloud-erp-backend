@@ -25,10 +25,6 @@
        <result column="channel_name" property="channelName" />
        <result column="requisition_warehouse_id" property="requisitionWarehouseId" />
        <result column="requisition_warehouse_name" property="requisitionWarehouseName" />
-       <result column="to_warehouse_id" property="toWarehouseId" />
-       <result column="to_warehouse_name" property="toWarehouseName" />
-       <result column="from_warehouse_id" property="fromWarehouseId" />
-       <result column="from_warehouse_name" property="fromWarehouseName" />
        <result column="handle_user_id" property="handleUserId" />
        <result column="handle_user_name" property="handleUserName" />
        <result column="handle_time" property="handleTime" />
@@ -75,10 +71,10 @@
             rad.picking_qty,
             ra.requisition_warehouse_id,
             ra.requisition_warehouse_name,
-            ra.from_warehouse_id,
-            ra.from_warehouse_name,
-            ra.to_warehouse_id,
-            ra.to_warehouse_name,
+            rad.from_warehouse_id,
+            rad.from_warehouse_name,
+            rad.to_warehouse_id,
+            rad.to_warehouse_name,
             ra.handle_user_name,
             ra.handle_time,
             ra.create_time
@@ -130,14 +126,14 @@
         </if>
         <!--调出仓库id-->
         <if test="params.fromWarehouseIdList !=null and params.fromWarehouseIdList.size>0">
-            AND ra.from_warehouse_id IN
+            AND rad.from_warehouse_id IN
             <foreach collection="params.fromWarehouseIdList" item="fromWarehouseId" open="(" separator="," close=")">
                 #{fromWarehouseId}
             </foreach>
         </if>
         <!--调出仓库id-->
         <if test="params.toWarehouseIdList !=null and params.toWarehouseIdList.size>0">
-            AND ra.to_warehouse_id IN
+            AND rad.to_warehouse_id IN
             <foreach collection="params.toWarehouseIdList" item="toWarehouseId" open="(" separator="," close=")">
                 #{toWarehouseId}
             </foreach>
@@ -177,7 +173,7 @@
     </select>
 
     <!--处理列表查询-->
-    <select id="handleList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$handleListDTO">
+    <select id="handleList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$HandleListDTO">
         SELECT
             ra.id AS sourceId,
             ra.code AS sourceCode,
@@ -189,6 +185,33 @@
             rad.bom_version,
             rad.requisition_qty AS requisitionQty,
             rad.approve_qty AS approveQty
+        FROM requisition_application_detail rad
+        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        WHERE ra.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND ra.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <!--完成列表查询-->
+    <select id="finishList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$FinishListDTO">
+        SELECT
+            ra.id AS sourceId,
+            ra.code AS sourceCode,
+            rad.id AS sourceDetailId,
+            ra.requisition_warehouse_id AS requisitionWarehouseId,
+            ra.requisition_warehouse_name AS requisitionWarehouseName,
+            rad.requisition_warehouse_location AS requisitionWarehouseLocation,
+            rad.to_warehouse_id AS pickingWarehouseId,
+            rad.to_warehouse_name AS pickingWarehouseName,
+            rad.sku_id,
+            rad.sku_no,
+            rad.bom_version,
+            rad.approve_qty AS approveQty,
+            rad.picking_qty AS pickingQty
         FROM requisition_application_detail rad
         LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE

@@ -49,5 +49,14 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>
      **/
-    List<RequisitionApplicationDTO.handleListDTO> handleList(@Param("ids") List<String> ids);
+    List<RequisitionApplicationDTO.HandleListDTO> handleList(@Param("ids") List<String> ids);
+
+    /**
+     * 完成列表查询
+     * @Author Luo_WG
+     * @Date 2023/11/24 11:28
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.finishListDTO>
+     **/
+    List<RequisitionApplicationDTO.FinishListDTO> finishList(@Param("ids") List<String> ids);
 }
