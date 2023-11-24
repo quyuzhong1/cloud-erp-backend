@@ -682,6 +682,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
         }
 
     }

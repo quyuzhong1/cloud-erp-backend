@@ -619,6 +619,16 @@ public class SkuMappingDTO implements Serializable {
          * 平台名称
          */
         private String platformName;
+
+        /**
+         * 对照关系是否映射到改服务商所有仓库
+         */
+        private String hasMappingAllStr;
+
+        /**
+         * 对照关系是否映射到改服务商所有仓库
+         */
+        private Boolean hasMappingAll;
     }
 
     @Data
