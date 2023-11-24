@@ -55,6 +55,12 @@ public class LogisticsBillFeignController {
         return flag;
     }
 
+    @PostMapping("/removeLogisticsBill")
+    public Boolean removeLogisticsBill(@RequestBody LogisticsBillDTO.RemoveDTO dto) {
+        Boolean flag = logisticsBillService.remove(dto);
+        return flag;
+    }
+
     /**
      * 根据来源id查询物流信息及跟踪号
      *

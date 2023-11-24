@@ -619,9 +619,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         addDTO.setOutstockId(entity.getId());
         addDTO.setOutstockCode(entity.getCode());
-        LocalDate actualDeliveryDate=entity.getActualDeliveryDate();
-        if(Objects.isNull(actualDeliveryDate)){
-            actualDeliveryDate=entity.getBillDate();
+        LocalDate actualDeliveryDate = entity.getActualDeliveryDate();
+        if (Objects.isNull(actualDeliveryDate)) {
+            actualDeliveryDate = entity.getBillDate();
         }
         //发货时间
         addDTO.setDeliveryTime(actualDeliveryDate);
@@ -689,6 +689,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         }
         soInfoFeign.updateDeliveryStatus(paramList);
+
+        //删除物流单
+        LogisticsBillDTO.RemoveDTO removeDTO = new LogisticsBillDTO.RemoveDTO();
+        removeDTO.setOutstockIdList(idList);
+        logisticsBillFeign.removeLogisticsBill(removeDTO);
 
     }
 
