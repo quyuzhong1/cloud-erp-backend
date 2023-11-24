@@ -16,7 +16,11 @@ public enum OutstockTypeEnum implements EnumMessage {
     KOL_DELIVERY("KOLDelivery", "KOL寄送"),
     AUXILIARY("auxiliary", "辅料包材"),
     ACCESSORY("accessory", "配件"),
-    SCRAP("scrap", "报废");
+    SCRAP("scrap", "报废"),
+    // TODO 更换
+    CLAIM("claim", "索赔")
+
+    ;
 
     /**
      * 类型
