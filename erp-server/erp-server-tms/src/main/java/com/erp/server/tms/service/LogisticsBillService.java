@@ -46,6 +46,16 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds);
 
     /**
+     * 销售出库单反审核后
+     * 删除 物流单
+     *@parms dto
+     *@return
+     *@author yl
+     *@date 2023-11-24
+     */
+    Boolean remove(LogisticsBillDTO.RemoveDTO dto);
+
+    /**
      * 新增物流单
      * @Author Luo_WG
      * @Date 2023/11/9 18:04
