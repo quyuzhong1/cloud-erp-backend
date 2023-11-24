@@ -185,9 +185,9 @@
         li.match_result,
         count(sm.*)
         FROM sku_mapping sm
-        INNER JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
+        LEFT JOIN listing_info li
+        ON sm.listing_id=li.id
+        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE AND li.is_deleted=FALSE
         <if test="params.type!=null and params.type!=''">
             AND sm.type=#{params.type}
         </if>
@@ -245,7 +245,8 @@
         sm.create_user_name,
         sm.create_time,
         sm.dict_platform,
-        sm.platform_name
+        sm.platform_name,
+        sm.has_mapping_all
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
