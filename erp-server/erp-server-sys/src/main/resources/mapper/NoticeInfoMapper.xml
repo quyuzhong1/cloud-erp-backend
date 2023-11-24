@@ -26,7 +26,7 @@
          AND ni.module=#{params.module}
        </if>
        <if test="params.nodeName !=null and params.nodeName!=''">
-           AND dn.node_name iLIKE concat('%',#{params.nodeName}::text,'%')
+           AND dn.node_name ilike concat('%',#{params.nodeName}::text,'%')
        </if>
        ORDER BY
        <if test="params.sortList != null and params.sortList.size > 0">
