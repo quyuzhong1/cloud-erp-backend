@@ -99,7 +99,7 @@ public interface ImlConverter {
     }
 
     static String getType(){
-        return RuleTypeEnum.THIRD_WAREHOUSE.getCode();
+        return RuleTypeEnum.WAREHOUSE.getCode();
     }
 
     static String getUniqueKey(ImlProductResp sourceData){

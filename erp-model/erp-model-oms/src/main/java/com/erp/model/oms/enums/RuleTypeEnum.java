@@ -21,8 +21,7 @@ public enum RuleTypeEnum implements EnumMessage {
     PLATFORM("platform","平台"),
     WAREHOUSE("warehouse","仓库"),
     ASSIGN("assign","指定物流"),
-    MIN_FREIGHT("minFreight","最低运费"),
-    THIRD_WAREHOUSE("thirdWarehouse","第三方仓")
+    MIN_FREIGHT("minFreight","最低运费")
     ;
 
     RuleTypeEnum(String code, String name) {

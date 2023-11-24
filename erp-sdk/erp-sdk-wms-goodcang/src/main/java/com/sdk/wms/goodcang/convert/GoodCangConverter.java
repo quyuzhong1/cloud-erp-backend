@@ -83,7 +83,7 @@ public interface GoodCangConverter {
     }
 
     static String getType(){
-        return RuleTypeEnum.THIRD_WAREHOUSE.getCode();
+        return RuleTypeEnum.WAREHOUSE.getCode();
     }
 
     static String getUniqueKey(GoodCangSkuResp sourceData){
