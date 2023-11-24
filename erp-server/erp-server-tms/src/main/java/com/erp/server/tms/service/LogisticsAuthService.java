@@ -103,4 +103,13 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
 
     ApiResult authLogistics(String id, String logisticsPlatform);
+
+    /**
+     *
+     *@parms authId
+     *@return authStatus
+     *@author yl
+     *@date 2023-11-24
+     */
+    void updateLogisticsAuthStatus(String mainId, String authStatus);
 }

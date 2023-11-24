@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ public class LogisticsAuthController extends BaseController {
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
             } else {
-//                logisticsAuthService.updateLogisticsAuth(id, );
+               logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
                 return apiResult;
             }
         }

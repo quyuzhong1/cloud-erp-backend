@@ -160,6 +160,16 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return authorization;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateLogisticsAuthStatus(String mainId, String authStatus) {
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        supplierEntity.setAuthStatus(authStatus);
+    }
+
     public LogisticsAuthEntity getDbByMainId(String mainId){
         return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
     }
