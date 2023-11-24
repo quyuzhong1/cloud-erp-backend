@@ -67,9 +67,6 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        if (StringUtils.isBlank(authId)) return null;
-        ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
-        if (Objects.isNull(shopAuth)) return null;
         //获取商铺配置信息
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -82,8 +79,14 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey", cfgAppClient.getClientSecret());
         map.put("partnerId", cfgAppClient.getClientId());
-        map.put("shopId", shopAuth.getData().getShopeeId());
-        map.put("accessToken", shopAuth.getData().getAccessToken());
+        map.put("url", cfgAppClient.getUrl());
+        if (StringUtils.isNotBlank(authId)) {
+            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
+            if (Objects.nonNull(shopAuth)) {
+                map.put("shopId", shopAuth.getData().getShopeeId());
+                map.put("token", shopAuth.getData().getAccessToken());
+            }
+        }
         return map;
     }
 
@@ -104,7 +107,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .partnerKey(authMap.get("partnerKey"))
                     .partnerId(Long.valueOf(authMap.get("partnerId")))
                     .shopId(Long.valueOf(authMap.get("shopId")))
-                    .accessToken(authMap.get("accessToken"))
+                    .accessToken(authMap.get("token"))
                     .orderSn(logisticsQueryVO.getDeliveryNo())
                     .build();
             try {
@@ -152,7 +155,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {
@@ -201,7 +204,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {

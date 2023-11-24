@@ -53,9 +53,15 @@ public class LogisticsAuthController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         String id = result.getId();
-        if(StringUtils.isNotBlank(id)){
-            logisticsAuthService.syncUpdateSaleChannel(id);
-
+        if (StringUtils.isNotBlank(id)) {
+            //先进行授权是否成功鉴权
+            ApiResult apiResult = logisticsAuthService.authLogistics(id, dto.getLogisticsPlatform());
+            if (apiResult.isSuccess()) {
+                logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
+            } else {
+//                logisticsAuthService.updateLogisticsAuth(id, );
+                return apiResult;
+            }
         }
         return success(result);
     }

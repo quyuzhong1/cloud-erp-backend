@@ -1,6 +1,9 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.service.LogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,6 +26,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.CfgLogisticsAuthFieldDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物流商管理
@@ -39,6 +43,19 @@ public class CfgLogisticsAuthFieldController extends BaseController {
     @Resource
     private CfgLogisticsAuthFieldService cfgLogisticsAuthFieldService;
 
+    @Resource
+    private LogisticsRegistry logisticsRegistry;
+
+    private void auth(String authId){
+        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
+        Map<String, String> authMap = service.getLogisticsAuthConfig(authId);
+        ApiResult authorization = service.authorization(authMap);
+        if (authorization.isSuccess()){
+            System.out.println("授权成功");
+        }else {
+            System.out.println("授权失败");
+        }
+    }
     /**
      * 新增
      *
