@@ -63,6 +63,13 @@ public class ImlService {
     }
 
     /**
+     * 获取库存
+     */
+    public ImlResponse<List<ImlInventoryResp>> getProductInventory(@Valid ImlGetInventoryReq imlGetInventoryReq){
+        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq);
+        return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryResp>>>() {}.getType());
+    }
+    /**
      * 创建入库单
      */
     public ImlResponse<String> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
@@ -109,13 +116,5 @@ public class ImlService {
         paramsMap.put("reason",reason);
         String response = ImlUtils.callService(ImlConstants.METHOD_CANCEL_ORDER,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
-    }
-
-    /**
-     * 获取库存
-     */
-    public ImlResponse<List<ImlInventoryResp>> getProductInventory(@Valid ImlGetInventoryReq imlGetInventoryReq){
-        String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq);
-        return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryResp>>>() {}.getType());
     }
 }

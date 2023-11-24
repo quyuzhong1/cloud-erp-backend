@@ -3,6 +3,8 @@ package com.sdk.tms.express.model.order.request;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -22,11 +24,13 @@ public class OrderRequest implements Serializable {
      * 响应报文的语言，缺省值为zh-CN，目前支持以下值zh-CN表示中文简体，zh-TW或zh-HK或zh-MO表示中文繁体，en 表示英文
      * 是
      */
+    @NotBlank(message = "响应报文语言未设置")
     private String language;
     /**
      * 客户订单号
      * 是
      */
+    @NotBlank(message = "客户订单号不能为空")
     private String orderId;
     /**
      * 顺丰运单号
@@ -40,6 +44,7 @@ public class OrderRequest implements Serializable {
      * 拖寄物信息
      * 是
      */
+    @NotNull(message = "拖寄物信息不能为空")
     private List<CargoDetail> cargoDetails;
     /**
      * 拖寄物类型描述,如：文件，电子产品，衣服等
@@ -57,18 +62,20 @@ public class OrderRequest implements Serializable {
     /**
      * 收寄双方信息
      */
+    @NotNull(message = "收寄双方信息不能为空")
     private List<ContactInfo> contactInfoList;
     /**
      * 顺丰月结卡号
      */
     private String monthlyCard;
-    /*
-     *付款方式，支持以下值：1:寄方付2:收方付3:第三方付
+    /**
+     * 付款方式，支持以下值：1:寄方付2:收方付3:第三方付
      */
     private Integer payMethod;
     /**
      * 快件产品类别，支持附录《快件产品类别表》的产品编码值，仅可使用与顺丰销售约定的快件产品。
      */
+    @NotNull(message = "快件产品类别不能为空")
     private Integer expressTypeId;
     /**
      * 包裹数，一个包裹对应一个运单号；若包裹数大于1，则返回一个母运单号和N-1 个子运单号。
@@ -176,6 +183,7 @@ public class OrderRequest implements Serializable {
     /**
      * 是否返回路由标签：默认0，1：返回路由标签，0：不返回
      */
+    @NotNull(message = "是否返回路由标签不能为空")
     private Integer isReturnRoutelabel;
     /**
      * 是否使用国家统一面单号1：是，0：否（默认）

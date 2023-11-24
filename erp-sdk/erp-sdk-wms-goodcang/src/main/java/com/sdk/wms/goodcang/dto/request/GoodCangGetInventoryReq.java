@@ -28,11 +28,11 @@ public class GoodCangGetInventoryReq extends GoodCangBaseRequest {
     @JSONField(name = "product_sku_arr")
     private List<String> productSkuArr;
 
-    //修改开始时间
+    //仓库code
     @JSONField(name = "warehouse_code")
     private String warehouseCode;
 
-    //修改结束时间
+    //仓库codelist
     @JSONField(name = "warehouse_code_arr")
     private List<String> warehouseCodeList;
 

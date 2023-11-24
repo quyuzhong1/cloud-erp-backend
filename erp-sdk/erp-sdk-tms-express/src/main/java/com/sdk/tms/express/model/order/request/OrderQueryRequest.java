@@ -3,6 +3,7 @@ package com.sdk.tms.express.model.order.request;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class OrderQueryRequest implements Serializable {
      * 客户订单号
      * 是
      */
+    @NotBlank(message = "客户订单号不能为空")
     private String orderId;
     /**
      * 查询类型：1正向单 2退货单

@@ -1,0 +1,89 @@
+package com.common.business.dto;
+
+import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import net.sf.cglib.core.Local;
+
+import java.time.LocalDateTime;
+
+/**
+ * 仓库DTO 所有平台库存数据通用数据，转换为此类后发送mq统一消费处理
+ *
+ **/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@ToString
+public class PlatformInventoryDTO extends UniqueDto {
+
+    /**
+     * 仓库平台类型
+     * {@link WarehousePlatformTypeEnum}
+     */
+    private String warehousePlatformType;
+
+    /**
+     * 供应商
+     * {@link OmsPlatformEnum}
+     */
+    private String provider;
+
+    /**
+     * 第三方仓对应erp表主键id
+     */
+    private String providerErpId;
+
+    //SKU
+    private String productSku;
+
+    //仓库代码
+    private String warehouseCode;
+
+    //仓库名称
+    private String warehouseName;
+
+    //尾程在途数量
+    private Integer onway;
+
+    //总尾程在途数量
+    private Integer totalOnway;
+
+    //发货在途数量
+    private Integer transferOnway;
+
+    //待上架数量
+    private Integer pending;
+
+    //可售数量
+    private Integer sellable;
+
+    //不合格数量
+    private Integer unsellable;
+
+    //备货数量
+    private Integer stocking;
+
+    //缺货数量
+    private Integer piNoStock;
+
+    //待出库数量
+    private Integer reserved;
+
+    //历史出库数量
+    private Integer shipped;
+
+    //待确认数量
+    private Integer unconfirmed;
+
+    //冻结数量
+    private Integer piFreeze;
+    /**
+     * 数据下载时间
+     */
+    private LocalDateTime downloadTime;
+}

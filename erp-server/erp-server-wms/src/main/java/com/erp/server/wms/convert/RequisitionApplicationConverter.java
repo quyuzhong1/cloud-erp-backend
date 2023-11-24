@@ -2,7 +2,9 @@ package com.erp.server.wms.convert;
 
 
 import com.common.business.dto.PlatformWarehouseDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
+import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
@@ -21,6 +23,15 @@ public interface RequisitionApplicationConverter {
 
     RequisitionApplicationConverter INSTANCE = Mappers.getMapper(RequisitionApplicationConverter.class);
 
-
     RequisitionApplicationDetailDTO.ViewDTO radEntityToRadDto(RequisitionApplicationDetailEntity entity);
+
+    @Mappings({
+            @Mapping(target = "qty", source = "approveQty"),
+            @Mapping(target = "outWarehouseId", source = "fromWarehouseId"),
+            @Mapping(target = "outWarehouseLocation", source = "fromWarehouseLocation"),
+            @Mapping(target = "inWarehouseId", source = "toWarehouseId"),
+            @Mapping(target = "inWarehouseLocation", source = "toWarehouseLocation"),
+            @Mapping(target = "sourceDetailId", constant = "")
+    })
+    TransferInfoDetailDTO.AddDTO radHandleListToTransferInfoDetail(RequisitionApplicationDTO.handleListDTO handleListDTO);
 }

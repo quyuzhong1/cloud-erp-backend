@@ -2,6 +2,7 @@ package com.erp.tms.aliexpress.model.order.request;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -16,5 +17,6 @@ public class AddressDTO implements Serializable {
     private Address refund;
     private Address sender;
     private Address pickup;
+    @NotNull(message = "收货人不能为空")
     private Address receiver;
 }

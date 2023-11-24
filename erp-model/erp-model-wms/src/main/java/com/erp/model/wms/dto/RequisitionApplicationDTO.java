@@ -545,6 +545,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * bom版本
+         */
+        private String bomVersion;
+        /**
          * 是否组合品
          */
         private Boolean isCombination;
@@ -573,6 +577,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String fromWarehouseName;
         /**
+         * 调出仓库仓位
+         */
+        private String fromWarehouseLocation;
+        /**
          * 调入仓库id
          */
         @NotBlank(message = "调入仓库不能为空")
@@ -581,6 +589,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调入仓库中文
          */
         private String toWarehouseName;
+        /**
+         * 调入仓库仓位
+         */
+        private String toWarehouseLocation;
     }
 
     /**

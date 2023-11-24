@@ -47,6 +47,14 @@ public class GoodCangService {
     }
 
     /**
+     * 获取物流产品与目的仓中转仓
+     */
+    public GoodCangResponse<GoodCangLogisticsAndWarehouseResp> getSmCodeTwcToWarehouse(){
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SMCODE_TWC_TO_WAREHOUSE,new HashMap<>());
+        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangLogisticsAndWarehouseResp>>() {}.getType());
+    }
+
+    /**
      * 获取收货批次
      * @param receivingCode 入库单号
      */
@@ -71,12 +79,14 @@ public class GoodCangService {
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT,json);
         return response;
     }
+
     /**
-     * 获取物流产品与目的仓中转仓
+     * 获取库存
      */
-    public GoodCangResponse<GoodCangLogisticsAndWarehouseResp> getSmCodeTwcToWarehouse(){
-        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SMCODE_TWC_TO_WAREHOUSE,new HashMap<>());
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangLogisticsAndWarehouseResp>>() {}.getType());
+    public GoodCangResponse<List<GoodCangInventoryResp>> getProductInventory(@Valid GoodCangGetInventoryReq goodCangGetInventoryReq){
+        String json = JSON.toJSONString(goodCangGetInventoryReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_PRODUCT_INVENTORY,json);
+        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangInventoryResp>>>() {}.getType());
     }
 
     /**
@@ -127,13 +137,5 @@ public class GoodCangService {
         paramsMap.put("reason",reason);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CANCEL_OUTBOUND_BILL,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
-    }
-    /**
-     * 获取库存
-     */
-    public GoodCangResponse<List<GoodCangInventoryResp>> getProductInventory(@Valid GoodCangGetInventoryReq goodCangGetInventoryReq){
-        String json = JSON.toJSONString(goodCangGetInventoryReq);
-        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_PRODUCT_INVENTORY,json);
-        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangInventoryResp>>>() {}.getType());
     }
 }

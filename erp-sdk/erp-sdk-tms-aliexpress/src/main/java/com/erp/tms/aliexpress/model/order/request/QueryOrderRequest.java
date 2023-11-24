@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -68,6 +69,7 @@ public class QueryOrderRequest implements Serializable {
      * 交易订单号
      * 是
      */
+    @NotBlank(message = "交易订单号不能为空")
     @JSONField(name = "trade_order_id")
     private String trade_order_id;
     /**

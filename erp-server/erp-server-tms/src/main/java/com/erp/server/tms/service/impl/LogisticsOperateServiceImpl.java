@@ -1,13 +1,20 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.tms.service.LogisticsOrderOperateLogService;
+import com.erp.server.tms.service.LogisticsOperateService;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,9 +30,11 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Service
-public class LogisticsOrderOperateLogServiceImpl implements LogisticsOrderOperateLogService {
+public class LogisticsOperateServiceImpl implements LogisticsOperateService {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Override
     public String pullOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson) {
@@ -45,13 +54,16 @@ public class LogisticsOrderOperateLogServiceImpl implements LogisticsOrderOperat
         dmpPullTaskEntity.setMqTag("");
         dmpPullTaskEntity.setMqData(requestParamJson);
         dmpPullTaskEntity.setReturnMsg(responseParamJson);
-        String s = null;
+        String id = null;
         try {
-            s = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+            id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
+            //增加异常预警
+            dmpPullTaskEntity.setId(id);
+            this.sendPullWarnMsg(dmpPullTaskEntity);
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPullTask:记录操作日志失败");
         }
-        return s;
+        return id;
     }
 
     @Override
@@ -72,12 +84,47 @@ public class LogisticsOrderOperateLogServiceImpl implements LogisticsOrderOperat
         dmpPushTaskEntity.setMqTag("");
         dmpPushTaskEntity.setMqData(requestParamJson);
         dmpPushTaskEntity.setReturnMsg(responseParamJson);
-        String s = null;
+        String id = null;
         try {
-            s = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            //增加异常预警
+            dmpPushTaskEntity.setId(id);
+            this.sendPushWarnMsg(dmpPushTaskEntity);
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
         }
-        return s;
+        return id;
+    }
+
+    @Override
+    public void sendPullWarnMsg(DmpPullTaskEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return;
+        }
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+        warnMsgInfo.setTitle(StrUtil.format("物流平台【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+        warnMsgInfo.setTableId(entity.getSourceId());
+        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+    @Override
+    public void sendPushWarnMsg(DmpPushTaskEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return;
+        }
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+        warnMsgInfo.setTitle(StrUtil.format("物流平台【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+        warnMsgInfo.setTableId(entity.getSourceId());
+        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 }

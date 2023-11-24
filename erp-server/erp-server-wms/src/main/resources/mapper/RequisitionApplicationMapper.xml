@@ -186,6 +186,7 @@
             ra.requisition_warehouse_name AS requisitionWarehouseName,
             rad.sku_id,
             rad.sku_no,
+            rad.bom_version,
             rad.requisition_qty AS requisitionQty,
             rad.approve_qty AS approveQty
         FROM requisition_application_detail rad

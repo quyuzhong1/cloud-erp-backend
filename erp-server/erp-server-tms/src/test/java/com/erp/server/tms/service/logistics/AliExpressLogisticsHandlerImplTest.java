@@ -88,7 +88,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("CAINIAO_EXPEDITED_ECONOMY");
+//        logisticsSaleChannel.setCode("CAINIAO_EXPEDITED_ECONOMY");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("155");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
@@ -151,6 +151,7 @@ public class AliExpressLogisticsHandlerImplTest {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
         logisticsQueryVO2.setTransportNo("580555992124");
         logisticsQueryVO2.setAuthMap(authMap);
+        logisticsQueryVO2.setLabelType("1");
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
     }

@@ -3,6 +3,7 @@ package com.sdk.tms.express.model.order.request;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -15,6 +16,7 @@ import java.io.Serializable;
 @Data
 @Builder
 public class Document implements Serializable {
+    @NotBlank(message = "主运单号不能为空")
     private String masterWaybillNo;
     private String backWaybillNo;
     private String seq;

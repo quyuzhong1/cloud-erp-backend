@@ -27,7 +27,9 @@ public class GoodCangServiceTest {
 
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
+        //a39ab99c1437c991ec07fad4e1f78f8f
         authMap.put("appToken","7013991264f611e98ea200e01b680258");
+        //f7e4102f9b0b983e58bed3140dc22f1a
         authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
@@ -69,6 +71,20 @@ public class GoodCangServiceTest {
     public void getSmCodeTwcToWarehouseTest() {
         GoodCangResponse<GoodCangLogisticsAndWarehouseResp> response = goodCangService.getSmCodeTwcToWarehouse();
         System.out.println(response);
+    }
+
+
+    @Test
+    public void getProductInventoryTest() {
+        GoodCangGetInventoryReq goodCangGetSkuReq = GoodCangGetInventoryReq.builder()
+                .page(1)
+                .pageSize(200)
+//                .productSkuArr(Arrays.asList("TEST180717"))
+//                .warehouseCode("USEA")
+                .build();
+        GoodCangResponse<List<GoodCangInventoryResp>> response = goodCangService.getProductInventory(goodCangGetSkuReq);
+        System.out.println(response);
+        System.out.println(response.getData());
     }
 
     @Test
@@ -125,19 +141,6 @@ public class GoodCangServiceTest {
     @Test
     public void cancelOutboundBillTest() {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-0005",null);
-        System.out.println(response);
-        System.out.println(response.getData());
-    }
-
-    @Test
-    public void getProductInventoryTest() {
-        GoodCangGetInventoryReq goodCangGetSkuReq = GoodCangGetInventoryReq.builder()
-                .page(1)
-                .pageSize(200)
-                .productSkuArr(Arrays.asList("TEST180717"))
-                .warehouseCode("USEA")
-                .build();
-        GoodCangResponse<List<GoodCangInventoryResp>> response = goodCangService.getProductInventory(goodCangGetSkuReq);
         System.out.println(response);
         System.out.println(response.getData());
     }

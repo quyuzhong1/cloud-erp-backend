@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 谷仓拉取产品数据
+ * 谷仓拉取中转仓数据
  **/
 @Slf4j
 @Component
