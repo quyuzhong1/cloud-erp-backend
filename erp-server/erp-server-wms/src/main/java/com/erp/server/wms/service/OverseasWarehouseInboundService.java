@@ -33,4 +33,5 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     Boolean update(OverseasWarehouseInboundDTO.UpdateDTO dto);
 
 
+    OverseasWarehouseInboundEntity getByCode(String receivingCode);
 }

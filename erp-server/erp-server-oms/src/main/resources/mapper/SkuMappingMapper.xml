@@ -116,9 +116,9 @@
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
-        INNER JOIN shop_info si
+        LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
-        INNER JOIN listing_info li
+        LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
@@ -343,9 +343,11 @@
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.platform_name,
+        sm.has_mapping_all
         FROM sku_mapping sm
-        INNER JOIN listing_info li
+        LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE

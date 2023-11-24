@@ -1,12 +1,10 @@
 package com.erp.server.tms.controller.feign;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
@@ -89,8 +87,8 @@ public class LogisticsBillFeignController {
      * @return
      */
     @PostMapping("/getLogisticsBillDetails")
-    public IPage<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query){
-        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+    public PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query){
+        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
         return page;
     }
 }

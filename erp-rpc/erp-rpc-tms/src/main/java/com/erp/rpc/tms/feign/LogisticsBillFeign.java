@@ -1,6 +1,6 @@
 package com.erp.rpc.tms.feign;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -51,5 +51,5 @@ public interface LogisticsBillFeign {
      * @return
      */
     @PostMapping("/feign/logisticsBill/getLogisticsBillDetails")
-    IPage<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
+    PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query);
 }

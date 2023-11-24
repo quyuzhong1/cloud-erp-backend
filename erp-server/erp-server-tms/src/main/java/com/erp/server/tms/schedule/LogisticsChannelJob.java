@@ -1,11 +1,9 @@
 package com.erp.server.tms.schedule;
 
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.server.tms.service.LogisticsBaseService;
@@ -106,13 +104,13 @@ public class LogisticsChannelJob {
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
-        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
         //业务处理
-        processTrackData(page.getRecords());
-        long pages = page.getPages();
-        if (pages > page.getCurrent()) {
+        processTrackData((List<LogisticsBillDetailEntity>) page.getList());
+        long pages = page.getTotalPage();
+        if (pages > page.getCurrPage()) {
             //下一页
-            query.setCurrent(page.getCurrent() + 1);
+            query.setCurrent(page.getCurrPage() + 1);
             getTrackData(query);
         } else {
             //无数据
@@ -121,13 +119,13 @@ public class LogisticsChannelJob {
     }
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
-        IPage<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
+        PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
         //业务处理
-        processRegisterData(page.getRecords());
-        long pages = page.getPages();
-        if (pages > page.getCurrent()) {
+        processRegisterData((List<LogisticsBillDetailEntity>) page.getList());
+        long pages = page.getTotalPage();
+        if (pages > page.getCurrPage()) {
             //下一页
-            query.setCurrent(page.getCurrent() + 1);
+            query.setCurrent(page.getCurrPage() + 1);
             getRegisterData(query);
         } else {
             //无数据

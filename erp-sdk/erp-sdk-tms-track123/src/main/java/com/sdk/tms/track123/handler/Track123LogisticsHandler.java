@@ -1,34 +1,27 @@
 package com.sdk.tms.track123.handler;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.sdk.tms.track123.convert.TrackDataConverter;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.dto.PlatformTrack123TrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
 import com.sdk.tms.track123.service.TrackShipperService;
@@ -59,8 +52,6 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     private static long pageSize = 100;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
     @Resource
@@ -98,16 +89,16 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
-        IPage<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
-        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getRecords())) return;
-        ResponseData responseData = processTrackData(page.getRecords(), cfgAppClient);
+        PagingVO<LogisticsBillDetailEntity> page = logisticsBillFeign.getLogisticsBillDetails(query);
+        if (Objects.isNull(page) || CollectionUtils.isEmpty(page.getList())) return;
+        ResponseData responseData = processTrackData((List<LogisticsBillDetailEntity>) page.getList(), cfgAppClient);
         if (Objects.isNull(responseData)) return;
         //业务处理
         responseDataList.add(responseData);
-        long pages = page.getPages();
-        if (pages > page.getCurrent()) {
+        long pages = page.getTotalPage();
+        if (pages > page.getCurrPage()) {
             //下一页
-            query.setCurrent(page.getCurrent() + 1);
+            query.setCurrent(page.getCurrPage() + 1);
             getTrackData(query, responseDataList, cfgAppClient);
         } else {
             //无数据
@@ -144,26 +135,34 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
             if (Objects.nonNull(accepted)){
                 if (CollectionUtils.isEmpty(accepted.getContent())) continue;
                 for (TrackDetail trackDetail : accepted.getContent()) {
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
                     LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
                     if (CollectionUtils.isEmpty(localLogisticsInfo.getTrackingDetails())) continue;
+                    List<PlatformTrackDetail> details = new ArrayList<>();
                     for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
-                        PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                        acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
-                        acceptedToSaveDto.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                        PlatformTrackDetail detail = new PlatformTrackDetail();
+                        detail.setTrackNo(trackDetail.getTrackNo());
+                        detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
                         LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                        acceptedToSaveDto.setTrackTime(eventTime);
-                        acceptedToSaveDto.setContent(trackingDetail.getEventDetail());
-                        resultList.add(acceptedToSaveDto);
+                        detail.setTrackTime(eventTime);
+                        detail.setContent(trackingDetail.getEventDetail());
+                        details.add(detail);
                     }
+                    acceptedToSaveDto.setDetails(details);
+                    resultList.add(acceptedToSaveDto);
                 }
             }
             if (CollectionUtils.isEmpty(sourceDto.getRejected())) continue;
             for (Rejected rejected : sourceDto.getRejected()) {
                 PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
                 acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
-                acceptedToSaveDto.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-                acceptedToSaveDto.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
-                acceptedToSaveDto.setTrackTime(LocalDateTime.now());
+                PlatformTrackDetail detail = new PlatformTrackDetail();
+                detail.setTrackNo(rejected.getTrackNo());
+                detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                detail.setTrackTime(LocalDateTime.now());
+                acceptedToSaveDto.setDetails(Collections.singletonList(detail));
                 resultList.add(acceptedToSaveDto);
             }
         }
