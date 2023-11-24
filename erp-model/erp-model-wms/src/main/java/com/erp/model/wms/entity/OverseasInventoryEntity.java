@@ -16,8 +16,8 @@ import com.common.business.enums.ApproveStatusEnum;
  * 海外仓库存
  * </p>
  *
- * @author Jim
- * @since 2023-11-16
+ * @author lrp
+ * @since 2023-11-24
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -26,10 +26,10 @@ import com.common.business.enums.ApproveStatusEnum;
 public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity> {
 
     /**
-    * 平台库存唯一id
+    * 平台仓库编码
     */
-    @TableField("platform_inventory_id")
-    private String platformInventoryId;
+    @TableField("warehouse_code")
+    private String warehouseCode;
     /**
     * 平台类型: goodcang=谷仓，iml=艾姆勒
     */
@@ -117,7 +117,7 @@ public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity>
     private LocalDateTime downloadTime;
 
 
-    public static final String PLATFORM_INVENTORY_ID = "platform_inventory_id";
+    public static final String WAREHOUSE_CODE = "warehouse_code";
 
     public static final String DICT_PLATFORM = "dict_platform";
 
