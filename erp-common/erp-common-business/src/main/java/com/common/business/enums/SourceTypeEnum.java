@@ -12,6 +12,7 @@ public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
 
 
+
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单","purchase_application"),
@@ -55,7 +56,7 @@ public enum SourceTypeEnum {
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
-    SO_INFO("soInfo", "销售订单","so_info"),
+    SO_INFO("soInfo", "B2B销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
