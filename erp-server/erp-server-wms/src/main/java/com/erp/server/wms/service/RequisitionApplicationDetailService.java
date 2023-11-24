@@ -47,4 +47,17 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @return java.util.List<com.erp.model.wms.entity.RequisitionApplicationDetailEntity>
      **/
     List<RequisitionApplicationDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 根据主表id查询详情信息
+     * @param fromWarehouseId
+     * @param fromWarehouseName
+     * @param toWarehouseId
+     * @param toWarehouseName
+     * @param approveQty
+     * @param id
+     * @return java.lang.Boolean
+     */
+    Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id);
+
 }

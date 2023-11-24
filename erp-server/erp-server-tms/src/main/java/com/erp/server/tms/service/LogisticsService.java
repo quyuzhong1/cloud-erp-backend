@@ -112,6 +112,12 @@ public interface LogisticsService {
     ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO);
 
     /**
+     * 渠道查询
+     *
+     * @return
+     */
+    ApiResult authorization(Map<String, String> authMap);
+    /**
      * 获取平台标识
      *
      * @return

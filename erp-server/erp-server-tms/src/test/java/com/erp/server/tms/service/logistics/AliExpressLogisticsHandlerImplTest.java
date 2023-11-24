@@ -42,6 +42,7 @@ public class AliExpressLogisticsHandlerImplTest {
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
+        authMap.put("url","https://api-sg.aliexpress.com");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -154,5 +155,10 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsQueryVO2.setLabelType("1");
         ApiResult<List<LogisticsPrintLabelResponse>> labelList = aliExpressLogisticsHandler.getLabelList(Collections.singletonList(logisticsQueryVO2));
         System.out.println(labelList);
+    }
+    @Test
+    public void authorization() {
+        ApiResult apiResult = aliExpressLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
     }
 }

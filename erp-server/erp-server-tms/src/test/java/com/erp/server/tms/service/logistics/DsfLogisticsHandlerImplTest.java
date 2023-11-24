@@ -183,4 +183,9 @@ public class DsfLogisticsHandlerImplTest {
         ApiResult<List<ConfirmResponseVO>> listApiResult = dsfLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
     }
+    @Test
+    public void authorization() {
+        ApiResult apiResult = dsfLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }

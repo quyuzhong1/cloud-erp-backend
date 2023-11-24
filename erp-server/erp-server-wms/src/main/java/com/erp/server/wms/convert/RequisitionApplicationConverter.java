@@ -1,11 +1,9 @@
 package com.erp.server.wms.convert;
 
 
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
@@ -33,5 +31,15 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "inWarehouseLocation", source = "toWarehouseLocation"),
             @Mapping(target = "sourceDetailId", constant = "")
     })
-    TransferInfoDetailDTO.AddDTO radHandleListToTransferInfoDetail(RequisitionApplicationDTO.handleListDTO handleListDTO);
+    TransferInfoDetailDTO.AddDTO radHandleListToTransferInfoDetail(RequisitionApplicationDTO.HandleListDTO handleListDTO);
+
+    @Mappings({
+            @Mapping(target = "qty", source = "pickingQty"),
+            @Mapping(target = "outWarehouseId", source = "pickingWarehouseId"),
+            @Mapping(target = "outWarehouseLocation", source = "pickingWarehouseLocation"),
+            @Mapping(target = "inWarehouseId", source = "requisitionWarehouseId"),
+            @Mapping(target = "inWarehouseLocation", source = "requisitionWarehouseLocation"),
+            @Mapping(target = "sourceDetailId", constant = "")
+    })
+    TransferInfoDetailDTO.AddDTO radFinishListToTransferInfoDetail(RequisitionApplicationDTO.FinishListDTO finishListDTO);
 }

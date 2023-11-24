@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外仓入库单详情 服务类
@@ -32,5 +34,5 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
     */
     Boolean update(OverseasWarehouseInboundDetailDTO.UpdateDTO dto);
 
-
+    List<OverseasWarehouseInboundDetailEntity> getByMainId(String mainId);
 }

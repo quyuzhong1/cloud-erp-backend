@@ -73,7 +73,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             // 添加到映射
             SkuMappingEntity skuMappingEntity;
-            if(RuleTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
+            if(RuleTypeEnum.WAREHOUSE.getCode().equals(entity.getType())){
                 PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(entity.getPlatform());
                 if (null == platformDictEnum){
                     String msg = StrUtil.format("【listing消费】未找到对应平台枚举：Platform={}, UniqueId={}", dto.getPlatform(), dto.getUniqueId());

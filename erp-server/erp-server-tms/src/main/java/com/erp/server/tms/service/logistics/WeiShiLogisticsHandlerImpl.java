@@ -21,6 +21,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.weishi.dto.request.*;
 import com.sdk.tms.weishi.dto.response.*;
 import com.sdk.tms.weishi.server.WeiShiService;
@@ -244,6 +245,26 @@ public class WeiShiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             result.add(cancelResponseVO);
         }
         return isSuccess?success(result):failure(result);
+    }
+
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            WeiShiResponse<List<WeiShiChannel>> weiShiResponse = weiShiService.getAllChannel(authMap);
+            if(isFailure(weiShiResponse.getAsk())) {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
     private Boolean isFailure(String ask){
         return !TmsConstant.SUCCESS.equals(ask);

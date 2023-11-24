@@ -80,4 +80,11 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
 
     LogisticsBillDetailEntity getDetailByTrackNo(String trackNo);
+
+    /**
+     * 更改运输单号
+     * @param billDTO
+     * @return
+     */
+    Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO);
 }

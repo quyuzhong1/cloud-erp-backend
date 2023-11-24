@@ -19,6 +19,7 @@ import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.ubi.model.catalog.response.Origin;
 import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.ubi.model.label.LabelRequest;
@@ -318,7 +319,20 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
-
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            ubiShipperService.getServiceCatalog(authMap);
+            return success("授权成功");
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.UBI;

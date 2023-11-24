@@ -35,11 +35,12 @@ public class ShopeeLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public ShopeeLogisticsHandlerImplTest(){
-        String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "3Xdk1jqeG1Xod9nUXus8Op7DNOkchTnw";//此处替换为您在丰桥平台获取的校验码
-        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        authMap.put("clientId",CLIENT_CODE);
-        authMap.put("clientSecret",CHECK_WORD);
+        authMap.put("id", "1111");
+        authMap.put("logisticsPlatform", "Shopee");
+        authMap.put("partnerKey", "436568524178574244445975595377664f574e6b536d786b7256744158715974");
+        authMap.put("partnerId", "2006582");
+        authMap.put("shopId", "111");
+        authMap.put("accessToken", "");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -177,5 +178,11 @@ public class ShopeeLogisticsHandlerImplTest {
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<ConfirmResponseVO>> listApiResult = shopeeLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
+    }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = shopeeLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
     }
 }

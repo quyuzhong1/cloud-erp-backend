@@ -23,6 +23,7 @@ import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
@@ -66,9 +67,6 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId) {
-        if (StringUtils.isBlank(authId)) return null;
-        ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
-        if (Objects.isNull(shopAuth)) return null;
         //获取商铺配置信息
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -81,8 +79,14 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey", cfgAppClient.getClientSecret());
         map.put("partnerId", cfgAppClient.getClientId());
-        map.put("shopId", shopAuth.getData().getShopeeId());
-        map.put("accessToken", shopAuth.getData().getAccessToken());
+        map.put("url", cfgAppClient.getUrl());
+        if (StringUtils.isNotBlank(authId)) {
+            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(authId);
+            if (Objects.nonNull(shopAuth)) {
+                map.put("shopId", shopAuth.getData().getShopeeId());
+                map.put("token", shopAuth.getData().getAccessToken());
+            }
+        }
         return map;
     }
 
@@ -103,7 +107,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .partnerKey(authMap.get("partnerKey"))
                     .partnerId(Long.valueOf(authMap.get("partnerId")))
                     .shopId(Long.valueOf(authMap.get("shopId")))
-                    .accessToken(authMap.get("accessToken"))
+                    .accessToken(authMap.get("token"))
                     .orderSn(logisticsQueryVO.getDeliveryNo())
                     .build();
             try {
@@ -151,7 +155,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {
@@ -189,7 +193,36 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .build();
+        ValidatorUtil.validateEntity(baseRequest);
+        try {
+            BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
+            if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
+                return failure("授权失败");
+            }
+            JSONObject response = baseResponse.getResponse();
+            String error = response.getString("error");
+            if (StrUtil.isNotEmpty(error)) {
+                return failure("授权失败");
+            }
+            return success("授权成功");
 
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.SHOPEE;

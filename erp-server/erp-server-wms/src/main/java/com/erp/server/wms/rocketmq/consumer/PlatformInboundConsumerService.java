@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -71,6 +73,9 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(Objects.isNull(mainEntity)){
                 return ApiResult.success();
             }
+            //查询明细数据
+            List<OverseasWarehouseInboundDetailEntity> detailList = overseasWarehouseInboundDetailService.getByMainId(mainEntity.getId());
+
 
         }
         return ApiResult.success();

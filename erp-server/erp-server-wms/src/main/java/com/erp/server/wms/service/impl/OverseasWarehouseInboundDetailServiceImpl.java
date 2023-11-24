@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
@@ -87,11 +89,16 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         return Boolean.TRUE;
     }
 
-
     /**
     * 新增修改处理数据
     */
     private void handleData(OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public List<OverseasWarehouseInboundDetailEntity> getByMainId(String mainId) {
+        return lambdaQuery().eq(OverseasWarehouseInboundDetailEntity::getMainId,mainId).list();
+    }
+
 }

@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +54,15 @@ public class LogisticsAuthController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         String id = result.getId();
-        if(StringUtils.isNotBlank(id)){
-            logisticsAuthService.syncUpdateSaleChannel(id);
+        if (StringUtils.isNotBlank(id)) {
+            //先进行授权是否成功鉴权
+            ApiResult apiResult = logisticsAuthService.authLogistics(id, dto.getLogisticsPlatform());
+            if (apiResult.isSuccess()) {
+                logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
+            } else {
+               logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
+                return apiResult;
+            }
         }
         return success(result);
     }
