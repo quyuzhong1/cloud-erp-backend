@@ -70,7 +70,7 @@ public class LogisticsBillFeignController {
     }
 
     /**
-     * 生成物流单
+     * 生成物流单 像物流商下單
      *@parms
      *@return
      *@author yl

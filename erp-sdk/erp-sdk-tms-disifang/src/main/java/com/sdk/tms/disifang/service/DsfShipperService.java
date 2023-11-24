@@ -1,6 +1,5 @@
 package com.sdk.tms.disifang.service;
 
-import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.disifang.constants.AmbientEnum;

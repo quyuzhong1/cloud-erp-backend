@@ -95,7 +95,7 @@
              lbd.track_query_mode AS trackQueryMode,
              lc.name AS channelName
          FROM  logistics_bill_detail lbd
-         LEFT JOIN  logistics_bill lb
+         RIGHT JOIN  logistics_bill lb
          ON lbd.main_id=lb.id and lb.is_deleted=false
          LEFT JOIN  logistics_channel lc
          ON lc.id=lb.channel_id and lc.is_deleted=false
@@ -199,7 +199,7 @@
             lbd.track_query_mode AS trackQueryMode,
             lc.name AS channelName
         FROM  logistics_bill_detail lbd
-                  LEFT JOIN  logistics_bill lb
+        RIGHT JOIN  logistics_bill lb
                              ON lbd.main_id=lb.id and lb.is_deleted=false
                   LEFT JOIN  logistics_channel lc
                              ON lc.id=lb.channel_id and lc.is_deleted=false

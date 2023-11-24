@@ -22,6 +22,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOrderOperateLogService;
+import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
@@ -79,16 +80,27 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(trackDetail -> {
                         List<TrackingDetail> trackingDetails = trackDetail.getLocalLogisticsInfo().getTrackingDetails();
-                        //本地物流
-                        trackingDetails.forEach(trackingDetail -> {
+                        if(CollectionUtils.isNotEmpty(trackingDetails)){
+                            //本地物流
+                            trackingDetails.forEach(trackingDetail -> {
+                                LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                                logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
+                                logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                logisticsTrackEntity.setTrackTime(eventTime);
+                                logisticsTrackEntity.setContent(trackingDetail.getEventDetail());
+                                logisticsTrackEntities.add(logisticsTrackEntity);
+                            });
+                        }else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())){
                             LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                             logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
-                            logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                             logisticsTrackEntity.setTrackTime(eventTime);
-                            logisticsTrackEntity.setContent(trackingDetail.getEventDetail());
+                            logisticsTrackEntity.setContent("暂无信息");
                             logisticsTrackEntities.add(logisticsTrackEntity);
-                        });
+                        }
+
                     });
                 }
                 //查询失败的单号
