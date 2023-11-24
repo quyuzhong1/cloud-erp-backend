@@ -2,6 +2,7 @@ package com.sdk.tms.express.model.order.request;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**

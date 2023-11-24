@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -23,6 +25,7 @@ public class ContactInfo implements Serializable {
      * 地址类型：1，寄件方信息2，到件方信息
      * 是
      */
+    @NotNull(message = "地址类型不能为空")
     private Integer contactType;
     /***
      *公司名称
@@ -48,6 +51,7 @@ public class ContactInfo implements Serializable {
      *国家或地区2 位代码参照附录国家代码附件
      * 是
      */
+    @NotBlank(message = "国家或地区代码不能为空")
     private String country;
     /***
      *所在省级行政区名称，必须是标准的省级行政区名称如：北京、广东省、广西壮族自治区等；此字段影响原寄地代码识别，建议尽可能传该字段的值。
@@ -64,6 +68,7 @@ public class ContactInfo implements Serializable {
     /***
      *详细地址，若province/city字段的值不传，此字段必须包含省市信息，避免影响原寄地代码识别，如：广东省深圳市福田区新洲十一街万基商务大厦10 楼；若需要生成电子运单，则为必填。
      */
+    @NotBlank(message = "详细地址不能为空")
     private String address;
     /***
      *邮编，跨境件必填（中国内地，港澳台互寄除外）。

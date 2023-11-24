@@ -4,6 +4,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -19,6 +20,7 @@ public class OrderQueryRequest implements Serializable {
     /**
      * 请求单号
      */
+    @NotBlank(message = "请求单号不能为空")
     @JSONField(name = "request_no")
     private String request_no;
 

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class LabelRequest implements Serializable {
     /**
      * 我们支持用户使用Tracking Number / Ref No.查询
      */
+    @NotNull(message = "客户单号不能为空")
     private List<String> orderIds;
     /**
      * 我们支持用户使用Master Ref No. 查询

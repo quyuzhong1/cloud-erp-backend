@@ -89,6 +89,18 @@ public enum SourceTypeEnum {
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
     LOGISTICS_SUPPLIER("logisticsSupplier","物流商",""),
     LOGISTICS_WAREHOUSE("logisticsWarehouse","物流仓库",""),
+    //物流系统操作方式
+    LOGISTICS_CREATE_ORDER("createOrder", "物流系统创建订单","dmp_push_task"),
+    LOGISTICS_CONFIRM_ORDER("confirmOrder", "物流系统确认订单","dmp_push_task"),
+    LOGISTICS_UPDATE_ORDER("updateOrder", "物流系统更新订单","dmp_push_task"),
+    LOGISTICS_INTERCEPT_ORDER("interceptOrder", "物流系统拦截订单","dmp_push_task"),
+    LOGISTICS_QUERY_ORDER("queryOrder", "物流系统查询订单","dmp_pull_task"),
+    LOGISTICS_GET_LABEL("getLabel", "物流系统获取标签","dmp_pull_task"),
+    LOGISTICS_GET_TRACK("getTrack", "物流系统轨迹查询","dmp_pull_task"),
+    LOGISTICS_REGISTER_TRACK("registerTrack", "物流系统注册物流单",""),
+    LOGISTICS_GET_LABEL_LIST("getLabelList", "物流系统批量获取标签","dmp_pull_task"),
+    LOGISTICS_GET_CHANEL_LIST("getChanelList", "物流系统批量渠道列表","dmp_pull_task"),
+    LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓库","")
     ;

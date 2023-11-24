@@ -5,8 +5,7 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FileUtil;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
@@ -19,7 +18,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsOrderOperateLogService;
+import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.express.model.base.BaseResult;
 import com.sdk.tms.express.model.order.request.*;
 import com.sdk.tms.express.model.order.response.*;
@@ -48,7 +47,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     ExpressShipperService expressShipperService;
     @Resource
-    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+    private LogisticsOperateService logisticsOperateService;
 
     /**
      * 创建订单
@@ -61,6 +60,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         OrderRequest orderRequest = processCreateOrderData(logisticsOrderVO);
         boolean success = false;
         BaseResult baseResult = null;
+        ValidatorUtil.validateEntity(orderRequest);
         try {
             baseResult = expressShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             //转换实体
@@ -95,11 +95,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             throw new RuntimeException(e);
         }
         if (success) {
-            logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
         } else {
-            logisticsOrderOperateLogService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(baseResult));
         }
@@ -169,6 +169,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             String msg = null;
             BaseResult baseResult = null;
             try {
+                ValidatorUtil.validateEntity(orderUpdateRequest);
                 baseResult = expressShipperService.updateOrder(logisticsQueryVO.getAuthMap(), orderUpdateRequest);
                 //转换实体
                 if (baseResult.isSuccess()) {
@@ -189,11 +190,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CONFIRM_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }
@@ -222,6 +223,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .dealType(2)
                     .build();
             try {
+                ValidatorUtil.validateEntity(orderUpdateRequest);
                 baseResult = expressShipperService.updateOrder(logisticsQueryVO.getAuthMap(), orderUpdateRequest);
                 //转换实体
                 if (baseResult.isSuccess()) {
@@ -242,11 +244,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+                logisticsOperateService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                         logisticsQueryVO.getTransportNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
             }
@@ -285,6 +287,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .language("zh-CN")
                 .build();
         try {
+            ValidatorUtil.validateEntity(orderQueryRequest);
             baseResult = expressShipperService.queryOrder(logisticsQueryVO.getAuthMap(), orderQueryRequest);
             if (baseResult.isSuccess()) {
                 OrderSearchRespDto orderSearchRespDto = JSONUtil.toBean(baseResult.getMsgData(), OrderSearchRespDto.class);
@@ -317,11 +320,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             log.error("查询订单异常：{}", e.getMessage());
         }
         if (success) {
-            logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                     logisticsQueryVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
         } else {
-            logisticsOrderOperateLogService.pushOperateLog(logisticsQueryVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsQueryVO.getAuthMap().get("id"),
                     logisticsQueryVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(baseResult));
         }
@@ -351,6 +354,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .sync(true)
                     .build();
             try {
+                ValidatorUtil.validateEntity(orderLabelRequest);
                 baseResult = expressShipperService.getLabel(logisticsGetLabelVO.getAuthMap(), orderLabelRequest);
                 //转换实体
                 if (baseResult.isSuccess()) {
@@ -387,11 +391,11 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsGetLabelVO.getDeliveryNo(), e.getMessage());
             }
             if (success) {
-                logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(baseResult));
             } else {
-                logisticsOrderOperateLogService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
                         logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.SF_EXPRESS.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(baseResult));
             }

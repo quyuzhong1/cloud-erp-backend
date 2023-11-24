@@ -1,19 +1,17 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
@@ -21,8 +19,7 @@ import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.erp.server.tms.service.LogisticsOrderOperateLogService;
-import com.sdk.tms.track123.dto.PlatformTrackDetail;
+import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
@@ -36,7 +33,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -54,7 +50,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
-    private LogisticsOrderOperateLogService logisticsOrderOperateLogService;
+    private LogisticsOperateService logisticsOperateService;
 
     /**
      * 轨迹查询
@@ -71,6 +67,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .cursor("")
                 .queryPageSize(100)
                 .build();
+        ValidatorUtil.validateEntity(trackRequest);
         try {
             TrackResponse<ResponseData> track = trackShipperService.getTrack(logisticsTrackVO.getAuthMap().get("clientSecret"), trackRequest);
             //成功
@@ -115,20 +112,20 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                         logisticsTrackEntities.add(logisticsTrackEntity);
                     });
                 }
-                logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return success(logisticsTrackEntities);
             } else {
-                logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+                logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(track));
                 return failure(track.getMsg());
             }
         } catch (Exception e) {
-            logisticsOrderOperateLogService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
+            logisticsOperateService.pullOperateLog(logisticsTrackVO.getAuthMap().get("id"),
                     UUID.randomUUID().toString(), BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(e.getMessage()));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(e));
             return failure(e.getMessage());
         }
     }
@@ -143,6 +140,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
             return failure("注册数据不能为空");
         }
         List<RegisterRequest> registerRequests = LogisticsChannelConverter.INSTANCE.registerTrackNoByTrack123(logisticsRegisterVOS);
+        ValidatorUtil.validateEntity(registerRequests);
         try {
             RegisterResult registerResult = trackShipperService.registerLogisticsNumber(token, registerRequests);
             //成功
@@ -162,20 +160,20 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 .msg(rejected1.getError().getMsg()).build());
                     });
                 }
-                logisticsOrderOperateLogService.pushOperateLog(authMap.get("id"),
+                logisticsOperateService.pushOperateLog(authMap.get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerRequests));
                 return success(registerResponseVOS);
             }else {
-                logisticsOrderOperateLogService.pullOperateLog(authMap.get("id"),
+                logisticsOperateService.pullOperateLog(authMap.get("id"),
                         UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerRequests));
                 return failure(registerResult.getMsg());
             }
         }catch (Exception e){
-            logisticsOrderOperateLogService.pullOperateLog(authMap.get("id"),
+            logisticsOperateService.pullOperateLog(authMap.get("id"),
                     UUID.randomUUID().toString(), BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e.getMessage()));
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e));
             return failure(e.getMessage());
         }
     }
