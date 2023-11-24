@@ -43,7 +43,7 @@
                 and pp.product_status in ('4','5','6')
             </if>
             <if test="params.name != null and params.name != ''">
-               and pp.name like concat('%',#{params.name},'%')
+               and pp.name ILIKE concat('%',#{params.name}::text,'%')
             </if>
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
@@ -151,7 +151,7 @@
                 and pp.product_status in ('4','5','6')
             </if>
             <if test="params.name != null and params.name != ''">
-                and pp.name like concat('%',#{params.name},'%')
+                and pp.name ILIKE concat('%',#{params.name}::text,'%')
             </if>
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and

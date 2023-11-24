@@ -10,7 +10,7 @@
         <where>
             sd.is_deleted = FALSE
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
+                AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             </if>
         </where>
 

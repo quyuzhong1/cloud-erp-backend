@@ -68,7 +68,7 @@
         <where>
             sc.is_deleted = false and scd.parent_id = ''
             <if test="params.code != null and params.code != ''">
-                and sc.code like concat('%',#{params.code},'%')
+                and sc.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and sc.invalid_status = #{params.invalidStatus}
@@ -158,7 +158,7 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and sc.code like concat('%',#{params.code},'%')
+                    and sc.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and sc.invalid_status = #{params.invalidStatus}

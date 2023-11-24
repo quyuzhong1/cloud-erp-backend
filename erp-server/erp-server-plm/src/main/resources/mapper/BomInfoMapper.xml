@@ -89,7 +89,7 @@
         SELECT id AS sourceId,serial_number AS  name FROM product_bom_info
         WHERE state=#{state} AND is_deleted = FALSE
         <if test="searchKeyword!=null and searchKeyword !=''">
-            AND serial_number LIKE concat('%',#{searchKeyword},'%')
+            AND serial_number ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 
@@ -170,7 +170,7 @@
                 </foreach>
             </if>
             <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
-                AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+                AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')
             </if>
             <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
                 and pi.category_id in

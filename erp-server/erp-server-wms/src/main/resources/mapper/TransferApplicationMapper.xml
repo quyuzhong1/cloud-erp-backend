@@ -63,7 +63,7 @@
         <where>
             ta.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and ta.code like concat('%',#{params.code},'%')
+                and ta.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and ta.invalid_status = #{params.invalidStatus}
@@ -185,7 +185,7 @@
                     AND ta.approve_status = #{params.searchType}
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and ta.code like concat('%',#{params.code},'%')
+                    and ta.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and ta.invalid_status = #{params.invalidStatus}

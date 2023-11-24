@@ -49,7 +49,7 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND ti.code ILIKE concat('%', #{params.code} ,'%')
+            AND ti.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND ti.approve_status IN
@@ -151,7 +151,7 @@
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND ti.code ILIKE concat('%', #{params.code} ,'%')
+                    AND ti.code ILIKE concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND ti.approve_status IN

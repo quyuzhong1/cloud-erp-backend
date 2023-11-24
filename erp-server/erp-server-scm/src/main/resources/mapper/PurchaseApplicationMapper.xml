@@ -54,10 +54,10 @@
         <where>
             pa.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and pa.code like concat('%',#{params.code},'%')
+                and pa.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.productName != null and params.productName != ''">
-                and pad.product_name like concat('%',#{params.productName},'%')
+                and pad.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pad.is_urgent = #{params.isUrgent}
@@ -138,10 +138,10 @@
         <where>
             pa.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and pa.code like concat('%',#{params.code},'%')
+                and pa.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.productName != null and params.productName != ''">
-                and pad.product_name like concat('%',#{params.productName},'%')
+                and pad.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pad.is_urgent = #{params.isUrgent}
@@ -243,10 +243,10 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and pa.code like concat('%',#{params.code},'%')
+                    and pa.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.productName != null and params.productName != ''">
-                    and pad.product_name like concat('%',#{params.productName},'%')
+                    and pad.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and pad.is_urgent = #{params.isUrgent}

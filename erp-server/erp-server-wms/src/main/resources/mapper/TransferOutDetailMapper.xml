@@ -47,7 +47,7 @@
         WHERE tot.is_deleted = false
         and tot.invalid_status = false
         <if test="param.remoteSearchSku != null  and param.remoteSearchSku != ''">
-            AND tod.sku_no ILIKE concat('%',#{param.remoteSearchSku},'%')
+            AND tod.sku_no ILIKE concat('%',#{param.remoteSearchSku}::text,'%')
         </if>
         <if test="param.skuNoList != null  and param.skuNoList != ''">
             AND tod.sku_no IN

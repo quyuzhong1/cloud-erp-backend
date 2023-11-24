@@ -16,7 +16,7 @@
          FROM qc_rule
          where is_deleted=false
          <if test="params.searchKeyword!=null and params.searchKeyword !=''">
-            AND code LIKE concat('%',#{params.searchKeyword},'%')
+            AND code ILIKE concat('%',#{params.searchKeyword}::text,'%')
          </if>
 
         <!--权限-->

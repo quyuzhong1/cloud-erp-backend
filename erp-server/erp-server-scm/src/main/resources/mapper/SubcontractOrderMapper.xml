@@ -70,10 +70,10 @@
         <where>
             so.is_deleted = false and sod.parent_id = ''
             <if test="params.code != null and params.code != ''">
-                and so.code like concat('%',#{params.code},'%')
+                and so.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.poCode != null and params.poCode != ''">
-                and sub.poCode like concat('%',#{params.poCode},'%')
+                and sub.poCode ILIKE concat('%',#{params.poCode}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and sod.is_urgent = #{params.isUrgent}
@@ -199,10 +199,10 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and so.code like concat('%',#{params.code},'%')
+                    and so.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.poCode != null and params.poCode != ''">
-                    and sub.poCode like concat('%',#{params.poCode},'%')
+                    and sub.poCode ILIKE concat('%',#{params.poCode}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and sod.is_urgent = #{params.isUrgent}

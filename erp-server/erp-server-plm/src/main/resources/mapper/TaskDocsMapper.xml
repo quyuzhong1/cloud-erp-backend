@@ -29,7 +29,7 @@
        INNER JOIN project_task pt ON pt.id=d.task_id AND pt.is_deleted=FALSE
        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
-            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
        </if>
        <if test="power.noContainDocsPowerList !=null and power.noContainDocsPowerList.size>0">
            AND d.id in
@@ -54,7 +54,7 @@
         INNER JOIN project_task pt ON pt.id=d.task_id AND pt.is_deleted=FALSE
         where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
-            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="power.containDocsPowerList !=null and power.containDocsPowerList.size>0">
             AND d.id in
@@ -75,7 +75,7 @@
         FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id AND f.is_deleted = FALSE
         where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
-            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="ids !=null and ids.size()>0">
             AND d.id in
@@ -126,7 +126,7 @@
         INNER JOIN project_task pt ON pt.id=d.task_id AND pt.is_deleted=FALSE
         where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
-            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="ids!=null and ids.size>0">
             AND d.id in
@@ -149,7 +149,7 @@
         INNER JOIN project_task pt ON pt.id=d.task_id AND pt.is_deleted=FALSE
         where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
-            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="ids !=null and ids.size>0">
             AND d.id in

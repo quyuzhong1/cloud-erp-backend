@@ -67,13 +67,13 @@
         <where>
             po.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and pod.product_name like concat('%',#{params.productName},'%')
+                and pod.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and po.code like concat('%',#{params.code},'%')
+                and po.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.subContractCode != null and params.subContractCode != ''">
-                and so.code like concat('%',#{params.subContractCode},'%')
+                and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -169,13 +169,13 @@
         <where>
             po.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and pod.product_name like concat('%',#{params.productName},'%')
+                and pod.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and po.code like concat('%',#{params.code},'%')
+                and po.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.subContractCode != null and params.subContractCode != ''">
-                and so.code like concat('%',#{params.subContractCode},'%')
+                and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -296,13 +296,13 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.productName != null and params.productName != ''">
-                    and pod.product_name like concat('%',#{params.productName},'%')
+                    and pod.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and po.code like concat('%',#{params.code},'%')
+                    and po.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.subContractCode != null and params.subContractCode != ''">
-                    and so.code like concat('%',#{params.subContractCode},'%')
+                    and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and pod.is_urgent = #{params.isUrgent}
@@ -624,7 +624,7 @@
             AND pod.sku_no = #{skuNo}
         </if>
         <if test="code != '' and code != null ">
-            AND po.code ILIKE concat('%', #{code} ,'%')
+            AND po.code ILIKE concat('%', #{code}::text ,'%')
         </if>
         ORDER BY po.create_time DESC
     </select>

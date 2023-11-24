@@ -40,10 +40,10 @@
         <where>
             tt.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-                and tt.name like concat('%', #{params.searchKeyword} ,'%')
+                and tt.name ILIKE concat('%', #{params.searchKeyword}::text ,'%')
             </if>
             <if test="params.templateId != '' and params.templateId != null">
-                and tt.template_id like concat('%', #{params.templateId} ,'%')
+                and tt.template_id ILIKE concat('%', #{params.templateId}::text ,'%')
             </if>
         </where>
         order by
@@ -158,11 +158,11 @@
             </if>
 
             <if test="params.taskName != '' and params.taskName != null">
-                and tt.name like concat('%', #{params.taskName} ,'%')
+                and tt.name ILIKE concat('%', #{params.taskName}::text ,'%')
             </if>
 
             <if test="params.templateId != '' and params.templateId != null">
-                and tt.template_id like concat('%', #{params.templateId} ,'%')
+                and tt.template_id ILIKE concat('%', #{params.templateId}::text ,'%')
             </if>
         order by tt.create_time asc
     </select>

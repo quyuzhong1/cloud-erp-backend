@@ -62,13 +62,13 @@
         <where>
             pc.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and pcd.product_name ilike concat('%',#{params.productName},'%')
+                and pcd.product_name iLIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and pc.code ilike concat('%',#{params.code},'%')
+                and pc.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and po.code ilike concat('%',#{params.purchaseOrderCode},'%')
+                and po.code iLIKE concat('%',#{params.purchaseOrderCode}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and pc.invalid_status = #{params.invalidStatus}
@@ -167,10 +167,10 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.productName != null and params.productName != ''">
-                    and pcd.product_name like concat('%',#{params.productName},'%')
+                    and pcd.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and pc.code like concat('%',#{params.code},'%')
+                    and pc.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and pc.invalid_status = #{params.invalidStatus}

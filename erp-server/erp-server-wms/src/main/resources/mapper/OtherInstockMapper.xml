@@ -56,7 +56,7 @@
                 AND oi.approve_status = #{params.searchType}
             </if>
             <if test="params.code != null and params.code != ''">
-                and oi.code like concat('%',#{params.code},'%')
+                and oi.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and oi.invalid_status = #{params.invalidStatus}
@@ -164,7 +164,7 @@
                     AND oi.approve_status = #{params.searchType}
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and oi.code like concat('%',#{params.code},'%')
+                    and oi.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and oi.invalid_status = #{params.invalidStatus}

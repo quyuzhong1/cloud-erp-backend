@@ -59,10 +59,10 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND sc.code ILIKE concat('%', #{params.code} ,'%')
+            AND sc.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.soCode !=null and params.soCode!=''">
-            AND si.code ILIKE concat('%', #{params.soCode} ,'%')
+            AND si.code ILIKE concat('%', #{params.soCode}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type =#{params.orderType}
@@ -151,10 +151,10 @@
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND sc.code ILIKE concat('%', #{params.code} ,'%')
+                    AND sc.code ILIKE concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.soCode !=null and params.soCode!=''">
-                    AND si.code ILIKE concat('%', #{params.soCode} ,'%')
+                    AND si.code ILIKE concat('%', #{params.soCode}::text ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND si.order_type =#{params.orderType}

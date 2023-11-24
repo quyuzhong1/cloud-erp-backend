@@ -92,18 +92,18 @@
         left join product_logistics pl on pd.id = pl.sku_id and pl.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE
         <if test="params.no != null  and params.no != ''">
-            AND (pi.spu_no ILIKE concat('%',#{params.no},'%') OR pd.sku_no ILIKE concat('%',#{params.no},'%') OR pd.name
-            ILIKE concat('%', #{params.no},'%'))
+            AND (pi.spu_no ILIKE concat('%',#{params.no}::text,'%') OR pd.sku_no ILIKE concat('%',#{params.no}::text,'%') OR pd.name
+            ILIKE concat('%', #{params.no}::text,'%'))
         </if>
         <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
-            AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+            AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')
         </if>
         <if test="params.productId != null and params.productId != ''  ">
             AND pd.product_id = #{params.productId}
         </if>
 
         <if test="params.name != null and params.name != ''  ">
-            AND pd.name ILIKE concat('%', #{params.name},'%')
+            AND pd.name ILIKE concat('%', #{params.name}::text,'%')
         </if>
 
         <if test="params.isChange != null and params.isChange != ''  ">
@@ -192,7 +192,7 @@
         </if>
 
         <if test="params.productName!=null and params.productName!=''">
-            AND pi.name ILIKE concat('%',#{params.productName},'%')
+            AND pi.name ILIKE concat('%',#{params.productName}::text,'%')
         </if>
         <if test="params.skuStateList !=null and params.skuStateList.size>0">
             AND pd.status IN
@@ -234,7 +234,7 @@
         </if>
 
         <if test="params.ean !=null and params.ean!=''">
-            AND pp.ean ILIKE concat('%',#{params.ean},'%')
+            AND pp.ean ILIKE concat('%',#{params.ean}::text,'%')
         </if>
 
 
@@ -515,7 +515,7 @@
         LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id AND dp.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE
         <if test="params.no != '' and params.no != null">
-            AND (pi.spu_no ILIKE concat('%',#{params.no},'%') OR pd.sku_no ILIKE concat('%',#{params.no},'%'))
+            AND (pi.spu_no ILIKE concat('%',#{params.no}::text,'%') OR pd.sku_no ILIKE concat('%',#{params.no}::text,'%'))
         </if>
         <if test="params.stateList != null and params.stateList.size() > 0">
             AND pd.product_state in
@@ -675,9 +675,9 @@
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
-            pd.sku_no ILIKE concat('%',#{searchKeyword},'%')
+            pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
             OR
-            pd.name ILIKE concat('%',#{searchKeyword},'%')
+            pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
         </if>
     </select>
@@ -691,7 +691,7 @@
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         WHERE pd.status = #{state} AND pd.is_deleted = FALSE
         <if test="searchKeyword != null and searchKeyword!=''">
-            AND pd.sku_no ILIKE concat('%',#{searchKeyword},'%')
+            AND pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
         </if>
     </select>
 
@@ -739,9 +739,9 @@
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
-            pd.sku_no ILIKE concat('%',#{searchKeyword},'%')
+            pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
             OR
-            pd.name ILIKE concat('%',#{searchKeyword},'%')
+            pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
         </if>
     </select>
@@ -875,9 +875,9 @@
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
-            pd.sku_no ILIKE concat('%',#{searchKeyword},'%')
+            pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
             OR
-            pd.name ILIKE concat('%',#{searchKeyword},'%')
+            pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
         </if>
         <if test="skuNo != null and skuNo!=''">

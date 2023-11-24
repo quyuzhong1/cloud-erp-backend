@@ -15,9 +15,9 @@
                 AND P.category_id=#{params.categoryId}
             </if>
             <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
-                AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-                OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
-                OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
+                AND (P.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+                OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
+                OR p.spu_no ILIKE concat('%',#{params.searchKeyword}::text,'%'))
             </if>
             <if test="params.productIds !=null and params.productIds.size()>0">
                 AND P.id IN
