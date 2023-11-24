@@ -1,16 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.OffsetDateTime;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -20,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  *
  * @author Jim
  * @since 2023-11-16
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -28,103 +25,108 @@ import com.common.business.enums.ApproveStatusEnum;
 public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouseInboundEntity> {
 
     /**
-    * 单据编号
-    */
+     * 单据编号
+     */
     @TableField("code")
     private String code;
     /**
-    * 平台类型: goodcang=谷仓，iml=艾姆勒
-    */
+     * 平台类型: goodcang=谷仓，iml=艾姆勒
+     */
     @TableField("dict_platform")
     private String dictPlatform;
     /**
-    * 来源单号
-    */
+     * 来源单号
+     */
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 来源ID
-    */
+     * 来源ID
+     */
     @TableField("source_id")
     private String sourceId;
     /**
-    * 来源类型
-    */
+     * 来源类型
+     */
     @TableField("source_type")
     private String sourceType;
     /**
-    * 入库类型
-    */
+     * 入库类型
+     */
     @TableField("instock_type")
     private String instockType;
     /**
-    * 入库状态
-    */
+     * 交货方式
+     */
+    @TableField("delivery_mode")
+    private String deliveryMode;
+    /**
+     * 入库状态
+     */
     @TableField("instock_status")
     private String instockStatus;
     /**
-    * 发货仓名称
-    */
+     * 发货仓名称
+     */
     @TableField("delivery_warehouse_name")
     private String deliveryWarehouseName;
     /**
-    * 发货仓ID
-    */
+     * 发货仓ID
+     */
     @TableField("delivery_warehouse_id")
     private String deliveryWarehouseId;
     /**
-    * 中转仓名称
-    */
+     * 中转仓名称
+     */
     @TableField("transfer_warehouse_name")
     private String transferWarehouseName;
     /**
-    * 中转仓ID
-    */
+     * 中转仓ID
+     */
     @TableField("transfer_warehouse_id")
     private String transferWarehouseId;
     /**
-    * 目的仓名称
-    */
+     * 目的仓名称
+     */
     @TableField("to_warehouse_name")
     private String toWarehouseName;
     /**
-    * 目的仓ID
-    */
+     * 目的仓ID
+     */
     @TableField("to_warehouse_id")
     private String toWarehouseId;
     /**
-    * 物流方式
-    */
+     * 物流方式
+     */
     @TableField("logistics_method")
     private String logisticsMethod;
     /**
-    * 备注
-    */
+     * 备注
+     */
     @TableField("remark")
     private String remark;
     /**
-    * 最新签收时间
-    */
-    @TableField("receive_time")
-    private OffsetDateTime receiveTime;
+     * 最新签收时间
+     */
+    @TableField(value = "receive_time")
+    private LocalDateTime receiveTime;
     /**
-    * 预计到达时间
-    */
-    @TableField("estimated_arrival_date")
-    private OffsetDateTime estimatedArrivalDate;
+     * 预计到达时间
+     */
+    @TableField(value = "estimated_arrival_date")
+    private LocalDateTime estimatedArrivalDate;
     /**
-    * 手动完结原因
-    */
+     * 手动完结原因
+     */
     @TableField("finish_reason")
     private String finishReason;
     /**
-    * 完结状态: not=未完结, auto=自动完结，manual=手动完结
-    */
+     * 完结状态: not=未完结, auto=自动完结，manual=手动完结
+     */
     @TableField("finish_status")
     private String finishStatus;
     /**
-    * 第三方唯一编码
-    */
+     * 第三方唯一编码
+     */
     @TableField("overseas_warehouse_inbound_id")
     private String overseasWarehouseInboundId;
 

@@ -1,6 +1,8 @@
 package com.common.business.dto.base;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -9,6 +11,8 @@ import java.io.Serializable;
  * @Author: zhangchunlin
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class BaseSelectDTO implements Serializable {
 
     /**

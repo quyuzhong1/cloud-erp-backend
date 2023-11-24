@@ -87,6 +87,13 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<OverseasWarehouseInboundReceivedEntity> listByDetailIds(List<String> detailIds) {
+        return lambdaQuery()
+                .in(OverseasWarehouseInboundReceivedEntity::getDetailId, detailIds)
+                .list();
+    }
+
 
     /**
     * 新增修改处理数据

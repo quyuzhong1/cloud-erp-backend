@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
@@ -24,6 +26,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("overseas_warehouse_inbound_received")
 public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasWarehouseInboundReceivedEntity> {
 
@@ -46,7 +50,7 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
     * 签收时间
     */
     @TableField("receive_time")
-    private OffsetDateTime receiveTime;
+    private LocalDateTime receiveTime;
 
 
     public static final String DETAIL_ID = "detail_id";

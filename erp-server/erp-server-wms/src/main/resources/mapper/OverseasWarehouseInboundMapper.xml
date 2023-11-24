@@ -48,5 +48,146 @@
         code, dict_platform, source_code, source_id, source_type, instock_type, instock_status, delivery_warehouse_name, delivery_warehouse_id, transfer_warehouse_name, transfer_warehouse_id, to_warehouse_name, to_warehouse_id, logistics_method, remark, receive_time, estimated_arrival_date, finish_reason, finish_status, overseas_warehouse_inbound_id
     </sql>
 
+    <sql id="conditionSql">
+        owi.is_deleted = FALSE
+        AND owid.is_deleted = FALSE
+        <!--来源单号-->
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            AND owi.sourceCode ILIKE concat('%',#{params.sourceCode}::text,'%')
+        </if>
+        <!--入库类型-->
+        <if test="params.instockType != null and params.instockType.size > 0">
+            AND owi.instock_type = #{instockType}
+        </if>
+        <!--交货方式-->
+        <if test="params.deliveryMode != null and params.deliveryMode.size > 0">
+            AND owi.delivery_mode = #{deliveryMode}
+        </if>
+        <!--入库状态-->
+        <if test="params.instockStatusList != null and params.instockStatusList.size > 0">
+            AND owi.instock_status in
+            <foreach collection="params.instockStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <!--发货仓ID-->
+        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+            AND owi.delivery_warehouse_id in
+            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--中转仓ID-->
+        <if test="params.transferWarehouseIdList != null and params.transferWarehouseIdList.size > 0">
+            AND owi.transfer_warehouse_id in
+            <foreach collection="params.transferWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--目的仓ID-->
+        <if test="params.toWarehouseIdList != null and params.toWarehouseIdList.size > 0">
+            AND owi.to_warehouse_id in
+            <foreach collection="params.toWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--物流方式-->
+        <if test="params.logisticsMethod != null and params.logisticsMethod != ''">
+            AND owi.logistics_method ILIKE concat('%',#{params.logisticsMethod}::text,'%')
+        </if>
+        <!--   是否组合品     -->
+        <if test="params.isCombination != null">
+            and owi.is_combination = #{params.isCombination}
+        </if>
+
+        <!--海外仓库存SKU列表-->
+        <if test="params.platformSkuNoList != null and params.platformSkuNoList.size > 0">
+            AND owi.platform_sku_no in
+            <foreach collection="params.platformSkuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <!--创建人 -->
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND owi.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <!--创建时间（拉取数据的日期）-->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND owi.create_time >= #{params.createTimeList[0]}
+            AND (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > owi.create_time
+        </if>
+        <!--签收时间（拉取签收数据的日期）-->
+        <if test="params.receiveTimeList !=null and params.receiveTimeList.size>0">
+            AND owi.receive_time >= #{params.receiveTimeList[0]}
+            AND (#{params.receiveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > owi.receive_time
+        </if>
+
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        owi.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDTO$ListDTO">
+        SELECT
+        owi.id,
+        owi.code,
+        owid.id AS detailId,
+        owi.create_time,
+        owi.create_user_name,
+        owi.create_user_id,
+        owi.dict_platform,
+        owi.source_code,
+        owi.source_id,
+        owi.source_type,
+        owi.instock_type,
+        owi.instock_status,
+        owi.delivery_warehouse_name,
+        owi.delivery_warehouse_id,
+        owi.transfer_warehouse_name,
+        owi.transfer_warehouse_id,
+        owi.to_warehouse_name,
+        owi.to_warehouse_id,
+        owi.logistics_method,
+        owi.remark,
+        owi.receive_time,
+        owi.estimated_arrival_date,
+        owi.finish_reason,
+        owi.finish_status,
+        owi.overseas_warehouse_inbound_id,
+        owi.delivery_mode,
+        owid.platform_product_name,
+        owid.platform_sku_no,
+        owid.product_name,
+        owid.sku_no,
+        owid.sku_id,
+        owid.is_combination,
+        owid.receive_qty,
+        owid.transport_qty,
+        owid.pack_qty,
+        owid.diff_qty,
+        owid.receive_time AS detailReceiveTime,
+        owid.receive_status,
+        owid.receive_type
+        FROM overseas_warehouse_inbound owi
+        INNER JOIN overseas_warehouse_inbound_detail owid ON owi.id = owid.main_id
+        <where>
+            <include refid="conditionSql"/>
+        </where>
+    </select>
+
+
 
 </mapper>

@@ -832,6 +832,9 @@ public enum ApiError implements Serializable {
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
     WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
 
+    OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
+    OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
+
 
     /**
      * OMS 错误
