@@ -40,16 +40,16 @@
         <where>
             psi.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and psid.product_name like concat('%',#{params.productName},'%')
+                and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and psi.code like concat('%',#{params.code},'%')
+                and psi.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and psi.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and psi.purchase_order_code like concat('%',#{params.purchaseOrderCode},'%')
+                and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and psid.sku_no in
@@ -172,16 +172,16 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.productName != null and params.productName != ''">
-                    and psid.product_name like concat('%',#{params.productName},'%')
+                    and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and psi.code like concat('%',#{params.code},'%')
+                    and psi.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and psi.invalid_status = #{params.invalidStatus}
                 </if>
                 <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                    and psi.purchase_order_code like concat('%',#{params.purchaseOrderCode},'%')
+                    and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and psid.sku_no in
@@ -406,16 +406,16 @@
         <where>
             psi.is_deleted = false
             <if test="params.productName != null  and params.productName != ''">
-                and psid.product_name like concat('%',#{params.productName},'%')
+                and psid.product_name ILIKE concat('%',#{params.productName}::text,'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and psi.code like concat('%',#{params.code},'%')
+                and psi.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and psi.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-                and psi.purchase_order_code like concat('%',#{params.purchaseOrderCode},'%')
+                and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and psid.sku_no in

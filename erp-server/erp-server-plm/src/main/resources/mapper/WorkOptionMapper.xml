@@ -120,7 +120,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword!=''">
-            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
             AND not EXISTS (
@@ -138,7 +138,7 @@
         </if>
         <if test="params.taskSearchDTO != null">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword}::text,'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in

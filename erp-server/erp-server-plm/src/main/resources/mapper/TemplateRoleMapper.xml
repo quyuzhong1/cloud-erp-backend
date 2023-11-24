@@ -22,7 +22,7 @@
         <where>
             tr.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-               and  tr.name like concat('%', #{params.searchKeyword} ,'%')
+               and  tr.name ILIKE concat('%', #{params.searchKeyword}::text ,'%')
             </if>
             <if test="params.templateId != '' and params.templateId != null">
                 and  tr.template_id = #{params.templateId}

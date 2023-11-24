@@ -60,10 +60,10 @@
             </foreach>
         </if>
         <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code ilike concat('%',#{params.sourceCode},'%')
+            and source_code iLIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <if test="params.returnMsg != null and params.returnMsg != '' ">
-            and return_msg ilike concat('%',#{params.returnMsg},'%')
+            and return_msg iLIKE concat('%',#{params.returnMsg}::text,'%')
         </if>
         <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
             and target_platform_name = #{params.targetPlatformName}
@@ -107,10 +107,10 @@
                 </foreach>
             </if>
             <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code ilike concat('%',#{params.sourceCode},'%')
+                and source_code iLIKE concat('%',#{params.sourceCode}::text,'%')
             </if>
             <if test="params.returnMsg != null and params.returnMsg != '' ">
-                and return_msg ilike concat('%',#{params.returnMsg},'%')
+                and return_msg iLIKE concat('%',#{params.returnMsg}::text,'%')
             </if>
             <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
                 and target_platform_name = #{params.targetPlatformName}

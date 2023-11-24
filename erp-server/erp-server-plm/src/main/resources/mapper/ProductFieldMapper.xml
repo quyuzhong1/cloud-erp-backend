@@ -8,7 +8,7 @@
         FROM product_field
         WHERE is_sys=1 AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
 
         ORDER BY create_time DESC
@@ -20,7 +20,7 @@
         FROM product_field
         WHERE is_sys=1 AND scope=1 AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         ORDER BY create_time DESC)
 
@@ -31,7 +31,7 @@
         FROM product_field
         WHERE product_id=#{params.flagId} AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         ORDER BY create_time DESC)
     </select>

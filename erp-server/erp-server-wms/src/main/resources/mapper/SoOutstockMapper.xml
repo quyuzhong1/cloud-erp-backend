@@ -64,10 +64,13 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND so.code ILIKE concat('%', #{params.code} ,'%')
+            AND so.code ILIKE concat('%', #{params.code}::text ,'%')
+        </if>
+        <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+            AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.soCode !=null and params.soCode!=''">
-            AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
+            AND so.so_code ILIKE concat('%', #{params.soCode}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND so.order_type =#{params.orderType}
@@ -207,10 +210,13 @@
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND so.code ILIKE concat('%', #{params.code} ,'%')
+                    AND so.code ILIKE concat('%', #{params.code}::text ,'%')
+                </if>
+                <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+                    AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
                 </if>
                 <if test="params.soCode !=null and params.soCode!=''">
-                    AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
+                    AND so.so_code ILIKE concat('%', #{params.soCode}::text ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND so.order_type =#{params.orderType}
@@ -440,13 +446,13 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND so.code ILIKE concat('%', #{params.code} ,'%')
+            AND so.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-            AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+            AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.soCode !=null and params.soCode!=''">
-            AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
+            AND so.so_code ILIKE concat('%', #{params.soCode}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND so.order_type =#{params.orderType}

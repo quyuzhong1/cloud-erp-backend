@@ -89,7 +89,7 @@
         </if>
         <if test="params.name !=null and params.name!=''">
             AND temp.staffName
-            ILIKE concat('%', #{params.name} ,'%')
+            ILIKE concat('%', #{params.name}::text ,'%')
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -199,7 +199,7 @@
         </if>
         <if test="params.name !=null and params.name!=''">
             AND  temp.staffName
-            ILIKE concat('%', #{params.name} ,'%')
+            ILIKE concat('%', #{params.name}::text ,'%')
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">

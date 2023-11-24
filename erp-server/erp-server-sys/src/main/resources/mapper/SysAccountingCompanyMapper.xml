@@ -15,7 +15,7 @@
             AND sac.disabled =true
         </if>
        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-            AND sac.${params.searchType} LIKE concat('%',#{params.searchKeyword}::text,'%')
+            AND sac.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         ORDER BY update_time DESC
 

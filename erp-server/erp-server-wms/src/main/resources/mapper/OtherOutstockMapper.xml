@@ -61,7 +61,7 @@
                 AND oo.approve_status = #{params.searchType}
             </if>
             <if test="params.code != null and params.code != ''">
-                and oo.code like concat('%',#{params.code},'%')
+                and oo.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and oo.invalid_status = #{params.invalidStatus}
@@ -70,7 +70,7 @@
                 and oo.inventory_direction = #{params.inventoryDirection}
             </if>
             <if test="params.processApplyCode != null and params.processApplyCode != ''">
-                and oo.process_apply_code like concat('%',#{params.processApplyCode},'%')
+                and oo.process_apply_code ILIKE concat('%',#{params.processApplyCode}::text,'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and ood.sku_no in
@@ -176,7 +176,7 @@
                     AND oo.approve_status = #{params.searchType}
                 </if>
                 <if test="params.code != null and params.code != ''">
-                    and oo.code like concat('%',#{params.code},'%')
+                    and oo.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and oo.invalid_status = #{params.invalidStatus}
@@ -185,7 +185,7 @@
                     and oo.inventory_direction = #{params.inventoryDirection}
                 </if>
                 <if test="params.processApplyCode != null and params.processApplyCode != ''">
-                    and oo.process_apply_code like concat('%',#{params.processApplyCode},'%')
+                    and oo.process_apply_code ILIKE concat('%',#{params.processApplyCode}::text,'%')
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and ood.sku_no in

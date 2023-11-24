@@ -85,7 +85,7 @@
             </foreach>
         </if>
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and t.source_code ilike concat('%', #{params.sourceCode} ,'%')
+            and t.source_code iLIKE concat('%', #{params.sourceCode}::text ,'%')
         </if>
         <if test="params.sourceTypeList != null and params.sourceTypeList.size != ''">
             and t.source_type in
@@ -178,7 +178,7 @@
             </foreach>
         </if>
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and t.source_code ilike concat('%', #{params.sourceCode} ,'%')
+            and t.source_code iLIKE concat('%', #{params.sourceCode}::text ,'%')
         </if>
         <if test="params.sourceTypeList != null and params.sourceTypeList.size != ''">
             and t.source_type in
@@ -630,7 +630,7 @@
                 and m.source_type = #{params.sourceType}
             </if>
              <if test="params.sourceCode != null and params.sourceCode != ''">
-                 and m.source_code ilike concat('%', #{params.sourceCode} ,'%')
+                 and m.source_code iLIKE concat('%', #{params.sourceCode}::text ,'%')
              </if>
          </where>
         group by source_type,source_code order by trade_time desc

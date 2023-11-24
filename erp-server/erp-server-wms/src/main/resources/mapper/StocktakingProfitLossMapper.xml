@@ -77,10 +77,10 @@
         </if>
         <!--code-->
         <if test="params.code!=null and params.code!=''">
-            AND spl.code ILIKE concat('%', #{params.code} ,'%')
+            AND spl.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.sourceCode!=null and params.sourceCode!=''">
-            AND spl.source_code ILIKE concat('%', #{params.sourceCode} ,'%')
+            AND spl.source_code ILIKE concat('%', #{params.sourceCode}::text ,'%')
         </if>
         <!--审核状态-->
         <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
@@ -134,7 +134,7 @@
         </if>
         <!--仓位 -->
         <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
-            AND spld.warehouse_location ILIKE concat('%', #{params.warehouseLocation} ,'%')
+            AND spld.warehouse_location ILIKE concat('%', #{params.warehouseLocation}::text ,'%')
         </if>
         <!--权限 -->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -201,10 +201,10 @@
                 </if>
                 <!--code-->
                 <if test="params.code!=null and params.code!=''">
-                    AND spl.code ILIKE concat('%', #{params.code} ,'%')
+                    AND spl.code ILIKE concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.sourceCode!=null and params.sourceCode!=''">
-                    AND spl.source_code ILIKE concat('%', #{params.sourceCode} ,'%')
+                    AND spl.source_code ILIKE concat('%', #{params.sourceCode}::text ,'%')
                 </if>
                 <if test="params.billTypeList!=null and params.billTypeList.size>0">
                     AND spl.bill_type IN

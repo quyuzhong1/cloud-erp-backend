@@ -13,7 +13,7 @@
         from bi_data_source bds
         <where>
             <if test="params.searchContent != null and params.searchContent != ''">
-                and bds.type like concat('%',#{params.searchContent},'%')
+                and bds.type ILIKE concat('%',#{params.searchContent}::text,'%')
             </if>
         </where>
     </select>
