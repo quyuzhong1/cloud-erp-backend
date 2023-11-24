@@ -58,8 +58,11 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
             //增加异常预警
-            dmpPullTaskEntity.setId(id);
-            this.sendPullWarnMsg(dmpPullTaskEntity);
+            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+                dmpPullTaskEntity.setId(id);
+                this.sendPullWarnMsg(dmpPullTaskEntity);
+            }
+
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPullTask:记录操作日志失败");
         }
@@ -88,8 +91,10 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
-            dmpPushTaskEntity.setId(id);
-            this.sendPushWarnMsg(dmpPushTaskEntity);
+            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+                dmpPushTaskEntity.setId(id);
+                this.sendPushWarnMsg(dmpPushTaskEntity);
+            }
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
         }
