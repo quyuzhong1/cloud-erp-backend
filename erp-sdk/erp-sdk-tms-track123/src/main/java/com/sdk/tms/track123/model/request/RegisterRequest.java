@@ -2,6 +2,8 @@ package com.sdk.tms.track123.model.request;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -16,6 +18,7 @@ public class RegisterRequest implements Serializable {
     /**
      * 物流单号
      */
+    @NotBlank(message = "跟踪单号不能为空")
     private String trackNo;
     /**
      * 物流商对应的唯一简码,如果简码为空,系统会根据规则自动匹配

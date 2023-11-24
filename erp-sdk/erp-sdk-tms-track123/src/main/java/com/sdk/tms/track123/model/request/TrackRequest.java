@@ -3,6 +3,7 @@ package com.sdk.tms.track123.model.request;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 @Data
 @Builder
 public class TrackRequest implements Serializable {
+    @NotNull(message = "跟踪单号不能为空")
     private List<String> trackNos;
     private List<String> orderNos;
     private String createTimeStart;

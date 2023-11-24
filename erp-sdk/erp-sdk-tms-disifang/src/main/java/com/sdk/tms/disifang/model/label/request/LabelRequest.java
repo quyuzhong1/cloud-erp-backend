@@ -4,6 +4,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,11 +21,13 @@ public class LabelRequest implements Serializable {
     /**
      * 请求单号（支持4PX单号、客户单号和面单号）
      */
+    @NotBlank(message = "请求单号不能为空")
     @JSONField(name = "request_no")
     private List<String> requestNo;
     /**
      * 物流产品代码
      */
+    @NotBlank(message = "物流产品代码不能为空")
     @JSONField(name = "logistics_product_code")
     private String logisticsProductCode;
 
