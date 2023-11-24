@@ -20,6 +20,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.tongyou.dto.request.TongYouCreateOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouGetOrderRequest;
 import com.sdk.tms.tongyou.dto.request.TongYouPrintLabelRequest;
@@ -202,7 +203,25 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return isSuccess?success(responseList):failure(responseList);
     }
 
-
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            TongYouResponse<List<TongYouChannel>> tongYouResponse =  tongYouService.getAllChannel(authMap);
+            if(!tongYouResponse.getSuccess()){
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.TONG_YOU;

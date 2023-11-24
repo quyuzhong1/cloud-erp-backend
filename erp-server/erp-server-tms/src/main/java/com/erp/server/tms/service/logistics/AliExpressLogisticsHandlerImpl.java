@@ -350,6 +350,25 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     }
 
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            ChannelResult responseMsg = aliExpressShipperService.getChanelList(authMap);
+            if (Objects.isNull(responseMsg) || !responseMsg.getResultSuccess()) {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.ALI_EXPRESS;

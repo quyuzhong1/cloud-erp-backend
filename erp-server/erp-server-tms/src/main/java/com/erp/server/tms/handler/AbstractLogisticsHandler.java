@@ -167,6 +167,16 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     }
 
     /**
+     * 判断是否授权成功
+     *
+     * @param authId
+     * @return
+     */
+    public ApiResult authorization(Map<String, String> authMap) {
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
      * 物流单注册
      *
      * @param registerTrackVO

@@ -21,6 +21,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.server.YunTuService;
@@ -286,6 +287,25 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return isSuccess?success(result):failure(result);
 
+    }
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            YunTuResponse<List<YunTuChannel>> yunTuResponse = yunTuService.getAllChannel(authMap);
+            if (isFailure(yunTuResponse.getCode())) {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
     private Boolean isFailure(String code){
         return !"0000".equals(code);

@@ -203,4 +203,10 @@ public class ExpressLogisticsHandlerImplTest {
         ApiResult<List<ConfirmResponseVO>> listApiResult = expressLogisticsHandler.confirmOrder(Collections.singletonList(logisticsQueryVO));
         System.out.println(listApiResult);
     }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = expressLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }

@@ -20,6 +20,7 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.disifang.model.label.request.LabelRequest;
@@ -364,7 +365,28 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
-
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            ChanelRequest chanelRequest = ChanelRequest.builder()
+                    .transport_mode("1")
+                    .build();
+            ResponseMsg responseMsg = dsfShipperService.getChanelList(authMap, chanelRequest);
+            if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.DSF;

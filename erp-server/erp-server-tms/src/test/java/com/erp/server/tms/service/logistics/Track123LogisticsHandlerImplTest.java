@@ -36,11 +36,7 @@ public class Track123LogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public Track123LogisticsHandlerImplTest(){
-        String CLIENT_CODE = "Yg4Zf06w_sxZs3A5D";  //此处替换为您在丰桥平台获取的顾客编码
-        String CHECK_WORD = "9fa500686633410a84ff0b00daed555e";//此处替换为您在丰桥平台获取的校验码
-        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
-        authMap.put("clientId",CLIENT_CODE);
-        authMap.put("clientSecret",CHECK_WORD);
+        authMap.put("clientSecret","9fa500686633410a84ff0b00daed555e");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -81,5 +77,11 @@ public class Track123LogisticsHandlerImplTest {
         logisticsQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsTrackEntity>> track = track123LogisticsHandler.getTrack(logisticsQueryVO);
         System.out.println(track);
+    }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = track123LogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
     }
 }

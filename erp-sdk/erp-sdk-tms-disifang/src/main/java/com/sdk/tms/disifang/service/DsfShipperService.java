@@ -10,6 +10,7 @@ import com.sdk.tms.disifang.model.label.request.LabelSingleRequest;
 import com.sdk.tms.disifang.model.order.request.*;
 import com.sdk.tms.disifang.model.product.request.ChanelRequest;
 import com.sdk.tms.disifang.utils.ApiHttpClientUtils;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +39,11 @@ public class DsfShipperService {
 //    static String appKey = "5dca6db7-6a21-4d31-a5f8-33a24a4f5b9d";
 //    static String appSecret = "b8bd24a5-35b0-4e8a-bbc0-c7458e21c7ad";
 
-
+    private void validate(String appKey,String appSecret,String method){
+        assert StringUtils.isNotEmpty(appKey);
+        assert StringUtils.isNotEmpty(appSecret);
+        assert StringUtils.isNotEmpty(method);
+    }
     /**
      * 获取标签 打印标签
      *
@@ -50,6 +55,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.label.get";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -60,7 +66,6 @@ public class DsfShipperService {
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(labelSingleRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
-        System.out.println(responseMsg);
         return responseMsg;
     }
 
@@ -75,6 +80,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.label.getlist";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -85,7 +91,6 @@ public class DsfShipperService {
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(labelRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
-        System.out.println(responseMsg);
         return responseMsg;
     }
 
@@ -100,6 +105,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.logistics_product.getlist";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -110,7 +116,6 @@ public class DsfShipperService {
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(chanelRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
-        System.out.println(responseMsg);
         return responseMsg;
     }
 
@@ -125,6 +130,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.create";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -135,7 +141,6 @@ public class DsfShipperService {
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -151,6 +156,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.cancel";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -161,7 +167,6 @@ public class DsfShipperService {
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCancelRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -177,6 +182,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.hold";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -187,7 +193,6 @@ public class DsfShipperService {
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderInterceptRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -203,6 +208,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.get";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -213,7 +219,6 @@ public class DsfShipperService {
                 .build();
         String result = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderQueryRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(result, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -229,6 +234,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.api.collect.create.order";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -239,7 +245,6 @@ public class DsfShipperService {
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCollectRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -255,6 +260,7 @@ public class DsfShipperService {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String method = "ds.xms.order.cancel";
+        validate(appKey,appSecret,method);
         AffterentParam param = AffterentParam.builder()
                 .version("1.0")
                 .format("json")
@@ -265,7 +271,6 @@ public class DsfShipperService {
                 .build();
         String s = ApiHttpClientUtils.apiJsonPost(param, JSONUtil.toJsonStr(orderCollectRequest), AmbientEnum.FORMAT_ADDRESS);
         ResponseMsg responseMsg = JSONObject.parseObject(s, ResponseMsg.class);
-        System.out.println(responseMsg);
         //{"data":{"collect_no":"2021081600000003"},"msg":"系统处理成功","result":"1"}
         return responseMsg;
     }
@@ -280,7 +285,6 @@ public class DsfShipperService {
         map.put("clientSecret",appSecret);
         ChanelRequest chanelRequest = ChanelRequest.builder().transport_mode("1").build();
         ResponseMsg chanelList = dsfShipperService.getChanelList(map, chanelRequest);
-        System.out.println(chanelList);
 //        String str = "app_key16081f05-e8fc-4250-b9c4-0660d1ecbb28" +
 //                "formatjson" +
 //                "methodds.xms.order.create" +
@@ -291,8 +295,6 @@ public class DsfShipperService {
 //
 //        String md5 = DigestUtil.md5Hex(str);
 //        String md52 = DigestUtil.md5Hex(str, Charset.defaultCharset());
-//        System.out.println(md5);
-//        System.out.println(md52);
         //timestamp1698823437409
         //timestamp1532592413187
 //        LabelRequest labelRequest = LabelRequest.builder()
@@ -329,6 +331,5 @@ public class DsfShipperService {
 //        paramMap.put("is_print_pick_barcode","N");
 ////        AmbientEnum ambient = new ApiHttpClientUtils();
 //        String s = ApiHttpClientUtils.apiJsongPost(param, paramMap, AmbientEnum.FORMAT_ADDRESS);
-//        System.out.println(s);
     }
 }

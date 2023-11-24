@@ -23,6 +23,7 @@ import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
@@ -189,7 +190,36 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("accessToken"))
+                .build();
+        ValidatorUtil.validateEntity(baseRequest);
+        try {
+            BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
+            if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
+                return failure("授权失败");
+            }
+            JSONObject response = baseResponse.getResponse();
+            String error = response.getString("error");
+            if (StrUtil.isNotEmpty(error)) {
+                return failure("授权失败");
+            }
+            return success("授权成功");
 
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.SHOPEE;
