@@ -56,7 +56,7 @@
         <where>
             st.is_deleted = false
             <if test="params.name != null and params.name != ''">
-                and st.name ilike concat('%',#{params.name},'%')
+                and st.name iLIKE concat('%',#{params.name}::text,'%')
             </if>
             <if test="params.disabled != null">
                 and st.disabled = #{params.disabled}
@@ -119,7 +119,7 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.name != null and params.name != ''">
-                    and st.name ilike concat('%',#{params.name},'%')
+                    and st.name iLIKE concat('%',#{params.name}::text,'%')
                 </if>
                 <if test="params.disabled != null">
                     and  st.disabled = #{params.disabled}

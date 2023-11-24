@@ -34,6 +34,12 @@ public class OverseasInventoryDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 平台仓库编码
+         */
+        private String warehouseCode;
+
         /**
          * 仓库名称
          */
@@ -73,9 +79,9 @@ public class OverseasInventoryDTO implements Serializable {
         private String  id;
 
         /**
-         * 平台库存唯一id
+         * 平台仓库编码
          */
-        private String platformInventoryId;
+        private String warehouseCode;
 
         /**
          * 平台类型: goodcang=谷仓，iml=艾姆勒
@@ -230,9 +236,9 @@ public class OverseasInventoryDTO implements Serializable {
         private String  id;
 
         /**
-        * 平台库存唯一id
+        * 平台仓库编码
         */
-        private String platformInventoryId;
+        private String warehouseCode;
 
         /**
         * 平台类型: goodcang=谷仓，iml=艾姆勒
@@ -352,11 +358,11 @@ public class OverseasInventoryDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台库存唯一id
+        * 平台仓库编码
         */
-        @NotBlank(message = "平台库存唯一id不能为空")
-        @Size(max = 64,message = "平台库存唯一id最大长度不能超过64位")
-        private String platformInventoryId;
+        @NotBlank(message = "平台仓库编码不能为空")
+        @Size(max = 64,message = "平台仓库编码最大长度不能超过64位")
+        private String warehouseCode;
 
         /**
         * 平台类型: goodcang=谷仓，iml=艾姆勒

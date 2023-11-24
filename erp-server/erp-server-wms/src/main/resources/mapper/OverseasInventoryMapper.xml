@@ -3,33 +3,33 @@
 <mapper namespace="com.erp.server.wms.mapper.OverseasInventoryMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasInventoryEntity">
-        <result column="id" property="id"/>
-        <result column="create_time" property="createTime"/>
-        <result column="update_time" property="updateTime"/>
-        <result column="create_user_name" property="createUserName"/>
-        <result column="create_user_id" property="createUserId"/>
-        <result column="update_user_name" property="updateUserName"/>
-        <result column="update_user_id" property="updateUserId"/>
-        <result column="version" property="version"/>
-        <result column="is_deleted" property="isDeleted"/>
-        <result column="platform_inventory_id" property="platformInventoryId"/>
-        <result column="dict_platform" property="dictPlatform"/>
-        <result column="name" property="name"/>
-        <result column="platform_sku" property="platformSku"/>
-        <result column="platform_sku_name" property="platformSkuName"/>
-        <result column="product_name" property="productName"/>
-        <result column="sku_no" property="skuNo"/>
-        <result column="sku_id" property="skuId"/>
-        <result column="deliver_onway_qty" property="deliverOnwayQty"/>
-        <result column="pending_qty" property="pendingQty"/>
-        <result column="sellable_qty" property="sellableQty"/>
-        <result column="unsellable_qty" property="unsellableQty"/>
-        <result column="reserved_qty" property="reservedQty"/>
-        <result column="onway_qty" property="onwayQty"/>
-        <result column="lack_qty" property="lackQty"/>
-        <result column="frozen_qty" property="frozenQty"/>
-        <result column="shipped_qty" property="shippedQty"/>
-        <result column="download_time" property="downloadTime"/>
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="name" property="name" />
+       <result column="platform_sku" property="platformSku" />
+       <result column="platform_sku_name" property="platformSkuName" />
+       <result column="product_name" property="productName" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="deliver_onway_qty" property="deliverOnwayQty" />
+       <result column="pending_qty" property="pendingQty" />
+       <result column="sellable_qty" property="sellableQty" />
+       <result column="unsellable_qty" property="unsellableQty" />
+       <result column="reserved_qty" property="reservedQty" />
+       <result column="onway_qty" property="onwayQty" />
+       <result column="lack_qty" property="lackQty" />
+       <result column="frozen_qty" property="frozenQty" />
+       <result column="shipped_qty" property="shippedQty" />
+       <result column="download_time" property="downloadTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -43,7 +43,7 @@
         update_user_id,
         version,
         is_deleted,
-        platform_inventory_id, dict_platform, name, platform_sku, platform_sku_name, product_name, sku_no, sku_id, deliver_onway_qty, pending_qty, sellable_qty, unsellable_qty, reserved_qty, onway_qty, lack_qty, frozen_qty, shipped_qty, download_time
+        warehouse_code, dict_platform, name, platform_sku, platform_sku_name, product_name, sku_no, sku_id, deliver_onway_qty, pending_qty, sellable_qty, unsellable_qty, reserved_qty, onway_qty, lack_qty, frozen_qty, shipped_qty, download_time
     </sql>
 
     <sql id="conditionSql">

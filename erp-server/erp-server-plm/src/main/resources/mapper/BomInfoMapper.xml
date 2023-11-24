@@ -238,13 +238,13 @@
         <where>
             pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
-                and pbs.parent_sku_no ilike concat('%', #{params.skuNo},'%')
+                and pbs.parent_sku_no iLIKE concat('%', #{params.skuNo}::text,'%')
             </if>
             <if test="params.childSkuNo != null and params.childSkuNo != ''">
-                and pbs.sku_no ilike concat('%', #{params.childSkuNo},'%')
+                and pbs.sku_no iLIKE concat('%', #{params.childSkuNo}::text,'%')
             </if>
             <if test="params.name != null and params.name != ''">
-                and pd.name ilike concat('%', #{params.name},'%')
+                and pd.name iLIKE concat('%', #{params.name}::text,'%')
             </if>
             <if test="params.updateUserIdList != null and params.updateUserIdList != ''">
                 and pbi.update_user_id in

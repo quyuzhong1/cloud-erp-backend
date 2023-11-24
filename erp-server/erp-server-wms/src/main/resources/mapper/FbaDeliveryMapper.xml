@@ -159,15 +159,15 @@
         </if>
         <!--平台sku-->
         <if test="params.asin != null and params.asin != ''">
-            AND fdd.asin ILIKE concat('%',#{params.asin},'%')
+            AND fdd.asin ILIKE concat('%',#{params.asin}::text,'%')
         </if>
         <!--fnSku-->
         <if test="params.fnSku != null and params.fnSku != ''">
-            AND fdd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+            AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
         </if>
         <!--卖家sku-->
         <if test="params.msku != null and params.msku != ''">
-            AND fdd.msku ILIKE concat('%',#{params.msku},'%')
+            AND fdd.msku ILIKE concat('%',#{params.msku}::text,'%')
         </if>
         <!--审核时间-->
         <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
@@ -244,11 +244,11 @@
                 </if>
                 <!--单据编号-->
                 <if test="params.code != null and params.code != ''">
-                    AND fd.code ILIKE concat('%',#{params.code},'%')
+                    AND fd.code ILIKE concat('%',#{params.code}::text,'%')
                 </if>
                 <!--来源单号-->
                 <if test="params.sourceCode != null and params.sourceCode != ''">
-                    AND fd.source_code ILIKE concat('%',#{params.sourceCode},'%')
+                    AND fd.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
                 </if>
                 <!--备货类型-->
                 <if test="params.demandTypeList != null and params.demandTypeList.size > 0">
@@ -312,15 +312,15 @@
                 </if>
                 <!--平台sku-->
                 <if test="params.asin != null and params.asin != ''">
-                    AND fdd.asin ILIKE concat('%',#{params.asin},'%')
+                    AND fdd.asin ILIKE concat('%',#{params.asin}::text,'%')
                 </if>
                 <!--fnSku-->
                 <if test="params.fnSku != null and params.fnSku != ''">
-                    AND fdd.fn_sku ILIKE concat('%',#{params.fnSku},'%')
+                    AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
                 </if>
                 <!--卖家sku-->
                 <if test="params.msku != null and params.msku != ''">
-                    AND fdd.msku ILIKE concat('%',#{params.msku},'%')
+                    AND fdd.msku ILIKE concat('%',#{params.msku}::text,'%')
                 </if>
                 <!--审核时间-->
                 <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
