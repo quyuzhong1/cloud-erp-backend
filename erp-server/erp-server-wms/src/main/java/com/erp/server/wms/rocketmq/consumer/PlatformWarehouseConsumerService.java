@@ -71,7 +71,7 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
     private void handleOverseasWarehouse(PlatformWarehouseDTO dto) {
         //查询数据库存在的数据
         OverseasProviderWarehouseEntity dbEntity = overseasProviderWarehouseService.getByPlatform(dto.getProviderErpId(),dto.getWarehouseCode());
-        OverseasProviderWarehouseEntity mqEntity = OverseasWarehouseConverter.INSTANCE.mqDtoToDbDto(dto);
+        OverseasProviderWarehouseEntity mqEntity = OverseasWarehouseConverter.INSTANCE.warehouseDb(dto);
         //设置国家名称
         setCountryName(mqEntity);
         if(Objects.isNull(dbEntity)){

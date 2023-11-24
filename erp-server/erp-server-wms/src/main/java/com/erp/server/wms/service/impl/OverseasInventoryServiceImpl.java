@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -10,6 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -134,6 +137,20 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             throw new ServiceException(ApiError.ERROR_1015 + e.getMessage());
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveOrUpdateByPlatform(OverseasInventoryEntity entity) {
+        LambdaQueryWrapper<OverseasInventoryEntity> queryWrapper = new LambdaQueryWrapper<OverseasInventoryEntity>()
+                .eq(OverseasInventoryEntity::getDictPlatform, entity.getDictPlatform())
+                .eq(OverseasInventoryEntity::getWarehouseCode, entity.getWarehouseCode())
+                .eq(OverseasInventoryEntity::getPlatformSku, entity.getPlatformSku());
+        OverseasInventoryEntity existingEntity = this.getOne(queryWrapper);
+        if (existingEntity == null || entity.getDownloadTime().isAfter(existingEntity.getDownloadTime())) {
+            return this.saveOrUpdate(entity,queryWrapper);
+        }
+        return false;
     }
 
 }

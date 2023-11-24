@@ -1,18 +1,17 @@
 package com.sdk.wms.iml.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.common.business.dto.CleanBaseDTO;
+import lombok.*;
 
 import java.io.Serializable;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class ImlInventoryResp implements Serializable {
+public class ImlInventoryResp extends CleanBaseDTO implements Serializable {
 
     //SKU
     @JSONField(name = "product_sku")

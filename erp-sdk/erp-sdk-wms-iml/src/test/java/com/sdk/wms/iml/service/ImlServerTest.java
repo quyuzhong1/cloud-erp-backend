@@ -74,6 +74,17 @@ public class ImlServerTest {
     }
 
     @Test
+    public void getProductInventoryTest() {
+        ImlGetInventoryReq imlGetInventoryReq = ImlGetInventoryReq.builder()
+                .page(1)
+                .pageSize(1000)
+//                .receivingCode("RV86526-230919-0005")
+                .build();
+        ImlResponse<List<ImlInventoryResp>> response = imlServer.getProductInventory(imlGetInventoryReq);
+        System.out.println(response);
+    }
+
+    @Test
     public void createInboundBillTest() {
         ImlCreateInboundReq imlGetReceiptReq = ImlCreateInboundReq.builder()
                 .referenceNo("wjtest20231116001")
@@ -152,14 +163,4 @@ public class ImlServerTest {
         System.out.println(response);
     }
 
-    @Test
-    public void getProductInventoryTest() {
-        ImlGetInventoryReq imlGetInventoryReq = ImlGetInventoryReq.builder()
-                .page(1)
-                .pageSize(1000)
-//                .receivingCode("RV86526-230919-0005")
-                .build();
-        ImlResponse<List<ImlInventoryResp>> response = imlServer.getProductInventory(imlGetInventoryReq);
-        System.out.println(response);
-    }
 }

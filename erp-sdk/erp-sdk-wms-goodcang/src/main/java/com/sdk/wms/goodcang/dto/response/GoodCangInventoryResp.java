@@ -1,24 +1,31 @@
 package com.sdk.wms.goodcang.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.common.business.dto.CleanBaseDTO;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class GoodCangInventoryResp implements Serializable {
+public class GoodCangInventoryResp extends CleanBaseDTO implements Serializable {
 
     //商品sku
     @JSONField(name = "product_sku")
     private String productSku;
+
+    //仓库描述
+    @JSONField(name = "warehouse_desc")
+    private String warehouseDesc;
+
+    //仓库代码
+    @JSONField(name = "warehouse_code")
+    private String warehouseCode;
 
     //尾程在途数量
     @JSONField(name = "onway")
@@ -59,14 +66,6 @@ public class GoodCangInventoryResp implements Serializable {
     //冻结数量
     @JSONField(name = "pi_freeze")
     private Integer piFreeze;
-
-    //仓库描述
-    @JSONField(name = "warehouse_desc")
-    private String warehouseDesc;
-
-    //仓库代码
-    @JSONField(name = "warehouse_code")
-    private String warehouseCode;
 
     //历史出库数量
     @JSONField(name = "shipped")

@@ -32,7 +32,8 @@ public enum BusinessTypeEnum implements EnumMessage {
     CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE),
     GET_TRACK("getTrack","物流轨迹", SourceTypeEnum.LOGISTICS_SUPPLIER),
     TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE),
-    INBOUND("inbound","第三方仓获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE)
+    INBOUND("inbound","第三方仓获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE),
+    INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE)
     ;
 
     @JsonValue
