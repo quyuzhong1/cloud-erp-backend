@@ -51,7 +51,7 @@ public class PlatformTrack123TrackDTO extends CleanBaseDTO {
         this.accepted = responseData.getAccepted();
         this.rejected = responseData.getRejected();
         this.setIsClean(0);
-        this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+        this.setPlatform(PlatformDictEnum.TRACK123.getCode());
         this.setUniqueId(UUID.randomUUID().toString());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(data.getNextTime().toString());

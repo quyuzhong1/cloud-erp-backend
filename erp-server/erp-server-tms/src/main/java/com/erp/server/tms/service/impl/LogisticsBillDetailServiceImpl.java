@@ -135,7 +135,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         page.setSize(query.getSize());
         page.setCurrent(query.getCurrent());
         IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return new PagingVO(result);
+        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
     }
 
     @Override
