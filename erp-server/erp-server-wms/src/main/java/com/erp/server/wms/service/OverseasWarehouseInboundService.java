@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -34,4 +35,22 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
 
 
     OverseasWarehouseInboundEntity getByCode(String receivingCode);
+
+    /**
+     * 分页查询
+     * @author Jim
+     * @date: 2023-11-21
+     * @param dto
+     * @return
+     */
+    PagingVO<OverseasWarehouseInboundDTO.ListDTO> paging(PagingDTO<OverseasWarehouseInboundDTO.PagingParamDTO> dto);
+
+    /**
+     * 手动完结
+     * @author Jim
+     * @date: 2023-11-24
+     * @param dto
+     * @return
+     */
+    BatchResultDTO manualFinish(OverseasWarehouseInboundDTO.FinishDTO dto);
 }

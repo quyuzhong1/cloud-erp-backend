@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -34,5 +35,24 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
     */
     Boolean update(OverseasWarehouseInboundDetailDTO.UpdateDTO dto);
 
+
+    /**
+     * 修改
+     * @author Jim
+     * @date: 2023-11-24
+     * @param detailId
+     * @return
+     */
+    List<OverseasWarehouseInboundDTO.ReceiveRecordView> listReceiveRecord(String detailId);
+
     List<OverseasWarehouseInboundDetailEntity> getByMainId(String mainId);
+
+    /**
+     * 动手签收
+     * @author Jim
+     * @date: 2023-11-24
+     * @param
+     * @return
+     */
+    BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto);
 }

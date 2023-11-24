@@ -1,8 +1,7 @@
 package com.sdk.wms.iml.enums;
 
-import com.common.business.enums.InstockStatusEnum;
+import com.common.business.enums.OverseasInstockStatusEnum;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
@@ -62,19 +61,19 @@ public enum ImlEnums {
      */
     @Getter
     public enum ReceivingStatusEnum {
-        NEW("C","新建",InstockStatusEnum.TO_BE_SHIPPED),
-        FIRST_JOURNEY_ON_THE_WAY("W","头程在途",InstockStatusEnum.TO_BE_SIGNED),
-        INITIAL_RECEIVING("P","头程收货中",InstockStatusEnum.TO_BE_SIGNED),
-        IN_TRANSIT("Z","转运中",InstockStatusEnum.TO_BE_SIGNED),
-        RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中",InstockStatusEnum.PARTIAL_SIGNED),
-        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成",InstockStatusEnum.SIGNED),
-        COMPLETE_LISTING("E","完成上架",InstockStatusEnum.SIGNED),
-        ABANDONMENT("X","废弃",InstockStatusEnum.CANCELED)
+        NEW("C","新建", OverseasInstockStatusEnum.TO_BE_SHIPPED),
+        FIRST_JOURNEY_ON_THE_WAY("W","头程在途", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        INITIAL_RECEIVING("P","头程收货中", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        IN_TRANSIT("Z","转运中", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中", OverseasInstockStatusEnum.PARTIAL_SIGNED),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成", OverseasInstockStatusEnum.SIGNED),
+        COMPLETE_LISTING("E","完成上架", OverseasInstockStatusEnum.SIGNED),
+        ABANDONMENT("X","废弃", OverseasInstockStatusEnum.CANCELED)
         ;
         private final String code;
         private final String name;
-        private final InstockStatusEnum instockStatusEnum;
-        ReceivingStatusEnum(String code, String name, InstockStatusEnum instockStatusEnum) {
+        private final OverseasInstockStatusEnum instockStatusEnum;
+        ReceivingStatusEnum(String code, String name, OverseasInstockStatusEnum instockStatusEnum) {
             this.code = code;
             this.name = name;
             this.instockStatusEnum = instockStatusEnum;
@@ -85,7 +84,7 @@ public enum ImlEnums {
                     .filter(item -> code.equals(item.getCode()))
                     .findFirst()
                     .map(ReceivingStatusEnum::getInstockStatusEnum)
-                    .map(InstockStatusEnum::getCode)
+                    .map(OverseasInstockStatusEnum::getCode)
                     .orElse(code);
         }
 

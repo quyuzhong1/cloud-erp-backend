@@ -49,7 +49,7 @@ public class OverseasInventoryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasInventory:paging",
-            tableAlias = "op"
+            tableAlias = "oi"
     )
     public ApiResult<PagingVO<OverseasInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
         PagingVO<OverseasInventoryDTO.ListDTO> result = overseasInventoryService.paging(dto);
@@ -67,7 +67,7 @@ public class OverseasInventoryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasInventory:paging",
-            tableAlias = "op"
+            tableAlias = "oi"
     )
     public ApiResult<OverseasInventoryDTO.ListTotalDTO> queryParamsTotal(@RequestBody @Validated OverseasInventoryDTO.PagingParamDTO dto) {
         OverseasInventoryDTO.ListTotalDTO resultDTO = overseasInventoryService.queryParamsTotal(dto);

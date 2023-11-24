@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BaseSelectDTO;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
@@ -19,8 +20,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasTransferWarehouseDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
 /**
  * <p>
  * 海外仓签收记录 服务实现类
@@ -97,6 +102,18 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, entity.getPlatformWarehouseCode())
                 .eq(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode, entity.getPlatformToWarehouseCode());
         return this.saveOrUpdate(entity, updateWrapper);
+    }
+
+    @Override
+    public List<BaseSelectDTO> baseSelectlist() {
+        List<OverseasTransferWarehouseEntity> list = lambdaQuery()
+                .list();
+        if(CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        return list.stream()
+                .map(e-> new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getPlatformToWarehouseName()))
+                .collect(Collectors.toList());
     }
 
 

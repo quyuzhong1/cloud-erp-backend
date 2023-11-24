@@ -4,23 +4,42 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.LoginUser;
+import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
+import com.erp.server.wms.convert.FbaShipmentConverter;
+import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.OverseasWarehouseInboundReceivedService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 海外仓入库单详情 服务实现类
@@ -32,10 +51,12 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundDetailMapper, OverseasWarehouseInboundDetailEntity> implements OverseasWarehouseInboundDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private CommonService commonService;
+    @Resource
+    private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -89,16 +110,54 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<OverseasWarehouseInboundDTO.ReceiveRecordView> listReceiveRecord(String detailId) {
+        List<OverseasWarehouseInboundReceivedEntity> list = overseasWarehouseInboundReceivedService.listByDetailIds(Collections.singletonList(detailId));
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        return list.stream()
+                .map(WmsOverseasWarehouseInboundConverter.INSTANCE::receivedEntityToView)
+                .collect(Collectors.toList());
+    }
+
+
     /**
     * 新增修改处理数据
     */
     private void handleData(OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+      // TODO 验证数据 & 数据赋值
     }
 
     @Override
     public List<OverseasWarehouseInboundDetailEntity> getByMainId(String mainId) {
         return lambdaQuery().eq(OverseasWarehouseInboundDetailEntity::getMainId,mainId).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto) {
+        // 查询详情
+        OverseasWarehouseInboundDetailEntity entity = this.getById(dto.getDetailId());
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST));
+        // TODO 校验
+
+        entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
+        // 详情更新签收数量
+        if (!this.updateById(entity)){
+            throw new ServiceException("海外仓入库单详情更新失败");
+        }
+        LoginUser userInfo = commonService.getUserInfo();
+        // 添加签收记录
+        OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
+                userInfo.getUserName(),
+                dto.getReceivedQty(),
+                LocalDateTime.now(ZoneId.systemDefault()));
+        if (!overseasWarehouseInboundReceivedService.save(receivedEntity)){
+            throw new ServiceException("海外仓入库单签收保存失败");
+        }
+
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
     }
 
 }
