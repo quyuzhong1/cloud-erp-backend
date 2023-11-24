@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -24,6 +25,7 @@ public class CargoDetail implements Serializable {
      * 货物名称，如果需要生成电子运单，则为必填。
      * 是
      */
+    @NotBlank(message = "货物名称不能为空")
     private String name;
     /**
      * 货物数量跨境件报关需要填写

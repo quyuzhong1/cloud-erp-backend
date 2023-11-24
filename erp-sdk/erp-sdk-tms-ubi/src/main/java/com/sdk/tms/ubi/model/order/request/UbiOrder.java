@@ -1,10 +1,13 @@
 package com.sdk.tms.ubi.model.order.request;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -22,12 +25,14 @@ import java.util.List;
 public class UbiOrder implements Serializable {
     private static final long serialVersionUID = 2801814838883246461L;
     //客户端的订单唯一标识
+    @NotBlank(message = "客户端的订单唯一标识不能为空")
     private String referenceNo;
     //客户端订单号
     private String referenceNo1;
     //跟踪号
     private String trackingNo;
     //服务代码，物流商提供
+    @NotBlank(message = "服务代码不能为空")
     private String serviceCode;
     //服务选项，物流商提供
     private String serviceOption;
@@ -38,6 +43,7 @@ public class UbiOrder implements Serializable {
     //中文品名
     private String nativeDescription;
     //重量(>=0.000001)
+    @NotNull(message = "重量不能为空")
     private Double weight;
     //重量单位，枚举值：G, KG,LB
     //默认值：KG
@@ -54,8 +60,11 @@ public class UbiOrder implements Serializable {
     //默认值：CM
     private String dimensionUnit;
     //货值(>=0.01)，与sum(itemCount * unitValue)的误差不能超过0.1
+    @NotNull(message = "货值不能为空")
     private Double invoiceValue;
     //币种，ISO货币代码
+    @NotNull(message = "币种代码不能为空")
+    @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "币种代码有误")
     private String invoiceCurrency;
     //枚举值：Y/N
     //默认值：N
@@ -96,6 +105,7 @@ public class UbiOrder implements Serializable {
 
     //收件人名称
     //限制英语/法语字符/非纯数字
+    @NotBlank(message = "收件人名称不能为空")
     private String recipientName;
     //收件人税号
     private String recipientTaxId;
@@ -107,20 +117,25 @@ public class UbiOrder implements Serializable {
     private String email;
     //地址第一行
     //限制英语/法语字符/非纯数字
+    @NotBlank(message = "地址第一行不能为空")
     private String addressLine1;
     //地址第二行
     private String addressLine2;
     //地址第三行
     private String addressLine3;
     //城市
+    @NotBlank(message = "城市不能为空")
     private String city;
     //省 限制英语/法语字符/非纯数字
+    @NotBlank(message = "省不能为空")
     private String state;
     //邮编
     private String postcode;
     //国家二字代码
+    @NotBlank(message = "国家二字代码为空")
     private String country;
     //发件人名称 限制英语/法语字符/非纯数字
+    @NotBlank(message = "发件人名称为空")
     private String shipperName;
     //电话
     private String shipperPhone;

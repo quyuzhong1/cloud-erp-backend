@@ -381,7 +381,8 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         //中间边长
         BigDecimal edge = Arrays.asList(length, width, height).stream().filter(obj -> MathUtil.compareTo(longestEdge, obj) > MathUtil.ZERO && MathUtil.compareTo(obj, shortestEdge) > MathUtil.ZERO).findFirst().orElse(null);
         //次边长
-        BigDecimal minorEdge = ObjectUtil.isEmpty(edge) ? longestEdge : edge;
+        long count = Arrays.asList(length, width, height).stream().filter(obj -> MathUtil.compareTo(longestEdge, obj) == MathUtil.ZERO).count();
+        BigDecimal minorEdge = ObjectUtil.isEmpty(edge) ? (count > 1 ? longestEdge : shortestEdge) : edge;
         //三边和
         BigDecimal edgelSum = Arrays.asList(length, width, height).stream().reduce(BigDecimal.ZERO,BigDecimal::add);
 

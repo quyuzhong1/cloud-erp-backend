@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class OrderRequest implements Serializable {
     /**
      *国内快递公司名称,物流公司Id为-1时,必填
      */
+    @NotNull(message = "申报产品信息为空")
     @JSONField(name = "declare_product_d_t_os")
     private List<DeclareProduct> declareProducts;
     /**
@@ -57,6 +59,7 @@ public class OrderRequest implements Serializable {
      *国内快递ID(物流公司是other时,ID为-1)
      * 是
      */
+    @NotNull(message = "国内快递ID不能为空")
     @JSONField(name = "domestic_logistics_company_id")
     private Long domestic_logistics_company_id;
     /**
@@ -74,12 +77,14 @@ public class OrderRequest implements Serializable {
      *订单来源
      * 是
      */
+    @NotNull(message = "订单来源不能为空")
     @JSONField(name = "trade_order_from")
     private String trade_order_from;
     /**
      *交易订单号
      * 是
      */
+    @NotNull(message = "交易订单号不能为空")
     @JSONField(name = "trade_order_id")
     private String trade_order_id;
     /**
@@ -91,6 +96,7 @@ public class OrderRequest implements Serializable {
      *”根据订单号获取线上发货物流方案“API获取用户选择的实际发货物流服务（物流服务key,即仓库服务名称)例如：HRB_WLB_ZTOGZ是 中俄航空 Ruston广州仓库； HRB_WLB_RUSTONHEB为哈尔滨备货仓暂不支持，该渠道请做忽略。
      * 是
      */
+    @NotNull(message = "发货物流方案不能为空")
     @JSONField(name = "warehouse_carrier_service")
     private String warehouse_carrier_service;
 

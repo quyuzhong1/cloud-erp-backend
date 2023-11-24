@@ -1,5 +1,8 @@
 package com.erp.server.tms.service;
 
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+
 /**
  * <p>
  * 物流平台订单操作记录 服务类
@@ -8,7 +11,7 @@ package com.erp.server.tms.service;
  * @author zdy
  * @since 2023-11-08
  */
-public interface LogisticsOrderOperateLogService {
+public interface LogisticsOperateService {
 
     /**
      * 增加接口调用记录
@@ -35,4 +38,14 @@ public interface LogisticsOrderOperateLogService {
      */
     String pushOperateLog(String authId, String sourceId, String businessType, String logisticsPlatform, String status, String requestParamJson, String responseParamJson);
 
+    /**
+     * 拉取数据 增加飞书预警
+     * @param entity
+     */
+    void sendPullWarnMsg(DmpPullTaskEntity entity);
+    /**
+     * 创建订单 增加飞书预警
+     * @param entity
+     */
+    void sendPushWarnMsg(DmpPushTaskEntity entity);
 }
