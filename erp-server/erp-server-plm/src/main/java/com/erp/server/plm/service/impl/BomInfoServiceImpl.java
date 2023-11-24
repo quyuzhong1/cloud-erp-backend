@@ -228,9 +228,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Override
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(BomInfoEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeId),BomInfoEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .eq(BomInfoEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), BomInfoEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -628,7 +628,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<String> skuNoList = newChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             List<String> dbSkuNoList = OldChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             String removeSkuNo = dbSkuNoList.stream().filter(d -> !skuNoList.contains(d)).collect(Collectors.joining(","));
-            if(StringUtils.isNotBlank(removeSkuNo)){
+            if (StringUtils.isNotBlank(removeSkuNo)) {
                 String removeContent = "删除了" + removeSkuNo + " 子物料";
                 contentList.add(removeContent);
             }
@@ -945,7 +945,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 17:04
      */
     @Override
-    public void checkIfChange(String sourceId) {
+    public void checkIfChange(String sourceId,String detailsJson) {
         BomInfoEntity infoEntity = this.getById(sourceId);
         if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95095);
@@ -959,6 +959,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
             throw new ServiceException(ApiError.ERROR_95113);
         }
+        BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
+        UpdateBomDTO updateBom=new UpdateBomDTO();
+        updateBom.setId(bom.getId());
+        updateBom.setSkuList(bom.getSkuList());
+        checkRepeatBomSku(updateBom);
+
 
     }
 
@@ -1159,7 +1165,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity bomEntity = this.getById(bomId);
         if (bomEntity != null) {
             String bomVersion = bomEntity.getBomVersion();
-            bomEntity.setBomVersion(MathUtil.add(MathUtil.valueOf(bomVersion),BigDecimal.ONE).toString());
+            bomEntity.setBomVersion(MathUtil.add(MathUtil.valueOf(bomVersion), BigDecimal.ONE).toString());
             bomEntity.setType(bom.getType());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
@@ -1348,12 +1354,31 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     private void checkRepeatBomSku(UpdateBomDTO dto) {
         List<BomSkuDTO> skuList = dto.getSkuList();
+        List<String> childrenSkuIdList = new ArrayList<>(10);
+        for (BomSkuDTO item : skuList) {
+            List<String> childrenSkuIds = item.getChildren().stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            childrenSkuIdList.addAll(childrenSkuIds);
+        }
+        childrenSkuIdList = childrenSkuIdList.stream().distinct().collect(Collectors.toList());
+        //这个是以子集sku当做父级sku 对应的bom 信息
+        List<BomChildrenSkuDTO> parentSkuList = bomSkuService.listAllBomChildBySkuIds(childrenSkuIdList);
+
         List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
         for (BomSkuDTO bomSkuDTO : skuList) {
-            long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(bomSkuDTO.getSkuId())).count();
+            //这个是父级的sku id
+            String parentSkuId = bomSkuDTO.getSkuId();
+            long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(parentSkuId)).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_BOM_PARENT_SKU_REPEAT, bomSkuDTO.getSkuNo());
+            }
+            /**
+             * 这个表示 bomSkuDTO 的子的sku  为bomm 的父级sku 而该Bom 的子sku 有为bomSkuDTO 的父级
+             * 这样就会有问题
+             */
+            List<String> bomCodeList = parentSkuList.stream().filter(p -> p.getSkuId().equals(parentSkuId)).map(BomChildrenSkuDTO::getSerialNumber).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(bomCodeList)) {
+                throw new ServiceException(ApiError.ERROR_BOM_CONTAIN, bomCodeList.stream().collect(Collectors.joining(",")),bomSkuDTO.getSkuNo());
             }
         }
     }

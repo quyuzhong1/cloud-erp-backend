@@ -5,6 +5,7 @@
     <select id="listAllBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbi.id as bomId,
+        pbi.serial_number,
         pbi.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
         pbs.sku_id as skuId,

@@ -55,7 +55,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean removeArchive(String id);
 
-    void checkIfChange(String sourceId);
+    void checkIfChange(String sourceId,String detailsJson);
 
     void updateState(String sourceId, Integer state);
 

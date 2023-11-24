@@ -481,12 +481,15 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
     ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
+    ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
+
     /**
      * TMS 错误
      * 从96000 开始
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
+
 
     /**
      * bi 错误
