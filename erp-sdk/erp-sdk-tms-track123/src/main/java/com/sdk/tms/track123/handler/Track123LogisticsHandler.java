@@ -117,8 +117,8 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
             try {
                 TrackResponse track = trackShipperService.getTrack(token, trackRequest);
                 return track.getData();
-            }catch (Exception e){
-                log.error("获取Track123物流轨迹查询异常：{}",e.getMessage());
+            } catch (Exception e) {
+                log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
                 return null;
             }
         } else {
@@ -132,39 +132,54 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
         for (PlatformTrack123TrackDTO sourceDto : sourceDataList) {
             //将成功和失败的数据返回
             TrackInfo accepted = sourceDto.getAccepted();
-            if (Objects.nonNull(accepted)){
-                if (CollectionUtils.isEmpty(accepted.getContent())) continue;
-                for (TrackDetail trackDetail : accepted.getContent()) {
-                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                    acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
-                    LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
-                    if (CollectionUtils.isEmpty(localLogisticsInfo.getTrackingDetails())) continue;
-                    List<PlatformTrackDetail> details = new ArrayList<>();
-                    for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
-                        PlatformTrackDetail detail = new PlatformTrackDetail();
-                        detail.setTrackNo(trackDetail.getTrackNo());
-                        detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
-                        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                        detail.setTrackTime(eventTime);
-                        detail.setContent(trackingDetail.getEventDetail());
-                        details.add(detail);
+            if (Objects.nonNull(accepted)) {
+                if (CollectionUtils.isNotEmpty(accepted.getContent())) {
+                    for (TrackDetail trackDetail : accepted.getContent()) {
+                        PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                        acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
+                        LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
+                        if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
+                            List<PlatformTrackDetail> details = new ArrayList<>();
+                            for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
+                                PlatformTrackDetail detail = new PlatformTrackDetail();
+                                detail.setTrackNo(trackDetail.getTrackNo());
+                                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                detail.setTrackTime(eventTime);
+                                detail.setContent(trackingDetail.getEventDetail());
+                                details.add(detail);
+                            }
+                            acceptedToSaveDto.setDetails(details);
+                            resultList.add(acceptedToSaveDto);
+                        } else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
+                            List<PlatformTrackDetail> details = new ArrayList<>();
+                            PlatformTrackDetail detail = new PlatformTrackDetail();
+                            detail.setTrackNo(trackDetail.getTrackNo());
+                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                            detail.setTrackTime(eventTime);
+                            detail.setContent("暂无信息");
+                            details.add(detail);
+                            acceptedToSaveDto.setDetails(details);
+                            resultList.add(acceptedToSaveDto);
+                        }
                     }
-                    acceptedToSaveDto.setDetails(details);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
+                for (Rejected rejected : sourceDto.getRejected()) {
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
+                    PlatformTrackDetail detail = new PlatformTrackDetail();
+                    detail.setTrackNo(rejected.getTrackNo());
+                    detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                    detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                    detail.setTrackTime(LocalDateTime.now());
+                    acceptedToSaveDto.setDetails(Collections.singletonList(detail));
                     resultList.add(acceptedToSaveDto);
                 }
             }
-            if (CollectionUtils.isEmpty(sourceDto.getRejected())) continue;
-            for (Rejected rejected : sourceDto.getRejected()) {
-                PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
-                acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
-                PlatformTrackDetail detail = new PlatformTrackDetail();
-                detail.setTrackNo(rejected.getTrackNo());
-                detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-                detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
-                detail.setTrackTime(LocalDateTime.now());
-                acceptedToSaveDto.setDetails(Collections.singletonList(detail));
-                resultList.add(acceptedToSaveDto);
-            }
+
         }
         return resultList;
     }
@@ -226,6 +241,6 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
      * false=不发送（有其他详情需要额外拉取）
      */
     public Boolean getIsSendMq() {
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 }

@@ -21,7 +21,6 @@
        <result column="paper_length" property="paperLength" />
        <result column="paper_width" property="paperWidth" />
        <result column="sorting_code" property="sortingCode" />
-       <result column="shipping_template_id" property="shippingTemplateId" />
        <result column="fee_rule" property="feeRule" />
        <result column="max_customs_amount" property="maxCustomsAmount" />
        <result column="max_customs_currency" property="maxCustomsCurrency" />
@@ -66,6 +65,7 @@
                 #{item}
             </foreach>
         </if>
+        order by lc.disabled asc,lc.id desc
     </select>
     <select id="listBySupplierId" resultType="com.common.business.dto.base.BaseIdDTO$CodeDTO">
         SELECT
