@@ -30,7 +30,7 @@
                 AND tfo.approve_status = #{params.searchType}
             </if>
             <if test="params.code != null and params.code != ''">
-                and tfo.code iLIKE concat('%',#{params.code}::text,'%')
+                and tfo.code ilike concat('%',#{params.code}::text,'%')
             </if>
             <if test="params.invalidStatus != null ">
                 and tfo.invalid_status = #{params.invalidStatus}
@@ -111,7 +111,7 @@
             </if>
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.code != null and params.code != ''">
-                    and tfo.code iLIKE concat('%',#{params.code}::text,'%')
+                    and tfo.code ilike concat('%',#{params.code}::text,'%')
                 </if>
                 <if test="params.invalidStatus != null ">
                     and tfo.invalid_status = #{params.invalidStatus}
