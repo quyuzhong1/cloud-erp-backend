@@ -167,7 +167,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         shippingTemplateOtherCostService.add(addDTO.getOtherCostList(),shippingTemplateEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "运费模板" , shippingTemplateEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", commonService.getUserInfo().getUserName(), "运费模板" , shippingTemplateEntity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(shippingTemplateEntity.getId(), shippingTemplateEntity.getId());
@@ -197,7 +197,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         // 记录主单操作日志
         log.info("编辑 开始记录运费模板日志数据，id：【{}】", shippingTemplateEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateEntity.getId(), "运费模板");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), shippingTemplateEntity.getName(), "运费模板");
 
         operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), msg);
         return Boolean.TRUE;
@@ -315,7 +315,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         removeById(id);
         // 删除日志数据
         log.info("删除 开始删除运费模板单日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板");
+        String msg = StrUtil.format("用户【{}】名称【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getName(), "运费模板");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "删除运费模板单数据");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
@@ -641,6 +641,8 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             if (StringUtils.isNotBlank(viewDTO.getExtendJson())) {
                 ExtendJsonDTO.CommonDTO jsonDTO = JSONUtil.toBean(viewDTO.getExtendJson(), ExtendJsonDTO.CommonDTO.class);
                 viewDTO.setExtendJsonDto(jsonDTO);
+            } else {
+                viewDTO.setExtendJsonDto(new ExtendJsonDTO.CommonDTO());
             }
         }
     }
@@ -836,6 +838,12 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             JSONObject jsonObject = JSONUtil.parseObj(excelValueDTO);
             addDTO.setCostSettingValue(ObjectUtil.isEmpty(jsonObject.get(shippingCostNameEnum.getCode())) ? null : new BigDecimal(jsonObject.get(shippingCostNameEnum.getCode()).toString()));
             addDTO.setCalculationUnit(shippingCostNameEnum.getUnit());
+            if (ShippingCostNameEnum.PREMIUM_COST.equals(shippingCostNameEnum)) {
+                addDTO.setSettingList(Arrays.asList(ShippingCostNameEnum.PREMIUM_COST.getType()));
+            }
+            if (ShippingCostNameEnum.SIGNATURE_COST.equals(shippingCostNameEnum)) {
+                addDTO.setSettingList(Arrays.asList(ShippingCostNameEnum.SIGNATURE_COST.getType()));
+            }
             otherCostList.add(addDTO);
         }
         return otherCostList;

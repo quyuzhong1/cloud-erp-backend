@@ -84,6 +84,12 @@ public class ShippingTemplateOtherCostEntity extends BaseEntity<ShippingTemplate
     @TableField(exist = false)
     private ExtendJsonDTO.CommonDTO extendJsonDto;
 
+    /**
+     * 数值设置json(用于日志)
+     */
+    @TableField(exist = false)
+    private String extendJsonLog;
+
 
     public static final String MAIN_ID = "main_id";
 

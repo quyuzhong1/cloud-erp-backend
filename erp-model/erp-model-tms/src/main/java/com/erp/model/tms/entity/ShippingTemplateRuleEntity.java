@@ -106,6 +106,16 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
     private BigDecimal minCost;
 
     /**
+     * 起始地名称
+     */
+    @TableField(exist = false)
+    private String fromCountryName;
+    /**
+     * 目的地名称
+     */
+    @TableField(exist = false)
+    private String toCountryName;
+    /**
      * 城市
      */
     @TableField(exist = false)
