@@ -361,6 +361,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     }
 
+    @Override
+    public List<LogisticsBillEntity> listByOutstockIdList(List<String> outstockIdList) {
+        if(CollectionUtils.isEmpty(outstockIdList)){
+              return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsBillEntity::getOutstockId,outstockIdList).list();
+    }
+
     private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;

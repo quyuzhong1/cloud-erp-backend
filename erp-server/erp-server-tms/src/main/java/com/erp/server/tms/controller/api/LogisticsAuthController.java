@@ -55,6 +55,7 @@ public class LogisticsAuthController extends BaseController {
         String id = result.getId();
         if(StringUtils.isNotBlank(id)){
             logisticsAuthService.syncUpdateSaleChannel(id);
+
         }
         return success(result);
     }

@@ -60,7 +60,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO addDTO) {
