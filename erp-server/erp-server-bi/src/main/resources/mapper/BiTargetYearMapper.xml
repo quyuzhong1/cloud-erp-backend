@@ -36,7 +36,8 @@
     <select id="AllTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
             month,
-            SUM (value) AS metricsValue
+            SUM (value) AS metricsValue,
+            '${metricsName}' AS metricsName
         FROM (
             SELECT
             month, SUM (value) AS value
@@ -90,7 +91,7 @@
 
     <select id="ListDeptTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
-            month ,SUM(value) AS metricsValue
+            month ,SUM(value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_staff_setting tss
         LEFT JOIN bi_target_year ty
         ON tss.main_id=ty.id and ty.is_deleted=false
@@ -107,7 +108,7 @@
 
     <select id="ListStaffTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
-        month, SUM (value) AS metricsValue
+        month, SUM (value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_staff_setting tss
         LEFT JOIN bi_target_year ty
         ON tss.main_id=ty.id and ty.is_deleted= false
@@ -125,7 +126,7 @@
 
     <select id="ListShopTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
-        month ,SUM(value) AS metricsValue
+        month ,SUM(value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_shop_setting tss
         LEFT JOIN bi_target_year ty
         ON tss.main_id=ty.id and ty.is_deleted=false
