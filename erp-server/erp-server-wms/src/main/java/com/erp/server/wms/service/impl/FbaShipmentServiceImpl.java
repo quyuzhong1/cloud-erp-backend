@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -36,6 +37,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -44,6 +46,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
+import com.erp.server.wms.convert.OverseasDeliveryPlanConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -101,6 +104,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -934,13 +939,86 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> GenerateRequisitionApplicationView(BaseIdsDTO.IdsDTO ids) {
-        return null;
+    public List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
+        List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+        //根据skuId查询拥有的子sku
+        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        //查询skuId产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : list) {
+            //FBA下推要货单要货类型默认是：销售平台
+            viewDTO.setType(RequisitionApplicationTypeEnum.SALES_PLATFORM.getCode());
+            viewDTO.setTypeName(RequisitionApplicationTypeEnum.SALES_PLATFORM.getName());
+            //来源类型
+            viewDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+            //来源类型中文
+            viewDTO.setSourceTypeName(SourceTypeEnum.FBA_SHIPMENT.getName());
+
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                viewDTO.setIsCombination(Boolean.TRUE);
+                viewDTO.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            } else {
+                viewDTO.setIsCombination(Boolean.FALSE);
+            }
+
+            //设置产品编号
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                viewDTO.setSkuNo(skuVO.getSkuNo());
+                viewDTO.setProductName(skuVO.getSkuName());
+            }
+            viewDTO.setRequisitionQty(viewDTO.getDeclareQty());
+        }
+        return list;
     }
 
     @Override
     public Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list) {
-        return null;
+        return generateRequisitionApplication(list, Boolean.FALSE);
+    }
+
+    @Override
+    public Boolean generateRequisitionApplicationSaveAndSubmit(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list) {
+        return generateRequisitionApplication(list, Boolean.TRUE);
+    }
+
+    private Boolean generateRequisitionApplication(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list, Boolean isSubmit) {
+        //一个发货计划单，生成一个要货申请单
+        Map<String, List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>> map = list.stream().collect(Collectors.groupingBy(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO::getSourceId));
+
+        //根据仓库id查询仓库信息
+        List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(requisitionWarehouseIds);
+
+        for (Map.Entry<String, List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>> entry : map.entrySet()) {
+            List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
+            //映射主表信息
+            RequisitionApplicationDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
+
+            //映射详情信息
+            List<RequisitionApplicationDetailDTO.AddDTO> detailAddList = new ArrayList<>();
+            for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
+                //要货仓库中文
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+                addDTO.setRequisitionWarehouseName(updateDTO.getName());
+
+                RequisitionApplicationDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
+
+                detailAddList.add(detailAddDto);
+            }
+            addDTO.setDetailList(detailAddList);
+
+            BaseResultDTO.AddDTO add = requisitionApplicationService.add(addDTO);
+            if (isSubmit) {
+                requisitionApplicationService.submit(add.getId());
+            }
+        }
+        return Boolean.TRUE;
     }
 
     @Override

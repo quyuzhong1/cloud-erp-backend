@@ -265,12 +265,12 @@ public class FbaShipmentController extends BaseController {
      * 下推要货申请列表查询
      * @Author Luo_WG
      * @Date 2023/11/17 11:19
-     * @param ids
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>>
      **/
-    @PostMapping("/requisitionApplicationView")
-    public ApiResult<List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>> GenerateRequisitionApplicationView(@RequestBody BaseIdsDTO.IdsDTO ids) {
-        List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> result = fbaShipmentService.GenerateRequisitionApplicationView(ids);
+    @PostMapping("/generateRequisitionApplicationView")
+    public ApiResult<List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> result = fbaShipmentService.generateRequisitionApplicationView(dto.getIds());
         return success(result);
     }
 
@@ -285,6 +285,20 @@ public class FbaShipmentController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "FBA货件下推要货申请保存")
     public ApiResult generateRequisitionApplicationSave(@RequestBody @Validated ValidList<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> dto) {
         Boolean flag = fbaShipmentService.generateRequisitionApplicationSave(dto.getList());
+        return flag ? success() : failure();
+    }
+
+    /**
+     * FBA货件下推要货申请保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateRequisitionApplicationSaveAndSubmit")
+    @LogAction(value = LogActionEnum.INSERT, desc = "FBA货件下推要货申请保存并提交")
+    public ApiResult generateRequisitionApplicationSaveAndSubmit(@RequestBody @Validated ValidList<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> dto) {
+        Boolean flag = fbaShipmentService.generateRequisitionApplicationSaveAndSubmit(dto.getList());
         return flag ? success() : failure();
     }
 
