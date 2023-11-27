@@ -3,6 +3,7 @@ import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 
 import java.util.List;
 
@@ -62,4 +63,14 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      *@date 2023-11-15
      */
     void copy(String channelId, String addChannelId);
+
+
+    /**
+     *
+     *@parms salesPlatform 销售平台 channelId 渠道id
+     *@return
+     *@author yl
+     *@date 2023-11-27
+     */
+    LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String channelId);
 }

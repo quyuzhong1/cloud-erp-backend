@@ -84,4 +84,13 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.LogisticsProductDTO.UpdatePagingDTO>
      */
     PagingVO<LogisticsProductDTO.UpdatePagingDTO> updatePaging(PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto);
+
+    /**
+     * 根据sku id list 获取到产品信息
+     *@parms skuIdList
+     *@return 
+     *@author yl
+     *@date 2023-11-27
+     */
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList);
 }

@@ -4,6 +4,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 
 import java.util.List;
 
@@ -140,4 +141,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-27
      */
     void removeByIdList(List<String> deleteChannelIdList);
+
+
 }

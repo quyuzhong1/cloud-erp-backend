@@ -84,8 +84,8 @@ public class LogisticsBillFeignController {
      * @date 2023-11-23
      */
     @PostMapping("/generateBill")
-    public void generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
-        logisticsBillService.generateBill(dto);
+    public List<String> generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
+        return logisticsBillService.generateBill(dto);
     }
 
     /**
