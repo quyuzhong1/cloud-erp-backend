@@ -99,8 +99,19 @@ public class LogisticsAuthController extends BaseController {
             keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流商授权更新")
     public ApiResult update(@RequestBody @Validated LogisticsAuthDTO.UpdateDTO dto) {
-        logisticsAuthService.update(dto);
-        return success();
+        BaseResultDTO.UpdateDTO result=  logisticsAuthService.update(dto);
+        String id = result.getId();
+        if (StringUtils.isNotBlank(id)) {
+            //先进行授权是否成功鉴权
+            ApiResult apiResult = logisticsAuthService.authLogistics(id, dto.getLogisticsPlatform());
+            if (apiResult.isSuccess()) {
+                logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
+            } else {
+                logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
+                return apiResult;
+            }
+        }
+        return success(result);
     }
 
     /**

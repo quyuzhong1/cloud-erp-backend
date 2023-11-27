@@ -47,7 +47,7 @@ public class LogisticsOrderResponseVO extends LogisticsBaseResponseVO implements
     /**
      * 是否存在 1对多订单情况
      */
-    boolean more;
+    Boolean more;
     /**
      * 兼容一对多情况 一个订单存在多个运单号 主单和子单
      */
