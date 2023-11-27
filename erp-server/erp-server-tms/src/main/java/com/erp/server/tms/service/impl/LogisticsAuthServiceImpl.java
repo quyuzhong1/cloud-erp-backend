@@ -96,7 +96,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(LogisticsAuthDTO.UpdateDTO updateDTO) {
+    public BaseResultDTO.UpdateDTO update(LogisticsAuthDTO.UpdateDTO updateDTO) {
         LogisticsAuthEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权单"));
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(updateDTO.getMainId());
@@ -116,7 +116,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         logisticsSupplierService.updateById(supplierEntity);
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), updateDTO.getFieldMap());
-        return Boolean.TRUE;
+        return new BaseResultDTO.UpdateDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
+
     }
 
     @Override

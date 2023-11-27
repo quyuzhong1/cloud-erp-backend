@@ -66,4 +66,11 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/updateTrackNo")
     Boolean updateTrackNo(@RequestBody LogisticsBillDTO.UpdateTrackNoDTO dto);
+
+    /**
+     * 自动生成物流单
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/generateBill")
+    List<String> generateBill(@RequestBody LogisticsBillDTO.GenerateBillDTO dto);
 }

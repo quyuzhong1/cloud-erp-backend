@@ -29,6 +29,24 @@
         is_deleted,
         logistics_channel_id, sales_platform
     </sql>
+    <select id="getBySalesPlatform" resultType="com.erp.model.tms.entity.LogisticsSaleChannelEntity">
+         SELECT
+             platform_channel_id,
+             cn_name,en_name,
+             code,channel_status,
+             supplier_name,supplier_code,
+             shipment_method,logistics_platform,
+             source_data,is_track,
+             aging,origin_country,
+             destination_country,
+             overseas_warehouse_id
+        FROM logistics_sale_channel
+        WHERE is_deleted=false
+            AND id=(SELECT logistics_sale_channel_id FROM logistics_mapping
+            WHERE logistics_channel_id=#{channelId} AND
+            sales_platform=#{salesPlatform} AND is_deleted=FALSE  LIMIT 1
+            )
+    </select>
 
 
 </mapper>

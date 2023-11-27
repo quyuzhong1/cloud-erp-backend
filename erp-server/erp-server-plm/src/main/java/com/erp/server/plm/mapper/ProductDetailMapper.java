@@ -208,6 +208,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     IPage<LogisticsProductDTO.UpdatePagingDTO> logisticsProductUpdatePaging(Page query,@Param("params") LogisticsProductDTO.UpdatePagingParamDTO params,@Param("approveStatus") Integer approvalStatus,@Param("fieldList") List<String> fieldList);
 
     Integer logisticsProductUpdateCount(@Param("approveStatus")Integer approvalStatus,@Param("fieldList") List<String> fieldList,@Param("permissionSql")String permissionSql);
+
+    /**
+     * 根据sku IdList 获取物流产品信息
+     *@parms skuIdList
+     *@return
+     *@author yl
+     *@date 2023-11-27
+     */
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList);
 }
 
 

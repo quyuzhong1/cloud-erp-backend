@@ -36,6 +36,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
@@ -351,6 +352,31 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList);
+        String isElectricFlag= ProductConstant.IS_ELECTRIC;
+        //属性
+        List<String> propertyIdList = list.stream().map(LogisticsProductDTO.ProductDTO::getProductPropertyId).distinct().collect(Collectors.toList());
+        List<BasicDictEntity> dictList = CollectionUtils.isNotEmpty(propertyIdList) ? basicDictService.listByIds(propertyIdList) : Collections.emptyList();
+        for (LogisticsProductDTO.ProductDTO item : list) {
+            //毛重
+            BigDecimal grossWeight = item.getGrossWeight();
+            Integer weight=0;
+            if(Objects.nonNull(grossWeight)){
+                weight=grossWeight.intValue();
+            }
+            item.setWeight(weight);
+            String propertyId=item.getProductPropertyId();
+            String flag=dictList.stream().filter(d->d.getId().equals(propertyId)).findFirst().map(BasicDictEntity::getRemark).orElse("");
+            item.setIsElectric(isElectricFlag.equals(flag));
+        }
+        return list;
+    }
+
 
     private List<String> listField() {
         List<String> fieldList = new ArrayList<>(10);
@@ -601,14 +627,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             BigDecimal actualTaxCost = item.getActualTaxCost();
             if (Objects.isNull(actualTaxCost) || zero.compareTo(actualTaxCost) == 0) {
                 Map<String, BigDecimal> map = getSkuCost(supplierSkuPriceList, skuId);
-                actualTaxCost=map.get("actualTaxCost");
+                actualTaxCost = map.get("actualTaxCost");
                 item.setActualTaxCost(actualTaxCost);
                 item.setActualNoTaxCost(map.get("actualNoTaxCost"));
             }
             BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
             //目的国申报价
             BigDecimal destDeclarePrice = item.getDestDeclarePrice();
-            if (Objects.isNull(destDeclarePrice)||destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
                 BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
                 item.setDestDeclarePrice(resultDestDeclarePrice);
             }
