@@ -129,7 +129,12 @@ public class ShopeeProductService {
 //        if (Objects.nonNull(productRequest.getTimeTo())) {
 //            paramMap.put("update_time_to", productRequest.getTimeTo());
 //        }
-        paramMap.put("item_status", "NORMAL");
+        List<String> status = new ArrayList<>();
+        status.add("NORMAL");
+        status.add("DELETED");
+        status.add("UNLIST");
+        status.add("BANNED");
+        paramMap.put("item_status", status);
         return ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
     }
 

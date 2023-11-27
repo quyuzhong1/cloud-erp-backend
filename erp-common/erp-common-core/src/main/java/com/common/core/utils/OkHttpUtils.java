@@ -165,7 +165,14 @@ public class OkHttpUtils {
         HttpUrl.Builder urlBuilder = request.url().newBuilder();
         if (params != null && params.size() > 0) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
-                urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(entry.getValue()));
+                Object value = entry.getValue();
+                if (value instanceof List){
+                    for (Object o : (List) value) {
+                        urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(o));
+                    }
+                }else {
+                    urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(entry.getValue()));
+                }
             }
         }
 
