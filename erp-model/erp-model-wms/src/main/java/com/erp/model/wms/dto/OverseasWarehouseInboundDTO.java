@@ -727,16 +727,12 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     @AllArgsConstructor
     public static class CountDTO {
         /**
-         * 类型名称
-         */
-        private String typeName;
-        /**
          * 入库单状态:
          * OutstockTypeEnum
          * 获取路径：/wms/common/enumDropDown?type=OverseasInstockStatus
          * toBeShipped=待发货，toBeSigned=待签收，partialSigned=部分签收，signed=已签收，canceled=已取消，abnormal=异常，
          */
-        private String type;
+        private String tabFlag;
         /**
          * 数量
          */
