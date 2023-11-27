@@ -32,7 +32,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private StocktakingProfitLossService  stocktakingProfitLossService;
 
     @Resource
-    private FbaDeliveryService fbaDeliveryService;
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @Resource
     private OverseasDeliveryPlanService overseasDeliveryPlanService;
@@ -141,11 +141,11 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      **/
     private Boolean fbaDeliveryApproveEnd(EndProcessDTO dto) {
         //FBA发货单
-        FbaDeliveryEntity entity = fbaDeliveryService.getById(dto.getBusinessId());
+        FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(dto.getBusinessId());
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
-        return fbaDeliveryService.approveEnd(approveOne,entity);
+        return firstMileDeliveryService.approveEnd(approveOne,entity);
     }
 
     /**

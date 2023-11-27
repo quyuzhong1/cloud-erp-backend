@@ -1,6 +1,6 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -8,21 +8,20 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
-import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
 import java.util.List;
 
 /**
  * <p>
- * FBI发货单 Mapper 接口
+ * 头程发货单 Mapper 接口
  * </p>
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Mapper
-public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
+public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEntity> {
 
     /**
     * 分页查询
@@ -30,21 +29,21 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
     * @param params
     * @return
     */
-    IPage<FbaDeliveryDTO.ListDTO> paging(Page query, @Param("params") FbaDeliveryDTO.PagingParamDTO params);
+    IPage<FirstMileDeliveryDTO.ListDTO> paging(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
     /**
     * 状态数量
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") FbaDeliveryDTO.PagingParamDTO params);
+    List<ApproveStatusQtyDTO> listCount(@Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
     * @param params
     * @return
     */
-    List<FbaDeliveryDTO.ListDTO> listExport(@Param("params") FbaDeliveryDTO.ExportDTO params);
+    List<FirstMileDeliveryDTO.ListDTO> listExport(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
 
 
     /**
@@ -52,7 +51,7 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
     * @param searchParam
     * @return
     */
-    List<FbaDeliveryDTO.TabListDTO> tabList(@Param("params") FbaDeliveryDTO.PagingParamDTO searchParam);
+    List<FirstMileDeliveryDTO.TabListDTO> tabList(@Param("params") FirstMileDeliveryDTO.PagingParamDTO searchParam);
 
     /**
      * 根据来源单号查询发货记录
@@ -61,7 +60,7 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FbaDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
 
     /**
      * 下推加工单列表查询
@@ -70,5 +69,5 @@ public interface FbaDeliveryMapper extends BaseMapper<FbaDeliveryEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateMachineView>
      **/
-    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(@Param("ids") List<String> ids);
+    List<FirstMileDeliveryDTO.GenerateMachineView> generateMachineView(@Param("ids") List<String> ids);
 }

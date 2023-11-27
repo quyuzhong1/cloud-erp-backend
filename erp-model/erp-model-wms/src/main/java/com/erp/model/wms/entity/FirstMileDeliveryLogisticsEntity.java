@@ -10,12 +10,11 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * FBI发货单物流信息表
+ * 头程发货单物流信息表
  * </p>
  *
  * @author Luo_WG
@@ -24,8 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("fba_delivery_logistics")
-public class FbaDeliveryLogisticsEntity extends BaseEntity<FbaDeliveryLogisticsEntity> {
+@TableName("first_mile_delivery_logistics")
+public class FirstMileDeliveryLogisticsEntity extends BaseEntity<FirstMileDeliveryLogisticsEntity> {
 
     /**
     * 主表id

@@ -5,13 +5,11 @@ import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.SalesDemandDetailDTO;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
-import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 
 import org.springframework.core.io.DefaultResourceLoader;
@@ -20,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,7 +26,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.OverseasDeliveryPlanService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -413,8 +409,8 @@ public class OverseasDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
      **/
     @GetMapping("/listDeliverRecord")
-    public ApiResult<List<FbaDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
-        List<FbaDeliveryDTO.DeliverRecordView> result = overseasDeliveryPlanService.listDeliverRecord(id);
+    public ApiResult<List<FirstMileDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
+        List<FirstMileDeliveryDTO.DeliverRecordView> result = overseasDeliveryPlanService.listDeliverRecord(id);
         return success(result);
     }
 

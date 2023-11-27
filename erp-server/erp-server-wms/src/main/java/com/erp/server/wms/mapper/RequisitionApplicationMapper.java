@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -30,7 +30,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @param searchParam
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.TabListDTO>
      **/
-    List<RequisitionApplicationDTO.TabListDTO> tabList(FbaDeliveryDTO.PagingParamDTO searchParam);
+    List<RequisitionApplicationDTO.TabListDTO> tabList(FirstMileDeliveryDTO.PagingParamDTO searchParam);
 
     /**
      * 分页查询

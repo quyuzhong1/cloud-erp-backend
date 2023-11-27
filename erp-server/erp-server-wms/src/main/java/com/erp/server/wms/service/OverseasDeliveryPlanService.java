@@ -1,5 +1,5 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 import com.common.business.service.SuperService;
@@ -163,7 +163,7 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @param id
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.DeliverRecordDTO>
      **/
-    List<FbaDeliveryDTO.DeliverRecordView> listDeliverRecord(String id);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id);
 
     /**
      * 下推要货申请列表查询

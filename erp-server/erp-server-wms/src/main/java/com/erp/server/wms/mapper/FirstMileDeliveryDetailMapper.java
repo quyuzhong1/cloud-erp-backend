@@ -1,5 +1,5 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -10,14 +10,14 @@ import java.util.List;
 
 /**
  * <p>
- * FBI发货单明细表 Mapper 接口
+ * 头程发货单明细表 Mapper 接口
  * </p>
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
 @Mapper
-public interface FbaDeliveryDetailMapper extends BaseMapper<FbaDeliveryDetailEntity> {
+public interface FirstMileDeliveryDetailMapper extends BaseMapper<FirstMileDeliveryDetailEntity> {
 
     /**
      * 根据来源详情id查询发货详情
@@ -26,5 +26,5 @@ public interface FbaDeliveryDetailMapper extends BaseMapper<FbaDeliveryDetailEnt
      * @param sourceDetailIds
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
      **/
-    List<FbaDeliveryDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+    List<FirstMileDeliveryDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 }
