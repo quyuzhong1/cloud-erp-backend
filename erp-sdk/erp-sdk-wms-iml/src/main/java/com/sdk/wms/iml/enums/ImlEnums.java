@@ -7,7 +7,8 @@ import java.util.Arrays;
 
 @Getter
 public enum ImlEnums {
-    PRODUCT_STATUS("productStatus",productStatusEnum.class),
+    RECEIVING_TYPE("receivingType",TransitTypeEnum.class),
+    PRODUCT_STATUS("productStatus",ProductStatusEnum.class),
     INCOME_TYPE("incomeType",IncomeTypeEnum.class),
     RECEIVING_STATUS("receivingStatus",ReceivingStatusEnum.class),
     CANCEL_STATUS("cancelStatus",CancelStatusEnum.class),
@@ -22,10 +23,25 @@ public enum ImlEnums {
     }
 
     /**
+     * 入库类型 D:自发头程,T中转代发
+     */
+    @Getter
+    public enum TransitTypeEnum {
+        DRAFT("D","自发头程"),
+        AVAILABLE("T","T中转代发")
+        ;
+        private final String code;
+        private final String name;
+        TransitTypeEnum(String code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
+    /**
      * 产品状态枚举
      */
     @Getter
-    public enum productStatusEnum {
+    public enum ProductStatusEnum {
         ABANDONMENT("X","废弃"),
         DRAFT("D","草稿"),
         AVAILABLE("S","可用"),
@@ -34,7 +50,7 @@ public enum ImlEnums {
         ;
         private final String code;
         private final String name;
-        productStatusEnum(String code, String name) {
+        ProductStatusEnum(String code, String name) {
             this.code = code;
             this.name = name;
         }

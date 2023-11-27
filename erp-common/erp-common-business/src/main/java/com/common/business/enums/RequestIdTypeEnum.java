@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum RequestIdTypeEnum implements EnumMessage {
-    MAIN_ID("main_id","单据ID"),
-    DETAIL_ID("detail_id","详情ID"),
+    MAIN_ID("mainId","单据ID"),
+    DETAIL_ID("detailId","详情ID"),
     ;
 
     @EnumValue

@@ -2,11 +2,9 @@ package com.common.business.dto;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,11 +33,17 @@ public class PlatformInboundDTO extends UniqueDto {
     //ERP入库单状态
     private String receivingStatus;
 
+    //下载时间
+    private LocalDateTime downloadTime;
+
     //入库明细
     private List<Item> items;
 
     @Data
     @ToString
+    @EqualsAndHashCode
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Item {
 
         //SKU
@@ -52,6 +56,39 @@ public class PlatformInboundDTO extends UniqueDto {
         private Integer putawayQuantity;
 
         //箱号
+        @EqualsAndHashCode.Exclude
         private String boxNo;
+
+        public Item(String productSku, Integer receivedQuantity) {
+            this.productSku = productSku;
+            this.receivedQuantity = receivedQuantity;
+        }
     }
+
+    //是否有签收数据,默认没有
+    private Boolean hasReceivedData = false;
+
+    //签收数据
+    private List<Receiving> receivingDataList;
+
+    @Data
+    @ToString
+    @EqualsAndHashCode
+    public static class Receiving {
+
+        //SKU
+        private String productSku;
+
+        //签收数量
+        private Integer receiveQty;
+
+        //签收人
+        @EqualsAndHashCode.Exclude
+        private String receiveUser;
+
+        //签收时间
+        private LocalDateTime receiveTime;
+
+    }
+
 }

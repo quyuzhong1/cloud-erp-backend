@@ -123,4 +123,6 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @date: 2023-11-27
      */
     Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
+
+    List<String> getReceiptNumbersForStatus(List<String> statusList);
 }

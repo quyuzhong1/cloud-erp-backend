@@ -56,17 +56,10 @@ public class GoodCangServiceTest {
     }
     @Test
     public void getReceiptBatchTest() {
-        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-231113-000");
+        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-230613-0002");
         System.out.println(response);
     }
-    @Test
-    public void getReceiptTest() {
-        GoodCangBaseRequest goodCangBaseRequest = new GoodCangGetSkuReq();
-        goodCangBaseRequest.setPage(1);
-        goodCangBaseRequest.setPageSize(20);
-        String response = goodCangService.getReceipt(goodCangBaseRequest);
-        System.out.println(response);
-    }
+
     @Test
     public void getSmCodeTwcToWarehouseTest() {
         GoodCangResponse<GoodCangLogisticsAndWarehouseResp> response = goodCangService.getSmCodeTwcToWarehouse();

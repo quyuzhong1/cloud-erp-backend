@@ -72,18 +72,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 throw new ServiceException("【listing消费】Listing 产品保存失败");
             }
             // 添加到映射
-            SkuMappingEntity skuMappingEntity;
-            if(RuleTypeEnum.WAREHOUSE.getCode().equals(entity.getType())){
-                PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(entity.getPlatform());
-                if (null == platformDictEnum){
-                    String msg = StrUtil.format("【listing消费】未找到对应平台枚举：Platform={}, UniqueId={}", dto.getPlatform(), dto.getUniqueId());
-                    throw new ServiceException(msg);
-                }
-                RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(entity.getType());
-                skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId(),platformDictEnum,ruleTypeEnum);
-            }else{
-                skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-            }
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
             if (!skuMappingService.save(skuMappingEntity)) {
                 throw new ServiceException("【listing消费】SkuMapping保存失败");
             }

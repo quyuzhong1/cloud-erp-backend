@@ -1,18 +1,12 @@
 package com.sdk.wms.goodcang.convert;
 
-import com.common.business.dto.PlatformInventoryDTO;
-import com.common.business.dto.PlatformProductDTO;
-import com.common.business.dto.PlatformTransferWarehouseDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
+import com.common.business.dto.*;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.utils.MD5Util;
 import com.common.core.utils.Md5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.sdk.wms.goodcang.dto.response.GoodCangInventoryResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangTransferWarehouseResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
+import com.sdk.wms.goodcang.dto.response.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -76,6 +70,26 @@ public interface GoodCangConverter {
     })
     PlatformInventoryDTO inventoryConversion(GoodCangInventoryResp sourceData);
     List<PlatformInventoryDTO> inventoryConversion(List<GoodCangInventoryResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "receivingCode",  source = "receivingCode"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
+            @Mapping(target = "hasReceivedData", constant = "true"),
+            @Mapping(target = "receivingDataList",  source = "gcReceivingDataList"),
+    })
+    PlatformInboundDTO inboundConversion(GoodCangReceiptBatchResp sourceData);
+    List<PlatformInboundDTO> inboundConversion(List<GoodCangReceiptBatchResp> sourceDataList);
+
+    @Mappings({
+            @Mapping(target = "productSku", source = "productSku"),
+            @Mapping(target = "receiveQty",  source = "receivedQty"),
+            @Mapping(target = "receiveTime",  source = "receivedTime"),
+    })
+    PlatformInboundDTO.Receiving inboundReceiveConversion(GoodCangReceiptBatchResp.GcReceiving data);
 
     static String getNowTime(){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

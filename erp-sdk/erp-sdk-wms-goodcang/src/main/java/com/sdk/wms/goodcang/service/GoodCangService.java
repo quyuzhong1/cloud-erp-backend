@@ -60,24 +60,16 @@ public class GoodCangService {
      */
     public GoodCangResponse<GoodCangReceiptBatchResp> getReceiptBatch(@Valid @NotEmpty String receivingCode){
         Map<String,Object> paramsMap = new HashMap<>();
-//        paramsMap.put("receiving_code",receivingCode);
+        paramsMap.put("receiving_code",receivingCode);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT_BATCH,paramsMap);
         GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
         //重新赋值，方便后面转换
         if(Objects.nonNull(respDto.getData())){
             respDto.getData().setReceivingStatus(respDto.getReceivingStatus());
             respDto.getData().setTransitType(respDto.getTransitType());
+            respDto.getData().setReceivingCode(receivingCode);
         }
         return respDto;
-    }
-
-    /**
-     * 获取收货批次
-     */
-    public String getReceipt(@Valid GoodCangBaseRequest goodCangBaseRequest){
-        String json = JSON.toJSONString(goodCangBaseRequest);
-        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT,json);
-        return response;
     }
 
     /**
