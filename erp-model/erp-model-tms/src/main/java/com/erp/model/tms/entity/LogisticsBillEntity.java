@@ -93,6 +93,18 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("to_country")
     private String toCountry;
 
+    /**
+     * 订单类型
+     */
+    @TableField("order_type")
+    private String orderType;
+
+
+
+
+
+
+
     public static final String SALES_PLATFORM = "sales_platform";
 
     public static final String SHOP_ID = "shop_id";

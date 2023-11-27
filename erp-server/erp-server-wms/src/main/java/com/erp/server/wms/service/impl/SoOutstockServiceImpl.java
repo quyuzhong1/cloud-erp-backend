@@ -37,6 +37,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
@@ -53,6 +54,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -141,6 +143,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -612,7 +618,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addDTO.setOrderTime(soInfo.getCreateTime());
             addDTO.setSalesPlatform(salesPlatform);
             addDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-            addDTO.setSourceTypeName(SourceTypeEnum.SO_INFO.getName());
+            //国家id
+            String countryId=soInfo.getCountryId();
+            List<DictCountryEntity>  countryList= sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+            if(CollectionUtils.isNotEmpty(countryList)){
+                addDTO.setToCountry(countryList.get(0).getNameCn());
+            }else{
+                addDTO.setToCountry("");
+            }
             addDTO.setSourceCode(soInfo.getCode());
             addDTO.setCurrency(soInfo.getCurrency());
             addDTO.setOrderType(OrderTypeEnum.B2B.getCode());

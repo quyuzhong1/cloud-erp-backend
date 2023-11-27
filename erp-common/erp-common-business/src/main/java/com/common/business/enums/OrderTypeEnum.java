@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import com.common.core.constant.EnumMessage;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Lambda
@@ -31,5 +32,18 @@ public enum OrderTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return this.name;
+    }
+
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (OrderTypeEnum item : OrderTypeEnum.values()) {
+            if (code.equals(item.getCode())) {
+                return item.getName();
+            }
+        }
+        return "";
     }
 }
