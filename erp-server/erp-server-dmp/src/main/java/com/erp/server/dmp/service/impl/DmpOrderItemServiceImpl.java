@@ -472,6 +472,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setSkuNo(skuNo);
             errorLogEntity.setMsg(String.format(ApiError.ERP_DMP_SKU_NOT_COST.msg,skuNo));
             dmpSplitErrorLogService.save(errorLogEntity);
+            return newSplitSkuDTO;
         }
         //拆分订单
         if (isSplit) {
@@ -491,22 +492,44 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * @param amountAfter
      */
     private void shareCost(List<SplitSkuDTO> itemList, BigDecimal amountAfter) {
-        List<SplitSkuDTO> collect = itemList.stream().filter(req -> !req.getIsGift().equals(1)).collect(Collectors.toList());
-        BigDecimal sumCostPrice = BigDecimal.ZERO;
-        BigDecimal finalSumCostPrice = BigDecimal.ZERO;
-        for (SplitSkuDTO itemEntity : collect) {
-            sumCostPrice = sumCostPrice.add(itemEntity.getCleanCostPrice());
-        }
 
-        for (int i = 0; i < collect.size(); i++) {
-            //最后一个sku计算方式为：总价-前面的所有sku价格汇总得出最后一个sku价格
-            if (i == collect.size()-1) {
-                for (int i1 = 0; i1 < collect.size() -1; i1++) {
-                    finalSumCostPrice = finalSumCostPrice.add(collect.get(i1).getAmountAfter());
+        /**
+         * 存在一条明细有成本的按照成本占比拆分
+         * 如果该订单全部明细无成本则按照明细条数进行平均分摊
+         */
+        BigDecimal sumCostPrice = itemList.stream().filter(obj -> MathUtil.compareTo(obj.getCleanCostPrice(), MathUtil.ZERO) > MathUtil.ZERO)
+                .map(SplitSkuDTO::getCleanCostPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //按成本占比分摊销售额
+        if (MathUtil.compareTo(sumCostPrice,MathUtil.ZERO) > MathUtil.ZERO) {
+            BigDecimal finalSumCostPrice = BigDecimal.ZERO;
+            for (int i = 0; i < itemList.size(); i++) {
+                //最后一个sku计算方式为：总价-前面的所有sku价格汇总得出最后一个sku价格
+                if (i == itemList.size()-1) {
+                    itemList.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
+                } else {
+                    //四位以后进行舍弃
+                    BigDecimal newAmountAfter = MathUtil.divide(MathUtil.multiply(itemList.get(i).getCleanCostPrice(), itemList.get(i).getCleanCostPrice(), 6)
+                            , sumCostPrice, 4, BigDecimal.ROUND_DOWN);
+                    itemList.get(i).setAmountAfter(newAmountAfter);
+                    //除最后一条数据成本合计
+                    finalSumCostPrice = MathUtil.add(finalSumCostPrice,newAmountAfter);
                 }
-                collect.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
+            }
+            return;
+        }
+        //按条数进行分摊
+        BigDecimal finalSumCostPrice = BigDecimal.ZERO;
+        for (int i = 0; i < itemList.size(); i++) {
+            //最后一个sku计算方式为：总价-前面的所有sku价格汇总得出最后一个sku价格
+            if (i == itemList.size()-1) {
+                itemList.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
             } else {
-                collect.get(i).setAmountAfter(amountAfter.divide(sumCostPrice, 4, BigDecimal.ROUND_DOWN).multiply(collect.get(i).getCleanCostPrice()).setScale(4, BigDecimal.ROUND_DOWN));
+                //四位以后进行舍弃
+                BigDecimal newAmountAfter = MathUtil.divide(amountAfter, new BigDecimal(itemList.size()), 4, BigDecimal.ROUND_DOWN);
+                itemList.get(i).setAmountAfter(newAmountAfter);
+                //除最后一条数据成本合计
+                finalSumCostPrice = MathUtil.add(finalSumCostPrice,newAmountAfter);
             }
         }
     }
