@@ -25,8 +25,10 @@ public enum OverseasInstockStatusEnum implements EnumMessage {
     TO_BE_SIGNED("toBeSigned", "待签收"),
     PARTIAL_SIGNED("partialSigned", "部分签收"),
     SIGNED("signed", "已签收"),
+    FINISH("finish", "已完结"),
     CANCELED("canceled", "已取消"),
-    ABNORMAL("abnormal", "异常");
+    ABNORMAL("abnormal", "异常"),
+    ;
 
     @EnumValue
     @JsonValue

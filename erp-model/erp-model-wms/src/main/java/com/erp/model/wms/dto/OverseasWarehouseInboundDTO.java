@@ -209,6 +209,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String logisticsMethod;
 
         /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+
+        /**
          * 备注
          */
         private String remark;
