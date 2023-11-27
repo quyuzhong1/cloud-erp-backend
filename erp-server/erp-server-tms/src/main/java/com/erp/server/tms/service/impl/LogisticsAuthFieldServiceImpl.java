@@ -74,7 +74,10 @@ public class LogisticsAuthFieldServiceImpl extends SuperServiceImpl<LogisticsAut
         return this.lambdaQuery().eq(LogisticsAuthFieldEntity::getLogisticsAuthId, authId).list();
     }
 
-
+    @Override
+    public void removeByAuthId(String authId) {
+        this.lambdaUpdate().eq(LogisticsAuthFieldEntity::getLogisticsAuthId, authId).remove();
+    }
 
 
 }

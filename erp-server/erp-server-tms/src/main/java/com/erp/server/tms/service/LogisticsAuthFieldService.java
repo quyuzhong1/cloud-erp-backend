@@ -38,4 +38,10 @@ public interface LogisticsAuthFieldService extends SuperService<LogisticsAuthFie
      *@date 2023-11-13
      */
     List<LogisticsAuthFieldEntity> listByLogisticsAuthId(String authId);
+
+    /**
+     * 刪除授權字段
+     * @param id
+     */
+    void removeByAuthId(String authId);
 }

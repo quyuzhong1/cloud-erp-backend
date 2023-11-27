@@ -416,6 +416,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         billEntity.setSourceId(dto.getOrderId());
         billEntity.setSourceCode(dto.getOrderCode());
         billEntity.setOrderTime(dto.getOrderTime());
+        billEntity.setOrderType(dto.getOrderType());
         billEntity.setTransportNo(responseVO.getTransportNo());
         //跟踪单号
         String trackNo = responseVO.getTrackNo();

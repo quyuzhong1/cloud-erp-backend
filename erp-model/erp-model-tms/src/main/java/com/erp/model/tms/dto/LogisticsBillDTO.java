@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -93,7 +94,7 @@ public class LogisticsBillDTO implements Serializable {
          * 订单类型
          * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=orderType
          */
-        private List<String>  sourceTypeList;
+        private List<String>  orderTypeList;
 
 
         /**
@@ -530,6 +531,8 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String sourceType;
 
+        private String orderType;
+
         private LocalDateTime orderTime;
 
         private String orderId;
@@ -670,6 +673,8 @@ public class LogisticsBillDTO implements Serializable {
 
 
     @Data
+    @Builder
+    @AllArgsConstructor
     @NoArgsConstructor
     public static class PackageDTO{
 
