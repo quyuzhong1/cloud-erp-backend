@@ -115,8 +115,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
 
-    @Resource
-    private SoInfoService soInfoService;
 
 
     @Resource

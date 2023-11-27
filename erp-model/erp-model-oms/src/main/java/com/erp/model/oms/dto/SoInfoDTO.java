@@ -1559,6 +1559,9 @@ public class SoInfoDTO implements Serializable {
 
         private LocalDate billDate;
 
+
+        private String countryId;
+
         /**
          * 审核状态
          */

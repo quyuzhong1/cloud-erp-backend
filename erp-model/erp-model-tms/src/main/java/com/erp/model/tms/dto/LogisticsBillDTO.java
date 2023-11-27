@@ -74,6 +74,11 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
+         * 订单号集合
+         */
+        private List<String> orderNoList;
+
+        /**
          * 物流单号
          */
         private List<String>  trackNoList;
@@ -159,14 +164,14 @@ public class LogisticsBillDTO implements Serializable {
 
 
         /**
-         * 订单来源类型
+         * 订单类型
          */
-        private String sourceType;
+        private String orderType;
 
         /**
-         * 订单来源类型名称
+         * 订单类型名称
          */
-        private String sourceTypeName;
+        private String orderTypeName;
 
 
         /**
@@ -391,10 +396,6 @@ public class LogisticsBillDTO implements Serializable {
         @Size(max = 30, message = "来源类型最大长度不能超过30位")
         private String sourceType;
 
-        /**
-         * 来源类型名
-         */
-        private String sourceTypeName;
 
         /**
          * 来源id 销售订单
@@ -425,6 +426,12 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String channelId;
 
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
         /**
          * 下单时间
          */
@@ -447,7 +454,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String currency;
 
+        /**
+         * 订单类型
+         */
         private String orderType;
+
 
 
     }

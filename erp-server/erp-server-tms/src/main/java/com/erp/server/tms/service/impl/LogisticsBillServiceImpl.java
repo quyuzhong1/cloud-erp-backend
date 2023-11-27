@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -245,7 +246,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             String group = item.getCode();
             List<String> statusList;
             if (group.equals(allFlag)) {
-                statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+                statusList = Collections.emptyList();
             } else {
                 statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                         map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
@@ -275,7 +276,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String group = params.getType();
         List<String> statusList;
         if (group.equals(allFlag)) {
-            statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+            statusList = Collections.emptyList();
         } else {
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
@@ -296,7 +297,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String group = params.getType();
         List<String> statusList;
         if (group.equals(allFlag)) {
-            statusList = trackStatusList.stream().map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+            statusList = Collections.emptyList();
         } else {
             statusList = trackStatusList.stream().filter(s -> s.getRemark().equals(group)).
                     map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
@@ -402,6 +403,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             LocalDateTime signTime = trackList.stream().filter(t -> "6".equals(t.getStatus())).findFirst().
                     map(LogisticsTrackEntity::getCreateTime).orElse(null);
             item.setSignTime(signTime);
+
+            String orderType=item.getOrderType();
+            String orderTypeName= OrderTypeEnum.getName(orderType);
+            item.setOrderTypeName(orderTypeName);
+
 
         }
     }

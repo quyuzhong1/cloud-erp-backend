@@ -849,7 +849,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //id
         String id = dto.getId();
         String currency = dto.getCurrency();
-        if(StringUtils.isBlank(currency)){
+        if (StringUtils.isBlank(currency)) {
             throw new ServiceException("币别不能空");
         }
         Boolean isFirst = false;
@@ -1486,9 +1486,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String customerId = customer.getCustomerId();
         CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
         String customerName = "";
+        String countryId = "";
         if (customerInfo != null) {
             customerName = customerInfo.getName();
+            countryId = customerInfo.getCountryId();
         }
+
+
+
         //收货地址id
         String receiverAddressId = customer.getReceiveAddressId();
 
@@ -1530,6 +1535,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(soInfo.getWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
             customer.setWarehouseName(warehouseName);
         }
+        customer.setCustomerId(customerId);
         return customer;
     }
 
@@ -2597,16 +2603,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewPi.setSkuNo(item.getSkuNo());
             Integer qty = item.getQty();
             viewPi.setQty(qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice,qty);
+            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
             viewPi.setAmount(taxAmountBefore);
             viewPi.setTaxPriceStr(symbol + taxPrice);
             viewPi.setAmountStr(symbol + taxAmountBefore);
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
-            if(Objects.nonNull(skuVO)){
+            if (Objects.nonNull(skuVO)) {
                 viewPi.setModel(skuVO.getDeclareModel());
                 viewPi.setMaterials(skuVO.getMaterials());
                 viewPi.setProductName(skuVO.getSkuName());
-            }else{
+            } else {
                 viewPi.setModel("");
                 viewPi.setProductName("");
                 viewPi.setMaterials("");
@@ -3205,8 +3211,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (Objects.isNull(b) || !b) {
                 throw new ServiceException("同步数据中台异常");
             }
-        }catch (Exception e){
-            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        } catch (Exception e) {
+            throw new ServiceException(String.format("同步数据中台异常:%s", e.getMessage()));
         }
         log.info("推送消息结束：");
     }

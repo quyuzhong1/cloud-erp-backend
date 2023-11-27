@@ -114,6 +114,13 @@
                 #{item}
             </foreach>
         </if>
+        <!--订单号-->
+        <if test="params.orderNoList !=null and params.orderNoList.size>0">
+            AND lbd.source_code in
+            <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
           <!--销售平台-->
          <if test="params.salesPlatformList !=null and params.salesPlatformList.size>0">
             AND lb.sales_platform in
@@ -179,7 +186,7 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         SELECT
-            lb.id,
+            lbd.id,
             lb.sales_platform AS salesPlatform,
             lb.shop_id AS shopId,
             lb.shop_name AS shopName,
@@ -206,7 +213,7 @@
         WHERE  lb.is_deleted=false
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
-                AND lb.id IN
+                AND lbd.id IN
                 <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>
@@ -216,6 +223,13 @@
                 <if test="statusList !=null and statusList.size>0">
                     AND lbd.track_status in
                     <foreach collection="statusList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--订单号-->
+                <if test="params.orderNoList !=null and params.orderNoList.size>0">
+                    AND lbd.source_code in
+                    <foreach collection="params.orderNoList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
                 </if>
