@@ -69,6 +69,7 @@ public interface ImlConverter {
             @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "items",  source = "items"),
+            @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
     })
     PlatformInboundDTO inboundConversion(ImlReceiptResp sourceData);
     List<PlatformInboundDTO> inboundConversion(List<ImlReceiptResp> sourceDataList);

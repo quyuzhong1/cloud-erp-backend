@@ -3,8 +3,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -298,6 +301,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<String> getReceiptNumbersForStatus(List<String> statusList) {
+        return this.list(Wrappers.<OverseasWarehouseInboundEntity>lambdaQuery()
+                        .in(OverseasWarehouseInboundEntity::getInstockStatus, statusList))
+                .stream()
+                .map(OverseasWarehouseInboundEntity::getCode)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**

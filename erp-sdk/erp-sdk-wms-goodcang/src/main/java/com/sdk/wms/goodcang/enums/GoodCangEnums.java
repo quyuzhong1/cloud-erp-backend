@@ -1,6 +1,9 @@
 package com.sdk.wms.goodcang.enums;
 
+import com.common.business.enums.OverseasInstockStatusEnum;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @Getter
 public enum GoodCangEnums {
@@ -125,25 +128,36 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum OpenReceivingStatusEnum {
-        DRAFT(0,"草稿"),
-        PENDING_REVIEW(1,"待审核"),
-        REVIEW_FAILED(2,"审核不通过"),
-        TRANSFER_WAREHOUSE_TO_BE_SIGNED(3,"中转仓待签收"),
-        TRANSFER_WAREHOUSE_TO_BE_RECEIVED(4,"中转仓待收货"),
-        TRANSIT_WAREHOUSE_WAITING_DISTRIBUTION(5,"中转仓待配货"),
-        TRANSIT_WAREHOUSE_TO_BE_SHIPPED(6,"中转仓待发货"),
-        OVERSEAS_WAREHOUSE_IN_TRANSIT(7,"海外仓在途"),
-        RECEIVING_FROM_OVERSEAS_WAREHOUSES(8,"海外仓收货中"),
-        COMPLETION_OVERSEAS_WAREHOUSE_RECEIPT(9,"海外仓收货完成"),
-        COMPLETION_OF_OVERSEAS_WAREHOUSE_LISTING(10,"海外仓上架完成"),
-        ABANDONMENT(100,"废弃"),
+        DRAFT(0,"草稿", OverseasInstockStatusEnum.TO_BE_SHIPPED),
+        PENDING_REVIEW(1,"待审核", OverseasInstockStatusEnum.TO_BE_SHIPPED),
+        REVIEW_FAILED(2,"审核不通过", OverseasInstockStatusEnum.ABNORMAL),
+        TRANSFER_WAREHOUSE_TO_BE_SIGNED(3,"中转仓待签收", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        TRANSFER_WAREHOUSE_TO_BE_RECEIVED(4,"中转仓待收货", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        TRANSIT_WAREHOUSE_WAITING_DISTRIBUTION(5,"中转仓待配货", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        TRANSIT_WAREHOUSE_TO_BE_SHIPPED(6,"中转仓待发货", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        OVERSEAS_WAREHOUSE_IN_TRANSIT(7,"海外仓在途", OverseasInstockStatusEnum.TO_BE_SIGNED),
+        RECEIVING_FROM_OVERSEAS_WAREHOUSES(8,"海外仓收货中", OverseasInstockStatusEnum.PARTIAL_SIGNED),
+        COMPLETION_OVERSEAS_WAREHOUSE_RECEIPT(9,"海外仓收货完成", OverseasInstockStatusEnum.SIGNED),
+        COMPLETION_OF_OVERSEAS_WAREHOUSE_LISTING(10,"海外仓上架完成", OverseasInstockStatusEnum.SIGNED),
+        ABANDONMENT(100,"废弃", OverseasInstockStatusEnum.CANCELED),
         ;
         private final Integer code;
         private final String name;
+        private final OverseasInstockStatusEnum instockStatusEnum;
 
-        OpenReceivingStatusEnum(Integer code, String name) {
+        OpenReceivingStatusEnum(Integer code, String name,OverseasInstockStatusEnum instockStatusEnum) {
             this.code = code;
             this.name = name;
+            this.instockStatusEnum = instockStatusEnum;
+        }
+
+        public static String getInstockByCode(Integer code){
+            return Arrays.stream(OpenReceivingStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OpenReceivingStatusEnum::getInstockStatusEnum)
+                    .map(OverseasInstockStatusEnum::getCode)
+                    .orElse(code.toString());
         }
     }
 

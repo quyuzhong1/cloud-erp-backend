@@ -1,29 +1,40 @@
 package com.sdk.wms.goodcang.dto.response;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.common.business.dto.CleanBaseDTO;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class GoodCangReceiptBatchResp implements Serializable {
+public class GoodCangReceiptBatchResp extends CleanBaseDTO implements Serializable {
 
+    //入库单号
+    @JSONField(name = "receiving_code")
+    private String receivingCode;
+
+    //入库单状态
+    @JSONField(name = "receiving_status")
+    private Integer receivingStatus;
+
+    //入库单类型
+    @JSONField(name = "transit_type")
+    private Integer transitType;
 
     //尾程仓收货批次
     @JSONField(name = "gc_receiving_data")
     private List<GcReceiving> gcReceivingDataList;
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class GcReceiving {
+    public static class GcReceiving extends CleanBaseDTO {
 
         //收货时间
         @JSONField(name = "received_time")
@@ -144,13 +155,5 @@ public class GoodCangReceiptBatchResp implements Serializable {
         private String receivingCode;
 
     }
-
-    //入库单状态
-    @JSONField(name = "receiving_status")
-    private Integer receivingStatus;
-
-    //入库单类型
-    @JSONField(name = "transit_type")
-    private Integer transitType;
 
 }
