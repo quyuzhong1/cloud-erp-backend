@@ -236,10 +236,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
-        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList);
+        //这个是删除的同步来源ids
+        List<String> deleteSyncSourceIdList=saleChannelList.stream().filter(l->l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList,id);
+        //这个是对应删除的渠道id集合
+        List<String> deleteChannelIdList=channelList.stream().filter(c->deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
 
         //这个是海外仓物流
-        List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId())).collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId())&&!s.getIsDeleted()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseLogisticsList)) {
             syncWarehouseLogistics(id, warehouseLogisticsList, channelList);
         }
@@ -247,7 +251,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Integer zeroFlag = MathUtil.ZERO;
 
         //这个不是海外仓物流
-        List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId())).collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId())&&!s.getIsDeleted()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(logisticsList)) {
             List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
             for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
@@ -271,13 +275,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 }
                 saveOrUpdateList.add(channelEntity);
             }
-
             logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
-
+        }
+        if(CollectionUtils.isNotEmpty(deleteChannelIdList)){
+            logisticsChannelService.removeByIdList(deleteChannelIdList);
         }
 
 
-        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步");
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功"+logisticsList.size()+"个渠道");
 
     }
 

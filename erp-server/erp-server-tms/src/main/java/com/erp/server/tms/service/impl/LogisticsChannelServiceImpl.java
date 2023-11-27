@@ -319,12 +319,30 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList) {
+    public List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList,String mainId) {
         if(CollectionUtils.isEmpty(syncSourceIdList)){
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(LogisticsChannelEntity::getSyncSourceId,syncSourceIdList).list();
+        return this.lambdaQuery().eq(LogisticsChannelEntity::getMainId,mainId).in(LogisticsChannelEntity::getSyncSourceId,syncSourceIdList).list();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByIdList(List<String> channelIdList) {
+        if(CollectionUtils.isEmpty(channelIdList)){
+               return;
+        }
+        this.removeByIds(channelIdList);
+        //平台物流映射
+        logisticsMappingService.removeByChannelIdList(channelIdList);
+        //面单设置 打印类型
+        logisticsPrintTypeService.removeByChannelIdList(channelIdList);
+        //物流地址
+        logisticsChannelAddressService.removeByChannelIdList(channelIdList);
+        //发货限制 黑名单
+        logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
+    }
+
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {

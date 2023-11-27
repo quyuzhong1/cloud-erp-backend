@@ -125,9 +125,19 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     /**
      * 根据同步的来源id 获取数据
      *@parms syncSourceIdList 同步的来源ud
+     *@param  mainId 物流商id
      *@return
      *@author yl
      *@date 2023-11-22
      */
-    List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList);
+    List<LogisticsChannelEntity> listBySyncSourceIds(List<String> syncSourceIdList,String mainId);
+
+    /**
+     * 根据渠道id 集合删除
+     *@parms deleteSyncSourceIdList
+     *@return 
+     *@author yl
+     *@date 2023-11-27
+     */
+    void removeByIdList(List<String> deleteChannelIdList);
 }

@@ -25,6 +25,7 @@ public interface ThirdWarehouseService {
 
     /**
      * 入库单创建接口对接
+     * @return 入库单号
      */
     ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
@@ -35,6 +36,7 @@ public interface ThirdWarehouseService {
 
     /**
      * 订单发货对接海外仓出库创建接口
+     * @return 出库单号
      */
     ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 

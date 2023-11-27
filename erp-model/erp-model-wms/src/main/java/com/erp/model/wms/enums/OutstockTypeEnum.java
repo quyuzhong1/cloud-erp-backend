@@ -17,8 +17,8 @@ public enum OutstockTypeEnum implements EnumMessage {
     AUXILIARY("auxiliary", "辅料包材"),
     ACCESSORY("accessory", "配件"),
     SCRAP("scrap", "报废"),
-    // TODO 更换
-    CLAIM("claim", "索赔")
+
+    REPORT_LOSSES("report_losses", "报损")
 
     ;
 
