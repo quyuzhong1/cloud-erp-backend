@@ -675,7 +675,6 @@ public enum ApiError implements Serializable {
 
 
 
-
     /**
      * WMS 错误
      * 从99000 开始  以端口号
@@ -836,6 +835,8 @@ public enum ApiError implements Serializable {
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
+    OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL(99123,"海外仓入库单待提交才支持取消"),
+    OVERSEAS_WAREHOUSE_INBOUND_NOT_DELETE(99124,"海外仓入库单取消后才支持删除"),
 
 
     /**

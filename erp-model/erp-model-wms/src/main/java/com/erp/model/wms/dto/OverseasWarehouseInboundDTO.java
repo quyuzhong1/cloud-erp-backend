@@ -753,4 +753,13 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private Integer count;
     }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+
+    }
 }
