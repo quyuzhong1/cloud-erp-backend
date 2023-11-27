@@ -129,9 +129,9 @@
             </foreach>
          </if>
         <!--订单类型-->
-        <if test="params.sourceTypeList !=null and params.sourceTypeList.size>0">
-            AND lb.source_type in
-            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+        <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
+            AND lb.order_type in
+            <foreach collection="params.orderTypeList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
@@ -248,9 +248,9 @@
                     </foreach>
                 </if>
                 <!--订单类型-->
-                <if test="params.sourceTypeList !=null and params.sourceTypeList.size>0">
-                    AND lb.source_type in
-                    <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                <if test="params.orderTypeList !=null and params.orderTypeList.size>0">
+                    AND lb.order_type in
+                    <foreach collection="params.orderTypeList" item="item" open="(" separator="," close=")">
                         #{item}
                     </foreach>
                 </if>

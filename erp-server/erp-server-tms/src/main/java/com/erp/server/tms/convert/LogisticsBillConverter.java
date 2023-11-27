@@ -1,9 +1,6 @@
 package com.erp.server.tms.convert;
 
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.dto.LogisticsBillDTO;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
 import org.mapstruct.Mapper;
@@ -11,14 +8,11 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 
-import java.util.List;
-
 /**
  *物流单转化
  *@author yl
  *@date 2023-11-23
  */
-@Mapper
 public interface LogisticsBillConverter {
 
     LogisticsBillConverter INSTANCE = Mappers.getMapper(LogisticsBillConverter.class);
@@ -41,7 +35,7 @@ public interface LogisticsBillConverter {
     ReceiverInfoVO convertReceiver(LogisticsBillDTO.ReceiverDTO  receiver);
 
     @Mappings({
-            @Mapping(target = "weight", source = "weight"),
+            @Mapping(target = "weight", source = "weight" ),
             @Mapping(target = "length", source = "length"),
             @Mapping(target = "width", source = "width"),
             @Mapping(target = "height", source = "height"),

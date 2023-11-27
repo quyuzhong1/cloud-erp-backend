@@ -40,6 +40,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.vo.request.ReceiverInfoVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -48,9 +50,11 @@ import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -153,6 +157,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Autowired
     private SoB2cFinanceService soB2cFinanceService;
+
+    @Autowired
+    private LogisticsBillFeign logisticsBillFeign;
+
+
+    @Autowired
+    private ShopAuthService shopAuthService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -609,9 +620,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
         }
+        LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity,soB2cLogisticsEntity);
+
 
         //货取物流单号，TODO
-        String logisticsCode = IdWorker.getIdStr();
+        List<String> logisticsTrackNoList = logisticsBillFeign.generateBill(generateBillDTO);
+        if (CollectionUtils.isEmpty(logisticsTrackNoList)) {
+            throw new ServiceException("下物流单失败");
+        }
+        String logisticsCode = logisticsTrackNoList.stream().collect(Collectors.joining(","));
+
         soB2cLogisticsService.updateLogisticsCode(id, logisticsCode);
 
 
@@ -623,6 +641,49 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "获取物流单号【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "获取物流单号");
+    }
+
+    /**
+     * 组装生成物流单数据
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-27
+     */
+    private LogisticsBillDTO.GenerateBillDTO makeGenerateBillDTO(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
+        LogisticsBillDTO.GenerateBillDTO result = new LogisticsBillDTO.GenerateBillDTO();
+        String id = entity.getId();
+        result.setCurrency(entity.getCurrency());
+        result.setOrderTime(entity.getBillDate().atStartOfDay());
+        result.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        result.setOrderId(id);
+        result.setOrderCode(entity.getCode());
+        result.setOrderType(OrderTypeEnum.B2C.getCode());
+        String shopId = entity.getShopId();
+        result.setShopId(shopId);
+        result.setShopName(entity.getShopName());
+        result.setSalesPlatform(entity.getDictPlatform());
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
+        if (Objects.isNull(shopAuth)) {
+            throw new ServiceException(ApiError.SHOP_NOT_AUTH_ERROR);
+        }
+        result.setToken(shopAuth.getToken());
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
+        if (Objects.nonNull(receiverEntity)) {
+            LogisticsBillDTO.ReceiverDTO receiverDTO = B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
+            result.setReceiver(receiverDTO);
+        }
+        LogisticsBillDTO.PackageDTO packageDTO = B2cOrderConverter.INSTANCE.convertPackage(soB2cLogisticsEntity);
+        packageDTO.setCurrency(entity.getCurrency());
+        result.setPackageInfo(packageDTO);
+
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+
+        List<LogisticsBillDTO.SkuDTO> skuList = B2cOrderConverter.INSTANCE.convertSku(detailList);
+        result.setSkuList(skuList);
+        return result;
     }
 
     @Override

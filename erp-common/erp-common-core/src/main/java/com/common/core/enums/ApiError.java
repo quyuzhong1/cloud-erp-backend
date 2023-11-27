@@ -837,6 +837,7 @@ public enum ApiError implements Serializable {
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL(99123,"海外仓入库单待提交才支持取消"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_DELETE(99124,"海外仓入库单取消后才支持删除"),
+    SHOP_NOT_AUTH_ERROR(99125,"店铺尚未授权"),
 
 
     /**

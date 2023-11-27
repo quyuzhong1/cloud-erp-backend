@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class LogisticsAuthController extends BaseController {
     @Autowired
     private LogisticsAuthService logisticsAuthService;
 
+    @Autowired
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+
     /**
      * 物流授权新增
      *
@@ -60,7 +64,8 @@ public class LogisticsAuthController extends BaseController {
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
             } else {
-               logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());
+               logisticsAuthService.removeById(id);
+                logisticsAuthFieldService.removeByAuthId(id);
                 return apiResult;
             }
         }
