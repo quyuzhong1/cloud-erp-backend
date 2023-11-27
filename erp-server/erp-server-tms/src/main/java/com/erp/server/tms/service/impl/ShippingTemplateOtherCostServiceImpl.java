@@ -11,8 +11,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
+import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.ShippingSideEnum;
 import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -203,11 +205,27 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     private void addOperateLog(List<ShippingTemplateOtherCostEntity> list,String mainId) {
         //原明细数据
         List<ShippingTemplateOtherCostEntity> oldList = this.listByMainId(mainId);
+        List<String> costIdList = oldList.stream().map(ShippingTemplateOtherCostEntity::getId).collect(Collectors.toList());
+        List<ShippingTemplateCostSettingEntity> settingList = shippingTemplateCostSettingService.listByOtherCostIds(costIdList);
         for (ShippingTemplateOtherCostEntity entity : list) {
             ShippingTemplateOtherCostEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_OTHER_COST_NOT_EXIST);
             }
+            List<String> settingCodeList = settingList.stream().filter(obj -> obj.getOtherCostId().equals(entity.getId())).map(ShippingTemplateCostSettingEntity::getCode).collect(Collectors.toList());
+            old.setSettingList(settingCodeList);
+
+            //数值设置
+            String oldExtendJson = old.getExtendJson();
+            String newExtendJson = JSONUtil.toJsonStr(entity.getExtendJsonDto());
+            for (ShippingSideEnum shippingSideEnum : ShippingSideEnum.values()) {
+                //原始数据格式化中文
+                oldExtendJson = oldExtendJson.replace(shippingSideEnum.getCode(),shippingSideEnum.getName());
+                //新数据格式化中文
+                newExtendJson = newExtendJson.replace(shippingSideEnum.getCode(),shippingSideEnum.getName());
+            }
+            old.setExtendJsonLog(oldExtendJson);
+            entity.setExtendJsonLog(newExtendJson);
             //操作日志
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(),mainId,"",String.format("【%s】",old.getDictName()));
         }

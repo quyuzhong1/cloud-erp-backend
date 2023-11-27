@@ -4,13 +4,8 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
-import com.erp.model.wms.entity.OverseasDeliveryPlanEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.server.wms.service.OverseasDeliveryPlanService;
-import com.erp.server.wms.service.StocktakingPlanService;
-import com.erp.server.wms.service.TransferInfoService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -174,7 +169,7 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.handleListDTO>>
      **/
     @PostMapping("/handleList")
-    public ApiResult<List<RequisitionApplicationDTO.handleListDTO>> handleList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<RequisitionApplicationDTO.HandleListDTO>> handleList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.handleList(dto.getIds()));
     }
 
@@ -193,7 +188,7 @@ public class RequisitionApplicationController extends BaseController {
             serviceClass = RequisitionApplicationService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "处理保存:ids={ids}")
-    public ApiResult handleSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.handleListDTO> dto) {
+    public ApiResult handleSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.HandleListDTO> dto) {
         Boolean flag = requisitionApplicationService.handleSave(dto.getList());
         return flag ? success() : failure();
     }
@@ -206,7 +201,7 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.finishListDTO>>
      **/
     @PostMapping("/finishList")
-    public ApiResult<List<RequisitionApplicationDTO.finishListDTO>> finishList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<RequisitionApplicationDTO.FinishListDTO>> finishList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.finishList(dto.getIds()));
     }
 
@@ -224,7 +219,7 @@ public class RequisitionApplicationController extends BaseController {
             serviceClass = RequisitionApplicationService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成保存:ids={ids}")
-    public ApiResult finishSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.finishListDTO> dto) {
+    public ApiResult finishSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.FinishListDTO> dto) {
         Boolean flag = requisitionApplicationService.finishSave(dto.getList());
         return flag ? success() : failure();
     }

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
@@ -68,7 +69,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @param authId
      * @return
      */
-    Map<String, String> getLogisticsAuthConfig(String authId);
+    Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform);
 
     /**
      * 根据授权id组装授权信息
@@ -82,7 +83,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * 授权完成后 同步销售渠道
      * @param authId
      */
-    void syncUpdateSaleChannel(String authId);
+    void syncUpdateSaleChannel(String authId,String logisticsPlatform);
 
     /**
      * 根据供应商id 获取信息
@@ -100,4 +101,15 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      *@date 2023-11-23
      */
     LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId);
+
+    ApiResult authLogistics(String id, String logisticsPlatform);
+
+    /**
+     *
+     *@parms authId
+     *@return authStatus
+     *@author yl
+     *@date 2023-11-24
+     */
+    void updateLogisticsAuthStatus(String mainId, String authStatus);
 }

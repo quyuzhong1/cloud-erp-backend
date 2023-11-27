@@ -17,8 +17,8 @@ public interface PathConstants {
 
 
     //沙箱环境的地址 -PRO
-//    String BASE_URL = "https://sfapi-sbox.sf-express.com/std/service";
+    String BASE_URL = "https://sfapi-sbox.sf-express.com/std/service";
     //正式环境
-    String BASE_URL = "https://bspgw.sf-express.com/std/service";
+//    String BASE_URL = "https://bspgw.sf-express.com/std/service";
     String filePath = "D:\\project\\microservices-platform\\zlt-sdk\\zlt-sdk-tms-express\\src\\main\\resources\\";
 }

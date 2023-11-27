@@ -67,15 +67,15 @@ public class TrackShipperService {
     /**
      * 获取快递物流商列表
      */
-    public void getCourierList(String token) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+    public TrackResponse getCourierList(String token) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
 
-        String string = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.GET_COURIER_URL, new LinkedHashMap<>(), headers);
-        System.out.println(string);
+        String result = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.GET_COURIER_URL, new LinkedHashMap<>(), headers);
+        return JSONUtil.toBean(result, TrackResponse.class);
     }
 
     public TrackResponse getTrack(String token, TrackRequest trackRequest) {
@@ -85,7 +85,6 @@ public class TrackShipperService {
         headers.put("Track123-Api-Secret", token);
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.GET_TRACK_URL, trackRequest, headers);
-        System.out.println(result);
         return JSONUtil.toBean(result, TrackResponse.class);
     }
 

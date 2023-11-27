@@ -146,5 +146,9 @@ public class TongYouLogisticsHandlerImplTest {
         ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
-
+    @Test
+    public void authorization() {
+        ApiResult apiResult = tongYouLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }

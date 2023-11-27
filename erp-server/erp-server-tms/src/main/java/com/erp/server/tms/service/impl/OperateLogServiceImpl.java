@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -15,10 +16,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
 
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.OperateLogDTO;
 import com.erp.model.tms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.OperateLogEntity;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.mapper.OperateLogMapper;
 import com.erp.server.tms.service.CfgOperateLogFieldService;
@@ -52,6 +55,9 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @Override
     public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
@@ -103,6 +109,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             //人员
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
                 valuePair = setUserValue(valuePair);
+            }
+            //国家
+            if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
+                valuePair = setCountryValue(valuePair);
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
@@ -221,6 +231,23 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return new Pair<>(oldValue,newValue);
     }
+
+    /**
+     * 设置国家值
+     */
+    private Pair<String,String> setCountryValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictCountryEntity> oldList = sysDictFeign.listCountryByIds(Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(DictCountryEntity::getNameCn).distinct().collect(Collectors.joining(","));
+        }
+        List<DictCountryEntity> newList = sysDictFeign.listCountryByIds(Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(DictCountryEntity::getNameCn).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue,newValue);
+    }
     /**
      * 设置枚举值
      */
@@ -228,8 +255,6 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        String  oldValue = "";
-        String  newValue = "";
         Class<?> aClass ;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
@@ -240,22 +265,34 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (!anEnum) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        if (StringUtils.isNotBlank(valuePair.getKey())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                oldValue = enumObject.getName();
-            } else {
-                oldValue = "";
-            }
-        }
-        if (StringUtils.isNotBlank(valuePair.getValue())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                newValue = enumObject.getName();
-            } else {
-                newValue = "";
-            }
-        }
+        String oldValue = handleEnumVale(valuePair.getKey(), aClass);
+        String newValue = handleEnumVale(valuePair.getValue(), aClass);
         return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * @description: 处理枚举数据
+     * @author Will
+     * @date: 2023/11/24 18:44
+     * @param object
+     * @param aClass
+     * @return String
+     */
+    private String handleEnumVale (String object,Class<?> aClass) {
+        if (StrUtil.isBlank(object)) {
+            return "";
+        }
+        List<String> resultList = new ArrayList<>();
+        String[] split = object.split(",");
+       for (String value : split) {
+           EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
+           if (ObjectUtils.isNotEmpty(enumObject)) {
+               resultList.add(enumObject.getName());
+           }
+       }
+       if (CollectionUtils.isEmpty(resultList)) {
+           return "";
+       }
+       return resultList.stream().collect(Collectors.joining(","));
     }
 }

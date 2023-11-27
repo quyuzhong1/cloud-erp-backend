@@ -47,7 +47,14 @@ public class LogisticsProductFeignController extends BaseController {
     @Resource
     private LogisticsProductService logisticsProductService;
 
-
+    /**
+     * 获取到物流产品信息
+     * @return
+     */
+    @PostMapping("/listLogisticsProduct")
+    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct() {
+         return null;
+    }
 
 
 }

@@ -77,24 +77,41 @@ public class LogisticsBillFeignController {
 
     /**
      * 生成物流单 像物流商下單
-     *@parms
-     *@return
-     *@author yl
-     *@date 2023-11-23
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-23
      */
     @PostMapping("/generateBill")
-    public void  generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO  dto){
+    public void generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         logisticsBillService.generateBill(dto);
     }
 
     /**
      * 获取物流单数据 用于查询轨迹
+     *
      * @param query
      * @return
      */
     @PostMapping("/getLogisticsBillDetails")
-    public PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query){
+    public PagingVO<LogisticsBillDetailEntity> getLogisticsBillDetails(@RequestBody LogisticsBillDetailQueryDTO query) {
         PagingVO<LogisticsBillDetailEntity> page = logisticsBillDetailService.getPage(query);
         return page;
+    }
+
+
+    /**
+     * 更改运单号
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-11-24
+     */
+    @PostMapping("/updateTrackNo")
+    public Boolean updateTrackNo(@RequestBody LogisticsBillDTO.UpdateTrackNoDTO billDTO) {
+        Boolean result = logisticsBillDetailService.updateTrackNo(billDTO);
+        return result;
     }
 }

@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasTransferWarehouseDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外仓签收记录 服务类
@@ -35,4 +37,12 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
 
 
     Boolean saveOrUpdateByPlatform(OverseasTransferWarehouseEntity mqEntity);
+
+    /**
+     * 中转仓列表基础信息
+     * @author Jim
+     * @date: 2023-11-16
+     */
+    List<BaseSelectDTO> baseSelectlist();
+
 }

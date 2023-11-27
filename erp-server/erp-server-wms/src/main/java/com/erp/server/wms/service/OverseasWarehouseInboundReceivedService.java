@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundReceivedDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外仓签收记录 服务类
@@ -32,5 +34,12 @@ public interface OverseasWarehouseInboundReceivedService extends SuperService<Ov
     */
     Boolean update(OverseasWarehouseInboundReceivedDTO.UpdateDTO dto);
 
-
+    /**
+     * 修改
+     * @author Jim
+     * @date: 2023-11-24
+     * @param detailIds
+     * @return
+     */
+    List<OverseasWarehouseInboundReceivedEntity> listByDetailIds(List<String> detailIds);
 }

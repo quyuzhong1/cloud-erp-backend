@@ -610,6 +610,23 @@ public class LogisticsBillDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateTrackNoDTO{
+
+        /**
+         * 销售出单单id 集合
+         */
+        private List<String> outstockIdList;
+
+        /**
+         * 运输单号
+         */
+        private String trackNo;
+
+    }
+
+
     /**
      * 产品信息
      */

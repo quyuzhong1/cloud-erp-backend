@@ -344,7 +344,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(auth)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId());
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(),auth.getLogisticsPlatform());
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -359,6 +359,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfo = logisticsProductFeign.listBySkuIdList(skuIdList);
 
+    }
+
+    @Override
+    public List<LogisticsBillEntity> listByOutstockIdList(List<String> outstockIdList) {
+        if(CollectionUtils.isEmpty(outstockIdList)){
+              return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsBillEntity::getOutstockId,outstockIdList).list();
     }
 
     private void fillPagingDb(List<LogisticsBillDTO.PagingVO> list) {

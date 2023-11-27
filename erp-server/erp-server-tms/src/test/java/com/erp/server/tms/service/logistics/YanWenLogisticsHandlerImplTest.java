@@ -136,4 +136,10 @@ public class YanWenLogisticsHandlerImplTest {
         logisticsQueryBaseVO.setAuthMap(authMap);
         System.out.println(yanWenLogisticsHandler.queryOrderList(Arrays.asList(logisticsQueryBaseVO)));
     }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = yanWenLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }

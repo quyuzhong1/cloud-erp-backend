@@ -826,7 +826,11 @@ public enum ApiError implements Serializable {
     ERROR_ONWAY_WAREHOUSE_NOT_EXIST(99118,"在途归属仓库不存在"),
     IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
-    SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99120,"仓库已绑定店铺【{}】不允许反审核"),
+    SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
+    WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
+
+    OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
+    OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
 
 
     /**

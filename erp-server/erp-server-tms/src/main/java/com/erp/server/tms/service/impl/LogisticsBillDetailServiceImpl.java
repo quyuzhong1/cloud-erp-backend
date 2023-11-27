@@ -3,7 +3,6 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -16,13 +15,11 @@ import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
-import com.erp.server.tms.service.LogisticsAuthService;
-import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +51,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Autowired
     private LogisticsAuthService logisticsAuthService;
+
+    @Autowired
+    private LogisticsBillService logisticsBillService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -142,6 +142,30 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     public LogisticsBillDetailEntity getDetailByTrackNo(String trackNo) {
         return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
                 .eq(LogisticsBillDetailEntity::getIsDeleted, false).last("limit 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateTrackNo(LogisticsBillDTO.UpdateTrackNoDTO billDTO) {
+        List<String> outstockIdList = billDTO.getOutstockIdList();
+        String trackNo = billDTO.getTrackNo();
+        if (CollectionUtils.isEmpty(outstockIdList) || StringUtils.isBlank(trackNo)) {
+            return Boolean.FALSE;
+        }
+        List<LogisticsBillEntity> billList = logisticsBillService.listByOutstockIdList(outstockIdList);
+        if (CollectionUtils.isNotEmpty(billList)) {
+            List<String> billIdList = billList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+            this.removeByMainIds(billIdList);
+            List<LogisticsBillDetailEntity> billDetailList = new ArrayList<>(billIdList.size());
+            for (String mainId : billIdList) {
+                LogisticsBillDetailEntity detailEntity = new LogisticsBillDetailEntity();
+                detailEntity.setMainId(mainId);
+                detailEntity.setTrackNo(trackNo);
+                billDetailList.add(detailEntity);
+            }
+            this.saveBatch(billDetailList);
+        }
+        return Boolean.FALSE;
     }
 
 

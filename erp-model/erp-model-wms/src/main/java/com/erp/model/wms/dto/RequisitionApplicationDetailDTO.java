@@ -89,6 +89,11 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         * 可用库存
         */
         private Integer usableQty;
+
+        /**
+        * 可用库存
+        */
+        private String requisitionWarehouseLocation;
     }
 
     /**
@@ -156,6 +161,11 @@ public class RequisitionApplicationDetailDTO implements Serializable {
         * 来源详情id
         */
         private String sourceDetailId;
+
+        /**
+        * 要货仓位
+        */
+        private String requisitionWarehouseLocation;
 
 
     }

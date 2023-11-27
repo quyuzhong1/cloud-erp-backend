@@ -101,6 +101,17 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         return lambdaQuery().in(RequisitionApplicationDetailEntity::getMainId, mainIds).list();
     }
 
+    @Override
+    public Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id) {
+        return lambdaUpdate().set(RequisitionApplicationDetailEntity::getFromWarehouseId, fromWarehouseId)
+                .set(RequisitionApplicationDetailEntity::getFromWarehouseName, fromWarehouseName)
+                .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
+                .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
+                .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
+                .eq(RequisitionApplicationDetailEntity::getId, id)
+                .update();
+    }
+
     /**
     * 新增修改处理数据
     */

@@ -161,4 +161,10 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsQueryVOList.setAuthMap(authMap);
         System.out.println(weiShiLogisticsHandler.cancelOrder(Arrays.asList(logisticsQueryVOList)));
     }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = weiShiLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }

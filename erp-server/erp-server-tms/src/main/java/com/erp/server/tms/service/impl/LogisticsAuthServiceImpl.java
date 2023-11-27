@@ -4,9 +4,11 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -14,6 +16,7 @@ import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -44,7 +47,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
-
+    @Resource
+    private LogisticsRegistry logisticsRegistry;
     @Autowired
     private LogisticsSupplierService logisticsSupplierService;
 
@@ -60,7 +64,6 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO addDTO) {
@@ -143,6 +146,30 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return baseMapper.getAuthByChannelId(channelId);
     }
 
+    @Override
+    public ApiResult authLogistics(String id, String logisticsPlatform) {
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        if (Objects.isNull(service)){
+            return ApiResult.error(-1,"功能未开发");
+        }
+        Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
+        if (Objects.isNull(authConfig)){
+            return ApiResult.error(-1,"未找到配置信息");
+        }
+        ApiResult authorization = service.authorization(authConfig);
+        return authorization;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateLogisticsAuthStatus(String mainId, String authStatus) {
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        supplierEntity.setAuthStatus(authStatus);
+    }
+
     public LogisticsAuthEntity getDbByMainId(String mainId){
         return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
     }
@@ -213,20 +240,25 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public Map<String, String> getLogisticsAuthConfig(String authId) {
+    public Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (StringUtils.isNoneBlank(authId)) {
-            map.put("id", authId);
-            LogisticsAuthEntity authEntity = this.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
-            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+            return service.getLogisticsAuthConfig(authId);
+        }else {
+            if (StringUtils.isNoneBlank(authId)) {
+                map.put("id", authId);
+                LogisticsAuthEntity authEntity = this.getById(authId);
+                if (Objects.isNull(authEntity)) return null;
+                map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+            }
+            if (CollectionUtils.isNotEmpty(fieldEntities)) {
+                fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+                });
+            }
         }
         return map;
     }
@@ -254,8 +286,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public void syncUpdateSaleChannel(String authId) {
-        Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId);
+    public void syncUpdateSaleChannel(String authId,String logisticsPlatform) {
+        Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId,logisticsPlatform);
         logisticsSaleChannelService.asyncUpdateSaleChannel(authConfig);
     }
 }

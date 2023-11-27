@@ -12,6 +12,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
@@ -20,6 +21,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
@@ -233,6 +235,25 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         return Collections.singletonList(map);
+    }
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            TrackResponse trackResponse = trackShipperService.getCourierList(authMap.get("clientSecret"));
+            if (!"00000".equalsIgnoreCase(trackResponse.getCode()))  {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
     @Override
     public LogisticsPlatformEnum getPlatForm() {

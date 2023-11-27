@@ -163,4 +163,10 @@ public class YunTuLogisticsHandlerImplTest {
         ApiResult<List<CancelResponseVO>> apiResult = yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
+
+    @Test
+    public void authorization() {
+        ApiResult apiResult = yunTuLogisticsHandler.authorization(authMap);
+        System.out.println(apiResult);
+    }
 }
