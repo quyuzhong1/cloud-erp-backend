@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 
@@ -125,6 +126,15 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      */
     List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList);
 
+
+    /**
+     * @description: 查询所有父级SKU
+     * @author Will
+     * @date: 2023/11/23 17:28
+     * @param params
+     * @return List<ListAllSkuDTO>
+     */
+    List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(BomSkuPageDTO.AllSkuParamDTO params);
 
     /**
      * 查询sku版本信息

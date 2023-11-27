@@ -2204,4 +2204,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
         return list;
     }
+
+    @Override
+    public List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO) {
+        return baseMapper.listPurchaseOrderCost(paramDTO);
+    }
+
 }

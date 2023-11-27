@@ -26,6 +26,12 @@ import lombok.experimental.Accessors;
 public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
 
     /**
+     * skuId
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
     * sku编号
     */
     @TableField("sku_no")
@@ -56,16 +62,17 @@ public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
     private BigDecimal costPrice;
 
     /**
-    * 最近的采购日期3个月前的日期
-    */
+     * 最近的采购日期3个月前的日期
+     */
     @TableField("three_months_ago_date")
     private LocalDate threeMonthsAgoDate;
 
     /**
-    * 最近的采购日期
-    */
+     * 最近的采购日期
+     */
     @TableField("latest_purchase_date")
     private LocalDate latestPurchaseDate;
+
 
     public static final String SKU_NO = "sku_no";
 

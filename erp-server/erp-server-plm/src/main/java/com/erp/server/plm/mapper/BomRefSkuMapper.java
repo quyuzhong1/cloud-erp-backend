@@ -2,6 +2,7 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
@@ -77,10 +78,19 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @Author Luo_WG
      * @Date 2023/9/4 19:36
      * @param skuIds
-     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     * @return java.util.List<com.erp.model.plm.dto.BomChild`renSkuDTO>
      **/
     List<BomChildrenSkuDTO> listBomBySkuIds(@Param("skuIds") List<String> skuIds);
 
     List<BomDTO.BomSku> listBySkuIds(@Param("skuIdList")List<String> skuIdList);
+
+    /**
+     * @description: 查询说有父级SKU
+     * @author Will
+     * @date: 2023/11/23 17:08
+     * @param params
+     * @return List<ListAllSkuDTO>
+     */
+    List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(@Param("params") BomSkuPageDTO.AllSkuParamDTO params);
 }
 

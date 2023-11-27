@@ -166,6 +166,30 @@
         </where>
     </select>
 
+    <select id="listAllParentSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListAllSkuDTO">
+        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no ) AS (
+            SELECT sku_id,sku_no, parent_sku_id,parent_sku_no FROM product_bom_sku
+            WHERE is_deleted = false
+            <if test="params.skuIdList != null and params.skuNoList.size > 0">
+                and sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            UNION ALL
+            SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no
+            FROM product_bom_sku st JOIN T ON st.sku_id = T.parent_sku_id and st.is_deleted = false
+        )
+        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no FROM T;
+    </select>
+
+
     <select id="listBySkuIds" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
         select
         pbs.parent_sku_id ,

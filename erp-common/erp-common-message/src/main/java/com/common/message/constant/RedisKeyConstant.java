@@ -34,4 +34,10 @@ public class RedisKeyConstant {
      * 计划单号
      */
     public static String SKU_OCCUPY_CODE="SKU_OCCUPY_CODE:{}_{}";
+    /**
+     * SKU含税成本
+     * skuNo
+     */
+    public static String DMP_SKU_COST_CODE = "DMP_SKU_COST:{}_*";
+
 }

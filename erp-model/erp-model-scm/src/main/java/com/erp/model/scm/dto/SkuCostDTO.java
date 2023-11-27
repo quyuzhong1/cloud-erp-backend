@@ -1,8 +1,12 @@
 package com.erp.model.scm.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * sku成本信息
@@ -15,6 +19,11 @@ public class SkuCostDTO {
      * id
      */
     private String id;
+
+    /**
+     * skuId
+     */
+    private String skuId;
 
     /**
     * sku编号
@@ -50,4 +59,21 @@ public class SkuCostDTO {
     * 最近的采购日期
     */
     private LocalDate latestPurchaseDate;
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+        /**
+         * sku编号集合
+         */
+        private List<String> skuNoList;
+
+    }
 }

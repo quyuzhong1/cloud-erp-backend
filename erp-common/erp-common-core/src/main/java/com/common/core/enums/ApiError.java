@@ -541,6 +541,8 @@ public enum ApiError implements Serializable {
     ERROR_SALE_RANGE_EXIST(97042, "区间类型不能为空"),
     //getSettleMethod
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
+    ERP_DMP_SKU_NOT_COST(97044, "sku【{}】未发现成本数据！"),
+
 
     /**
      * SCM 错误

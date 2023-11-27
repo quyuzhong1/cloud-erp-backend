@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
@@ -215,6 +216,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return baseMapper.listAllBomByParentSkuNos(parentSkuNos);
     }
+
+    @Override
+    public List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(BomSkuPageDTO.AllSkuParamDTO params) {
+        return baseMapper.listAllParentSku(params);
+    }
+
 
     /**
      * 根据Bomid 删除 bom sku 信息

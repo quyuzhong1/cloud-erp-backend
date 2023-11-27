@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 清洗数据job
@@ -56,4 +57,25 @@ public class CleanJob {
         dmpSkuCostService.syncPurchaseOrderSkuCost(flag, localDateList);
         return ReturnT.SUCCESS;
     }
+
+    /**
+     * 根据sku编码清洗成本
+     * @author Will
+     * @date: 2023/11/23 14:48
+     * @return ReturnT
+     */
+    @XxlJob("cleanSkuCostBySKuNos")
+    public ReturnT cleanSkuCostBySKuNos(){
+        String jobParam = XxlJobHelper.getJobParam();
+
+        if(StrUtil.isBlank(jobParam)){
+            XxlJobHelper.log("未找到录入参数，cleanSkuCostBySKuNos jobParam:{}",jobParam);
+            return ReturnT.FAIL;
+        }
+        XxlJobHelper.log("cleanSkuCostBySKuNos jobParam:{}", jobParam);
+        List<String> skuNoList = Arrays.stream(jobParam.split(",")).collect(Collectors.toList());
+        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList);
+        return ReturnT.SUCCESS;
+    }
+
 }

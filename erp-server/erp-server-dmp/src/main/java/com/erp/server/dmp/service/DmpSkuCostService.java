@@ -25,6 +25,14 @@ public interface DmpSkuCostService extends SuperService<DmpSkuCostEntity> {
     void syncPurchaseOrderSkuCost(String flag, List<LocalDate> localDateList);
 
     /**
+     * @description: 根据sku编码集合清洗成本数据
+     * @author Will
+     * @date: 2023/11/23 14:52
+     * @param skuNoList
+     */
+    void cleanSkuCostBySKuNos(List<String> skuNoList);
+
+    /**
      * 根据sku查询产品成本信息
      * @Author Luo_WG
      * @Date 2023/9/13 19:03
@@ -32,4 +40,23 @@ public interface DmpSkuCostService extends SuperService<DmpSkuCostEntity> {
      * @return java.util.List<com.erp.model.dmp.entity.DmpSkuCostEntity>
      **/
     List<DmpSkuCostEntity> listDmpSkuCostBySkuNo(List<String> skuNoList);
+
+    /**
+     * @description: 根据skuId集合查询
+     * @author Will
+     * @date: 2023/11/23 12:04
+     * @param skuIdList
+     * @return List<DmpSkuCostEntity>
+     */
+    List<DmpSkuCostEntity> listBySkuIdList(List<String> skuIdList);
+
+    /**
+     * @description: 根据skuId集合查询缓存数据
+     * @author Will
+     * @date: 2023/11/23 12:29
+     * @param skuNoList
+     * @return List<DmpSkuCostEntity>
+     */
+    List<DmpSkuCostEntity> listRedisBySkuNoList(List<String> skuNoList);
+
 }
