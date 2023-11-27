@@ -4,13 +4,18 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
@@ -21,6 +26,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -197,6 +203,29 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 组合
         return detailEntityList.stream()
                 .map(e -> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewListDTO(e, mainEntityMap.get(e.getMainId())))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDTO.CountDTO> listCount(PermissionsDTO dto) {
+        QueryChainWrapper<OverseasWarehouseInboundEntity> queryWrapper = query();
+
+        queryWrapper.select("count(id) as count", "instock_status")
+                .groupBy(OverseasWarehouseInboundEntity.INSTOCK_STATUS);
+        if (StringUtils.isNotBlank(dto.getPermissionSql())){
+            queryWrapper.last(dto.getPermissionSql());
+        }
+        List<OverseasWarehouseInboundEntity> inStockStatusList = queryWrapper.list();
+
+        Map<String, Integer> countMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(inStockStatusList)){
+            countMap = inStockStatusList
+                    .stream()
+                    .collect(Collectors.toMap(OverseasWarehouseInboundEntity::getInstockStatus, OverseasWarehouseInboundEntity::getCount));
+        }
+        Map<String, Integer> finalCountMap = countMap;
+        return Arrays.stream(OverseasInstockStatusEnum.values())
+                .map(e-> new OverseasWarehouseInboundDTO.CountDTO(e.getName(), e.getCode(), finalCountMap.getOrDefault(e.getCode(), 0)))
                 .collect(Collectors.toList());
     }
 
