@@ -1,4 +1,4 @@
-package com.erp.model.wms.enums;
+package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
@@ -11,22 +11,19 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.rmi.ServerException;
 import java.util.stream.Stream;
 
 /**
- * 【海外仓入库单】
- * 完结状态
+ * 【请求ID类型】
  *
  * @author Jim
- * @since 2023-11-16
+ * @since 2023-11-27
  */
 @Getter
 @AllArgsConstructor
-public enum OverseasFinishStatusEnum implements EnumMessage {
-    NOT("not","未完结"),
-    AUTO("auto","自动完结"),
-    MANUAL("manual","手动完结"),
+public enum RequestIdTypeEnum implements EnumMessage {
+    MAIN_ID("main_id","单据ID"),
+    DETAIL_ID("detail_id","详情ID"),
     ;
 
     @EnumValue
@@ -35,43 +32,43 @@ public enum OverseasFinishStatusEnum implements EnumMessage {
 
     /**
      * 通过code查询
-     * OverseasFinishStatus
+     * RequestIdEnum
      * 枚举名称
      */
     public static String getNameByCode(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        OverseasFinishStatusEnum resultEnum = getByCode(code);
+        RequestIdTypeEnum resultEnum = getByCode(code);
         return null == resultEnum ? "" : resultEnum.getName();
     }
 
     /**
      * 通过code查询
-     * OverseasFinishStatus
+     * RequestIdEnum
      * 枚举
      */
-    public static OverseasFinishStatusEnum getByCode(String code) {
-        return Stream.of(OverseasFinishStatusEnum.values())
+    public static RequestIdTypeEnum getByCode(String code) {
+        return Stream.of(RequestIdTypeEnum.values())
                 .filter(e -> e.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .orElse(null);
     }
 
     /**
-     * OverseasFinishStatus
+     * RequestIdEnum
      * 枚举解析器
      */
-    public static class OverseasFinishStatusDeserializer extends JsonDeserializer<OverseasFinishStatusEnum> {
+    public static class RequestIdEnumDeserializer extends JsonDeserializer<RequestIdTypeEnum> {
         @Override
-        public OverseasFinishStatusEnum deserialize(JsonParser p, DeserializationContext c) throws IOException {
+        public RequestIdTypeEnum deserialize(JsonParser p, DeserializationContext c) throws IOException {
             String value = p.getValueAsString();
             if (StringUtils.isBlank(value)) {
                 return null;
             }
-            OverseasFinishStatusEnum type = OverseasFinishStatusEnum.getByCode(value);
+            RequestIdTypeEnum type = RequestIdTypeEnum.getByCode(value);
             if (type == null) {
-                throw new ServiceException("完结状态类型不存在:" + value);
+                throw new ServiceException("请求ID类型不存在:" + value);
             }
             return type;
         }

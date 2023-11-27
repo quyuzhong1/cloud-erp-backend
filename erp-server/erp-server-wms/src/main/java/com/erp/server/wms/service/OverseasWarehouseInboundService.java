@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -53,4 +56,22 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @return
      */
     BatchResultDTO manualFinish(OverseasWarehouseInboundDTO.FinishDTO dto);
+
+    /**
+     * 详情
+     * @author Jim
+     * @date: 2023-11-27
+     * @param id
+     * @return
+     */
+    OverseasWarehouseInboundDTO.ViewDTO view(String id);
+
+    /**
+     * 详情列表
+     * @author Jim
+     * @date: 2023-11-27
+     * @param dto
+     * @return
+     */
+    List<OverseasWarehouseInboundDetailDTO.ViewListDTO> viewList(OverseasWarehouseInboundDTO.ViewListReqDTO dto);
 }

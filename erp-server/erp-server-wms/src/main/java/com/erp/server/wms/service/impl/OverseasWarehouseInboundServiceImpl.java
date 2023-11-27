@@ -4,37 +4,24 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.OptChangeTypeEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SubcontractChangeDTO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.wms.dto.OverseasInventoryDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +32,8 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -57,12 +46,14 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private CommonService commonService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private OverseasWarehouseInboundDetailService overseasWarehouseInboundDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -158,10 +149,55 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         entity.setFinishStatus(OverseasFinishStatusEnum.MANUAL.getCode());
         entity.setFinishReason(dto.getFinishReason());
         // 详情更新签收数量
-        if (!this.updateById(entity)){
+        if (!this.updateById(entity)) {
             throw new ServiceException("海外仓入库单更新失败");
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
+    }
+
+    @Override
+    public OverseasWarehouseInboundDTO.ViewDTO view(String id) {
+        OverseasWarehouseInboundEntity entity = this.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+
+        OverseasWarehouseInboundDTO.ViewDTO resultDTO = OverseasWarehouseInboundConverter.INSTANCE.entityToViewDTO(entity);
+
+        // 查询详情信息
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
+
+        List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailDTOList = detailEntityList.stream()
+                .map(OverseasWarehouseInboundConverter.INSTANCE::detailEntityToViewDTO)
+                .collect(Collectors.toList());
+        resultDTO.setDetailList(detailDTOList);
+
+        return resultDTO;
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDetailDTO.ViewListDTO> viewList(OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        // 详情列表
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = Collections.emptyList();
+        // 主表ID
+        List<String> mainIds = Collections.emptyList();
+        if (RequestIdTypeEnum.MAIN_ID.equals(dto.getRequestIdType())) {
+            detailEntityList = overseasWarehouseInboundDetailService.getByMainIds(dto.getRequestIdList());
+            mainIds = dto.getRequestIdList();
+        } else if (RequestIdTypeEnum.DETAIL_ID.equals(dto.getRequestIdType())) {
+            detailEntityList = overseasWarehouseInboundDetailService.getByIds(dto.getRequestIdList());
+            // 主键IDS
+            mainIds = detailEntityList.stream()
+                    .map(OverseasWarehouseInboundDetailEntity::getMainId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            return Collections.emptyList();
+        }
+        Map<String, OverseasWarehouseInboundEntity> mainEntityMap = this.mapByIds(mainIds);
+        // 组合
+        return detailEntityList.stream()
+                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewListDTO(e, mainEntityMap.get(e.getMainId())))
+                .collect(Collectors.toList());
     }
 
     /**

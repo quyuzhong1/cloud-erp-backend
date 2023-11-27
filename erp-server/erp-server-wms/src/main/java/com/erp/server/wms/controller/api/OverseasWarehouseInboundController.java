@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -11,16 +10,19 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,20 +50,6 @@ public class OverseasWarehouseInboundController extends BaseController {
     private OverseasTransferWarehouseService overseasTransferWarehouseService;
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return ApiResult<String>
-     * @author Jim
-     * @date: 2023-11-16
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "海外仓入库单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated OverseasWarehouseInboundDTO.AddDTO dto) {
-        return success(overseasWarehouseInboundService.add(dto));
-    }
-
-    /**
      * 修改
      *
      * @param dto
@@ -79,6 +67,43 @@ public class OverseasWarehouseInboundController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated OverseasWarehouseInboundDTO.UpdateDTO dto) {
         overseasWarehouseInboundService.update(dto);
         return success();
+    }
+
+    /**
+     * 查询详情
+     * @author Jim
+     * @date: 2023/11/27
+     * @param id
+     * @return ApiResult<OverseasWarehouseInboundDTO>
+     */
+    @LogViewService
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:view",
+            serviceClass = OverseasTransferWarehouseService.class,
+            keyIdName = "id")
+    public ApiResult<OverseasWarehouseInboundDTO.ViewDTO> viewList(@Param("id") String id) {
+        OverseasWarehouseInboundDTO.ViewDTO dto = overseasWarehouseInboundService.view(id);
+        return success(dto);
+    }
+
+
+    /**
+     * 查询详情列表
+     * @author Jim
+     * @date: 2023/11/27
+     * @return ApiResult<List<OverseasWarehouseInboundDTO.ViewDTO>>
+     */
+    @PostMapping("/viewList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:view",
+            serviceClass = OverseasTransferWarehouseService.class,
+            keyIdName = "id")
+    public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewListDTO>> view(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        List<OverseasWarehouseInboundDetailDTO.ViewListDTO> resultList = overseasWarehouseInboundService.viewList(dto);
+        return success(resultList);
     }
 
 
@@ -124,7 +149,7 @@ public class OverseasWarehouseInboundController extends BaseController {
      * @author Jim
      * @date: 2023-11-24
      */
-    @PostMapping("/transferWareHouseList")
+    @GetMapping("/transferWareHouseList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasWarehouseInbound:paging",

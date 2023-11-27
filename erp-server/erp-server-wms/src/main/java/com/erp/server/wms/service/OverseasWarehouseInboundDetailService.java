@@ -51,8 +51,26 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
      * 动手签收
      * @author Jim
      * @date: 2023-11-24
-     * @param
-     * @return
+     * @param dto 签收信息
+     * @return 处理结果
      */
     BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto);
+
+    /**
+     * 通过mainId列表查询
+     * @author Jim
+     * @date: 2023-11-27
+     * @param mainIdList 主表ID
+     * @return entityList
+     */
+    List<OverseasWarehouseInboundDetailEntity> getByMainIds(List<String> mainIdList);
+
+    /**
+     * 通过Ids列表查询
+     * @author Jim
+     * @date: 2023-11-27
+     * @param idList 表ID
+     * @return entityList
+     */
+    List<OverseasWarehouseInboundDetailEntity> getByIds(List<String> idList);
 }

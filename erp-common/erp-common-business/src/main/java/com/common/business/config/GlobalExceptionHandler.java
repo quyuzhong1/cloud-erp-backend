@@ -29,10 +29,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.util.List;
 import java.util.Objects;
 
-/** 
- *
+/**
  * @Classname: GlobalExceptionHandler
-
  * @CreateTime: 2023-04-13  19:34
  * @Author: zhangchunlin
  */
@@ -68,7 +66,7 @@ public class GlobalExceptionHandler {
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
         // 某些异常需要返回data
-        if(Objects.nonNull(e.getData())) {
+        if (Objects.nonNull(e.getData())) {
             result.setData(e.getData());
         }
         return result;
@@ -190,6 +188,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
     public ApiResult resolveException(HttpMessageNotReadableException e) {
         log.error("系统异常：", e);
+        if (StrUtils.isNotEmpty(e.getMessage())) {
+            return ApiResult.error(ApiError.ERROR_600.code, ApiError.ERROR_600.msg + ":" + e.getMessage());
+        }
         return ApiResult.error(ApiError.ERROR_600);
     }
 

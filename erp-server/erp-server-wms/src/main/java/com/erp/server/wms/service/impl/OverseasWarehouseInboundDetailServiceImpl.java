@@ -70,12 +70,12 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
         log.info("开始新增海外仓入库单详情");
         boolean save = super.save(overseasWarehouseInboundDetailEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("海外仓入库单详情保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单详情" , overseasWarehouseInboundDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单详情", overseasWarehouseInboundDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasWarehouseInboundDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -84,27 +84,27 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(OverseasWarehouseInboundDetailDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单详情"));
-        OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity =  BeanMapperUtils.map(OverseasWarehouseInboundDetailEntity.class, updateDTO);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单详情"));
+        OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity = BeanMapperUtils.map(OverseasWarehouseInboundDetailEntity.class, updateDTO);
 
         // 数据处理
         handleData(overseasWarehouseInboundDetailEntity);
         log.info("编辑 开始修改海外仓入库单详情数据，id：【{}】", old.getId());
         boolean save = super.updateById(overseasWarehouseInboundDetailEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("海外仓入库单详情保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录海外仓入库单详情日志数据，id：【{}】", overseasWarehouseInboundDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
+        log.info("编辑 开始记录海外仓入库单详情日志数据，id：【{}】", overseasWarehouseInboundDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundDetailEntity, null, overseasWarehouseInboundDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -113,7 +113,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     @Override
     public List<OverseasWarehouseInboundDTO.ReceiveRecordView> listReceiveRecord(String detailId) {
         List<OverseasWarehouseInboundReceivedEntity> list = overseasWarehouseInboundReceivedService.listByDetailIds(Collections.singletonList(detailId));
-        if (CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
         return list.stream()
@@ -123,15 +123,15 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity) {
-      // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 
     @Override
     public List<OverseasWarehouseInboundDetailEntity> getByMainId(String mainId) {
-        return lambdaQuery().eq(OverseasWarehouseInboundDetailEntity::getMainId,mainId).list();
+        return lambdaQuery().eq(OverseasWarehouseInboundDetailEntity::getMainId, mainId).list();
     }
 
     @Override
@@ -144,7 +144,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
         entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
         // 详情更新签收数量
-        if (!this.updateById(entity)){
+        if (!this.updateById(entity)) {
             throw new ServiceException("海外仓入库单详情更新失败");
         }
         LoginUser userInfo = commonService.getUserInfo();
@@ -153,11 +153,25 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 userInfo.getUserName(),
                 dto.getReceivedQty(),
                 LocalDateTime.now(ZoneId.systemDefault()));
-        if (!overseasWarehouseInboundReceivedService.save(receivedEntity)){
+        if (!overseasWarehouseInboundReceivedService.save(receivedEntity)) {
             throw new ServiceException("海外仓入库单签收保存失败");
         }
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDetailEntity> getByMainIds(List<String> mainIdList) {
+        return lambdaQuery()
+                .in(OverseasWarehouseInboundDetailEntity::getMainId, mainIdList)
+                .list();
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDetailEntity> getByIds(List<String> idList) {
+        return lambdaQuery()
+                .in(OverseasWarehouseInboundDetailEntity::getId, idList)
+                .list();
     }
 
 }

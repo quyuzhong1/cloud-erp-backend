@@ -86,7 +86,7 @@ public class OverseasWarehouseInboundDetailEntity extends BaseEntity<OverseasWar
     * 签收时间
     */
     @TableField("receive_time")
-    private OffsetDateTime receiveTime;
+    private LocalDateTime receiveTime;
     /**
     * 签收状态：not=未签收，already=已签收
     */

@@ -2,6 +2,7 @@ package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -69,7 +70,7 @@ public enum OverseasDeliveryModeEnum implements EnumMessage {
             }
             OverseasDeliveryModeEnum type = OverseasDeliveryModeEnum.getByCode(value);
             if (type == null) {
-                throw new ServerException("交货方式类型不存在:" + value);
+                throw new ServiceException("交货方式类型不存在:" + value);
             }
             return type;
         }
