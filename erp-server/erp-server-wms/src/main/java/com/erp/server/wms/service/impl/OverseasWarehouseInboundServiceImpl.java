@@ -17,6 +17,7 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -244,6 +245,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             data.setInstockStatus(OverseasInstockStatusEnum.getName(data.getInstockStatus()));
             // 完结状态名称
             data.setFinishStatusName(OverseasFinishStatusEnum.getNameByCode(data.getFinishStatus()));
+            // 物流方式
+            data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
         }
     }
 
