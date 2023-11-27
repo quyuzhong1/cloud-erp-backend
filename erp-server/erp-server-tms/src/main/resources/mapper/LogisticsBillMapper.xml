@@ -99,7 +99,7 @@
          ON lbd.main_id=lb.id
          LEFT JOIN  logistics_channel lc
          ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false
+        WHERE  lb.is_deleted=false and (lbd.is_deleted=false or lbd.is_deleted is null)
         <!--状态-->
         <if test="statusList !=null and statusList.size>0">
             AND lbd.track_status in
@@ -209,8 +209,8 @@
         RIGHT JOIN  logistics_bill lb
         ON lbd.main_id=lb.id
         LEFT JOIN  logistics_channel lc
-        ON lc.id=lb.channel_id and lc.is_deleted=false
-        WHERE  lb.is_deleted=false
+        ON lc.id=lb.channel_id and (lbd.is_deleted=false or lbd.is_deleted is null)
+        WHERE  lb.is_deleted=false and lbd.is_deleted=false
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND lbd.id IN

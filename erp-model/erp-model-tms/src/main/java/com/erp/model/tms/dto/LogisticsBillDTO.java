@@ -91,7 +91,7 @@ public class LogisticsBillDTO implements Serializable {
 
         /**
          * 订单类型
-         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=salesOrderType
+         * 来源  http://172.16.100.11:3002/project/128/interface/api/25522 key=orderType
          */
         private List<String>  sourceTypeList;
 

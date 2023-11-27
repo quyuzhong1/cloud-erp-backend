@@ -1535,7 +1535,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(soInfo.getWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
             customer.setWarehouseName(warehouseName);
         }
-        customer.setCustomerId(customerId);
+        customer.setCountryId(countryId);
         return customer;
     }
 
