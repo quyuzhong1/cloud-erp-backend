@@ -168,6 +168,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
         supplierEntity.setAuthStatus(authStatus);
+        logisticsSupplierService.updateById(supplierEntity);
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){
