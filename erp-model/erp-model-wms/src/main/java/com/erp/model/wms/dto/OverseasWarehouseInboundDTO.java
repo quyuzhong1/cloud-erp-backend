@@ -46,15 +46,18 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         /**
          * 入库类型
+         * /api/wms/common/enumDropDown?type=OverseasInstockType
          */
         private String instockType;
 
         /**
          * 交货方式
+         * /api/wms/common/enumDropDown?type=OverseasDeliveryMode
          */
         private String deliveryMode;
         /**
          * 入库状态
+         * /api/wms/common/enumDropDown?type=OverseasInstockStatus
          */
         private List<String> instockStatusList;
 
@@ -75,8 +78,9 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         /**
          * 物流方式
+         * /api/wms/common/enumDropDown?type=LogisticsMethod
          */
-        private String logisticsMethod;
+        private List<String> logisticsMethodList;
 
         /**
          * 是否组合品
@@ -212,6 +216,17 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 物流方式名称
          */
         private String logisticsMethodName;
+
+        /**
+         * 交货方式
+         * /api/wms/common/enumDropDown?type=OverseasDeliveryMode
+         */
+        private String deliveryMode;
+
+        /**
+         * 交货方式名称
+         */
+        private String deliveryModeName;
 
         /**
          * 备注

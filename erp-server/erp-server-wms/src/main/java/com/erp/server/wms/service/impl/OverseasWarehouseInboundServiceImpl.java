@@ -13,11 +13,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -242,11 +244,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             // 入库类型名称
             data.setInstockTypeName(OverseasInstockTypeEnum.getNameByCode(data.getInstockType()));
             // 入库状态名称
-            data.setInstockStatus(OverseasInstockStatusEnum.getName(data.getInstockStatus()));
+            data.setInstockStatusName(OverseasInstockStatusEnum.getName(data.getInstockStatus()));
             // 完结状态名称
             data.setFinishStatusName(OverseasFinishStatusEnum.getNameByCode(data.getFinishStatus()));
             // 物流方式
             data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
+            // 交货方式
+            data.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(data.getDeliveryMode()));
         }
     }
 
