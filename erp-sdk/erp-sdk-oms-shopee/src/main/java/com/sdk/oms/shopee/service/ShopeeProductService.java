@@ -123,12 +123,12 @@ public class ShopeeProductService {
         paramMap.put("access_token", productRequest.getToken());
         paramMap.put("offset", productRequest.getOffset());
         paramMap.put("page_size", pageSize);
-        if (Objects.nonNull(productRequest.getTimeFrom())) {
-            paramMap.put("update_time_from", productRequest.getTimeFrom());
-        }
-        if (Objects.nonNull(productRequest.getTimeTo())) {
-            paramMap.put("update_time_to", productRequest.getTimeTo());
-        }
+//        if (Objects.nonNull(productRequest.getTimeFrom())) {
+//            paramMap.put("update_time_from", productRequest.getTimeFrom());
+//        }
+//        if (Objects.nonNull(productRequest.getTimeTo())) {
+//            paramMap.put("update_time_to", productRequest.getTimeTo());
+//        }
         paramMap.put("item_status", "NORMAL");
         return ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
     }

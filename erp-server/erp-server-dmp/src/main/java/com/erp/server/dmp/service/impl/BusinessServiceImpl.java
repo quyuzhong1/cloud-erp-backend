@@ -103,9 +103,9 @@ public class BusinessServiceImpl {
             }
             T mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(item.toString())) {
-                continue;//时间不一致比较不会生效
-            }
+//            if (mongoDatum.toString().equals(item.toString())) {
+//                continue;//时间不一致比较不会生效
+//            }
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getUniqueId());
             mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
