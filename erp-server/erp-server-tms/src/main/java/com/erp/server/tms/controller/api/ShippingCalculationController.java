@@ -48,11 +48,6 @@ public class ShippingCalculationController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:shippingCalculation:paging",
-            tableAlias = "st"
-    )
     public ApiResult<PagingVO<ShippingCalculationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
         PagingVO<ShippingCalculationDTO.ListDTO> pagingVO = shippingCalculationService.paging(dto);
         return success(pagingVO);
@@ -68,11 +63,6 @@ public class ShippingCalculationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:shippingCalculation:paging",
-            tableAlias = "st"
-    )
     public ApiResult exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = shippingCalculationService.exportExcel(dto, response);
         return flag == true ? success() : failure();
