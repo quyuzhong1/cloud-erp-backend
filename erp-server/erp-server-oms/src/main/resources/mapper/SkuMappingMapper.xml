@@ -101,9 +101,9 @@
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no,
-        li.platform_product_name,
-        li.sku_no AS sellerSkuNo,
-        li.product_name AS sellerProductName,
+        li.platform_sku_name,
+        li.platform_sku_no AS sellerSkuNo,
+        li.platform_sku_name AS sellerProductName,
         li.match_result,
         li.product_image_url,
         li.product_spec,
@@ -134,15 +134,27 @@
                 <if test="params.type !=null and params.type!=''">
                     AND sm.type =#{params.type}
                 </if>
-                <if test="params.platformSpuNo !=null and params.platformSpuNo!=''">
-                    AND sm.platform_spu_no ILIKE concat('%', #{params.platformSpuNo}::text,'%')
+                <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+                    AND li.platform_spu_no IN
+                    <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
+                        #{platformSpuNoItem}
+                    </foreach>
                 </if>
-                <if test="params.platformSkuNo !=null and params.platformSkuNo!=''">
-                    AND sm.platform_sku_no ILIKE concat('%', #{params.platformSkuNo}::text,'%')
+
+                <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+                    AND li.platform_sku_no IN
+                    <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
+                        #{platformSkuNoItem}
+                    </foreach>
                 </if>
-                <if test="params.fnSku !=null and params.fnSku!=''">
-                    AND sm.fn_sku ILIKE concat('%', #{params.fnSku}::text,'%')
+
+                <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
+                    AND li.platform_fn_sku IN
+                    <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
+                        #{fnSkuItem}
+                    </foreach>
                 </if>
+
                 <if test="params.shopIdList !=null and params.shopIdList.size>0">
                     AND sm.shop_id IN
                     <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
@@ -336,8 +348,8 @@
         li.id AS listingId,
         sm.product_sku_id,
         sm.product_sku_no,
-        li.sku_no AS warehouseSkuNo,
-        li.product_name AS warehouseProductName,
+        li.platform_sku_no AS warehouseSkuNo,
+        li.platform_sku_name AS warehouseProductName,
         li.match_result,
         sm.warehouse_id,
         sm.warehouse_name,
@@ -380,6 +392,13 @@
                 #{productSkuNo}
             </foreach>
         </if>
+        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
+            AND li.platform_spu_no IN
+            <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
+                #{platformSpuNoItem}
+            </foreach>
+        </if>
+
         <if test="params.skuIdList !=null and params.skuIdList.size>0">
             AND sm.product_sku_id IN
             <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
