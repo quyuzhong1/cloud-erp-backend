@@ -70,6 +70,13 @@
                 #{item}
             </foreach>
         </if>
+        <!--物流方式-->
+        <if test="params.logisticsMethodList != null and params.logisticsMethodList.size > 0">
+            AND owi.logistics_method in
+            <foreach collection="params.logisticsMethodList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
 
         <!--发货仓ID-->
         <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
@@ -91,10 +98,6 @@
             <foreach collection="params.toWarehouseIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-        </if>
-        <!--物流方式-->
-        <if test="params.logisticsMethod != null and params.logisticsMethod != ''">
-            AND owi.logistics_method ILIKE concat('%',#{params.logisticsMethod}::text,'%')
         </if>
         <!--   是否组合品     -->
         <if test="params.isCombination != null">
