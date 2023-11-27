@@ -5,6 +5,7 @@ import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -106,6 +107,12 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 签收时间
          */
         private List<OffsetDateTime> receiveTimeList;
+
+        /**
+         * 收发差异：/wms/common/enumDropDown?type=DiffRule
+         * 描述： >:大于0，<:小于0，=:等于0，<>:不等于0
+         */
+        private String diffRule;
 
     }
 
@@ -708,5 +715,26 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         @NotNull(message = "请求ID列表不能为空")
         @Size(min = 1,message = "请求ID至少有一个")
         private List<@NotBlank(message = "请求ID不能为空") String> requestIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CountDTO {
+        /**
+         * 类型名称
+         */
+        private String typeName;
+        /**
+         * 入库单状态:
+         * OutstockTypeEnum
+         * 获取路径：/wms/common/enumDropDown?type=OverseasInstockStatus
+         * toBeShipped=待发货，toBeSigned=待签收，partialSigned=部分签收，signed=已签收，canceled=已取消，abnormal=异常，
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

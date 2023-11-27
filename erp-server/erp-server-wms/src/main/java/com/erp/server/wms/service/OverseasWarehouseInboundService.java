@@ -74,4 +74,13 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @return
      */
     List<OverseasWarehouseInboundDetailDTO.ViewListDTO> viewList(OverseasWarehouseInboundDTO.ViewListReqDTO dto);
+
+    /**
+     * 状态数量统计
+     * @author Jim
+     * @date: 2023-11-27
+     * @param dto
+     * @return
+     */
+    List<OverseasWarehouseInboundDTO.CountDTO> listCount(PermissionsDTO dto);
 }

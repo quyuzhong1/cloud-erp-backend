@@ -6,6 +6,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -16,6 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
@@ -104,6 +106,24 @@ public class OverseasWarehouseInboundController extends BaseController {
     public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewListDTO>> view(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
         List<OverseasWarehouseInboundDetailDTO.ViewListDTO> resultList = overseasWarehouseInboundService.viewList(dto);
         return success(resultList);
+    }
+
+    /**
+     * 列表状态数量统计
+     * @Author Jim
+     * @Date 2023/11/27
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
+     **/
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:overseasWarehouseInbound:paging",
+            tableAlias = "owi"
+    )
+    public ApiResult<List<OverseasWarehouseInboundDTO.CountDTO>> listCount(@RequestBody @Validated PermissionsDTO dto) {
+        List<OverseasWarehouseInboundDTO.CountDTO> resultDTO = overseasWarehouseInboundService.listCount(dto);
+        return success(resultDTO);
     }
 
 

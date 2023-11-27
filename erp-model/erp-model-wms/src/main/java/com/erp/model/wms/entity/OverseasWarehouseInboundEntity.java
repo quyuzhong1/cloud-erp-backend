@@ -129,6 +129,11 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
      */
     @TableField("overseas_warehouse_inbound_id")
     private String overseasWarehouseInboundId;
+    /**
+     * 数量
+     */
+    @TableField(exist = false)
+    private Integer count;
 
 
     public static final String CODE = "code";
