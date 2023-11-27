@@ -56,6 +56,11 @@ public class ShippingTemplateController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:shippingTemplate:paging",
+            tableAlias = "st"
+    )
     public ApiResult<List<ShippingTemplateDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<ShippingTemplateDTO.TabListDTO> tabList = shippingTemplateService.tabList(dto);
         return success(tabList);
