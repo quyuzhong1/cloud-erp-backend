@@ -37,7 +37,9 @@
         update_time,
         version,
         is_deleted,
-        platform_channel_id, cn_name, en_name, code, expire_time, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging
+        platform_channel_id, cn_name, en_name, code, channel_status, supplier_name, supplier_code, shipment_method,
+        logistics_platform, source_data, is_track, aging,
+        origin_country,destination_country,overseas_warehouse_id
     </sql>
 
     <select id="listByType" resultType="com.erp.model.tms.dto.SaleChannelDTO">
@@ -52,5 +54,12 @@
             t.is_deleted = false
             AND t.channel_status = 0
             AND t.logistics_platform = #{platformType}
+    </select>
+    <select id="listByLogisticsPlatform" resultType="com.erp.model.tms.entity.LogisticsSaleChannelEntity">
+        SELECT
+          <include refid="Base_Column_List">
+
+          </include>
+        FROM  logistics_sale_channel WHERE logistics_platform=#{logisticsPlatform}
     </select>
 </mapper>

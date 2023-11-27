@@ -136,7 +136,7 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
 
     public static final String NAME = "name";
 
-    public static final String DICT_LOGISTICS_METHOD = "dict_logistics_method";
+    public static final String logistics_channel_name = "logistics_channel_name";
 
     public static final String DELIVERY_TIME = "delivery_time";
 

@@ -59,4 +59,11 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/removeLogisticsBill")
     Boolean removeLogisticsBill(@RequestBody LogisticsBillDTO.RemoveDTO dto);
+
+    /**
+     * 删除物流单
+     * @return
+     */
+    @PostMapping("/feign/logisticsBill/updateTrackNo")
+    Boolean updateTrackNo(@RequestBody LogisticsBillDTO.UpdateTrackNoDTO dto);
 }

@@ -29,4 +29,13 @@ public interface LogisticsSaleChannelMapper extends BaseMapper<LogisticsSaleChan
      * @return
      */
     List<SaleChannelDTO> listByType(@Param("platformType") String platformType);
+
+    /**
+     *
+     *@parms logisticsPlatform
+     *@return 
+     *@author yl
+     *@date 2023-11-27
+     */
+    List<LogisticsSaleChannelEntity> listByLogisticsPlatform(@Param("logisticsPlatform") String logisticsPlatform);
 }

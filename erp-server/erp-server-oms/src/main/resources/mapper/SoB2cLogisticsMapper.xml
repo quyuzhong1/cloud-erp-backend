@@ -15,7 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="code" property="code" />
        <result column="name" property="name" />
-       <result column="dict_logistics_method" property="dictLogisticsMethod" />
+       <result column="logistics_channel_name" property="dictLogisticsMethod" />
        <result column="delivery_time" property="deliveryTime" />
        <result column="estimated_shipping_cost" property="estimatedShippingCost" />
        <result column="estimated_shipping_currency" property="estimatedShippingCurrency" />
@@ -44,7 +44,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, code, name, dict_logistics_method, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
+        main_id, code, name, logistics_channel_name, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
     </sql>
 
 

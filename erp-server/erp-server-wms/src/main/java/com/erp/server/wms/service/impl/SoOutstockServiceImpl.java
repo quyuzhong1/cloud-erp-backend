@@ -1575,6 +1575,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto) {
         List<SoOutstockEntity> list = this.listByIds(dto.getIdList());
         if (ObjectUtils.isEmpty(list)) {
@@ -1583,6 +1585,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         boolean update = lambdaUpdate().in(SoOutstockEntity::getId, dto.getIdList())
                 .set(SoOutstockEntity::getTrackNo, dto.getTrackNo())
                 .update();
+        LogisticsBillDTO.UpdateTrackNoDTO updateTrackNoDTO=new LogisticsBillDTO.UpdateTrackNoDTO();
+        updateTrackNoDTO.setTrackNo(dto.getTrackNo());
+        updateTrackNoDTO.setOutstockIdList(dto.getIdList());
+        logisticsBillFeign.updateTrackNo(updateTrackNoDTO);
         return update;
     }
 
