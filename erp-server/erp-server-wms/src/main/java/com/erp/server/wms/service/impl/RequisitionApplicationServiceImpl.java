@@ -19,8 +19,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -381,7 +383,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 printPickingViewList.add(viewDTO);
             }
         }
-        return printPickingViewList;
+
+        List<RequisitionApplicationDTO.printPickingViewDTO> resultList = printPickingViewList.stream()
+                .sorted(Comparator.comparing(RequisitionApplicationDTO.printPickingViewDTO::getSkuNo).reversed()
+                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getToWarehouseName).reversed()
+                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation).reversed()
+                ).collect(Collectors.toList());
+        return resultList;
     }
 
     @Override

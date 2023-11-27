@@ -187,4 +187,27 @@
         </if>
     </select>
 
+    <select id="generateRequisitionApplicationView" resultType="com.erp.model.wms.dto.FbaShipmentDTO$GenerateRequisitionApplicationViewDTO">
+        SELECT
+            fs.id AS sourceId,
+            fsd.id AS sourceDetailId,
+            fs.code AS sourceCode,
+            fs.shop_id AS channelId,
+            fs.shop_name AS channelName,
+            fsd.asin,
+            fsd.msku,
+            fsd.fn_sku,
+            fsd.sku_id,
+            fsd.sku_no,
+            fsd.declare_qty
+        FROM fba_shipment_detail fsd
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        WHERE fs.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            and fs.id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

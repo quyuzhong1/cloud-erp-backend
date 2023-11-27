@@ -47,4 +47,13 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @date 2023/11/20
      */
     boolean updateByIdWithoutIsDelete(FbaShipmentEntity entity);
+
+    /**
+     * 下推要货申请
+     * @Author Luo_WG
+     * @Date 2023/11/27 15:58
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
+     **/
+    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
 }

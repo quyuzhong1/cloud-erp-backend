@@ -129,4 +129,24 @@ public interface FbaShipmentConverter {
     })
     FbaShipmentEntity oldToNew(FbaShipmentEntity entity, FbaShipmentEntity oldEntity);
 
+    @Mappings({
+            @Mapping(target = "toWarehouseId", constant = ""),
+            @Mapping(target = "toWarehouseName", constant = ""),
+            @Mapping(target = "fromWarehouseId", constant = ""),
+            @Mapping(target = "fromWarehouseName", constant = ""),
+            @Mapping(target = "handleUserId", constant = ""),
+            @Mapping(target = "detailList", ignore = true),
+            @Mapping(target = "handleUserName", constant = ""),
+            @Mapping(target = "requisitionWarehouseName", constant = ""),
+            @Mapping(target = "status", constant = "")
+    })
+    RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
+
+
+
+    @Mappings({
+            @Mapping(target = "approveQty", ignore = true),
+            @Mapping(target = "pickingQty", ignore = true),
+    })
+    RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 }

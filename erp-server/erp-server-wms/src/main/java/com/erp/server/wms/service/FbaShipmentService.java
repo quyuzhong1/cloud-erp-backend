@@ -165,7 +165,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
      **/
-    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> GenerateRequisitionApplicationView(BaseIdsDTO.IdsDTO ids);
+    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
 
     /**
      * FBA货件下推要货申请保存
@@ -175,6 +175,15 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return java.lang.Boolean
      **/
     Boolean generateRequisitionApplicationSave(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
+
+    /**
+     * FBA货件下推要货申请保存并提交
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:22
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateRequisitionApplicationSaveAndSubmit(List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list);
 
     /**
      * 发货更新状态和发货数量

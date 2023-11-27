@@ -624,6 +624,16 @@ public class FbaShipmentDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源类型中文
+         */
+        private String sourceTypeName;
+
+        /**
          * 要货类型
          */
         private String type;
@@ -667,6 +677,11 @@ public class FbaShipmentDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
 
         /**
          * bom版本
