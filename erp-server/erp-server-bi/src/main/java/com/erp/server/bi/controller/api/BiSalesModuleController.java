@@ -694,7 +694,7 @@ public class BiSalesModuleController extends BaseController {
      * @author yl
      * @date 2023-09-21 17:13
      */
-    @PostMapping("grossProfit")
+    @PostMapping("/grossProfit")
     public ApiResult<StatisticalDataVO> grossProfit(@RequestBody @Validated BiDataSourceCostDTO.GrossProfitDTO dto) {
         StatisticalDataVO statistical = salesOrderService.grossProfit(dto);
         return success(statistical);
