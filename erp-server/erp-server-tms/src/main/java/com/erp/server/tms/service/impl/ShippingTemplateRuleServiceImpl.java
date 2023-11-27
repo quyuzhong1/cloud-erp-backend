@@ -219,7 +219,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         }
 
         //重量验证
-        long weightCount = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getStartWeight(), obj.getEndWeight()) > MathUtil.ZERO).count();
+        long weightCount = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getStartWeight(), obj.getEndWeight()) >= MathUtil.ZERO).count();
         if (weightCount > 0) {
             throw new ServiceException(ApiError.ERROR_RULE_WEIGHT_COMPARE);
         }
