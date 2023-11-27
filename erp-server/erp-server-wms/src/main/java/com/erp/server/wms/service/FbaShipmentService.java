@@ -2,8 +2,8 @@ package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -42,7 +42,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordDTO>>
      **/
-    List<FbaDeliveryDTO.DeliverRecordView> listDeliverRecord(String id);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id);
 
     /**
      * 查询货件状态记录
@@ -88,7 +88,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param id
      * @return com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO
      **/
-    FbaDeliveryDTO.ViewDTO getDeliverView(String id);
+    FirstMileDeliveryDTO.ViewDTO getDeliverView(String id);
 
     /**
      * 下推发货单保存
@@ -192,7 +192,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param deliveryEntity
      * @return java.lang.Boolean
      **/
-    Boolean deliveryStatus(FbaDeliveryEntity deliveryEntity);
+    Boolean deliveryStatus(FirstMileDeliveryEntity deliveryEntity);
 
     /**
      * 发货单反审核修改发货数量和状态
@@ -201,6 +201,6 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @param deliveryEntity
      * @return java.lang.Boolean
      **/
-    Boolean deliveryDisApprove(FbaDeliveryEntity deliveryEntity);
+    Boolean deliveryDisApprove(FirstMileDeliveryEntity deliveryEntity);
 
 }

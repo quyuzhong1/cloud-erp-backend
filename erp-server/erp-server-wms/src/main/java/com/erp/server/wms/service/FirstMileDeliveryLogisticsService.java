@@ -1,22 +1,19 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.entity.FbaDeliveryDetailEntity;
-import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryLogisticsDTO;
 
 import java.util.List;
 
 /**
  * <p>
- * FBI发货单物流信息表 服务类
+ * 头程发货单物流信息表 服务类
  * </p>
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
-public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLogisticsEntity> {
+public interface FirstMileDeliveryLogisticsService extends SuperService<FirstMileDeliveryLogisticsEntity> {
 
     /**
      * 新增
@@ -27,7 +24,7 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param code 主单据编号
      * @return java.lang.String
      **/
-    String add(FbaDeliveryLogisticsDTO.AddDTO dto, String mainId, String code);
+    String add(FirstMileDeliveryLogisticsDTO.AddDTO dto, String mainId, String code);
 
     /**
     * 修改
@@ -36,7 +33,7 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
     * @param dto
     * @return
     */
-    Boolean update(FbaDeliveryLogisticsDTO.UpdateDTO dto, String mainId);
+    Boolean update(FirstMileDeliveryLogisticsDTO.UpdateDTO dto, String mainId);
 
     /**
      * 根据主键id删除物流信息
@@ -54,7 +51,7 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param mainId
      * @return com.erp.model.wms.entity.FbaDeliveryDetailEntity
      **/
-    FbaDeliveryLogisticsEntity listByMainId(String mainId);
+    FirstMileDeliveryLogisticsEntity listByMainId(String mainId);
 
     /**
      * 根据主表ids查询物流信息
@@ -63,7 +60,7 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param mainIds
      * @return com.erp.model.wms.entity.FbaDeliveryDetailEntity
      **/
-    List<FbaDeliveryLogisticsEntity> listByMainIds(List<String> mainIds);
+    List<FirstMileDeliveryLogisticsEntity> listByMainIds(List<String> mainIds);
 
     /**
      *
@@ -72,7 +69,7 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
-    List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids);
+    List<FirstMileDeliveryLogisticsDTO.DeliveryLogisticsView> updateLogisticsView(List<String> ids);
 
     /**
      * 更新物流信息列表保存
@@ -81,5 +78,5 @@ public interface FbaDeliveryLogisticsService extends SuperService<FbaDeliveryLog
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean saveUpdateLogistics(List<FbaDeliveryLogisticsEntity> dto);
+    Boolean saveUpdateLogistics(List<FirstMileDeliveryLogisticsEntity> dto);
 }

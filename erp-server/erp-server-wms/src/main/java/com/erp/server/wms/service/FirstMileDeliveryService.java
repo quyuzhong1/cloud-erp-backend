@@ -1,24 +1,23 @@
 package com.erp.server.wms.service;
 import com.common.business.validator.ValidList;
-import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
  * <p>
- * FBI发货单 服务类
+ * 头程发货单 服务类
  * </p>
  *
  * @author Luo_WG
  * @since 2023-10-30
  */
-public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
+public interface FirstMileDeliveryService extends SuperService<FirstMileDeliveryEntity> {
 
     /**
     * 新增
@@ -27,7 +26,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FbaDeliveryDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO dto);
 
     /**
     * 修改
@@ -36,7 +35,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     * @param dto
     * @return
     */
-    Boolean update(FbaDeliveryDTO.UpdateDTO dto);
+    Boolean update(FirstMileDeliveryDTO.UpdateDTO dto);
 
       /**
       * 分页列表查询
@@ -45,7 +44,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
       * @param pagingParamDTO
       * @return PagingVO<FbaDeliveryDTO.ListDTO>>
       */
-      PagingVO<FbaDeliveryDTO.ListDTO> paging(PagingDTO<FbaDeliveryDTO.PagingParamDTO> pagingParamDTO);
+      PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
@@ -54,7 +53,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return List<FbaDeliveryDTO.TabListDTO>>
      */
-     List<FbaDeliveryDTO.TabListDTO> tabList(PermissionsDTO dto);
+     List<FirstMileDeliveryDTO.TabListDTO> tabList(PermissionsDTO dto);
 
      /**
      * 详情
@@ -63,7 +62,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param id
      * @return
      */
-     FbaDeliveryDTO.ViewDTO view(String id);
+     FirstMileDeliveryDTO.ViewDTO view(String id);
 
      /**
      * 新增并提交审核
@@ -72,7 +71,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return
      */
-     BaseResultDTO.AddDTO addAndSubmit(FbaDeliveryDTO.AddDTO dto);
+     BaseResultDTO.AddDTO addAndSubmit(FirstMileDeliveryDTO.AddDTO dto);
 
      /**
      * 修改并提交审核
@@ -81,7 +80,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return
      */
-     void updateAndSubmit(FbaDeliveryDTO.UpdateDTO dto);
+     void updateAndSubmit(FirstMileDeliveryDTO.UpdateDTO dto);
 
      /**
      * 提交审核
@@ -145,7 +144,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     * @param response
     * @return
     */
-    void exportList(FbaDeliveryDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -153,7 +152,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
     * @param entity
     * @return
     */
-    Boolean approveEnd(ApproveOneDTO dto, FbaDeliveryEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, FirstMileDeliveryEntity entity);
 
     /**
      * 下推加工单列表查询
@@ -162,7 +161,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param ids
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
      **/
-    List<FbaDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids);
+    List<FirstMileDeliveryDTO.GenerateMachineView> generateMachineView(List<String> ids);
 
     /**
      * 下推加工单保存
@@ -171,7 +170,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param list
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean fbaDeliveryGenerateMachineSave(List<FbaDeliveryDTO.GenerateMachineView> list);
+    Boolean fbaDeliveryGenerateMachineSave(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 下推加工单保存并提交
@@ -180,7 +179,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean fbaDeliveryGenerateMachineSubmit(List<FbaDeliveryDTO.GenerateMachineView> list);
+    Boolean fbaDeliveryGenerateMachineSubmit(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 下推加工单提交并审核
@@ -189,7 +188,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FbaDeliveryDTO.GenerateMachineView> list);
+    Boolean fbaDeliveryGenerateMachineSubmitAndApprove(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 打印子件明细查询
@@ -198,7 +197,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param list
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
-    List<FbaDeliveryDTO.PrintSonItem> printSonItemDetail(List<FbaDeliveryDTO.GenerateMachineView> list);
+    List<FirstMileDeliveryDTO.PrintSonItem> printSonItemDetail(List<FirstMileDeliveryDTO.GenerateMachineView> list);
 
     /**
      * 根据来源单号查询发货记录
@@ -207,7 +206,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FbaDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
 
     /**
      * 根据来源单号查询发货信息
@@ -216,7 +215,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryEntity>
      **/
-    List<FbaDeliveryEntity> listBySourceIds(List<String> sourceIds);
+    List<FirstMileDeliveryEntity> listBySourceIds(List<String> sourceIds);
 
     /**
      * 根据版本号重新获取下推加工单的子件详情
@@ -225,7 +224,7 @@ public interface FbaDeliveryService extends SuperService<FbaDeliveryEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>
      **/
-    List<FbaDeliveryDTO.SonItem> sonItemDetailByVersion(FbaDeliveryDTO.SonItemDetailByVersion dto);
+    List<FirstMileDeliveryDTO.SonItem> sonItemDetailByVersion(FirstMileDeliveryDTO.SonItemDetailByVersion dto);
 
     /**
      * 装箱

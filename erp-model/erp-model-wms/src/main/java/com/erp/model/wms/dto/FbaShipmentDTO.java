@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -711,6 +709,9 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 要货数量
          */
+        @NotNull(message = "要货数量不能为空")
+        @DecimalMax(value = "999999999",message ="要货数量超出最大值" )
+        @DecimalMin(value = "1",message ="要货数量最小值为1" )
         private Integer requisitionQty;
     }
 

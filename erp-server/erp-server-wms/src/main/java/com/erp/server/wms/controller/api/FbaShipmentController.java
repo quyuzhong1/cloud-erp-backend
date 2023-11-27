@@ -11,12 +11,8 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.dto.FirstMileCartonDTO;
-import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.server.wms.service.FbaDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -91,8 +87,8 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordDTO>>
      **/
     @GetMapping("/listDeliverRecord")
-    public ApiResult<List<FbaDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam(value = "id") String id) {
-        List<FbaDeliveryDTO.DeliverRecordView> result = fbaShipmentService.listDeliverRecord(id);
+    public ApiResult<List<FirstMileDeliveryDTO.DeliverRecordView>> listDeliverRecord(@RequestParam(value = "id") String id) {
+        List<FirstMileDeliveryDTO.DeliverRecordView> result = fbaShipmentService.listDeliverRecord(id);
         return success(result);
     }
 
@@ -176,8 +172,8 @@ public class FbaShipmentController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaDeliveryDTO.ViewDTO>
      **/
     @GetMapping("/getDeliverView")
-    public ApiResult<FbaDeliveryDTO.ViewDTO> getDeliverView(@RequestParam("id") String id) {
-        FbaDeliveryDTO.ViewDTO view = fbaShipmentService.getDeliverView(id);
+    public ApiResult<FirstMileDeliveryDTO.ViewDTO> getDeliverView(@RequestParam("id") String id) {
+        FirstMileDeliveryDTO.ViewDTO view = fbaShipmentService.getDeliverView(id);
         return success(view);
     }
 

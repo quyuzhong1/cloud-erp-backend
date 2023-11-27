@@ -3,6 +3,8 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -14,17 +16,16 @@ import com.common.core.enums.LogActionEnum;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.FbaDeliveryService;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import com.erp.model.wms.entity.FbaDeliveryEntity;
 
 /**
  * FBA发货单
@@ -36,10 +37,10 @@ import com.erp.model.wms.entity.FbaDeliveryEntity;
 @RestController
 @LogSystemModule("FBA发货单")
 @RequestMapping("/fbaDelivery")
-public class FbaDeliveryController extends BaseController {
+public class FirstMileDeliveryController extends BaseController {
 
     @Autowired
-    private FbaDeliveryService fbaDeliveryService;
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     /**
     * 新增
@@ -50,8 +51,8 @@ public class FbaDeliveryController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
-        return success(fbaDeliveryService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
+        return success(firstMileDeliveryService.add(dto));
     }
 
     /**
@@ -65,10 +66,10 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
     menuCode = "wms:fbaDelivery:update",
-    serviceClass = FbaDeliveryService.class,
+    serviceClass = FirstMileDeliveryService.class,
     keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated FbaDeliveryDTO.UpdateDTO dto) {
-        fbaDeliveryService.update(dto);
+    public ApiResult update(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
+        firstMileDeliveryService.update(dto);
         return success();
     }
 
@@ -77,8 +78,8 @@ public class FbaDeliveryController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
-    public ApiResult<List<FbaDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(fbaDeliveryService.tabList(dto));
+    public ApiResult<List<FirstMileDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+       return success(firstMileDeliveryService.tabList(dto));
     }
 
     /**
@@ -94,8 +95,8 @@ public class FbaDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:paging",
             tableAlias = "fd"
     )
-    public ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaDeliveryDTO.PagingParamDTO> dto) {
-        return success(fbaDeliveryService.paging(dto));
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        return success(firstMileDeliveryService.paging(dto));
     }
 
     /**
@@ -106,8 +107,8 @@ public class FbaDeliveryController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated FbaDeliveryDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO addDTO = fbaDeliveryService.addAndSubmit(dto);
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO addDTO = firstMileDeliveryService.addAndSubmit(dto);
         return success(addDTO);
     }
 
@@ -122,10 +123,10 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:updateAndSubmit",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated FbaDeliveryDTO.UpdateDTO dto) {
-        fbaDeliveryService.updateAndSubmit(dto);
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
+        firstMileDeliveryService.updateAndSubmit(dto);
         return success();
     }
 
@@ -140,7 +141,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:submit",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "FBA发货单提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -148,10 +149,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = fbaDeliveryService.submit(id);
+                submit = firstMileDeliveryService.submit(id);
             }catch (Exception e){
                 log.error("FBA发货单 提交审核失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "FBA发货单不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -175,7 +176,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:approve",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "FBA发货单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -184,10 +185,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = fbaDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("FBA发货单审核失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 审核失败");
                     resultDTOS.add(approveResult);
@@ -211,7 +212,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:disApprove",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "FBA发货单反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -219,10 +220,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
-                disApproveResult = fbaDeliveryService.disApprove(id);
+                disApproveResult = firstMileDeliveryService.disApprove(id);
             }catch (Exception e){
                 log.error("FBA发货单反审核失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
@@ -246,7 +247,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:delete",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "FBA发货单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -254,10 +255,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = fbaDeliveryService.delete(id);
+                deleteResult = firstMileDeliveryService.delete(id);
             }catch (Exception e){
                 log.error("FBA发货单删除失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
@@ -280,7 +281,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:invalid",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "FBA发货单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -288,10 +289,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
             try {
-                invalidResult = fbaDeliveryService.invalid(id,dto.getRemark());
+                invalidResult = firstMileDeliveryService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("FBA发货单作废失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     invalidResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
@@ -315,7 +316,7 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:cancel",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "FBA发货单撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -323,10 +324,10 @@ public class FbaDeliveryController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = fbaDeliveryService.cancelProcess(id);
+                cancelResult = firstMileDeliveryService.cancelProcess(id);
             }catch (Exception e){
                 log.error("FBA发货单撤回流程失败",e);
-                FbaDeliveryEntity entity = fbaDeliveryService.getById(id);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "FBA发货单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
@@ -350,11 +351,11 @@ public class FbaDeliveryController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:fbaDelivery:view",
-            serviceClass = FbaDeliveryService.class,
+            serviceClass = FirstMileDeliveryService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<FbaDeliveryDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(fbaDeliveryService.view(id));
+    public ApiResult<FirstMileDeliveryDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(firstMileDeliveryService.view(id));
     }
 
     /**
@@ -372,8 +373,8 @@ public class FbaDeliveryController extends BaseController {
             tableAlias = "fd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出Excel数据")
-    public void exportList(@RequestBody @Validated FbaDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
-        fbaDeliveryService.exportList(dto, response);
+    public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+        firstMileDeliveryService.exportList(dto, response);
     }
 
     /**
@@ -384,8 +385,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.GenerateGenerateMachineView>>
      **/
     @PostMapping("/generateMachineView")
-    public ApiResult<List<FbaDeliveryDTO.GenerateMachineView>> generateMachineView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FbaDeliveryDTO.GenerateMachineView> result = fbaDeliveryService.generateMachineView(dto.getIds());
+    public ApiResult<List<FirstMileDeliveryDTO.GenerateMachineView>> generateMachineView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FirstMileDeliveryDTO.GenerateMachineView> result = firstMileDeliveryService.generateMachineView(dto.getIds());
         return success(result);
     }
 
@@ -397,8 +398,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/fbaDeliveryGenerateMachineSave")
-    public ApiResult fbaDeliveryGenerateMachineSave(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
-        Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSave(list);
+    public ApiResult fbaDeliveryGenerateMachineSave(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+        Boolean flag = firstMileDeliveryService.fbaDeliveryGenerateMachineSave(list);
         return flag ? success() : failure();
     }
 
@@ -410,8 +411,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/fbaDeliveryGenerateMachineSubmit")
-    public ApiResult fbaDeliveryGenerateMachineSubmit(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
-        Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSubmit(list);
+    public ApiResult fbaDeliveryGenerateMachineSubmit(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+        Boolean flag = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmit(list);
         return flag ? success() : failure();
     }
 
@@ -423,8 +424,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/fbaDeliveryGenerateMachineSubmitAndApprove")
-    public ApiResult fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> list) {
-        Boolean flag = fbaDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
+    public ApiResult fbaDeliveryGenerateMachineSubmitAndApprove(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> list) {
+        Boolean flag = firstMileDeliveryService.fbaDeliveryGenerateMachineSubmitAndApprove(list);
         return flag ? success() : failure();
     }
 
@@ -436,8 +437,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.PrintSonItem>>
      **/
     @PostMapping("/printSonItemDetail")
-    public ApiResult<List<FbaDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated List<FbaDeliveryDTO.GenerateMachineView> dto) {
-        List<FbaDeliveryDTO.PrintSonItem> list = fbaDeliveryService.printSonItemDetail(dto);
+    public ApiResult<List<FirstMileDeliveryDTO.PrintSonItem>> printSonItemDetail(@RequestBody @Validated List<FirstMileDeliveryDTO.GenerateMachineView> dto) {
+        List<FirstMileDeliveryDTO.PrintSonItem> list = firstMileDeliveryService.printSonItemDetail(dto);
         return success(list);
     }
 
@@ -449,8 +450,8 @@ public class FbaDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.SonItem>>
      **/
     @PostMapping("/sonItemDetailByVersion")
-    public ApiResult<List<FbaDeliveryDTO.SonItem>> sonItemDetailByVersion(@RequestBody @Validated FbaDeliveryDTO.SonItemDetailByVersion dto) {
-        List<FbaDeliveryDTO.SonItem> result = fbaDeliveryService.sonItemDetailByVersion(dto);
+    public ApiResult<List<FirstMileDeliveryDTO.SonItem>> sonItemDetailByVersion(@RequestBody @Validated FirstMileDeliveryDTO.SonItemDetailByVersion dto) {
+        List<FirstMileDeliveryDTO.SonItem> result = firstMileDeliveryService.sonItemDetailByVersion(dto);
         return success(result);
     }
 
@@ -464,7 +465,7 @@ public class FbaDeliveryController extends BaseController {
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单装箱保存")
     public ApiResult packingSave(@RequestBody @Validated ValidList<FirstMileCartonDTO.AddDTO> dto) {
-        Boolean flag = fbaDeliveryService.packingSave(dto);
+        Boolean flag = firstMileDeliveryService.packingSave(dto);
         return flag ? success() : failure();
     }
 
@@ -477,7 +478,7 @@ public class FbaDeliveryController extends BaseController {
      **/
     @PostMapping("/listPacking")
     public ApiResult<List<FirstMileCartonDTO.ListPackingDTO>> listPacking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FirstMileCartonDTO.ListPackingDTO> result = fbaDeliveryService.listPacking(dto.getIds());
+        List<FirstMileCartonDTO.ListPackingDTO> result = firstMileDeliveryService.listPacking(dto.getIds());
         return success(result);
     }
 }

@@ -12,14 +12,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
- * FBI发货单请求响应实体
+ * 头程发货单请求响应实体
  * </p>
  *
  * @author Luo_WG
@@ -27,7 +25,7 @@ import javax.validation.constraints.NotEmpty;
 */
 @Data
 @NoArgsConstructor
-public class FbaDeliveryDTO implements Serializable {
+public class FirstMileDeliveryDTO implements Serializable {
 
 
      /**
@@ -479,12 +477,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FbaDeliveryLogisticsDTO.ViewDTO logisticsView;
+        private FirstMileDeliveryLogisticsDTO.ViewDTO logisticsView;
 
         /**
          * 产品信息
          */
-        private List<FbaDeliveryDetailDTO.ViewDTO> detailList;
+        private List<FirstMileDeliveryDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -507,12 +505,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FbaDeliveryLogisticsDTO.AddDTO logisticsView;
+        private FirstMileDeliveryLogisticsDTO.AddDTO logisticsView;
 
         /**
          * 产品信息
          */
-        private List<FbaDeliveryDetailDTO.AddDTO> detailList;
+        private List<FirstMileDeliveryDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -542,12 +540,12 @@ public class FbaDeliveryDTO implements Serializable {
         /**
          * 物流信息
          */
-        private FbaDeliveryLogisticsDTO.UpdateDTO logisticsView;
+        private FirstMileDeliveryLogisticsDTO.UpdateDTO logisticsView;
 
         /**
          * 产品信息
          */
-        private List<FbaDeliveryDetailDTO.UpdateDTO> detailList;
+        private List<FirstMileDeliveryDetailDTO.UpdateDTO> detailList;
     }
 
     @Data

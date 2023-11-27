@@ -1,22 +1,13 @@
 package com.erp.server.wms.convert;
 
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import javax.validation.constraints.*;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 
 /**
  * FBA货件实体映射工具
@@ -50,7 +41,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "remark", constant = ""),
             @Mapping(target = "sourceType", constant = ""),
     })
-    FbaDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
+    FirstMileDeliveryDTO.AddDTO fbaGenerateDeliverViewToDeliveryAdd(FbaShipmentDTO.GenerateDeliverView view);
 
 
     @Mappings({
@@ -62,7 +53,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "productSizeLength", constant = "0"),
             @Mapping(target = "productSizeWidth", constant = "0")
     })
-    FbaDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
+    FirstMileDeliveryDetailDTO.AddDTO fbaGenerateDeliverViewToDeliveryDetailAdd(FbaShipmentDTO.GenerateDeliverView view);
 
     @Mappings({
             @Mapping(target = "sourceId", source = "id"),
@@ -70,14 +61,14 @@ public interface FbaShipmentConverter {
             @Mapping(target = "outWarehouseId", source = "deliveryWarehouseId"),
             @Mapping(target = "inWarehouseId", source = "destWarehouseId"),
     })
-    TransferOutDTO.AddDTO fbaDeliveryEntityToTransferOutAdd(FbaDeliveryEntity entity);
+    TransferOutDTO.AddDTO fbaDeliveryEntityToTransferOutAdd(FirstMileDeliveryEntity entity);
 
     @Mappings({
             @Mapping(target = "outWarehouseLocation", source = "warehouseLocation"),
             @Mapping(target = "qty", source = "deliveryQty"),
             @Mapping(target = "sourceDetailId", source = "id")
     })
-    TransferOutDetailDTO.AddDTO fbaDeliveryDetailEntityToTransferOutDetailAdd(FbaDeliveryDetailEntity detailEntity);
+    TransferOutDetailDTO.AddDTO fbaDeliveryDetailEntityToTransferOutDetailAdd(FirstMileDeliveryDetailEntity detailEntity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -89,7 +80,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "countryId", source = "countryId"),
             @Mapping(target = "countryName", source = "countryName")
     })
-    FbaDeliveryDTO.ViewDTO fbaShipmentEntityToFbaDeliveryViewDTO(FbaShipmentEntity entity);
+    FirstMileDeliveryDTO.ViewDTO fbaShipmentEntityToFbaDeliveryViewDTO(FbaShipmentEntity entity);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
@@ -97,7 +88,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "planQty", source = "declareQty"),
             @Mapping(target = "deliveryQty", source = "declareQty"),
     })
-    FbaDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
+    FirstMileDeliveryDetailDTO.ViewDTO fbaShipmentDetailEntityToDeliveryDetailViewDTO(FbaShipmentDetailEntity detailEntity);
 
 
     @Mappings({

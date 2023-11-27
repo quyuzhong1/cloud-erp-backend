@@ -3,16 +3,12 @@ package com.erp.model.wms.dto;
 import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
- * FBI发货单明细表请求响应实体
+ * 头程发货单明细表请求响应实体
  * </p>
  *
  * @author Luo_WG
@@ -20,7 +16,7 @@ import javax.validation.constraints.Digits;
 */
 @Data
 @NoArgsConstructor
-public class FbaDeliveryDetailDTO implements Serializable {
+public class FirstMileDeliveryDetailDTO implements Serializable {
 
     /**
     * 详情

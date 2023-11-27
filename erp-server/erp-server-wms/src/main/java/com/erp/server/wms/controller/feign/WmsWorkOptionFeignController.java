@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.wms.service.*;
@@ -46,7 +43,7 @@ public class WmsWorkOptionFeignController {
     private StocktakingTaskService stocktakingTaskService;
 
     @Resource
-    private FbaDeliveryService fbaDeliveryService;
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @Resource
     private OverseasDeliveryPlanService overseasDeliveryPlanService;
@@ -148,7 +145,7 @@ public class WmsWorkOptionFeignController {
         BeanMapper.copy(baseApproveParamDTO,oneDto);
         String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
         oneDto.setId(id);
-        fbaDeliveryService.approve(oneDto);
+        firstMileDeliveryService.approve(oneDto);
         return Boolean.TRUE;
     }
 

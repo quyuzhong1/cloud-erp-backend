@@ -1,9 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
-import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 

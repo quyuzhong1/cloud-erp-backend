@@ -3,21 +3,18 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.wms.dto.FbaDeliveryDTO;
-import com.erp.model.wms.entity.FbaDeliveryLogisticsEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryLogisticsEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.FbaDeliveryLogisticsService;
+import com.erp.server.wms.service.FirstMileDeliveryLogisticsService;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.FbaDeliveryLogisticsDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryLogisticsDTO;
 
 import java.util.List;
 
@@ -31,10 +28,10 @@ import java.util.List;
 @RestController
 @LogSystemModule("FBA发货单物流信息表")
 @RequestMapping("/fbaDeliveryLogistics")
-public class FbaDeliveryLogisticsController extends BaseController {
+public class FirstMileDeliveryLogisticsController extends BaseController {
 
     @Autowired
-    private FbaDeliveryLogisticsService fbaDeliveryLogisticsService;
+    private FirstMileDeliveryLogisticsService firstMileDeliveryLogisticsService;
 
     /**
      * 更新物流信息列表查询
@@ -44,8 +41,8 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/viewUpdateLogistics")
-    public ApiResult<List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView>> viewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FbaDeliveryLogisticsDTO.DeliveryLogisticsView> result = fbaDeliveryLogisticsService.updateLogisticsView(dto.getIds());
+    public ApiResult<List<FirstMileDeliveryLogisticsDTO.DeliveryLogisticsView>> viewUpdateLogistics(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<FirstMileDeliveryLogisticsDTO.DeliveryLogisticsView> result = firstMileDeliveryLogisticsService.updateLogisticsView(dto.getIds());
         return success(result);
     }
 
@@ -58,9 +55,9 @@ public class FbaDeliveryLogisticsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/saveUpdateLogistics")
-    public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FbaDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
-        List<FbaDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FbaDeliveryLogisticsEntity.class);
-        Boolean flag = fbaDeliveryLogisticsService.saveUpdateLogistics(fbaDeliveryLogisticsEntities);
+    public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FirstMileDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
+        List<FirstMileDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FirstMileDeliveryLogisticsEntity.class);
+        Boolean flag = firstMileDeliveryLogisticsService.saveUpdateLogistics(fbaDeliveryLogisticsEntities);
         return flag ? success() : failure();
     }
 

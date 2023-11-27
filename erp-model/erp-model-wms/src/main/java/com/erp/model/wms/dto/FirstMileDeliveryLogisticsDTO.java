@@ -3,16 +3,15 @@ package com.erp.model.wms.dto;
 import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
  * <p>
- * FBI发货单物流信息表请求响应实体
+ * 头程发货单物流信息表请求响应实体
  * </p>
  *
  * @author Luo_WG
@@ -20,7 +19,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class FbaDeliveryLogisticsDTO implements Serializable {
+public class FirstMileDeliveryLogisticsDTO implements Serializable {
 
     /**
     * 详情

@@ -56,7 +56,7 @@
         fs.country_name,
         fs.fulfillment_center,
         fs.delivery_status,
-        (SELECT fd.code FROM fba_delivery fd WHERE fd.source_id = fs.id ORDER BY fd.create_time DESC LIMIT 1) AS
+        (SELECT fd.code FROM first_mile_delivery fd WHERE fd.source_id = fs.id ORDER BY fd.create_time DESC LIMIT 1) AS
         deliveryCode,
         fs.platform_shipment_status,
         fs.shipment_create_time,

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.FbaDeliveryMapper">
+<mapper namespace="com.erp.server.wms.mapper.FirstMileDeliveryMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaDeliveryEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FirstMileDeliveryEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="update_time" property="updateTime" />
@@ -51,7 +51,7 @@
         code, approve_status, approve_time, approve_user_id, approve_user_name, invalid_status, invalid_remark, source_id, source_type, source_code, demand_type, shop_id, shop_name, country_id, country_name, delivery_warehouse_id, delivery_warehouse_name, dest_warehouse_id, dest_warehouse_name, remark, fulfillment_center, inventory_org_id, inventory_org_name
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListDTO">
         SELECT
         fd.id,
         fd.code,
@@ -81,9 +81,9 @@
         fd.create_time,
         fd.approve_user_name,
         fd.approve_time
-        FROM fba_delivery fd
-        INNER JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
-        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         <!--状态-->
         <if test="params.tabFlag != null and params.tabFlag != ''">
@@ -194,10 +194,10 @@
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from fba_delivery where is_deleted = false group by approve_status
+        select approve_status, count(id) from first_mile_delivery where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$ListDTO">
+    <select id="listExport" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListDTO">
         SELECT
         fd.id,
         fd.code,
@@ -226,9 +226,9 @@
         fd.create_time,
         fd.approve_user_name,
         fd.approve_time
-        FROM fba_delivery fd
-        INNER JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
-        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0 ">
@@ -349,7 +349,7 @@
         </if>
         fd.create_time DESC, fd.code, fdd.id
     </select>
-    <select id="tabList" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$TabListDTO">
+    <select id="tabList" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
@@ -362,16 +362,16 @@
         GROUP BY approve_status
     </select>
 
-    <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$DeliverRecordView">
+    <select id="listDeliveryRecordBySourceIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
         SELECT
         fd.code AS deliveryCode,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fdl.delivery_time AS deliveryTime
-        FROM  fba_delivery fd
-        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        FROM  first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         <if test="sourceIds != null and sourceIds.size > 0">
             AND fd.source_id IN
@@ -385,7 +385,7 @@
         ORDER BY fd.code DESC
     </select>
 
-    <select id="generateMachineView" resultType="com.erp.model.wms.dto.FbaDeliveryDTO$GenerateMachineView">
+    <select id="generateMachineView" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GenerateMachineView">
         SELECT
         fd.code,
         fdd.id,
@@ -396,9 +396,9 @@
         fd.delivery_warehouse_name AS warehouseName,
         fdd.warehouse_location,
         fdd.delivery_qty AS assembleQty
-        FROM  fba_delivery fd
-        INNER JOIN fba_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN fba_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
+        FROM  first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
         AND fdd.is_combination = TRUE
         <if test="ids != null and ids.size > 0">
