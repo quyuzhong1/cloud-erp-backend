@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseSelectDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -28,6 +25,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,10 +71,11 @@ public class OverseasWarehouseInboundController extends BaseController {
 
     /**
      * 查询详情
-     * @author Jim
-     * @date: 2023/11/27
+     *
      * @param id
      * @return ApiResult<OverseasWarehouseInboundDTO>
+     * @author Jim
+     * @date: 2023/11/27
      */
     @LogViewService
     @GetMapping("/view")
@@ -92,9 +92,10 @@ public class OverseasWarehouseInboundController extends BaseController {
 
     /**
      * 查询详情列表
+     *
+     * @return ApiResult<List < OverseasWarehouseInboundDTO.ViewDTO>>
      * @author Jim
      * @date: 2023/11/27
-     * @return ApiResult<List<OverseasWarehouseInboundDTO.ViewDTO>>
      */
     @PostMapping("/viewList")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -109,10 +110,11 @@ public class OverseasWarehouseInboundController extends BaseController {
 
     /**
      * 列表状态数量统计
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      * @Author Jim
      * @Date 2023/11/27
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -247,5 +249,93 @@ public class OverseasWarehouseInboundController extends BaseController {
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量取消入库
+     *
+     * @param dto ids
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    @LogAction(value = LogActionEnum.CANCEL, desc = "海外仓入库单取消")
+    @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:cancel",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = overseasWarehouseInboundService.cancel(id);
+            } catch (Exception e) {
+                log.error("海外仓入库单 取消失败", e);
+                OverseasWarehouseInboundEntity entity = overseasWarehouseInboundService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "海外仓入库单不存在, 取消失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量删除
+     *
+     * @param dto ids
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "海外仓入库单删除")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:delete",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = overseasWarehouseInboundService.delete(id);
+            } catch (Exception e) {
+                log.error("海外仓入库单删除失败", e);
+                OverseasWarehouseInboundEntity entity = overseasWarehouseInboundService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "海外仓入库单不存在, 删除失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param dto ids
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2023-11-27
+     */
+//    @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
+    @PostMapping("/export")
+    public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = overseasWarehouseInboundService.exportExcel(dto, response);
+        return result ? success() : failure();
     }
 }

@@ -6,6 +6,9 @@ import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -25,4 +28,12 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @date: 2023-11-21
      */
     IPage<OverseasWarehouseInboundDTO.ListDTO> paging(Page<?> query, OverseasWarehouseInboundDTO.PagingParamDTO params);
+
+    /**
+     * 导出查询
+     *
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    List<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
 }

@@ -1,11 +1,14 @@
 package com.erp.server.wms.service;
+
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -19,21 +22,23 @@ import java.util.List;
 public interface OverseasWarehouseInboundService extends SuperService<OverseasWarehouseInboundEntity> {
 
     /**
-    * 新增
-    * @author Jim
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
+     * 新增
+     *
+     * @param dto
+     * @return
+     * @author Jim
+     * @date: 2023-11-16
+     */
     BaseResultDTO.AddDTO add(OverseasWarehouseInboundDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author Jim
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
+     * 修改
+     *
+     * @param dto
+     * @return
+     * @author Jim
+     * @date: 2023-11-16
+     */
     Boolean update(OverseasWarehouseInboundDTO.UpdateDTO dto);
 
 
@@ -41,46 +46,81 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
 
     /**
      * 分页查询
-     * @author Jim
-     * @date: 2023-11-21
+     *
      * @param dto
      * @return
+     * @author Jim
+     * @date: 2023-11-21
      */
     PagingVO<OverseasWarehouseInboundDTO.ListDTO> paging(PagingDTO<OverseasWarehouseInboundDTO.PagingParamDTO> dto);
 
     /**
      * 手动完结
-     * @author Jim
-     * @date: 2023-11-24
+     *
      * @param dto
      * @return
+     * @author Jim
+     * @date: 2023-11-24
      */
     BatchResultDTO manualFinish(OverseasWarehouseInboundDTO.FinishDTO dto);
 
     /**
      * 详情
-     * @author Jim
-     * @date: 2023-11-27
+     *
      * @param id
      * @return
+     * @author Jim
+     * @date: 2023-11-27
      */
     OverseasWarehouseInboundDTO.ViewDTO view(String id);
 
     /**
      * 详情列表
-     * @author Jim
-     * @date: 2023-11-27
+     *
      * @param dto
      * @return
+     * @author Jim
+     * @date: 2023-11-27
      */
     List<OverseasWarehouseInboundDetailDTO.ViewListDTO> viewList(OverseasWarehouseInboundDTO.ViewListReqDTO dto);
 
     /**
      * 状态数量统计
-     * @author Jim
-     * @date: 2023-11-27
+     *
      * @param dto
      * @return
+     * @author Jim
+     * @date: 2023-11-27
      */
     List<OverseasWarehouseInboundDTO.CountDTO> listCount(PermissionsDTO dto);
+
+    /**
+     * 取消
+     *
+     * @param id ID
+     * @return
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    BatchResultDTO cancel(String id);
+
+    /**
+     * 删除
+     *
+     * @param id ID
+     * @return
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    BatchResultDTO delete(String id);
+
+    /**
+     * d导出
+     *
+     * @param dto 条件
+     * @return Boolean
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
 }
