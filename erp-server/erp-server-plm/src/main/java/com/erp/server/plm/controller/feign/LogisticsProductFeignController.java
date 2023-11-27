@@ -52,8 +52,8 @@ public class LogisticsProductFeignController extends BaseController {
      * @return
      */
     @PostMapping("/listLogisticsProduct")
-    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct() {
-         return null;
+    public List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@RequestBody List<String> skuIdList) {
+         return logisticsProductService.listLogisticsProduct(skuIdList);
     }
 
 

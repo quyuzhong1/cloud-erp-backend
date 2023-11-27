@@ -517,14 +517,29 @@ public class LogisticsBillDTO implements Serializable {
         @NotBlank(message = "渠道不能为空")
         private String channelId;
 
+        private String shopId;
+
+        private String shopName;
+
+        /**
+         * 币别
+         */
+        private String currency;
         /**
          * 来源类型
          */
         private String sourceType;
 
+        private LocalDateTime orderTime;
+
         private String orderId;
 
         private String orderCode;
+
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
 
 
         /**
@@ -677,6 +692,11 @@ public class LogisticsBillDTO implements Serializable {
          * 包裹高(单位:cm)
          */
         private BigDecimal height;
+
+        /**
+         * 币别
+         */
+        private String currency;
 
 
 

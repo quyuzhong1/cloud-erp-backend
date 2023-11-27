@@ -99,6 +99,11 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
 
     }
 
+    @Override
+    public LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String channelId) {
+        return baseMapper.getBySalesPlatform(salesPlatform,channelId);
+    }
+
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
 
