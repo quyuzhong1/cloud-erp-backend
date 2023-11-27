@@ -134,7 +134,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean exportExcel(RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportExcel(RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 删除

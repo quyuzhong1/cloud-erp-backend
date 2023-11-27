@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -667,9 +668,17 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class printPickingViewDTO {
         /**
+         * 产品id
+         */
+        private String skuId;
+        /**
          * 产品编码
          */
         private String skuNo;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
         /**
          * 产品名称
          */
@@ -677,23 +686,19 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 拣货数量
          */
-        private Integer qty;
+        private Integer pickingQty;
         /**
          * 仓库Id
          */
-        private String warehouseId;
+        private String toWarehouseId;
         /**
          * 仓库名称
          */
-        private String warehouseName;
+        private String toWarehouseName;
         /**
-         * 仓位编号
+         * 推荐仓位
          */
         private String warehouseLocation;
-        /**
-         * 仓位名称
-         */
-        private String warehouseLocationName;
         /**
          * 备注
          */

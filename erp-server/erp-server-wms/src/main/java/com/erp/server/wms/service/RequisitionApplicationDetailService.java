@@ -60,4 +60,21 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      */
     Boolean updateTransferWarehouse(String fromWarehouseId, String fromWarehouseName, String toWarehouseId, String toWarehouseName, Integer approveQty, String id);
 
+
+    /**
+     * 根据主表id查询详情信息
+     * @param pickingQty
+     * @param id
+     * @return java.lang.Boolean
+     */
+    Boolean updateFinishDetailPickingQty(Integer pickingQty, String id);
+
+    /**
+     * 根据主表id删除明细信息
+     * @Author Luo_WG
+     * @Date 2023/11/27 9:25
+     * @param mainIds
+     * @return void
+     **/
+    Boolean removeByMainIds(List<String> mainIds);
 }

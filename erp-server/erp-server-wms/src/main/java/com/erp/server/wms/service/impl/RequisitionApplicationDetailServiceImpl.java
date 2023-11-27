@@ -112,6 +112,21 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .update();
     }
 
+    @Override
+    public Boolean updateFinishDetailPickingQty(Integer pickingQty, String id) {
+        return lambdaUpdate().set(RequisitionApplicationDetailEntity::getPickingQty, pickingQty)
+                .eq(RequisitionApplicationDetailEntity::getId, id)
+                .update();
+    }
+
+    @Override
+    public Boolean removeByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.FALSE;
+        }
+        return lambdaUpdate().in(RequisitionApplicationDetailEntity::getMainId,mainIds).remove();
+    }
+
     /**
     * 新增修改处理数据
     */
