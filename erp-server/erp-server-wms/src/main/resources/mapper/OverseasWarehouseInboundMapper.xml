@@ -126,6 +126,10 @@
             AND owi.receive_time >= #{params.receiveTimeList[0]}
             AND (#{params.receiveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > owi.receive_time
         </if>
+        <!--收发差异（大于0，小于0，等于0，不等于0）-->
+        <if test="params.diffRule != null and params.diffRule != ''">
+            AND fsd.diff_qty ${params.diffRule} 0
+        </if>
 
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
