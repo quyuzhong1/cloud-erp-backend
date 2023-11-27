@@ -40,10 +40,10 @@
         COUNT(id) AS count,
         type AS tabFlag
         FROM logistics_supplier
+        WHERE is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        WHERE is_deleted=FALSE
         GROUP BY type
 
     </select>
