@@ -1,9 +1,11 @@
 package com.erp.model.oms.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import lombok.Getter;
@@ -119,25 +121,19 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
 
 
     public SkuMappingEntity(ListingInfoEntity entity, String shopId) {
-        this.shopId = shopId;
-        this.dictPlatform = PlatformDictEnum.AMAZON.getCode();
-        this.platformName = PlatformDictEnum.AMAZON.getDesc();
-        this.productSkuId = "";
-        this.productSkuNo = "";
-        this.productName = "";
-        this.type = RuleTypeEnum.PLATFORM;
-        this.listingId = entity.getId();
-        this.warehouseId = "";
-        this.warehouseName = "";
-        this.effectiveTime = LocalDateTime.now(ZoneId.systemDefault());
-        this.expireTime = this.effectiveTime.plusYears(MathUtil.NUMBER_100);
-        this.isExpire = false;
-    }
-
-    public SkuMappingEntity(ListingInfoEntity entity, String shopId,PlatformDictEnum platformDictEnum,RuleTypeEnum ruleTypeEnum) {
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(entity.getPlatform());
+        if (null == platformDictEnum){
+            String msg = StrUtil.format("【listing消费】未找到对应平台枚举：Platform={}, UniqueId={}", entity.getPlatform(), entity.getPlatformSkuNo());
+            throw new ServiceException(msg);
+        }
+        RuleTypeEnum ruleTypeEnum = RuleTypeEnum.getByCode(entity.getType());
+        if (null == ruleTypeEnum){
+            String msg = StrUtil.format("【listing消费】未找到对应type枚举：type={}, UniqueId={}", entity.getType(), entity.getPlatformSkuNo());
+            throw new ServiceException(msg);
+        }
         this.shopId = shopId;
         this.dictPlatform = platformDictEnum.getCode();
-        this.platformName = platformDictEnum.getName();
+        this.platformName = platformDictEnum.getDesc();
         this.productSkuId = "";
         this.productSkuNo = "";
         this.productName = "";
