@@ -280,15 +280,15 @@ public class RequisitionApplicationController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出要货申请")
-    @PostMapping("/export")
+    @PostMapping("/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:requisitionApplication:export",
             tableAlias = "ra"
     )
     public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean result = requisitionApplicationService.exportExcel(dto, response);
-        return result ? success() : failure();
+        requisitionApplicationService.exportExcel(dto, response);
+        return success();
     }
 
     /**
