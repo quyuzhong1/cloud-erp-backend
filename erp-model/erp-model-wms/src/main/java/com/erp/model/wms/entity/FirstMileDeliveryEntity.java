@@ -149,11 +149,6 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     */
     @TableField("packing_status")
     private String packingStatus;
-    /**
-    * 海外仓入库单id
-    */
-    @TableField("overseas_inbound_id")
-    private String overseasInboundId;
 
 
     public static final String CODE = "code";
