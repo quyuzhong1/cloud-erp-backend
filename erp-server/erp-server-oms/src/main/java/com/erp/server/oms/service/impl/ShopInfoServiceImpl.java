@@ -499,8 +499,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @return
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
         return authModelService.shopAuthorize(dto);
     }
@@ -799,11 +799,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shopInfoEntity = shopInfo;
                 shopInfoEntity.setId(null);
                 shopInfoEntity.setName(shopeeId);
-                shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             } else {
-                String name = shopeeId;
-                shopInfoEntity.setName(name);
+                if (StringUtils.isBlank(shopInfoEntity.getName())){
+                    String name = shopeeId;
+                    shopInfoEntity.setName(name);
+                }
+
             }
+            shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             //店铺
             this.saveOrUpdate(shopInfoEntity);
             shopId = shopInfoEntity.getId();

@@ -14,9 +14,12 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="shop_id" property="shopId" />
        <result column="token" property="token" />
-       <result column="access_token " property="accessToken " />
-       <result column="expired_time " property="expiredTime " />
-       <result column="app_client_id " property="appClientId " />
+       <result column="access_token " property="accessToken" />
+       <result column="expires_in " property="expiresIn" />
+       <result column="app_client_id " property="appClientId" />
+       <result column="type " property="type" />
+       <result column="refresh_token " property="refreshToken" />
+       <result column="shopee_id " property="shopeeId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

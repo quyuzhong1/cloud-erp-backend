@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -125,7 +126,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
      */
     @Override
     public ShopAuthEntity getByShopId(String shopId) {
-        if (StringUtils.isBlank(shopId)){
+        if (StringUtils.isBlank(shopId)) {
             return null;
         }
         return this.lambdaQuery().eq(ShopAuthEntity::getShopId, shopId).
@@ -177,7 +178,6 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     }
 
     /**
-     *
      * @param type
      * @param stauts 是否授权
      * @return
@@ -185,7 +185,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public List<ShopAuthEntity> getShopeeShopList(String type, String stauts) {
         //获取已授权店铺配置
-        return baseMapper.getShopeeShopList(type,stauts);
+        return baseMapper.getShopeeShopList(type, stauts);
 //        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
     }
 
@@ -197,8 +197,16 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public ShopAuthEntity getShopeeShopById(String shopeeId) {
-        return this.lambdaQuery().eq(ShopAuthEntity::getShopeeId, shopeeId).
-                last("LIMIT 1").one();
+        LambdaQueryWrapper<ShopAuthEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ShopAuthEntity::getShopeeId, shopeeId);
+        queryWrapper.eq(ShopAuthEntity::getIsDeleted, false);
+
+        List<ShopAuthEntity> shopAuthEntities = baseMapper.selectList(queryWrapper);
+        if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
+            return shopAuthEntities.get(0);
+        } else {
+            return null;
+        }
     }
 
     @Override
