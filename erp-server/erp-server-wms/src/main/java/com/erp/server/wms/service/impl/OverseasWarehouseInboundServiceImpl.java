@@ -226,7 +226,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         Map<String, Integer> finalCountMap = countMap;
         return Arrays.stream(OverseasInstockStatusEnum.values())
-                .map(e-> new OverseasWarehouseInboundDTO.CountDTO(e.getName(), e.getCode(), finalCountMap.getOrDefault(e.getCode(), 0)))
+                .map(e-> new OverseasWarehouseInboundDTO.CountDTO(e.getCode(), finalCountMap.getOrDefault(e.getCode(), 0)))
                 .collect(Collectors.toList());
     }
 
