@@ -38,7 +38,6 @@ public class AliExpressLogisticsHandlerImplTest {
         String CLIENT_CODE = "502978";  //此处替换为您在丰桥平台获取的顾客编码
         String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";//此处替换为您在丰桥平台获取的校验码
         String token = "50000201815x0JpYsqi9bBs8MR11cd7a16dGmlyIWdSwlD3HOSDuQ1xrO34XX6CU58SN";
-        //注意！！通邮没有测试环境，用正式环境测试创建订单记得在客户端将订单删除！！！
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -89,9 +88,9 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsProductVO.setDestDeclarePrice(BigDecimal.valueOf(2));
 
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-//        logisticsSaleChannel.setCode("CAINIAO_EXPEDITED_ECONOMY");
+        logisticsSaleChannel.setCode("CAINIAO_ECONOMY_TS");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
-        logisticsSaleChannel.setPlatformChannelId("155");
+        logisticsSaleChannel.setPlatformChannelId("11169435");
         logisticsSaleChannel.setSupplierName("CAINIAONNRM");
         LogisticsChannelEntity logisticsChannel = new LogisticsChannelEntity();
 //        logisticsChannel.setCode("S832");
@@ -103,15 +102,15 @@ public class AliExpressLogisticsHandlerImplTest {
                 .orderSource("ERP")
                 .pickupType("SELF_POST")
 //                .facility("can")
-                .deliveryNo("580555992124")
+                .deliveryNo("8180834369177849")
                 .receiverInfoVO(ReceiverInfoVO.builder()
                         .addressFirst("address")
                         .email("965656546@qq.con")
-                        .city("Auburn")
-                        .name("zhang san")
+                        .city("2900000")
+                        .name("cl114341849dzvae")
                         .companyName("")
                         .contact("zhang san")
-                        .country("US")
+                        .country("CL")
                         .zipCode("13021")
                         .province("NY")
                         .telNumber("1234567890")

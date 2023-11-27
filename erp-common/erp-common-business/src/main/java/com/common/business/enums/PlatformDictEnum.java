@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * @author Lambda
  * @Classname DictEnum
@@ -108,5 +112,15 @@ public enum PlatformDictEnum implements EnumMessage {
             }
         }
         return null;
+    }
+
+    /**
+     * 已接入平台列表
+     */
+    public static List<String> hasConnectionPlatform(){
+        return Stream.of(AMAZON, ALI_EXPRESS, SHOPIFY, SHOPEE, WALMART)
+                .map(PlatformDictEnum::getCode)
+                .collect(Collectors.toList());
+
     }
 }

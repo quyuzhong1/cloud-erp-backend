@@ -3,6 +3,7 @@ package com.erp.server.oms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -79,6 +80,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
      */
     private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
 
+    /**
+     * 更新的listing
+     */
+    private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
+
     public SkuMappingExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                    List<ShopInfoEntity> shopList, List<SkuMappingEntity> skuMappingList,
                                    List<DictBasicDTO.ViewDTO> dictBasicList,
@@ -132,26 +138,36 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
 
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
         }
+        //平台标识
+        String dictPlatform = platform.getValue();
+        RuleTypeEnum platformType = RuleTypeEnum.PLATFORM;
+
         //平台sku no
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
 
         String platformProductName = skuMappingImportExcelDTO.getPlatformProductName();
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getPlatformSkuNo().
-                equals(platformSkuNo)).findFirst().orElse(null);
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
+                .filter(l -> l.getPlatformSkuNo().equals(platformSkuNo) && l.getPlatform().equalsIgnoreCase(dictPlatform))
+                .findFirst().orElse(null);
 
         String listingId = "";
         if (Objects.nonNull(listingInfoEntity)) {
             listingId = listingInfoEntity.getId();
+            if (listingInfoEntity.getMatchResult()){
+                //存在错误数据则直接返回
+                errorMsgList.add("平台sku已存在匹配关系");
+                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(skuMappingImportExcelDTO);
+                return;
+            }
         }
 
-        //平台标识
-        String dictPlatform = platform.getValue();
-        RuleTypeEnum platformType = RuleTypeEnum.PLATFORM;
+
         //已对应的平台sku
         String finalListingId = listingId;
         List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
@@ -167,9 +183,16 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 skuMappingEntity.setProductSkuId(sku.getSkuId());
                 skuMappingEntity.setProductSkuNo(sku.getSkuNo());
                 updateSkuMappingList.add(skuMappingEntity);
+                listingInfoEntity.setMatchResult(true);
+                updateListingInfoList.add(listingInfoEntity);
                 return;
             }
-            errorMsgList.add("相同平台sku只能对应一个平台sku");
+            errorMsgList.add("平台sku已存在匹配关系");
+        } else {
+            // 已接入平台不允许新增
+            if (PlatformDictEnum.hasConnectionPlatform().contains(dictPlatform)){
+                errorMsgList.add("Amazon, aliexpress, shopify, shopee, Walmart不允许新增");
+            }
         }
 
         long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(finalListingId) &&
@@ -178,7 +201,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             errorMsgList.add("相同平台sku只能对应一个平台sku");
         }
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
@@ -223,6 +246,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         if (CollectionUtils.isNotEmpty(updateSkuMappingList)){
             if (!skuMappingService.updateBatchById(updateSkuMappingList)){
                 throw new ServiceException("映射关系更新异常");
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateListingInfoList)){
+            if (!listingInfoService.updateBatchById(updateListingInfoList)){
+                throw new ServiceException("Listing更新异常");
             }
         }
     }
