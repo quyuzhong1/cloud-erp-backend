@@ -92,8 +92,8 @@ public class ApiResult<T>  implements Serializable {
         return apiResult;
     }
 
-    public static ApiResult error(Integer code, String msg) {
-        ApiResult apiResult = new ApiResult();
+    public static <T> ApiResult<T> error(Integer code, String msg) {
+        ApiResult<T> apiResult = new ApiResult<>();
         apiResult.setCode(code);
         apiResult.setMsg(msg);
         return apiResult;
