@@ -2,7 +2,6 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -189,5 +188,18 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<SkuMappingDTO.ListSkuDTO>> listBySkuNoList(@RequestBody @Validated ValidList<SkuMappingDTO.ListSkuParamDTO> list) {
         List<SkuMappingDTO.ListSkuDTO> resultList = skuMappingService.listBySkuNoList(list.getList());
         return success(resultList);
+    }
+
+    /**
+     * 根据产品sku查询库存sku
+     * @Author Luo_WG
+     * @Date 2023/11/2 17:24
+     * @param productSkuIdList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
+     **/
+    @PostMapping("/listStockSkuNoByProductSkuIds")
+    public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuNo(@RequestBody ValidList<String> productSkuIdList) {
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList.getList());
+        return list;
     }
 }

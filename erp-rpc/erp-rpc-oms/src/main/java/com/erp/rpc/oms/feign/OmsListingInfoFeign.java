@@ -28,11 +28,11 @@ public interface OmsListingInfoFeign {
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:24
-     * @param productSkuNoList
+     * @param productSkuIdList
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
-    @PostMapping("feign/listing/listStockSkuNoByProductSkuNo")
-    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@RequestBody List<String> productSkuNoList);
+    @PostMapping("feign/listing/listStockSkuNoByProductSkuIds")
+    List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@RequestBody List<String> productSkuIdList);
 
     /**
      * sku映射

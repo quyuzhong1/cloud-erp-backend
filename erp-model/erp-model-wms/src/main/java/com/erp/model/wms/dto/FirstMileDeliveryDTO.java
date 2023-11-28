@@ -259,6 +259,11 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String fnSku;
 
         /**
+         * ERP的SKU主键
+         */
+        private String skuId;
+
+        /**
          * ERP的SKU
          */
         private String skuNo;
