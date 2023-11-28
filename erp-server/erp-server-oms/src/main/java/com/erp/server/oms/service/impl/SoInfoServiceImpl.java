@@ -330,6 +330,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
+
+        //验证报关费是否填写
+        String codes = list.stream().filter(obj -> obj.getIsDeclare() && MathUtil.compareTo(obj.getCustomsFee(), MathUtil.ZERO) <= MathUtil.ZERO).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL,codes);
+        }
+
         //售后订单
         String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
         //检查的销售订单

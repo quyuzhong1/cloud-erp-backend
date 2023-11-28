@@ -669,6 +669,9 @@ public enum ApiError implements Serializable {
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
     ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
     SUBMIT_IS_DELETE(98109,"只有待提交和审核不通过数据支持删除"),
+    ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
+
+
 
 
 
