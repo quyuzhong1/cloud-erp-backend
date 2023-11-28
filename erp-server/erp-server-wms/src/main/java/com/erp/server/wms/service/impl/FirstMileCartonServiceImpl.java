@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.FirstMileCartonEntity;
 import com.erp.server.wms.mapper.FirstMileCartonMapper;
+import com.erp.server.wms.service.FirstMileCartonDetailService;
 import com.erp.server.wms.service.FirstMileCartonService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -34,6 +35,8 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private FirstMileCartonDetailService firstMileCartonDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -51,11 +54,8 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
             throw new ServiceException("发货单箱规信息保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "发货单箱规信息" , firstMileCartonEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, firstMileCartonEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        //新增详情信息
+        firstMileCartonDetailService.add(addDTO, firstMileCartonEntity.getId());
 
         return new BaseResultDTO.AddDTO(firstMileCartonEntity.getId(), firstMileCartonEntity.getId());
     }

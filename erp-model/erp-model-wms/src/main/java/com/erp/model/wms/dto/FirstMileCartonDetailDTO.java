@@ -91,6 +91,11 @@ public class FirstMileCartonDetailDTO implements Serializable {
         private String skuId;
 
         /**
+        * 产品编号
+        */
+        private String skuNo;
+
+        /**
         * 装箱数量
         */
         @NotNull(message = "装箱数量不能为空")

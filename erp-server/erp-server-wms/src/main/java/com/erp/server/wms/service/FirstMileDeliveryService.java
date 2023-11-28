@@ -233,7 +233,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto);
+    Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto);
 
     /**
      * 装箱清单

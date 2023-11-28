@@ -498,6 +498,11 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 创建人名称
          */
+        private String createUserName;
+
+        /**
+         * 处理人名称
+         */
         private String handleUserName;
 
         /**

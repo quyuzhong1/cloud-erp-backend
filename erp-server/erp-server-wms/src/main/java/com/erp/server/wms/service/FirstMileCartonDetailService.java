@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FirstMileCartonDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -21,7 +22,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FirstMileCartonDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(FirstMileCartonDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -30,7 +31,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
     * @param dto
     * @return
     */
-    Boolean update(FirstMileCartonDetailDTO.UpdateDTO dto);
+    Boolean update(FirstMileCartonDTO.UpdateDTO dto, String mainId);
 
 
 }

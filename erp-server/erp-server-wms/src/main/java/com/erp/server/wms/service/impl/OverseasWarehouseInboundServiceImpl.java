@@ -326,6 +326,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<OverseasWarehouseInboundEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+
+        return lambdaQuery()
+                .in(OverseasWarehouseInboundEntity::getSourceId, sourceIds)
+                .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
+                .list();
+    }
+
     /**
      * 分页查询、导出 数据处理
      */
