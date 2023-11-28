@@ -271,7 +271,7 @@ public class SoB2cController extends BaseController {
             serviceClass = SoB2cService.class,
             keyIdName = "id")
     public ApiResult<SoB2cDTO.FinancialInfoDTO> getFinancialInfo(@RequestBody @Validated SoB2cDTO.FinancialParamDTO dto) {
-        return success(soB2cService.getFinancialInfo(dto,Boolean.FALSE));
+        return success(soB2cService.getFinancialInfoById(dto));
     }
 
 

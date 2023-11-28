@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -276,9 +277,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
             detailEntity.setImageUrl(skuVO.getSkuImagesUrl());
             //建议售价
-            detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+            BigDecimal advicePrice = MathUtil.multiply(skuVO.getRetailPrice(), detailEntity.getQty());
+            detailEntity.setAdvicePrice(advicePrice);
             //含税单价
-            detailEntity.setTaxCost(ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
+            BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
+            detailEntity.setTaxCost(MathUtil.multiply(costPrice,detailEntity.getQty()));
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()

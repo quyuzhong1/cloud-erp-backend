@@ -271,6 +271,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return FinancialInfoDTO
      */
+    SoB2cDTO.FinancialInfoDTO getFinancialInfoById(SoB2cDTO.FinancialParamDTO dto);
+
+    /**
+     * @description: 查看财务信息
+     * @author Will
+     * @date: 2023/9/6 15:44
+     * @param dto
+     * @return FinancialInfoDTO
+     */
     SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto,Boolean isAdd);
     /**
      * @description: 标记不合并
