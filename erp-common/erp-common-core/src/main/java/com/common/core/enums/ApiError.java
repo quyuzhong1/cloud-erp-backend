@@ -534,7 +534,7 @@ public enum ApiError implements Serializable {
     ERROR_EMPTY_DICT_TYPE(97038, "系统字典类型不能为空"),
     ERROR_EMPTY_LIST(97039, "请求参数不能为空"),
     ERROR_DATE_RANGE_THIRTY_ONE(97040, "日范围不能大于31天"),
-    ERROR_DATE_RANGE_WEEK_DAY(97041, "日范围不能大于62天"),
+    ERROR_DATE_RANGE_WEEK_DAY(97041, "周范围不能大于12周"),
     ERROR_SALE_RANGE_EXIST(97042, "区间类型不能为空"),
     //getSettleMethod
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
