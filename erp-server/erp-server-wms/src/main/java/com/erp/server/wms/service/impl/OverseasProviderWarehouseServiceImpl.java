@@ -107,7 +107,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
         for (OverseasProviderWarehouseEntity detailEntity : list) {
             //如果启用，校验仓库是否绑定
-            if (detailEntity.getDisabled()) {
+            if (!detailEntity.getDisabled()) {
                 if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
                     throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
                 }
