@@ -35,9 +35,9 @@ public class SoB2cFeignController extends BaseController {
     * @return ApiResult<List<SoB2cLogisticsEntity>>
     */
     @PostMapping("/listSoB2cLogisticsByMainIdList")
-    public ApiResult<List<SoB2cLogisticsEntity>> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList) {
+    public List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList) {
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(mainIdList);
-        return success(soB2cLogisticsList);
+        return soB2cLogisticsList;
     }
 
 }
