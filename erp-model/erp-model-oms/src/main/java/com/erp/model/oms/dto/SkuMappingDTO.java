@@ -709,6 +709,17 @@ public class SkuMappingDTO implements Serializable {
         private String dictPlatform;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MappingSkuParam {
+
+        /**
+         * ERP的skuId列表
+         */
+        private List<String> skuIdList;
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -790,6 +801,36 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class MappingSkuViewDTO {
+       /**
+        * 产品skuId
+        */
+       private String productSkuId;
+
+        /**
+         * 产品skuNo
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 库存sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 库存sku名称
+         */
+        private String platformProductName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
     public static class SkuDTO {
         /**
          * 产品skuId
@@ -834,11 +875,7 @@ public class SkuMappingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class listStockSkuNoByProductSkuNoView {
-        /**
-         * id
-         */
-        private String id;
+    public static class ListStockSkuNoByProductSkuIdView {
         /**
          * 产品skuId
          */
@@ -847,6 +884,10 @@ public class SkuMappingDTO implements Serializable {
          * 产品sku编号
          */
         private String productSkuNo;
+        /**
+         * 产品sku名称
+         */
+        private String productSkuName;
         /**
          * 仓库id
          */
@@ -858,10 +899,10 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 库存sku
          */
-        private String warehouseSkuNo;
+        private String stockSku;
         /**
          * 库存产品名称
          */
-        private String warehouseProductName;
+        private String stockSkuName;
     }
 }

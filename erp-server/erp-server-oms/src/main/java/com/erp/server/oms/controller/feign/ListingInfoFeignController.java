@@ -47,12 +47,12 @@ public class ListingInfoFeignController extends BaseController {
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:24
-     * @param productSkuNoList
+     * @param productSkuIdList
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
-    @PostMapping("/listStockSkuNoByProductSkuNo")
-    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@RequestBody List<String> productSkuNoList) {
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> list = skuMappingService.listStockSkuNoByProductSkuNo(productSkuNoList);
+    @PostMapping("/listStockSkuNoByProductSkuIds")
+    public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@RequestBody List<String> productSkuIdList) {
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
         return list;
     }
 
@@ -67,4 +67,6 @@ public class ListingInfoFeignController extends BaseController {
     public Boolean skuMapping(@RequestBody @Validated FbaShipmentDTO.skuMappingParamDTO dto) {
         return listingInfoService.skuMapping(dto);
     }
+
+
 }

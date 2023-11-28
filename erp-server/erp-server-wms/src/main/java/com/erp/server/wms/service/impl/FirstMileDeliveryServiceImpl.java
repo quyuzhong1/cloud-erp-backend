@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -1032,15 +1031,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //查询产品信息
-        List<String> skuNoList = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
         //获取库存sku信息
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
 
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
@@ -1050,12 +1049,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
             //库存sku
-            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
-                    .filter(req -> req.getProductSkuNo().equals(data.getSkuNo())
+            String stockSku = ListStockSkuNoByProductSkuIdViews.stream()
+                    .filter(req -> req.getProductSkuId().equals(data.getSkuId())
                             && req.getWarehouseId().equals(data.getDeliveryWarehouseId()))
                     .distinct()
                     .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+                    .flatMap(obj -> Optional.ofNullable(obj.getStockSku())).orElse("");
             data.setStockSku(stockSku);
 
             //审核状态名称

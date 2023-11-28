@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -80,9 +79,9 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20
-     * @param productSkuNoList
+     * @param productSkuIdList
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
-    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(@Param("productSkuNoList") List<String> productSkuNoList);
+    List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@Param("productSkuIdList") List<String> productSkuIdList);
 
 }

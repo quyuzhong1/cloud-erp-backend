@@ -2,13 +2,11 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -156,10 +154,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:20
-     * @param productSkuNoList
+     * @param productSkuIdList
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
-    List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList);
+    List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(List<String> productSkuIdList);
 
     /**
      * 根据listingId查询sku映射表

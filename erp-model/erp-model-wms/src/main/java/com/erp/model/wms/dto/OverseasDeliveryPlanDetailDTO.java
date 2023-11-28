@@ -118,6 +118,16 @@ public class OverseasDeliveryPlanDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 库存sku
+         */
+        private String stockSku;
+
+        /**
+         * 库存sku名称
+         */
+        private String stockSkuName;
+
+        /**
         * 计划数量
         */
         private Integer qty;

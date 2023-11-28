@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -625,11 +625,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNo(List<String> productSkuNoList) {
-        if (CollectionUtils.isEmpty(productSkuNoList)) {
+    public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(List<String> productSkuIdList) {
+        if (CollectionUtils.isEmpty(productSkuIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listStockSkuNoByProductSkuNo(productSkuNoList);
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = baseMapper.listStockSkuNoByProductSkuIds(productSkuIdList);
+
+        List<String> skuIds = listStockSkuNoByProductSkuIdViews.stream().map(req -> req.getProductSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        for (SkuMappingDTO.ListStockSkuNoByProductSkuIdView view : listStockSkuNoByProductSkuIdViews) {
+            SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(view.getProductSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                view.setProductSkuName(skuVO.getSkuName());
+            }
+        }
+        return listStockSkuNoByProductSkuIdViews;
     }
 
     /**
