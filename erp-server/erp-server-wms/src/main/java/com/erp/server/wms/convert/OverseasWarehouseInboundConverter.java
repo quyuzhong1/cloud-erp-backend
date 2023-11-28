@@ -6,8 +6,10 @@ import com.common.business.dto.PlatformTransferWarehouseDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -76,4 +78,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receiveType",  constant = ""),
     })
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity, OverseasWarehouseInboundEntity mainEntity);
+
+
+    GoodCangCreateInboundReq inboundDtoToGoodCang(ThirdWarehouseCreateInboundReq createInboundReq);
 }

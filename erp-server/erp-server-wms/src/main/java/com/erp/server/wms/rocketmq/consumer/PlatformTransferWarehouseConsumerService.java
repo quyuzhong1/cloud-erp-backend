@@ -52,7 +52,6 @@ public class PlatformTransferWarehouseConsumerService<T extends DmpSyncTaskIdDTO
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

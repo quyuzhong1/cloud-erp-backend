@@ -38,7 +38,7 @@ public class ImlServerTest {
                 .pageSize(50)
 //                .productSku("0044")
 //                .productSkuArr(Arrays.asList("0044"))
-                .updateStartTime("2023-05-01 11:11:11")
+                .updateStartTime("2000-01-01 11:11:11")
                 .updateEndTime("2024-01-01 11:11:11")
                 .build();
         ImlResponse<List<ImlProductResp>> response = imlServer.getSkuList(imlProductReq);
