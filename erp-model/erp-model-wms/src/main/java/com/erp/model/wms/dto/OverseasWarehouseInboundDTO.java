@@ -378,7 +378,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String instockType;
 
         /**
-         * 入库类型
+         * 入库类型名称
          */
         private String instockTypeName;
 
@@ -388,7 +388,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String instockStatus;
 
         /**
-         * 入库状态
+         * 入库状态名称
          */
         private String instockStatusName;
 
