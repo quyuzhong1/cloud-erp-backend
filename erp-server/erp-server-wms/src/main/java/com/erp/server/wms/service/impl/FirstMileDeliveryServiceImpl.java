@@ -1166,7 +1166,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids) {
+    public FirstMileCartonDTO.ListPackingDTO listPacking(String id) {
+        FirstMileDeliveryEntity entity = this.getById(id);
+        FirstMileCartonDTO.ListPackingDTO listPackingDTO = new FirstMileCartonDTO.ListPackingDTO();
+        listPackingDTO.setId(entity.getId());
+        listPackingDTO.setCode(entity.getCode());
+        List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(id);
+
         return null;
     }
 }
