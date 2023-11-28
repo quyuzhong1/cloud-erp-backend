@@ -172,7 +172,7 @@ public class OrderDetail implements Serializable {
     private String checkoutShippingCarrier;
 
     @JSONField(name = "reverse_shipping_fee")
-    private String reverseShippingFee;
+    private float reverseShippingFee;
     @JSONField(name = "order_chargeable_weight_gram")
     private Integer orderChargeableWeightGram;
 
