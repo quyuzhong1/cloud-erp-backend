@@ -41,6 +41,7 @@ import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -2681,6 +2682,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2023-01-06 11:19
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byDate",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
 
         //如果查询财务销售额
@@ -2768,7 +2770,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             case "WEEK":
                 long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
-                if (weekDay > 62) {
+                if (weekDay > 84) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
                 }
                 salesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
