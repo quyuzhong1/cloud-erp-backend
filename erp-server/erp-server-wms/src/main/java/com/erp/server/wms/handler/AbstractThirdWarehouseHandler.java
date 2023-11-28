@@ -1,9 +1,20 @@
 package com.erp.server.wms.handler;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
@@ -13,10 +24,12 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+@Slf4j
 @Service
 public abstract class AbstractThirdWarehouseHandler extends BaseController implements ThirdWarehouseService {
 
@@ -25,6 +38,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private MQProducerService mqProducerService;
 
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);
@@ -51,22 +67,22 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
-        return handleAndRemoveContext(() -> createInboundBill(createInboundReq), authId);
+        return handleAndRemoveContext(() -> createInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,createInboundReq.getReferenceNo());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId) {
-        return handleAndRemoveContext(() -> cancelInboundBill(cancelInboundReq), authId);
+        return handleAndRemoveContext(() -> cancelInboundBill(cancelInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_INBOUND_BILL,null);
     }
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
-        return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId);
+        return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,null);
     }
 
     @Override
     public ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId) {
-        return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId);
+        return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,null);
     }
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -79,11 +95,19 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     protected abstract Boolean hasWarehouse();
 
-    private ApiResult<String> handleAndRemoveContext(Handler handler, String authId) {
+    private ApiResult<String> handleAndRemoveContext(Handler handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
         try {
+            //设置授权信息
             handleAuthInfo(authId);
-            return handler.handle();
+            //执行逻辑
+            ApiResult<String> result = handler.handle();
+            //记录日志
+            pushOperateLog(businessType,result.getCode(),erpBusinessCode);
+            return result;
+        } catch (Exception e){
+            return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
+            // remove thread-local
             ThirdWarehouseContext.remove();
         }
     }
@@ -91,5 +115,54 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     @FunctionalInterface
     private interface Handler {
         ApiResult<String> handle();
+    }
+
+    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+        DmpPushTaskEntity dmpPushTaskEntity = buildDmpPushTaskEntity(businessType, status, erpBusinessCode);
+        try {
+            String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
+            //增加异常预警
+            if (!ApiResult.success().getCode().equals(status)) {
+                dmpPushTaskEntity.setId(id);
+                sendPushWarnMsg(dmpPushTaskEntity);
+            }
+        } catch (Exception e) {
+            log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
+        }
+    }
+
+    private DmpPushTaskEntity buildDmpPushTaskEntity(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+        DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
+        dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc());
+        dmpPushTaskEntity.setSourceType(businessType.getCode());
+        dmpPushTaskEntity.setSourceId("");
+        dmpPushTaskEntity.setSourceCode(erpBusinessCode);
+        dmpPushTaskEntity.setTargetPlatformName(getPlatForm().getName());
+        dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.FAILED_SYNC.getCode());
+        dmpPushTaskEntity.setMqTopic("");
+        dmpPushTaskEntity.setMqTag("");
+        dmpPushTaskEntity.setMqData(ThirdWarehouseContext.getRequestJson());
+        dmpPushTaskEntity.setReturnMsg(ThirdWarehouseContext.getResponseJson());
+        return dmpPushTaskEntity;
+    }
+
+    private void sendPushWarnMsg(DmpPushTaskEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return;
+        }
+        WarnMsgInfoDTO warnMsgInfo = buildWarnMsgInfoDTO(entity);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPushTaskEntity entity) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+        warnMsgInfo.setTitle(StrUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
+        warnMsgInfo.setTableId(entity.getSourceId());
+        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        return warnMsgInfo;
     }
 }

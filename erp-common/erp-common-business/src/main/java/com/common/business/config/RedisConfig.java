@@ -1,7 +1,9 @@
 package com.common.business.config;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
+import com.common.business.utils.MD5Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.redisson.Redisson;
@@ -14,7 +16,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
@@ -130,11 +134,12 @@ public class RedisConfig {
     /**
      * redis缓存管理器
      */
-    @Bean
+    @Bean(name = "cacheManager")
+    @Primary
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         // 初始化一个RedisCacheWriter，采用fastjson序列化方式
         RedisCacheWriter redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(redisConnectionFactory);
-        FastJsonRedisSerializer serializer = new FastJsonRedisSerializer(Object.class);
+        FastJson2JsonRedisSerializer serializer = new FastJson2JsonRedisSerializer(Object.class);
         RedisSerializationContext.SerializationPair<Object> pair = RedisSerializationContext.SerializationPair.fromSerializer(serializer);
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 // 设置CacheManager的值序列化方式为json序列化
@@ -175,5 +180,13 @@ public class RedisConfig {
         config.setLockWatchdogTimeout(15000);
         return Redisson.create(config);
     }
-
+    @Bean("myKeyGenerator")
+    public KeyGenerator keyGenerator() {
+        return (target, method, objects) -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append(target.getClass().getName());
+            sb.append(":" + method.getName() + ":" + JSONObject.toJSONString(objects));
+            return MD5Util.toMD5(sb.toString());
+        };
+    }
 }

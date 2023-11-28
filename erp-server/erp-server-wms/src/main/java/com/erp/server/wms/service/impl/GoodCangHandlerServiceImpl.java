@@ -39,6 +39,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         GoodCangCreateInboundReq goodCangCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCang(createInboundReq);
         GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
+        if(isSuccess(goodCangResponse.getAsk())){
+
+        }
         return null;
     }
 

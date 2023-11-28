@@ -3,6 +3,10 @@ package com.erp.model.oms.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -463,8 +467,31 @@ public class SoB2cDTO implements Serializable {
          * 是否是人民币
          */
         private Boolean isCny;
-    }
+
         /**
+         * 销售订单
+         */
+        private  SoB2cEntity soB2cEntity;
+
+        /**
+         * 销售订单物流信息
+         */
+        private SoB2cLogisticsEntity soB2cLogisticsEntity;
+
+        /**
+         * 财务信息
+         */
+        private SoB2cFinanceEntity soB2cFinanceEntity;
+
+        /**
+         * 明细信息
+         */
+        private List<SoB2cDetailEntity> soB2cDetailList;
+
+
+    }
+
+    /**
      * 财务信息
      */
     @Data
