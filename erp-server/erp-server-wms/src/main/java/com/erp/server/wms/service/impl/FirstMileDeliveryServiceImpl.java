@@ -26,6 +26,7 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -1163,6 +1164,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         FirstMileDeliveryEntity entity = this.getById(dto.getId());
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
+        }
+
+        //已装箱的数据，如果未下推入库单，或者下推的入库单待提交时，可以再次修改装箱信息，否则提示：已下推海外仓入库单【单号】，不允许修改装箱数据（装箱页面保存时校验）
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(dto.getId()));
+        long count = overseasWarehouseInboundEntities.stream()
+                .filter(req -> !req.getInstockStatus().equals(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode())
+                        && !req.getInstockStatus().equals(OverseasInstockStatusEnum.CANCELED.getCode())
+                ).count();
+        if (count > 0) {
+            List<String> codes = overseasWarehouseInboundEntities.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, StringUtils.join(codes, ","));
         }
 
         List<FirstMileCartonDTO.AddDTO> addList = BeanMapper.copyList(dto.getFirstMileCartonList(), FirstMileCartonDTO.AddDTO.class);
