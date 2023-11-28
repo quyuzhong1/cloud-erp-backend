@@ -30,12 +30,17 @@ public class PlatformProductDTO extends UniqueDto {
     private String platformSkuNo;
 
     /**
+     * 平台sku name
+     */
+    private String platformSkuName;
+
+    /**
      * 平台产品(spu) no或id
      */
     private String platformProductNo;
 
     /**
-     * 平台产品名称
+     * 平台产品(spu)名称
      */
     private String platformProductName;
 

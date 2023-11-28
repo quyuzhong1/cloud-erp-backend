@@ -25,8 +25,7 @@ public interface ImlConverter {
     @Mappings({
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
-            @Mapping(target = "platformProductNo", source = "productSku"),
-            @Mapping(target = "platformProductName", source = "productDeclaredName"),
+            @Mapping(target = "platformSkuName", source = "productTitle"),
             @Mapping(target = "productImageUrl", source = "productDescUrl"),
             @Mapping(target = "productSpec", source = "productModel"),
             @Mapping(target = "type", expression ="java(ImlConverter.getType())"),
