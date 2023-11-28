@@ -50,6 +50,26 @@ public class OverseasWarehouseInboundController extends BaseController {
     private OverseasTransferWarehouseService overseasTransferWarehouseService;
 
     /**
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-27
+     */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "海外仓入库单新增")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:update",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "owi")
+    public ApiResult<?> add(@RequestBody @Validated OverseasWarehouseInboundDTO.AddDTO dto) {
+        overseasWarehouseInboundService.add(dto);
+        return success();
+    }
+
+    /**
      * 修改
      *
      * @param dto

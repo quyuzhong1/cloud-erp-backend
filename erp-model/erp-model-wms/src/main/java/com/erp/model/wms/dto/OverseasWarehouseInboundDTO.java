@@ -462,10 +462,54 @@ public class OverseasWarehouseInboundDTO implements Serializable {
      * 新增
      */
     @Data
-    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO {
+        /**
+         * 发货单ID
+         */
+        @NotBlank(message = "发货单ID不能为空")
+        private String deliveryId;
 
+        /**
+         * 入库类型
+         * selfHeadway=自发头程
+         * transferAgent=中转代发
+         */
+        @NotBlank(message = "入库类型不能为空")
+        @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
+        private OverseasInstockTypeEnum instockType;
+
+        /**
+         * 物流方式
+         * airfreight=空运
+         * express=快递
+         * oceanFreightBulk=海运散装
+         * oceanFreightFCL=海运整箱
+         * railwayTransportationBulk=铁运散装
+         * railwayTransportationFCL=铁运整箱
+         */
+        @NotBlank(message = "物流方式不能为空")
+        @Size(max = 64, message = "物流方式最大长度不能超过64位")
+        @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
+        private LogisticsMethodEnum logisticsMethod;
+
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255位")
+        private String remark;
+
+        /**
+         * 预计到达时间
+         */
+        @NotNull(message = "预计到达时间不能为空")
+        private LocalDateTime estimatedArrivalDate;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
     }
 
     /**
@@ -733,7 +777,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 请求ID列表
          */
         @NotNull(message = "请求ID列表不能为空")
-        @Size(min = 1,message = "请求ID至少有一个")
+        @Size(min = 1, message = "请求ID至少有一个")
         private List<@NotBlank(message = "请求ID不能为空") String> requestIdList;
     }
 
