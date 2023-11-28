@@ -30,6 +30,7 @@ public interface B2cOrderConverter {
 
     @Mappings({
             @Mapping(target = "customerId", source = "customerId"),
+            @Mapping(target = "name", source = "name"),
             @Mapping(target = "email", source = "email"),
             @Mapping(target = "receiverName", source = "receiverName"),
             @Mapping(target = "receiverTelNumber", source = "receiverTelNumber"),

@@ -888,6 +888,9 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class ProductDTO{
 
+
+       private BigDecimal price;
+
         /**
          * 数量
          */

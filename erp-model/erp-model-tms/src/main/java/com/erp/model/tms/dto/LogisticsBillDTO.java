@@ -510,6 +510,7 @@ public class LogisticsBillDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class GenerateBillDTO{
 
        private String token;
@@ -567,7 +568,13 @@ public class LogisticsBillDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReceiverDTO{
+
+        /**
+         * 收件人
+         */
+        private String name;
 
         /**
          * 买价id
