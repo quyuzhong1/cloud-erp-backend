@@ -4,20 +4,20 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformInventoryDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.service.OverseasInventoryService;
-import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import io.seata.common.util.CollectionUtils;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -25,8 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 下载平台库存消费服务
@@ -45,6 +45,9 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     @Resource
     private OverseasInventoryService overseasInventoryService;
 
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
@@ -62,6 +65,21 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
         if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
             //转换成数据库实体对象
             OverseasInventoryEntity entity = OverseasWarehouseConverter.INSTANCE.inventoryDtoToDb(dto);
+            if (StringUtils.isNotBlank(entity.getPlatformSku())){
+                ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+                paramDTO.setPlatform(entity.getDictPlatform());
+                paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
+                paramDTO.setMatchResult(true);
+                // 查询ListingInfo和skuMapping的关系
+                List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+                if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
+                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.get(0);
+                    entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+                    entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
+                    entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
+                    entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                }
+            }
             overseasInventoryService.saveOrUpdateByPlatform(entity);
         }
         return ApiResult.success();
