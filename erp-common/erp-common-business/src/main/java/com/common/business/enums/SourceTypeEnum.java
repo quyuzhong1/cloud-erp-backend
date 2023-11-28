@@ -103,7 +103,17 @@ public enum SourceTypeEnum {
     LOGISTICS_GET_CHANEL_LIST("getChanelList", "物流系统批量渠道列表","dmp_pull_task"),
     LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
-    THIRD_WAREHOUSE("thirdWarehouse","第三方仓库","")
+    THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "产品数据拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "仓库数据拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "地址基础信息拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_INBOUND_RECEIPT("thirdWarehouseGetInboundReceipt", "入库单签收数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_INVENTORY("thirdWarehouseGetInventory", "库存获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC("thirdWarehouseGetTransitWarehouseAndLogistic", "中转仓及支持的物流产品基础数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "入库单创建接口对接","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "入库单取消接口对接","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "订单发货对接海外仓出库创建接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "出库取消接口","dmp_push_task"),
     ;
 
     /**

@@ -839,6 +839,7 @@ public enum ApiError implements Serializable {
     OVERSEAS_WAREHOUSE_INBOUND_NOT_DELETE(99124,"海外仓入库单取消后才支持删除"),
     SHOP_NOT_AUTH_ERROR(99125,"店铺尚未授权"),
     SKU_NOT_MAPPING_PLATFORM_SKU(99126,"sku【{}】无平台sku映射关系，请绑定第三方sku后操作"),
+    THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
 
 
     /**
