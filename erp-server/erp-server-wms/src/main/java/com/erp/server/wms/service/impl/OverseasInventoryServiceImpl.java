@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
@@ -123,16 +124,17 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     }
 
     @Override
-    public Boolean exportExcel(OverseasInventoryDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto, HttpServletResponse response) {
         //查询所有数据
         List<OverseasInventoryDTO.ListDTO> list = baseMapper.listByParams(dto);
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
+        List<ExportOverseasInventoryExcelDTO> resultList = BeanMapper.copyList(list,ExportOverseasInventoryExcelDTO.class);
         //  导出
         String fileName = "海外仓库数据";
         try {
-            ExcelUtil.export(fileName, "海外仓库数据", list, ExportOverseasInventoryExcelDTO.class, response);
+            ExcelUtil.export(fileName, "海外仓库数据", resultList, ExportOverseasInventoryExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015 + e.getMessage());
         }

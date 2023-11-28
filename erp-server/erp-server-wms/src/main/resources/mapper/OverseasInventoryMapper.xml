@@ -69,15 +69,15 @@
         </if>
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
-            AND oi.deliver_onway_qty > 0
-            AND oi.pending_qty > 0
-            AND oi.sellable_qty > 0
-            AND oi.unsellable_qty > 0
-            AND oi.reserved_qty > 0
-            AND oi.onway_qty > 0
-            AND oi.lack_qty > 0
-            AND oi.frozen_qty > 0
-            AND oi.shipped_qty > 0
+            AND (oi.deliver_onway_qty > 0
+            OR oi.pending_qty > 0
+            OR oi.sellable_qty > 0
+            OR oi.unsellable_qty > 0
+            OR oi.reserved_qty > 0
+            OR oi.onway_qty > 0
+            OR oi.lack_qty > 0
+            OR oi.frozen_qty > 0
+            OR oi.shipped_qty > 0)
         </if>
 
         <!--权限-->
@@ -117,7 +117,16 @@
         oi.*
         FROM overseas_inventory as oi
         <where>
-            <include refid="conditionSql"/>
+            <if test="params.ids!=null and params.ids.size>0 ">
+                AND oi.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="params.ids == null">
+                <include refid="conditionSql"/>
+            </if>
+
         </where>
     </select>
 

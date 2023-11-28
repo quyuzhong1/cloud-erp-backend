@@ -86,7 +86,7 @@ public class OverseasInventoryController extends BaseController {
             tableField = "create_user_id",
             menuCode = "vms:overseasInventory:exportExcel",
             tableAlias = "op")
-    public ApiResult<?> exportExcel(@RequestBody @Validated OverseasInventoryDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult<?> exportExcel(@RequestBody @Validated OverseasInventoryDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean flag = overseasInventoryService.exportExcel(dto, response);
         return flag ? success() : failure();
     }

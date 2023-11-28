@@ -26,6 +26,17 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class OverseasInventoryDTO implements Serializable {
 
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+    }
+
 
     /**
      * 列表查询入参
@@ -58,7 +69,7 @@ public class OverseasInventoryDTO implements Serializable {
         /**
          * 更新时间
          */
-        private List<LocalDateTime> updateTimeList;
+        private List<LocalDate> updateTimeList;
 
         /**
          * 是否不显示0库存: true=不显示0库存, false=显示0库存
