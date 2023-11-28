@@ -34,9 +34,9 @@ public interface LogisticsAddressMapper extends BaseMapper<LogisticsAddressEntit
 
     /**
      * 查询地址信息
-     * @param deliverType
+     * @param type
      * @param channelId
      * @return
      */
-    List<LogisticsAddressEntity> listByTypeAndChannelId(@Param("deliverType") String deliverType,@Param("channelId") String channelId);
+    List<LogisticsAddressEntity> listByTypeAndChannelId(@Param("type") String type,@Param("channelId") String channelId,@Param("shopId") String shopId);
 }

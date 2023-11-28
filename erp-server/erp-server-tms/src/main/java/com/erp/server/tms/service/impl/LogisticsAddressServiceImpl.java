@@ -185,8 +185,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
     @Override
-    public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId) {
-        return baseMapper.listByTypeAndChannelId(type,channelId);
+    public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId) {
+        return baseMapper.listByTypeAndChannelId(type,channelId,shopId);
     }
 
 

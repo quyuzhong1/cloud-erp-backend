@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.mapper.BigDecimalToIntMapperWork;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
@@ -13,6 +14,7 @@ import org.mapstruct.factory.Mappers;
  *@author yl
  *@date 2023-11-23
  */
+@Mapper(uses = {BigDecimalToIntMapperWork.class})
 public interface LogisticsBillConverter {
 
     LogisticsBillConverter INSTANCE = Mappers.getMapper(LogisticsBillConverter.class);
@@ -34,12 +36,12 @@ public interface LogisticsBillConverter {
     })
     ReceiverInfoVO convertReceiver(LogisticsBillDTO.ReceiverDTO  receiver);
 
-    @Mappings({
-            @Mapping(target = "weight", source = "weight" ),
-            @Mapping(target = "length", source = "length"),
-            @Mapping(target = "width", source = "width"),
-            @Mapping(target = "height", source = "height"),
-            @Mapping(target = "country", source = "currency"),
-    })
-    ParceInfoVO convertParceInfo(LogisticsBillDTO.PackageDTO packageDTO);
+//    @Mappings({
+//            @Mapping(target = "weight", source = "weight" ),
+//            @Mapping(target = "length", source = "length" ),
+//            @Mapping(target = "width", source = "width"),
+//            @Mapping(target = "height", source = "height"),
+//            @Mapping(target = "country", source = "currency"),
+//    })
+//    ParceInfoVO convertParceInfo(LogisticsBillDTO.PackageDTO packageDTO);
 }

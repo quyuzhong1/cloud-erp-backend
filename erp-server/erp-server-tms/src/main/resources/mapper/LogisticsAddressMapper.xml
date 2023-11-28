@@ -161,23 +161,37 @@
     <!--根据渠道和类型查找地址-->
     <select id="listByTypeAndChannelId" resultType="com.erp.model.tms.entity.LogisticsAddressEntity">
           SELECT
-              id,
-              create_user_id,
-              create_user_name,
-              create_time,
-              update_user_id,
-              update_user_name,
-              update_time,
-              version,
-              is_deleted,
-              name, type, company_name, contact,
-              email, tel_number, country, province,
-              city, district , address_first, address_second,
-              zip_code,province_name,city_name,district_name,country_name
+              la.id,
+              la.create_user_id,
+              la.create_user_name,
+              la.create_time,
+              la.update_user_id,
+              la.update_user_name,
+              la.update_time,
+              la.version,
+              la.is_deleted,
+              la.name,
+              la.type,
+              la.company_name,
+              la.contact,
+              la.email,
+              la.tel_number,
+              la.country,
+              la.address_first,
+              la.address_second,
+              la.zip_code,
+              la.province_name,
+              la.city_name,
+              la.district_name,
+              la.country_name
          FROM  logistics_channel_address lca
-         LEFT JOIN  logistics_address la AND la.is_deleted=false
-         WHERE lca.logistics_channel_id=#{channelId} AND lca.is_deleted=false
-         AND lca.type=#{type}
+         LEFT JOIN  logistics_address la
+         ON la.ID = lca.address_id
+         AND la.is_deleted=false
+         WHERE lca.logistics_channel_id=#{channelId}
+         AND lca.is_deleted=false
+         AND la.type=#{type}
+         AND lca.shop_id=#{shopId}
 
 
     </select>
