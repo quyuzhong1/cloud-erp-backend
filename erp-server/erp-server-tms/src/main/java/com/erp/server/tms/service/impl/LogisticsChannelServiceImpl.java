@@ -343,6 +343,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
     }
 
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String mainId) {
+        List<LogisticsChannelEntity> channelList=this.listDbByMainIdList(Arrays.asList(mainId));
+        List<BaseDropDownDTO.DisabledDTO> resultList=LogisticsChannelConverter.INSTANCE.convertByChannelDown(channelList);
+        return resultList;
+    }
+
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {

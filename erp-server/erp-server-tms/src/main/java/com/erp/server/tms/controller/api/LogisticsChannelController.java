@@ -206,4 +206,16 @@ public class LogisticsChannelController extends BaseController {
         return success(logisticsChannelService.listAll());
     }
 
+    /**
+     * 根据物流商id 获取渠道
+     *@parms logisticsSupplierId
+     *@return 
+     *@author yl
+     *@date 2023-11-28
+     */
+    @GetMapping("listByLogisticsSupplierId")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listByLogisticsSupplierId(@RequestParam(value = "logisticsSupplierId") String  logisticsSupplierId){
+        return success(logisticsChannelService.listByLogisticsSupplierId(logisticsSupplierId));
+    }
+
 }

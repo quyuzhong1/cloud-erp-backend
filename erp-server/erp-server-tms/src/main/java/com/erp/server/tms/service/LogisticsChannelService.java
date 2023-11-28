@@ -143,4 +143,12 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     void removeByIdList(List<String> deleteChannelIdList);
 
 
+    /**
+     * 根据物流商id 获取渠道
+     *@parms logisticsSupplierId
+     *@return
+     *@author yl
+     *@date 2023-11-28
+     */
+    List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String logisticsSupplierId);
 }
