@@ -116,16 +116,16 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileDeliveryDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
         //获取sku信息
-        List<String> skuNoList = list.stream().map(FirstMileDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
         //产品名称
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
         List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
 
         //获取库存sku信息
-        List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
 
         for (FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity : list) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
@@ -134,12 +134,12 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
             firstMileDeliveryDetailEntity.setWarehouseLocation(firstMileDeliveryDetailEntity.getWarehouseLocation());
 
             //库存sku
-            String stockSku = listStockSkuNoByProductSkuNoViews.stream()
-                    .filter(req -> req.getProductSkuNo().equals(firstMileDeliveryDetailEntity.getSkuNo())
+            String stockSku = ListStockSkuNoByProductSkuIdViews.stream()
+                    .filter(req -> req.getProductSkuId().equals(firstMileDeliveryDetailEntity.getSkuId())
                             && req.getWarehouseId().equals(deliveryWarehouseId))
                     .distinct()
                     .findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
+                    .flatMap(obj -> Optional.ofNullable(obj.getStockSku())).orElse("");
             firstMileDeliveryDetailEntity.setStockSku(stockSku);
 
             //校验是否是修改，如果是就新增修改日志

@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.FbaShipmentDTO;
@@ -68,4 +69,5 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @Date 2023/11/20
      **/
     List<ListingInfoDTO.BaseDropDownDTO> listByTypeWithFieldName(ListingInfoDTO.BaseDropDownParamDTO dto);
+
 }

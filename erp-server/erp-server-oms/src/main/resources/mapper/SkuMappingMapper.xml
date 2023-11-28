@@ -469,24 +469,24 @@
         </if>
     </select>
 
-    <select id="listStockSkuNoByProductSkuNo" resultType="com.erp.model.oms.dto.SkuMappingDTO$listStockSkuNoByProductSkuNoView">
+    <select id="listStockSkuNoByProductSkuIds" resultType="com.erp.model.oms.dto.SkuMappingDTO$ListStockSkuNoByProductSkuIdView">
         SELECT
-            sm.id,
+            DISTINCT
             sm.product_sku_id,
             sm.product_sku_no,
+            sm.product_name,
             sm.warehouse_id,
             sm.warehouse_name,
-            li.platform_sku_no AS warehouseSkuNo,
-            li.platform_sku_name AS warehouseProductName
+            li.platform_sku_no AS stockSku,
+            li.platform_sku_name AS stockSkuName
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
-        <if test="productSkuNoList !=null and productSkuNoList.size>0">
-            AND sm.product_sku_no IN
-            <foreach collection="productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
-                #{productSkuNo}
+        <if test="productSkuIdList !=null and productSkuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="productSkuIdList" item="productSkuId" open="(" separator="," close=")">
+                #{productSkuId}
             </foreach>
         </if>
     </select>
