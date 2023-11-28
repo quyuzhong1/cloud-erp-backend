@@ -475,7 +475,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * selfHeadway=自发头程
          * transferAgent=中转代发
          */
-        @NotBlank(message = "入库类型不能为空")
+        @NotNull(message = "入库类型不能为空")
         @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
         private OverseasInstockTypeEnum instockType;
 
@@ -488,8 +488,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * railwayTransportationBulk=铁运散装
          * railwayTransportationFCL=铁运整箱
          */
-        @NotBlank(message = "物流方式不能为空")
-        @Size(max = 64, message = "物流方式最大长度不能超过64位")
+        @NotNull(message = "物流方式不能为空")
         @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
         private LogisticsMethodEnum logisticsMethod;
 
@@ -537,15 +536,14 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 入库类型
          */
-        @NotBlank(message = "入库类型不能为空")
+        @NotNull(message = "入库类型不能为空")
         @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
         private OverseasInstockTypeEnum instockType;
 
         /**
          * 物流方式
          */
-        @NotBlank(message = "物流方式不能为空")
-        @Size(max = 64, message = "物流方式最大长度不能超过64位")
+        @NotNull(message = "物流方式不能为空")
         @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
         private LogisticsMethodEnum logisticsMethod;
 
