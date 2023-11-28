@@ -41,7 +41,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
         this.itemInfo = itemInfo;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(String.valueOf(itemInfo.getId()));
+        this.setUniqueId(itemInfo.getId() + "_" + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.shopId = dto.getShopId();
