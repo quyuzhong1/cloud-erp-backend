@@ -481,6 +481,7 @@ public class ShopDTO implements Serializable {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
     }

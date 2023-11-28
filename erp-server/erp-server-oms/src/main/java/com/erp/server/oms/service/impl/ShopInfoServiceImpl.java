@@ -365,6 +365,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         shopInfo.setWarehouseName(updateDTO.getName());
+        shopInfo.setWarehouseId(dto.getWarehouseId());
         Boolean result = this.updateById(shopInfo);
         if (result) {
             return shopInfo.getId();
