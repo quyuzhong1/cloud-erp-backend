@@ -6,14 +6,12 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.sdk.oms.shopee.dto.product.response.Dimension;
-import com.sdk.oms.shopee.dto.product.response.Image;
-import com.sdk.oms.shopee.dto.product.response.ItemInfo;
-import lombok.Data;
+import com.sdk.oms.shopee.dto.product.response.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,6 +32,7 @@ import java.util.Objects;
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
     private ItemInfo itemInfo;
+    private String shopId;
 
     /**
      * 初始化
@@ -45,6 +44,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
         this.setUniqueId(String.valueOf(itemInfo.getId()));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
+        this.shopId = dto.getShopId();
     }
 
     /**
@@ -53,7 +53,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
     public static PlatformProductDTO convertDTO(PlatformShopeeListingDTO dto) {
         // 原商品信息
         ItemInfo itemInfo = dto.getItemInfo();
-        if (Objects.isNull(itemInfo)){
+        if (Objects.isNull(itemInfo)) {
             return null;
         }
         Long updateTime = itemInfo.getUpdateTime();
@@ -77,22 +77,46 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 平台产品名称
                 .setPlatformProductName(itemInfo.getName())
                 //产品包装信息
-                .setProductPacking(processDimension(itemInfo.getDimension()))
+                .setProductPacking(processDimension(itemInfo.getDimension(), itemInfo.getWeight()))
                 //产品规格信息
-                .setProductSpec(String.valueOf(itemInfo.getCategoryId()))
+                .setProductSpec(processProductSpec(itemInfo.getAttributes()))
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
+                //店铺
+                .setShopId(dto.getShopId())
                 //平台最后修改时间
                 .setPlatformUpdateTime(LocalDateTime.ofInstant(instant, zone));
         productDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
         return productDTO;
     }
 
-    public static String processDimension(Dimension dimension) {
-        if (Objects.isNull(dimension)) {
+    private static String processProductSpec(List<Attribute> attributes) {
+        if (CollectionUtils.isEmpty(attributes)) return "";
+        StringBuffer stringBuffer = new StringBuffer();
+        attributes.forEach(attribute -> {
+            stringBuffer.append(attribute.getAttributeName()).append(":");
+            List<AttributeValue> attributeValueList = attribute.getAttributeValueList();
+            if (CollectionUtils.isNotEmpty(attributeValueList)) {
+                attributeValueList.forEach(attributeValue -> {
+                    stringBuffer.append(attributeValue.getValueName());
+                });
+                stringBuffer.append(";");
+            }
+        });
+        return stringBuffer.toString();
+    }
+
+    /***
+     *
+     * @param dimension
+     * @param weight  重量 kg
+     * @return
+     */
+    public static String processDimension(Dimension dimension, String weight) {
+        if (Objects.isNull(dimension) && StringUtils.isBlank(weight)) {
             return "";
         }
-        return StrUtil.format("长度:{};宽度:{};高度:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight());
+        return StrUtil.format("长度:{};宽度:{};高度:{};重量:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight(), weight);
     }
 
     @Override
