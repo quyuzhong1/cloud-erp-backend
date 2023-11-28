@@ -18,14 +18,17 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLogisticsService;
 import com.erp.server.oms.service.SoB2cService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -129,52 +132,52 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
+
+        if (CollectionUtils.isEmpty(logisticsList)){
+            //获取主表下物流记录
+            List<SoB2cLogisticsEntity> entityList = getListByMainId(mainEntity.getId());
+            if( CollectionUtils.isEmpty(entityList) ){
+                SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId());
+                // 无信息新增空表
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
+            }
+            return;
+        }
+
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPayMethod());
-        if (CollectionUtils.isEmpty(logisticsList)){
-            //清空主表下的物流信息
-            deleteByMainIds(Collections.singletonList(mainEntity.getId()));
-        }else {
-            //获取主表下物流记录
-            List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
-            if (CollectionUtils.isEmpty(listByMainId)){
-                //新增
-                logisticsList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
-                    BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                    this.saveOrUpdate(entity);
-                    if (isShopee){
-                        addDTOList.add(buildLogisticsBill(entity, mainEntity));
-                    }
 
-                });
+        //获取主表下物流记录
+        List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
+        //转map 比较是否存在记录 不存在则删除 存在则更新
+        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
+
+        logisticsList.forEach(platformOrderLogisticsDTO -> {
+            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
+            if (Objects.isNull(entity)){
+                entity = new SoB2cLogisticsEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                this.save(entity);
+                if (isShopee){
+                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
+                }
             }else {
-                //转map 比较是否存在记录 不存在则删除 存在则更新
-                Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
-                logisticsList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
-                    if (Objects.isNull(entity)){
-                        entity = new SoB2cLogisticsEntity();
-                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                        this.saveOrUpdate(entity);
-                        if (isShopee){
-                            addDTOList.add(buildLogisticsBill(entity, mainEntity));
-                        }
-                    }else {
-                        SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
-                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
-                        entity2.setId(entity.getId());
-                        this.saveOrUpdate(entity2);
-                        if (isShopee){
-                            addDTOList.add(buildLogisticsBill(entity, mainEntity));
-                        }
-                    }
-                });
+                SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                entity2.setId(entity.getId());
+                this.saveOrUpdate(entity2);
+                if (isShopee){
+                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
+                }
             }
-        }
+        });
         //虾皮物流订单新增 TMS物流单号记录
         if (isShopee){
             try {

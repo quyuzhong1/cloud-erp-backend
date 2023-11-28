@@ -57,6 +57,13 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         ShopifyShopInfoDTO shopInfoDTO = dto.getShopInfoDTO();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
+        // 平台类型
+        orderDTO.setPlatform(dto.getPlatform());
+        // 唯一ID
+        orderDTO.setUniqueId(dto.getUniqueId());
+        // 同步任务ID
+        orderDTO.setDmpSyncTaskId(dto.getDmpSyncTaskId());
+
         // 订单日期
         orderDTO.setBillDate(sourceOrder.getCreatedAt().toLocalDate());
         // 平台订单号
@@ -160,7 +167,9 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
                     .map(ShopifyShippingLine::getPrice)
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             financeDTO.setShippingCost(totalShippingPrice);
+            financesList.add(financeDTO);
         }
+        orderDTO.setFinancesList(financesList);
         return orderDTO;
 
     }

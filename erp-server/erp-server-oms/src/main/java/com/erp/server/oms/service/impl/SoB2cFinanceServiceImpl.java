@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.SoB2cFinanceDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
 import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.OperateLogService;
@@ -97,30 +98,40 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         List<PlatformOrderFinanceDTO> financesList = dto.getFinancesList();
+
         if (CollectionUtils.isEmpty(financesList)){
-            //清空主表下的物流信息
-            deleteByMainIds(Collections.singletonList(mainEntity.getId()));
-        }else {
             //获取主表下物流记录
-            List<SoB2cFinanceEntity>  listByMainId = getListByMainId(mainEntity.getId());
-            if (CollectionUtils.isEmpty(listByMainId)){
-                //新增
-                financesList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
-                    BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                    this.saveOrUpdate(entity);
-                });
-            }else {
-                //转map 比较是否存在记录 不存在则删除 存在则更新
-                financesList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
-                    BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                    this.saveOrUpdate(entity);
-                });
+            List<SoB2cFinanceEntity> entityList = getListByMainId(mainEntity.getId());
+            if( CollectionUtils.isEmpty(entityList) ){
+                SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(null, mainEntity.getId());
+                // 无信息新增空表
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
             }
+            return;
+        }
+        //获取主表下物流记录
+        List<SoB2cFinanceEntity>  listByMainId = getListByMainId(mainEntity.getId());
+        if (CollectionUtils.isEmpty(listByMainId)){
+            //新增
+            financesList.forEach(platformOrderLogisticsDTO -> {
+                SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                this.saveOrUpdate(entity);
+            });
+        }else {
+            //转map 比较是否存在记录 不存在则删除 存在则更新
+            financesList.forEach(platformOrderLogisticsDTO -> {
+                SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                this.saveOrUpdate(entity);
+            });
         }
     }
 

@@ -88,5 +88,5 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 }
