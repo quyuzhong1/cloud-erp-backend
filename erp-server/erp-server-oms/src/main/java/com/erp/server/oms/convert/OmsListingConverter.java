@@ -33,6 +33,8 @@ public interface OmsListingConverter {
             @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
+            @Mapping(target = "platformSpuNo", source = "platformProductNo"),
+            @Mapping(target = "platformSpuName", source = "platformProductName"),
             @Mapping(target = "matchResult", source = "matchResult",defaultValue = "false"),
     })
     ListingInfoEntity listingDtoToEntity(PlatformProductDTO platformProductDTO);
