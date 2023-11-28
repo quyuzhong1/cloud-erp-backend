@@ -26,6 +26,7 @@ import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -270,6 +271,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO salePriceDistribution(BiFilterDTO biFilterDTO) {
         Optional.ofNullable(biFilterDTO.getRangeType()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST));
         Optional.ofNullable(biFilterDTO.getSettleMethod()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
@@ -460,6 +462,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:saleDetailDate",keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailDate(SkuDateFilterDTO biFilterDTO) {
         //获取销售额
         biFilterDTO.setSku(Arrays.asList(biFilterDTO.getSkuNo()));
@@ -570,6 +573,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:skuDateSaleTrend",keyGenerator = "myKeyGenerator")
     public List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO) {
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = null;
         switch (biFilterDTO.getDateType()) {
@@ -596,6 +600,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:skuDetailTop",keyGenerator = "myKeyGenerator")
     public BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto) {
         // 商品详情
         BiProductDetailEntity detailEntity = biProductDetailService.getBySkuNo(dto.getSkuNo());
@@ -675,6 +680,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * 区域销售分析
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:getRegionSales",keyGenerator = "myKeyGenerator")
     public List<BiRegionAnalyzeDTO> getSubRegionSales(BiCountryRegionFilterDTO dto) {
         // 国家列表
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList()
@@ -758,6 +764,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * 国家销售分析
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:getCountrySales",keyGenerator = "myKeyGenerator")
     public List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto) {
         // 国家列表
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList()
