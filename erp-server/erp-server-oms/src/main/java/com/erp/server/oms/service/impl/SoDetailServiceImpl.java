@@ -1241,7 +1241,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
         BigDecimal purchasePrice = BigDecimal.ZERO;
         String currency = CurrencyEnum.CNY.getCurrencyCode();
-        if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
+        if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
             purchasePrice = MathUtil.divide(dmpSkuCostEntity.getCostPrice(), MathUtil.add(BigDecimal.ONE, BigDecimal.ZERO));
         }
 
