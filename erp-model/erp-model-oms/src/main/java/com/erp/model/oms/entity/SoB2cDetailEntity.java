@@ -180,8 +180,28 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     public static final String WAREHOUSE_ORG_NAME = "warehouse_org_name";
 
     @Override
-    public Serializable pkVal() {
-        return null;
+    public String toString() {
+        return "SoB2cDetailEntity{" +
+                "imageUrl='" + imageUrl + '\'' +
+                ", skuId='" + skuId + '\'' +
+                ", skuNo='" + skuNo + '\'' +
+                ", sellerSkuNo='" + sellerSkuNo + '\'' +
+                ", platformSkuNo='" + platformSkuNo + '\'' +
+                ", warehouseSkuNo='" + warehouseSkuNo + '\'' +
+                ", qty=" + qty +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", price=" + price +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", exchangeRate=" + exchangeRate +
+                ", advicePrice=" + advicePrice +
+                ", taxCost=" + taxCost +
+                ", labelJson='" + labelJson + '\'' +
+                ", kingdeeDetailId='" + kingdeeDetailId + '\'' +
+                ", warehouseOrgId='" + warehouseOrgId + '\'' +
+                ", warehouseOrgName='" + warehouseOrgName + '\'' +
+                ", warehouseLocation='" + warehouseLocation + '\'' +
+                '}';
     }
-
 }

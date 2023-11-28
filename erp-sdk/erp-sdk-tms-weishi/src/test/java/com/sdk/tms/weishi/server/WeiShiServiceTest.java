@@ -39,7 +39,7 @@ class WeiShiServiceTest {
     @Test
     void createOrder() {
         WeiShiCreateOrderRequest weiShiCreateOrderRequest = WeiShiCreateOrderRequest.builder()
-                .referenceNo("wj1234516779")
+                .referenceNo("wj1234516778")
                 .shippingMethod("MX1001")
                 .countryCode("MX")
                 .orderWeight(new BigDecimal("0.123"))

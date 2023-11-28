@@ -15,12 +15,15 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -97,40 +100,43 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         List<PlatformOrderReceiverDTO> receiverList = dto.getReceiverList();
+
         if (CollectionUtils.isEmpty(receiverList)){
-            //清空主表下的物流信息
-            deleteByMainIds(Collections.singletonList(mainEntity.getId()));
-        }else {
             //获取主表下物流记录
-            List<SoB2cReceiverEntity> listByMainId = getListByMainId(mainEntity.getId());
-            if (CollectionUtils.isEmpty(listByMainId)){
-                //新增
-                receiverList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
-                    BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                    this.saveOrUpdate(entity);
-                });
-            }else {
-                //转map 比较是否存在记录 不存在则删除 存在则更新
-                Map<String, SoB2cReceiverEntity> map = listByMainId.stream().filter(e -> StrUtil.isNotBlank(e.getCustomerId())).collect(Collectors.toMap(SoB2cReceiverEntity::getCustomerId, Function.identity()));
-                receiverList.forEach(platformOrderLogisticsDTO -> {
-                    SoB2cReceiverEntity entity = map.get(platformOrderLogisticsDTO.getCustomerId());
-                    if (Objects.isNull(entity)){
-                        entity = new SoB2cReceiverEntity();
-                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                        this.saveOrUpdate(entity);
-                    }else {
-                        SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                        BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
-                        entity2.setId(entity.getId());
-                        this.saveOrUpdate(entity2);
-                    }
-                });
+            List<SoB2cReceiverEntity> entityList = getListByMainId(mainEntity.getId());
+            if( CollectionUtils.isEmpty(entityList) ){
+                SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
+                // 无信息新增空表
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
             }
+            return;
         }
+
+        //获取主表下物流记录
+        List<SoB2cReceiverEntity> listByMainId = getListByMainId(mainEntity.getId());
+        //转map 比较是否存在记录 不存在则删除 存在则更新
+        Map<String, SoB2cReceiverEntity> map = listByMainId.stream().filter(e -> StrUtil.isNotBlank(e.getCustomerId())).collect(Collectors.toMap(SoB2cReceiverEntity::getCustomerId, Function.identity()));
+        receiverList.forEach(platformOrderLogisticsDTO -> {
+            SoB2cReceiverEntity entity = map.get(platformOrderLogisticsDTO.getCustomerId());
+            if (Objects.isNull(entity)){
+                entity = new SoB2cReceiverEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
+                this.saveOrUpdate(entity);
+            }else {
+                SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
+                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                entity2.setId(entity.getId());
+                this.saveOrUpdate(entity2);
+            }
+        });
+
     }
 
     /**

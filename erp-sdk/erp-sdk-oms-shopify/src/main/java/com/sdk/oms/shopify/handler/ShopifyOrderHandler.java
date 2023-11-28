@@ -58,11 +58,12 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         // 下次执行时间
         OffsetDateTime nextOffSetTime = data.getNextTime().atOffset(zoneOffset);
         // 当前时间
-        OffsetDateTime nowOffSetTime = OffsetDateTime.now(ZoneId.systemDefault());
+//        OffsetDateTime nowOffSetTime = OffsetDateTime.now(ZoneId.systemDefault());
+//        OffsetDateTime nowOffSetTime = null;
 
         // Shopify产品下载所有(SDK已分页查询所有)
         List<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
-                .getAllUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, nowOffSetTime);
+                .getAllUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, null);
 
         if (CollectionUtils.isEmpty(orders)) {
             return Collections.emptyList();

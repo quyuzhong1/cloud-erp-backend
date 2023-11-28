@@ -92,15 +92,20 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void filterShopifyOrders() {
-        String accessToken = "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";
+        String accessToken = "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";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
 
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
-        OffsetDateTime minTime = OffsetDateTime.parse("2023-08-23T17:07:31+08:00");
+//        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2023-09-23T00:00:00+08:00");
+        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-08-22T00:00:00+08:00");
 
-        ShopifyPage<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
-                .getOrders(minTime);
-        System.out.println("订单结果：\n" + JSONUtil.toJsonStr(orders));
+
+        List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
+                .getAllUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, null);
+//                .getUpdatedOrdersCreatedBefore(lastOffSetTime, nextOffSetTime, null, 200);
+//        .getOrders(lastOffSetTime, nextOffSetTime, 200);
+        System.out.println("订单结果：\n" + JSONUtil.toJsonStr(shopifyOrders));
     }
 
 

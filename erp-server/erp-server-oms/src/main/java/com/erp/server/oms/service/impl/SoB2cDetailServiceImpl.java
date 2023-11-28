@@ -12,33 +12,32 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -180,31 +179,45 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
+        // 来源为空
         if(CollectionUtils.isEmpty(dto.getDetails())){
-            if (!CollectionUtils.isEmpty(oldDetailEntityList)){
-                if(!this.deleteByMainIds(Collections.singletonList(mainEntity.getId()))){
-                    throw new ServiceException("[SoB2cDetailEntity] 批量删除失败");
+            if (CollectionUtils.isEmpty(oldDetailEntityList)){
+                // 新建空
+                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId());
+                if(!this.save(detailEntity)){
+                    throw new ServiceException("[SoB2cDetailEntity] 保存失败");
                 }
+                return Collections.singletonList(detailEntity);
             }
-            return;
+            return oldDetailEntityList;
         }
-        if (CollectionUtils.isEmpty(oldDetailEntityList)){
-            List<SoB2cDetailEntity> detailEntityList = dto.getDetails().stream().map(d -> {
-                SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
-                BeanUtils.copyProperties(d, detailEntity);
-                detailEntity.setMainId(mainEntity.getId());//增加主表id
-                return detailEntity;
-            }).collect(Collectors.toList());
+        // 来源不为空
+        // 历史map
+        Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+        // 新增或更新列表
+        List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
+            // 历史记录
+            SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
+            SoB2cDetailEntity saveOrUpdateEntity;
+            if (null != oldEntity) {
+                // 更新指定内容
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO);
+            } else {
+                // 新记录
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId());
+            }
+            return saveOrUpdateEntity;
+        }).collect(Collectors.toList());
 
-            if (!this.saveBatch(detailEntityList)){
-                throw new ServiceException("Shopify 订单明细批量保存失败");
-            }
-            return;
+        // 批量保存和更新
+        if (!this.saveOrUpdateBatch(saveOrUpdateList)){
+            throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
         }
-        // TODO 更新操作
+        return saveOrUpdateList;
     }
 
 

@@ -366,6 +366,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsBillDTO.ReceiverDTO receiverDTO = dto.getReceiver();
         //转化成收货人
         ReceiverInfoVO receiverInfo = LogisticsBillConverter.INSTANCE.convertReceiver(receiverDTO);
+        receiverInfo.setCountry("MX");
         List<LogisticsBillDTO.SkuDTO> skuList = dto.getSkuList();
         List<String> skuIdList = skuList.stream().map(LogisticsBillDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listBySkuIdList(skuIdList);
@@ -377,17 +378,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
 
         //销售平台
         String salesPlatform = dto.getSalesPlatform();
 
         List<LogisticsProductVO> logisticsProductList =  LogisticsBillConverter.INSTANCE.convertLogisticsProduct(skuInfoList);
+        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
+        parceInfo.setTotalQuantity(logisticsProductList.size());
         //根据销售平台和渠道id 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsMappingService.getBySalesPlatform(salesPlatform, channelId);
         if (Objects.isNull(saleChannel)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
+        saleChannel.setCode("MX1001");
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
                 deliveryNo(dto.getOrderId()).
@@ -433,13 +436,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         addDTO.setTrackNo(trackNo);
         detailList.add(addDTO);
         Boolean more = responseVO.getMore();
-        if (more) {
+        if (Objects.nonNull(more)&&more) {
             List<LogisticsOrderResponseVO> responseList = responseVO.getLogisticsOrderResponseVOS();
             for (LogisticsOrderResponseVO item : responseList) {
                 LogisticsBillDetailDTO.AddDTO detailDTO = new LogisticsBillDetailDTO.AddDTO();
-                detailDTO.setTrackNo(detailDTO.getTrackNo());
+                detailDTO.setTrackNo(item.getTrackNo());
                 detailList.add(detailDTO);
-                trackNoList.add(detailDTO.getTrackNo());
+                trackNoList.add(item.getTrackNo());
             }
         }
         this.save(billEntity);
