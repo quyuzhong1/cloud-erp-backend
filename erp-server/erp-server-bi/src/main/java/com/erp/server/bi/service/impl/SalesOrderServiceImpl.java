@@ -1019,6 +1019,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 10:07
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byHomeAndAbroad",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byHomeAndAbroad(BiFilterDTO dto) {
 
         //获取到结算汇率
@@ -1411,6 +1412,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleMonthRank",keyGenerator = "myKeyGenerator")
     public List<PeopleSalesRankVO> byPeopleMonthRank(BiFilterDTO dto) {
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         //获取到结算汇率
@@ -2774,7 +2776,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             case "WEEK":
                 long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
-                if (weekDay > 84) {
+                if (weekDay > 90) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
                 }
                 salesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
