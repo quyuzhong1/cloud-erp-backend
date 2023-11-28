@@ -1,6 +1,7 @@
 package com.erp.model.tms.vo.request;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class ReceiverInfoVO {
     /**
      * 名称

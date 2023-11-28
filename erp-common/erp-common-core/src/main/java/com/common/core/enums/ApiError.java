@@ -998,8 +998,8 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST(94024,"存在未停用的物流渠道,无法停用该物流商"),
     ERROR_LOGISTICS_CHANNEL_ADDRESS_EXIST(94025,"【{}】地址已在渠道引用,无法删除"),
     ERROR_LOGISTICS_CHANNEL_NOT_EXIST(94026,"物流渠道不存在"),
-    ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【】渠道,【】类型的地址为空"),
-    ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【】渠道,尚未配置销售渠道"),
+    ERROR_CHANNEL_ADDRESS_NOT_EXIST(94027,"【{}】渠道,【{}】类型的地址为空"),
+    ERROR_SALES_CHANNEL_NOT_EXIST(94028,"【{}】渠道,尚未配置销售渠道"),
 
 
 
