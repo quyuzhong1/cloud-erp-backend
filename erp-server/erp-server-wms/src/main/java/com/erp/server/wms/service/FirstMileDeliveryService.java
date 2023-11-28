@@ -239,8 +239,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * 装箱清单
      * @Author Luo_WG
      * @Date 2023/11/17 11:52
-     * @param ids
+     * @param id
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
      **/
-    List<FirstMileCartonDTO.ListPackingDTO> listPacking(List<String> ids);
+    FirstMileCartonDTO.ListPackingDTO listPacking(String id);
 }
