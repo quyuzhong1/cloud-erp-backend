@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -27,4 +28,13 @@ public interface FirstMileDeliveryDetailMapper extends BaseMapper<FirstMileDeliv
      * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
      **/
     List<FirstMileDeliveryDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
+    /**
+     * 根据主表id分组sku查询发货及待装箱数
+     * @Author Luo_WG
+     * @Date 2023/11/28 18:40
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileDeliveryDTO.GroupSkuDTO>
+     **/
+    List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainIds(@Param("mainIds") List<String> mainIds);
 }

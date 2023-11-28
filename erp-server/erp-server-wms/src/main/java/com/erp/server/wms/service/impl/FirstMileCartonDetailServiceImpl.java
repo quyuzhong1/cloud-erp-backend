@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.FirstMileCartonBillDTO;
@@ -75,6 +76,14 @@ public class FirstMileCartonDetailServiceImpl extends SuperServiceImpl<FirstMile
         }
         //箱子信息明细
         this.firstMileCartonBillSave(updateDTO.getBoxQty(), detailEntityList, mainId);
+    }
+
+    @Override
+    public List<FirstMileCartonDetailEntity> listByCartonIds(List<String> cartonIds) {
+        if (CollectionUtils.isEmpty(cartonIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FirstMileCartonDetailEntity::getCartonId, cartonIds).list();
     }
 
     /**

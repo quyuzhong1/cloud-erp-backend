@@ -35,6 +35,7 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -1158,11 +1159,40 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
-        List<FirstMileCartonDTO.AddDTO> addList = BeanMapper.copyList(dto.getFirstMileCarton(), FirstMileCartonDTO.AddDTO.class);
+        //待审核的数据可以上传装箱数据
+        FirstMileDeliveryEntity entity = this.getById(dto.getId());
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.APPROVE_ING_IS_PACKING);
+        }
+
+        List<FirstMileCartonDTO.AddDTO> addList = BeanMapper.copyList(dto.getFirstMileCartonList(), FirstMileCartonDTO.AddDTO.class);
         for (FirstMileCartonDTO.AddDTO addDTO : addList) {
             firstMileCartonService.add(addDTO);
         }
+
+        //根据主表id分组sku查询发货及待装箱数
+        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(dto.getId()));
+
+        //当所有产品待装箱数量为0时，状态自动变更为已装箱
+        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(groupSkuDTOList)) {
+            lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, PackingStatusEnum.PACKING.getCode())
+                    .eq(FirstMileDeliveryEntity::getId, dto.getId())
+                    .update();
+        }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public FirstMileDeliveryDTO.FirstMileCartonView packingView(String id) {
+        FirstMileDeliveryEntity entity = this.getById(id);
+        FirstMileDeliveryDTO.FirstMileCartonView view = new FirstMileDeliveryDTO.FirstMileCartonView();
+        view.setId(entity.getId());
+        view.setCode(entity.getCode());
+        List<FirstMileCartonEntity> firstMileCartonEntities = firstMileCartonService.listByMainIds(Arrays.asList(id));
+        List<FirstMileCartonDTO.ViewDTO> firstMileCartonList = BeanMapper.copyList(firstMileCartonEntities, FirstMileCartonDTO.ViewDTO.class);
+        view.setFirstMileCartonList(firstMileCartonList);
+        return view;
     }
 
     @Override
@@ -1172,7 +1202,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
         List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(id);
-
-        return null;
+        listPackingDTO.setDetailList(detailList);
+        return listPackingDTO;
     }
 }

@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.entity.FirstMileCartonEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface FirstMileCartonMapper extends BaseMapper<FirstMileCartonEntity> {
 
+    /**
+     * 查询已装箱数量
+     * @Author Luo_WG
+     * @Date 2023/11/28 19:04
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
+     **/
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(@Param("mainIds") List<String> mainIds);
 }

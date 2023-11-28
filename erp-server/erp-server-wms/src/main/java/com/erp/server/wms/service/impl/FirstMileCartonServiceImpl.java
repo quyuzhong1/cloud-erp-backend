@@ -11,6 +11,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +79,18 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         firstMileCartonDetailService.update(updateDTO, firstMileCartonEntity.getId());
     }
 
+    @Override
+    public List<FirstMileCartonEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FirstMileCartonEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds) {
+        return baseMapper.listPackingQtyByMainIds(mainIds);
+    }
 
     /**
     * 新增修改处理数据
