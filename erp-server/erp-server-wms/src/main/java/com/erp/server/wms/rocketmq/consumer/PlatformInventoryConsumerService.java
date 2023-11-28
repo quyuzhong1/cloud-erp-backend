@@ -69,7 +69,6 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(entity.getDictPlatform());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
-                paramDTO.setMatchResult(true);
                 // 查询ListingInfo和skuMapping的关系
                 List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
