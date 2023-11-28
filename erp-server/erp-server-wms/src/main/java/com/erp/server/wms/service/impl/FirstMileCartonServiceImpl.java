@@ -41,7 +41,7 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(FirstMileCartonDTO.AddDTO addDTO) {
+    public void add(FirstMileCartonDTO.AddDTO addDTO) {
         FirstMileCartonEntity firstMileCartonEntity = new FirstMileCartonEntity();
         BeanMapperUtils.copy(addDTO, firstMileCartonEntity);
 
@@ -53,11 +53,8 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         if(!save) {
             throw new ServiceException("发货单箱规信息保存失败");
         }
-
         //新增详情信息
         firstMileCartonDetailService.add(addDTO, firstMileCartonEntity.getId());
-
-        return new BaseResultDTO.AddDTO(firstMileCartonEntity.getId(), firstMileCartonEntity.getId());
     }
 
     /**
@@ -65,7 +62,7 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(FirstMileCartonDTO.UpdateDTO updateDTO) {
+    public void update(FirstMileCartonDTO.UpdateDTO updateDTO) {
         FirstMileCartonEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货单箱规信息"));
         FirstMileCartonEntity firstMileCartonEntity =  BeanMapperUtils.map(FirstMileCartonEntity.class, updateDTO);
@@ -77,14 +74,8 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         if(!save) {
             throw new ServiceException("发货单箱规信息保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录发货单箱规信息日志数据，id：【{}】", firstMileCartonEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), firstMileCartonEntity.getId(), "发货单箱规信息");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, firstMileCartonEntity, null, firstMileCartonEntity.getId(), msg);
-        return Boolean.TRUE;
+        //新增详情信息
+        firstMileCartonDetailService.update(updateDTO, firstMileCartonEntity.getId());
     }
 
 
@@ -92,6 +83,6 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     * 新增修改处理数据
     */
     private void handleData(FirstMileCartonEntity firstMileCartonEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }

@@ -21,7 +21,7 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FirstMileCartonDTO.AddDTO dto);
+    void add(FirstMileCartonDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +30,7 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
     * @param dto
     * @return
     */
-    Boolean update(FirstMileCartonDTO.UpdateDTO dto);
+    void update(FirstMileCartonDTO.UpdateDTO dto);
 
 
 }

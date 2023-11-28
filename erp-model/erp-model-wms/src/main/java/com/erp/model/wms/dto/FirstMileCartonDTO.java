@@ -6,10 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -155,6 +152,8 @@ public class FirstMileCartonDTO implements Serializable {
         * 箱数
         */
         @NotNull(message = "箱数不能为空")
+        @Min(value = 1,message = "箱数最小值为1")
+        @Max(value = 99999999,message = "箱数最大值为99999999")
         private Integer boxQty;
     }
 

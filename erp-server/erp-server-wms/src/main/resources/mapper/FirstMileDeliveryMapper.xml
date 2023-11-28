@@ -379,7 +379,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  fba_delivery
+        FROM  first_mile_delivery
         WHERE is_deleted=FALSE
 
         GROUP BY approve_status

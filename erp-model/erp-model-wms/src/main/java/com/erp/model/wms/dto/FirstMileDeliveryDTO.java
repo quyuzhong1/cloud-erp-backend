@@ -877,4 +877,26 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private List<FirstMileCartonDTO.AddDTO> firstMileCarton;
     }
+
+    /**
+     * 装箱详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FirstMileCartonView {
+        /**
+         * 发货单id
+         */
+        private String id;
+
+        /**
+         * 发货单号
+         */
+        private String code;
+
+        /**
+         * 装箱信息
+         */
+        private List<FirstMileCartonDTO.AddDTO> firstMileCarton;
+    }
 }

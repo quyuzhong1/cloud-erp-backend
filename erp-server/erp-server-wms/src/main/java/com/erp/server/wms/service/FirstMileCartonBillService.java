@@ -33,4 +33,14 @@ public interface FirstMileCartonBillService extends SuperService<FirstMileCarton
     Boolean update(FirstMileCartonBillDTO.UpdateDTO dto);
 
 
+    /**
+     * 根据装箱id删除箱子明细
+     * @Author Luo_WG
+     * @Date 2023/11/28 16:31
+     * @param cartonId
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteByCartonId(String cartonId);
+
+
 }
