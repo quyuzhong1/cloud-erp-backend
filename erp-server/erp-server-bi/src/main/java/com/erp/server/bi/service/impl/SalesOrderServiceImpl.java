@@ -1019,6 +1019,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 10:07
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byHomeAndAbroad",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byHomeAndAbroad(BiFilterDTO dto) {
 
         //获取到结算汇率
@@ -1407,6 +1408,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleMonthRank",keyGenerator = "myKeyGenerator")
     public List<PeopleSalesRankVO> byPeopleMonthRank(BiFilterDTO dto) {
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         //获取到结算汇率
