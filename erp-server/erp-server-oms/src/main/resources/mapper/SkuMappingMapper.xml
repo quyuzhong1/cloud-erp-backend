@@ -111,6 +111,7 @@
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
+        li.platform_update_time,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
