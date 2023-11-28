@@ -43,7 +43,6 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(200)
-                .productUpdateTimeFrom("2020-10-01 00:00:00")
                 .build();
         GoodCangResponse<List<GoodCangSkuResp>> response = goodCangService.getSkuList(goodCangGetSkuReq);
         System.out.println(response);

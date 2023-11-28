@@ -8,6 +8,7 @@ import java.util.Arrays;
 @Getter
 public enum GoodCangEnums {
     CONTAIN_BATTERY("containBattery",GoodsAttributeEnum.class),
+    PRODUCT_STATUS("productStatus",OpenApiProductStatusEnum.class),
     TYPE_OF_GOODS("typeOfGoods",ProductPackageTypeEnum.class),
     CAT_LANG("catLang",LanguageEnum.class),
     HEAD_TYPE("headType",HeadTypeEnum.class),
@@ -66,6 +67,25 @@ public enum GoodCangEnums {
         private final String name;
 
         ProductPackageTypeEnum(Integer code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
+    /**
+     * 包裹类型枚举
+     */
+    @Getter
+    public enum OpenApiProductStatusEnum {
+        ABANDONMENT("X","废弃"),
+        AVAILABLE("S","可用"),
+        DRAFT("D","草稿"),
+        UNDER_REVIEW("W","审核中/待审核"),
+        REJECT("R","驳回")
+        ;
+        private final String code;
+        private final String name;
+
+        OpenApiProductStatusEnum(String code, String name) {
             this.code = code;
             this.name = name;
         }
