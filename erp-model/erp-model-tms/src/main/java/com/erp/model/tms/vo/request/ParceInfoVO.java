@@ -2,6 +2,7 @@ package com.erp.model.tms.vo.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class ParceInfoVO {
 
     //是否带电 1:是 0:否
