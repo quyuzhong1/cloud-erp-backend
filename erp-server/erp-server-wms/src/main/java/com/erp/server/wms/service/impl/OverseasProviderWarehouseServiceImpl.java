@@ -106,9 +106,13 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
         for (OverseasProviderWarehouseEntity detailEntity : list) {
-            if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
-                throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
+            //如果启用，校验仓库是否绑定
+            if (detailEntity.getDisabled()) {
+                if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
+                    throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
+                }
             }
+
             detailEntity.setMainId(mainId);
             WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(updateDTO)) {

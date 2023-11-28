@@ -51,7 +51,7 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-
+        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

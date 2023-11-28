@@ -73,34 +73,47 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private OverseasWarehouseInboundDetailService overseasWarehouseInboundDetailService;
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+    @Resource
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasWarehouseInboundDTO.AddDTO addDTO) {
-        OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = new OverseasWarehouseInboundEntity();
-        BeanMapperUtils.copy(addDTO, overseasWarehouseInboundEntity);
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getDeliveryId());
+        Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+        // 发货单明细
+        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
+        if (CollectionUtils.isEmpty(deliveryDetailEntityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
+        }
+
+        OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
+        BeanMapperUtils.copy(addDTO, mainEntity);
 
         // 数据处理
-        handleData(overseasWarehouseInboundEntity);
+        handleData(mainEntity);
 
+        // 明细处理
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
+                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity))
+                .collect(Collectors.toList());
         log.info("开始新增海外仓入库单");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        overseasWarehouseInboundEntity.setCode(code);
-        boolean save = super.save(overseasWarehouseInboundEntity);
+        boolean save = super.save(mainEntity);
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单", overseasWarehouseInboundEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, overseasWarehouseInboundEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(overseasWarehouseInboundEntity.getId(), code);
+        String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "新增操作");
+        // 新增明细（如果有明细的话）
+        if (!overseasWarehouseInboundDetailService.saveBatch(detailEntityList)){
+            throw new ServiceException("海外仓入库单明细保存失败");
+        }
+        return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
 
     /**
@@ -311,6 +324,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .map(OverseasWarehouseInboundEntity::getCode)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+
+        return lambdaQuery()
+                .in(OverseasWarehouseInboundEntity::getSourceId, sourceIds)
+                .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
+                .list();
     }
 
     /**

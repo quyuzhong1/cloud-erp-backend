@@ -464,7 +464,7 @@ public class FirstMileDeliveryController extends BaseController {
      **/
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "FBA发货单装箱保存")
-    public ApiResult packingSave(@RequestBody @Validated ValidList<FirstMileCartonDTO.AddDTO> dto) {
+    public ApiResult packingSave(@RequestBody @Validated FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
         Boolean flag = firstMileDeliveryService.packingSave(dto);
         return flag ? success() : failure();
     }

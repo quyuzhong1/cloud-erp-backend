@@ -126,6 +126,16 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 创建时间
          */
          private List<LocalDate> createTimeList;
+         /**
+          * 装箱状态：/wms/common/enumDropDown?type=PackingStatus
+          * notPacking：未装箱
+          * packing：已装箱
+          */
+         private String packingStatus;
+         /**
+          * 是否下推入库单
+          */
+         private Boolean isGenerateOverseasInbound;
      }
 
     /**
@@ -157,6 +167,11 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 备货类型名称
          */
         private String demandTypeName;
+
+        /**
+         * 海外仓入库单编号
+         */
+        private String overseasInboundCode;
 
         /**
          * 审核状态
@@ -834,5 +849,27 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货时间
          */
         private LocalDateTime deliveryTime;
+    }
+
+    /**
+     * 装箱
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FirstMileCartonAdd {
+        /**
+         * 发货单id
+         */
+        private String id;
+
+        /**
+         * 发货单号
+         */
+        private String code;
+
+        /**
+         * 装箱信息
+         */
+        private List<FirstMileCartonDTO.AddDTO> firstMileCarton;
     }
 }

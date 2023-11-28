@@ -125,4 +125,13 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
 
     List<String> getReceiptNumbersForStatus(List<String> statusList);
+
+    /**
+     * 根据来源id查询入库单
+     * @Author Luo_WG
+     * @Date 2023/11/27 17:36
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.OverseasWarehouseInboundEntity>
+     **/
+    List<OverseasWarehouseInboundEntity> listBySourceIds(List<String> sourceIds);
 }

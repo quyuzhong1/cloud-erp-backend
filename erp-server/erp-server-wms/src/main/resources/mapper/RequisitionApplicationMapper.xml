@@ -75,6 +75,7 @@
             rad.from_warehouse_name,
             rad.to_warehouse_id,
             rad.to_warehouse_name,
+            ra.create_user_name,
             ra.handle_user_name,
             ra.handle_time,
             ra.create_time
@@ -244,6 +245,7 @@
         rad.from_warehouse_name,
         rad.to_warehouse_id,
         rad.to_warehouse_name,
+        ra.create_user_name,
         ra.handle_user_name,
         ra.handle_time,
         ra.create_time

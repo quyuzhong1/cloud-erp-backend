@@ -114,6 +114,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private OmsListingInfoFeign omsListingInfoFeign;
     @Autowired
     private SkuMappingFeign skuMappingFeign;
+    @Autowired
+    private OverseasWarehouseInboundService overseasWarehouseInboundService;
+    @Autowired
+    private FirstMileCartonService firstMileCartonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1025,6 +1029,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollUtil.isEmpty(list)) {
            return;
         }
+
+
         //查询产品信息
         List<String> skuNoList = list.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
@@ -1035,6 +1041,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //获取库存sku信息
         List<SkuMappingDTO.listStockSkuNoByProductSkuNoView> listStockSkuNoByProductSkuNoViews = omsListingInfoFeign.listStockSkuNoByProductSkuNo(skuNoList);
+
+        //查询已下推的海外入库单
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
 
         // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
@@ -1063,6 +1072,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
+
+            OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream().filter(req -> req.getSourceId().equals(data.getId())).limit(MathUtil.ONE).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
+                data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
+            }
         }
     }
     /**
@@ -1144,8 +1158,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public Boolean packingSave(ValidList<FirstMileCartonDTO.AddDTO> dto) {
-        return null;
+    public Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
+        List<FirstMileCartonDTO.AddDTO> addList = BeanMapper.copyList(dto.getFirstMileCarton(), FirstMileCartonDTO.AddDTO.class);
+        for (FirstMileCartonDTO.AddDTO addDTO : addList) {
+            firstMileCartonService.add(addDTO);
+        }
+        return Boolean.TRUE;
     }
 
     @Override

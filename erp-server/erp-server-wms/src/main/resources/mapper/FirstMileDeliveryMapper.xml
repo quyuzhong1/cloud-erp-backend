@@ -179,11 +179,23 @@
             AND fd.create_time >= #{params.createTimeList[0]} and
             (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > fd.create_time
         </if>
+        <!--装箱状态-->
+        <if test="params.packingStatus != null and params.packingStatus != ''">
+            AND fd.delivery_status = #{params.packingStatus}
+        </if>
+        <!--是否下推入库单-->
+        <if test="params.isGenerateOverseasInbound != null">
+            <if test="params.isGenerateOverseasInbound == true">
+                AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
+            </if>
+            <if test="params.isGenerateOverseasInbound == false ">
+                AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
+            </if>
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -334,7 +346,19 @@
                     (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
                     DAY' ) > fd.create_time
                 </if>
-
+                <!--装箱状态-->
+                <if test="params.packingStatus != null and params.packingStatus != ''">
+                    AND fd.delivery_status = #{params.packingStatus}
+                </if>
+                <!--是否下推入库单-->
+                <if test="params.isGenerateOverseasInbound != null">
+                    <if test="params.isGenerateOverseasInbound == true">
+                        AND EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
+                    </if>
+                    <if test="params.isGenerateOverseasInbound == false ">
+                        AND NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)
+                    </if>
+                </if>
             </otherwise>
         </choose>
         <!--数据权限-->
@@ -355,9 +379,6 @@
         count(*)  AS count
         FROM  fba_delivery
         WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
-        </if>
 
         GROUP BY approve_status
     </select>
