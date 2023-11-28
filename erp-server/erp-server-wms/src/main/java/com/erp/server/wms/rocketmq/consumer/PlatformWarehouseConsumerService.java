@@ -54,7 +54,6 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wms.iml.convert.ImlConverter;
 import com.sdk.wms.iml.dto.request.ImlGetProductReq;
 import com.sdk.wms.iml.dto.response.ImlProductResp;
@@ -84,7 +85,7 @@ public class ImlProductHandler extends AbstractThirdWarehouseHandler<ImlProductR
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.IML.getCode();
+        return PlatformEnum.ERP_OMS.getDesc();
     }
 
     public boolean isSuccess(String ask){

@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
@@ -65,7 +66,7 @@ public class GoodCangWarehouseHandler extends AbstractThirdWarehouseHandler<Good
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.GOOD_CANG.getCode();
+        return PlatformEnum.ERP_WMS.getDesc();
     }
 
     public boolean isSuccess(String ask){

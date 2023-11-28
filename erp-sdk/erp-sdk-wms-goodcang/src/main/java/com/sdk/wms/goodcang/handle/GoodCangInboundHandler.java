@@ -13,6 +13,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
@@ -91,7 +92,7 @@ public class GoodCangInboundHandler extends AbstractThirdWarehouseHandler<GoodCa
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.GOOD_CANG.getCode();
+        return PlatformEnum.ERP_WMS.getDesc();
     }
 
     public boolean isSuccess(String ask){
