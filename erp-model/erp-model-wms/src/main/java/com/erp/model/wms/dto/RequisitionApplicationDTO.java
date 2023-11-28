@@ -11,6 +11,7 @@ import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.*;
@@ -22,76 +23,76 @@ import javax.validation.constraints.*;
  *
  * @author Luo_WG
  * @since 2023-11-16
-*/
+ */
 @Data
 @NoArgsConstructor
 public class RequisitionApplicationDTO implements Serializable {
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * code
-        */
+         * code
+         */
         private String code;
 
         /**
-        * 来源id
-        */
+         * 来源id
+         */
         private String sourceId;
 
         /**
-        * 来源单号
-        */
+         * 来源单号
+         */
         private String sourceCode;
 
         /**
-        * 来源类型
-        */
+         * 来源类型
+         */
         private String sourceType;
 
         /**
-        * 来源类型中文
-        */
+         * 来源类型中文
+         */
         private String sourceTypeName;
 
         /**
-        * 单据状态
-        */
+         * 单据状态
+         */
         private String status;
 
         /**
-        * 单据状态中文
-        */
+         * 单据状态中文
+         */
         private String statusName;
 
         /**
-        * 作废状态
-        */
+         * 作废状态
+         */
         private String invalidStatus;
 
         /**
-        * 作废状态中文
-        */
+         * 作废状态中文
+         */
         private String invalidStatusName;
 
         /**
-        * 作废备注
-        */
+         * 作废备注
+         */
         private String invalidRemark;
 
         /**
-        * 作废时间
-        */
+         * 作废时间
+         */
         private LocalDateTime invalidTime;
 
         /**
@@ -102,63 +103,63 @@ public class RequisitionApplicationDTO implements Serializable {
         private String type;
 
         /**
-        * 类型名称
-        */
+         * 类型名称
+         */
         private String typeName;
 
         /**
-        * 要货渠道id
-        */
+         * 要货渠道id
+         */
         private String channelId;
 
         /**
-        * 要货渠道中文名
-        */
+         * 要货渠道中文名
+         */
         private String channelName;
 
         /**
-        * 要货仓库id
-        */
+         * 要货仓库id
+         */
         private String requisitionWarehouseId;
 
         /**
-        * 要货仓库中文名
-        */
+         * 要货仓库中文名
+         */
         private String requisitionWarehouseName;
 
         /**
-        * 调入仓库id
-        */
+         * 调入仓库id
+         */
         private String toWarehouseId;
 
         /**
-        * 调入仓库中文名
-        */
+         * 调入仓库中文名
+         */
         private String toWarehouseName;
 
         /**
-        * 调出仓库id
-        */
+         * 调出仓库id
+         */
         private String fromWarehouseId;
 
         /**
-        * 调出仓库中文名
-        */
+         * 调出仓库中文名
+         */
         private String fromWarehouseName;
 
         /**
-        * 处理人id
-        */
+         * 处理人id
+         */
         private String handleUserId;
 
         /**
-        * 处理人中文名
-        */
+         * 处理人中文名
+         */
         private String handleUserName;
 
         /**
-        * 处理时间
-        */
+         * 处理时间
+         */
         private LocalDateTime handleTime;
 
         /**
@@ -168,8 +169,8 @@ public class RequisitionApplicationDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -181,15 +182,15 @@ public class RequisitionApplicationDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -204,23 +205,23 @@ public class RequisitionApplicationDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 来源id
-        */
+         * 来源id
+         */
         private String sourceId;
 
         /**
-        * 来源单号
-        */
+         * 来源单号
+         */
         private String sourceCode;
 
         /**
-        * 来源类型
-        */
+         * 来源类型
+         */
         private String sourceType;
 
         /**
-        * 单据状态
-        */
+         * 单据状态
+         */
         private String status;
 
         /**
@@ -232,59 +233,59 @@ public class RequisitionApplicationDTO implements Serializable {
         private String type;
 
         /**
-        * 要货渠道id
-        */
+         * 要货渠道id
+         */
         private String channelId;
 
         /**
-        * 要货渠道中文名
-        */
+         * 要货渠道中文名
+         */
         private String channelName;
 
         /**
-        * 要货仓库id
-        */
+         * 要货仓库id
+         */
         @NotBlank(message = "要货仓库不能为空")
         private String requisitionWarehouseId;
 
         /**
-        * 要货仓库中文名
-        */
+         * 要货仓库中文名
+         */
         private String requisitionWarehouseName;
 
         /**
-        * 调入仓库id
-        */
+         * 调入仓库id
+         */
         private String toWarehouseId;
 
         /**
-        * 调入仓库中文名
-        */
+         * 调入仓库中文名
+         */
         private String toWarehouseName;
 
         /**
-        * 调出仓库id
-        */
+         * 调出仓库id
+         */
         private String fromWarehouseId;
 
         /**
-        * 调出仓库中文名
-        */
+         * 调出仓库中文名
+         */
         private String fromWarehouseName;
 
         /**
-        * 处理人id
-        */
+         * 处理人id
+         */
         private String handleUserId;
 
         /**
-        * 处理人中文名
-        */
+         * 处理人中文名
+         */
         private String handleUserName;
 
         /**
-        * 处理时间
-        */
+         * 处理时间
+         */
         private LocalDateTime handleTime;
     }
 
@@ -316,7 +317,8 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 类型
+         * 状态
+         * 地址：/wms/common/enumDropDown?type=RequisitionApplicationStatus
          */
         private String tabFlag;
 
@@ -331,7 +333,9 @@ public class RequisitionApplicationDTO implements Serializable {
         private List<String> skuNoList;
 
         /**
-         * 要货类型
+         * 要货类型：/wms/common/enumDropDown?type=RequisitionApplicationTypeEnum
+         * salesPlatform：销售平台
+         * overseasWarehouse：海外仓
          */
         private List<String> typeList;
 
@@ -341,7 +345,8 @@ public class RequisitionApplicationDTO implements Serializable {
         private String channelName;
 
         /**
-         * 审核状态
+         * 状态
+         * 地址：/wms/common/enumDropDown?type=RequisitionApplicationStatus
          */
         private List<String> statusList;
 
@@ -352,11 +357,13 @@ public class RequisitionApplicationDTO implements Serializable {
 
         /**
          * 调出仓库id
+         * 地址：http://172.16.100.11:3002/project/92/interface/api/7336
          */
         private List<String> fromWarehouseIdList;
 
         /**
          * 调入仓库id
+         * 地址：http://172.16.100.11:3002/project/92/interface/api/7336
          */
         private List<String> toWarehouseIdList;
 
@@ -508,12 +515,12 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 处理时间
          */
-        private String handleTime;
+        private LocalDateTime handleTime;
 
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
     }
 
     /**
