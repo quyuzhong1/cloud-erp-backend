@@ -524,7 +524,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台SKU额外关联的FNSKU
          */
-        private String fuSku;
+        private String platformFnSku;
 
     }
 
