@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.PlatformInventoryDTO;
 import com.common.business.dto.PlatformTransferWarehouseDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
@@ -12,6 +13,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 /**
  * 海外仓入库单
@@ -45,4 +48,32 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "toWarehouseId", source = "mainEntity.toWarehouseId"),
     })
     OverseasWarehouseInboundDetailDTO.ViewListDTO detailEntityToViewListDTO(OverseasWarehouseInboundDetailEntity entity, OverseasWarehouseInboundEntity mainEntity);
+
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "mainId",  source = "mainEntity.id"),
+            // TODO 确定?
+            @Mapping(target = "platformProductName",  source = "detailEntity.productName"),
+            @Mapping(target = "platformSkuNo",  source = "detailEntity.stockSku"),
+            @Mapping(target = "productName",  source = "detailEntity.productName"),
+            @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
+            @Mapping(target = "skuId",  source = "detailEntity.skuId"),
+            @Mapping(target = "isCombination",  source = "detailEntity.isCombination"),
+            @Mapping(target = "receiveQty",  constant = "0"),
+            @Mapping(target = "transportQty",  constant = "0"),
+            @Mapping(target = "packQty",  source = "detailEntity.deliveryQty"),
+            @Mapping(target = "diffQty",  constant = "0"),
+            @Mapping(target = "receiveStatus",  constant = "not"),
+            @Mapping(target = "receiveType",  constant = ""),
+    })
+    OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity, OverseasWarehouseInboundEntity mainEntity);
 }
