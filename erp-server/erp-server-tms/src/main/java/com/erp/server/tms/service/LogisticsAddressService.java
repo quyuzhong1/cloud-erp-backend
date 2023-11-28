@@ -87,5 +87,5 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
      * @param channelId
      * @return
      */
-    List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId);
+    List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId);
 }

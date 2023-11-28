@@ -338,7 +338,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         String deliverType = LogisticsAddressTypeEnum.DELIVER.getCode();
         //发货人信息
-        List<LogisticsAddressEntity> deliverList = logisticsAddressService.listByTypeAndChannelId(deliverType, channelId);
+        List<LogisticsAddressEntity> deliverList = logisticsAddressService.listByTypeAndChannelId(deliverType, channelId,dto.getShopId());
         if (CollectionUtils.isEmpty(deliverList)) {
             throw new ServiceException(ApiError.ERROR_CHANNEL_ADDRESS_NOT_EXIST, logisticsChannel.getName(), LogisticsAddressTypeEnum.DELIVER.getName());
         }
@@ -370,9 +370,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
-
-        BeanMapperUtils.copy(packageDTO, parceInfo);
+//        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
 
         //销售平台
         String salesPlatform = dto.getSalesPlatform();
@@ -388,7 +386,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 deliveryNo(dto.getOrderId()).
                 senderInfo(senderInfo).
                 receiverInfoVO(receiverInfo).
-                parceInfoVO(parceInfo).
+               // parceInfoVO(parceInfo).
                 logisticsProductVOList(logisticsProductList).
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).build();

@@ -65,8 +65,9 @@ public class LogisticsAuthController extends BaseController {
                 logisticsAuthService.syncUpdateSaleChannel(id, dto.getLogisticsPlatform());
             } else {
                logisticsAuthService.removeById(id);
-                logisticsAuthFieldService.removeByAuthId(id);
-                return apiResult;
+               logisticsAuthFieldService.removeByAuthId(id);
+               logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(),LogisticsAuthStatusEnum.NOT.getCode());
+               return apiResult;
             }
         }
         return success(result);
