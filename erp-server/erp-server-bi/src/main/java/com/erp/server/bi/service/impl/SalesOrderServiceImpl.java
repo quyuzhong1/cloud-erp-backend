@@ -196,6 +196,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:queryByPageBySku",keyGenerator = "myKeyGenerator")
     public PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
         SkuSalesDTO.SearchSkuDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
@@ -404,6 +405,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:productGradeSales",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO productGradeSales(BiFilterDTO params) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
@@ -535,6 +537,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-20 12:28
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:getByPlatformRatio",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO getByPlatformRatio(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
@@ -1296,6 +1299,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byCategory",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
         //获取到一级类目列表
         List<BasicCategoryDTO> categoryList = plmTaskFeign.listCategoryTree();
@@ -3085,6 +3089,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:newAndOldSalesAmount",keyGenerator = "myKeyGenerator")
     public List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
         TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
         DateTimeFormatter fmt = new DateTimeFormatterBuilder()
@@ -3137,6 +3142,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2023-09-18 11:01
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:listTargetMetrics",keyGenerator = "myKeyGenerator")
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
         List<BiTargetYearDTO.TargetMetricsFinishDTO> resultList = new ArrayList<>(2);
         /**
