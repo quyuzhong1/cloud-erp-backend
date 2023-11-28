@@ -843,6 +843,7 @@ public enum ApiError implements Serializable {
     SHOP_NOT_AUTH_ERROR(99125,"店铺尚未授权"),
     SKU_NOT_MAPPING_PLATFORM_SKU(99126,"sku【{}】无平台sku映射关系，请绑定第三方sku后操作"),
     THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
+    APPROVE_ING_IS_PACKING(99130,"待审核的数据才可以上传装箱数据"),
 
 
     /**

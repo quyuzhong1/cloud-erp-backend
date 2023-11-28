@@ -35,5 +35,26 @@
         main_id, box_spec_no, package_weight, box_length, box_width, box_height, box_qty
     </sql>
 
-
+    <!--查询已装箱数量-->
+    <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingQtyDTO">
+        SELECT
+            fmc.main_id,
+            SUM(fmc.box_qty) AS boxQty,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmcd.pack_qty) AS packQty
+            SUM(fmc.box_qty) * SUM(fmcd.pack_qty) AS usePackQty
+        FROM first_mile_carton fmc
+        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="mainIds != null and mainIds.size > 0">
+            AND fmc.main_id IN
+            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
+                #{mainId}
+            </foreach>
+        </if>
+        GROUP BY fmc.main_id,
+        fmcd.sku_id,
+        fmcd.sku_no
+    </select>
 </mapper>

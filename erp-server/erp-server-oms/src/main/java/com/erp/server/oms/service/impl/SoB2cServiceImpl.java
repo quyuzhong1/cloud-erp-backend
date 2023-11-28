@@ -75,6 +75,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1349,15 +1350,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //产品信息
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        Map<String, SkuVO> skuVOMap = new HashMap<>();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        if (CollectionUtils.isNotEmpty(skuList)){
+            skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        }
 
         for (SoB2cDetailDTO.ViewDTO viewDTO : data.getDetailList()) {
-
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
-            viewDTO.setProductName(skuVO.getSkuName());
+            SkuVO skuVO = skuVOMap.get(viewDTO.getSkuId());
+//            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+//            if (ObjectUtils.isEmpty(skuVO)) {
+//                throw new ServiceException(ApiError.ERROR_95084);
+//            }
+            viewDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
         }
     }
 
@@ -1471,9 +1476,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        Map<String, SkuVO> skuVOMap = new HashMap<>();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        if (CollectionUtils.isEmpty(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+        if (!CollectionUtils.isEmpty(skuList)) {
+            skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
@@ -1552,12 +1558,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean isCombination = Boolean.FALSE;
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 //SKU信息
-                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_95084);
-                }
-                detailDTO.setVariantProperty(skuVO.getVariantProperty());
-                detailDTO.setProductName(skuVO.getSkuName());
+//                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(null);
+//                if (ObjectUtils.isEmpty(skuVO)) {
+//                    throw new ServiceException(ApiError.ERROR_95084);
+//                }
+                SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
+                detailDTO.setVariantProperty(null == skuVO ? "": skuVO.getVariantProperty());
+                detailDTO.setProductName(null == skuVO ? "": skuVO.getSkuName());
                 //是否是组合SKU
                 if (CollectionUtils.isNotEmpty(bomChildrenList)) {
                     long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())).count();
