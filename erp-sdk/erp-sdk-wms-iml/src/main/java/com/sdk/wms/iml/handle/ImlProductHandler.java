@@ -43,20 +43,10 @@ public class ImlProductHandler extends AbstractThirdWarehouseHandler<ImlProductR
 
     @Override
     public List<ImlProductResp> download(JobTaskDTO data) {
-        LocalDateTime lastTime = data.getLastTime();
-        LocalDateTime nextTime = data.getNextTime();
-        if (lastTime.isEqual(nextTime)){
-            //nextTime +30分钟
-            nextTime = lastTime.plusMinutes(30);
-        }
-
         //查询数据
         ImlGetProductReq imlGetProductReq = new ImlGetProductReq();
-        imlGetProductReq.setUpdateStartTime(lastTime.format(formatter));
-        imlGetProductReq.setUpdateEndTime(nextTime.format(formatter));
         //最大页码100，从第一页开始查询
         imlGetProductReq.setPageSize(100);
-
         List<ImlProductResp> respList = new ArrayList<>();
         int page = 1;
         while (true) {
