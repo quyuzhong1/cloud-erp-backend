@@ -30,11 +30,6 @@ public class FirstMileCartonBillEntity extends BaseEntity<FirstMileCartonBillEnt
     @TableField("carton_id")
     private String cartonId;
     /**
-    * first_mile_carton_detail表id
-    */
-    @TableField("carton_detail_id")
-    private String cartonDetailId;
-    /**
     * 箱号
     */
     @TableField("box_no")
