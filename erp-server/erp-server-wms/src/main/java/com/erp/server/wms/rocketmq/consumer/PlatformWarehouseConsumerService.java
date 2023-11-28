@@ -75,7 +75,8 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
         //设置国家名称
         setCountryName(mqEntity);
         if(Objects.isNull(dbEntity)){
-            //不存在，插入
+            //不存在，插入,默认禁用
+            mqEntity.setDisabled(Boolean.TRUE);
             overseasProviderWarehouseService.save(mqEntity);
         }else{
             updateOverseasWarehouse(dbEntity, mqEntity);
