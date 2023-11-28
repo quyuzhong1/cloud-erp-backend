@@ -46,9 +46,19 @@ public class SkuCostDTO {
     private Boolean status;
 
     /**
-    * 成本价格
+    * 成本价格（含税）
     */
     private BigDecimal costPrice;
+
+    /**
+     * 成本价格（不含税）
+     */
+    private BigDecimal notTaxCostPrice;
+
+    /**
+     * 币别
+     */
+    private String currency;
 
     /**
     * 最近的采购日期3个月前的日期

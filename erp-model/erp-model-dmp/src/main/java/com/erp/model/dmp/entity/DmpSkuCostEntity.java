@@ -56,10 +56,23 @@ public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
     private Boolean status;
 
     /**
-    * 成本价格
+    * 成本价格（含税）
     */
     @TableField("cost_price")
     private BigDecimal costPrice;
+
+    /**
+     * 成本价格（不含税）
+     */
+    @TableField("not_tax_cost_price")
+    private BigDecimal notTaxCostPrice;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
 
     /**
      * 最近的采购日期3个月前的日期

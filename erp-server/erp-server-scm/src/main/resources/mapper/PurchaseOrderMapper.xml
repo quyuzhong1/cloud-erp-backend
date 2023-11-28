@@ -636,6 +636,8 @@
         T."sku_no" AS skuNo,
         T."LatestPurchaseDate" AS costDate,
         ROUND(AVG(D."tax_price"),4) AS costPrice,
+        ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+        D.currency,
         CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
         CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
         FROM
@@ -656,7 +658,7 @@
         T."sku_no" = D."sku_no"
         AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         GROUP BY
-        T.sku_id,T."sku_no", T."LatestPurchaseDate";
+        T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
     </select>
 
     <select id="listPurchaseOrderCost" resultType="com.erp.model.scm.dto.SkuCostDTO">
@@ -665,6 +667,8 @@
             T."sku_no" AS skuNo,
             T."LatestPurchaseDate" AS costDate,
             ROUND(AVG(D."tax_price"),4) AS costPrice,
+            ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+            D.currency,
             CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
             CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
         FROM
@@ -696,6 +700,6 @@
                 T."sku_no" = D."sku_no"
                 AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         GROUP BY
-            T.sku_id,T."sku_no", T."LatestPurchaseDate";
+            T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
     </select>
 </mapper>

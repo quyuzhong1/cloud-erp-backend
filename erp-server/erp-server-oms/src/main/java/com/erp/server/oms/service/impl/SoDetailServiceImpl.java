@@ -1242,7 +1242,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         BigDecimal purchasePrice = BigDecimal.ZERO;
         String currency = CurrencyEnum.CNY.getCurrencyCode();
         if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
-            purchasePrice = MathUtil.divide(dmpSkuCostEntity.getCostPrice(), MathUtil.add(BigDecimal.ONE, BigDecimal.ZERO));
+            purchasePrice = dmpSkuCostEntity.getNotTaxCostPrice();
         }
 
         // 销售金额转换

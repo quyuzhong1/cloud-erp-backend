@@ -61,15 +61,16 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
             for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
                 String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
                 DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
-                BigDecimal purchasePrice = BigDecimal.ZERO;
+                BigDecimal actualTaxCost = BigDecimal.ZERO;
+                BigDecimal actualNoTaxCost = BigDecimal.ZERO;
                 if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
-                    purchasePrice = dmpSkuCostEntity.getCostPrice();
+                    actualTaxCost = dmpSkuCostEntity.getCostPrice();
+                    actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
                 }
                 //含税单价
-                productCostShowDTO.setActualTaxCost(purchasePrice);
+                productCostShowDTO.setActualTaxCost(actualTaxCost);
                 //不含税单价
-                BigDecimal actualNotTaxCost = purchasePrice.divide(MathUtil.BigDecimal_1.add(productCostShowDTO.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-                productCostShowDTO.setActualNoTaxCost(actualNotTaxCost);
+                productCostShowDTO.setActualNoTaxCost(actualNoTaxCost);
             }
         }
         return productCostShowDTOList;
@@ -90,15 +91,16 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
             for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
                 String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
                 DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
-                BigDecimal purchasePrice = BigDecimal.ZERO;
+                BigDecimal actualTaxCost = BigDecimal.ZERO;
+                BigDecimal actualNoTaxCost = BigDecimal.ZERO;
                 if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
-                    purchasePrice = dmpSkuCostEntity.getCostPrice();
+                    actualTaxCost = dmpSkuCostEntity.getCostPrice();
+                    actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
                 }
                 //含税单价
-                productCostShowDTO.setActualTaxCost(purchasePrice);
+                productCostShowDTO.setActualTaxCost(actualTaxCost);
                 //不含税单价
-                BigDecimal actualNotTaxCost = purchasePrice.divide(MathUtil.BigDecimal_1.add(productCostShowDTO.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-                productCostShowDTO.setActualNoTaxCost(actualNotTaxCost);
+                productCostShowDTO.setActualNoTaxCost(actualNoTaxCost);
             }
         }
         return productCostShowDTOList;
