@@ -52,7 +52,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
         String userId = StrUtil.isBlank(uid) ? "0": uid;
         String userName = StrUtil.isBlank(userNameStr) ? "system": userNameStr;
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
-        this.fillStrategy(metaObject, "updateUserName", userName);
-        this.fillStrategy(metaObject, "updateUserId", userId);
+        this.setFieldValByName("updateUserName", userName, metaObject);
+        this.setFieldValByName("updateUserId", userId, metaObject);
     }
 }
