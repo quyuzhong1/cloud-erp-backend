@@ -226,6 +226,10 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
          */
         private String receiveType;
 
+        /**
+         * 图片
+         */
+        private String imagesUrl;
 
     }
 
