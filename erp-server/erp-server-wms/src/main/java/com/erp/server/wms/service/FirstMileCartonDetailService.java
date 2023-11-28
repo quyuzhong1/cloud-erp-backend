@@ -22,7 +22,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(FirstMileCartonDTO.AddDTO dto, String mainId);
+    void add(FirstMileCartonDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
@@ -31,7 +31,7 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
     * @param dto
     * @return
     */
-    Boolean update(FirstMileCartonDTO.UpdateDTO dto, String mainId);
+    void update(FirstMileCartonDTO.UpdateDTO dto, String mainId);
 
 
 }

@@ -24,6 +24,7 @@ import com.erp.server.bi.mapper.DmpRefundInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -75,6 +76,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:targetFinish",keyGenerator = "myKeyGenerator")
     public LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto) {
 
         LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();

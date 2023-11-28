@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.wms.entity.FirstMileCartonBillEntity;
 import com.erp.server.wms.mapper.FirstMileCartonBillMapper;
 import com.erp.server.wms.service.FirstMileCartonBillService;
@@ -87,11 +88,15 @@ public class FirstMileCartonBillServiceImpl extends SuperServiceImpl<FirstMileCa
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean deleteByCartonId(String cartonId) {
+        return lambdaUpdate().in(FirstMileCartonBillEntity::getCartonId, cartonId).remove();
+    }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(FirstMileCartonBillEntity firstMileCartonBillEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }
