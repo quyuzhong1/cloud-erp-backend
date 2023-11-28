@@ -16,6 +16,7 @@ import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 谷仓拉取产品数据
@@ -66,6 +68,7 @@ public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCa
             }
             page++;
         }
+        respList = respList.stream().filter(v->v.getProductStatus().equals(GoodCangEnums.OpenApiProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
         respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+v.getProductSku())));
         return respList;
     }

@@ -332,6 +332,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<String> generateBill(LogisticsBillDTO.GenerateBillDTO dto) {
         String channelId = dto.getChannelId();
+        Map<String, String> authMap = new HashMap<>();
+
+        //测试环境账号
+        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
+        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
         LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
@@ -349,7 +354,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(auth)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
-        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+//        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
+
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -366,16 +372,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsProductDTO.ProductDTO item : skuInfoList) {
             Integer qty = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).map(LogisticsBillDTO.SkuDTO::getQty).
                     findFirst().orElse(0);
+            item.setPrice(item.getDeclarePrice());
             item.setQuantity(qty);
         }
         //包裹信息
         LogisticsBillDTO.PackageDTO packageDTO = dto.getPackageInfo();
-//        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
+        ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
 
         //销售平台
         String salesPlatform = dto.getSalesPlatform();
 
-        List<LogisticsProductVO> logisticsProductList = BeanMapperUtils.copyList(LogisticsProductVO.class, skuInfoList);
+        List<LogisticsProductVO> logisticsProductList =  LogisticsBillConverter.INSTANCE.convertLogisticsProduct(skuInfoList);
         //根据销售平台和渠道id 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsMappingService.getBySalesPlatform(salesPlatform, channelId);
         if (Objects.isNull(saleChannel)) {
@@ -386,7 +393,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 deliveryNo(dto.getOrderId()).
                 senderInfo(senderInfo).
                 receiverInfoVO(receiverInfo).
-               // parceInfoVO(parceInfo).
+                parceInfoVO(parceInfo).
                 logisticsProductVOList(logisticsProductList).
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).build();
@@ -395,9 +402,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (orderResult.isSuccess()) {
             List<String> trackNoList = handleBill(orderResult.getData(), dto);
             return trackNoList;
+        }else{
+            throw new ServiceException(orderResult.getCode(), orderResult.getMsg());
         }
 
-        return Collections.emptyList();
+
 
     }
 

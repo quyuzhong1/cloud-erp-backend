@@ -1,13 +1,11 @@
 package com.erp.server.wms.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.dto.PlatformInventoryDTO;
-import com.common.business.dto.PlatformTransferWarehouseDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import org.mapstruct.Mapper;
@@ -15,8 +13,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
 
 /**
  * 海外仓入库单

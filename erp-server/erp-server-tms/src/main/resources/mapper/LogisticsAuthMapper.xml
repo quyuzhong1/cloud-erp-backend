@@ -44,7 +44,8 @@
         FROM logistics_auth la
         INNER JOIN logistics_supplier ls
         ON ls.id=la.main_id and  ls.is_deleted=false
-        WHERE ls.id=(SELECT main_id FROM  logistics_channel  WHERE id=#{channelId} and is_deleted=FALSE)
+        WHERE ls.id=(SELECT main_id FROM  logistics_channel  WHERE id=#{channelId} and is_deleted=FALSE )
+        AND la.is_deleted=false
 
     </select>
 
