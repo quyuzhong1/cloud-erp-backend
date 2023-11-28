@@ -180,47 +180,47 @@ public class OverseasInventoryDTO implements Serializable {
         /**
          * 发货在途数量
          */
-        private Integer deliverOnwayQty;
+        private Long deliverOnwayQty;
 
         /**
          * 待上架数量
          */
-        private Integer pendingQty;
+        private Long pendingQty;
 
         /**
          * 可售数量
          */
-        private Integer sellableQty;
+        private Long sellableQty;
 
         /**
          * 不可售数量
          */
-        private Integer unsellableQty;
+        private Long unsellableQty;
 
         /**
          * 待出库数量
          */
-        private Integer reservedQty;
+        private Long reservedQty;
 
         /**
          * 尾程在途
          */
-        private Integer onwayQty;
+        private Long onwayQty;
 
         /**
          * 缺货数量
          */
-        private Integer lackQty;
+        private Long lackQty;
 
         /**
          * 冻结数量
          */
-        private Integer frozenQty;
+        private Long frozenQty;
 
         /**
          * 历史出库数量
          */
-        private Integer shippedQty;
+        private Long shippedQty;
     }
 
     /**
