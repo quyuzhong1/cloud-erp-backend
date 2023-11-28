@@ -19,6 +19,7 @@ import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -26,6 +27,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -100,7 +102,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         BeanMapperUtils.copy(addDTO, mainEntity);
-
+        mainEntity.setInstockType(addDTO.getInstockType().getCode());
+        mainEntity.setLogisticsMethod(addDTO.getLogisticsMethod().getCode());
         // 数据处理
         handleData(mainEntity);
 
@@ -226,6 +229,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toList());
         resultDTO.setDetailList(detailDTOList);
 
+        //获取到附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(entity.getId()));
+        //附件地址
+        List<String> attachmentUrlList = attachmentList.stream()
+                .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                .collect(Collectors.toList());
+        //附件名称
+        List<String> attachmentNameList = attachmentList.stream()
+                .map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                collect(Collectors.toList());
+        resultDTO.setAttachUrlList(attachmentUrlList);
+        resultDTO.setAttachNameList(attachmentNameList);
         return resultDTO;
     }
 

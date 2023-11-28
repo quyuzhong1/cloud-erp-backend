@@ -473,12 +473,12 @@ public class FirstMileDeliveryController extends BaseController {
      * 装箱清单
      * @Author Luo_WG
      * @Date 2023/11/17 11:21
-     * @param dto
+     * @param id
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/listPacking")
-    public ApiResult<List<FirstMileCartonDTO.ListPackingDTO>> listPacking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FirstMileCartonDTO.ListPackingDTO> result = firstMileDeliveryService.listPacking(dto.getIds());
+    public ApiResult<FirstMileCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
+        FirstMileCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
         return success(result);
     }
 }

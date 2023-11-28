@@ -198,8 +198,8 @@ public class SkuMappingController extends BaseController {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.listStockSkuNoByProductSkuNoView>
      **/
     @PostMapping("/listStockSkuNoByProductSkuIds")
-    public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuNo(@RequestBody ValidList<String> productSkuIdList) {
+    public ApiResult<List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> listStockSkuNoByProductSkuIds(@RequestBody ValidList<String> productSkuIdList) {
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList.getList());
-        return list;
+        return success(list);
     }
 }
