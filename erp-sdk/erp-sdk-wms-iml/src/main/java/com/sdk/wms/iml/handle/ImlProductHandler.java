@@ -17,6 +17,7 @@ import com.sdk.wms.iml.convert.ImlConverter;
 import com.sdk.wms.iml.dto.request.ImlGetProductReq;
 import com.sdk.wms.iml.dto.response.ImlProductResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
+import com.sdk.wms.iml.enums.ImlEnums;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 艾姆勒拉取产品数据
@@ -67,6 +69,7 @@ public class ImlProductHandler extends AbstractThirdWarehouseHandler<ImlProductR
             }
             page++;
         }
+        respList = respList.stream().filter(v->v.getProductStatus().equals(ImlEnums.ProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
         respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.PRODUCT.getCode()+v.getProductSku())));
         return respList;
     }
