@@ -210,11 +210,12 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setIntervalTime(task.getIntervalTime());
         //间隔一天，从0点开始执行
         if(task.getIntervalTime().equals(86400)){
-            entity.setLastTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()));
-            entity.setNextTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()).plusSeconds(task.getIntervalTime()));
+            entity.setLastTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()).minusSeconds(task.getIntervalTime()));
+            entity.setNextTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()));
         }else{
-            entity.setLastTime(LocalDateTime.now());
-            entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
+            //调整时间，拉取一次全量数据
+            entity.setLastTime(LocalDateTime.parse("2015-01-01T00:00:00"));
+            entity.setNextTime(LocalDateTime.now());
         }
         entity.setStatus(1);
         entity.setRetryTimes(0);
@@ -227,5 +228,4 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setOperateType(task.getOperateType());
         return entity;
     }
-
 }
