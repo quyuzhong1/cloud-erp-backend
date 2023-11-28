@@ -497,7 +497,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
@@ -510,6 +509,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 物流跟踪号
          */
         private String trackingNo;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
     }
 
     /**

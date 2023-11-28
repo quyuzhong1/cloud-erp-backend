@@ -32,9 +32,9 @@ public interface OverseasWarehouseInboundConverter {
 
 
     @Mappings({
-//            @Mapping(target = "id",  ignore = true)
+            @Mapping(target = "imagesUrl", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(imageUrl)? \"\" : imageUrl)"),
     })
-    OverseasWarehouseInboundDetailDTO.ViewDTO detailEntityToViewDTO(OverseasWarehouseInboundDetailEntity entity);
+    OverseasWarehouseInboundDetailDTO.ViewDTO detailEntityToViewDTO(OverseasWarehouseInboundDetailEntity entity, String imageUrl);
 
     @Mappings({
             @Mapping(target = "id",  source = "entity.id"),

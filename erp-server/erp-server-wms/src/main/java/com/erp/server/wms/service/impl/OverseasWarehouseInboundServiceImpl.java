@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,8 +18,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
@@ -30,6 +33,7 @@ import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.*;
@@ -77,6 +81,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private FirstMileDeliveryService firstMileDeliveryService;
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +121,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!overseasWarehouseInboundDetailService.saveBatch(detailEntityList)){
             throw new ServiceException("海外仓入库单明细保存失败");
         }
+        //保存附件
+        Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
+
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
 
@@ -194,11 +209,20 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         OverseasWarehouseInboundDTO.ViewDTO resultDTO = OverseasWarehouseInboundConverter.INSTANCE.entityToViewDTO(entity);
 
+
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return resultDTO;
+        }
+        //查询skuId产品信息
+        List<String> skuIds = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        Map<String, String> imageUrlMap = plmTaskFeign.getSkuInfoByIds(skuIds)
+                .stream()
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuImagesUrl));
 
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailDTOList = detailEntityList.stream()
-                .map(OverseasWarehouseInboundConverter.INSTANCE::detailEntityToViewDTO)
+                .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")))
                 .collect(Collectors.toList());
         resultDTO.setDetailList(detailDTOList);
 

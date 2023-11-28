@@ -352,7 +352,7 @@ public class OverseasWarehouseInboundController extends BaseController {
      * @author Jim
      * @date: 2023-11-27
      */
-//    @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
     @PostMapping("/export")
     public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = overseasWarehouseInboundService.exportExcel(dto, response);
