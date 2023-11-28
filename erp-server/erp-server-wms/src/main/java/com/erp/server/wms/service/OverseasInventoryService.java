@@ -61,7 +61,7 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
      * @param dto
      * @return
      */
-    Boolean exportExcel(OverseasInventoryDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto, HttpServletResponse response);
 
     Boolean saveOrUpdateByPlatform(OverseasInventoryEntity entity);
 
