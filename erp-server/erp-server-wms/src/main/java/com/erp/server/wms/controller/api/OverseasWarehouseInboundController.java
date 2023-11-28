@@ -172,7 +172,6 @@ public class OverseasWarehouseInboundController extends BaseController {
      * @author Jim
      * @date: 2023-11-24
      */
-    @PostMapping("/receivedList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:overseasWarehouseInbound:paging",

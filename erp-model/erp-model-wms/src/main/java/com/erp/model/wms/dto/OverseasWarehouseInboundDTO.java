@@ -456,6 +456,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * SKU信息
          */
         private List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
     }
 
     /**
