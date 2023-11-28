@@ -291,6 +291,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("customer_order_no")
     private String customerOrderNo;
 
+    /**
+     * 是否报关
+     */
+    @TableField("is_declare")
+    private Boolean isDeclare;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

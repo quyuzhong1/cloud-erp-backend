@@ -3,6 +3,7 @@ package com.erp.server.oms.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -311,6 +312,7 @@ public class SoUtils {
         headMap.put("currency", "结算币种");
         headMap.put("requireDate", "要货日期");
         headMap.put("customerOrderNo", "客户订单号");
+        headMap.put("isDeclare", "是否报关");
         headMap.put("remark", "备注");
         headMap.put("detailRemark", "明细备注");
         headMap.put("approveUserName", "最新审核人");
@@ -335,7 +337,7 @@ public class SoUtils {
             }
         }
 
-        List<String> boolList = Lists.newArrayList("isGift", "isReissue", "isClose");
+        List<String> boolList = Lists.newArrayList("isGift", "isReissue", "isClose", "isDeclare");
         LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
         headMap.keySet().stream().forEach(field -> {
             if (CollUtil.isNotEmpty(nopermitFields) && nopermitFields.contains(field)) {
@@ -343,7 +345,7 @@ public class SoUtils {
             } else {
                 if (boolList.contains(field)) {
                     Object boolObj = convertData.get(field);
-                    dataMap.put(field, Objects.equals(boolObj, Boolean.TRUE) ? "是" : " 否");
+                    dataMap.put(field, ObjectUtil.isEmpty(boolObj) ? "" : (Objects.equals(boolObj, Boolean.TRUE) ? "是" : " 否"));
                 } else {
                     dataMap.put(field, StrUtils.null2EmptyWithTrim(convertData.get(field)));
                 }

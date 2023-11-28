@@ -534,6 +534,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerOrderNo;
 
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
 
         /**
          * 运单号
@@ -593,6 +597,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
 
         /**
          * 类型
@@ -769,6 +777,12 @@ public class SoInfoDTO implements Serializable {
          */
         @PositiveOrZero(message = "运费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
+
+        /**
+         * 是否报关
+         */
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
 
         /**
          * 报关费
@@ -1070,6 +1084,11 @@ public class SoInfoDTO implements Serializable {
          * 报关费
          */
         private BigDecimal customsFee;
+
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
 
 
         /**
@@ -1400,6 +1419,11 @@ public class SoInfoDTO implements Serializable {
         @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
         private BigDecimal customsFee;
 
+        /**
+         * 是否报关
+         */
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
 
         /**
          * 客户id
