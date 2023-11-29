@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -451,6 +452,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 完结状态: not=未完结, auto=自动完结，manual=手动完结
          */
         private String finishStatus;
+
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
 
         /**
          * SKU信息
