@@ -176,10 +176,6 @@ public class FirstMileCartonDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportPackingDTO {
         /**
-         * 主键id
-         */
-        private String id;
-        /**
          * 发货单号
          */
         private String code;

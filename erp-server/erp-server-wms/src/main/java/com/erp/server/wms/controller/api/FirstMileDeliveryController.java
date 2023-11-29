@@ -526,7 +526,7 @@ public class FirstMileDeliveryController extends BaseController {
             tableAlias = "fd"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出装箱清单Excel")
-    public void exportPacking(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
+    public void exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportPacking(dto, response);
     }
 }

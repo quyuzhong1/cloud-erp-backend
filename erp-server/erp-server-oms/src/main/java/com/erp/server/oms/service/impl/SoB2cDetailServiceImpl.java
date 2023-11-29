@@ -189,7 +189,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if(CollectionUtils.isEmpty(dto.getDetails())){
             if (CollectionUtils.isEmpty(oldDetailEntityList)){
                 // 新建空
-                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(),"", "");
+                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(),"", "","");
                 if(!this.save(detailEntity)){
                     throw new ServiceException("[SoB2cDetailEntity] 保存失败");
                 }
@@ -208,18 +208,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             ListingInfoWithSkuMappingDTO mappingDTO = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             String skuId = "";
             String skuNO= "";
+            String imageUrl= "";
             if(null != mappingDTO){
                 skuId = mappingDTO.checkAndGetProductSkuId();
                 skuNO = mappingDTO.checkAndGetProductSkuNo();
+                imageUrl = mappingDTO.checkAndGetProductImageUrl();
             }
 
             SoB2cDetailEntity saveOrUpdateEntity;
             if (null != oldEntity) {
                 // 更新指定内容
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl);
             } else {
                 // 新记录
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
             }
             //建议售价
             if (StringUtils.isNotBlank(skuId)){

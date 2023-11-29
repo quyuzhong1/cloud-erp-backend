@@ -1,10 +1,7 @@
 package com.erp.server.oms.convert;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.dto.PlatformOrderLogisticsDTO;
-import com.common.business.dto.PlatformOrderReceiverDTO;
+import com.common.business.dto.*;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;
@@ -46,8 +43,9 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseLocation", constant = ""),
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "imageUrl", source = "imageUrl"),
     })
-    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo);
+    SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo,String imageUrl);
 
 
     @Mappings({
@@ -76,8 +74,9 @@ public interface B2cOrderConsumerConverter {
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
+            @Mapping(target = "imageUrl", source = "imageUrl"),
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo,String imageUrl);
 
 
     @Mappings({
@@ -163,5 +162,23 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
     })
-    SoB2cFinanceEntity convertNewFinance(PlatformOrderLogisticsDTO dto, String mainId);
+    SoB2cFinanceEntity convertNewFinance(PlatformOrderFinanceDTO dto, String mainId);
+
+
+    @Mappings({
+            // 更新的内容
+            @Mapping(target = "mainId", source = "oldEntity.mainId"),
+            @Mapping(target = "currency", source = "financeDTO.currency"),
+            @Mapping(target = "shippingCost", source = "financeDTO.shippingCost"),
+            @Mapping(target = "itemCost", source = "financeDTO.itemCost"),
+            @Mapping(target = "logisticsCost", source = "financeDTO.logisticsCost"),
+            @Mapping(target = "accessoriesCost", source = "financeDTO.accessoriesCost"),
+            @Mapping(target = "platformRate", source = "financeDTO.platformRate"),
+            @Mapping(target = "vatRate", source = "financeDTO.vatRate"),
+            @Mapping(target = "transferRate", source = "financeDTO.transferRate"),
+            @Mapping(target = "platformCostType", source = "financeDTO.platformCostType"),
+            @Mapping(target = "transferCostType", source = "financeDTO.transferCostType"),
+            @Mapping(target = "vatCostType", source = "financeDTO.vatCostType"),
+    })
+    SoB2cFinanceEntity convertUpdateFinance(SoB2cFinanceEntity oldEntity, PlatformOrderFinanceDTO financeDTO);
 }

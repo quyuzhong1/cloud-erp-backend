@@ -185,9 +185,10 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         logisticsList.forEach(platformOrderLogisticsDTO -> {
             SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
-                entity = new SoB2cLogisticsEntity();
-                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                this.save(entity);
+                entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
+                }
                 if (isShopee) {
                     addDTOList.add(buildLogisticsBill(entity, mainEntity));
                 }
@@ -195,7 +196,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
                 entity2.setId(entity.getId());
-                this.saveOrUpdate(entity2);
+                if (!this.updateById(entity2)){
+                    throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
+                }
                 if (isShopee) {
                     addDTOList.add(buildLogisticsBill(entity, mainEntity));
                 }

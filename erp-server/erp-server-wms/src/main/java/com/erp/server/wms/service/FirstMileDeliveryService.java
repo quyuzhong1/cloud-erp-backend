@@ -261,5 +261,5 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param dto
      * @param response
      */
-    void exportPacking(BaseIdDTO dto, HttpServletResponse response);
+    void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
 }

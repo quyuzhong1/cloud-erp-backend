@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileCartonDetailDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -80,4 +81,14 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
     List<FirstMileCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("id") String id);
+
+    /**
+     * 导出装箱清单Excel
+     * @Author Luo_WG
+     * @Date 2023/11/29 12:17
+     * @param params
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ExportPackingDTO>
+     **/
+    List<FirstMileCartonDTO.ExportPackingDTO> exportPacking(@Param("params") FirstMileDeliveryDTO.ExportDTO params);
+
 }
