@@ -120,6 +120,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
         StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
         return success(statisticalDataVO);
     }
+
     /**
      * 销售明细表-店铺
      *
