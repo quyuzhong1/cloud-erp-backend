@@ -125,7 +125,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
                 }
-                operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getWarehouseName()));
+                operateLogService.addModuleOperateLogByObj(old,detailEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getPlatformWarehouseName()));
             }
         }
 
