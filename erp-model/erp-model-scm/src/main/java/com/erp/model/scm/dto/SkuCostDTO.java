@@ -86,4 +86,19 @@ public class SkuCostDTO {
         private List<String> skuNoList;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SendWarnMsgDTO {
+
+        /**
+         * 日期
+         */
+        private String date;
+
+        /**
+         * 币别
+         */
+        private String currency;
+    }
 }

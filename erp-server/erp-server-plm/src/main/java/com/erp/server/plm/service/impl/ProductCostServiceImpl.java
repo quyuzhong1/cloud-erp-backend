@@ -63,7 +63,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
                 DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
                 BigDecimal actualNoTaxCost = BigDecimal.ZERO;
-                if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
+                if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
                     actualTaxCost = dmpSkuCostEntity.getCostPrice();
                     actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
                 }

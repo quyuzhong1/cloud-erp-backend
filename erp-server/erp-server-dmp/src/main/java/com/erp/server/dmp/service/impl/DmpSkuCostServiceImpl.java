@@ -125,7 +125,9 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      */
     private List<DmpSkuCostEntity> groupSkuCost (List<SkuCostDTO> skuCostList) {
         List<DmpSkuCostEntity> resultList = new ArrayList<>();
-        Map<String, List<SkuCostDTO>> map = skuCostList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuNo().concat(obj.getCurrency())));
+        Map<String, List<SkuCostDTO>> map = skuCostList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuNo()));
+
+        List<SkuCostDTO.SendWarnMsgDTO> sendList = new ArrayList<>();
         for (Map.Entry<String, List<SkuCostDTO>> entry : map.entrySet()) {
             List<SkuCostDTO> value = entry.getValue();
             SkuCostDTO skuCost = entry.getValue().get(0);
@@ -144,7 +146,10 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                 }
                 if (ObjectUtil.isEmpty(exchangeRate)) {
                     log.info("未找到汇率，>>>>>>>> costDate = {},currency = {}",skuCostDTO.getCostDate(),skuCostDTO.getCurrency());
-                    sendWarnMsg(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),skuCostDTO.getCurrency());
+                    SkuCostDTO.SendWarnMsgDTO sendWarnMsgDTO = new SkuCostDTO.SendWarnMsgDTO();
+                    sendWarnMsgDTO.setDate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    sendWarnMsgDTO.setCurrency(skuCostDTO.getCurrency());
+                    sendList.add(sendWarnMsgDTO);
                     continue;
                 }
                 //含税成本
@@ -152,11 +157,21 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                 //未含税成本
                 totalNoTaxCostPrice = MathUtil.add(totalNoTaxCostPrice,MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate));
 
-                size = size++;
+                size++;
             }
+            dmpSkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             dmpSkuCostEntity.setCostPrice(MathUtil.divide(totalCostPrice, BigDecimal.valueOf(size),4) );
-            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostPrice, BigDecimal.valueOf(size),4) );
+            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostPrice, BigDecimal.valueOf(size),4));
+            //无成本则不保存
+            if (MathUtil.compareTo(dmpSkuCostEntity.getCostPrice(),MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
             resultList.add(dmpSkuCostEntity);
+        }
+        //预警
+        if (CollectionUtils.isNotEmpty(sendList)) {
+            List<SkuCostDTO.SendWarnMsgDTO> sendWarnMsgList = sendList.stream().distinct().collect(Collectors.toList());
+            sendWarnMsgList.forEach(obj -> sendWarnMsg(obj.getDate(),obj.getCurrency()));
         }
         return  resultList;
     }
@@ -167,7 +182,9 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         if (CollectionUtils.isEmpty(skuNoList)) {
             return Collections.EMPTY_LIST;
         }
-        List<DmpSkuCostEntity> list = lambdaQuery().in(DmpSkuCostEntity::getSkuNo, skuNoList).list();
+        List<DmpSkuCostEntity> list = this.lambdaQuery()
+                .in(DmpSkuCostEntity::getSkuNo, skuNoList)
+                .list();
         return list;
     }
 
@@ -176,7 +193,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.EMPTY_LIST;
         }
-        List<DmpSkuCostEntity> list = lambdaQuery().in(DmpSkuCostEntity::getSkuId, skuIdList).list();
+        List<DmpSkuCostEntity> list = this.lambdaQuery().in(DmpSkuCostEntity::getSkuId, skuIdList).list();
         return list;
     }
 
@@ -254,7 +271,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             if (ObjectUtil.isEmpty(entity)) {
                 this.saveOrUpdate(dmpSkuCostEntity);
             } else {
-                BeanMapper.copy(entity, dmpSkuCostEntity);
+                dmpSkuCostEntity.setId(entity.getId());
                 this.saveOrUpdate(dmpSkuCostEntity);
             }
             //判断是否存在redis缓存，存在则删除后更新，不存在则添加
