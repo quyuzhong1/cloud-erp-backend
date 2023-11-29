@@ -241,4 +241,14 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return
      */
     void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList);
+
+
+    /**
+     * 仓库列表(所有关联海外服务商)
+     *
+     * @Author Jim
+     * @date 2023-11-29
+     */
+    List<WarehouseDTO.ListDTO> listOverseasWarehouse();
+
 }
