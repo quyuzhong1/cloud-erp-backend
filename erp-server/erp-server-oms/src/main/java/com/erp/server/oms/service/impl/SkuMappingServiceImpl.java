@@ -30,8 +30,11 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
@@ -86,6 +89,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -421,15 +427,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
         checkWarehouseSkuExist("", listingId, warehouseId, skuId);
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+//        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        // 查询当前仓库的平台类型
+        List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException("仓库不存在");
+        }
+        WarehouseDTO.ListDTO currenWareHouse = warehouseList.stream().findFirst().orElse(null);
+        OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(currenWareHouse.getDictPlatform());
+        if (null != platformEnum){
+            throw new ServiceException(platformEnum.getName() + "服务商仓库不允许新增");
         }
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
         }
-
 
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setWarehouseId(warehouseId);
@@ -439,8 +451,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
-        // TODO 查询当前仓库的平台类型
+
         String dictPlatform = skuMappingEntity.getWarehouseName().contains("艾姆勒") ? OmsPlatformEnum.OMS_IML.getCode() : "";
+
+
         skuMappingEntity.setDictPlatform(dictPlatform);
         skuMappingEntity.setHasMappingAll(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform) && dto.checkAndGetHasMappingAll());
         LocalDateTime now = LocalDateTime.now();
@@ -522,6 +536,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String listingId = "";
         if (Objects.nonNull(listingInfo)) {
             listingId = listingInfo.getId();
+            // listing 更新匹配关系
+            listingInfo.setMatchResult(true);
+            if (!listingInfoService.updateById(listingInfo)){
+                throw new ServiceException("[listing] 更新失败");
+            }
         } else {
             String warehouseProductName = dto.getWarehouseProductName();
             listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
