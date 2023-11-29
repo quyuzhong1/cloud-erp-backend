@@ -34,7 +34,7 @@ public class FirstMileCartonEntity extends BaseEntity<FirstMileCartonEntity> {
     * 箱规编号
     */
     @TableField("box_spec_no")
-    private String boxSpecNo;
+    private Integer boxSpecNo;
     /**
     * 包装重量
     */

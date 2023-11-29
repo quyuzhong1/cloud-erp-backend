@@ -42,7 +42,7 @@
             SUM(fmc.box_qty) AS boxQty,
             fmcd.sku_id,
             fmcd.sku_no,
-            SUM(fmcd.pack_qty) AS packQty
+            SUM(fmcd.pack_qty) AS packQty,
             SUM(fmc.box_qty) * SUM(fmcd.pack_qty) AS usePackQty
         FROM first_mile_carton fmc
         INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE

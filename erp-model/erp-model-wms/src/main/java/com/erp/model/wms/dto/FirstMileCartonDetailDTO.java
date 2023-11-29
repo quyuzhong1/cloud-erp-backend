@@ -51,6 +51,11 @@ public class FirstMileCartonDetailDTO implements Serializable {
         * 装箱数量
         */
         private Integer packQty;
+
+        /**
+        * 待装箱数量
+        */
+        private Integer waitPackQty;
     }
 
     /**
@@ -59,25 +64,16 @@ public class FirstMileCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
+         * 主键id
+         */
         private String id;
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
         /**
         * first_mile_carton表id
         */

@@ -76,6 +76,7 @@ public interface OverseasWarehouseInboundConverter {
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity, OverseasWarehouseInboundEntity mainEntity);
 
     @Mappings({
+            @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
             @Mapping(target = "transitType",  source = "transitType"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),

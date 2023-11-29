@@ -48,20 +48,20 @@
     <!--根据主表id分组sku查询发货及待装箱数-->
     <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
         SELECT
-            fdd.id,
+            fd.id,
             fdd.sku_id,
             fdd.sku_no,
             SUM(fdd.delivery_qty) AS deliveryQty
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
-        <if test="mainIds != null and mainIds > 0">
+        <if test="mainIds != null and mainIds.size > 0">
             AND fdd.main_id IN
             <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
                 #{mainId}
             </foreach>
         </if>
-        GROUP BY fdd.id,
+        GROUP BY fd.id,
         fdd.sku_id,
         fdd.sku_no
     </select>

@@ -5,6 +5,7 @@ import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -41,6 +42,9 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Autowired
     private FirstMileDeliveryService firstMileDeliveryService;
+
+    @Autowired
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     /**
     * 新增
@@ -476,7 +480,7 @@ public class FirstMileDeliveryController extends BaseController {
      * @param id
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    @PostMapping("/packingView")
+    @GetMapping("/packingView")
     public ApiResult<FirstMileDeliveryDTO.FirstMileCartonView> packingView(@RequestParam("id") String id) {
         FirstMileDeliveryDTO.FirstMileCartonView firstMileCartonView = firstMileDeliveryService.packingView(id);
         return success(firstMileCartonView);
@@ -489,9 +493,40 @@ public class FirstMileDeliveryController extends BaseController {
      * @param id
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/listPacking")
+    @GetMapping("/listPacking")
     public ApiResult<FirstMileCartonDTO.ListPackingDTO> listPacking(@RequestParam("id") String id) {
         FirstMileCartonDTO.ListPackingDTO result = firstMileDeliveryService.listPacking(id);
         return success(result);
+    }
+
+    /**
+     * 快粘贴查询sku
+     * @Author Luo_WG
+     * @Date 2023/11/17 11:21
+     * @param id 发货单Id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listGroupSkuById")
+    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainIds(@RequestParam("id") String id) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(id));
+        return success(result);
+    }
+
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @param response
+     */
+    @PostMapping("/exportPacking")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:exportPacking",
+            tableAlias = "fd"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "FBA发货单导出装箱清单Excel")
+    public void exportPacking(@RequestBody @Validated BaseIdDTO dto, HttpServletResponse response) {
+        firstMileDeliveryService.exportPacking(dto, response);
     }
 }

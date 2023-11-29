@@ -119,6 +119,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Autowired
     private FirstMileCartonService firstMileCartonService;
+    @Autowired
+    private FirstMileCartonBillService firstMileCartonBillService;
+    @Autowired
+    private FirstMileCartonDetailService firstMileCartonDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1159,6 +1163,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto) {
         //待审核的数据可以上传装箱数据
         FirstMileDeliveryEntity entity = this.getById(dto.getId());
@@ -1177,9 +1182,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, StringUtils.join(codes, ","));
         }
 
-        List<FirstMileCartonDTO.AddDTO> addList = BeanMapper.copyList(dto.getFirstMileCartonList(), FirstMileCartonDTO.AddDTO.class);
-        for (FirstMileCartonDTO.AddDTO addDTO : addList) {
-            firstMileCartonService.add(addDTO);
+        //删除原装箱信息
+        deleteCarton(dto.getId());
+
+        //新增装箱信息
+        for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
+            firstMileCartonService.add(addDTO, dto.getId());
         }
 
         //根据主表id分组sku查询发货及待装箱数
@@ -1201,9 +1209,21 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         FirstMileDeliveryDTO.FirstMileCartonView view = new FirstMileDeliveryDTO.FirstMileCartonView();
         view.setId(entity.getId());
         view.setCode(entity.getCode());
+
+        //查询箱规信息
         List<FirstMileCartonEntity> firstMileCartonEntities = firstMileCartonService.listByMainIds(Arrays.asList(id));
         List<FirstMileCartonDTO.ViewDTO> firstMileCartonList = BeanMapper.copyList(firstMileCartonEntities, FirstMileCartonDTO.ViewDTO.class);
         view.setFirstMileCartonList(firstMileCartonList);
+
+        //查询箱规包含的产品信息
+        for (FirstMileCartonDTO.ViewDTO viewDTO : firstMileCartonList) {
+            //根据主表id分组sku查询发货及待装箱数
+            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(id));
+            List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(groupSkuList, FirstMileCartonDetailDTO.ViewDTO.class);
+            detailList.forEach(req -> req.setCartonId(view.getId()));
+            viewDTO.setDetailList(detailList);
+        }
+
         return view;
     }
 
@@ -1213,8 +1233,55 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         FirstMileCartonDTO.ListPackingDTO listPackingDTO = new FirstMileCartonDTO.ListPackingDTO();
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
+
+        //获取总箱数
+        List<FirstMileCartonEntity> firstMileCartonEntities = firstMileCartonService.listByMainIds(Arrays.asList(id));
+        int boxQty = firstMileCartonEntities.stream().mapToInt(FirstMileCartonEntity::getBoxQty).sum();
+        listPackingDTO.setBoxQty(boxQty);
+
+        //箱子明细信息
         List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList = baseMapper.listPackingDetail(id);
         listPackingDTO.setDetailList(detailList);
         return listPackingDTO;
+    }
+
+    @Override
+    public void exportPacking(BaseIdDTO dto, HttpServletResponse response) {
+/*
+        List<FirstMileDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/fbaDelivery.xlsx";
+        String name = "FBA发货单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }*/
+    }
+
+    /**
+     * 删除原装箱信息
+     * @param id
+     */
+    private void deleteCarton(String id) {
+        List<FirstMileCartonEntity> firstMileCartonEntities = firstMileCartonService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(firstMileCartonEntities)) {
+            List<String> cartonIds = firstMileCartonEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+            //删除箱子明细信息
+            firstMileCartonBillService.deleteByCartonIds(cartonIds);
+            //删除原箱包装信息
+            firstMileCartonDetailService.deleteByCartonIds(cartonIds);
+            //删除原箱信息
+            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
+        }
     }
 }

@@ -95,6 +95,13 @@ public class FirstMileCartonBillDTO implements Serializable {
         private String cartonId;
 
         /**
+         * 发货单id
+         */
+        @NotBlank(message = "mainId不能为空")
+        @Size(max = 19,message = "mainId最大长度不能超过19位")
+        private String mainId;
+
+        /**
         * 箱号
         */
         @NotBlank(message = "箱号不能为空")

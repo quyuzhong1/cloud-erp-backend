@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -30,4 +32,11 @@ public interface OverseasProviderMapper extends BaseMapper<OverseasProviderEntit
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.ListDTO>
      **/
     IPage<OverseasProviderDTO.ListDTO> paging(Page query, @Param("params") OverseasProviderDTO.PagingParamDTO params);
+
+    /**
+     * 查询携带仓库信息
+     * @Author Jim
+     * @Date 2023/11/29
+     */
+    List<OverseasProviderDTO.ListWithWarehouseDTO> selectListWithWarehouse(Boolean notEmptyWarehouseId);
 }

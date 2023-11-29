@@ -19,6 +19,11 @@ import java.util.List;
 public class ThirdWarehouseCreateInboundReq {
 
     /**
+     * 第三方入库单号（只有编辑才需要填写）
+     */
+    private String receivingCode;
+
+    /**
      * 发货单号
      */
     private String referenceNo;

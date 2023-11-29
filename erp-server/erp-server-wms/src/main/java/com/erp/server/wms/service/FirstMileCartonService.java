@@ -23,16 +23,7 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
     * @param dto
     * @return
     */
-    void add(FirstMileCartonDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
-    void update(FirstMileCartonDTO.UpdateDTO dto);
+    void add(FirstMileCartonDTO.AddDTO dto, String mainId);
 
     /**
     * 根据发货单id查询装箱信息
@@ -47,9 +38,18 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
      * 查询装箱数量
      * @Author Luo_WG
      * @Date 2023/11/28 19:04
-     * @param mainId
+     * @param mainIds
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainId);
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds);
+
+    /**
+     * 根据主表id删除箱规信息
+     * @Author Luo_WG
+     * @Date 2023/11/29 10:33
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteByMainIds(List<String> mainIds);
 
 }

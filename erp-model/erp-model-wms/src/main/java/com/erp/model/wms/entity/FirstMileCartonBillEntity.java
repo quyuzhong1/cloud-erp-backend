@@ -39,7 +39,11 @@ public class FirstMileCartonBillEntity extends BaseEntity<FirstMileCartonBillEnt
     */
     @TableField("box_desc")
     private String boxDesc;
-
+    /**
+     * 发货单id
+     */
+    @TableField("main_id")
+    private String mainId;
 
     public static final String CARTON_ID = "carton_id";
 

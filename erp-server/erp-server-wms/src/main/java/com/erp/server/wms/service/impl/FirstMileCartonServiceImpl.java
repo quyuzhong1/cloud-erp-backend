@@ -1,15 +1,13 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.FirstMileCartonEntity;
 import com.erp.server.wms.mapper.FirstMileCartonMapper;
-import com.erp.server.wms.service.FirstMileCartonDetailService;
-import com.erp.server.wms.service.FirstMileCartonService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -19,6 +17,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -38,16 +38,19 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     private CommonService commonService;
     @Autowired
     private FirstMileCartonDetailService firstMileCartonDetailService;
+    @Autowired
+    private FirstMileCartonBillService firstMileCartonBillService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(FirstMileCartonDTO.AddDTO addDTO) {
+    public void add(FirstMileCartonDTO.AddDTO addDTO, String mainId) {
         FirstMileCartonEntity firstMileCartonEntity = new FirstMileCartonEntity();
         BeanMapperUtils.copy(addDTO, firstMileCartonEntity);
 
         // 数据处理
-        handleData(firstMileCartonEntity);
+        handleData(firstMileCartonEntity, mainId);
 
         log.info("开始新增发货单箱规信息");
         boolean save = super.save(firstMileCartonEntity);
@@ -55,28 +58,7 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
             throw new ServiceException("发货单箱规信息保存失败");
         }
         //新增详情信息
-        firstMileCartonDetailService.add(addDTO, firstMileCartonEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void update(FirstMileCartonDTO.UpdateDTO updateDTO) {
-        FirstMileCartonEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货单箱规信息"));
-        FirstMileCartonEntity firstMileCartonEntity =  BeanMapperUtils.map(FirstMileCartonEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(firstMileCartonEntity);
-        log.info("编辑 开始修改发货单箱规信息数据，id：【{}】", old.getId());
-        boolean save = super.updateById(firstMileCartonEntity);
-        if(!save) {
-            throw new ServiceException("发货单箱规信息保存失败");
-        }
-        //新增详情信息
-        firstMileCartonDetailService.update(updateDTO, firstMileCartonEntity.getId());
+        firstMileCartonDetailService.add(addDTO, firstMileCartonEntity.getId(), mainId);
     }
 
     @Override
@@ -92,10 +74,15 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         return baseMapper.listPackingQtyByMainIds(mainIds);
     }
 
+    @Override
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        return lambdaUpdate().in(FirstMileCartonEntity::getMainId, mainIds).remove();
+    }
+
     /**
     * 新增修改处理数据
     */
-    private void handleData(FirstMileCartonEntity firstMileCartonEntity) {
-
+    private void handleData(FirstMileCartonEntity firstMileCartonEntity, String mainId) {
+        firstMileCartonEntity.setMainId(mainId);
     }
 }
