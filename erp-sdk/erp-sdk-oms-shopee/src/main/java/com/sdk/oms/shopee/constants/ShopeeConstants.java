@@ -21,7 +21,7 @@ public interface ShopeeConstants {
      String refresh_token = "4e776c4e494949424e464d664379436c";
      String shop_refresh_token = "58666c4b58496358486265526e6f434a";
      String shop_access_token = "7a5371454f5562556877745a57496f59";
-     String merchant_access_token = "666a465647424a544e694c7043564a6e";
+     String merchant_access_token = "477a7653457462506f6f584e75526a7a";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 
 
