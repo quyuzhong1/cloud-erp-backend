@@ -24,13 +24,19 @@ public interface ThirdWarehouseService {
     Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     /**
-     * 入库单创建接口对接
+     * 入库单创建接口
      * @return 入库单号
      */
     ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq,String authId);
 
     /**
-     * 入库单取消接口对接
+     * 入库单编辑接口
+     * @return 入库单号
+     */
+    ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq,String authId);
+
+    /**
+     * 入库单取消接口
      */
     ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq,String authId);
 
@@ -39,6 +45,7 @@ public interface ThirdWarehouseService {
      * @return 出库单号
      */
     ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq,String authId);
+
 
     /**
      * 出库取消接口

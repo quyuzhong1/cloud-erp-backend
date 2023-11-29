@@ -71,8 +71,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
+        return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,createInboundReq.getReferenceNo());
+    }
+    @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId) {
-        return handleAndRemoveContext(() -> cancelInboundBill(cancelInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_INBOUND_BILL,null);
+        return handleAndRemoveContext(() -> cancelInboundBill(cancelInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_INBOUND_BILL,cancelInboundReq.getReceivingCode());
     }
 
     @Override
@@ -86,6 +90,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
     protected abstract ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq);
 
@@ -127,7 +133,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
                 sendPushWarnMsg(dmpPushTaskEntity);
             }
         } catch (Exception e) {
-            log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
+            log.error("saveOrUpdateDmpPushTask:记录操作日志失败",e);
         }
     }
 
@@ -157,7 +163,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPushTaskEntity entity) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfo.setTitle(StrUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());

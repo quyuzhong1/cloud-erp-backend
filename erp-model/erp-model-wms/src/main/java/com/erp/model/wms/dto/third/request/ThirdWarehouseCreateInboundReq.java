@@ -64,51 +64,6 @@ public class ThirdWarehouseCreateInboundReq {
     private LocalDateTime etaDate;
 
     /**
-     * 联系人，取姓+名
-     */
-    private String contacter;
-
-    /**
-     * 联系人名
-     */
-    private String contacterFirstName;
-
-    /**
-     * 联系人姓
-     */
-    private String contacterLastName;
-
-    /**
-     * 联系电话
-     */
-    private String contactPhone;
-
-    /**
-     * 揽收支持的省ID
-     */
-    private String collectStateId;
-
-    /**
-     * 揽收支持的市ID
-     */
-    private String collectCityId;
-
-    /**
-     * 揽收支持的区ID
-     */
-    private String collectAreaId;
-
-    /**
-     * 揽收地址
-     */
-    private String collectStreet;
-
-    /**
-     * 揽收地址2
-     */
-    private String collectStreet2;
-
-    /**
      * 入库单创建时取0，发货单审核通过更新为1
      */
     private String verify;
@@ -124,40 +79,129 @@ public class ThirdWarehouseCreateInboundReq {
     private String collectingService;
 
     /**
-     * 揽收地址国家/地区
-     */
-    private String collectCountryCode;
-
-    /**
-     * 揽收省份的中文
-     */
-    private String collectStateName;
-
-    /**
-     * 揽收城市的中文
-     */
-    private String collectCityName;
-
-    /**
-     * 揽收地址邮编
-     */
-    private String collectZipcode;
-
-    /**
      * 快递单号
      */
     private String deliveryCode;
-
-    /**
-     * 预计揽收时间
-     */
-    private String collectingTime;
 
     /**
      * 是否自有税号清关
      */
     private Integer clearanceService;
 
+    //发货信息
+    private ShiperInfo shiperInfo;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ShiperInfo {
+
+        //联系人姓名
+        private String contacterName;
+
+        //联系电话（手机号）
+        private String phone;
+
+        //发件国家/地区简称
+        private String countryCode;
+
+        //省/州名
+        private String stateName;
+
+        //城市名
+        private String cityName;
+
+        //区名
+        private String region;
+
+        //发货地址
+        private String address1;
+
+        //发货地址
+        private String address2;
+    }
+
+    //揽收信息
+    private Collect collect;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Collect {
+
+        /**
+         * 联系人姓+名
+         */
+        private String contacterName;
+
+        /**
+         * 联系人名
+         */
+        private String contacterFirstName;
+
+        /**
+         * 联系人姓
+         */
+        private String contacterLastName;
+
+        /**
+         * 联系电话
+         */
+        private String contactPhone;
+
+        /**
+         * 揽收支持的省ID
+         */
+        private String collectStateId;
+
+        /**
+         * 揽收支持的市ID
+         */
+        private String collectCityId;
+
+        /**
+         * 揽收支持的区ID
+         */
+        private String collectAreaId;
+
+        /**
+         * 揽收地址
+         */
+        private String collectStreet;
+
+        /**
+         * 揽收地址2
+         */
+        private String collectStreet2;
+
+        /**
+         * 预计揽收时间
+         */
+        private LocalDateTime collectingTime;
+
+        /**
+         * 揽收地址国家/地区
+         */
+        private String collectCountryCode;
+
+        /**
+         * 揽收省份的中文
+         */
+        private String collectStateName;
+
+        /**
+         * 揽收城市的中文
+         */
+        private String collectCityName;
+
+        /**
+         * 揽收地址邮编
+         */
+        private String collectZipcode;
+
+    }
     /**
      * 入库单明细
      */

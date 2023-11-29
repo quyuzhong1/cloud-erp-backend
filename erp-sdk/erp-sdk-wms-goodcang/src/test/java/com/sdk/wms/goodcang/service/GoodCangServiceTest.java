@@ -4,6 +4,7 @@ package com.sdk.wms.goodcang.service;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,10 +14,8 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=GoodCangService.class)
@@ -42,10 +41,23 @@ public class GoodCangServiceTest {
     public void getSkuListTest() {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
-                .pageSize(200)
+                .pageSize(100)
+                .productUpdateTimeFrom("2015-01-01 00:00:00")
+                .productUpdateTimeTo("2024-01-01 00:00:00")
                 .build();
-        GoodCangResponse<List<GoodCangSkuResp>> response = goodCangService.getSkuList(goodCangGetSkuReq);
-        System.out.println(response);
+        List<GoodCangSkuResp> respList = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            goodCangGetSkuReq.setPage(page);
+            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
+            respList.addAll(goodCangResponse.getData());
+            if (goodCangResponse.getCount() <= page * 100) {
+                break;
+            }
+            page++;
+        }
+        respList = respList.stream().filter(v->v.getProductStatus().equals(GoodCangEnums.OpenApiProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
+        System.out.println(123);
     }
 
     @Test

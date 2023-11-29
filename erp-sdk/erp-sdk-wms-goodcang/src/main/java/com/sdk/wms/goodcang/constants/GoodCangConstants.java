@@ -8,6 +8,7 @@ public class GoodCangConstants {
     public static final String METHOD_GET_RECEIPT_BATCH = "/public_open/inbound_order/get_receipt_batch";
     public static final String METHOD_GET_SMCODE_TWC_TO_WAREHOUSE = "/public_open/inbound_order/get_smcode_twc_to_warehouse";
     public static final String METHOD_GET_CREATE_INBOUND_BILL = "/public_open/inbound_order/create_grn";
+    public static final String METHOD_GET_EDIT_INBOUND_BILL = "/public_open/inbound_order/modify_grn";
     public static final String METHOD_GET_CANCEL_INBOUND_BILL = "/public_open/inbound_order/del_grn";
     public static final String METHOD_GET_CREATE_OUTBOUND_BILL = "/public_open/order/create_order";
     public static final String METHOD_GET_CANCEL_OUTBOUND_BILL = "/public_open/order/cancel_order";

@@ -75,6 +75,43 @@ public interface OverseasWarehouseInboundConverter {
     })
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity, OverseasWarehouseInboundEntity mainEntity);
 
-
+    @Mappings({
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "transitType",  source = "transitType"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
+            @Mapping(target = "smCode",  source = "smCode"),
+            @Mapping(target = "receivingShippingType",  source = "receivingShippingType"),
+            @Mapping(target = "trackingNumber",  source = "trackingNumber"),
+            @Mapping(target = "etaDate",  source = "etaDate"),
+            @Mapping(target = "verify",  source = "verify"),
+            @Mapping(target = "customsType",  source = "customsType"),
+            @Mapping(target = "collectingService",  source = "collectingService"),
+            @Mapping(target = "customersSendInfo.deliveryCode",  source = "deliveryCode"),
+            @Mapping(target = "collectingTime",  source = "collect.collectingTime"),
+            @Mapping(target = "clearanceService",  source = "clearanceService"),
+            @Mapping(target = "shiperAddress.saContacter",  source = "shiperInfo.contacterName"),
+            @Mapping(target = "shiperAddress.saContactPhone",  source = "shiperInfo.phone"),
+            @Mapping(target = "shiperAddress.saCountryCode",  source = "shiperInfo.countryCode"),
+            @Mapping(target = "shiperAddress.saState",  source = "shiperInfo.stateName"),
+            @Mapping(target = "shiperAddress.saCity",  source = "shiperInfo.cityName"),
+            @Mapping(target = "shiperAddress.saRegion",  source = "shiperInfo.region"),
+            @Mapping(target = "shiperAddress.saAddress1",  source = "shiperInfo.address1"),
+            @Mapping(target = "shiperAddress.saAddress2",  source = "shiperInfo.address2"),
+            @Mapping(target = "items",  source = "items"),
+    })
     GoodCangCreateInboundReq inboundDtoToGoodCang(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "caFirstName",  source = "collect.contacterFirstName"),
+            @Mapping(target = "caLastName",  source = "collect.contacterLastName"),
+            @Mapping(target = "caContactPhone",  source = "collect.contactPhone"),
+            @Mapping(target = "caCountryCode",  source = "collect.collectCountryCode"),
+            @Mapping(target = "caState",  source = "collect.collectStateName"),
+            @Mapping(target = "caCity",  source = "collect.collectCityName"),
+            @Mapping(target = "caZipcode",  source = "collect.collectZipcode"),
+            @Mapping(target = "caAddress1",  source = "collect.collectStreet"),
+            @Mapping(target = "caAddress2",  source = "collect.collectStreet2"),
+    })
+    GoodCangCreateInboundReq.CollectingAddress inboundDtoToGoodCangCollect(ThirdWarehouseCreateInboundReq createInboundReq);
 }
