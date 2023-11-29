@@ -221,6 +221,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO);
             }
+            //建议售价
+            if (StringUtils.isNotBlank(skuId)){
+                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
+                if (CollectionUtils.isNotEmpty(skuList)){
+                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
+                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
+                }
+            }else if (StringUtils.isNotBlank(skuNO)){
+                List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNO));
+                if (CollectionUtils.isNotEmpty(skuList)){
+                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
+                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
+                }
+            }
             return saveOrUpdateEntity;
         }).collect(Collectors.toList());
 
