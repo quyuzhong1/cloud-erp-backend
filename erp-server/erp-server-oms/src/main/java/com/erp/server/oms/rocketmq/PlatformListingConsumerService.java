@@ -90,6 +90,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 oldEntity.setProductPacking(entity.getProductPacking());
                 oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                 oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
+                oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
                 if (!listingInfoService.updateById(oldEntity)) {
                     throw new ServiceException("Listing 产品更新失败");
                 }

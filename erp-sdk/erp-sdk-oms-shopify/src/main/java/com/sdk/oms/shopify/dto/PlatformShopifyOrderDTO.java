@@ -2,6 +2,9 @@ package com.sdk.oms.shopify.dto;
 
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,6 +38,30 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
      */
     private ShopifyShopInfoDTO shopInfoDTO;
 
+    /**
+     * 详情或其他数据下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
+    private Integer downloadStatus;
+
+    /**
+     * 付款时间
+     */
+    private LocalDateTime payTime;
+
+    /**
+     * 付款方式
+     */
+    private String dictPayMethod;
+
+
+    public static PlatformShopifyOrderDTO getByDownloadStatus(Integer status) {
+        PlatformShopifyOrderDTO orderMongoDTO = new PlatformShopifyOrderDTO();
+        orderMongoDTO.setDownloadStatus(status);
+        return orderMongoDTO;
+    }
 
     public PlatformShopifyOrderDTO(JobTaskDTO dto, ShopifyOrder shopifyOrder, ShopifyShopInfoDTO shopInfoDTO) {
         this.shopifyOrder = shopifyOrder;
@@ -45,6 +72,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         this.shopInfoDTO = shopInfoDTO;
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
+        this.downloadStatus = 0;
     }
 
     /**
@@ -97,11 +125,11 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
                 .orElse(BigDecimal.ZERO);
         orderDTO.setShippingFee(shippingFee);
         // 付款时间
-        orderDTO.setPayTime(sourceOrder.convertPayTime());
+        orderDTO.setPayTime(dto.getPayTime());
         // 付款金额
         orderDTO.setPayAmount(sourceOrder.getSubtotalPrice());
         // 付款方式
-        orderDTO.setDictPayMethod(sourceOrder.convertPayMethod());
+        orderDTO.setDictPayMethod(dto.getDictPayMethod());
         // 买家备注
         orderDTO.setBuyerRemark("");
         // 订单备注
@@ -173,6 +201,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             financesList.add(financeDTO);
         }
         orderDTO.setFinancesList(financesList);
+        // 设置下载其他详情
+        orderDTO.setDownloadStatus(0);
         return orderDTO;
 
     }

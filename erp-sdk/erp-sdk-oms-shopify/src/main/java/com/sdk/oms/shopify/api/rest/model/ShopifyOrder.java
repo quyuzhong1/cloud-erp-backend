@@ -195,29 +195,4 @@ public class ShopifyOrder {
         }
         return "unknow";
     }
-
-    /**
-     * 转换支付时间
-     */
-    public LocalDateTime convertPayTime() {
-        if (null == this.getPaymentTerms()){
-            return null;
-        }
-        List<ShopifyPaymentSchedules> paymentSchedules = this.getPaymentTerms().getPaymentSchedules();
-        if (CollectionUtils.isEmpty(paymentSchedules)){
-            return null;
-        }
-        return paymentSchedules.get(0).getCompletedAt();
-    }
-
-    public String convertPayMethod() {
-        if (null == this.getPaymentTerms()){
-            return "";
-        }
-        List<ShopifyPaymentSchedules> paymentSchedules = this.getPaymentTerms().getPaymentSchedules();
-        if (CollectionUtils.isEmpty(paymentSchedules)){
-            return "";
-        }
-        return paymentSchedules.get(0).getExpectedPaymentMethod();
-    }
 }

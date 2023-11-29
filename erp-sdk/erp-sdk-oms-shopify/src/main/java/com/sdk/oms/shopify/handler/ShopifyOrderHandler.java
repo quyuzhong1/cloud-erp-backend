@@ -1,5 +1,7 @@
 package com.sdk.oms.shopify.handler;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -9,9 +11,12 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
 import com.sdk.oms.shopify.api.rest.model.ShopifyProduct;
+import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
@@ -88,5 +93,34 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.SHOPIFY.getCode();
+    }
+
+    @Override
+    public Boolean getIsSendMq() {
+        return Boolean.FALSE;
+    }
+
+    @Override
+    public PlatformShopifyOrderDTO downloadDetail(PlatformShopifyOrderDTO dto, JSONObject extendObj) {
+        // Shopify订单下载
+        String shopId = dto.getShopInfoDTO().getId();
+        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(shopId);
+        if (null == shopInfoDTO) {
+            log.error("[Shopify详情订单下载]从缓存中获取shopify token 失败: shopId={}",shopId);
+            throw new ServiceException();
+        }
+        String shopifyShopDomain = shopInfoDTO.getShopDomain();
+        String accessToken = shopInfoDTO.getAccessToken();
+
+        List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
+                .getOrderTransactions(dto.getShopifyOrder().getId());
+        if (CollectionUtils.isEmpty(transactionList)){
+            return dto;
+        }
+        ShopifyTransaction shopifyTransaction = transactionList.stream().findFirst().orElse(null);
+        LocalDateTime paymentCreatedAt = shopifyTransaction.getCreatedAt();
+        dto.setPayTime(paymentCreatedAt);
+        dto.setDictPayMethod(shopifyTransaction.getGateway());
+        return dto;
     }
 }
