@@ -78,9 +78,9 @@
         </if>
         <if test="params.address !=null and params.address!=''">
              AND (
-            la.address_first ILIKE concat('%', #{params.address} ,'%')
+            la.address_first ILIKE concat('%',#{params.address}::text,'%')
                  OR
-            la.address_second ILIKE concat('%', #{params.address} ,'%')
+            la.address_second ILIKE concat('%',#{params.address}::text,'%')
             )
         </if>
         <!--权限-->
@@ -139,9 +139,9 @@
                 </if>
                 <if test="params.address !=null and params.address!=''">
                     AND (
-                    la.address_first ILIKE concat('%', #{params.address} ,'%')
+                    la.address_first ILIKE concat('%',#{params.address}::text,'%')
                     OR
-                    la.address_second ILIKE concat('%', #{params.address} ,'%')
+                    la.address_second ILIKE concat('%',#{params.address}::text,'%')
                     )
                 </if>
             </otherwise>
