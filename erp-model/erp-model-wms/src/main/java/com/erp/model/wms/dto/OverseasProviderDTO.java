@@ -252,4 +252,68 @@ public class OverseasProviderDTO implements Serializable {
          */
         private String countryName;
     }
+
+    /**
+     * 列表查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListWithWarehouseDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 服务商编号
+         */
+        private String code;
+        /**
+         * 服务商名称
+         */
+        private String name;
+        /**
+         * 授权状态 already 已授权 not未授权 cancel 取消授权
+         */
+        private String authStatus;
+        /**
+         * 授权状态中文名
+         */
+        private String authStatusName;
+        /**
+         * 授权时间
+         */
+        private LocalDateTime authTime;
+        /**
+         * 详情ID
+         */
+        private String detailId;
+        /**
+         * ERP仓库id
+         */
+        private String warehouseId;
+        /**
+         * ERP仓库名称
+         */
+        private String warehouseName;
+        /**
+         * ERP仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 第三方平台仓库编码
+         */
+        private String platformWarehouseCode;
+        /**
+         * 第三方平台仓库名称
+         */
+        private String platformWarehouseName;
+        /**
+         * 所属国家二字码
+         */
+        private String country;
+        /**
+         * 国家中文
+         */
+        private String countryName;
+    }
 }

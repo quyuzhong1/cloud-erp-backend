@@ -4,8 +4,10 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -70,4 +72,11 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * @return java.util.List<com.erp.model.wms.dto.OverseasProviderDTO.WarehouseDTO>
      **/
     List<OverseasProviderDTO.WarehouseDTO> listProviderWarehouseByIds(List<String> warehouseIds);
+
+    /**
+     * 查询已绑定的海外仓关系
+     * @Author JIm
+     * @Date 2023/11/28
+     */
+    Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> mapByWarehouseIds();
 }

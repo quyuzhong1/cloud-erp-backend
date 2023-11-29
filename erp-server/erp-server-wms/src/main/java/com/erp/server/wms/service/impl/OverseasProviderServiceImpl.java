@@ -40,6 +40,8 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -181,5 +183,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(warehouseIds);
         List<OverseasProviderDTO.WarehouseDTO> warehouseDTOS = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderDTO.WarehouseDTO.class);
         return warehouseDTOS;
+    }
+
+    @Override
+    public Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> mapByWarehouseIds() {
+        List<OverseasProviderDTO.ListWithWarehouseDTO> list = baseMapper.selectListWithWarehouse(true);
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyMap();
+        }
+        return list.stream().collect(Collectors.groupingBy(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
     }
 }

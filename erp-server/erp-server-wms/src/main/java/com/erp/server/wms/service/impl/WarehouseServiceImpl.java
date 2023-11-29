@@ -22,9 +22,11 @@ import com.common.core.utils.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
@@ -36,9 +38,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +58,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -91,6 +92,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private ShopInfoFeign shopInfoFeign;
 
+    @Resource
+    private OverseasProviderService overseasProviderService;
+
 
 
     @Override
@@ -116,28 +120,39 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
         List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
             if (!statusList.contains(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
-            // TODO 查询仓库关联服务商
             //平台
             String dictPlatform = "";
             //平台名称
             String platformName = "";
-            if (listDTO.getName().contains("艾姆勒")){
-                dictPlatform = OmsPlatformEnum.OMS_IML.getCode();
-                platformName = OmsPlatformEnum.OMS_IML.getName();
-            } else if (listDTO.getName().contains("谷仓")){
-                dictPlatform = OmsPlatformEnum.OMS_GOOD_CANG.getCode();
-                platformName = OmsPlatformEnum.OMS_GOOD_CANG.getName();
+            List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
+            if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
+                // 取指定服务商
+                Map<String, OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOMap = listWithWarehouseDTOS.stream().collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getCode, Function.identity()));
+                OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = null;
+                if (StringUtils.isBlank(listDTO.getDictPlatform())) {
+                    warehouseDTO = warehouseDTOMap.get(listDTO.getDictPlatform());
+                }
+                // 设置平台信息
+                if (null != warehouseDTO) {
+                    OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(warehouseDTO.getCode());
+                    if (null != platformEnum) {
+                        dictPlatform = platformEnum.getCode();
+                        platformName = platformEnum.getName();
+                    }
+                }
             }
             listDTO.setDictPlatform(dictPlatform);
             listDTO.setPlatformName(platformName);
         }
-
 
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
@@ -792,23 +807,38 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
         List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
             if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
-            // TODO 查询仓库关联服务商
             //平台
             String dictPlatform = "";
             //平台名称
             String platformName = "";
-            if (listDTO.getName().contains("艾姆勒")){
-                dictPlatform = OmsPlatformEnum.OMS_IML.getCode();
-                platformName = OmsPlatformEnum.OMS_IML.getName();
-            } else if (listDTO.getName().contains("谷仓")){
-                dictPlatform = OmsPlatformEnum.OMS_GOOD_CANG.getCode();
-                platformName = OmsPlatformEnum.OMS_GOOD_CANG.getName();
+            List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
+            if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
+                // 取指定服务商，否则取第一个
+                Map<String, OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOMap = listWithWarehouseDTOS.stream().collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getCode, Function.identity()));
+                OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = null;
+                if (StringUtils.isBlank(dto.getDictPlatform())) {
+                    warehouseDTO = warehouseDTOMap.get(dto.getDictPlatform());
+                }
+                if (CollectionUtils.isNotEmpty(dto.getDictPlatformList())) {
+                    warehouseDTO = listWithWarehouseDTOS.stream().findFirst().orElse(null);
+                }
+                // 设置平台信息
+                if (null != warehouseDTO) {
+                    OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(warehouseDTO.getCode());
+                    if (null != platformEnum) {
+                        dictPlatform = platformEnum.getCode();
+                        platformName = platformEnum.getName();
+                    }
+                }
             }
             listDTO.setDictPlatform(dictPlatform);
             listDTO.setPlatformName(platformName);
@@ -816,6 +846,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return resultList.stream()
                 .filter(e-> StringUtils.isBlank(dto.getDictPlatform()) ||
                             (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                )
+                .filter(e-> CollectionUtils.isEmpty(dto.getDictPlatformList()) ||
+                                (CollectionUtils.isNotEmpty(dto.getDictPlatformList()) && dto.getDictPlatformList().contains(e.getDictPlatform()))
                 )
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
