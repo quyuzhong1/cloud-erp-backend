@@ -5,12 +5,14 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -72,10 +75,17 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
 
+        // 查询关联关系
+        List<String> platformSkuList = dto.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .distinct().collect(Collectors.toList());
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform());
+
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
         // 详情更新或保存
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity);
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap);
         //物流信息更新保存
         soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存

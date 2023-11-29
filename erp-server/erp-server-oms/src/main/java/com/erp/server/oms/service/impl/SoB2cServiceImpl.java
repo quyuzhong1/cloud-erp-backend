@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
@@ -2573,6 +2574,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             return entity;
         } else {
+            // 历史异常记录修复
+            if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")){
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
+                oldEntity.setCode(code);
+            }
+            if (StringUtils.isBlank(oldEntity.getShopId()) && !BusinessCommonConstants.hasProfile("prod")) {
+                oldEntity.setShopId(dto.getShopId());
+            }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
