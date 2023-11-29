@@ -40,6 +40,11 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        return null;
+    }
+
+    @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
         return null;
     }

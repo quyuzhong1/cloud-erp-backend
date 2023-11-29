@@ -36,6 +36,7 @@ public interface OmsListingConverter {
             @Mapping(target = "platformSpuNo", source = "platformProductNo"),
             @Mapping(target = "platformSpuName", source = "platformProductName"),
             @Mapping(target = "platformSkuName", source = "platformSkuName"),
+            @Mapping(target = "platformUpdateTime", source = "platformUpdateTime"),
             @Mapping(target = "matchResult", source = "matchResult",defaultValue = "false"),
     })
     ListingInfoEntity listingDtoToEntity(PlatformProductDTO platformProductDTO);

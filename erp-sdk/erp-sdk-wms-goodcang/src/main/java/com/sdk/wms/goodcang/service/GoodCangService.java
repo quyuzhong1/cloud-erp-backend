@@ -96,6 +96,20 @@ public class GoodCangService {
     }
 
     /**
+     * 编辑入库单
+     */
+    public GoodCangResponse<String> editInboundBill(@Valid GoodCangCreateInboundReq goodCangCreateInboundReq){
+        String json = JSON.toJSONString(goodCangCreateInboundReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_EDIT_INBOUND_BILL,json);
+        //处理返回值
+        GoodCangResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.nonNull(respDto.getData())){
+            respDto.setData(JSONObject.parseObject(respDto.getData()).get("receiving_code").toString());
+        }
+        return respDto;
+    }
+
+    /**
      * 取消入库单
      * 入库单审核通过后不能取消
      */

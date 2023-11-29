@@ -13,11 +13,16 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -37,17 +42,27 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        GoodCangCreateInboundReq goodCangCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCang(createInboundReq);
-        GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
-        if(isSuccess(goodCangResponse.getAsk())){
 
-        }
-        return null;
+        GoodCangCreateInboundReq goodCangCreateInboundReq = this.buildInboundDto(createInboundReq);
+        // 创建入库单
+        GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
+
+        return isSuccess(goodCangResponse.getAsk()) ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
+    }
+
+    @Override
+    protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
+        GoodCangCreateInboundReq goodCangCreateInboundReq = this.buildInboundDto(createInboundReq);
+        // 编辑入库单
+        GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
+
+        return isSuccess(goodCangResponse.getAsk()) ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        return null;
+        GoodCangResponse<String> response = goodCangService.cancelInboundBill(cancelInboundReq.getReceivingCode());
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override
@@ -70,6 +85,46 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return isSuccess(response.getAsk());
     }
 
+    private GoodCangCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq){
+        GoodCangCreateInboundReq goodCangCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCang(createInboundReq);
+
+        //处理揽收数据
+        GoodCangCreateInboundReq.CollectingAddress collectingAddress = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToGoodCangCollect(createInboundReq);
+        List<GoodCangCreateInboundReq.CollectingAddress> collectingAddressList = Collections.singletonList(collectingAddress);
+        goodCangCreateInboundReq.setCollectingAddressList(collectingAddressList);
+        // 处理箱子明细
+        List<GoodCangCreateInboundReq.Item> itemList = new ArrayList<>();
+        List<ThirdWarehouseCreateInboundReq.Item> requestItemList = createInboundReq.getItems();
+
+        // 检查请求的商品数据是否为空
+        if (CollectionUtils.isEmpty(requestItemList)) {
+            throw new ServiceException("入库单产品数据为空");
+        }
+
+        // 根据箱号对商品进行分组
+        Map<Integer, List<ThirdWarehouseCreateInboundReq.Item>> requestItemMap = requestItemList.stream().collect(Collectors.groupingBy(ThirdWarehouseCreateInboundReq.Item::getBoxNo));
+
+        // 遍历分组后的数据，构建 GoodCang 的箱子明细对象
+        requestItemMap.forEach((key, val) -> {
+            GoodCangCreateInboundReq.Item item = new GoodCangCreateInboundReq.Item();
+            item.setBoxNo(String.valueOf(key));
+
+            List<GoodCangCreateInboundReq.Item.BoxDetail> boxDetails = val.stream()
+                    .map(requestItem -> {
+                        GoodCangCreateInboundReq.Item.BoxDetail boxDetail = new GoodCangCreateInboundReq.Item.BoxDetail();
+                        boxDetail.setProductSku(requestItem.getProductSku());
+                        boxDetail.setQuantity(requestItem.getQuantity());
+                        return boxDetail;
+                    })
+                    .collect(Collectors.toList());
+
+            item.setBox_detailList(boxDetails);
+            itemList.add(item);
+        });
+
+        goodCangCreateInboundReq.setItems(itemList);
+        return goodCangCreateInboundReq;
+    }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }
