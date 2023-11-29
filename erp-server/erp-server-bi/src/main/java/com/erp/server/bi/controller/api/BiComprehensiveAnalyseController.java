@@ -126,37 +126,6 @@ public class BiComprehensiveAnalyseController extends BaseController {
         return success(statisticalDataVO);
     }
 
-
-    /**
-     * B2B客户属性分析
-     *
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     * @Author zdy
-     * @Date 2022/12/27 10:41
-     **/
-    @PostMapping("/customerPropertyAnalysis")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<StatisticalDataVO> customerPropertyAnalysis(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-//        StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
-        return success();
-    }
-
-    /**
-     * B2B客户等级占比
-     *
-     * @param biFilterDTO biFilterDTO
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
-     * @Author zdy
-     * @Date 2022/12/27 10:41
-     **/
-    @PostMapping("/customerLevelProportion")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<StatisticalDataVO> customerLevelProportion(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-//        StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
-        return success();
-    }
-
     /**
      * 销售明细表-店铺
      *
