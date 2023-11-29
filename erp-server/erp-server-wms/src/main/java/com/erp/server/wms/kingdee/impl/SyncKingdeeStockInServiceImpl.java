@@ -140,7 +140,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库组织
         resultMap.put("receiveOrgName", entity.getReceiveOrgName());
         //单据类型
-        resultMap.put("billType",entity.getSubcontractType());
+        resultMap.put("billType",purchaseOrderEntity.getType());
 
 
         //获取用户部门id
