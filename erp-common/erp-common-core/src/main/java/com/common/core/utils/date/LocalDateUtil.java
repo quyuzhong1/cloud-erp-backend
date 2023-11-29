@@ -2,6 +2,7 @@ package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Cloud
  */
+@Slf4j
 public class LocalDateUtil {
 
     /**
@@ -445,6 +447,31 @@ public class LocalDateUtil {
             }
         } catch (Exception e) {
 
+        }
+        return null;
+    }
+
+    /**
+     * 转化日期
+     *
+     * @param dateStr
+     * @return java.time.LocalDate
+     * @author yl
+     * @date 2023-10-24 15:06
+     */
+    public static LocalDateTime parseStrToLocalTime(String dateStr) {
+        try {
+            if (StringUtils.isBlank(dateStr)) {
+                return null;
+            }
+            if (dateStr.contains("/")) {
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+                return LocalDateTime.parse(dateStr, dateTimeFormatter);
+            } else {
+                return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }
+        } catch (Exception e) {
+            log.error("parseStrToLocalTime 出错了>>>{}", e);
         }
         return null;
     }

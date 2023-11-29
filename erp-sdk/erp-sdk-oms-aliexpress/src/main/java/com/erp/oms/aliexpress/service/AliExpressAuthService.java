@@ -5,13 +5,12 @@ import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.constants.ApiNamePathConstants;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,7 +31,7 @@ public class AliExpressAuthService {
         String baseUrl = map.getOrDefault("baseUrl", "");
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
-        request.setApiName(ApiNamePathConstants.TOKEN_CREATE);
+        request.setApiName(AliexpressConstants.TOKEN_CREATE);
         request.addApiParameter("code", code);
         IopResponse response = client.execute(request, Protocol.GOP);
         return JSONObject.parseObject(response.getBody());

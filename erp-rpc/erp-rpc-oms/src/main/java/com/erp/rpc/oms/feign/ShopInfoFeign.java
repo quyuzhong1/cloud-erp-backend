@@ -65,4 +65,13 @@ public interface ShopInfoFeign {
      **/
     @PostMapping("feign/shop/listShopInfoByWarehouseIds")
     List<ShopInfoEntity> listShopInfoByWarehouseIds(@RequestBody List<String> warehouseIds);
+
+
+    /**
+     * 获取授权信息
+     * @param shopId
+     * @return
+     */
+    @PostMapping("feign/shop/getShopAuthByShopId")
+    ShopAuthEntity getShopAuthByShopId(String shopId);
 }
