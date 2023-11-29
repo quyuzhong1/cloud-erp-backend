@@ -153,7 +153,7 @@ public class ShopifyOrder {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
         // 待发货
-        return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
     }
 
     private final static String PAYMENT_STATUS = "payment";

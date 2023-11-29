@@ -138,8 +138,11 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
             receiverDTO.setName(
                     (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getFirstName()) +
-                            (StringUtils.isBlank(customer.getFirstName()) ? "" : customer.getLastname())
+                            (StringUtils.isBlank(customer.getFirstName()) ? "" : " " + customer.getLastname())
             );
+            receiverDTO.setCustomerId(StringUtils.isBlank(customer.getId())? "" : customer.getId());
+            receiverDTO.setReceiverTelNumber(StringUtils.isBlank(customer.getPhone()) ? "" :customer.getPhone());
+            receiverDTO.setTelNumber(StringUtils.isBlank(customer.getPhone())? "" : customer.getPhone());
             receiverDTO.setEmail(StringUtils.isBlank(customer.getEmail()) ? "" : customer.getEmail());
 
             receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddress1()) ? "" : shippingAddress.getAddress1());
