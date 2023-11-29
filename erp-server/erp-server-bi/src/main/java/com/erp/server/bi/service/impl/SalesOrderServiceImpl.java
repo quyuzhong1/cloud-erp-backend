@@ -108,6 +108,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:getMonthSales",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO getMonthSales(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
@@ -455,6 +456,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-20 9:15
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:getByCountry",keyGenerator = "myKeyGenerator")
     public XyAxesResultVO getByCountry(BiFilterDTO dto) {
         XyAxesResultVO result = new XyAxesResultVO();
 
@@ -585,6 +587,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-20 12:28
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byTobToc",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byTobToc(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
 
@@ -637,6 +640,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-21 10:33
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:getByShop",keyGenerator = "myKeyGenerator")
     public List<ShopSalesVO> getByShop(BiFilterDTO dto) {
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
@@ -713,6 +717,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-21 10:33
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byTopShop",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byTopShop(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -767,6 +772,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-26 10:10
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byShopCountry",keyGenerator = "myKeyGenerator")
     public XyAxesResultVO byShopCountry(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -833,6 +839,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:byShopCategory",keyGenerator = "myKeyGenerator")
     public XyAxesResultVO byShopCategory(BiFilterDTO dto) {
 
         //获取到结算汇率
@@ -894,6 +901,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 9:09
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byBrand",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -956,6 +964,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPlatform",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -1073,6 +1082,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeople",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byPeople(BiFilterDTO dto) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         LocalDateTime startTime = dto.getStartTime();
@@ -1155,6 +1165,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-26 10:10
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byShopNewAndOld",keyGenerator = "myKeyGenerator")
     public List<ShopNewAndOldSalesVO> byShopNewAndOld(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -1207,6 +1218,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byCountry",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byCountry(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -1347,6 +1359,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleWeekRank",keyGenerator = "myKeyGenerator")
     public List<PeopleSalesRankVO> byPeopleWeekRank(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -1478,6 +1491,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleQuarterRank",keyGenerator = "myKeyGenerator")
     public List<PeopleSalesRankVO> byPeopleQuarterRank(BiFilterDTO dto) {
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1542,6 +1556,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleYearRank",keyGenerator = "myKeyGenerator")
     public List<PeopleSalesRankVO> byPeopleYearRank(BiFilterDTO dto) {
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1604,6 +1619,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byDept",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byDept(BiFilterDTO dto) {
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
@@ -1682,6 +1698,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byDeptNewAndOld",keyGenerator = "myKeyGenerator")
     public List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto) {
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
 
@@ -1744,6 +1761,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byNewAndOld",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byNewAndOld(BiFilterDTO dto) {
 
         //获取到结算汇率
@@ -1802,6 +1820,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPlatformNewAndOld",keyGenerator = "myKeyGenerator")
     public List<ProductNewAndOldVO> byPlatformNewAndOld(BiFilterDTO dto) {
         List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
         LocalDateTime startTime = dto.getStartTime();
@@ -1869,6 +1888,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:byPeopleNewAndOld",keyGenerator = "myKeyGenerator")
     public List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //获取到结算汇率
@@ -1929,6 +1949,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 16:53
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byCategoryNewAndOld",keyGenerator = "myKeyGenerator")
     public List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto) {
         //新品
         Integer newFlag = BiConstant.NEW;
@@ -1983,6 +2004,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:bySite",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> bySite(BiFilterDTO dto) {
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
@@ -2072,6 +2094,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-28 9:18
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byProductType",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byProductType(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
@@ -2140,6 +2163,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-28 9:24
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byOldProductTop",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byOldProductTop(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2180,6 +2204,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-28 9:24
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byNewProductTop",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byNewProductTop(BiFilterDTO dto) {
 
         //获取到结算汇率
@@ -2222,6 +2247,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-28 16:01
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byMarketingCenter",keyGenerator = "myKeyGenerator")
     public List<SalesCountVO> byMarketingCenter(BiFilterDTO dto) {
         LocalDate nowDate = LocalDate.now();
         List<SalesCountVO> resultList = new ArrayList<>(12);
@@ -2303,6 +2329,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:byEuropeAndJapanSite",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO byEuropeAndJapanSite(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -3441,6 +3468,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:listCompletionRateRanking",keyGenerator = "myKeyGenerator")
     public List<CompletionRateRankingDTO.PagingDTO> listCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
         TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
         // 获取当月第一天
@@ -3604,6 +3632,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2023-09-21 17:18
      */
     @Override
+    @Cacheable(cacheNames = "cache:bi:grossProfit",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO grossProfit(BiDataSourceCostDTO.GrossProfitDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         String dateType = dto.getDateType();
@@ -3684,6 +3713,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:customerPropertyAnalysis",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO customerPropertyAnalysis(BiFilterDTO params) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("B2B客户属性销售额占比");
@@ -3731,6 +3761,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:bi:customerLevelProportion",keyGenerator = "myKeyGenerator")
     public StatisticalDataVO customerLevelProportion(BiFilterDTO params) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("B2B客户等级销售额占比");
