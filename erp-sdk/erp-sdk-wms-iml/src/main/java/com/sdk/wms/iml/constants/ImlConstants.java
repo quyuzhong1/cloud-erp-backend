@@ -12,6 +12,8 @@ public class ImlConstants {
 
     public static final String METHOD_CREATE_INBOUND = "createAsn";
 
+    public static final String METHOD_EDIT_INBOUND = "modifyAsn";
+
     public static final String METHOD_CANCEL_INBOUND = "cancelAsn";
 
     public static final String METHOD_CREATE_ORDER = "createOrder";

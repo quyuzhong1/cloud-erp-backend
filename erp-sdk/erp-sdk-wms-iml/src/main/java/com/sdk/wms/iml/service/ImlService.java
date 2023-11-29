@@ -76,12 +76,29 @@ public class ImlService {
         String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_INBOUND,imlGetReceiptReq);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值
-        if(StringUtil.isNotBlank(respDto.getReceivingCode())){
+        if (StringUtil.isNotBlank(respDto.getData())) {
+            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+        }
+        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
             respDto.setData(respDto.getReceivingCode());
         }
         return respDto;
     }
-
+    /**
+     * 编辑入库单
+     */
+    public ImlResponse<String> editInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){
+        String response = ImlUtils.callService(ImlConstants.METHOD_EDIT_INBOUND,imlGetReceiptReq);
+        ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
+        //处理返回值
+        if (StringUtil.isNotBlank(respDto.getData())) {
+            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+        }
+        if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
+            respDto.setData(respDto.getReceivingCode());
+        }
+        return respDto;
+    }
     /**
      * 取消入库单
      */
