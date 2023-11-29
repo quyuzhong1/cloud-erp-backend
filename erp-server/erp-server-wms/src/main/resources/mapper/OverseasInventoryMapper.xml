@@ -87,8 +87,36 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
-        oi.*
+        oi.id,
+        oi.create_time,
+        oi.update_time,
+        oi.create_user_name,
+        oi.create_user_id,
+        oi.update_user_name,
+        oi.update_user_id,
+        oi.version,
+        oi.is_deleted,
+        oi.warehouse_code,
+        oi.dict_platform,
+        oi.platform_sku,
+        oi.platform_sku_name,
+        oi.product_name,
+        oi.sku_no,
+        oi.sku_id,
+        oi.deliver_onway_qty,
+        oi.pending_qty,
+        oi.sellable_qty,
+        oi.unsellable_qty,
+        oi.reserved_qty,
+        oi.onway_qty,
+        oi.lack_qty,
+        oi.rozen_qty,
+        oi.shipped_qty,
+        oi.download_time,
+        opw.warehouse_name as name
         FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse as opw
+        on opw.platform_warehouse_code = oi.warehouse_code
         <where>
             <include refid="conditionSql"/>
         </where>
