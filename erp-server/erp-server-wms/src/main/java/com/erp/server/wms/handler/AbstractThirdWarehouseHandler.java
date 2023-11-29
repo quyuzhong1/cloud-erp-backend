@@ -22,10 +22,12 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.sqlite.util.StringUtils;
 
 import javax.annotation.Resource;
 
@@ -72,7 +74,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
-        return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_INBOUND_BILL,createInboundReq.getReferenceNo());
+        return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_EDIT_INBOUND_BILL,createInboundReq.getReceivingCode());
     }
     @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq, String authId) {
@@ -107,6 +109,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             handleAuthInfo(authId);
             //执行逻辑
             ApiResult<String> result = handler.handle();
+            ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
             pushOperateLog(businessType,result.getCode(),erpBusinessCode);
             return result;
@@ -141,7 +144,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         DmpPushTaskEntity dmpPushTaskEntity = new DmpPushTaskEntity();
         dmpPushTaskEntity.setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc());
         dmpPushTaskEntity.setSourceType(businessType.getCode());
-        dmpPushTaskEntity.setSourceId("");
+        dmpPushTaskEntity.setSourceId(erpBusinessCode);
         dmpPushTaskEntity.setSourceCode(erpBusinessCode);
         dmpPushTaskEntity.setTargetPlatformName(getPlatForm().getName());
         dmpPushTaskEntity.setStatus(status.equals(ApiResult.success().getCode()) ? SyncStatusEnum.SUCCESS_SYNC.getCode() : SyncStatusEnum.FAILED_SYNC.getCode());
@@ -167,7 +170,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         warnMsgInfo.setTitle(StrUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setKeyInfo(StringUtil.isEmpty(ThirdWarehouseContext.getMsg())?"":ThirdWarehouseContext.getMsg());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -33,7 +34,7 @@ public class GoodCangHandlerServiceImplTest {
     @Test
     public void testCreateInboundBill() {
         final ThirdWarehouseCreateInboundReq createInboundReq = ThirdWarehouseCreateInboundReq.builder()
-                .referenceNo("wj132465987")
+                .referenceNo("wj132123412")
                 .transitType("0")
                 .receivingShippingType("2")
                 .trackingNumber("123")
@@ -89,7 +90,8 @@ public class GoodCangHandlerServiceImplTest {
     @Test
     public  void testEditInboundBill() {
         final ThirdWarehouseCreateInboundReq createInboundReq = ThirdWarehouseCreateInboundReq.builder()
-                .referenceNo("wj132465987")
+                .receivingCode("RVG1149-231129-0004")
+                .referenceNo("wj132123412")
                 .transitType("0")
                 .receivingShippingType("2")
                 .trackingNumber("123")
@@ -144,6 +146,10 @@ public class GoodCangHandlerServiceImplTest {
 
     @Test
     public  void testCancelInboundBill() {
+        ThirdWarehouseCancelInboundReq cancelInboundReq = new ThirdWarehouseCancelInboundReq();
+        cancelInboundReq.setReceivingCode("RVG1149-231129-0003");
+        ApiResult<String> result = thirdWarehouseService.cancelInboundBill(cancelInboundReq,"1726456935660867586");
+        System.out.println(result);
     }
 
     @Test

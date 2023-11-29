@@ -17,6 +17,10 @@ import java.util.List;
 @Builder
 public class GoodCangCreateInboundReq {
 
+    // 第三方入库单号（只有编辑才需要填写）
+    @JSONField(name = "receiving_code")
+    private String receivingCode;
+
     //入库单类型
     @JSONField(name = "transit_type")
     @NotNull(message = "入库单类型不能为空")

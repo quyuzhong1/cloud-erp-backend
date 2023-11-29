@@ -30,6 +30,11 @@ public class ThirdWarehouseContext {
      */
     private static final ThreadLocal<String> authId = new ThreadLocal<>();
 
+    /**
+     * 接口返回信息
+     */
+    private static final ThreadLocal<String> msg = new ThreadLocal<>();
+
     public static void setAuthId(String id) {authId.set(id);}
 
     public static String getAuthId() {return authId.get();}
@@ -46,10 +51,15 @@ public class ThirdWarehouseContext {
 
     public static Map<String,Object> getAuthMap() { return authMap.get();}
 
+    public static void setMsg(String message) {msg.set(message);}
+
+    public static String getMsg() { return msg.get();}
+
     public static void remove() {
         responseJson.remove();
         requestJson.remove();
         authMap.remove();
         authId.remove();
+        msg.remove();
     }
 }
