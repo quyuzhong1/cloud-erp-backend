@@ -18,22 +18,13 @@ import java.util.List;
 public interface FirstMileCartonDetailService extends SuperService<FirstMileCartonDetailEntity> {
 
     /**
-    * 新增
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
-    void add(FirstMileCartonDTO.AddDTO dto, String mainId);
-
-    /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
-    void update(FirstMileCartonDTO.UpdateDTO dto, String mainId);
+     * 新增
+     * @Author Luo_WG
+     * @Date 2023/11/29 10:39
+     * @param dto
+     * @param cartonId
+     **/
+    void add(FirstMileCartonDTO.AddDTO dto, String cartonId, String mainId);
 
     /**
      * 根据装箱id查询箱子产品信息
@@ -43,6 +34,24 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
      **/
     List<FirstMileCartonDetailEntity> listByCartonIds(List<String> cartonIds);
+
+    /**
+     * 根据发货单id查询箱子产品信息
+     * @Author Luo_WG
+     * @Date 2023/11/29 11:15
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.FirstMileCartonDetailEntity>
+     **/
+    List<FirstMileCartonDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 根据箱规id删除箱子产品信息
+     * @Author Luo_WG
+     * @Date 2023/11/29 10:35
+     * @param cartonIds
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteByCartonIds(List<String> cartonIds);
 
 
 }

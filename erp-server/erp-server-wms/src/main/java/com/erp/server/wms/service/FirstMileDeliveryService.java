@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -252,4 +253,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.ListPackingDTO>
      **/
     FirstMileCartonDTO.ListPackingDTO listPacking(String id);
+
+    /**
+     * 导出装箱清单Excel
+     * @author Luo_WG
+     * @date:  2023-10-30
+     * @param dto
+     * @param response
+     */
+    void exportPacking(BaseIdDTO dto, HttpServletResponse response);
 }

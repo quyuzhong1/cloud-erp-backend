@@ -44,7 +44,11 @@ public class FirstMileCartonDetailEntity extends BaseEntity<FirstMileCartonDetai
     */
     @TableField("pack_qty")
     private Integer packQty;
-
+    /**
+    * 发货单id
+    */
+    @TableField("main_id")
+    private String mainId;
 
     public static final String CARTON_ID = "carton_id";
 

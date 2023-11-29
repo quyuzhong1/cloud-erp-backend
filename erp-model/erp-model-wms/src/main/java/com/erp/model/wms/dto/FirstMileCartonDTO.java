@@ -40,7 +40,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
         * 箱规编号
         */
-        private String boxSpecNo;
+        private Integer boxSpecNo;
 
         /**
         * 包装重量
@@ -66,6 +66,11 @@ public class FirstMileCartonDTO implements Serializable {
         * 箱数
         */
         private Integer boxQty;
+
+        /**
+         * 详情
+         */
+        private List<FirstMileCartonDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -74,6 +79,10 @@ public class FirstMileCartonDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
          * 详情
@@ -81,39 +90,18 @@ public class FirstMileCartonDTO implements Serializable {
         private List<FirstMileCartonDetailDTO.AddDTO> detailList;
     }
 
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-        /**
-         * 详情
-         */
-        private List<FirstMileCartonDetailDTO.UpdateDTO> detailList;
-    }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-        /**
-        * 主表id
-        */
-        private String mainId;
 
         /**
         * 箱规编号
         */
         @NotBlank(message = "箱规编号不能为空")
-        @Size(max = 255,message = "箱规编号最大长度不能超过255位")
-        private String boxSpecNo;
+        @Min(value = 1,message = "箱规编号最小值为1")
+        @Max(value = 999999999,message = "箱规编号最大值为999999999")
+        private Integer boxSpecNo;
 
         /**
         * 包装重量
@@ -182,6 +170,40 @@ public class FirstMileCartonDTO implements Serializable {
 
 
     /**
+     * 导出装箱清单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPackingDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 发货单号
+         */
+        private String code;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * 箱子包装尺寸
+         */
+        private String boxSize;
+        /**
+         * 箱子包装重量
+         */
+        private String packageWeight;
+        /**
+         * 装箱SKU
+         * 例：（sku*qty+sku*qty+...）
+         */
+        private String boxDesc;
+    }
+
+
+    /**
      * 装箱清单
      */
     @Data
@@ -190,6 +212,11 @@ public class FirstMileCartonDTO implements Serializable {
          * 发货单id
          */
         private String mainId;
+
+        /**
+         * 箱子id
+         */
+        private String cartonId;
 
         /**
          * 箱数

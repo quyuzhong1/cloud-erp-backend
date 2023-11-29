@@ -907,9 +907,13 @@ public class FirstMileDeliveryDTO implements Serializable {
     @NoArgsConstructor
     public static class GroupSkuDTO {
         /**
-         * 产品id
+         * 发货单id
          */
         private String id;
+        /**
+         * 箱子id
+         */
+        private String cartonId;
         /**
          * 产品id
          */
@@ -921,6 +925,11 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品产品名称
+         */
+        private String productName;
+
+        /**
          * 发货数量
          */
         private Integer deliveryQty;
@@ -929,5 +938,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 待装箱数量
          */
         private Integer waitPackQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
     }
 }
