@@ -6,7 +6,12 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.sdk.oms.shopee.dto.product.response.*;
+import com.sdk.oms.shopee.dto.global.response.AttributeList;
+import com.sdk.oms.shopee.dto.global.response.AttributeValueList;
+import com.sdk.oms.shopee.dto.global.response.Dimension;
+import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
+import com.sdk.oms.shopee.dto.product.response.Attribute;
+import com.sdk.oms.shopee.dto.product.response.AttributeValue;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,17 +37,17 @@ import java.util.Objects;
 @NoArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
-    private ItemInfo itemInfo;
+    private GlobalItemInfo globalItemInfo;
     private String shopId;
 
     /**
      * 初始化
      */
-    public PlatformShopeeListingDTO(ItemInfo itemInfo, JobTaskDTO dto) {
-        this.itemInfo = itemInfo;
+    public PlatformShopeeListingDTO(GlobalItemInfo globalItemInfo, JobTaskDTO dto) {
+        this.globalItemInfo = globalItemInfo;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(itemInfo.getId() + "_" + dto.getShopId());
+        this.setUniqueId(globalItemInfo.getId() + "_" + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.shopId = dto.getShopId();
@@ -52,20 +58,17 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
      */
     public static PlatformProductDTO convertDTO(PlatformShopeeListingDTO dto) {
         // 原商品信息
-        ItemInfo itemInfo = dto.getItemInfo();
+        GlobalItemInfo itemInfo = dto.getGlobalItemInfo();
         if (Objects.isNull(itemInfo)) {
             return null;
         }
         Long updateTime = itemInfo.getUpdateTime();
         Instant instant = Instant.ofEpochSecond(updateTime);
         ZoneId zone = ZoneId.systemDefault();
-        Image image = itemInfo.getImage();
+        String[] image_url_list = itemInfo.getImage().getImage_url_list();
         String imageUrl = null;
-        if (Objects.nonNull(image)) {
-            List<String> urls = image.getUrls();
-            if (CollectionUtils.isNotEmpty(urls)) {
-                imageUrl = urls.get(0).toString();
-            }
+        if (Objects.nonNull(image_url_list)) {
+            imageUrl = Arrays.asList(image_url_list).get(0);
         }
         PlatformProductDTO productDTO = new PlatformProductDTO()
                 // 类型 platform 平台  warehouse 仓库
@@ -73,11 +76,11 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 平台spu no
                 .setPlatformProductNo(String.valueOf(itemInfo.getId()))
                 // 平台sku no
-                .setPlatformSkuNo(itemInfo.getItemSku())
+                .setPlatformSkuNo(itemInfo.getGlobalItemSku())
                 //sku名称
-                .setPlatformSkuName(itemInfo.getName())
+                .setPlatformSkuName(itemInfo.getGlobalItemName())
                 // 平台产品名称
-                .setPlatformProductName(itemInfo.getName())
+                .setPlatformProductName(itemInfo.getGlobalItemName())
                 //产品包装信息
                 .setProductPacking(processDimension(itemInfo.getDimension(), itemInfo.getWeight()))
                 //产品规格信息
@@ -114,17 +117,17 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
      * @param weight  重量 kg
      * @return
      */
-    public static String processDimension(Dimension dimension, String weight) {
-        if (Objects.isNull(dimension) && StringUtils.isBlank(weight)) {
+    public static String processDimension(Dimension dimension, float weight) {
+        if (Objects.isNull(dimension)) {
             return "";
         }
-        return StrUtil.format("长度:{};宽度:{};高度:{};重量:{};", dimension.getPackageLength(), dimension.getPackageWidth(), dimension.getPackageHeight(), weight);
+        return StrUtil.format("长度:{};宽度:{};高度:{};重量:{};", dimension.getPackage_length(), dimension.getPackage_width(), dimension.getPackage_height(), weight);
     }
 
     @Override
     public String toString() {
         return "PlatformShopeeListingDTO{" +
-                "itemInfo=" + itemInfo +
+                "globalItemInfo=" + globalItemInfo +
                 '}';
     }
 }
