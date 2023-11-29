@@ -7,8 +7,12 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
+import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
@@ -36,17 +40,24 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return null;
+        ImlCreateInboundReq imlCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToIml(createInboundReq);
+        // 修改入库单
+        ImlResponse<String> imlResponse = imlService.createInboundBill(imlCreateInboundReq);
+        return isSuccess(imlResponse.getAsk()) ? success(imlResponse.getData()) : failure(imlResponse.getMessage());
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return null;
+        ImlCreateInboundReq imlCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToIml(createInboundReq);
+        // 修改入库单
+        ImlResponse<String> imlResponse = imlService.editInboundBill(imlCreateInboundReq);
+        return isSuccess(imlResponse.getAsk()) ? success(imlResponse.getData()) : failure(imlResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        return null;
+        ImlResponse<String> response = imlService.cancelInboundBill(cancelInboundReq.getReceivingCode());
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override

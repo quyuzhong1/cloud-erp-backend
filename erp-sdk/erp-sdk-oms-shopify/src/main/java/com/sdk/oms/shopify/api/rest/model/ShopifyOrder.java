@@ -146,14 +146,14 @@ public class ShopifyOrder {
     public String convertBillStatus() {
         if (null == this.fulfillmentStatus || StringUtils.isBlank(this.fulfillmentStatus)){
             // 配货中
-            return SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
         }
         // 已发货
         if ("fulfilled".equalsIgnoreCase(this.fulfillmentStatus)){
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
         // 待发货
-        return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+        return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
     }
 
     private final static String PAYMENT_STATUS = "payment";

@@ -125,17 +125,21 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         Map<String, SoB2cReceiverEntity> map = listByMainId.stream()
 //                .filter(e -> StrUtil.isNotBlank(e.getCustomerId()))
                 .collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
-        receiverList.forEach(platformOrderLogisticsDTO -> {
+        receiverList.forEach(receiverDTO -> {
             SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){
-                entity = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                this.saveOrUpdate(entity);
+                entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
+                entity.setMainId(mainEntity.getId());
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
+                }
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
-                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
+                BeanMapperUtils.copy(receiverDTO, entity2);
                 entity2.setId(entity.getId());
-                this.saveOrUpdate(entity2);
+                if (!this.updateById(entity2)){
+                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
+                }
             }
         });
 

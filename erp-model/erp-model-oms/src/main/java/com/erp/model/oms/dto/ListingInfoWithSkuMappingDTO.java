@@ -156,4 +156,11 @@ public class ListingInfoWithSkuMappingDTO {
         }
         return "";
     }
+
+    public String checkAndGetProductImageUrl() {
+        if (StringUtils.isNotBlank(this.productImageUrl)){
+            return this.productImageUrl;
+        }
+        return "";
+    }
 }

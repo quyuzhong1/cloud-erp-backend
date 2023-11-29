@@ -16,6 +16,10 @@ import java.util.List;
 @Builder
 public class ImlCreateInboundReq {
 
+    // 第三方入库单号（只有编辑才需要填写）
+    @JSONField(name = "receiving_code")
+    private String receivingCode;
+
     //入库单参考号
     @JSONField(name = "reference_no")
     @NotNull(message = "入库单参考号不能为空")

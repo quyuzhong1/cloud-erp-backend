@@ -131,7 +131,9 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
         List<FirstMileDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = this.listByMainIds(ids);
 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listByIds(ids);
-        List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream()
+                .filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()) && !ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus()))
+                .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deliveryEntityList)) {
             throw new ServiceException(ApiError.NOT_APPROVE_NOT_UPDATE_LOGISTICS);
         }

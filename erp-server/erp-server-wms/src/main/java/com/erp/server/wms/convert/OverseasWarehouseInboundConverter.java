@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import com.common.business.mapper.DateMapperWork;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -8,6 +9,7 @@ import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
+import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Component;
 /**
  * 海外仓入库单
  **/
-@Mapper(uses = TypeConversionWorker.class)
+@Mapper(uses = {TypeConversionWorker.class, DateMapperWork.class})
 @Component
 public interface OverseasWarehouseInboundConverter {
 
@@ -115,4 +117,32 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "caAddress2",  source = "collect.collectStreet2"),
     })
     GoodCangCreateInboundReq.CollectingAddress inboundDtoToGoodCangCollect(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "receivingCode",  source = "receivingCode"),
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "incomeType",  source = "incomeType"),
+            @Mapping(target = "receivingType",  source = "receivingType"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
+            @Mapping(target = "smCode",  source = "smCode"),
+            @Mapping(target = "trackingNumber",  source = "trackingNumber"),
+            @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "localDateTimeToDate"),
+            @Mapping(target = "verify",  source = "verify"),
+            @Mapping(target = "contacter",  source = "collect.contacterName"),
+            @Mapping(target = "contactPhone",  source = "collect.contactPhone"),
+            @Mapping(target = "regionIdLevel0",  source = "collect.collectStateId"),
+            @Mapping(target = "regionIdLevel1",  source = "collect.collectCityId"),
+            @Mapping(target = "regionIdLevel2",  source = "collect.collectAreaId"),
+            @Mapping(target = "street",  source = "collect.collectStreet"),
+            @Mapping(target = "items",  source = "items"),
+    })
+    ImlCreateInboundReq inboundDtoToIml(ThirdWarehouseCreateInboundReq createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "productSku",  source = "productSku"),
+            @Mapping(target = "boxNo",  source = "boxNo"),
+            @Mapping(target = "quantity",  source = "quantity"),
+    })
+    ImlCreateInboundReq.Item inboundDtoToImlItem(ThirdWarehouseCreateInboundReq.Item createInboundReq);
 }

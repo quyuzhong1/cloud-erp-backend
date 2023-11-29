@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -29,12 +31,17 @@ public class ThirdWarehouseCreateInboundReq {
     private String referenceNo;
 
     /**
-     * 交货方式
+     * 交货方式 （自送，揽收）
      */
     private String incomeType;
 
     /**
-     * 入库单类型
+     * 入库类型 （自发头程,中转代发）
+     */
+    private String receivingType;
+
+    /**
+     * 入库单类型 （标准入库单，中转入库单(标准货运单)，FBA入库单）
      */
     private String transitType;
 
@@ -57,7 +64,6 @@ public class ThirdWarehouseCreateInboundReq {
      * 物流方式
      */
     private String receivingShippingType;
-
     /**
      * 快递单号
      */

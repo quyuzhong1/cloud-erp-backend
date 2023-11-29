@@ -26,7 +26,6 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -36,7 +35,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -1230,6 +1228,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public FirstMileCartonDTO.ListPackingDTO listPacking(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
+        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }
         FirstMileCartonDTO.ListPackingDTO listPackingDTO = new FirstMileCartonDTO.ListPackingDTO();
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
@@ -1246,26 +1247,29 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public void exportPacking(BaseIdDTO dto, HttpServletResponse response) {
-/*
-        List<FirstMileDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
+    public void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
+        List<FirstMileCartonDTO.ExportPackingDTO> list = baseMapper.exportPacking(dto);
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        // 数据处理
-        fillList(list);
+
+        //只有已装箱的发货单可以查看/导出装箱数据
+        long count = list.stream().map(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
+        }
 
         // 导出数据
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/fbaDelivery.xlsx";
-        String name = "FBA发货单导出";
+        String excelPath = "excel/packingExport.xlsx";
+        String name = "装箱清单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }*/
+        }
     }
 
     /**

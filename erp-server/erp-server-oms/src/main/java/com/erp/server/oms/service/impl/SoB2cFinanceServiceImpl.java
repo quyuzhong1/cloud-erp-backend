@@ -120,18 +120,20 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         List<SoB2cFinanceEntity>  listByMainId = getListByMainId(mainEntity.getId());
         if (CollectionUtils.isEmpty(listByMainId)){
             //新增
-            financesList.forEach(platformOrderLogisticsDTO -> {
-                SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
-                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                this.saveOrUpdate(entity);
+            financesList.forEach(financeDTO -> {
+                SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(financeDTO, mainEntity.getId());
+                if (!this.save(entity)){
+                    throw new ServiceException("[SoB2cFinanceEntity] 保存失败");
+                }
             });
         }else {
-            //转map 比较是否存在记录 不存在则删除 存在则更新
-            financesList.forEach(platformOrderLogisticsDTO -> {
-                SoB2cFinanceEntity entity = new SoB2cFinanceEntity();
-                BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
-                this.saveOrUpdate(entity);
-            });
+            // 更新
+            SoB2cFinanceEntity oldEntity = listByMainId.get(0);
+            PlatformOrderFinanceDTO financeDTO = financesList.get(0);
+            SoB2cFinanceEntity newEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateFinance(oldEntity, financeDTO);
+            if (!this.updateById(newEntity)){
+                throw new ServiceException("[SoB2cFinanceEntity] 更新失败");
+            }
         }
     }
 
