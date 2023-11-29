@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -60,7 +61,7 @@ public class ThirdWarehouseCreateInboundReq {
     /**
      * 预计到达日期
      */
-    private String etaDate;
+    private LocalDateTime etaDate;
 
     /**
      * 联系人，取姓+名
