@@ -223,7 +223,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
 
         OverseasWarehouseInboundDTO.ViewDTO resultDTO = OverseasWarehouseInboundConverter.INSTANCE.entityToViewDTO(entity);
-
+        // 入库类型名称
+        resultDTO.setInstockTypeName(OverseasInstockTypeEnum.getNameByCode(resultDTO.getInstockType()));
+        // 入库状态名称
+        resultDTO.setInstockStatusName(OverseasInstockStatusEnum.getName(resultDTO.getInstockStatus()));
 
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());

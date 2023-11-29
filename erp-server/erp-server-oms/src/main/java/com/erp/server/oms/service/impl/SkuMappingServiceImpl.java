@@ -330,13 +330,25 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("平台sku不存在");
         }
         checkExist(id, listing.getId());
+        // listing 更新匹配关系
+        listing.setMatchResult(true);
+        if (!listingInfoService.updateById(listing)){
+            throw new ServiceException("[listing] 更新失败");
+        }
+        // 无修改
+        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)){
+            return skuMaping.getId();
+        }
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-        this.updateById(skuMaping);
+        if (!this.updateById(skuMaping)){
+            throw new ServiceException("[SkuMapping] 历史映射修改失败");
+        }
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
-        addSkuMaping.setPlatformName(dictBasic.getName());
+        addSkuMaping.setDictPlatform(skuMaping.getDictPlatform());
+        addSkuMaping.setPlatformName(skuMaping.getPlatformName());
         addSkuMaping.setProductSkuNo(skuVOList.get(0).getSkuNo());
         addSkuMaping.setProductSkuId(productSkuId);
         addSkuMaping.setListingId(listing.getId());
@@ -344,7 +356,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setIsExpire(Boolean.FALSE);
         addSkuMaping.setEffectiveTime(now);
         addSkuMaping.setExpireTime(now.plusYears(100));
-        this.save(addSkuMaping);
+        if (!this.save(addSkuMaping)){
+            throw new ServiceException("[SkuMapping] 映射修改新增失败");
+        }
         return addSkuMaping.getId();
     }
 
