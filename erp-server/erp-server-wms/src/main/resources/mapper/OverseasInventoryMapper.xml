@@ -61,8 +61,7 @@
             </foreach>
         </if>
         <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
-            AND oi.download_time >= #{params.updateTimeList[0]}
-            AND oi.download_time &lt;= #{params.updateTimeList[1]}
+            and oi.download_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.download_time
         </if>
         <if test="params.name !=null and params.name!=''">
             AND oi.name ILIKE concat('%', #{params.name}::text ,'%')
@@ -88,8 +87,36 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
-        oi.*
+        oi.id,
+        oi.create_time,
+        oi.update_time,
+        oi.create_user_name,
+        oi.create_user_id,
+        oi.update_user_name,
+        oi.update_user_id,
+        oi.version,
+        oi.is_deleted,
+        oi.warehouse_code,
+        oi.dict_platform,
+        oi.platform_sku,
+        oi.platform_sku_name,
+        oi.product_name,
+        oi.sku_no,
+        oi.sku_id,
+        oi.deliver_onway_qty,
+        oi.pending_qty,
+        oi.sellable_qty,
+        oi.unsellable_qty,
+        oi.reserved_qty,
+        oi.onway_qty,
+        oi.lack_qty,
+        oi.rozen_qty,
+        oi.shipped_qty,
+        oi.download_time,
+        opw.warehouse_name as name
         FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse as opw
+        on opw.platform_warehouse_code = oi.warehouse_code
         <where>
             <include refid="conditionSql"/>
         </where>

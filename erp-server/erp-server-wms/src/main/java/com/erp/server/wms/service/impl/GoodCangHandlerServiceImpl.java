@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
+import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -67,7 +68,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        GoodCangCreateOutboundReq cangCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToGoodCang(createOutboundReq);
+        GoodCangResponse<String> response = goodCangService.createOutboundBill(cangCreateOutboundReq);
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override

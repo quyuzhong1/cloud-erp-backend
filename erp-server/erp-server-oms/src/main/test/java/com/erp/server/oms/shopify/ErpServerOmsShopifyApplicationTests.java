@@ -216,5 +216,12 @@ public class ErpServerOmsShopifyApplicationTests {
         System.out.println(JSONUtil.toJsonStr(actualShopifyFulfillment));
     }
 
-
+    @Test
+    public void transaction() {
+        String accessToken = "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";
+        String shopifyShopDomain = "jim-shop-test.myshopify.com";
+        String orderId = "5484775768363";
+        List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderTransactions(orderId);
+        System.out.println("订单支付信息结果：\n" + JSONUtil.toJsonStr(transactionList));
+    }
 }

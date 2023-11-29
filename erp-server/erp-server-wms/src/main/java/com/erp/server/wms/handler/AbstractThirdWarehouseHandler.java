@@ -9,12 +9,14 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.sqlite.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -46,6 +49,12 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);
+        if(Objects.isNull(authEntity)){
+            throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
+        }
+        if(!authEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+            throw new ServiceException(ApiError.OVERSEAS_PROVIDE_NOT_AUTH);
+        }
         ThirdWarehouseContext.setAuthMap(authEntity.getAuthJson());
     }
 
@@ -83,7 +92,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
-        return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,null);
+        return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
     }
 
     @Override

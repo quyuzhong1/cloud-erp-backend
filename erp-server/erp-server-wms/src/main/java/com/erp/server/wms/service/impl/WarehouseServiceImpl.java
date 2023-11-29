@@ -830,6 +830,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseEntity> list = lambdaQuery()
                 .eq(StringUtils.isNotBlank(dto.getWarehouseName()),WarehouseEntity::getName,dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
+                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()),WarehouseEntity::getId,dto.getWarehouseIdList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();

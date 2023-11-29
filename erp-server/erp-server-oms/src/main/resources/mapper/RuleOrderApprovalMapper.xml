@@ -51,7 +51,7 @@
         FROM rule_order_approval roa
         WHERE roa.is_deleted=FALSE
         <if test="params.name !=null and params.name!=''">
-           AND name ILIKE concat('%', #{params.name} ,'%')
+           AND name ILIKE concat('%',#{params.name}::text,'%')
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">

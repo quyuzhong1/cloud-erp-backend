@@ -87,7 +87,7 @@
             AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > sm.create_time
         </if>
-        ORDER BY sm.id,sm.create_time DESC
+        ORDER BY sm.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
@@ -221,8 +221,8 @@
         AND si.customer_code=(SELECT code FROM customer_info WHERE id=#{params.customerId})
         <if test="params.no!=null and params.no!=''">
             AND (
-            sm.product_sku_no ILIKE concat('%', #{params.no} ,'%') OR
-            sm.platform_sku_no ILIKE concat('%', #{params.no} ,'%')
+            sm.product_sku_no ILIKE concat('%',#{params.no}::text,'%') OR
+            sm.platform_sku_no ILIKE concat('%',#{params.no}::text,'%')
             )
         </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
@@ -305,10 +305,10 @@
         </if>
 
         <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
-            AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
+            AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
         </if>
         <if test="params.productName !=null and params.productName!=''">
-            AND sm.product_name ILIKE concat('%', #{params.productName} ,'%')
+            AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
         </if>
         <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
             AND li.platform_sku_no IN
@@ -338,7 +338,7 @@
             AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > sm.create_time
         </if>
-        ORDER BY sm.id DESC
+        ORDER BY sm.create_time DESC
 
     </select>
 
@@ -384,10 +384,10 @@
                     AND sm.type =#{params.type}
                 </if>
                 <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
-                    AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
+                    AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
                 </if>
                 <if test="params.productName !=null and params.productName!=''">
-                    AND sm.product_name ILIKE concat('%', #{params.productName} ,'%')
+                    AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
                 </if>
                 <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
                     AND li.platform_sku_no IN
@@ -427,14 +427,14 @@
             </otherwise>
         </choose>
 
-        ORDER BY sm.id,sm.create_time DESC
+        ORDER BY sm.create_time DESC
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id           AS listingId,
                sm.product_sku_id,
                sm.product_sku_no,
                li.platform_sku_no       AS flagSkuNo,
-               li.product_name AS flagProductName,
+               li.platform_sku_name AS flagProductName,
                li.platform_sku_no,
                li.platform_product_name
         FROM sku_mapping sm
@@ -456,7 +456,7 @@
             sm.product_sku_id,
             sm.product_sku_no,
             li.platform_sku_no AS flagSkuNo,
-            li.product_name AS flagProductName,
+            li.platform_sku_name AS flagProductName,
             li.platform_sku_no,
             li.platform_product_name
         FROM sku_mapping sm

@@ -200,6 +200,12 @@ public interface MongoTableNameContant {
      */
     String REPORT_AMAZON_RESERVED = "report_amazon_reserved";
 
+    // Shopify数据库表名
+    /**
+     * Shopify订单表
+     */
+    String THIRD_SYSTEM_SHOPIFY_ORDER = "third_system_Shopify_order";
+
 
     /**
      * 根据任务 key 获取表名

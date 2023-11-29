@@ -24,7 +24,7 @@ public class AliExpressOrder  implements Serializable {
     /**
      * 订单创建时间
      */
-    @JSONField(name = "order_sn")
+    @JSONField(name = "gmt_create")
     private String  gmtCreate;
 
     /**
@@ -43,7 +43,7 @@ public class AliExpressOrder  implements Serializable {
      * 当前状态的剩余时间（负数表示超时时间）
      */
     @JSONField(name = "timeout_left_time")
-    private Integer timeoutLeftTime;
+    private Long timeoutLeftTime;
 
     /**
      * 买家登录id

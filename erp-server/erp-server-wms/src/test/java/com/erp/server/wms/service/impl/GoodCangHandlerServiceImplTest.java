@@ -4,6 +4,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -154,6 +155,28 @@ public class GoodCangHandlerServiceImplTest {
 
     @Test
     public void testCreateOutboundBill() {
+        ThirdWarehouseCreateOutboundReq createOutboundReq = ThirdWarehouseCreateOutboundReq.builder()
+                .referenceNo("WJTEST1234")
+                .shippingMethod("RETURN-OR")
+                .warehouseCode("USEA")
+                .verify(1)
+                .receiverInfo(ThirdWarehouseCreateOutboundReq.ReceiverInfo.builder()
+                        .name("mark")
+                        .phone("123234567")
+                        .countryCode("US")
+                        .province("nowyork")
+                        .city("hs")
+                        .address1("13")
+                        .zipcode("51200")
+                        .build())
+                .items(Arrays.asList(ThirdWarehouseCreateOutboundReq.Item.builder()
+                        .productSku("USRAD01454-C")
+                        .quantity(5)
+                        .build()))
+                .build();
+        ApiResult<String> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726456935660867586");
+        System.out.println(code);
+        System.out.println(code.getData());
     }
 
     @Test

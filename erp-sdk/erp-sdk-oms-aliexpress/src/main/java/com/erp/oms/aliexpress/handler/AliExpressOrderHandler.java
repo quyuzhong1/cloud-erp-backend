@@ -76,6 +76,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
                 endTime(LocalDateUtil.formatTime(nextTime, formatStr)).
                 baseUrl(shopInfoDTO.getBaseUrl()).
                 apiName(apiName).
+                currentPage(1).
                 token(shopInfoDTO.getToken()).build();
         List<AliExpressOrder> orderList = new ArrayList<>(20);
         try {
