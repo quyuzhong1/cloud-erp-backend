@@ -253,6 +253,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //采购数量
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
 
+            //赠品
+            jsonObject.set("isGift", purchaseOrderDetailEntity.getIsGift());
             //计价数量
             jsonObject.set("priceBaseQty", detail.getStockInQty());
             //含税单价
