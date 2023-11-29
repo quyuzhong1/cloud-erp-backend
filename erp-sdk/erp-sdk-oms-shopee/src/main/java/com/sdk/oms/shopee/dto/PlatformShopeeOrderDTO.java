@@ -234,6 +234,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
+                .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))
                 .logisticsCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                 .build();
         financeDTOList.add(dto);
