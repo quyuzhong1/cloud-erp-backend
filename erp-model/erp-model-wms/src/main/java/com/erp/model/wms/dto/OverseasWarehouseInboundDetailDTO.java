@@ -140,6 +140,10 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
          */
         private String receiveType;
 
+        /**
+         * 物流跟踪号
+         */
+        private String trackingNo;
 
     }
 

@@ -1,6 +1,5 @@
 package com.erp.server.oms.service.authorize;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
@@ -17,20 +16,14 @@ import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.oms.aliexpress.constants.ApiNamePathConstants;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.AuthSaveData;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
-import com.sdk.oms.walmart.api.WalmartStaticKey;
-import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
-import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
-import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -136,7 +129,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
             JSONObject jsonObject = aliExpressAuthService.generateToken(paramMap);
             String resultCode = jsonObject.getOrDefault("code", "").toString();
             //成功
-            if (ApiNamePathConstants.SUCCESS_CODE.equals(resultCode)) {
+            if (AliexpressConstants.SUCCESS_CODE.equals(resultCode)) {
                 //根据店铺id 获取到授权信息
                 ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
                 if (Objects.isNull(shopAuth)) {
@@ -157,6 +150,15 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
                 shopInfo.setIsGenTask(Boolean.TRUE);
                 shopInfoService.updateById(shopInfo);
+                AliExpressShopInfoDTO shopInfoDTO=new AliExpressShopInfoDTO();
+                shopInfoDTO.setId(shopId);
+                shopInfoDTO.setClientId(cfgAppClient.getClientId());
+                shopInfoDTO.setClientSecret(cfgAppClient.getClientSecret());
+                shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
+                shopInfoDTO.setName(shopInfo.getName());
+                shopInfoDTO.setToken(token);
+                String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
+                redisUtil.set(tokenKey, shopInfoDTO,expiresIn);
             } else {
                 String msg = jsonObject.getOrDefault("message", "").toString();
                 throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, msg);

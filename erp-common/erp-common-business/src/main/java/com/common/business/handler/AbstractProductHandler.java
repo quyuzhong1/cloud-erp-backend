@@ -21,7 +21,7 @@ public abstract class AbstractProductHandler<T extends CleanBaseDTO,R extends Un
      * 平台数据下载数据
      * @return
      */
-    public abstract List<T> download(JobTaskDTO data);
+    public abstract List<T> download(JobTaskDTO data) ;
 
     /**
      * 平台数据转换为mq数据

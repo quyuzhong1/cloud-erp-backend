@@ -12,9 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -114,6 +116,22 @@ public class ShopifyVariant {
 			}
 		}
 		return resultOption;
+	}
+
+	/**
+	 * 重量换算
+	 */
+	public String checkAndGetWeight() {
+		if (StringUtils.isBlank(this.weight) || StringUtils.isBlank(this.weightUnit)){
+			return "";
+		}
+		BigDecimal resultWeight = new BigDecimal(this.weight);
+		if ("lb".equalsIgnoreCase(this.weightUnit)){
+			resultWeight = resultWeight.multiply(new BigDecimal("0.453"));
+		} else if ("oz".equalsIgnoreCase(this.weightUnit)){
+			resultWeight = resultWeight.multiply(new BigDecimal("0.028"));
+		}
+		return resultWeight.setScale(4, RoundingMode.DOWN).stripTrailingZeros() + "kg";
 	}
 
 }

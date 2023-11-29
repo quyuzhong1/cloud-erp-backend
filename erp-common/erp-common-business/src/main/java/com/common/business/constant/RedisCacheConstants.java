@@ -16,7 +16,10 @@ public interface RedisCacheConstants {
      */
     public long EXPIRATION = 7;
 
-    //邮箱验证码
+    /**
+     *  邮箱验证码
+     */
+
     String CODE_OF_EMAIL = "email_code_";
 
     /**

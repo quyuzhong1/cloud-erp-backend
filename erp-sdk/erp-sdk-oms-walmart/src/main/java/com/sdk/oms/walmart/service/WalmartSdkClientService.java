@@ -6,13 +6,17 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.UUID;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -28,7 +32,7 @@ import java.util.Map;
 @Component
 public class WalmartSdkClientService {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         String baseUrl = "https://marketplace.walmartapis.com/v3/";
         String clientId = "2434a35c-7c42-4420-9618-0c179b68a8c2";
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
@@ -81,6 +85,9 @@ public class WalmartSdkClientService {
         param.put("grant_type", "client_credentials");
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headers);
         WalmartTokenDTO tokenDTO = JSONUtil.toBean(bodyStr, WalmartTokenDTO.class);
+        if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
+            throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, bodyStr);
+        }
         return tokenDTO;
     }
 

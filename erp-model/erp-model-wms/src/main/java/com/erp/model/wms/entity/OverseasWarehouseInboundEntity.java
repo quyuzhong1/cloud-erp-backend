@@ -129,6 +129,13 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
      */
     @TableField("overseas_warehouse_inbound_id")
     private String overseasWarehouseInboundId;
+
+    /**
+     * 物流跟踪号
+     */
+    @TableField("tracking_no")
+    private String trackingNo;
+
     /**
      * 数量
      */

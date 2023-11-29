@@ -91,4 +91,14 @@ public class ShopInfoFeignController extends BaseController {
     public List<ShopInfoEntity> listShopInfoByWarehouseIds(@RequestBody List<String> warehouseIds) {
         return shopInfoService.listShopInfoByWarehouseIds(warehouseIds);
     }
+
+    /**
+     * 获取授权信息
+     * @param shopId
+     * @return
+     */
+    @PostMapping("/getShopAuthByShopId")
+    public ShopAuthEntity getShopAuth(@RequestBody String shopId) {
+        return shopAuthService.getByShopId(shopId);
+    }
 }

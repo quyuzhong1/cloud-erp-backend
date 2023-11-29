@@ -82,80 +82,75 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(dto.getClientSecret())) {
             throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_SECRET_NOT_NULL);
         }
-        try {
-            ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-            //根据店铺id 获取到授权信息
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
-            if (Objects.isNull(shopAuth)) {
-                shopAuth = new ShopAuthEntity();
-            }
-            //获取地址
-            String url = WalmartStaticKey.baseUrl + "token";
-
-            WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
-            WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
-            if (ObjectUtil.isEmpty(walmartTokenDTO)) {
-                return Boolean.FALSE;
-            }
-
-            String appClientId = shopAuth.getAppClientId();
-            //判断是否有授权过，如果没有就新增保存店铺秘钥信息，如果有就修改秘钥信息重新授权
-            if (StringUtils.isBlank(shopAuth.getAppClientId())) {
-                CfgAppClientDTO.AddDTO addDTO = new CfgAppClientDTO.AddDTO();
-                addDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
-                addDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
-                addDTO.setDictPlatform(dto.getPlatformCode());
-                addDTO.setClientId(dto.getClientId());
-                addDTO.setClientSecret(dto.getClientSecret());
-                appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
-                // 授权后添加任务
-                dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(), shopInfo.getDictPlatform()));
-            } else {
-                CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
-                updateDTO.setId(appClientId);
-                updateDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
-                updateDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
-                updateDTO.setDictPlatform(dto.getPlatformCode());
-                updateDTO.setClientId(dto.getClientId());
-                updateDTO.setClientSecret(dto.getClientSecret());
-                dmpTaskFeign.updateCfgAppClient(updateDTO);
-            }
-            shopAuth.setShopId(shopId);
-            shopAuth.setExpiresIn(Integer.valueOf(walmartTokenDTO.getExpiresIn()));
-            shopAuth.setAppClientId(appClientId);
-            shopAuth.setAccessToken(walmartTokenDTO.getAccessToken());
-            shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-            shopInfo.setAuthTime(LocalDateTime.now());
-            shopAuthService.saveOrUpdate(shopAuth);
-            boolean result = shopInfoService.updateById(shopInfo);
-            shopInfo.setIsGenTask(Boolean.TRUE);
-            shopInfoService.updateShopInfoById(shopInfo);
-            // 添加到缓存redis
-            WalmartShopInfoDTO shopInfoDTO = new WalmartShopInfoDTO()
-                    // 店铺ID
-                    .setId(shopInfo.getId())
-                    // 访问token
-                    .setAccessToken(walmartTokenDTO.getAccessToken())
-                    // 店铺名称
-                    .setName(shopInfo.getName())
-                    // 区域id
-                    .setDictAreaCode(shopInfo.getDictAreaCode())
-                    // 国家id
-                    .setDictCountryCode(shopInfo.getDictCountryCode())
-                    // 负责人id
-                    .setChargeId(shopInfo.getChargeId())
-                    //平台账户id
-                    .setClientId(dto.getClientId())
-                    //平台店铺秘钥
-                    .setClientSecret(dto.getClientSecret());
-            // platform-token:平台名称:店铺ID
-            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopId);
-            redisUtil.set(tokenKey, shopInfoDTO);
-            return result;
-        } catch (Exception e) {
-            log.error("沃尔玛平台店铺授权出错了===> bodyStr==>{} e==>{}", dto, e);
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        //根据店铺id 获取到授权信息
+        ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
+        if (Objects.isNull(shopAuth)) {
+            shopAuth = new ShopAuthEntity();
         }
-        return Boolean.FALSE;
+        //获取地址
+        String url = WalmartStaticKey.baseUrl + "token";
+
+        WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+        WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
+        if (ObjectUtil.isEmpty(walmartTokenDTO)) {
+            return Boolean.FALSE;
+        }
+
+        String appClientId = shopAuth.getAppClientId();
+        //判断是否有授权过，如果没有就新增保存店铺秘钥信息，如果有就修改秘钥信息重新授权
+        if (StringUtils.isBlank(shopAuth.getAppClientId())) {
+            CfgAppClientDTO.AddDTO addDTO = new CfgAppClientDTO.AddDTO();
+            addDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
+            addDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
+            addDTO.setDictPlatform(dto.getPlatformCode());
+            addDTO.setClientId(dto.getClientId());
+            addDTO.setClientSecret(dto.getClientSecret());
+            appClientId = dmpTaskFeign.addCfgAppClient(addDTO);
+            // 授权后添加任务
+            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+        } else {
+            CfgAppClientDTO.UpdateDTO updateDTO = new CfgAppClientDTO.UpdateDTO();
+            updateDTO.setId(appClientId);
+            updateDTO.setBusinessType(AppClientEnum.WALMART_AUTHORIZE.getBusinessType());
+            updateDTO.setPlatformType(AppClientEnum.WALMART_AUTHORIZE.getPlatformType());
+            updateDTO.setDictPlatform(dto.getPlatformCode());
+            updateDTO.setClientId(dto.getClientId());
+            updateDTO.setClientSecret(dto.getClientSecret());
+            dmpTaskFeign.updateCfgAppClient(updateDTO);
+        }
+        shopAuth.setShopId(shopId);
+        shopAuth.setExpiresIn(Integer.valueOf(walmartTokenDTO.getExpiresIn()));
+        shopAuth.setAppClientId(appClientId);
+        shopAuth.setAccessToken(walmartTokenDTO.getAccessToken());
+        shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        shopInfo.setAuthTime(LocalDateTime.now());
+        shopAuthService.saveOrUpdate(shopAuth);
+        boolean result = shopInfoService.updateById(shopInfo);
+        shopInfo.setIsGenTask(Boolean.TRUE);
+        shopInfoService.updateShopInfoById(shopInfo);
+        // 添加到缓存redis
+        WalmartShopInfoDTO shopInfoDTO = new WalmartShopInfoDTO()
+                // 店铺ID
+                .setId(shopInfo.getId())
+                // 访问token
+                .setAccessToken(walmartTokenDTO.getAccessToken())
+                // 店铺名称
+                .setName(shopInfo.getName())
+                // 区域id
+                .setDictAreaCode(shopInfo.getDictAreaCode())
+                // 国家id
+                .setDictCountryCode(shopInfo.getDictCountryCode())
+                // 负责人id
+                .setChargeId(shopInfo.getChargeId())
+                //平台账户id
+                .setClientId(dto.getClientId())
+                //平台店铺秘钥
+                .setClientSecret(dto.getClientSecret());
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopId);
+        redisUtil.set(tokenKey, shopInfoDTO);
+        return result;
     }
 
     /**
