@@ -4,11 +4,13 @@ import com.common.business.mapper.DateMapperWork;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
+import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -145,4 +147,27 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "quantity",  source = "quantity"),
     })
     ImlCreateInboundReq.Item inboundDtoToImlItem(ThirdWarehouseCreateInboundReq.Item createInboundReq);
+
+    @Mappings({
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "shippingMethod",  source = "shippingMethod"),
+            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "verify",  source = "verify"),
+            @Mapping(target = "name",  source = "receiverInfo.name"),
+            @Mapping(target = "phone",  source = "receiverInfo.phone"),
+            @Mapping(target = "countryCode",  source = "receiverInfo.countryCode"),
+            @Mapping(target = "province",  source = "receiverInfo.province"),
+            @Mapping(target = "city",  source = "receiverInfo.city"),
+            @Mapping(target = "address1",  source = "receiverInfo.address1"),
+            @Mapping(target = "address2",  source = "receiverInfo.address2"),
+            @Mapping(target = "zipcode",  source = "receiverInfo.zipcode"),
+            @Mapping(target = "itemList",  source = "items"),
+    })
+    GoodCangCreateOutboundReq outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq createOutboundReq);
+
+    @Mappings({
+            @Mapping(target = "productSku",  source = "productSku"),
+            @Mapping(target = "quantity",  source = "quantity"),
+    })
+    GoodCangCreateOutboundReq.Item outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
 }
