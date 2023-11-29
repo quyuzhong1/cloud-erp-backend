@@ -10,6 +10,7 @@ import com.sdk.oms.shopify.api.rest.model.ShopifyVariant;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
@@ -64,7 +65,10 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
         // 产品规格信息
         String productSpec = variant.checkAndGetOptions(sourceProduct.getOptions());
         // 图片默认
-        String imageUrl = sourceProduct.getImage().getSource();
+        String imageUrl = "";
+        if (null != sourceProduct.getImage()){
+            imageUrl = StringUtils.isBlank(sourceProduct.getImage().getSource()) ? "" : sourceProduct.getImage().getSource();
+        }
         // 规格的图片不为空查询
         if (StringUtils.isNotBlank(variant.getImageId())) {
             // 找到对应ImageId的图片
@@ -76,15 +80,15 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
             }
         }
         // 包装信息
-        String packing = "包装重量:".concat(variant.getWeight()).concat(variant.getWeightUnit());
+        String packing = "包装重量:".concat(variant.checkAndGetWeight());
 
         PlatformProductDTO resultDto = new PlatformProductDTO()
                 // 平台spu no
                 .setPlatformProductNo(variant.getProductId())
                 // 平台sku no
-                .setPlatformSkuNo(variant.getId())
+                .setPlatformSkuNo(variant.getSku())
                 // 平台产品名称
-                .setPlatformSkuName(sourceProduct.getHandle())
+                .setPlatformSkuName(variant.getTitle())
                 // 平台产品名称
                 .setPlatformProductName(sourceProduct.getHandle())
                 // 类型 platform 平台  warehouse 仓库
