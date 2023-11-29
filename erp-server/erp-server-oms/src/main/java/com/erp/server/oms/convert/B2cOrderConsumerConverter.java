@@ -50,7 +50,6 @@ public interface B2cOrderConsumerConverter {
 
     @Mappings({
             // 更新的内容
-            @Mapping(target = "imageUrl", source = "detailDTO.imageUrl"),
             @Mapping(target = "sellerSkuNo", source = "detailDTO.sellerSkuNo"),
             @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
             @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),

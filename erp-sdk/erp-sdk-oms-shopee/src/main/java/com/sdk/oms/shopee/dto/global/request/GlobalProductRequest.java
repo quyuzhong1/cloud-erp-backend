@@ -1,4 +1,4 @@
-package com.sdk.oms.shopee.dto.product.request;
+package com.sdk.oms.shopee.dto.global.request;
 
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 @Data
 @Builder
-public class ProductRequest implements Serializable {
+public class GlobalProductRequest implements Serializable {
     String host;
     String path;
     String token;
@@ -22,7 +22,7 @@ public class ProductRequest implements Serializable {
     long merchantId;
     long partnerId;
     String tmpPartnerKey;
-    Integer offset;
+    String offset;
     Long timeFrom;
     Long timeTo;
     String itemIdList;
