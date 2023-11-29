@@ -36,9 +36,15 @@ public class SoB2cLogisticsDTO implements Serializable {
         private String  id;
 
         /**
-        * 物流方式名称
+        * 物流渠道名
         */
-        private String dictLogisticsMethodName;
+        private String logisticsChannelName;
+
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
 
         /**
         * 包装辅料sku编码
@@ -90,10 +96,10 @@ public class SoB2cLogisticsDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
-        * 物流方式 （logisticsMethod字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+        * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/25999
         */
         @Size(max = 32,message = "物流方式最大长度不能超过32位")
-        private String dictLogisticsMethod;
+        private String logisticsChannelId;
 
         /**
         * 预估运费

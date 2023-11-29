@@ -22,7 +22,7 @@
         <result column="sourceId" property="sourceId"/>
         <result column="sourceType" property="sourceType"/>
         <result column="sourceCode" property="sourceCode"/>
-        <result column="dictLogisticsMethod" property="dictLogisticsMethod"/>
+        <result column="logisticsChannelId" property="logisticsChannelId"/>
         <result column="shippingCost" property="shippingCost"/>
         <result column="shippingCostCurrency" property="shippingCostCurrency"/>
         <result column="logisticsCode" property="logisticsCode"/>
@@ -60,7 +60,7 @@
         <result column="dict_platform" property="dictPlatform"/>
         <result column="shop_id" property="shopId"/>
         <result column="buyerName" property="buyerName"/>
-        <result column="logistics_channel_name" property="dictLogisticsMethod"/>
+        <result column="logistics_channel_name" property="logisticsChannelName"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -86,7 +86,7 @@
          sb2c.source_id as sourceId,
          sb2c.source_type as sourceType,
          sb2c.source_code as sourceCode,
-        sb2cl.logistics_channel_name as dictLogisticsMethod,
+        sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
         end
@@ -267,7 +267,7 @@
         sb2cr.second_address as secondAddress,
         sb2cr.full_address as fullAddress,
         sb2cd.warehouse_id as warehouseId,
-        sb2cl.logistics_channel_name as dictLogisticsMethod
+        sb2cl.logistics_channel_name as logisticsChannelName
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
@@ -457,9 +457,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.dictLogisticsMethodList != null and params.dictLogisticsMethodList.size > 0">
-                and sb2cl.logistics_channel_name in
-                <foreach collection="params.dictLogisticsMethodList" item="item" open="(" separator="," close=")">
+            <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
+                and sb2cl.logistics_channel_id in
+                <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>

@@ -217,8 +217,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             for (JSONObject jsonObject : jsonObjectList) {
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
                 if (matchResult) {
-                    ruleMatchResult.setLogisticsSupplier(item.getLogisticsSupplierId());
+                    ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                     ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
+                    ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
                     return ruleMatchResult;
                 }
             }
