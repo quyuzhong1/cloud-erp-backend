@@ -462,7 +462,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
 
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
@@ -474,12 +474,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuVO)) {
-                viewDTO.setProductName(skuVO.getSkuNo());
+                viewDTO.setProductName(skuVO.getSkuName());
                 viewDTO.setImageUrl(skuVO.getSkuImagesUrl());
             }
 
             //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = ListStockSkuNoByProductSkuIdViews.stream().filter(req -> req.getProductSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream().filter(req -> req.getProductSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(listStockSkuNoByProductSkuIdView)) {
                 viewDTO.setStockSku(listStockSkuNoByProductSkuIdView.getStockSku());
                 viewDTO.setStockSkuName(listStockSkuNoByProductSkuIdView.getStockSkuName());
