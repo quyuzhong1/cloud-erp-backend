@@ -74,6 +74,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/26 9:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:skuMatrix",keyGenerator = "myKeyGenerator")
     public List<List<Object>> skuMatrix(BiFilterDTO biFilterDTO) {
         List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
@@ -96,6 +97,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/26 10:42
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:shopMatrix",keyGenerator = "myKeyGenerator")
     public List<List<Object>> shopMatrix(BiFilterDTO biFilterDTO) {
         List<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
@@ -118,6 +120,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/26 15:29
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:shopContrastTrend",keyGenerator = "myKeyGenerator")
     public List<List<Object>> shopContrastTrend(BiFilterDTO biFilterDTO) {
         List<ContrastTrendVO> contrastTrendVOList = baseMapper.shopContrastTrend(biFilterDTO);
 
@@ -160,6 +163,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/26 10:35
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:categoryMatrix",keyGenerator = "myKeyGenerator")
     public List<List<Object>> categoryMatrix(BiFilterDTO biFilterDTO) {
         List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
@@ -182,6 +186,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:saleDetailSku",keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailSku(BiFilterDTO biFilterDTO) {
         //获取销售额
         TargetSaleSumVO targetSaleSumVO = dmpOrderInfoService.sumSales(biFilterDTO);
@@ -287,6 +292,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:saleDetailShop",keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailShop(BiFilterDTO biFilterDTO) {
         //获取销售额
         TargetSaleSumVO targetSaleSumVO = dmpOrderInfoService.sumSales(biFilterDTO);
@@ -371,6 +377,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
+    @Cacheable(cacheNames = "cache:bi:saleDetailUser",keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailUser(BiFilterDTO biFilterDTO) {
         //获取销售额
         TargetSaleSumVO targetSaleSumVO = dmpOrderInfoService.sumSales(biFilterDTO);
