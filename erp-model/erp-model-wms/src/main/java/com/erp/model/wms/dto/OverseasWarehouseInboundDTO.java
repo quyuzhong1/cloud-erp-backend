@@ -574,6 +574,15 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private String trackingNo;
 
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
     }
 
     /**

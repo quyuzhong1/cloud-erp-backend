@@ -124,6 +124,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!overseasWarehouseInboundDetailService.saveBatch(detailEntityList)){
             throw new ServiceException("海外仓入库单明细保存失败");
         }
+        if (CollectionUtils.isEmpty(addDTO.getAttachUrlList())){
+            return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
+        }
         //保存附件
         Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
         TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
@@ -143,7 +146,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         OverseasWarehouseInboundEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单"));
         OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = BeanMapperUtils.map(OverseasWarehouseInboundEntity.class, updateDTO);
-
+        old.setInstockType(updateDTO.getInstockType().getCode());
+        old.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
         // 数据处理
         handleData(overseasWarehouseInboundEntity);
         log.info("编辑 开始修改海外仓入库单数据，单号：【{}】", old.getCode());
@@ -158,6 +162,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), overseasWarehouseInboundEntity.getCode(), "海外仓入库单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundEntity, null, overseasWarehouseInboundEntity.getId(), msg);
+
+        //保存附件
+        Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
+        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, old.getId());
+
         return Boolean.TRUE;
     }
 
