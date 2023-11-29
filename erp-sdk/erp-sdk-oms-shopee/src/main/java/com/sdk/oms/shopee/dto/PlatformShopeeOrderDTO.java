@@ -46,7 +46,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         this.shopId = dto.getShopId();
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(orderDetail.getOrdersn());
+        this.setUniqueId(orderDetail.getOrdersn() + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -208,7 +208,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         List<Package> packages = orderDetail.getPackages();
-        packages.forEach(p->{
+        packages.forEach(p -> {
             Instant instant = Instant.ofEpochSecond(orderDetail.getShipByDate());
             ZoneId zone = ZoneId.systemDefault();
             PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
