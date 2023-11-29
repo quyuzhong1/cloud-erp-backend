@@ -99,10 +99,14 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                     .timeFrom(timeFrom)
                     .timeTo(timeTo)
                     .build();
+            List<GlobalItemInfo> list = new ArrayList<>();
             try {
-                shopeeGlobalProductService.getAllProduct(productRequest, itemInfos);
+                shopeeGlobalProductService.getAllProduct(productRequest, list);
             } catch (Exception e) {
                 log.error("获取产品数据异常:{}", e.getMessage());
+            }
+            if (CollectionUtils.isNotEmpty(list)) {
+                itemInfos.addAll(list);
             }
         }
         // 返回下载源数据

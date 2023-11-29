@@ -62,7 +62,7 @@ public class GlobalItemInfo implements Serializable {
     @JSONField(name ="has_model")
     private Boolean hasModel;
     @JSONField(name ="video")
-    private Video video;
+    private List<Video> videos;
     @JSONField(name ="brand")
     private Brand brand;
     /**
