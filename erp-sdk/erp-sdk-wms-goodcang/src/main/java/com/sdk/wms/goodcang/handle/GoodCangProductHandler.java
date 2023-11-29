@@ -53,8 +53,8 @@ public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCa
         GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
         goodCangGetSkuReq.setProductUpdateTimeFrom(lastTime.format(formatter));
         goodCangGetSkuReq.setProductUpdateTimeTo(nextTime.format(formatter));
-        //最大页码200，从第一页开始查询
-        goodCangGetSkuReq.setPageSize(200);
+        //最大页码100，从第一页开始查询
+        goodCangGetSkuReq.setPageSize(100);
 
         List<GoodCangSkuResp> respList = new ArrayList<>();
         int page = 1;
@@ -63,7 +63,7 @@ public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCa
             GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
             checkResponse(goodCangResponse);
             respList.addAll(goodCangResponse.getData());
-            if (goodCangResponse.getCount() <= page * 200) {
+            if (goodCangResponse.getCount() <= page * 100) {
                 break;
             }
             page++;
