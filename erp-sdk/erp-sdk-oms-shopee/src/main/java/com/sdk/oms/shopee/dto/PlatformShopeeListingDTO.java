@@ -57,7 +57,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
             return null;
         }
         Long updateTime = itemInfo.getUpdateTime();
-        Instant instant = Instant.ofEpochMilli(updateTime);
+        Instant instant = Instant.ofEpochSecond(updateTime);
         ZoneId zone = ZoneId.systemDefault();
         Image image = itemInfo.getImage();
         String imageUrl = null;
@@ -74,6 +74,8 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 .setPlatformProductNo(String.valueOf(itemInfo.getId()))
                 // 平台sku no
                 .setPlatformSkuNo(itemInfo.getItemSku())
+                //sku名称
+                .setPlatformSkuName(itemInfo.getName())
                 // 平台产品名称
                 .setPlatformProductName(itemInfo.getName())
                 //产品包装信息

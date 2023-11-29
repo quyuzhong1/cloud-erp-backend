@@ -129,6 +129,8 @@ public class PlatformAmazonListingDTO extends CleanBaseDTO {
                 // 平台sku no
                 .setPlatformSkuNo(sourceEntity.getSellerSku())
                 // 平台产品名称
+                .setPlatformSkuName(sourceEntity.getItemName())
+                // 平台产品名称
                 .setPlatformProductName(sourceEntity.getItemName())
                 // 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")

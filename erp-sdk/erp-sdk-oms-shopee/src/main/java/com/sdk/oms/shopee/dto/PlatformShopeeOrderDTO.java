@@ -46,7 +46,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         this.shopId = dto.getShopId();
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(orderDetail.getOrdersn() + dto.getShopId());
+        this.setUniqueId(orderDetail.getOrdersn() + "_" + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
