@@ -87,7 +87,7 @@ public class AliExpressOrderService {
         JSONObject resultJsONObject=jsonObject.getJSONObject("result");
         Boolean  success=resultJsONObject.getBooleanValue("success");
         //失败
-        if(success){
+        if(!success){
             log.error("拉取速卖通订单失败>>>>>>>{}",resultJsONObject.getOrDefault("error_message","").toString());
             return;
         }
