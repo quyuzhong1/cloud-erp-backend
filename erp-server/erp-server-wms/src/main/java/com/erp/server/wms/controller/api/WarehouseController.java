@@ -298,6 +298,18 @@ public class WarehouseController extends BaseController {
     }
 
     /**
+     * 仓库列表(所有关联海外服务商)
+     *
+     * @Author Jim
+     * @date 2023-11-29
+     */
+    @GetMapping("/listOverseasWarehouse")
+    public ApiResult<List<WarehouseDTO.ListDTO>> listOverseasWarehouse() {
+        List<WarehouseDTO.ListDTO> list = warehouseService.listOverseasWarehouse();
+        return success(list);
+    }
+
+    /**
      * 仓库列表(树状)
      */
     @GetMapping("/listTree")

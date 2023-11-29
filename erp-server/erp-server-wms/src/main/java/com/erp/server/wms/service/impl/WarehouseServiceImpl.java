@@ -20,20 +20,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
@@ -111,50 +108,41 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        List<ApproveStatusEnum> statusList = new ArrayList<>(2);
-        statusList.add(ApproveStatusEnum.APPROVE);
         List<WarehouseEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+
+        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+    }
+
+    /**
+     * 填充列表信息
+     */
+    private void fillListData(List<WarehouseDTO.ListDTO> resultList, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<ApproveStatusEnum> statusList = Collections.singletonList(ApproveStatusEnum.APPROVE);
+
+        List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
 
         for (WarehouseDTO.ListDTO listDTO : resultList) {
+            // 组织信息
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
             if (!statusList.contains(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
-            //平台
-            String dictPlatform = "";
-            //平台名称
-            String platformName = "";
-            List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
-            if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
-                // 取指定服务商
-                Map<String, OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOMap = listWithWarehouseDTOS.stream().collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getCode, Function.identity()));
-                OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = null;
-                if (StringUtils.isBlank(listDTO.getDictPlatform())) {
-                    warehouseDTO = warehouseDTOMap.get(listDTO.getDictPlatform());
-                }
-                // 设置平台信息
-                if (null != warehouseDTO) {
-                    OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(warehouseDTO.getCode());
-                    if (null != platformEnum) {
-                        dictPlatform = platformEnum.getCode();
-                        platformName = platformEnum.getName();
-                    }
-                }
-            }
-            listDTO.setDictPlatform(dictPlatform);
-            listDTO.setPlatformName(platformName);
+            //平台信息
+            OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
+            listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
+            listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
         }
-
-        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
     @Override
@@ -221,6 +209,48 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
             throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList) );
         }
+    }
+
+    @Override
+    public List<WarehouseDTO.ListDTO> listOverseasWarehouse() {
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        if (warehouseBindMap.isEmpty()){
+            return Collections.emptyList();
+        }
+        // 查询对应仓库
+        Set<String> ids = warehouseBindMap.keySet();
+        List<WarehouseEntity> list = lambdaQuery()
+                .in(WarehouseEntity::getId, ids)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        // 填充其他信息
+        this.fillListData(resultList, warehouseBindMap);
+
+        return resultList.stream()
+                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
+                .collect(Collectors.toList());
+                    
+
+    }
+
+    /**
+     * 检查绑定海外仓库服务商信息
+     */
+    private OmsPlatformEnum checkAndGetPlatformInfo(WarehouseDTO.ListDTO listDTO, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
+        if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
+            // 取指定服务商，否则取第一个
+            OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = listWithWarehouseDTOS.stream().findFirst().orElse(null);
+            // 设置平台信息
+            if (null != warehouseDTO) {
+                return OmsPlatformEnum.getByCode(warehouseDTO.getCode());
+            }
+        }
+        return null;
     }
 
 
@@ -802,53 +832,18 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
 
-        for (WarehouseDTO.ListDTO listDTO : resultList) {
-            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-            listDTO.setOrgName(orgName);
-            if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
-                listDTO.setDisabled(true);
-            }
-            //平台
-            String dictPlatform = "";
-            //平台名称
-            String platformName = "";
-            List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
-            if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
-                // 取指定服务商，否则取第一个
-                Map<String, OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOMap = listWithWarehouseDTOS.stream().collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getCode, Function.identity()));
-                OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = null;
-                if (StringUtils.isBlank(dto.getDictPlatform())) {
-                    warehouseDTO = warehouseDTOMap.get(dto.getDictPlatform());
-                }
-                if (CollectionUtils.isNotEmpty(dto.getDictPlatformList())) {
-                    warehouseDTO = listWithWarehouseDTOS.stream().findFirst().orElse(null);
-                }
-                // 设置平台信息
-                if (null != warehouseDTO) {
-                    OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(warehouseDTO.getCode());
-                    if (null != platformEnum) {
-                        dictPlatform = platformEnum.getCode();
-                        platformName = platformEnum.getName();
-                    }
-                }
-            }
-            listDTO.setDictPlatform(dictPlatform);
-            listDTO.setPlatformName(platformName);
-        }
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+
         return resultList.stream()
                 .filter(e-> StringUtils.isBlank(dto.getDictPlatform()) ||
                             (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
-                )
-                .filter(e-> CollectionUtils.isEmpty(dto.getDictPlatformList()) ||
-                                (CollectionUtils.isNotEmpty(dto.getDictPlatformList()) && dto.getDictPlatformList().contains(e.getDictPlatform()))
                 )
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());
