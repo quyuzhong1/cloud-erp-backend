@@ -452,6 +452,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 状态
+         */
+        private String approveStatus;
+
+        /**
          * 要货类型
          */
         private String type;
@@ -573,6 +578,11 @@ public class OverseasDeliveryPlanDTO implements Serializable {
          * 目的仓名称
          */
         private String toWarehouseName;
+
+        /**
+         * 状态
+         */
+        private String approveStatus;
 
         /**
          * skuId

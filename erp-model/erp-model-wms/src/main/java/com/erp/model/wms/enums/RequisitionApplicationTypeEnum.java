@@ -5,8 +5,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum RequisitionApplicationTypeEnum implements EnumMessage {
-    SALES_PLATFORM("salesPlatform", "销售平台"),
-    OVERSEAS_WAREHOUSE("overseasWarehouse", "海外仓");
+    SALES_PLATFORM("salesPlatform", "平台仓要货单"),
+    OVERSEAS_WAREHOUSE("overseasWarehouse", "海外仓要货单");
 
     /**
      * 类型

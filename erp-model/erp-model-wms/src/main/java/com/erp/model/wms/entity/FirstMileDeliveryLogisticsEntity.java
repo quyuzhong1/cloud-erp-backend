@@ -1,5 +1,6 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
@@ -49,7 +50,7 @@ public class FirstMileDeliveryLogisticsEntity extends BaseEntity<FirstMileDelive
     /**
     * 发货时间
     */
-    @TableField("delivery_time")
+    @TableField(value = "delivery_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime deliveryTime;
     /**
     * 备注

@@ -1,5 +1,6 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
@@ -94,7 +95,7 @@ public class OverseasDeliveryPlanEntity extends BaseEntity<OverseasDeliveryPlanE
     /**
     * 计划发货时间
     */
-    @TableField("plan_delivery_date")
+    @TableField(value = "plan_delivery_date", fill = FieldFill.INSERT_UPDATE)
     private LocalDate planDeliveryDate;
     /**
     * 描述

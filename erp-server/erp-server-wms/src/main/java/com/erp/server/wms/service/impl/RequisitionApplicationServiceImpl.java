@@ -196,7 +196,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.HandleListDTO> handleList(List<String> ids) {
+
         List<RequisitionApplicationDTO.HandleListDTO> list = baseMapper.handleList(ids);
+        long count = list.stream().map(req -> RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus().equals(req.getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.WAIT_HANDLE_HANDLE);
+        }
+
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -254,6 +260,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //保存处理选择的调出,调入,批准数量等信息
         updateHandleDetailDate(list, warehouseList);
+
+        //修改状态到处理中
+        Map<String, List<RequisitionApplicationDTO.HandleListDTO>> listMap = list.stream().collect(Collectors.groupingBy(req -> req.getSourceId()));
+        for (Map.Entry<String, List<RequisitionApplicationDTO.HandleListDTO>> stringListEntry : listMap.entrySet()) {
+            updateApproveStatus(stringListEntry.getKey(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
+        }
         return flag;
     }
 
@@ -261,6 +273,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FinishListDTO> finishList(List<String> ids) {
         List<RequisitionApplicationDTO.FinishListDTO> list = baseMapper.finishList(ids);
+        long count = list.stream().map(req -> RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.HANDLE_ING_FINISH);
+        }
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -321,6 +337,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //保存完成输入的拣货数量
         updateFinishDetailPickingQty(list);
+
+        //修改状态到已审核
+        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> listMap = list.stream().collect(Collectors.groupingBy(req -> req.getSourceId()));
+        for (Map.Entry<String, List<RequisitionApplicationDTO.FinishListDTO>> stringListEntry : listMap.entrySet()) {
+            updateApproveStatus(stringListEntry.getKey(), RequisitionApplicationStatusEnum.HANDLE.getStatus());
+        }
         return flag;
     }
 
