@@ -46,7 +46,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         this.shopId = dto.getShopId();
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(orderDetail.getOrdersn());
+        this.setUniqueId(orderDetail.getOrdersn() + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
     }
@@ -123,15 +123,15 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
         // 运费收入
-        orderDTO.setShippingFee(BigDecimal.valueOf(orderDetail.getActualShippingFee()));
+        orderDTO.setShippingFee(BigDecimal.valueOf(orderDetail.getReverseShippingFee()));
         // 付款金额
-        orderDTO.setPayAmount(null);
+        orderDTO.setPayAmount(BigDecimal.valueOf(orderDetail.getTotalAmount()));
         // 付款方式
         orderDTO.setDictPayMethod(orderDetail.getPaymentMethod());
         // 买家备注
         orderDTO.setBuyerRemark(orderDetail.getNote());
         // 订单备注
-        orderDTO.setRemark(null);
+        orderDTO.setRemark(orderDetail.getMessageToSeller());
         // 销售组织id
         Long buyerUserId = orderDetail.getBuyerUserId();
         if (Objects.nonNull(buyerUserId)) {
@@ -142,7 +142,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 是否拦截
         orderDTO.setIsIntercept(false);
         // 拦截备注
-        orderDTO.setInterceptRemark("");
+        orderDTO.setInterceptRemark(orderDetail.getBuyerCancelReason());
         // 来源类型
         orderDTO.setSourceType("soB2c");
         // 来源id
@@ -150,7 +150,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 来源编码
         orderDTO.setSourceCode(orderDetail.getOrdersn());
         // 标签json
-        orderDTO.setLabelJson(null);
+        orderDTO.setLabelJson("{}");
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
@@ -208,7 +208,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         List<Package> packages = orderDetail.getPackages();
-        packages.forEach(p->{
+        packages.forEach(p -> {
             Instant instant = Instant.ofEpochSecond(orderDetail.getShipByDate());
             ZoneId zone = ZoneId.systemDefault();
             PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
@@ -234,8 +234,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
                 .currency(orderDetail.getCurrency())
+                .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))
                 .logisticsCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                 .build();
+        financeDTOList.add(dto);
         return financeDTOList;
     }
 

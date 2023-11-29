@@ -71,16 +71,25 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
+
         // 主表更新或保存
         SoB2cEntity mainEntity = soB2cService.saveOrUpdateEntity(dto);
         // 详情更新或保存
-        soB2cDetailService.saveOrUpdateEntity(dto, mainEntity);
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity);
         //物流信息更新保存
         soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity);
         //买家信息更新保存
         soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity);
         //财务信息更新保存
-//        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
+        soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
+
+        // TODO 校验
+        //自动匹配订单规则
+//        Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList);
+//        if (isSuccess) {
+//            //自动匹配配货规则
+//            soB2cService.distributionRule(mainEntity.getId(), detailList);
+//        }
         return ApiResult.success();
     }
 }

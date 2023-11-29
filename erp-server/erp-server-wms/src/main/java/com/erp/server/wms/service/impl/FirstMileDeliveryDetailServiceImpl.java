@@ -6,12 +6,17 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
+import com.erp.model.wms.entity.FirstMileCartonDetailEntity;
+import com.erp.model.wms.entity.FirstMileCartonEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
+import com.erp.server.wms.service.FirstMileCartonDetailService;
+import com.erp.server.wms.service.FirstMileCartonService;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -46,6 +51,10 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Autowired
+    private FirstMileCartonService firstMileCartonService;
+    @Autowired
+    private FirstMileCartonDetailService firstMileCartonDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -106,6 +115,22 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     @Override
     public List<FirstMileDeliveryDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(FirstMileDeliveryDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public  List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainIds(List<String> mainIds) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainIds(mainIds);
+        //查询已装箱数
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainIds(mainIds);
+        for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
+            //待装箱数量=发货数量-已装箱数量
+            FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
+                    .filter(req -> req.getMainId().equals(groupSkuDTO.getId())
+                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .findFirst().orElse(new FirstMileCartonDTO.PackingQtyDTO());
+            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packingQtyDTO.getUsePackQty());
+        }
+        return list;
     }
 
     /**

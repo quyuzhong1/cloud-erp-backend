@@ -470,6 +470,19 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
     /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @PostMapping("/packingView")
+    public ApiResult<FirstMileDeliveryDTO.FirstMileCartonView> packingView(@RequestParam("id") String id) {
+        FirstMileDeliveryDTO.FirstMileCartonView firstMileCartonView = firstMileDeliveryService.packingView(id);
+        return success(firstMileCartonView);
+    }
+
+    /**
      * 装箱清单
      * @Author Luo_WG
      * @Date 2023/11/17 11:21

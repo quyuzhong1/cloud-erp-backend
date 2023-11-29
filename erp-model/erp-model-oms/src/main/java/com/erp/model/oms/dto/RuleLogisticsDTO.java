@@ -238,18 +238,16 @@ public class RuleLogisticsDTO implements Serializable {
         private String modeType;
 
         /**
-         * 物流供应商
+         * 物流商 来源  http://172.16.100.11:3002/project/128/interface/api/26440
          */
-        @NotBlank(message = "物流供应商不能为空")
-        @Size(max = 255, message = "物流供应商最大长度不能超过255位")
-        private String supplier;
+        @NotBlank(message = "物流商不能为空")
+        private String logisticsSupplierId;
 
         /**
-         * 物流方式
+         * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/26908
          */
         @NotBlank(message = "物流方式不能为空")
-        @Size(max = 50, message = "物流方式最大长度不能超过50位")
-        private String mode;
+        private String logisticsChannelId;
 
         /**
          * 是否自动获取物流单号

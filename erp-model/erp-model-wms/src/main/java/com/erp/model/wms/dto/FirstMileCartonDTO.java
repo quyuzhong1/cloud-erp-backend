@@ -20,9 +20,6 @@ import javax.validation.constraints.*;
 @NoArgsConstructor
 public class FirstMileCartonDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */
@@ -69,8 +66,6 @@ public class FirstMileCartonDTO implements Serializable {
         * 箱数
         */
         private Integer boxQty;
-
-
     }
 
     /**
@@ -183,5 +178,48 @@ public class FirstMileCartonDTO implements Serializable {
          * 详情
          */
         private List<FirstMileCartonDetailDTO.ListPackingDetailDTO> detailList;
+    }
+
+
+    /**
+     * 装箱清单
+     */
+    @Data
+    public static class PackingQtyDTO {
+        /**
+         * 发货单id
+         */
+        private String mainId;
+
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 已装箱数量
+         */
+        private Integer usePackQty;
+
+        public PackingQtyDTO() {
+            this.boxQty = 0;
+            this.packQty = 0;
+            this.usePackQty = 0;
+        }
     }
 }

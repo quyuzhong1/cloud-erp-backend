@@ -708,10 +708,15 @@ public class ShopifyRestClient {
 	 */
 	public ShopifyPage<ShopifyOrder> getUpdatedOrdersCreatedBefore(final OffsetDateTime minimumUpdatedAtDate, final OffsetDateTime maximumUpdatedAtDate,
 			final OffsetDateTime maximumCreatedAtDate, final int pageSize) {
-		final Response response = get(buildOrdersEndpoint().queryParam(STATUS_QUERY_PARAMETER, ANY_STATUSES)
-				.queryParam(LIMIT_QUERY_PARAMETER, pageSize).queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
-				.queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString())
-				.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString()));
+        WebTarget currentWebTarget = buildOrdersEndpoint()
+                .queryParam(STATUS_QUERY_PARAMETER, ANY_STATUSES)
+                .queryParam(LIMIT_QUERY_PARAMETER, pageSize)
+                .queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
+                .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
+        if (null != maximumCreatedAtDate){
+            webTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
+        }
+        final Response response = get(currentWebTarget);
 		return getOrders(response);
 	}
 

@@ -18,6 +18,7 @@
             fdd.asin,
             fdd.msku,
             fdd.fn_sku,
+            fdd.sku_id,
             fdd.sku_no,
             fdd.product_name,
             fdd.stock_sku,
@@ -42,5 +43,26 @@
                 #{sourceDetailId}
             </foreach>
         </if>
+    </select>
+
+    <!--根据主表id分组sku查询发货及待装箱数-->
+    <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+        SELECT
+            fdd.id,
+            fdd.sku_id,
+            fdd.sku_no,
+            SUM(fdd.delivery_qty) AS deliveryQty
+        FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="mainIds != null and mainIds > 0">
+            AND fdd.main_id IN
+            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
+                #{mainId}
+            </foreach>
+        </if>
+        GROUP BY fdd.id,
+        fdd.sku_id,
+        fdd.sku_no
     </select>
 </mapper>

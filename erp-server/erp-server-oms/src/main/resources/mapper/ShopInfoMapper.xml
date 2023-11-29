@@ -61,7 +61,7 @@
         <if test="params.updateUserIdList!=null and params.updateUserIdList.size>0 ">
             AND si.update_user_id IN
             <foreach collection="params.updateUserIdList" item="updateUserId" open="(" separator="," close=")">
-                #{createUserId}
+                #{updateUserId}
             </foreach>
         </if>
         <if test="params.createTimeList !=null and params.createTimeList.size>0">

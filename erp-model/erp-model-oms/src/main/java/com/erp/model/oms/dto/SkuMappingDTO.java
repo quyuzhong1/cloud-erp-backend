@@ -1,9 +1,7 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -245,7 +243,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台code 集合
          */
-        private List<String> platformList;
+        private List<String> dictPlatformList;
 
         /**
          * sku id list
@@ -596,7 +594,6 @@ public class SkuMappingDTO implements Serializable {
          * 匹配结果
          */
         private String matchResultStr;
-
 
 
         /**

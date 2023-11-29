@@ -1,11 +1,13 @@
 package com.erp.server.oms.service;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
@@ -246,6 +248,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO cancelSplit(String id);
+
+    /**
+     * 匹配审核规则
+     */
+    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, List<JSONObject> jsonList);
+
+    /**
+     * 匹配配货规则
+     */
+    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, List<JSONObject> jsonList);
 
     /**
      * 报表管理 销售统计

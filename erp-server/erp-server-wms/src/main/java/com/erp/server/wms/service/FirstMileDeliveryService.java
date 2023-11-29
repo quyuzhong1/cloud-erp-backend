@@ -236,6 +236,15 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     Boolean packingSave(FirstMileDeliveryDTO.FirstMileCartonAdd dto);
 
     /**
+     * 装箱详情
+     * @Author Luo_WG
+     * @Date 2023/11/28 17:44
+     * @param id
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    FirstMileDeliveryDTO.FirstMileCartonView packingView(String id);
+
+    /**
      * 装箱清单
      * @Author Luo_WG
      * @Date 2023/11/17 11:52

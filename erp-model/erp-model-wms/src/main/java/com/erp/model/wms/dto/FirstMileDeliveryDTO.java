@@ -875,7 +875,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱信息
          */
-        private List<FirstMileCartonDTO.AddDTO> firstMileCarton;
+        private List<FirstMileCartonDTO.AddDTO> firstMileCartonList;
     }
 
     /**
@@ -897,6 +897,37 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱信息
          */
-        private List<FirstMileCartonDTO.AddDTO> firstMileCarton;
+        private List<FirstMileCartonDTO.ViewDTO> firstMileCartonList;
+    }
+
+    /**
+     * 分组汇总sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GroupSkuDTO {
+        /**
+         * 产品id
+         */
+        private String id;
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 待装箱数量
+         */
+        private Integer waitPackQty;
     }
 }
