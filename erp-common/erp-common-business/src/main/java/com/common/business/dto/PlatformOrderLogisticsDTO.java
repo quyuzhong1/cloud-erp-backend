@@ -32,9 +32,9 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      */
     private String name;
     /**
-     * 物流方式
+     * 物流渠道id
      */
-    private String dictLogisticsMethod;
+    private String logisticsChannelId;
     /**
      * 发货时间
      */
