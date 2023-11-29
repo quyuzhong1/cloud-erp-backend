@@ -450,6 +450,8 @@
     <!--导出装箱清单Excel-->
     <select id="exportPacking" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$ExportPackingDTO">
         SELECT
+        fmd.id,
+        fmd.packing_status,
         fmd.code,
         fmcb.box_no,
         concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,

@@ -818,7 +818,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_OVERSEAS_DELIVERY_PLAN(99112,"未找到发货计划单"),
     EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE(99113,"已下推FBA发货单不允许反审核"),
     EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE(99114,"已下要货申请不允许反审核"),
-    NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有已审核的发货单可以更新物流信息"),
+    NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有待审核和审核通过的发货单可以更新物流信息"),
     DELIVERY_QTY_EXCEED_DECLAREQTY(99115,"sku【{}】发货数量超过申报数量不允许下推"),
     ERROR_NOT_REQUISITION_APPLICATION(99116,"未找到要货申请单"),
     ERROR_NOT_WAREHOUSE(99117,"请匹配系统仓库后启用"),
@@ -837,6 +837,9 @@ public enum ApiError implements Serializable {
     THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
     APPROVE_ING_IS_PACKING(99130,"待审核的数据才可以上传装箱数据"),
     OVERSEAS_WAREHOUSE_INBOUND_EXIST(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
+    NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
+    WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
+    HANDLE_ING_FINISH(99134,"处理中状态的要货单才能完成"),
 
 
     /**

@@ -317,6 +317,10 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
          * 状态
          * 地址：/wms/common/enumDropDown?type=RequisitionApplicationStatus
          */
@@ -550,6 +554,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String requisitionWarehouseName;
         /**
+         * 状态
+         */
+        private String status;
+        /**
          * 产品id
          */
         private String skuId;
@@ -630,6 +638,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 要货仓位
          */
         private String requisitionWarehouseLocation;
+        /**
+         * 状态
+         */
+        private String status;
         /**
          * 产品id
          */

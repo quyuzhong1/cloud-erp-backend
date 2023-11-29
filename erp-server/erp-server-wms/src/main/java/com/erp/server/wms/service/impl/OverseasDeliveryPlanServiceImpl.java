@@ -330,7 +330,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
 
     private Boolean validateDisApprove(OverseasDeliveryPlanEntity entity) {
         // 已审核支持反审核
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // 下游单反审核
@@ -341,8 +341,8 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Override
     public BatchResultDTO delete(String id) {
         OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
-        // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        // 只有待提交和审核不通过数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.SUBMIT_IS_DELETE);
         }
         // 删除明细数据
@@ -388,7 +388,7 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     public BatchResultDTO cancelProcess(String id) {
         OverseasDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //撤销流程
@@ -539,6 +539,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Override
     public List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
         List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+
+        //审核通过才能下推
+        long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
+
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -620,6 +627,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
     @Override
     public List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> generateDeliverView(List<String> ids) {
         List<OverseasDeliveryPlanDTO.GenerateDeliverViewDTO> list = baseMapper.generateDeliverView(ids);
+
+        //审核通过才能下推
+        long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
+
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
