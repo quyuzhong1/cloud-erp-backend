@@ -47,8 +47,8 @@ public class GoodCangInventoryHandler extends AbstractThirdWarehouseHandler<Good
 
         //查询数据
         GoodCangGetInventoryReq req = new GoodCangGetInventoryReq();
-        //最大页码200，从第一页开始查询
-        req.setPageSize(200);
+        //最大页码100，从第一页开始查询
+        req.setPageSize(100);
 
         List<GoodCangInventoryResp> respList = new ArrayList<>();
         int page = 1;
@@ -57,7 +57,7 @@ public class GoodCangInventoryHandler extends AbstractThirdWarehouseHandler<Good
             GoodCangResponse<List<GoodCangInventoryResp>> goodCangResponse = goodCangService.getProductInventory(req);
             checkResponse(goodCangResponse);
             respList.addAll(goodCangResponse.getData());
-            if (goodCangResponse.getCount() <= page * 200) {
+            if (goodCangResponse.getCount() <= page * 100) {
                 break;
             }
             page++;
