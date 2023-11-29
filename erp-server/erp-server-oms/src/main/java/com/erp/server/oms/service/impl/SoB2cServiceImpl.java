@@ -1342,13 +1342,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setDictPlatformName(name);
         }
 
-        //物流方式
-        List<DictBasicDTO.ViewDTO> dictLogisticsList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_METHOD.getType());
-        if (CollectionUtils.isNotEmpty(dictLogisticsList)) {
-            String name = dictList.stream().filter(obj -> obj.getValue().equals(data.getLogisticsDTO().getDictLogisticsMethod())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.getLogisticsDTO().setDictLogisticsMethodName(name);
-        }
-
         //产品信息
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
@@ -1502,11 +1495,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
-            //物流方式
-            if (CollectionUtils.isNotEmpty(logisticsMethodList)) {
-                String logisticsMethodName = logisticsMethodList.stream().filter(obj -> obj.getValue().equals(data.getDictLogisticsMethod())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                data.setDictLogisticsMethodName(logisticsMethodName);
-            }
+
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
@@ -1781,7 +1770,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //仓库
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.MergeListDTO::getWarehouseId).distinct().collect(Collectors.toList());
         //物流方式
-        List<String> dictLogisticsMethodList = records.stream().map(SoB2cDTO.MergeListDTO::getDictLogisticsMethod).distinct().collect(Collectors.toList());
+        List<String> logisticsChannelIdList = records.stream().map(SoB2cDTO.MergeListDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
 
         SoB2cDTO.MergeParamDTO mergeParamDTO = new SoB2cDTO.MergeParamDTO();
         mergeParamDTO.setPlatformList(platformList);
@@ -1794,7 +1783,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         mergeParamDTO.setSecondAddressList(secondAddressList);
         mergeParamDTO.setFullAddressList(fullAddressList);
         mergeParamDTO.setWarehouseIdList(warehouseIdList);
-        mergeParamDTO.setDictLogisticsMethodList(dictLogisticsMethodList);
+        mergeParamDTO.setLogisticsChannelIdList(logisticsChannelIdList);
         List<SoB2cDTO.MergeMainDTO> mergeMainList = baseMapper.listMerge(mergeParamDTO);
         if (CollectionUtils.isEmpty(mergeMainList)) {
             return;
@@ -1832,7 +1821,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         && mergeListDTO.getSecondAddress().equals(obj.getSecondAddress())
                         && mergeListDTO.getFullAddress().equals(obj.getFullAddress())
                         && mergeListDTO.getWarehouseId().equals(obj.getWarehouseId())
-                        && StrUtil.equals(mergeListDTO.getDictLogisticsMethod(), obj.getDictLogisticsMethod())
+                        && StrUtil.equals(mergeListDTO.getLogisticsChannelId(), obj.getLogisticsChannelId())
                 ).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(mainList) || mainList.size() == 1) {
                     continue;

@@ -15,7 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="code" property="code" />
        <result column="name" property="name" />
-       <result column="logistics_channel_name" property="dictLogisticsMethod" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
        <result column="delivery_time" property="deliveryTime" />
        <result column="estimated_shipping_cost" property="estimatedShippingCost" />
        <result column="estimated_shipping_currency" property="estimatedShippingCurrency" />

@@ -98,9 +98,14 @@ public class RuleLogisticsDTO implements Serializable {
     public static class RuleMatchResultDTO  {
 
         /**
-         * 物流供应商
+         * 物流商
          */
-        private String logisticsSupplier;
+        private String logisticsSupplierId;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
 
         /**
          * 是否自动获取物流单号

@@ -183,14 +183,14 @@ public class SoB2cDTO implements Serializable {
         private String countryName;
 
         /**
-         * 物流方式
+         * 物流渠道id
          */
-        private String dictLogisticsMethod;
+        private String logisticsChannelId;
 
         /**
-         * 物流方式名称
+         * 物流渠道名
          */
-        private String dictLogisticsMethodName;
+        private String logisticsChannelName;
 
         /**
          * 实际运费(优先实际、没有取预估)
@@ -981,7 +981,12 @@ public class SoB2cDTO implements Serializable {
         /**
          * 物流方式
          */
-        private String dictLogisticsMethod;
+        private String logisticsChannelId;
+
+        /**
+         * 物流方式
+         */
+        private String logisticsChannelName;
 
         /**
          * 地址1
@@ -1056,7 +1061,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 物流方式集合
          */
-        private List<String> dictLogisticsMethodList;
+        private List<String> logisticsChannelIdList;
     }
 
     /**
@@ -1182,9 +1187,9 @@ public class SoB2cDTO implements Serializable {
         private String buyerName;
 
         /**
-         * 物流方式
+         * 物流渠道
          */
-        private String dictLogisticsMethod;
+        private String logisticsChannelId;
 
         /**
          * 是否是组数据（第一条标记，前端有用）

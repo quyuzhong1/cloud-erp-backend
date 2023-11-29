@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -32,6 +33,14 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/listBySupplierId")
     List<BaseIdDTO.CodeDTO> listBySupplierId(@RequestBody String supplierId);
 
-    @GetMapping("/feign/logistics/updateDisabledBySupplierId")
+    @PostMapping("/feign/logistics/updateDisabledBySupplierId")
     Boolean updateDisabledBySupplierId(@RequestBody LogisticsSupplierDTO.UpdateDisabledDTO updateDisabledDTO);
+
+    /**
+     * 根据渠道id 获取渠道信息
+     * @param channelId
+     * @return
+     */
+    @PostMapping("/feign/logistics/getChannelById")
+    LogisticsChannelEntity getChannelById(@RequestBody String channelId);
 }

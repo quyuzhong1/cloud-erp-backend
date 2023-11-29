@@ -2,16 +2,18 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
-import io.seata.saga.statelang.domain.impl.BaseState;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -62,6 +64,16 @@ public class LogisticsFeignController {
     @PostMapping("/updateDisabledBySupplierId")
     public Boolean updateDisabledBySupplierId(@RequestBody LogisticsSupplierDTO.UpdateDisabledDTO dto){
         return logisticsSupplierService.updateDisabledBySupplierId(dto);
+    }
+
+    /**
+     * 获取渠道 根据渠道id
+     * @param channelId
+     * @return
+     */
+    @PostMapping("/getChannelById")
+    public LogisticsChannelEntity getChannelById(@RequestBody String channelId){
+        return logisticsChannelService.getById(channelId);
     }
 
 }
