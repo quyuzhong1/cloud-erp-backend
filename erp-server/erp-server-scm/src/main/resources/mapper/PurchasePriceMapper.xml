@@ -42,7 +42,7 @@
             </foreach>
         </if>
         <if test="params.code != null and params.code != ''">
-            and pp.code like concat('%',#{params.code},'%')
+            and pp.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <if test="params.name !=null and params.name!=''">
           AND pp.supplier_id IN
@@ -80,7 +80,7 @@
         </if>
         <if test="params.productName !=null and params.productName !=''">
             AND
-            ppd.product_name LIKE concat('%', #{params.productName} ,'%')
+            ppd.product_name ILIKE concat('%', #{params.productName}::text ,'%')
         </if>
         <if test="statusList !=null and statusList.size>0">
             AND pp.approve_status IN
@@ -177,7 +177,7 @@
                 </if>
                 <if test="params.productName !=null and params.productName !=''">
                     AND
-                    ppd.name LIKE concat('%', #{params.productName} ,'%')
+                    ppd.name ILIKE concat('%', #{params.productName}::text ,'%')
                 </if>
             </otherwise>
         </choose>

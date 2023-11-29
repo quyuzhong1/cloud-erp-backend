@@ -8,7 +8,7 @@
              is_deleted = false
              and type = 'location'
              <if test="params.code != null and params.code != '' ">
-                 and code ilike concat('%', #{params.code} ,'%')
+                 and code ilike concat('%', #{params.code}::text ,'%')
              </if>
          </where>
          order by code asc NULLS FIRST
@@ -93,7 +93,7 @@
             </foreach>
         </if>
         <if test="params.warehouseLocation !=null and params.warehouseLocation != ''">
-            AND wl.code ilike concat('%', #{params.warehouseLocation} ,'%')
+            AND wl.code ilike concat('%', #{params.warehouseLocation}::text ,'%')
         </if>
         ORDER BY warehouseName,warehouseArea,warehouseLocation desc
 

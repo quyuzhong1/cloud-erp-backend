@@ -286,7 +286,7 @@
             AND srd.sku_no = #{skuNo}
         </if>
         <if test="code != '' and code != null ">
-            AND sr.code ILIKE concat('%', #{code} ,'%')
+            AND sr.code ILIKE concat('%', #{code}::text ,'%')
         </if>
         ORDER BY sr.create_time DESC
     </select>

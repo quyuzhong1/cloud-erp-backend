@@ -410,7 +410,7 @@
             AND prd.sku_no = #{skuNo}
         </if>
         <if test="code != '' and code != null ">
-            AND pr.code ILIKE concat('%', #{code} ,'%')
+            AND pr.code ILIKE concat('%', #{code}::text ,'%')
         </if>
         ORDER BY pr.create_time
     </select>

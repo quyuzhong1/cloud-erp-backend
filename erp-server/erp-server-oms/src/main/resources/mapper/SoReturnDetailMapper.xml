@@ -84,7 +84,7 @@
             </foreach>
         </if>
         <if test="remoteSearchSku != null  and remoteSearchSku != ''">
-            AND srd.sku_no ILIKE concat('%',#{remoteSearchSku},'%')
+            AND srd.sku_no ILIKE concat('%',#{remoteSearchSku}::text,'%')
         </if>
     </select>
 

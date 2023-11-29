@@ -58,8 +58,8 @@
           </if>
           <if test="params.code !=null and params.code!=''">
               AND (
-              st.code ILIKE concat('%', #{params.code} ,'%') OR
-              sp.code ILIKE concat('%', #{params.code} ,'%')
+              st.code ILIKE concat('%', #{params.code}::text ,'%') OR
+              sp.code ILIKE concat('%', #{params.code}::text ,'%')
               )
           </if>
           <if test="mainIdList !=null and mainIdList.size>0">
@@ -173,8 +173,8 @@
                 </if>
                 <if test="params.code !=null and params.code!=''">
                     AND (
-                    st.code ILIKE concat('%', #{params.code} ,'%') OR
-                    sp.code ILIKE concat('%', #{params.code} ,'%')
+                    st.code ILIKE concat('%', #{params.code}::text ,'%') OR
+                    sp.code ILIKE concat('%', #{params.code}::text ,'%')
                     )
                 </if>
                 <if test="mainIdList !=null and mainIdList.size>0">

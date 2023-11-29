@@ -19,7 +19,7 @@
         from cfg_api_field_map cafm
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND cafm.self_field_name LIKE concat('%',#{params.searchKeyword},'%')
+                AND cafm.self_field_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             </if>
         </where>
     </select>

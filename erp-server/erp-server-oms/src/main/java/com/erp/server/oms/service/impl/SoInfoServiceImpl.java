@@ -251,6 +251,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (userInfo != null) {
             addEntity.setSellerName(userInfo.getUserName());
         }
+        //报关费
+        if (!addEntity.getIsDeclare()) {
+            addEntity.setCustomsFee(BigDecimal.ZERO);
+        }
 
         //仓库id
         String warehouseId = dto.getWarehouseId();
@@ -322,6 +326,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
+
+        //验证报关费是否填写
+        String codes = list.stream().filter(obj -> obj.getIsDeclare() && MathUtil.compareTo(obj.getCustomsFee(), MathUtil.ZERO) <= MathUtil.ZERO).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL,codes);
+        }
+
         //售后订单
         String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
         //检查的销售订单
@@ -867,6 +878,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoEntity draftEntity = new SoInfoEntity();
         BeanMapper.copy(dto, draftEntity);
         draftEntity.setId(id);
+        //报关费
+        if (!draftEntity.getIsDeclare()) {
+            draftEntity.setCustomsFee(BigDecimal.ZERO);
+        }
         //销售组织
         String salesOrgId = dto.getSalesOrgId() == null ? "" : dto.getSalesOrgId();
         //销售员
@@ -967,6 +982,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (requireDate.compareTo(billDate) < 0) {
                 throw new ServiceException(ApiError.ERROR_92059);
             }
+        }
+
+        //报关费
+        if (!soInfo.getIsDeclare()) {
+            soInfo.setCustomsFee(BigDecimal.ZERO);
         }
 
         //销售组织

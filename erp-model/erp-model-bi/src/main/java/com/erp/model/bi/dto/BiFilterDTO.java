@@ -2,9 +2,7 @@ package com.erp.model.bi.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.apache.commons.collections.CollectionUtils;
 
 import javax.validation.constraints.NotNull;
@@ -21,8 +19,9 @@ import java.util.Objects;
  * @author Cloud
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class BiFilterDTO extends SortDTO {
 
 

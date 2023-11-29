@@ -38,12 +38,7 @@ public class ShopTargetValueStrategy implements ListYearMonthValueStrategy {
      */
     @Override
     public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,List<String> shopIdList) {
-        List<BiTargetYearDTO.YearMonthValueDTO> staffTargetValue = biTargetYearMapper.ListShopTargetValue(year, metrics,shopIdList);
         String metricsName = MetricsEnum.getNameByCode(metrics);
-        staffTargetValue.forEach(obj -> {
-            obj.setYear(year);
-            obj.setMetricsName(metricsName);
-        });
-        return staffTargetValue;
+        return biTargetYearMapper.ListShopTargetValue(year, metrics,metricsName,shopIdList);
     }
 }

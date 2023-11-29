@@ -19,7 +19,7 @@
           WHERE PP.is_deleted=false
           <if test="params.searchKeyword !=null and params.searchKeyword!=''">
                AND
-               pi.name LIKE concat('%',#{params.searchKeyword},'%')
+               pi.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
           </if>
           <if test="idList!=null and idList.size>0">
               AND

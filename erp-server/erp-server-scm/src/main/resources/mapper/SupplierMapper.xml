@@ -23,10 +23,10 @@
         FROM supplier
         WHERE is_deleted=FALSE
         <if test="params.name!=null and params.name!=''">
-            AND name LIKE concat('%', #{params.name} ,'%')
+            AND name ILIKE concat('%', #{params.name}::text ,'%')
         </if>
         <if test="params.code!=null and params.code!=''">
-            AND code LIKE concat('%', #{params.code} ,'%')
+            AND code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
             AND category_id IN
@@ -123,7 +123,7 @@
             <otherwise>
                 <if test="params.name!=null and params.name!=''">
                     AND
-                    name LIKE concat('%', #{params.name} ,'%')
+                    name ILIKE concat('%', #{params.name}::text ,'%')
                 </if>
                 <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
                     AND category_id IN

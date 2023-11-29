@@ -143,8 +143,8 @@
         AND si.customer_code=(SELECT code FROM customer_info WHERE id=#{params.customerId})
         <if test="params.no!=null and params.no!=''">
             AND (
-            sm.product_sku_no ILIKE concat('%', #{params.no} ,'%') OR
-            sm.platform_sku_no ILIKE concat('%', #{params.no} ,'%')
+            sm.product_sku_no ILIKE concat('%', #{params.no}::text ,'%') OR
+            sm.platform_sku_no ILIKE concat('%', #{params.no}::text ,'%')
             )
         </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">

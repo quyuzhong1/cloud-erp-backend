@@ -86,7 +86,7 @@
                  LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
         where ptm.task_status = 'approveIng'  and ptm.is_deleted = false
           <if test="null != param.processName and param.processName != ''">
-              and pd.process_name ilike concat('%', #{param.processName},'%')
+              and pd.process_name ilike concat('%', #{param.processName}::text,'%')
           </if>
           <if test="null != param.businessNames and param.businessNames.size() > 0">
               and pm.business_name in

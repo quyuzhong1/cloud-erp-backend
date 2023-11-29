@@ -239,13 +239,13 @@
             AND ( qb.qc_status = 'finishQc' and  qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
         </if>
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-            AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode} ,'%')
+            AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode}::text ,'%')
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND qb.code ilike concat('%', #{params.code} ,'%')
+            AND qb.code ilike concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.sourceCode !=null and params.sourceCode!=''">
-            AND qb.source_code ilike concat('%', #{params.sourceCode} ,'%')
+            AND qb.source_code ilike concat('%', #{params.sourceCode}::text ,'%')
         </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND qp.sku_no IN
@@ -378,10 +378,10 @@
                     AND ( qb.qc_status = 'finishQc' and qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
+                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode}::text ,'%')
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND qb.code ilike concat('%', #{params.code} ,'%')
+                    AND qb.code ilike concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.skuNoList !=null and params.skuNoList.size>0">
                     AND qp.sku_no IN
@@ -571,10 +571,10 @@
                     AND qb.qc_status in ('draft', #{params.searchType})
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
+                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode}::text ,'%')
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND qb.code ilike concat('%', #{params.code} ,'%')
+                    AND qb.code ilike concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.skuNoList !=null and params.skuNoList.size>0">
                     AND qp.sku_no IN

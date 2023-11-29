@@ -78,7 +78,7 @@
             and pro.return_mode = #{params.returnMode}
         </if>
         <if test="params.detailRemark != null and params.detailRemark != ''">
-            and prod.remark ilike concat('%',#{params.detailRemark},'%')
+            and prod.remark ilike concat('%',#{params.detailRemark}::text,'%')
         </if>
 
         <if test="params.billDateList != null and params.billDateList.size > 0">

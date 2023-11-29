@@ -25,6 +25,7 @@
         si.all_amount_lc AS allAmountLc,
         si.remark,
         si.customer_order_no AS customerOrderNo,
+        si.is_declare as isDeclare,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
         sod.qty,
@@ -57,13 +58,16 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND si.code ILIKE concat('%', #{params.code} ,'%')
+            AND si.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
+        </if>
+        <if test="params.isDeclare !=null ">
+            AND si.is_declare = #{params.isDeclare}
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND si.approve_status IN
@@ -122,7 +126,7 @@
             </foreach>
         </if>
         <if test="params.remark !=null and params.remark!=''">
-            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+            AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
         </if>
         <if test="params.salesOrgId != null and params.salesOrgId != '' ">
             AND si.sales_org_id = #{params.salesOrgId}
@@ -171,13 +175,16 @@
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
-            AND si.code ILIKE concat('%', #{params.code} ,'%')
+            AND si.code ILIKE concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
+        </if>
+        <if test="params.isDeclare !=null ">
+            AND si.is_declare = #{params.isDeclare}
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND si.approve_status IN
@@ -236,7 +243,7 @@
             </foreach>
         </if>
         <if test="params.remark !=null and params.remark!=''">
-            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+            AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
         </if>
         <if test="params.salesOrgId != null and params.salesOrgId != '' ">
             AND si.sales_org_id = #{params.salesOrgId}
@@ -312,6 +319,7 @@
             si.address_type AS addressType,
             si.receive_condition AS receiveCondition,
             si.customer_order_no AS customerOrderNo,
+            si.is_declare as isDeclare,
             sod.tax_rate AS taxRate,
             sod.price,
             sod.tax_amount_before AS taxAmountBefore,
@@ -345,13 +353,16 @@
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
-                    AND si.code ILIKE concat('%', #{params.code} ,'%')
+                    AND si.code ILIKE concat('%', #{params.code}::text ,'%')
                 </if>
                 <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
-                    AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
+                    AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo}::text ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND si.order_type=#{params.orderType}
+                </if>
+                <if test="params.isDeclare != null ">
+                    AND si.is_declare = #{params.isDeclare}
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND si.approve_status IN
@@ -412,7 +423,7 @@
                     </foreach>
                 </if>
                 <if test="params.remark !=null and params.remark!=''">
-                    AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+                    AND (si.remark ILIKE concat('%', #{params.remark}::text ,'%') or sod.remark ILIKE concat('%', #{params.remark}::text ,'%'))
                 </if>
                 <if test="params.salesOrgId != null and params.salesOrgId != '' ">
                     AND si.sales_org_id = #{params.salesOrgId}

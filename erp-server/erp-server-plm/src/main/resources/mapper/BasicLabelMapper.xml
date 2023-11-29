@@ -35,7 +35,7 @@
         SELECT id,name,color,level,index FROM basic_label
         WHERE is_deleted=false
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            AND name like concat('%',#{params.searchKeyword},'%')
+            AND name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.level != null and params.level == 'private'">
             AND level = #{params.level} AND create_user_id = #{params.createUserId}

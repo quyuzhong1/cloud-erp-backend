@@ -9,8 +9,8 @@
         WHERE sru.role_id=#{params.flagId}
         AND delete_state=1
         <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-            sui.user_name LIKE concat('%',#{params.searchKeyword},'%') OR
-            sui.real_name LIKE concat('%',#{params.searchKeyword},'%')
+            sui.user_name ILIKE concat('%',#{params.searchKeyword}::text,'%') OR
+            sui.real_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
 
     </select>
