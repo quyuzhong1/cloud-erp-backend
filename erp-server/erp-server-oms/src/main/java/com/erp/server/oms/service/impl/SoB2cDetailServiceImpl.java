@@ -10,6 +10,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -22,10 +24,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingService;
-import com.erp.server.oms.service.SoB2cDetailService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -69,6 +68,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private ListingInfoService listingInfoService;
 
     @Override
     public Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId) {
@@ -180,14 +182,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
         // 来源为空
         if(CollectionUtils.isEmpty(dto.getDetails())){
             if (CollectionUtils.isEmpty(oldDetailEntityList)){
                 // 新建空
-                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId());
+                SoB2cDetailEntity detailEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(),"", "");
                 if(!this.save(detailEntity)){
                     throw new ServiceException("[SoB2cDetailEntity] 保存失败");
                 }
@@ -202,13 +204,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
+            // 映射关系
+            ListingInfoWithSkuMappingDTO mappingDTO = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            String skuId = "";
+            String skuNO= "";
+            if(null != mappingDTO){
+                skuId = mappingDTO.checkAndGetProductSkuId();
+                skuNO = mappingDTO.checkAndGetProductSkuNo();
+            }
+
             SoB2cDetailEntity saveOrUpdateEntity;
             if (null != oldEntity) {
                 // 更新指定内容
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO);
             } else {
                 // 新记录
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId());
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO);
             }
             return saveOrUpdateEntity;
         }).collect(Collectors.toList());
@@ -218,6 +229,24 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
         }
         return saveOrUpdateList;
+    }
+
+    @Override
+    public Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform) {
+        if (CollectionUtils.isEmpty(platformSkuList)) {
+            return Collections.emptyMap();
+        }
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(dictPlatform);
+        paramDTO.setPlatformSkuNoList(platformSkuList);
+        paramDTO.setMatchResult(true);
+        // 查询ListingInfo和skuMapping的关系
+        List<ListingInfoWithSkuMappingDTO> listDto = listingInfoService.findListDto(paramDTO);
+        if (CollectionUtils.isEmpty(listDto)){
+            return Collections.emptyMap();
+        }
+        return listDto.stream()
+                .collect(Collectors.toMap(e-> e.getPlatformSkuNo(), Function.identity()));
     }
 
 

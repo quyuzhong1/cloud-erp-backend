@@ -122,9 +122,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         //获取主表下物流记录
         List<SoB2cReceiverEntity> listByMainId = getListByMainId(mainEntity.getId());
         //转map 比较是否存在记录 不存在则删除 存在则更新
-        Map<String, SoB2cReceiverEntity> map = listByMainId.stream().filter(e -> StrUtil.isNotBlank(e.getCustomerId())).collect(Collectors.toMap(SoB2cReceiverEntity::getCustomerId, Function.identity()));
+        Map<String, SoB2cReceiverEntity> map = listByMainId.stream()
+//                .filter(e -> StrUtil.isNotBlank(e.getCustomerId()))
+                .collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
         receiverList.forEach(platformOrderLogisticsDTO -> {
-            SoB2cReceiverEntity entity = map.get(platformOrderLogisticsDTO.getCustomerId());
+            SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){
                 entity = new SoB2cReceiverEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity);
