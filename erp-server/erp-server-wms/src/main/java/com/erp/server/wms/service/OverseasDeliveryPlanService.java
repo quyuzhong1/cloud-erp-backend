@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasDeliveryPlanDTO;
 import com.common.business.vo.PagingVO;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -229,4 +230,13 @@ public interface OverseasDeliveryPlanService extends SuperService<OverseasDelive
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.OverseasDeliveryPlanDetailDTO.ImportDTO>
      **/
     OverseasDeliveryPlanDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
+
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/11/30 12:11
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
 }

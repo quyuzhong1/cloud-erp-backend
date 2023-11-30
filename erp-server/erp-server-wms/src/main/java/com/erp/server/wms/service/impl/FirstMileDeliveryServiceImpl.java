@@ -123,6 +123,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private FirstMileCartonBillService firstMileCartonBillService;
     @Autowired
     private FirstMileCartonDetailService firstMileCartonDetailService;
+    @Autowired
+    private OverseasDeliveryPlanService overseasDeliveryPlanService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -443,6 +445,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
         }
 
+        //如果是发货计划来源，反审核修改发货状态
+        if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+            OverseasDeliveryPlanEntity planEntity = overseasDeliveryPlanService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(planEntity)) {
+                //如果存在有一个审核通过的发货单，状态都是已发货
+                List<FirstMileDeliveryEntity> firstMileDeliveryEntities = this.listBySourceIds(Arrays.asList(entity.getSourceId()));
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(deliveryEntities)) {
+                    //如果没有审核通过否发货单，修改发货计划单的发货状态为未发货
+                    overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.UN_SHIPPED.getCode());
+                }
+            }
+        }
+
         //查找发货单下推的分步式调出单自动反审并删除
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
         //分步式调出单已审核先反审核
@@ -578,6 +594,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(shipmentEntity)) {
                     fbaShipmentService.deliveryStatus(entity);
+                }
+            }
+            //如果是发货计划来源，审核通过修改发货状态为已发货
+            if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
+                OverseasDeliveryPlanEntity planEntity = overseasDeliveryPlanService.getById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(planEntity)) {
+                    overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
             }
 
