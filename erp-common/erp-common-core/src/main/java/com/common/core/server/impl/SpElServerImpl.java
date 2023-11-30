@@ -1,13 +1,7 @@
 package com.common.core.server.impl;
 
-/**
- * @author Lambda
- * @Classname SpElServerImpl
- * @Description TODO
- * @Date 2023-09-07 10:35
- * @Created by yl
- */
 
+import cn.hutool.json.JSONObject;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
@@ -20,13 +14,12 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-07 10:35
  */
@@ -102,7 +95,11 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Object obj) {
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj) {
+        for(String key:obj.keySet()){
+            String value= obj.get(key).toString();
+            obj.put(key,value);
+        }
         String expression = getConditionExpression(conditionList, obj);
         return matchExpression(expression, obj);
 
