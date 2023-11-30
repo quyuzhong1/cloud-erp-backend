@@ -392,7 +392,7 @@
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatus,
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
-        fdl.delivery_time AS deliveryTime
+        fd.approve_time AS deliveryTime
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN first_mile_delivery_logistics fdl ON fd.id = fdl.main_id AND fdl.is_deleted = FALSE
@@ -405,7 +405,7 @@
         </if>
         GROUP BY fd.code,
         deliveryStatus,
-        fdl.delivery_time
+        fd.approve_time
         ORDER BY fd.code DESC
     </select>
 
