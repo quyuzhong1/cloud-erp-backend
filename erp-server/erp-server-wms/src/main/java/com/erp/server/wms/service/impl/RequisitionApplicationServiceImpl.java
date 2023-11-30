@@ -232,6 +232,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean handleSave(List<RequisitionApplicationDTO.HandleListDTO> list) {
         //根据调出调入仓id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getFromWarehouseId()).collect(Collectors.toList());
@@ -309,6 +310,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
         //根据调出调入仓id查询仓库信息
         List<String> pickingWarehouseIds = list.stream().map(req -> req.getPickingWarehouseId()).collect(Collectors.toList());
@@ -471,6 +473,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(RequisitionApplicationEntity::getSourceId, sourceIds).list();
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto) {
+        return null;
     }
 
     /**

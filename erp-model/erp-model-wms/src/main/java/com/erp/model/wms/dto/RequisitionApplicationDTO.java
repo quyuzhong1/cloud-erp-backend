@@ -728,4 +728,60 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String remark;
     }
+
+    /**
+     * 查询子件信息条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChildParamDTO {
+        /**
+         * 要货单主表id
+         */
+        @NotBlank(message = "要货单主表id不能为空")
+        private String id;
+        /**
+         * sku
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+    }
+
+    /**
+     * 子件信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChildViewDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 可用库存
+         */
+        private Integer useableQty;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * 要货数量
+         */
+        private Integer requisitionQty;
+    }
 }

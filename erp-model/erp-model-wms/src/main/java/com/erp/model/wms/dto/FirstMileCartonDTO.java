@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 /**
@@ -87,6 +88,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<FirstMileCartonDetailDTO.AddDTO> detailList;
     }
 
@@ -98,7 +100,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
         * 箱规编号
         */
-        @NotBlank(message = "箱规编号不能为空")
+        @NotNull(message = "箱规编号不能为空")
         @Min(value = 1,message = "箱规编号最小值为1")
         @Max(value = 999999999,message = "箱规编号最大值为999999999")
         private Integer boxSpecNo;
@@ -106,37 +108,26 @@ public class FirstMileCartonDTO implements Serializable {
         /**
         * 包装重量
         */
-        @NotNull(message = "包装重量不能为空")
-        @Digits(integer = 8, fraction = 2, message = "包装重量整数位不能超过8位，小数位不能超过2位")
         private BigDecimal packageWeight;
 
         /**
         * 箱子尺寸（长）
         */
-        @NotNull(message = "箱子尺寸（长）不能为空")
-        @Digits(integer = 8, fraction = 2, message = "箱子尺寸（长）整数位不能超过8位，小数位不能超过2位")
         private BigDecimal boxLength;
 
         /**
         * 箱子尺寸（宽）
         */
-        @NotNull(message = "箱子尺寸（宽）不能为空")
-        @Digits(integer = 8, fraction = 2, message = "箱子尺寸（宽）整数位不能超过8位，小数位不能超过2位")
         private BigDecimal boxWidth;
 
         /**
         * 箱子尺寸（高）
         */
-        @NotNull(message = "箱子尺寸（高）不能为空")
-        @Digits(integer = 8, fraction = 2, message = "箱子尺寸（高）整数位不能超过8位，小数位不能超过2位")
         private BigDecimal boxHeight;
 
         /**
         * 箱数
         */
-        @NotNull(message = "箱数不能为空")
-        @Min(value = 1,message = "箱数最小值为1")
-        @Max(value = 99999999,message = "箱数最大值为99999999")
         private Integer boxQty;
     }
 

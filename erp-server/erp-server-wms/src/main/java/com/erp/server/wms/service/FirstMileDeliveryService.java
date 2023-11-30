@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -262,4 +263,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param response
      */
     void exportPacking(FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 下推海外仓入库单单个查询
+     * @Author Luo_WG
+     * @Date 2023/11/29 17:13
+     * @param id
+     * @return com.erp.model.wms.dto.OverseasWarehouseInboundDTO.ViewDTO
+     **/
+    OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id);
 }
