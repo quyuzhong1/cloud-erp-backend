@@ -43,7 +43,7 @@ public class GoodCangServiceTest {
                 .page(1)
                 .pageSize(100)
                 .productUpdateTimeFrom("2015-01-01 00:00:00")
-                .productUpdateTimeTo("2024-01-01 00:00:00")
+                .productUpdateTimeTo("2023-01-01 00:00:00")
                 .build();
         List<GoodCangSkuResp> respList = new ArrayList<>();
         int page = 1;
@@ -57,7 +57,7 @@ public class GoodCangServiceTest {
             page++;
         }
         respList = respList.stream().filter(v->v.getProductStatus().equals(GoodCangEnums.OpenApiProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
-        System.out.println(123);
+        System.out.println(respList.size());
     }
 
     @Test
