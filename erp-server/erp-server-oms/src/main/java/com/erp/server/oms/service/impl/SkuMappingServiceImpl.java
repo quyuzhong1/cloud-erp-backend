@@ -620,7 +620,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 }
             }
             //查询平台sku信息
-            SkuMappingEntity platformSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) && StringUtils.isEmpty( obj.getWarehouseId()) && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())).findFirst().orElse(null);
+            SkuMappingEntity platformSkuMapping = list.stream()
+                    .filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId())
+                            && StringUtils.isEmpty( obj.getWarehouseId())
+                            && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())
+                    ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
                 //库存sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
