@@ -488,15 +488,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(skuVOList.get(0).getSkuNo()) && req.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
 
         List<RequisitionApplicationDTO.ChildViewDTO> list = new ArrayList<>();
-        RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.getById(dto.getId());
-        RequisitionApplicationEntity entity = this.getById(detailEntity.getMainId());
         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomSonItemList) {
             RequisitionApplicationDTO.ChildViewDTO childViewDTO = new RequisitionApplicationDTO.ChildViewDTO();
             childViewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
             childViewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
             childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
-            childViewDTO.setRequisitionQty(detailEntity.getRequisitionQty() * bomChildrenSkuDTO.getQuantity());
-            childViewDTO.setUsableQty(inventoryService.getUsableInventoryTotal(entity.getRequisitionWarehouseId(), bomChildrenSkuDTO.getSkuId()));
+            childViewDTO.setUsableQty(inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), bomChildrenSkuDTO.getSkuId()));
             list.add(childViewDTO);
         }
         return list;
