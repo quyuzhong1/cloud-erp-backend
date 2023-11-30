@@ -1359,7 +1359,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //删除原箱包装信息
             firstMileCartonDetailService.deleteByMainIds(Arrays.asList(id));
             //删除原箱信息
-//            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
+            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
         }
     }
 }
