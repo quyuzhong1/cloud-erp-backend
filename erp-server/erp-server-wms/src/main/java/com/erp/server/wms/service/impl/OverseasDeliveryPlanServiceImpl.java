@@ -711,6 +711,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
         return importDTO;
     }
 
+    @Override
+    public Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus) {
+        return lambdaUpdate().set(OverseasDeliveryPlanEntity::getDeliveryStatus, deliveryStatus)
+                .in(OverseasDeliveryPlanEntity::getId, ids)
+                .update();
+    }
+
     /**
      * 下推发货单处理
      * @Author Luo_WG
