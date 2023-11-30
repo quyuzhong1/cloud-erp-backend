@@ -83,7 +83,7 @@ public class FirstMileCartonDTO implements Serializable {
         /**
          * 主键id
          */
-        private String id;
+//        private String id;
 
         /**
          * 详情

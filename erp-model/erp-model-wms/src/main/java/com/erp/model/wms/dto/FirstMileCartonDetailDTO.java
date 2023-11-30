@@ -67,7 +67,7 @@ public class FirstMileCartonDetailDTO implements Serializable {
         /**
          * 主键id
          */
-        private String id;
+//        private String id;
     }
 
     @Data

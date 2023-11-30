@@ -1233,7 +1233,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询箱规包含的产品信息
         for (FirstMileCartonDTO.ViewDTO viewDTO : firstMileCartonList) {
             //根据主表id分组sku查询发货及待装箱数
-            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(id));
+            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainIds(Arrays.asList(id));
             List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(groupSkuList, FirstMileCartonDetailDTO.ViewDTO.class);
             detailList.forEach(req -> req.setCartonId(view.getId()));
             viewDTO.setDetailList(detailList);
@@ -1355,11 +1355,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(firstMileCartonEntities)) {
             List<String> cartonIds = firstMileCartonEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             //删除箱子明细信息
-            firstMileCartonBillService.deleteByCartonIds(cartonIds);
+            firstMileCartonBillService.deleteByCartonIds(Arrays.asList(id));
             //删除原箱包装信息
-            firstMileCartonDetailService.deleteByCartonIds(cartonIds);
+            firstMileCartonDetailService.deleteByMainIds(Arrays.asList(id));
             //删除原箱信息
-//            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
+            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
         }
     }
 }

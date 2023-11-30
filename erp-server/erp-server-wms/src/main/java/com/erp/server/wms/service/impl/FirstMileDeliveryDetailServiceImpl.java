@@ -141,6 +141,32 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         return list;
     }
 
+    @Override
+    public List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainIds(List<String> mainIds) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuByMainIds(mainIds);
+
+        //查询产品信息
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //查询已装箱数
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainIds(mainIds);
+        for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
+            //待装箱数量=发货数量-已装箱数量
+            FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
+                    .filter(req -> req.getMainId().equals(groupSkuDTO.getId())
+                            && req.getSkuId().equals(groupSkuDTO.getSkuId()))
+                    .findFirst().orElse(new FirstMileCartonDTO.PackingQtyDTO());
+            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packingQtyDTO.getUsePackQty());
+            groupSkuDTO.setPackQty(packingQtyDTO.getPackQty());
+            groupSkuDTO.setCartonId(packingQtyDTO.getCartonId());
+
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            groupSkuDTO.setProductName(skuVO.getSkuName());
+        }
+        return list;
+    }
+
     /**
     * 新增修改处理数据
     */

@@ -53,5 +53,14 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
      **/
     Boolean deleteByCartonIds(List<String> cartonIds);
 
+    /**
+     * 根据发货单id删除箱子产品信息
+     * @Author Luo_WG
+     * @Date 2023/11/29 10:35
+     * @param mainIds
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteByMainIds(List<String> mainIds);
+
 
 }
