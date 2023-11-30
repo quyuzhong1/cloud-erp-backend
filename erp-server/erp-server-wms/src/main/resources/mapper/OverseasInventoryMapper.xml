@@ -110,7 +110,7 @@
         oi.reserved_qty,
         oi.onway_qty,
         oi.lack_qty,
-        oi.rozen_qty,
+        oi.frozen_qty,
         oi.shipped_qty,
         oi.download_time,
         opw.warehouse_name as name
