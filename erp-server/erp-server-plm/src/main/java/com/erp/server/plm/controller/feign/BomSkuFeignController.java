@@ -116,10 +116,10 @@ public class BomSkuFeignController {
      * @author Will
      * @date: 2023/11/23 18:10
      * @param params
-     * @return List<ListAllSkuDTO>
+     * @return ListAllSkuDTO
      */
-    @PostMapping("/listAllParentSku")
-    public List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params) {
-        return bomSkuService.listAllParentSku(params);
+    @PostMapping("/listAllLevelSku")
+    public BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params) {
+        return bomSkuService.listAllLevelSku(params);
     }
 }

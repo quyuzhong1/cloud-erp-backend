@@ -236,6 +236,22 @@ public class BomSkuPageDTO {
     public static class ListAllSkuDTO {
 
         /**
+         * 父级SKU
+         */
+        private List<ListSkuLevelDTO> parentList;
+
+        /**
+         * 子级SKU
+         */
+        private List<ListSkuLevelDTO> childList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListSkuLevelDTO {
+
+        /**
          * skuId
          */
         private String skuId;
@@ -254,5 +270,10 @@ public class BomSkuPageDTO {
          * 父级sku编号
          */
         private String parentSkuNo;
+
+        /**
+         * 用量
+         */
+        private Integer quantity;
     }
 }

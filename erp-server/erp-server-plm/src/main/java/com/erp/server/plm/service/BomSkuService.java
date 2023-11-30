@@ -132,8 +132,9 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @author Will
      * @date: 2023/11/23 17:28
      * @param params
-     * @return List<ListAllSkuDTO>
+     * @return BomSkuPageDTO.ListAllSkuDTO
      */
+    BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(BomSkuPageDTO.AllSkuParamDTO params);
     List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(BomSkuPageDTO.AllSkuParamDTO params);
 
     /**

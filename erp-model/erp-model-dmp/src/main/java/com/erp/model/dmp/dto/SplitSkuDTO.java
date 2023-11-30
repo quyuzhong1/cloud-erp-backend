@@ -31,6 +31,11 @@ public class SplitSkuDTO implements Serializable {
     private String originalSkuNo;
 
     /**
+     * 清洗前成本价
+     */
+    private BigDecimal originalCostPrice;
+
+    /**
      * 清洗后成本价
      */
     private BigDecimal cleanCostPrice;
@@ -49,6 +54,11 @@ public class SplitSkuDTO implements Serializable {
      * 商品数量
      */
     private Integer quantity;
+
+    /**
+     * 清洗前商品售价
+     */
+    private BigDecimal originalAmountAfter;
 
     /**
      * 商品售价

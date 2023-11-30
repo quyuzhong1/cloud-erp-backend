@@ -31,6 +31,11 @@ public class BomChildrenSkuDTO  implements Serializable {
 
 
     /**
+     * 类型combination 组合 single 单品
+     */
+    private String type;
+
+    /**
      * bom 编号
      */
     private String serialNumber;

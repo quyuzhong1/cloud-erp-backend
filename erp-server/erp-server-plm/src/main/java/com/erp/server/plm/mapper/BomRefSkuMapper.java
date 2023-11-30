@@ -89,8 +89,16 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @author Will
      * @date: 2023/11/23 17:08
      * @param params
+     * @return List<ListSkuLevelDTO>
+     */
+    List<BomSkuPageDTO.ListSkuLevelDTO> listAllParentSku(@Param("params") BomSkuPageDTO.AllSkuParamDTO params);
+    /**
+     * @description: 查询说有子级SKU
+     * @author Will
+     * @date: 2023/11/30 10:12
+     * @param params
      * @return List<ListAllSkuDTO>
      */
-    List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(@Param("params") BomSkuPageDTO.AllSkuParamDTO params);
+    List<BomSkuPageDTO.ListSkuLevelDTO> listAllChildSku(@Param("params") BomSkuPageDTO.AllSkuParamDTO params);
 }
 

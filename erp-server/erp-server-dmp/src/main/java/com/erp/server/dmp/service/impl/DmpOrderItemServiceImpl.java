@@ -486,6 +486,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         if (isSplit) {
             newSplitSkuDTO.setSkuNo(skuNo);
             newSplitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
+            newSplitSkuDTO.setOriginalCostPrice(dmpSkuCostEntity.getCostPrice());
             newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),splitSkuDTO.getQuantity()));
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);
         }
@@ -522,6 +523,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                     //除最后一条数据成本合计
                     finalSumCostPrice = MathUtil.add(finalSumCostPrice,newAmountAfter);
                 }
+                itemList.get(i).setOriginalAmountAfter(itemList.get(i).getAmountAfter());
             }
             return;
         }
@@ -538,6 +540,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 //除最后一条数据成本合计
                 finalSumCostPrice = MathUtil.add(finalSumCostPrice,newAmountAfter);
             }
+            itemList.get(i).setOriginalAmountAfter(itemList.get(i).getAmountAfter());
         }
     }
 }

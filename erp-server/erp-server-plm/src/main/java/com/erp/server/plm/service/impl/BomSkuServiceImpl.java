@@ -217,8 +217,24 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     }
 
     @Override
-    public List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(BomSkuPageDTO.AllSkuParamDTO params) {
-        return baseMapper.listAllParentSku(params);
+    public BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(BomSkuPageDTO.AllSkuParamDTO params) {
+        BomSkuPageDTO.ListAllSkuDTO listAllSkuDTO = new BomSkuPageDTO.ListAllSkuDTO();
+        //父级SKU
+        List<BomSkuPageDTO.ListSkuLevelDTO> parentSkuList = baseMapper.listAllParentSku(params);
+        //父级SKUId集合
+        List<String> parentSkuNoList = parentSkuList.stream().map(BomSkuPageDTO.ListSkuLevelDTO::getParentSkuNo).distinct().collect(Collectors.toList());
+
+        List<BomSkuPageDTO.ListSkuLevelDTO> childSkuList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(parentSkuNoList)) {
+
+            //根据父级sku递归查询子级SKU
+            params.setSkuNoList(null);
+            params.setSkuNoList(parentSkuNoList);
+            childSkuList = baseMapper.listAllChildSku(params);
+        }
+        listAllSkuDTO.setParentList(parentSkuList);
+        listAllSkuDTO.setChildList(childSkuList);
+        return listAllSkuDTO;
     }
 
 

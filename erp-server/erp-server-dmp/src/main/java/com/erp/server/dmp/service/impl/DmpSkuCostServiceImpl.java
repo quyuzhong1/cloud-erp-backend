@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.utils.RedisUtil;
@@ -83,10 +84,10 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> localDateList：{}",localDateList);
             return;
         }
-        List<DmpSkuCostEntity> dmpSkuCostEntityList = groupSkuCost(skuCostList);
-        List<String> skuNoList = dmpSkuCostEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        //新增或修改
-        addOrUpdateSkuCost(dmpSkuCostEntityList,skuNoList);
+        List<String> skuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
+
+        //更新本身及上级SKU
+        cleanSkuCostBySKuNos (skuNoList);
     }
 
     @Override
@@ -95,86 +96,42 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             log.warn("录入编码不能为空，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
         }
-        //查询sku上级所有父级SKU
+
+        //查询sku上级所有父级SKU及子级SKU
         BomSkuPageDTO.AllSkuParamDTO allSkuParamDTO = new BomSkuPageDTO.AllSkuParamDTO();
         allSkuParamDTO.setSkuNoList(skuNoList);
-        List<BomSkuPageDTO.ListAllSkuDTO> listAllSkuList = plmTaskFeign.listAllParentSku(allSkuParamDTO);
-        if (CollectionUtils.isNotEmpty(listAllSkuList)) {
-            List<String> parentSkuList = listAllSkuList.stream().map(BomSkuPageDTO.ListAllSkuDTO::getParentSkuNo).collect(Collectors.toList());
-            skuNoList.addAll(parentSkuList);
+        BomSkuPageDTO.ListAllSkuDTO listAllSkuDTO = plmTaskFeign.listAllLevelSku(allSkuParamDTO);
+
+        List<String> resultSkuNoList = new ArrayList<>();
+        //所有父级sku
+        List<String> parentSkuNoList = listAllSkuDTO.getChildList().stream().map(BomSkuPageDTO.ListSkuLevelDTO::getParentSkuNo).distinct().collect(Collectors.toList());
+        //所有子级sku(不包括为bom的父级sku)
+        List<String> childSkuNoList = listAllSkuDTO.getChildList().stream().filter(obj -> !parentSkuNoList.contains(obj.getSkuNo())).map(BomSkuPageDTO.ListSkuLevelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(childSkuNoList)) {
+            resultSkuNoList.addAll(childSkuNoList);
         }
-        //近三个月成本信息
+        //无bom的sku
+        List<String> notBomSkuNoList = skuNoList.stream().filter(obj -> !parentSkuNoList.contains(obj) && !childSkuNoList.contains(obj)).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notBomSkuNoList)) {
+            resultSkuNoList.addAll(notBomSkuNoList);
+        }
         SkuCostDTO.ParamDTO paramDTO = new SkuCostDTO.ParamDTO();
-        paramDTO.setSkuNoList(skuNoList);
+        paramDTO.setSkuNoList(resultSkuNoList);
+        //查询所有子级SKU近三个月成本信息
         List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderCost(paramDTO);
         if (CollectionUtils.isEmpty(skuCostList)) {
             log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
         }
-        List<DmpSkuCostEntity> dmpSkuCostEntityList = groupSkuCost(skuCostList);
+        //所有子级SKU成本
+        List<DmpSkuCostEntity> childSkuCostList = groupSkuCost(skuCostList);
+        //添加父级成本数据
+        handleParentCost(childSkuCostList,listAllSkuDTO);
+
         //新增或修改
-        addOrUpdateSkuCost(dmpSkuCostEntityList,skuNoList);
+        addOrUpdateSkuCost(childSkuCostList);
     }
 
-    /**
-     * @description: 分组处理成本信息
-     * @author Will
-     * @date: 2023/11/28 18:41
-     * @param skuCostList
-     * @return List<DmpSkuCostEntity>
-     */
-    private List<DmpSkuCostEntity> groupSkuCost (List<SkuCostDTO> skuCostList) {
-        List<DmpSkuCostEntity> resultList = new ArrayList<>();
-        Map<String, List<SkuCostDTO>> map = skuCostList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuNo()));
-
-        List<SkuCostDTO.SendWarnMsgDTO> sendList = new ArrayList<>();
-        for (Map.Entry<String, List<SkuCostDTO>> entry : map.entrySet()) {
-            List<SkuCostDTO> value = entry.getValue();
-            SkuCostDTO skuCost = entry.getValue().get(0);
-            //成本信息
-            DmpSkuCostEntity dmpSkuCostEntity = new DmpSkuCostEntity();
-            BeanMapperUtils.copy(skuCost,dmpSkuCostEntity);
-            BigDecimal totalCostPrice = BigDecimal.ZERO;
-            BigDecimal totalNoTaxCostPrice = BigDecimal.ZERO;
-            //条数
-            Integer size = MathUtil.ZERO;
-            for (SkuCostDTO skuCostDTO : value) {
-                //汇率
-                BigDecimal exchangeRate = BigDecimal.ONE;
-                if (StrUtil.isNotBlank(skuCostDTO.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(skuCostDTO.getCurrency())) {
-                    exchangeRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
-                }
-                if (ObjectUtil.isEmpty(exchangeRate)) {
-                    log.info("未找到汇率，>>>>>>>> costDate = {},currency = {}",skuCostDTO.getCostDate(),skuCostDTO.getCurrency());
-                    SkuCostDTO.SendWarnMsgDTO sendWarnMsgDTO = new SkuCostDTO.SendWarnMsgDTO();
-                    sendWarnMsgDTO.setDate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                    sendWarnMsgDTO.setCurrency(skuCostDTO.getCurrency());
-                    sendList.add(sendWarnMsgDTO);
-                    continue;
-                }
-                //含税成本
-                totalCostPrice = MathUtil.add(totalCostPrice,MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate));
-                //未含税成本
-                totalNoTaxCostPrice = MathUtil.add(totalNoTaxCostPrice,MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate));
-
-                size++;
-            }
-            dmpSkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            dmpSkuCostEntity.setCostPrice(MathUtil.divide(totalCostPrice, BigDecimal.valueOf(size),4) );
-            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostPrice, BigDecimal.valueOf(size),4));
-            //无成本则不保存
-            if (MathUtil.compareTo(dmpSkuCostEntity.getCostPrice(),MathUtil.ZERO) == MathUtil.ZERO) {
-                continue;
-            }
-            resultList.add(dmpSkuCostEntity);
-        }
-        //预警
-        if (CollectionUtils.isNotEmpty(sendList)) {
-            List<SkuCostDTO.SendWarnMsgDTO> sendWarnMsgList = sendList.stream().distinct().collect(Collectors.toList());
-            sendWarnMsgList.forEach(obj -> sendWarnMsg(obj.getDate(),obj.getCurrency()));
-        }
-        return  resultList;
-    }
 
 
     @Override
@@ -258,12 +215,12 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      * @author Will
      * @date: 2023/11/23 18:49
      * @param dmpSkuCostEntityList
-     * @param skuNoList
      */
-    private void addOrUpdateSkuCost ( List<DmpSkuCostEntity> dmpSkuCostEntityList,List<String> skuNoList) {
+    private void addOrUpdateSkuCost ( List<DmpSkuCostEntity> dmpSkuCostEntityList) {
         if (CollectionUtils.isEmpty(dmpSkuCostEntityList)) {
             return;
         }
+        List<String> skuNoList = dmpSkuCostEntityList.stream().map(DmpSkuCostEntity::getSkuNo).distinct().collect(Collectors.toList());
         List<DmpSkuCostEntity> dmpSkuCostList = this.listDmpSkuCostBySkuNo(skuNoList);
         for (DmpSkuCostEntity dmpSkuCostEntity : dmpSkuCostEntityList) {
             DmpSkuCostEntity entity = dmpSkuCostList.stream().filter(req -> req.getSkuNo().equals(dmpSkuCostEntity.getSkuNo())).limit(1).findFirst().orElse(null);
@@ -277,6 +234,136 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             //判断是否存在redis缓存，存在则删除后更新，不存在则添加
             setRedisSkuCost(dmpSkuCostEntity);
         }
+    }
+
+    /**
+     * @description: 添加父级成本数据
+     * @author Will
+     * @date: 2023/11/30 17:17
+     * @param childSkuCostList
+     * @param listAllSkuDTO
+     */
+    private void handleParentCost (List<DmpSkuCostEntity> childSkuCostList,BomSkuPageDTO.ListAllSkuDTO listAllSkuDTO) {
+        /**
+         * 最底层sku成本信息（bom子件+无bom的sku） childSkuCostList
+         * bom父级sku成本信息
+         */
+
+        //父级SKU下面所有的子级SKU
+        List<BomSkuPageDTO.ListSkuLevelDTO> allList = listAllSkuDTO.getChildList();
+        if (CollectionUtils.isEmpty(allList)) {
+            log.info("未发现上级bom信息，handleParentCost >>>>>> childSkuCostList：{}",childSkuCostList);
+            return;
+        }
+        Map<String, List<BomSkuPageDTO.ListSkuLevelDTO>> map = allList.stream().collect(Collectors.groupingBy(BomSkuPageDTO.ListSkuLevelDTO::getParentSkuId));
+        for (Map.Entry<String, List<BomSkuPageDTO.ListSkuLevelDTO>> entry : map.entrySet()) {
+            BomSkuPageDTO.ListSkuLevelDTO parentSkuLevelDTO = entry.getValue().get(0);
+            DmpSkuCostEntity dmpSkuCostEntity = new DmpSkuCostEntity();
+            dmpSkuCostEntity.setSkuId(parentSkuLevelDTO.getParentSkuId());
+            dmpSkuCostEntity.setSkuNo(parentSkuLevelDTO.getParentSkuNo());
+            dmpSkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            //计算成本信息和未税成本信息
+            getParentCost(childSkuCostList,allList,parentSkuLevelDTO.getParentSkuId(),dmpSkuCostEntity);
+            JSONObject jsonObject = new JSONObject();
+            List<BomSkuPageDTO.ListSkuLevelDTO> childSkuList = allList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuLevelDTO.getParentSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childSkuList)) {
+                log.info("未发现下级bom信息，handleParentCost >>>>>> parentSkuNo：{}",parentSkuLevelDTO.getParentSkuNo());
+                continue;
+            }
+            //无成本不添加
+            if (MathUtil.compareTo(dmpSkuCostEntity.getCostPrice(),MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            childSkuList.forEach(obj -> jsonObject.set(obj.getSkuNo(),obj.getQuantity()));
+            dmpSkuCostEntity.setBomSkuJson(jsonObject);
+            childSkuCostList.add(dmpSkuCostEntity);
+        }
+    }
+
+    /**
+     * @description: 迭代查询父级SKU成本
+     * @author Will
+     * @date: 2023/11/30 17:16
+     * @param childSkuCostList
+     * @param childList
+     * @param parentSkuId
+     * @param parentSkuCostEntity
+     */
+    private void getParentCost (List<DmpSkuCostEntity> childSkuCostList,List<BomSkuPageDTO.ListSkuLevelDTO> childList,String parentSkuId,DmpSkuCostEntity parentSkuCostEntity) {
+        List<BomSkuPageDTO.ListSkuLevelDTO> childSkuList = childList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuId)).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(childSkuList)) {
+            for (BomSkuPageDTO.ListSkuLevelDTO childSkuLevelDTO :  childSkuList) {
+                DmpSkuCostEntity dmpSkuCostEntity = childSkuCostList.stream().filter(obj -> obj.getSkuId().equals(childSkuLevelDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
+                    getParentCost(childSkuCostList,childList,childSkuLevelDTO.getSkuId(),parentSkuCostEntity);
+                    continue;
+                }
+                parentSkuCostEntity.setCostPrice(MathUtil.add(dmpSkuCostEntity.getCostPrice(),parentSkuCostEntity.getCostPrice()));
+                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(dmpSkuCostEntity.getNotTaxCostPrice(),parentSkuCostEntity.getNotTaxCostPrice()));
+            }
+        }
+
+    }
+
+
+    /**
+     * @description: 分组处理成本信息
+     * @author Will
+     * @date: 2023/11/28 18:41
+     * @param skuCostList
+     * @return List<DmpSkuCostEntity>
+     */
+    private List<DmpSkuCostEntity> groupSkuCost (List<SkuCostDTO> skuCostList) {
+        List<DmpSkuCostEntity> resultList = new ArrayList<>();
+        Map<String, List<SkuCostDTO>> map = skuCostList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuNo()));
+
+        List<SkuCostDTO.SendWarnMsgDTO> sendList = new ArrayList<>();
+        for (Map.Entry<String, List<SkuCostDTO>> entry : map.entrySet()) {
+            List<SkuCostDTO> value = entry.getValue();
+            SkuCostDTO skuCost = entry.getValue().get(0);
+            //成本信息
+            DmpSkuCostEntity dmpSkuCostEntity = new DmpSkuCostEntity();
+            BeanMapperUtils.copy(skuCost,dmpSkuCostEntity);
+            BigDecimal totalCostPrice = BigDecimal.ZERO;
+            BigDecimal totalNoTaxCostPrice = BigDecimal.ZERO;
+            //条数
+            Integer size = MathUtil.ZERO;
+            for (SkuCostDTO skuCostDTO : value) {
+                //汇率
+                BigDecimal exchangeRate = BigDecimal.ONE;
+                if (StrUtil.isNotBlank(skuCostDTO.getCurrency()) && !CurrencyEnum.CNY.getCurrencyCode().equals(skuCostDTO.getCurrency())) {
+                    exchangeRate = dmpTaskFeign.getRate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                }
+                if (ObjectUtil.isEmpty(exchangeRate)) {
+                    log.info("未找到汇率，>>>>>>>> costDate = {},currency = {}",skuCostDTO.getCostDate(),skuCostDTO.getCurrency());
+                    SkuCostDTO.SendWarnMsgDTO sendWarnMsgDTO = new SkuCostDTO.SendWarnMsgDTO();
+                    sendWarnMsgDTO.setDate(skuCostDTO.getCostDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    sendWarnMsgDTO.setCurrency(skuCostDTO.getCurrency());
+                    sendList.add(sendWarnMsgDTO);
+                    continue;
+                }
+                //含税成本
+                totalCostPrice = MathUtil.add(totalCostPrice,MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate));
+                //未含税成本
+                totalNoTaxCostPrice = MathUtil.add(totalNoTaxCostPrice,MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate));
+
+                size++;
+            }
+            dmpSkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dmpSkuCostEntity.setCostPrice(MathUtil.divide(totalCostPrice, BigDecimal.valueOf(size),4) );
+            dmpSkuCostEntity.setNotTaxCostPrice(MathUtil.divide(totalNoTaxCostPrice, BigDecimal.valueOf(size),4));
+            //无成本则不保存
+            if (MathUtil.compareTo(dmpSkuCostEntity.getCostPrice(),MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            resultList.add(dmpSkuCostEntity);
+        }
+        //预警
+        if (CollectionUtils.isNotEmpty(sendList)) {
+            List<SkuCostDTO.SendWarnMsgDTO> sendWarnMsgList = sendList.stream().distinct().collect(Collectors.toList());
+            sendWarnMsgList.forEach(obj -> sendWarnMsg(obj.getDate(),obj.getCurrency()));
+        }
+        return  resultList;
     }
 
     /**
