@@ -1,19 +1,15 @@
-package com.common.core.server.rule;/**
- * @author Lambda
- * @Classname SpElServer
- * @Description TODO
- * @Date 2023-09-07 8:59
- * @Created by yl
- */
-
+package com.common.core.server.rule;
+import cn.hutool.json.JSONObject;
 import com.common.core.entity.ConditionElement;
 
 import java.util.List;
 
 /**
- * @Description TODO
- * @Author yl
+ * @author Lambda
+ * @Classname SpElServer
+ * @Description
  * @Date 2023-09-07 8:59
+ * @Created by yl
  */
 public interface SpElServer {
 
@@ -50,7 +46,7 @@ public interface SpElServer {
      * @param obj
      * @return
      */
-    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList,Object obj);
+    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj);
 
 
 }
