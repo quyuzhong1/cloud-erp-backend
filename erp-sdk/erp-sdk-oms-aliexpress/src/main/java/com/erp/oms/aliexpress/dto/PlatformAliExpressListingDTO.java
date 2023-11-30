@@ -73,8 +73,7 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setPlatformType("platform");
             product.setProductImageUrl(sourceProduct.getImageUrls());
             // 包装信息
-            String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", item.getPackageLength(), item.getPackageWidth(), item.getPackageHeight(), item.getGrossWeight());
-
+            String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
 
             product.setProductPacking(packing);
             String gmtModified = sourceProduct.getGmtModified();
