@@ -3,7 +3,9 @@ package com.erp.server.wms.service.impl;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -162,10 +164,38 @@ public class ImlHandlerServiceImplTest {
 
     @Test
     public void testCreateOutboundBill() {
+        ThirdWarehouseCreateOutboundReq createOutboundReq = ThirdWarehouseCreateOutboundReq.builder()
+                .referenceNo("WJTEST1234")
+                .shippingMethod("IML-RU")
+                .warehouseCode("RUS2")
+                .verify(0)
+                .receiverInfo(ThirdWarehouseCreateOutboundReq.ReceiverInfo.builder()
+                        .name("mark")
+                        .phone("12345678910")
+                        .countryCode("RU")
+                        .province("newyork")
+                        .city("hs")
+                        .address1("13")
+                        .zipcode("123456")
+                        .build())
+                .items(Arrays.asList(ThirdWarehouseCreateOutboundReq.Item.builder()
+                        .productSku("1764")
+                        .quantity(1)
+                        .build()))
+                .build();
+        ApiResult<String> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726457716430561281");
+        System.out.println(code);
+        System.out.println(code.getData());
     }
 
     @Test
     public void testCancelOutboundBill() {
+        ThirdWarehouseCancelOutboundReq cancelOutboundReq = ThirdWarehouseCancelOutboundReq.builder()
+                .orderCode("86526-231130-2195")
+                .build();
+        ApiResult<String> code = thirdWarehouseService.cancelOutboundBill(cancelOutboundReq,"1726457716430561281");
+        System.out.println(code);
+        System.out.println(code.getData());
     }
 
     @Test

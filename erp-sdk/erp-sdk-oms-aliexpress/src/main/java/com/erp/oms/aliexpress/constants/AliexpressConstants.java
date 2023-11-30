@@ -17,5 +17,20 @@ public interface AliexpressConstants {
     String LIST_ORDER="aliexpress.trade.seller.orderlist.get";
 
     Integer pageSize=50;
+    /**
+     * 产品分页的 api name
+     */
+    String LIST_PRODUCT="aliexpress.postproduct.redefining.findproductinfolistquery";
+
+    /**
+     * 产品详情的 api name
+     */
+    String PRODUCT_INFO="aliexpress.postproduct.redefining.findaeproductbyid";
+
+
+    /**
+     *上架
+     */
+    String ON_SELLING="onSelling";
 
 }

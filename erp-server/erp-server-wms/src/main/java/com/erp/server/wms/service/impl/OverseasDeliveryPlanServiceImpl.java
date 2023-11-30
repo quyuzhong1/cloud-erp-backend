@@ -479,7 +479,12 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             }
 
             //获取库存sku
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream().filter(req -> req.getProductSkuId().equals(viewDTO.getSkuId())).distinct().findFirst().orElse(null);
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
+                    .filter(req -> req.getProductSkuId().equals(viewDTO.getSkuId())
+                        && req.getWarehouseId().equals(data.getToWarehouseId())
+                    ).distinct()
+                    .findFirst().orElse(null);
+
             if (ObjectUtil.isNotEmpty(listStockSkuNoByProductSkuIdView)) {
                 viewDTO.setStockSku(listStockSkuNoByProductSkuIdView.getStockSku());
                 viewDTO.setStockSkuName(listStockSkuNoByProductSkuIdView.getStockSkuName());
