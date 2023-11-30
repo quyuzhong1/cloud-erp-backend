@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.sqlite.util.StringUtils;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.Objects;
 
 @Slf4j
@@ -104,11 +105,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
-    protected abstract ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq);
+    protected abstract ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq);
 
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
-    protected abstract ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq);
+    protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 
     protected abstract Boolean hasWarehouse();
 

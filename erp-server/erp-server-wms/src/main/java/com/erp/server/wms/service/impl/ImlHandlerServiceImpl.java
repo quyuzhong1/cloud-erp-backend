@@ -13,13 +13,16 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
+import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -28,6 +31,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@Validated
 public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Resource
@@ -55,19 +59,24 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    public ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
+    public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
         ImlResponse<String> response = imlService.cancelInboundBill(cancelInboundReq.getReceivingCode());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        ImlCreateOutboundReq imlCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToIml(createOutboundReq);
+        //艾姆勒没有测试环境，测试时默认不审核，上生产去掉
+        imlCreateOutboundReq.setVerify(0);
+        ImlResponse<String> response =  imlService.createOutboundBill(imlCreateOutboundReq);
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override
-    public ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return null;
+    public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
+        ImlResponse<String> response = imlService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override

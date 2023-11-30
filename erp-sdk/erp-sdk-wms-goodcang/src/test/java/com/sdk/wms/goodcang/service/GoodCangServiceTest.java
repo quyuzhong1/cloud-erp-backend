@@ -42,8 +42,8 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(100)
-                .productUpdateTimeFrom("2015-01-01 00:00:00")
-                .productUpdateTimeTo("2023-01-01 00:00:00")
+                .productUpdateTimeFrom("2023-09-26 15:00:00")
+                .productUpdateTimeTo("2023-09-26 16:00:00")
                 .build();
         List<GoodCangSkuResp> respList = new ArrayList<>();
         int page = 1;
