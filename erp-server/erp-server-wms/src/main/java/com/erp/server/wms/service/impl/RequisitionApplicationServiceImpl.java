@@ -524,7 +524,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //要货类型中文
         data.setTypeName(RequisitionApplicationTypeEnum.getName(data.getType()));
         //单据状态中文
-        data.setStatus(RequisitionApplicationStatusEnum.getName(data.getStatus()));
+        data.setStatusName(RequisitionApplicationStatusEnum.getName(data.getStatus()));
 
         //详情字段设置
         List<RequisitionApplicationDetailDTO.ViewDTO> viewDetailList = new ArrayList<>();
