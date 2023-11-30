@@ -1269,9 +1269,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public FirstMileCartonDTO.ListPackingDTO listPacking(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
-        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
+/*        if (PackingStatusEnum.NOT_PACKING.getCode().equals(entity.getPackingStatus())) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
-        }
+        }*/
         FirstMileCartonDTO.ListPackingDTO listPackingDTO = new FirstMileCartonDTO.ListPackingDTO();
         listPackingDTO.setId(entity.getId());
         listPackingDTO.setCode(entity.getCode());
