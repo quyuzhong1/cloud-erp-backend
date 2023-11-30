@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
@@ -27,6 +28,9 @@ public class ImlHandlerServiceImplTest {
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
     private ThirdWarehouseService thirdWarehouseService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     @PostConstruct
     public void init(){
@@ -196,14 +200,6 @@ public class ImlHandlerServiceImplTest {
         ApiResult<String> code = thirdWarehouseService.cancelOutboundBill(cancelOutboundReq,"1726457716430561281");
         System.out.println(code);
         System.out.println(code.getData());
-    }
-
-    @Test
-    public void testHasWarehouse() {
-    }
-
-    @Test
-    public void testHasWarehouse_GoodCangServiceReturnsNoItems() {
     }
 
 }

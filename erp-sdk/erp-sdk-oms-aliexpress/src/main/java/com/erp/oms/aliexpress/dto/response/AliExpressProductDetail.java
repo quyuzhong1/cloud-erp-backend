@@ -42,29 +42,6 @@ public class AliExpressProductDetail implements Serializable {
     @JSONField(name = "barcode")
     private String barcode;
 
-    /**
-     * sku重量，单位公斤
-     */
-    @JSONField(name = "gross_weight")
-    private String grossWeight;
-
-    /**
-     * sku物流尺寸-高，单位cm
-     */
-    @JSONField(name = "package_height")
-    private Integer packageHeight;
-
-    /**
-     * sku物流尺寸-宽，单位cm。
-     */
-    @JSONField(name = "package_width")
-    private Integer packageWidth;
-
-    /**
-     *sku物流尺寸-长，单位cm
-     */
-    @JSONField(name = "package_length")
-    private Integer packageLength;
 
 
 
