@@ -5,6 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor
@@ -24,13 +25,23 @@ public enum PackingStatusEnum implements EnumMessage {
      */
     private String name;
 
-
     public String getCode() {
         return code;
     }
 
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
+            for (PackingStatusEnum item : PackingStatusEnum.values()) {
+                if (code.equals(item.getCode())) {
+                    return item.getName();
+                }
+            }
+        }
+        return "";
     }
 
     public static PackingStatusEnum getByCode(String code) {

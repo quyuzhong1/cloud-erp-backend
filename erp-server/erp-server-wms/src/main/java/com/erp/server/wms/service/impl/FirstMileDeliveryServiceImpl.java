@@ -1058,7 +1058,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
            return;
         }
 
-
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -1092,6 +1091,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             data.setDemandTypeName(FbaDemandTypeEnum.getName(data.getDemandType()));
             //作废状态名称
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            //装箱状态名称
+            data.setPackingStatusName(PackingStatusEnum.getName(data.getPackingStatus()));
             //物流方式名称
             data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
             //产品名称

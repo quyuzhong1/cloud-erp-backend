@@ -59,6 +59,7 @@
         fd.demand_type,
         fd.approve_status,
         fd.invalid_status,
+        fd.packing_status,
         fd.shop_id,
         fd.shop_name,
         fd.country_id,

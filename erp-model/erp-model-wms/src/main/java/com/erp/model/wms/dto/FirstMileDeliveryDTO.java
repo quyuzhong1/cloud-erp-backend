@@ -162,6 +162,11 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 入库单号
+         */
+        private String overseasInboundCode;
+
+        /**
          * 备货类型
          */
         private String demandType;
@@ -170,11 +175,6 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 备货类型名称
          */
         private String demandTypeName;
-
-        /**
-         * 海外仓入库单编号
-         */
-        private String overseasInboundCode;
 
         /**
          * 审核状态
@@ -195,6 +195,16 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 作废状态名称
          */
         private String invalidStatusName;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
 
         /**
          * 店铺id
