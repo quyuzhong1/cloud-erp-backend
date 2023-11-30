@@ -1,6 +1,7 @@
 package com.erp.server.wms.convert;
 
 
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
@@ -41,4 +42,5 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "sourceDetailId", constant = "")
     })
     TransferInfoDetailDTO.AddDTO radFinishListToTransferInfoDetail(RequisitionApplicationDTO.FinishListDTO finishListDTO);
+
 }

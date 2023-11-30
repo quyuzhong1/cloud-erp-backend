@@ -477,7 +477,29 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto) {
-        return null;
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(dto.getSkuId()));
+        if (CollectionUtils.isEmpty(skuVOList)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        //查询历史子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
+        //查询最新版本的sku子件信息
+        List<BomChildrenSkuDTO> bomSonItemList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuNo().equals(skuVOList.get(0).getSkuNo()) && req.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
+
+        List<RequisitionApplicationDTO.ChildViewDTO> list = new ArrayList<>();
+        RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.getById(dto.getId());
+        RequisitionApplicationEntity entity = this.getById(detailEntity.getMainId());
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomSonItemList) {
+            RequisitionApplicationDTO.ChildViewDTO childViewDTO = new RequisitionApplicationDTO.ChildViewDTO();
+            childViewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+            childViewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+            childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+            childViewDTO.setRequisitionQty(detailEntity.getRequisitionQty() * bomChildrenSkuDTO.getQuantity());
+            childViewDTO.setUsableQty(inventoryService.getUsableInventoryTotal(entity.getRequisitionWarehouseId(), bomChildrenSkuDTO.getSkuId()));
+            list.add(childViewDTO);
+        }
+        return list;
     }
 
     /**

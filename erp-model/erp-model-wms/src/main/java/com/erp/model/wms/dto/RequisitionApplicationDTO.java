@@ -736,9 +736,9 @@ public class RequisitionApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class ChildParamDTO {
         /**
-         * 要货单主表id
+         * 要货详情表id
          */
-        @NotBlank(message = "要货单主表id不能为空")
+        @NotBlank(message = "要货详情表id不能为空")
         private String id;
         /**
          * sku
@@ -772,7 +772,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 可用库存
          */
-        private Integer useableQty;
+        private Integer usableQty;
 
         /**
          * bom用量
