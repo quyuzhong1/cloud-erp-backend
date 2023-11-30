@@ -34,7 +34,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     /**
      * 是否审核 默认1
      */
-    private Integer verify = 1;
+    private Integer verify;
 
     //收件人信息
     private ReceiverInfo receiverInfo;

@@ -115,7 +115,6 @@ public class ImlService {
      */
     public ImlResponse<String> createOutboundBill(@Valid ImlCreateOutboundReq imlCreateOutboundReq){
         String response = ImlUtils.callService(ImlConstants.METHOD_CREATE_ORDER,imlCreateOutboundReq);
-        System.out.println(response);
         ImlResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<ImlResponse<String>>() {}.getType());
         //处理返回值
         if(StringUtil.isNotBlank(respDto.getOrderCode())){
