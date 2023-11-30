@@ -804,7 +804,7 @@ public enum ApiError implements Serializable {
     SHIPMENT_NOT_EXIST(99101, "FBA货件单据不存在！"),
 
     ERROR_NOT_DISAPPROVE_CHANGE(99095, "【{}】单据存在变更单,无法反审核"),
-    ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到FBA发货单"),
+    ERROR_NOT_FBA_DELIVERY_DETAIL(99096,"未找到发货单"),
     IS_DELIVERY_DELETE(99097,"只有未发货的数据支持删除"),
     FBA_SHIPMENT_DETAIL_NOT_EXIST(99098,"货件详情不存在"),
     FBA_SHIPMENT_NOT_EXIST(99098,"货件不存在"),
@@ -844,7 +844,7 @@ public enum ApiError implements Serializable {
     SKU_NOT_MAPPING_PLATFORM_SKU(99126,"sku【{}】无平台sku映射关系，请绑定第三方sku后操作"),
     THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
     APPROVE_ING_IS_PACKING(99130,"待审核的数据才可以上传装箱数据"),
-    OVERSEAS_WAREHOUSE_INBOUND_EXIST(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
+    OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
     NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
     HANDLE_ING_FINISH(99134,"处理中状态的要货单才能完成"),
@@ -853,6 +853,9 @@ public enum ApiError implements Serializable {
     PACKING_SKU_IS_NOT_NULL(99134,"箱规【{}】中sku不能为空"),
     PACKING_SKU_PACK_QTY_IS_NOT_NULL(99135,"箱规【{}】中sku【{}】未填写装箱数量"),
     PACKING_SKU_BOX_QTY_IS_NOT_NULL(99136,"箱规【{}】中未填写箱数"),
+    IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN(99137,"只有备货海外仓的发货单允许下推入库单"),
+    APPROVE_ING_CAN_TO_OVERSEAS_WAREHOUSE_INBOUND(99138,"只有待审核的数据允许下推海外仓入库单"),
+    OVERSEAS_WAREHOUSE_INBOUND_EXIST(99139,"已下推入库单【{}】，不允许重复操作"),
 
 
     /**

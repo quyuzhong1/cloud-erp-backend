@@ -1179,7 +1179,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 ).count();
         if (count > 0) {
             List<String> codes = overseasWarehouseInboundEntities.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, StringUtils.join(codes, ","));
+            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE, StringUtils.join(codes, ","));
         }
 
         //删除原装箱信息
@@ -1292,8 +1292,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
-        FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
+        }
 
+        //只有备货类型等于备货海外仓时，才可以下推入库单，否则提示：只有备货海外仓的发货单允许下推入库单
+        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            throw new ServiceException(ApiError.IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN);
+        }
+
+        //发货单待审核的数据可以下推海外仓入库单，其他状态下不可操作，否则提示：只有待审核的数据允许下推海外仓入库单
+        if (!ApproveStatusEnum.APPROVE_ING.getCode().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.APPROVE_ING_CAN_TO_OVERSEAS_WAREHOUSE_INBOUND);
+        }
+
+        //一个发货单只能下推一个入库单，否则提示：已下推入库单，不允许重复操作
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isNotEmpty(overseasWarehouseInboundEntities)) {
+            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInboundEntities.get(0).getCode());
+        }
+
+        //物流信息
+        FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
         OverseasWarehouseInboundDTO.ViewDTO viewDTO = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundView(entity, logisticsEntity);
         viewDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         viewDTO.setTrackingNo(StringUtils.join(logisticsEntity.getTrackingNoList(), ","));
@@ -1305,12 +1325,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //获取库存sku信息
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
-
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailViewList = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundDetailView(firstMileDeliveryDetailEntities);
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
             dto.setProductName(skuVO.getSkuName());
+            dto.setImagesUrl(skuVO.getSkuImagesUrl());
 
             //库存sku
             SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = ListStockSkuNoByProductSkuIdViews.stream()
@@ -1321,7 +1341,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             dto.setPlatformSkuNo(view.getStockSku());
             dto.setPlatformProductName(view.getStockSkuName());
         }
-        return null;
+
+        viewDTO.setDetailList(detailViewList);
+        return viewDTO;
     }
 
     /**
@@ -1337,7 +1359,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //删除原箱包装信息
             firstMileCartonDetailService.deleteByCartonIds(cartonIds);
             //删除原箱信息
-            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
+//            firstMileCartonService.deleteByMainIds(Arrays.asList(id));
         }
     }
 }

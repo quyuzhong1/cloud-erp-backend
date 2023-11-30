@@ -53,7 +53,7 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         handleData(firstMileCartonEntity, mainId);
 
         log.info("开始新增发货单箱规信息");
-        boolean save = super.save(firstMileCartonEntity);
+        boolean save = super.saveOrUpdate(firstMileCartonEntity);
         if(!save) {
             throw new ServiceException("发货单箱规信息保存失败");
         }

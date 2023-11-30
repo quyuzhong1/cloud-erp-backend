@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.ErpServerWmsApplication;
@@ -181,6 +182,12 @@ public class GoodCangHandlerServiceImplTest {
 
     @Test
     public void testCancelOutboundBill() {
+        ThirdWarehouseCancelOutboundReq cancelOutboundReq = ThirdWarehouseCancelOutboundReq.builder()
+                .orderCode("G1149-231129-0051")
+                .build();
+        ApiResult<String> code = thirdWarehouseService.cancelOutboundBill(cancelOutboundReq,"1726456935660867586");
+        System.out.println(code);
+        System.out.println(code.getData());
     }
 
     @Test
