@@ -64,13 +64,13 @@ public class AliExpressOrderService {
      * @author yl
      * @date 2023-11-22
      */
-    public void listOrder(OrderRequest orderRequest,List<AliExpressOrder> orderList) throws ApiException {
+    public void listOrder(OrderRequest orderRequest, List<AliExpressOrder> orderList) throws ApiException {
 
         String appKey = orderRequest.getClientId();
         String appSecret = orderRequest.getClientSecret();
         String baseUrl = orderRequest.getBaseUrl();
-        String apiName=orderRequest.getApiName();
-        Integer currentPage=orderRequest.getCurrentPage();
+        String apiName = orderRequest.getApiName();
+        Integer currentPage = orderRequest.getCurrentPage();
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName(apiName);
@@ -83,27 +83,27 @@ public class AliExpressOrderService {
         request.addApiParameter("param_aeop_order_query", JSONObject.toJSONString(paramMap));
         String token = orderRequest.getToken();
         IopResponse response = client.execute(request, token, Protocol.TOP);
-        JSONObject jsonObject=JSONObject.parseObject(response.getBody());
-        JSONObject resultJsONObject=jsonObject.getJSONObject("result");
-        Boolean  success=resultJsONObject.getBooleanValue("success");
+        JSONObject jsonObject = JSONObject.parseObject(response.getBody());
+        JSONObject resultJsONObject = jsonObject.getJSONObject("result");
+        Boolean success = resultJsONObject.getBooleanValue("success");
         //失败
-        if(!success){
-            log.error("拉取速卖通订单失败>>>>>>>{}",resultJsONObject.getOrDefault("error_message","").toString());
+        if (!success) {
+            log.error("拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
             return;
         }
         JSONArray jsonArray = (JSONArray) resultJsONObject.get("target_list");
-        if (Objects.isNull(jsonArray)){
+        if (Objects.isNull(jsonArray)) {
             return;
         }
         //目录列表
         List<AliExpressOrder> orderInfoList = JSONObject.parseArray(jsonArray.toJSONString(), AliExpressOrder.class);
         orderList.addAll(orderInfoList);
         //总页数
-        Integer totalPage=resultJsONObject.getInteger("total_page");
+        Integer totalPage = resultJsONObject.getInteger("total_page");
         //表示还有
-        if(Objects.nonNull(totalPage)&&!totalPage.equals(currentPage)){
-            orderRequest.setCurrentPage(currentPage+1);
-            listOrder(orderRequest,orderInfoList);
+        if (Objects.nonNull(totalPage) && !totalPage.equals(currentPage)) {
+            orderRequest.setCurrentPage(currentPage + 1);
+            listOrder(orderRequest, orderInfoList);
         }
 
     }
@@ -142,10 +142,10 @@ public class AliExpressOrderService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             result.setId(shopId);
-            if(Objects.nonNull(shopAuthEntity)){
+            if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
             }
-            return  result;
+            return result;
         }
         return null;
 
