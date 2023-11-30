@@ -856,6 +856,7 @@ public enum ApiError implements Serializable {
     IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN(99137,"只有备货海外仓的发货单允许下推入库单"),
     APPROVE_ING_CAN_TO_OVERSEAS_WAREHOUSE_INBOUND(99138,"只有待审核的数据允许下推海外仓入库单"),
     OVERSEAS_WAREHOUSE_INBOUND_EXIST(99139,"已下推入库单【{}】，不允许重复操作"),
+    REQUISITION_APPLICATION_NOT_EXIST(99139,"货件【{}】没有下推【要货申请】的单据不允许下推发货单"),
 
 
     /**

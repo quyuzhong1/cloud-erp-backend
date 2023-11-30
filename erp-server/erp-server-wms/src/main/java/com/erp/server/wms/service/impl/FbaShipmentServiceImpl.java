@@ -282,14 +282,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
 
+        //查询下推的要要货申请单
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(ids.getIds());
+
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
                 throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
             }
         });
-
-        //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
 
         //校验货件单据是否存在
         List<String> shipmentIds = list.stream().map(FbaShipmentDTO.GenerateDeliverView::getMainId).distinct().collect(Collectors.toList());
@@ -319,7 +320,19 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         List<String> skuIdList = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         for (FbaShipmentDTO.GenerateDeliverView view : list) {
+
+            //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
+/*
+            RequisitionApplicationEntity applicationEntity = requisitionApplicationEntities.stream()
+                    .filter(req -> req.getSourceId().equals(view.getMainId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(applicationEntity)) {
+                throw new ServiceException(ApiError.REQUISITION_APPLICATION_NOT_EXIST, view.getCode());
+            }
+*/
+
             //处理字段映射
             generateDeliverViewFieldHandle(view, shopInfoEntities, skuVOList, bomChildrenSkuDTOS);
         }
