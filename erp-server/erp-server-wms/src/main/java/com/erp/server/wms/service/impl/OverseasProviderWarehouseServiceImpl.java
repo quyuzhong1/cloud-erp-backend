@@ -100,9 +100,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     * 新增修改处理数据
     */
     private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
-
         List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
-
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
         for (OverseasProviderWarehouseEntity detailEntity : list) {
@@ -112,13 +110,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                     throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
                 }
             }
-
             detailEntity.setMainId(mainId);
-            WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(updateDTO)) {
-                detailEntity.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
-                detailEntity.setWarehouseName(updateDTO.getName());
-            }
+            //仓库信息
+            WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            detailEntity.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
+            detailEntity.setWarehouseName(updateDTO.getName());
+
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
                 OverseasProviderWarehouseEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
