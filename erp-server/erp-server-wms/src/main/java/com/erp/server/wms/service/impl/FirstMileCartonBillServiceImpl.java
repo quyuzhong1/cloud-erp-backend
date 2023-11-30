@@ -65,6 +65,14 @@ public class FirstMileCartonBillServiceImpl extends SuperServiceImpl<FirstMileCa
     }
 
     @Override
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().in(FirstMileCartonBillEntity::getMainId, mainIds).remove();
+    }
+
+    @Override
     public List<FirstMileCartonBillEntity> listByMainIds(List<String> mainIds) {
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();

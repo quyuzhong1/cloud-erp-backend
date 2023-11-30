@@ -85,6 +85,14 @@ public class FirstMileCartonDetailServiceImpl extends SuperServiceImpl<FirstMile
         return lambdaUpdate().in(FirstMileCartonDetailEntity::getCartonId, cartonIds).remove();
     }
 
+    @Override
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().in(FirstMileCartonDetailEntity::getMainId, mainIds).remove();
+    }
+
     /**
     * 新增修改处理数据
     */

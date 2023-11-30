@@ -65,4 +65,26 @@
         fdd.sku_id,
         fdd.sku_no
     </select>
+
+    <!--根据主表id分组查询发货单已包装发货及待装箱数-->
+    <select id="listCartonGroupSkuByMainIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+        SELECT
+            fmcd.main_id AS id,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmdd.delivery_qty) AS deliveryQty
+        FROM first_mile_carton fmc
+        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.main_id AND fmdd.sku_id = fmcd.sku_id AND fmdd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="mainIds != null and mainIds.size > 0">
+            AND fmcd.main_id IN
+            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
+                #{mainId}
+            </foreach>
+        </if>
+        GROUP BY fmcd.main_id,
+        fmcd.sku_id,
+        fmcd.sku_no
+    </select>
 </mapper>
