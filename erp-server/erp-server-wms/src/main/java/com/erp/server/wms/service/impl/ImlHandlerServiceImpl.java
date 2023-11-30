@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
@@ -9,8 +10,6 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.iml.dto.request.ImlBaseRequest;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
@@ -36,6 +35,9 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Resource
     private ImlService imlService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -67,8 +69,14 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         ImlCreateOutboundReq imlCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToIml(createOutboundReq);
-        //艾姆勒没有测试环境，测试时默认不审核，上生产去掉
+        // TODO 艾姆勒没有测试环境，测试时默认不审核，上生产去掉
         imlCreateOutboundReq.setVerify(0);
+        // 艾姆勒同个客户同个参考号5分钟内不允许重复提交
+        String key = "wms-iml:"+createOutboundReq.getReferenceNo();
+        if(redisUtil.get(key) != null){
+            return failure("艾姆勒同个客户同个参考号5分钟内不允许重复提交");
+        }
+        redisUtil.set("wms-iml:"+createOutboundReq.getReferenceNo(),createOutboundReq.getReferenceNo(),300);
         ImlResponse<String> response =  imlService.createOutboundBill(imlCreateOutboundReq);
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
