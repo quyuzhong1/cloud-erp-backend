@@ -11,7 +11,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+
 import java.io.Serializable;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -875,6 +878,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
          * 装箱信息
          */
+        @Valid
         private List<FirstMileCartonDTO.AddDTO> firstMileCartonList;
     }
 

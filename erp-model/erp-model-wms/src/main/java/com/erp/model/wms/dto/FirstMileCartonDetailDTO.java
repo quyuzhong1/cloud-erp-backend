@@ -82,21 +82,16 @@ public class FirstMileCartonDetailDTO implements Serializable {
         /**
         * 产品id
         */
-        @NotBlank(message = "产品id不能为空")
-        @Size(max = 19,message = "产品id最大长度不能超过19位")
         private String skuId;
 
         /**
         * 产品编号
         */
-        @NotBlank(message = "产品编号不能为空")
-        @Size(max = 19,message = "产品编号最大长度不能超过19位")
         private String skuNo;
 
         /**
         * 装箱数量
         */
-        @NotNull(message = "装箱数量不能为空")
         private Integer packQty;
     }
 

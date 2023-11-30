@@ -118,7 +118,7 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
         //修改操作日志
         if (StringUtils.isNotBlank(firstMileDeliveryLogisticsEntity.getId())) {
             FirstMileDeliveryLogisticsEntity old = this.getById(firstMileDeliveryLogisticsEntity.getId());
-            operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryLogisticsEntity, ModuleTypeEnum.FBA_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getDeliveryCode()));
+            operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryLogisticsEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(),mainId,"",String.format("【%s】",old.getDeliveryCode()));
         }
 
         //更新物流信息
@@ -182,7 +182,7 @@ public class FirstMileDeliveryLogisticsServiceImpl extends SuperServiceImpl<Firs
             addDTO.setSourceCode(firstMileDeliveryEntity.getCode());
             addDTO.setTransportNo(firstMileDeliveryEntity.getCode());
             addDTO.setSalesPlatform(PlatformDictEnum.AMAZON.getCode());
-            addDTO.setSourceType(SourceTypeEnum.FBA_DELIVERY.getCode());
+            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
             addDTO.setOutstockId("");
             addDTO.setOutstockCode("");
             addDTO.setChannelId(deliveryLogisticsSave.getLogisticsChannel()==null?"":deliveryLogisticsSave.getLogisticsChannel());

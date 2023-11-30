@@ -354,11 +354,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String code;
 
         /**
-         * 平台类型: goodcang=谷仓，iml=艾姆勒
-         */
-        private String dictPlatform;
-
-        /**
          * 来源单号
          */
         private String sourceCode;

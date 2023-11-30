@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.FirstMileCartonDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -515,7 +516,7 @@ public class FirstMileDeliveryController extends BaseController {
     /**
      * 导出装箱清单Excel
      * @author Luo_WG
-     * @date:  2023-10-30
+     * @date 2023-10-30
      * @param dto
      * @param response
      */
@@ -529,4 +530,18 @@ public class FirstMileDeliveryController extends BaseController {
     public void exportPacking(@RequestBody @Validated FirstMileDeliveryDTO.ExportDTO dto, HttpServletResponse response) {
         firstMileDeliveryService.exportPacking(dto, response);
     }
+
+    /**
+     * 下推海外仓入库单单个查询
+     * @author Luo_WG
+     * @date 2023-10-30
+     * @param id 发货单id
+     */
+    @GetMapping("/getGenerateOverseasWarehouseInboundView")
+    public ApiResult<OverseasWarehouseInboundDTO.ViewDTO> getGenerateOverseasWarehouseInboundView(@RequestParam("id") String id) {
+        OverseasWarehouseInboundDTO.ViewDTO result = firstMileDeliveryService.getGenerateOverseasWarehouseInboundView(id);
+        return success(result);
+    }
+
+
 }

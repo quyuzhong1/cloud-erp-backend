@@ -850,6 +850,9 @@ public enum ApiError implements Serializable {
     HANDLE_ING_FINISH(99134,"处理中状态的要货单才能完成"),
     NOT_FOUND_OVERSEAS_PROVIDE(99135,"未查询到服务商信息"),
     OVERSEAS_PROVIDE_NOT_AUTH(99136,"海外仓服务商未授权"),
+    PACKING_SKU_IS_NOT_NULL(99134,"箱规【{}】中sku不能为空"),
+    PACKING_SKU_PACK_QTY_IS_NOT_NULL(99135,"箱规【{}】中sku【{}】未填写装箱数量"),
+    PACKING_SKU_BOX_QTY_IS_NOT_NULL(99136,"箱规【{}】中未填写箱数"),
 
 
     /**

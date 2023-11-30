@@ -153,4 +153,13 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return java.util.List<com.erp.model.wms.entity.RequisitionApplicationEntity>
      **/
     List<RequisitionApplicationEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 查询子件sku
+     * @Author Luo_WG
+     * @Date 2023/11/30 8:54
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ChildViewDTO>
+     **/
+    List<RequisitionApplicationDTO.ChildViewDTO> listChildBySku(RequisitionApplicationDTO.ChildParamDTO dto);
 }

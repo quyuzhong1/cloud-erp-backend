@@ -325,4 +325,18 @@ public class RequisitionApplicationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 查询子件sku
+     * @Author Luo_WG
+     * @Date 2023/11/29 19:26
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ChildViewDTO>>
+     **/
+    @PostMapping("/listChildBySku")
+    public ApiResult<List<RequisitionApplicationDTO.ChildViewDTO>> listChildBySku(@RequestBody @Validated RequisitionApplicationDTO.ChildParamDTO dto) {
+        List<RequisitionApplicationDTO.ChildViewDTO> result = requisitionApplicationService.listChildBySku(dto);
+        return success(result);
+    }
+
 }
