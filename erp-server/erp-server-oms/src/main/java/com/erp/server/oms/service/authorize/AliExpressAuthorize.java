@@ -90,7 +90,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         byte[] randomBytes = new byte[256];
         secureRandom.nextBytes(randomBytes);
         // 进行 Base64 编码
-        String state = Base64.getEncoder().encodeToString(randomBytes);
+        String state = Base64.getEncoder().withoutPadding().encodeToString(randomBytes);
         // 添加到缓存
         // 缓存state
         String key = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, state);
