@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -148,7 +149,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     }
 
     @Override
-    public String getShopeeCodeUrl(ShopAuthorizeDTO dto) {
+    public String getShopeeCodeUrl(ShopAuthorizeUrlDTO dto) {
         if (Objects.isNull(dto)) {
             throw new ServiceException("店铺记录id不能为空");
         }

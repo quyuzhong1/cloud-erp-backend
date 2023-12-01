@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.server.oms.service.AuthModelService;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class AuthModelServiceImpl implements AuthModelService {
 
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         return AuthSaveHandler.getShopAuthorizeUrl(dto);
     }
 

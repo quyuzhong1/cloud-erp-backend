@@ -48,9 +48,6 @@ import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
-import com.erp.server.oms.service.authorize.ShopfiyAuthorize;
-import com.erp.server.oms.service.authorize.WalmartAuthorize;
-import com.erp.server.oms.service.*;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -503,7 +500,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        return authModelService.shopAuthorize(dto);
+        return authModelService.shopAuthorize(dto.checkAndSetPlatform());
     }
 
     /**
@@ -557,7 +554,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         return authModelService.getShopAuthorizeUrl(dto);
     }
 

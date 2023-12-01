@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 
 /**
  * 平台授权
@@ -15,7 +16,7 @@ public interface IShopAuthorizeService<T> {
      * @param dto
      * @return
      */
-    String getShopAuthorizeUrl(ShopAuthorizeDTO dto);
+    String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto);
 
     /**
      * 授权

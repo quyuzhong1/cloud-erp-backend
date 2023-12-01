@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -60,7 +61,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException("店铺不存在");
@@ -73,11 +74,17 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         // 全域名：SHOP_NAME.myshopify.com
         String fullDomain = shopInfo.getDomain().concat(ShopifyConstant.DOMAIN);
+        // 添加到缓存
+        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, fullDomain);
+        Object obj = redisUtil.get(key);
+        if (null != obj){
+            throw new ServiceException("正在申请授权中");
+        }
+        redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 //        String grantOptions = "per-user";
         // 离线模式：token无过期
         String grantOptions = "offline-access";
-        String path = String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
-        return path;
+        return String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
     }
 
     /**
@@ -151,6 +158,13 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
             // platform-token:平台名称:店铺ID
             String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
             redisUtil.set(tokenKey, shopInfoDTO);
+
+            // 删除授权缓存
+            String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, dto.getShop());
+            Object obj = redisUtil.get(key);
+            if (null != obj){
+                redisUtil.del(key);
+            }
             return result;
         } catch (Exception e) {
             log.error("店铺授权出错了===> bodyStr==>{} e==>{}", bodyStr, e);

@@ -47,7 +47,7 @@ public class OrdersV0ApiTest {
 
     @Test
     public void getOrderListTest() throws ApiException {
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.US;
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.AE;
 //        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
         AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
         LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
@@ -68,7 +68,7 @@ public class OrdersV0ApiTest {
         }
 
         List<String> marketplaceIds = new ArrayList<>();
-        marketplaceIds.add("ATVPDKIKX0DER");//根据国家确定
+        marketplaceIds.add(marketplaceEnum.getMarketplaceId());//根据国家确定
 //        marketplaceIds.add("A1AM78C64UM0Y8");//根据国家确定
 
         List<String> fulfillmentChannels = new ArrayList<>();
@@ -76,10 +76,12 @@ public class OrdersV0ApiTest {
         List<String> orderStatuses = new ArrayList<>();
 //        String createdAfter = "TEST_CASE_200";
 //        String lastUpdatedAfter = null;
-        String createdAfter = null;
-//        String createdAfter = "2020-10-01T00:00:00";
-        String createdBefore = "2023-10-16T00:00:00";
-        String lastUpdatedAfter = "2023-10-15T00:00:00Z";
+//        String createdAfter = null;
+        String createdAfter = "2020-10-01T00:00:00";
+//        String createdBefore = "2023-10-16T00:00:00Z";
+        String createdBefore = null;
+        String lastUpdatedAfter = null;
+//        String lastUpdatedAfter = "2023-10-15T00:00:00Z";
 //        String lastUpdatedAfter = "2023-10-15T16:30:19";
 //        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
 //        orderStatuses.add("Unshipped");
