@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -51,8 +52,16 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
      * 获取授权地址
      */
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
-        return shopAuthService.getShopeeCodeUrl(dto);
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
+        String url = shopAuthService.getShopeeCodeUrl(dto);
+        // 设置缓存
+        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop());
+        Object obj = redisUtil.get(key);
+        if (null != obj){
+            throw new ServiceException("正在申请授权中");
+        }
+        redisUtil.set(key, dto.getShopId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
+        return url;
     }
 
     /**
@@ -68,11 +77,18 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         if(Objects.nonNull(dto.getShopId())){
             returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
         }
-        returnDTO.setMainAccountId(dto.getMainAccountId());
-        if (StringUtils.isEmpty(dto.getShopId()) && Objects.isNull(dto.getMainAccountId())){
+        returnDTO.setMainAccountId(dto.getMain_account_id());
+        if (StringUtils.isEmpty(dto.getShopId()) && Objects.isNull(dto.getMain_account_id())){
             throw new ServiceException("虾皮授权时,店铺和主账号不能同时为空");
         }
-        return shopInfoService.getShopeeReturn(returnDTO);
+        Boolean result = shopInfoService.getShopeeReturn(returnDTO);
+        // 删除授权缓存
+        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShopId());
+        Object obj = redisUtil.get(key);
+        if (null != obj){
+            redisUtil.del(key);
+        }
+        return result;
     }
 
     /**

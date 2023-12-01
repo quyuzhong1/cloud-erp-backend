@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -32,7 +33,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +70,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
      * 获取授权地址
      */
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException("店铺不存在");
@@ -81,12 +84,23 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
         }
+        // 生成随机数据
+        SecureRandom secureRandom = new SecureRandom();
+        // 生成 256 字节的随机数据
+        byte[] randomBytes = new byte[256];
+        secureRandom.nextBytes(randomBytes);
+        // 进行 Base64 编码
+        String state = Base64.getEncoder().encodeToString(randomBytes);
+        // 添加到缓存
+        // 缓存state
+        String key = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, state);
+        redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
+
         String url = cfgAppClient.getUrl();
         //回调地址
         String redirectUrl = cfgAppClient.getRedirectUrl();
         String clientId = cfgAppClient.getClientId();
-        String path = String.format(url, redirectUrl, clientId);
-        return path;
+        return String.format(url, redirectUrl, clientId, state);
     }
 
     /**
@@ -99,7 +113,13 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        String shopId = dto.getShopId();
+        // 校验是否是本系统发起
+        String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
+        Object shopIdObj = redisUtil.get(stateKey);
+        if (null == shopIdObj){
+            throw new ServiceException("信息已失效, 请重新发起授权");
+        }
+        String shopId = shopIdObj.toString();
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
         }
@@ -159,6 +179,8 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopInfoDTO.setToken(token);
                 String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
                 redisUtil.set(tokenKey, shopInfoDTO,expiresIn);
+
+                redisUtil.del(stateKey);
             } else {
                 String msg = jsonObject.getOrDefault("message", "").toString();
                 throw new ServiceException(ApiError.ERROR_AUTHORIZE_FAIL, msg);
