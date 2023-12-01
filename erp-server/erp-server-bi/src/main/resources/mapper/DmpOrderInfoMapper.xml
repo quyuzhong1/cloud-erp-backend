@@ -55,6 +55,24 @@
         country_name_en,country_name_cn
     </sql>
 
+    <sql id="base_where_sql_report">
+        <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
+            and o.dept_id != ''
+        </if>
+        <if test="params.searchType == 'user'">
+            and o.charge_id != ''
+        </if>
+        <if test="params.searchType == 'shop'">
+            and o.shop_name != ''
+        </if>
+        <if test="params.searchType == 'category'">
+            and o.category_id != ''
+        </if>
+        <if test="params.searchType == 'sku'">
+            and o.sku_no != ''
+        </if>
+    </sql>
+
     <sql id="base_where_sql">
         <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
             and doi.dept_id != ''
@@ -399,6 +417,59 @@
         <where>
             <include refid="conditionSql"/>
         </where>
+    </select>
+
+    <select id="listSalesBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+            <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
+                o.dept_id as typeId,
+            </if>
+            <if test="params.searchType == 'user'">
+                and o.charge_id as typeId,
+            </if>
+            <if test="params.searchType == 'shop'">
+                and o.shop_name as typeName,
+            </if>
+            <if test="params.searchType == 'category'">
+                and o.category_id as typeId,
+            </if>
+            <if test="params.searchType == 'sku'">
+                and o.sku_no as typeName,
+            </if>
+            o.date_name AS month,
+            <if test="dataType != null and dataType = 'sales'">
+                round(sum(o.sales_amount_currency_rate),2) as value
+            </if>
+            <if test="dataType != null and dataType = 'qty'">
+                SUM ( o.sales_qty ) as value
+            </if>
+
+        <choose>
+            <when test="params.timeType == '1'">
+                dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
+        <include refid="base_where_sql_report"/>
+        group by o.date_name
+        <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
+            ,o.dept_id
+        </if>
+        <if test="params.searchType == 'user'">
+            ,o.charge_id
+        </if>
+        <if test="params.searchType == 'shop'">
+            ,o.shop_name
+        </if>
+        <if test="params.searchType == 'category'">
+            ,o.category_id
+        </if>
+        <if test="params.searchType == 'sku'">
+            ,o.sku_no
+        </if>
     </select>
 
     <select id="listSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">

@@ -167,6 +167,12 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         return list;
     }
 
+    @Override
+    public List<FirstMileDeliveryDTO.PackDateDTO> listPackDate(String mainId) {
+        List<FirstMileDeliveryDTO.PackDateDTO> list = baseMapper.listPackDate(mainId);
+        return list;
+    }
+
     /**
     * 新增修改处理数据
     */

@@ -4615,6 +4615,45 @@
 
     </select>
 
+    <select id="newAndOldSalesAmount" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
+            round(SUM (o.sales_amount_currency_rate),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
+            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (o.sales_amount),2) AS sales,
+        </if>
+        o.new_sign AS flag,
+        <if test="dataType != null and dataType == 'user'">
+            CASE WHEN o.charge_id IS NULL OR o.charge_id = '' THEN '无' ELSE o.charge_id END AS name,
+        </if>
+        <if test="dataType != null and dataType == 'dept'">
+            CASE WHEN o.dept_id IS NULL OR o.dept_id = '' THEN '无' ELSE o.dept_id END AS name,
+        </if>
+        SUM ( o.sales_qty ) AS salesQuantity,
+        (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
+        <choose>
+            <when test="params.timeType == '1'">
+                FROM dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                FROM dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="sql_report_condition"/>
+        GROUP BY o.new_sign
+        <if test="dataType != null and dataType == 'user'">
+            ,o.charge_id
+        </if>
+        <if test="dataType != null and dataType == 'dept'">
+            ,o.dept_id
+        </if>
+        ORDER BY sales DESC
+    </select>
+
     <select id="deptNewAndOldSalesAmount" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
         <if test="settleRate !=null and settleRate!=''">

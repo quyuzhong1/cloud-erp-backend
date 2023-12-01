@@ -1268,13 +1268,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //新增装箱信息
         for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
+
             //根据主表id分组sku查询发货及待装箱数
-            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainId(dto.getId(), addDTO.getBoxSpecNo());
-            for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : groupSkuList) {
-                if (groupSkuDTO.getDeliveryQty() < groupSkuDTO.getPackQty()) {
-                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxQty(), groupSkuDTO.getSkuNo());
+            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOS = firstMileDeliveryDetailService.listPackDate(dto.getId());
+            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(addDTO.getBoxSpecNo())).collect(Collectors.toList());
+
+            for (FirstMileDeliveryDTO.PackDateDTO packDateDTO : packDateDTOList) {
+                //待装箱数量=发货数量-所有已装箱数量
+                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(FirstMileDeliveryDTO.PackDateDTO::getPackQty).sum();
+                if (packDateDTO.getDeliveryQty() < packQtySum) {
+                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxQty(), packDateDTO.getSkuNo());
                 }
             }
+
             //校验必填
             for (FirstMileCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
                 if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
@@ -1321,12 +1327,27 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         for (FirstMileCartonDTO.ViewDTO viewDTO : firstMileCartonList) {
 
             //根据主表id分组sku查询发货及待装箱数
-            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainId(id, viewDTO.getBoxSpecNo());
-            List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(groupSkuList, FirstMileCartonDetailDTO.ViewDTO.class);
-            detailList.forEach(req -> req.setCartonId(view.getId()));
+            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOS = firstMileDeliveryDetailService.listPackDate(id);
+            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
+
+            //查询产品信息
+            List<String> skuIdList = packDateDTOS.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+            List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, FirstMileCartonDetailDTO.ViewDTO.class);
+            for (FirstMileCartonDetailDTO.ViewDTO dto : detailList) {
+                //待装箱数量=发货数量-所有已装箱数量
+                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(FirstMileDeliveryDTO.PackDateDTO::getPackQty).sum();
+                dto.setWaitPackQty(dto.getDeliveryQty() - packQtySum);
+
+                //匹配产品信息，设置中文名
+                SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(skuVO)) {
+                    dto.setProductName(skuVO.getSkuName());
+                }
+            }
             viewDTO.setDetailList(detailList);
         }
-
         return view;
     }
 
