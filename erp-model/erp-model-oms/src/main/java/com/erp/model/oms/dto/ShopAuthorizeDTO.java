@@ -60,4 +60,19 @@ public class ShopAuthorizeDTO implements Serializable {
 
     private Integer mainAccountId;
 
+    /**
+     * 亚马逊授权state
+     */
+    private String state;
+
+    /**
+     * 亚马逊授权卖家ID
+     */
+    private String selling_partner_id;
+
+    /**
+     * 亚马逊授权code
+     */
+    private String spapi_oauth_code;
+
 }

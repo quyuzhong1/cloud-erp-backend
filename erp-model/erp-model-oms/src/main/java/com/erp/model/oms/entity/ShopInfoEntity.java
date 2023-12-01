@@ -147,6 +147,13 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("warehouse_name")
     private String warehouseName;
 
+    /**
+     * 平台店铺编码/卖家编码
+     * 亚马逊平台=卖家ID
+     */
+    @TableField("platform_shop_code")
+    private String platformShopCode;
+
     public static final String PLATFORM_DICT = "platform_dict";
 
     public static final String SHOP_CODE = "shop_code";
@@ -158,11 +165,6 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     public ShopInfoEntity(String id, Boolean isGenTask) {
         super(id);
         this.isGenTask = isGenTask;
-    }
-
-    @Override
-    public Serializable pkVal() {
-        return null;
     }
 
 }

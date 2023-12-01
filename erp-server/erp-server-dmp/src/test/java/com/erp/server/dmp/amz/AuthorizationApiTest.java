@@ -13,16 +13,22 @@
 
 package com.erp.server.dmp.amz;
 
-import com.erp.sdk.oms.amz.spapi.api.*;
+import com.erp.sdk.oms.amz.spapi.api.AuthorizationApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.authorization.GetAuthorizationCodeResponse;
-import org.junit.Ignore;
+import com.erp.server.dmp.ErpServerDmpApplication;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * API tests for AuthorizationApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class AuthorizationApiTest {
 
     private final AuthorizationApi api = null;

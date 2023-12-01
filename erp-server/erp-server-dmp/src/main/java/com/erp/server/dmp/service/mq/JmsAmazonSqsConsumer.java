@@ -34,8 +34,8 @@ public class JmsAmazonSqsConsumer {
      * 监听接收消息
      * 如果有多个Factory 需要手动指定
      */
-    @JmsListener(destination = "erpNotifications", containerFactory = "jmsListenerContainerFactory")
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+//    @JmsListener(destination = "erpNotifications", containerFactory = "jmsListenerContainerFactory")
+//    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.warn("接收到亚马逊SQS通知:{}", textMessage.getText());

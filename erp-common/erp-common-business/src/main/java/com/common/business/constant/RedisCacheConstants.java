@@ -53,4 +53,11 @@ public interface RedisCacheConstants {
      * 亚马逊报告文档URL:{文档类型}:MarketplaceId
      */
     String REDIS_AMAZON_REPORT_DOCUMENT_URL = "amazon-report-document-{}-{}";
+
+
+    /**
+     * 亚马逊授权state:{state}
+     * 内容店铺ID
+     */
+    String AMAZON_STATE = "amazon_state:{}";
 }
