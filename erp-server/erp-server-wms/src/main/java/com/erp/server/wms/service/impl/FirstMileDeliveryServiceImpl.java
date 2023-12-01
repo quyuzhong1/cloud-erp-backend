@@ -1277,7 +1277,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 //待装箱数量=发货数量-所有已装箱数量
                 int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
                 if (packDateDTO.getDeliveryQty() < packQtySum) {
-                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxQty(), packDateDTO.getSkuNo());
+                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
                 }
             }
 
