@@ -98,7 +98,7 @@ public class SpElServerImpl implements SpElServer {
     public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj) {
         for(String key:obj.keySet()){
             String value= obj.get(key).toString();
-            obj.put(key,value);
+            obj.set(key,value);
         }
         String expression = getConditionExpression(conditionList, obj);
         return matchExpression(expression, obj);

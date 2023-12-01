@@ -2005,7 +2005,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/11/16 15:27
      */
-    private void handleMatchJson(String id, List<SoB2cDetailEntity> detailList,List<JSONObject> jsonList) {
+    private List<JSONObject> handleMatchJson(String id, List<SoB2cDetailEntity> detailList,List<JSONObject> jsonList) {
         SoB2cEntity soB2cEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -2062,7 +2062,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             jsonObject.set("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
             jsonObject.set("dictPlatform", soB2cEntity.getDictPlatform());
             //是否买家留言
-            jsonObject.set("isHavebuyerRemark", soB2cEntity.getBuyerRemark());
+            jsonObject.set("isHavebuyerRemark",StringUtils.isBlank(soB2cEntity.getBuyerRemark()));
 
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
@@ -2112,6 +2112,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             jsonObject.set("orderProfitRate", financialInfo.getProfitRate());
             jsonList.add(jsonObject);
         }
+        return jsonList;
     }
 
     /**
@@ -2603,6 +2604,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
                 .last("LIMIT 1")
                 .one();
+    }
+
+    @Override
+    public List<JSONObject> getJson(String id) {
+        List<SoB2cDetailEntity> soB2cDetailList=soB2cDetailService.listByMainId(id);
+       List<JSONObject> list= handleMatchJson(id,soB2cDetailList,new ArrayList<>());
+        return list;
     }
 
 }

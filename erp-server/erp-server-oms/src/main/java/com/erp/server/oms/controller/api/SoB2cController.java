@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONObject;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -735,5 +736,13 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    @GetMapping("/getJson")
+    public ApiResult<List<JSONObject>>  getJson(@RequestParam("id")String id){
+        List<JSONObject>  list=soB2cService.getJson(id);
+        return success(list);
+
     }
 }
