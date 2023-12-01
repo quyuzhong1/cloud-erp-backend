@@ -1271,7 +1271,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //新增装箱信息
         for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
 
-
             //校验必填
             for (FirstMileCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
                 if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
