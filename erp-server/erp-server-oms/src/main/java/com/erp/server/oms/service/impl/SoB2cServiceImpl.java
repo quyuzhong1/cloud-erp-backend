@@ -2336,13 +2336,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
         BeanMapperUtils.copy(soB2cFinanceEntity, financialInfoDTO);
 
+        //商品成本,订单SKU*数量的含税成本价汇总
+        BigDecimal itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
         //判断是否是人民币
         if (ObjectUtils.isNotEmpty(dto.getIsCny()) && dto.getIsCny()) {
             financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
+            financialInfoDTO.setItemCost(itemCost);
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
             financialInfoDTO.setAmount(soB2cEntity.getAmount());
+            financialInfoDTO.setItemCost(MathUtil.divide(itemCost,soB2cEntity.getExchangeRate()));
         }
 
         String platformOption = soB2cFinanceEntity.getPlatformCostType();
@@ -2351,7 +2357,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal platformRate = soB2cFinanceEntity.getPlatformRate();
         BigDecimal vatRate = soB2cFinanceEntity.getVatRate();
         BigDecimal transferRate = soB2cFinanceEntity.getTransferRate();
-        BigDecimal itemCost = BigDecimal.ZERO;
         if (isAdd) {
             if (ObjectUtils.isNotEmpty(shopCostEntity)) {
                 platformOption = shopCostEntity.getDictPlatformOption();
@@ -2360,11 +2365,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 platformRate = shopCostEntity.getPlatformRate();
                 vatRate = shopCostEntity.getVatRate();
                 transferRate = shopCostEntity.getTransferRate();
-                itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+
             }
         }
-        //商品成本,订单SKU*数量的含税成本价汇总
-        financialInfoDTO.setItemCost(itemCost);
+
         DictBasicEntity dictPlatformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), platformOption);
 
         DictBasicEntity dictVatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), vatOption);

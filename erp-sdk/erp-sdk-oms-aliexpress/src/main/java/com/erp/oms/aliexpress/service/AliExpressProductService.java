@@ -114,8 +114,6 @@ public class AliExpressProductService {
         request.addApiParameter("product_id", productId.toString());
         IopResponse response = client.execute(request, token, Protocol.TOP);
         JSONObject jsonObject = JSONObject.parseObject(response.getBody());
-        String jsonStr=jsonObject.toJSONString();
-        System.out.println();
         //表示成功
         if (Objects.nonNull(jsonObject)) {
             JSONObject json = jsonObject.getJSONObject("result");

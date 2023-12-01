@@ -33,4 +33,10 @@ public interface AliexpressConstants {
      */
     String ON_SELLING="onSelling";
 
+
+    /**
+     *声明发货
+     */
+    String DECLARE_DELIVER="aliexpress.logistics.sellershipmentfortop";
+
 }

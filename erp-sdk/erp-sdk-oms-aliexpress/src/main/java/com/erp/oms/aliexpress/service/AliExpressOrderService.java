@@ -7,6 +7,8 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -15,7 +17,9 @@ import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.oms.aliexpress.enums.Protocol;
@@ -24,12 +28,10 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.ui.context.Theme;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.erp.oms.aliexpress.constants.AliexpressConstants.pageSize;
 
@@ -151,13 +153,68 @@ public class AliExpressOrderService {
 
     }
 
+
+    /**
+     * 申明发货
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2023-12-01
+     */
+    public void declareDeliver(DeclareDeliverRequest declareDeliverRequest) throws ApiException {
+
+        String shopId = declareDeliverRequest.getShopId();
+        String shopName = declareDeliverRequest.getShopName();
+        AliExpressShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
+        if (Objects.isNull(shopInfoDTO)) {
+            log.error("[速卖通订单声明发货  获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(ApiError.ERROR_SHOP_TOKEN_IS_NULL, shopName);
+        }
+        String appKey = shopInfoDTO.getClientId();
+        String appSecret = shopInfoDTO.getClientSecret();
+        String baseUrl = shopInfoDTO.getBaseUrl();
+        String apiName = AliexpressConstants.DECLARE_DELIVER;
+        String token = shopInfoDTO.getToken();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("logistics_no", declareDeliverRequest.getLogisticsNo());
+        request.addApiParameter("send_type", declareDeliverRequest.getSendType());
+        request.addApiParameter("out_ref", declareDeliverRequest.getOutRef());
+        request.addApiParameter("service_name", declareDeliverRequest.getServiceName());
+        request.setApiName(apiName);
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        String body = response.getBody();
+        JSONObject jsonObject = JSONObject.parseObject(body);
+        Boolean success = jsonObject.getBooleanValue("result_success");
+        if (!success) {
+            String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
+            throw new ServiceException(ApiError.Default, msg);
+        }
+
+    }
+
     public static void main(String[] args) throws ApiException {
-        AliExpressOrderService orderService = new AliExpressOrderService();
-        Map<String, String> map = new HashMap<>();
-        map.put("clientId", "502978");
-        map.put("clientSecret", "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY");
-        map.put("baseUrl", "https://api-sg.aliexpress.com");
-        //orderService.listOrder();
+
+
+        String appKey = "502978";
+        String appSecret = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+        String baseUrl = "https://api-sg.aliexpress.com";
+        String apiName = AliexpressConstants.DECLARE_DELIVER;
+        String token = "500002000383xXYuTpfDpvgviHHR2uUB9yHxEIwiRSF7Dgx9Mz12af849325O8FaLsaz";
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("logistics_no", "580555992124");
+        request.addApiParameter("send_type", "all");
+        request.addApiParameter("out_ref", "8181197194141756");
+        request.addApiParameter("service_name", "OTHER_UK");
+
+        request.setApiName(apiName);
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        String body = response.getBody();
+        System.out.println(body);
     }
 
 
