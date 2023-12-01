@@ -131,8 +131,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-        List<SkuMappingDTO.SkuDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
@@ -923,14 +923,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(mskuList);
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        List<SkuMappingDTO.SkuDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 
         for (FbaShipmentDetailEntity detailEntity : fbaShipmentDetailEntities) {
 
             FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
             BeanMapper.copy(detailEntity, old);
 
-            SkuMappingDTO.SkuDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
+            SkuMappingDTO.MappingSkuViewDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());

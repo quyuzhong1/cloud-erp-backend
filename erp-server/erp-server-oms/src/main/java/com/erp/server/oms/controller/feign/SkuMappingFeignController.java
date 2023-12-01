@@ -52,7 +52,7 @@ public class SkuMappingFeignController extends BaseController {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
      **/
     @PostMapping("/listByPlatformSkuNoAndPlatform")
-    public List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO) {
+    public List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO) {
         return skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
     }
 }

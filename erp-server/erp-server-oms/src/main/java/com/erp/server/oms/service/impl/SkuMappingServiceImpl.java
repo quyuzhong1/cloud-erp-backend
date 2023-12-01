@@ -657,7 +657,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO) {
+    public List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO) {
         return baseMapper.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
     }
 
