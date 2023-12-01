@@ -1268,7 +1268,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //新增装箱信息
         for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
-
+            //根据主表id分组sku查询发货及待装箱数
+            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainId(dto.getId(), addDTO.getBoxSpecNo());
+            for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : groupSkuList) {
+                if (groupSkuDTO.getDeliveryQty() < groupSkuDTO.getPackQty()) {
+                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxQty(), groupSkuDTO.getSkuNo());
+                }
+            }
             //校验必填
             for (FirstMileCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
                 if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {

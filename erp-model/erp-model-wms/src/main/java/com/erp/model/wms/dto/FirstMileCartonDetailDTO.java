@@ -48,6 +48,16 @@ public class FirstMileCartonDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+        * 产品名称
+        */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
         * 装箱数量
         */
         private Integer packQty;
