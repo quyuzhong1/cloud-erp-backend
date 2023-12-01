@@ -38,10 +38,10 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
      * 查询装箱数量
      * @Author Luo_WG
      * @Date 2023/11/28 19:04
-     * @param mainIds
+     * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(List<String> mainIds);
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId);
 
     /**
      * 根据主表id删除箱规信息

@@ -125,6 +125,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private FirstMileCartonDetailService firstMileCartonDetailService;
     @Autowired
     private OverseasDeliveryPlanService overseasDeliveryPlanService;
+    @Autowired
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -348,11 +350,43 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
+    /**
+     * 生产直接调拨单
+     * @Author Luo_WG
+     * @Date 2023/12/1 9:20
+     * @param entity
+     * @param detailEntityList
+     * @return java.lang.String
+     **/
     private String generateTransferOut(FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getDestWarehouseId(), entity.getDeliveryWarehouseId()));
-        //获取sku信息
-        List<String> skuNoList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+
+        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
+        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+
+
+        //配置为空时默认FBA在途仓
+        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getType())).findFirst().orElse(null);
+        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
+            if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                if (CollectionUtils.isEmpty(warehouseEntities)) {
+                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                }
+                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
+                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
+            }
+        }
+
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+
+        //查询在途仓
+        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
         addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
@@ -361,13 +395,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        addDTO.setInOrgId(destWarehouse.getOrgId());
+        addDTO.setInOrgId(warehouseEntity.getOrgId());
         //调出组织
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
         //调拨类型
-        if (destWarehouse.getOrgId().equals(deliveryWarehouse.getOrgId()))  {
+        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId()))  {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -377,24 +410,46 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
 
+        //根据sku查询拥有的子sku
+        List<String> skuIdList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
-            // TODO 是否需要拆分为子件
-            //映射产品信息
-            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-//            TransferOutDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferOutDetailAdd(detailEntity);
-//            TransferInfoDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.fbaDeliveryDetailEntityToTransferInfoDetailAdd(detailEntity);
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
-            detailAddDto.setSkuId(skuVO.getSkuId());
-            detailAddDto.setSkuNo(skuVO.getSkuNo());
-            detailAddDto.setQty(detailEntity.getDeliveryQty());
-            detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
-            detailAddDto.setInWarehouseId(entity.getDestWarehouseId());
-            detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-            detailAddDto.setInWarehouseLocation(detailEntity.getWarehouseLocation());
-            detailAddDto.setSourceDetailId(detailEntity.getId());
-            detailAddDtoList.add(detailAddDto);
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                detailEntity.setIsCombination(Boolean.TRUE);
+                //拆分子件
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                    //映射产品信息
+                    TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+                    detailAddDto.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    detailAddDto.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    detailAddDto.setQty(detailEntity.getDeliveryQty());
+                    detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
+                    detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+                    detailAddDto.setInWarehouseId(warehouseEntity.getOnwayWarehouseId());
+                    detailAddDto.setInWarehouseLocation("");
+                    detailAddDto.setSourceDetailId(detailEntity.getId());
+                    detailAddDtoList.add(detailAddDto);
+                }
+
+            } else {
+                detailEntity.setIsCombination(Boolean.FALSE);
+                //映射产品信息
+                TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+                detailAddDto.setSkuId(detailEntity.getSkuId());
+                detailAddDto.setSkuNo(detailEntity.getSkuNo());
+                detailAddDto.setQty(detailEntity.getDeliveryQty());
+                detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
+                detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+                detailAddDto.setInWarehouseId(warehouseEntity.getOnwayWarehouseId());
+                detailAddDto.setInWarehouseLocation("");
+                detailAddDto.setSourceDetailId(detailEntity.getId());
+                detailAddDtoList.add(detailAddDto);
+            }
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
@@ -605,7 +660,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
 
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
-            //新增分布式调拨单
+            //新增直接调拨单
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
 
@@ -1230,7 +1285,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //根据主表id分组sku查询发货及待装箱数
-        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(dto.getId()));
+        List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listGroupSkuByMainId(dto.getId());
 
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
@@ -1256,8 +1311,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //查询箱规包含的产品信息
         for (FirstMileCartonDTO.ViewDTO viewDTO : firstMileCartonList) {
+
             //根据主表id分组sku查询发货及待装箱数
-            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainIds(Arrays.asList(id));
+            List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuList = firstMileDeliveryDetailService.listCartonGroupSkuByMainId(id, viewDTO.getBoxSpecNo());
             List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(groupSkuList, FirstMileCartonDetailDTO.ViewDTO.class);
             detailList.forEach(req -> req.setCartonId(view.getId()));
             viewDTO.setDetailList(detailList);

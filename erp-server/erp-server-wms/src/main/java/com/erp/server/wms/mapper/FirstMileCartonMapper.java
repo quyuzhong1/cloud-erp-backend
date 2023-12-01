@@ -24,8 +24,8 @@ public interface FirstMileCartonMapper extends BaseMapper<FirstMileCartonEntity>
      * 查询已装箱数量
      * @Author Luo_WG
      * @Date 2023/11/28 19:04
-     * @param mainIds
+     * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainIds(@Param("mainIds") List<String> mainIds);
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId);
 }

@@ -116,15 +116,15 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public  List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainIds(List<String> mainIds) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainIds(mainIds);
+    public  List<FirstMileDeliveryDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainId(mainId);
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainIds(mainIds);
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
@@ -142,15 +142,15 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainIds(List<String> mainIds) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuByMainIds(mainIds);
+    public List<FirstMileDeliveryDTO.GroupSkuDTO> listCartonGroupSkuByMainId(String mainId , Integer boxSpecNo) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> list = baseMapper.listCartonGroupSkuByMainId(mainId, boxSpecNo);
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainIds(mainIds);
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()

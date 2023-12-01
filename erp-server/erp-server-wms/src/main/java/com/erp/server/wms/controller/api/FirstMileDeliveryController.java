@@ -508,8 +508,8 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/listGroupSkuById")
-    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainIds(@RequestParam("id") String id) {
-        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainIds(Arrays.asList(id));
+    public ApiResult<List<FirstMileDeliveryDTO.GroupSkuDTO>> listGroupSkuByMainId(@RequestParam("id") String id) {
+        List<FirstMileDeliveryDTO.GroupSkuDTO> result = firstMileDeliveryDetailService.listGroupSkuByMainId(id);
         return success(result);
     }
 
