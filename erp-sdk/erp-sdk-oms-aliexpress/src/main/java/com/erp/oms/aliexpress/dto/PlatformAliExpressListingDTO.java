@@ -71,7 +71,9 @@ public class PlatformAliExpressListingDTO extends CleanBaseDTO {
             product.setPlatformSkuNo(item.getSkuCode());
             // 类型 platform 平台  warehouse 仓库
             product.setPlatformType("platform");
-            product.setProductImageUrl(sourceProduct.getImageUrls());
+            String imageUrls=sourceProduct.getImageUrls();
+            String imageUrl=imageUrls.split(";")[0];
+            product.setProductImageUrl(imageUrl);
             // 包装信息
             String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", sourceProduct.getPackageLength(), sourceProduct.getPackageWidth(), sourceProduct.getPackageHeight(), sourceProduct.getGrossWeight());
 
