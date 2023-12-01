@@ -36,7 +36,7 @@
     </sql>
 
     <!--查询已装箱数量-->
-    <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingQtyDTO">
+    <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingQtyDTO">
         SELECT
             fmc.main_id,
             SUM(fmc.box_qty) AS boxQty,
@@ -47,11 +47,8 @@
         FROM first_mile_carton fmc
         INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
         WHERE fmc.is_deleted = FALSE
-        <if test="mainIds != null and mainIds.size > 0">
-            AND fmc.main_id IN
-            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
-                #{mainId}
-            </foreach>
+        <if test="mainId != null and mainId != ''">
+            AND fmc.main_id = #{mainId}
         </if>
         GROUP BY fmc.main_id,
         fmcd.sku_id,

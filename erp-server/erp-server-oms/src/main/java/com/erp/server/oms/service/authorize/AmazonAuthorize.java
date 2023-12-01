@@ -232,6 +232,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 取消报告计划任务
         DmpSyncReportScheduleDTO dmpDTO = new DmpSyncReportScheduleDTO();
         BeanUtils.copyProperties(shopInfo, dmpDTO);
+        dmpDTO.setShopId(dto.getShopId());
         dmpReportFeign.cancelReportSchedule(dmpDTO);
         return result;
 

@@ -46,7 +46,7 @@
     </select>
 
     <!--根据主表id分组sku查询发货及待装箱数-->
-    <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
         SELECT
             fd.id,
             fdd.sku_id,
@@ -55,11 +55,8 @@
         FROM first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
-        <if test="mainIds != null and mainIds.size > 0">
-            AND fdd.main_id IN
-            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
-                #{mainId}
-            </foreach>
+        <if test="mainId != null and mainId != ''">
+            AND fdd.main_id = #{mainId}
         </if>
         GROUP BY fd.id,
         fdd.sku_id,
@@ -67,7 +64,7 @@
     </select>
 
     <!--根据主表id分组查询发货单已包装发货及待装箱数-->
-    <select id="listCartonGroupSkuByMainIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+    <select id="listCartonGroupSkuByMainId" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
         SELECT
             fmcd.main_id AS id,
             fmcd.sku_id,
@@ -77,11 +74,11 @@
         INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
         LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.main_id AND fmdd.sku_id = fmcd.sku_id AND fmdd.is_deleted = FALSE
         WHERE fmc.is_deleted = FALSE
-        <if test="mainIds != null and mainIds.size > 0">
-            AND fmcd.main_id IN
-            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
-                #{mainId}
-            </foreach>
+        <if test="mainId != null and mainId != ''">
+            AND fmcd.main_id = #{mainId}
+        </if>
+        <if test="boxSpecNo != null and boxSpecNo != ''">
+            AND fmc.box_spec_no = #{boxSpecNo}
         </if>
         GROUP BY fmcd.main_id,
         fmcd.sku_id,

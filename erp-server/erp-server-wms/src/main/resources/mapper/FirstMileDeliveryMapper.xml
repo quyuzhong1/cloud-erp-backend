@@ -183,7 +183,7 @@
         </if>
         <!--装箱状态-->
         <if test="params.packingStatus != null and params.packingStatus != ''">
-            AND fd.delivery_status = #{params.packingStatus}
+            AND fd.packing_status = #{params.packingStatus}
         </if>
         <!--是否下推入库单-->
         <if test="params.isGenerateOverseasInbound != null">
