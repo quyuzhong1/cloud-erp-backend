@@ -43,7 +43,7 @@ public class WalmartSdkClientService {
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         System.out.println(walmartTokenDTO);
-/*        //请求参数
+        //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
         Integer pageSize = 200;
         paramMap.put("limit", pageSize);
@@ -54,9 +54,9 @@ public class WalmartSdkClientService {
         paramMap.put("status", "Acknowledged,Shipped");
         paramMap.put("productInfo", "true");
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        baseUrl = WalmartStaticKey.baseUrl + "orders";
+        baseUrl = WalmartStaticKey.baseUrlTest + "orders";
         String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
-        System.out.println(s);*/
+        System.out.println(s);
     }
 
     private static RedisUtil redisUtil;

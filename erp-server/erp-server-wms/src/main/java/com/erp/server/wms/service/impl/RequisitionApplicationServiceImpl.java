@@ -89,7 +89,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         log.info("开始新增要货申请单");
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHJH);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ);
         requisitionApplicationEntity.setCode(code);
         boolean save = super.save(requisitionApplicationEntity);
         if(!save) {
