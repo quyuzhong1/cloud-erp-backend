@@ -1335,6 +1335,11 @@ public class SoInfoDTO implements Serializable {
         private String tradeTerm;
 
 
+        /**
+         * 通讯地址
+         */
+        private String mailAddress;
+
     }
 
 
@@ -1729,6 +1734,11 @@ public class SoInfoDTO implements Serializable {
          * 纳税登记号
          */
         private String taxRegisterCode;
+
+        /**
+         * 通讯地址
+         */
+        private String mailAddress;
     }
 
 
