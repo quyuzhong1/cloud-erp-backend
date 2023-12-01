@@ -5,22 +5,17 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
-import com.common.business.utils.MD5Util;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.wms.enums.InstockTypeEnum;
-import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,7 +35,7 @@ import java.util.stream.Collectors;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.GOOD_CANG)
 @BusinessType(BusinessTypeEnum.INBOUND)
-public class GoodCangInboundHandler extends AbstractThirdWarehouseHandler<GoodCangReceiptBatchResp, PlatformInboundDTO> {
+public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<GoodCangReceiptBatchResp, PlatformInboundDTO> {
 
     @Resource
     private GoodCangService goodCangService;
