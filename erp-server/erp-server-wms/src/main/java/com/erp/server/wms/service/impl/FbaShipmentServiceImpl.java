@@ -952,6 +952,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
         List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+
+        //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
+        list.forEach(req -> {
+            if (StringUtils.isBlank(req.getSkuNo())) {
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+            }
+        });
+
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
