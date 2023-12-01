@@ -33,29 +33,30 @@ import java.util.Map;
 public class WalmartSdkClientService {
 
     public static void main(String[] args) throws Exception {
-        String baseUrl = "https://marketplace.walmartapis.com/v3/";
+        String baseUrl = "https://sandbox.walmartapis.com/v3/token";
         String clientId = "2434a35c-7c42-4420-9618-0c179b68a8c2";
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
         //获取令牌
-        baseUrl = WalmartStaticKey.baseUrl + "token";
+        baseUrl = WalmartStaticKey.baseUrlTest + "token";
 
 
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        //请求参数
+        System.out.println(walmartTokenDTO);
+/*        //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
         Integer pageSize = 200;
         paramMap.put("limit", pageSize);
         paramMap.put("lastModifiedStartDate", "2023-09-01T00:00:00");
-        paramMap.put("lastModifiedEndDate", "2023-10-27T00:00:00");
+        paramMap.put("lastModifiedEndDate", "2023-12-27T00:00:00");
         paramMap.put("createdStartDate", "2023-09-01T00:00:00");
-        paramMap.put("createdEndDate", "2023-10-27T00:00:00");
-        paramMap.put("status", "Acknowledged,Shipped,Delivered,Cancelled");
+        paramMap.put("createdEndDate", "2023-12-27T00:00:00");
+        paramMap.put("status", "Acknowledged,Shipped");
         paramMap.put("productInfo", "true");
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";
         String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
-        System.out.println(s);
+        System.out.println(s);*/
     }
 
     private static RedisUtil redisUtil;

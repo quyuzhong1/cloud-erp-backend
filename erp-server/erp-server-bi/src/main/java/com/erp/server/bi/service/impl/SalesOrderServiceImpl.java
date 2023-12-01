@@ -2410,7 +2410,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 //                break;
 //        }
 
-        List<SalesFlagVO> salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), dateType.toLowerCase(),groupName);
+        List<SalesFlagVO> salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),groupName);
 
         //如果是季度
         if (dateType.equals("QUARTER")) {
@@ -2844,10 +2844,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
         }
 
-        salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), dateType.toLowerCase(),null);
+        salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),null);
         dto.setStartTime(dto.getStartTime().minusYears(1));
         dto.setEndTime(dto.getEndTime().minusYears(1));
-        lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),dateType.toLowerCase(), null);
+        lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), null);
         dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, dateType);
 
         //如果是季度

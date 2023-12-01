@@ -41,7 +41,7 @@ public interface FirstMileCartonService extends SuperService<FirstMileCartonEnti
      * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId);
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo);
 
     /**
      * 根据主表id删除箱规信息
