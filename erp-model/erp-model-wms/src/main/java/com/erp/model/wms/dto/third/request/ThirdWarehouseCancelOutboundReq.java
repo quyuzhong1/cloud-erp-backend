@@ -1,9 +1,7 @@
 package com.erp.model.wms.dto.third.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 
@@ -11,11 +9,12 @@ import javax.validation.constraints.NotNull;
  * @author liuruipeng
  * @date 2023年11月17日 10:22
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class ThirdWarehouseCancelOutboundReq {
+@SuperBuilder
+public class ThirdWarehouseCancelOutboundReq extends ThirdWarehouseAuth{
 
     //第三方仓的出库单号
     @NotNull(message = "出库单号不能为空")
