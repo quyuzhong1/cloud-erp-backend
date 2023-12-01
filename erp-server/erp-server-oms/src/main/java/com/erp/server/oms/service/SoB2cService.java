@@ -317,4 +317,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @since 2023-11-10
      **/
     SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
+
+    List<JSONObject> getJson(String id);
 }

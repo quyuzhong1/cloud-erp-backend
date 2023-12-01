@@ -414,6 +414,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(params.getSettleMethod());
         LocalDateTime paramsEndTime = params.getEndTime();
         params.setEndTime(paramsEndTime, 1);
+        params.setDateType(DateTypeEnum.MONTH.getType());
         //产品销售等级销售额
         List<Map<String, Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
         int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
@@ -1322,6 +1323,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
@@ -2103,6 +2105,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         List<SalesBaseVO> list = baseMapper.byCategory((BiCategoryDTO.FirstCategoryParamsDTO) dto, settleRate);
         //获取到sku 属性分类
         List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();

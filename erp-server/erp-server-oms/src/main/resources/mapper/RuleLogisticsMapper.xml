@@ -44,7 +44,6 @@
         logistics_supplier_id,
         logistics_channel_id,
         mode_type,
-        mode,
         auto_get_track_no,
         create_user_name,
         create_time,

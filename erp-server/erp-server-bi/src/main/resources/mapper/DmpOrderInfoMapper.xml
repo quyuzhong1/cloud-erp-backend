@@ -275,7 +275,6 @@
         </if>
         GROUP BY doi.${groupName}
     </select>
-
     <sql id="conditionSql">
         <if test = "params.timeType != null and params.timeType == 0">
             <if test="params.startTime != null">
@@ -356,6 +355,86 @@
             #{params.permissionSql}
         </if>
     </sql>
+    <sql id="sql_order_view_condition">
+        <if test = "params.timeType != null and params.timeType == 0">
+            <if test="params.startTime != null">
+                AND o.platform_create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND o.platform_create_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <if test = "params.timeType != null and params.timeType == 1">
+            <if test="params.startTime != null">
+                AND o.delivery_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND o.delivery_time &lt; #{params.endTime}
+            </if>
+        </if>
+
+        /*部门*/
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        /*平台*/
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        /*站点*/
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        /*店铺*/
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
+            </foreach>
+        </if>
+        /*用户id*/
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--分类-->
+        <if test="params.category!=null and params.category.size>0">
+            AND o.category_id  IN
+            <foreach collection="params.category" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
+        <!--品牌-->
+        <if test="params.brand !=null and params.brand.size>0">
+            AND o.brand_id IN
+            <foreach collection="params.brand" item="brandId" open="(" separator="," close=")">
+                #{brandId}
+            </foreach>
+        </if>
+        <!--sku-->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND o.sku_no IN
+            <foreach collection="params.sku" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
+        </if>
+    </sql>
     <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
          <if test="null != params.settleMethod and params.settleMethod == 0">
@@ -382,30 +461,25 @@
     </select>
     <select id="countSalePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         SELECT
-        sum(doit.quantity) AS salesQuantity,
+        sum(o.quantity) AS salesQuantity,
 --         round(doit.sell_price,2) AS sellPrice,
         <if test="settleRate !=null and settleRate!=''">
-            round(sum(doit.amount_after * doit.${settleRate}),2) AS saleAmount
+            round(sum(o.amount_after * o.${settleRate}),2) AS saleAmount
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(sum(doit.amount_after * 1),2) AS saleAmount
+            round(sum(o.amount_after * 1),2) AS saleAmount
         </if>
         FROM
-        dmp_order_item AS doit
-        LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi.id
-        LEFT JOIN product_detail AS pd on doit.sku_no = pd.sku_no
-        LEFT JOIN product_info AS pi on pi.id = pd.product_id
+        dmp_order_product_view o
         <where>
-            doit.sell_price >= #{startValue}
-            <if test="endValue != null and endValue != -1">
-                and doit.sell_price &lt; #{endValue}
-            </if>
-            <include refid="conditionSql"/>
+            <include refid="sql_order_view_condition"/>
+            and o.sell_price BETWEEN #{startValue} AND #{endValue}
             <!--新品-->
             <if test="params.newSign != null">
-                AND doit.new_sign = #{params.newSign}
+                AND o.new_sign = #{params.newSign}
             </if>
         </where>
+
     </select>
     <select id="countSalesVolume" resultType="java.lang.Integer"  parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
