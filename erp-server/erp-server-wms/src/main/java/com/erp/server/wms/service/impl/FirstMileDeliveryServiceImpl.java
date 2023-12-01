@@ -1284,13 +1284,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //校验必填
             for (FirstMileCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
                 if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
-                    throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, addDTO.getBoxQty());
+                    throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, addDTO.getBoxSpecNo());
                 }
                 if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
-                    throw new ServiceException(ApiError.PACKING_SKU_PACK_QTY_IS_NOT_NULL, addDTO.getBoxQty(), detail.getSkuNo());
+                    throw new ServiceException(ApiError.PACKING_SKU_PACK_QTY_IS_NOT_NULL, addDTO.getBoxSpecNo(), detail.getSkuNo());
                 }
                 if (addDTO.getBoxQty() == null || addDTO.getBoxQty() <= 0) {
-                    throw new ServiceException(ApiError.PACKING_SKU_BOX_QTY_IS_NOT_NULL, addDTO.getBoxQty());
+                    throw new ServiceException(ApiError.PACKING_SKU_BOX_QTY_IS_NOT_NULL, addDTO.getBoxSpecNo());
                 }
             }
 

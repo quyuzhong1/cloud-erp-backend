@@ -12,6 +12,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
@@ -21,6 +22,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpReportFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
@@ -96,7 +98,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         byte[] randomBytes = new byte[256];
         secureRandom.nextBytes(randomBytes);
         // 进行 Base64 编码
-        String state = Base64.getEncoder().encodeToString(randomBytes);
+        String state = Base64.getEncoder().withoutPadding().encodeToString(randomBytes);
         // 账号要求
         String resultState = "GSA_" + state.substring(4);
 
@@ -108,6 +110,19 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         }
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
         return String.format(cfgAppClient.getUrl(), marketplaceEnum.getSellerCentralUrl(), resultState);
+    }
+
+    public static void main(String[] args) {
+        // 生成随机数据
+        SecureRandom secureRandom = new SecureRandom();
+        // 生成 256 字节的随机数据
+        byte[] randomBytes = new byte[256];
+        secureRandom.nextBytes(randomBytes);
+        // 进行 Base64 编码
+        String state = Base64.getEncoder().withoutPadding().encodeToString(randomBytes);
+        // 账号要求
+        String resultState = "GSA_" + state.substring(4);
+        System.out.println(resultState);
     }
 
     /**
@@ -164,6 +179,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("亚马逊应用授权配置不存在");
         }
+
         // 发起授权请求
         AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.getShopAuthorizeInfo(
                 cfgAppClient.getUrl(),
