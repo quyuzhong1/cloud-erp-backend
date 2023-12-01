@@ -13,7 +13,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum AppClientEnum  {
-
+    // 卖家平台
     SHOP_AUTHORIZE("shopAuthorize","sales","Shopify"),
     SHOP_ACCESS_TOKEN("shopAccessToken","sales","Shopify"),
     SHOP_AUTHORIZE_INSTALL("shopAuthorizeInstall","sales","Shopify"),
@@ -22,6 +22,11 @@ public enum AppClientEnum  {
     SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
     ALI_EXPRESS_AUTHORIZE("aliExpressAuthorize","sales","AliExpress"),
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
+    AMAZON_AUTHORIZE("amazonAuthorize","sales","Amazon"),
+    AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
+
+
+    // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
     ALI_EXPRESS_LOGISTICS("aliExpressAuthorize","logistics","AliExpress"),
 
