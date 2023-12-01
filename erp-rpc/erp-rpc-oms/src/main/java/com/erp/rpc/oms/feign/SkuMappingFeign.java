@@ -41,5 +41,5 @@ public interface SkuMappingFeign {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
      **/
     @PostMapping("feign/skuMapping/listByPlatformSkuNoAndPlatform")
-    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO);
+    List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO);
 }

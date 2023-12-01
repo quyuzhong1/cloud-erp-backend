@@ -1331,7 +1331,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
 
             //查询产品信息
-            List<String> skuIdList = packDateDTOS.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+            List<String> skuIdList = packDateDTOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
             List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
             List<FirstMileCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, FirstMileCartonDetailDTO.ViewDTO.class);

@@ -73,7 +73,7 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @param listingInfoParamDTO
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
      **/
-    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(@Param("params") ListingInfoParamDTO listingInfoParamDTO);
+    List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@Param("params") ListingInfoParamDTO listingInfoParamDTO);
 
     /**
      * 根据产品sku查询库存sku

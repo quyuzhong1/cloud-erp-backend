@@ -148,7 +148,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @param listingInfoParamDTO
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuDTO>
      **/
-    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO);
+    List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(ListingInfoParamDTO listingInfoParamDTO);
 
     /**
      * 根据产品sku查询库存sku
