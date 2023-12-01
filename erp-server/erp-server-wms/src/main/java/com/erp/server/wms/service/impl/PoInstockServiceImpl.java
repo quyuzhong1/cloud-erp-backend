@@ -1034,7 +1034,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98025);
         }
         entity.setSubcontractType(getOneDTO.getSubcontractType());
-
+        //采购订单类型
+        entity.setPurchaseType(getOneDTO.getType());
     }
 
     /**
