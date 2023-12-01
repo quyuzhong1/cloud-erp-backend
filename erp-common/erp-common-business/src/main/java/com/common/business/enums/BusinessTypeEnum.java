@@ -28,12 +28,12 @@ public enum BusinessTypeEnum implements EnumMessage {
     REFRESH_TOKEN("refresh_token","刷新token",null),
     FBA_SHIPMENT("fba_shipment","亚马逊FBA货件", SourceTypeEnum.FBA_SHIPMENT),
     FBA_INVENTORY("fba_inventory","亚马逊FBA仓库", SourceTypeEnum.FBA_INVENTORY),
-    WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE),
-    CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE),
+    WAREHOUSE("warehouse","仓库", SourceTypeEnum.THIRD_WAREHOUSE_GET_WAREHOUSE),
+    CITY_DICT("city_dict","第三方仓城市字典", SourceTypeEnum.THIRD_WAREHOUSE_GET_BASE_ADDRESS),
     GET_TRACK("getTrack","物流轨迹", SourceTypeEnum.LOGISTICS_SUPPLIER),
-    TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE),
-    INBOUND("inbound","第三方仓获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE),
-    INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE)
+    TRANSFER("transfer","第三方仓中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC),
+    INBOUND("inbound","第三方仓获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE_GET_INBOUND_RECEIPT),
+    INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE_GET_INVENTORY)
     ;
 
     @JsonValue
