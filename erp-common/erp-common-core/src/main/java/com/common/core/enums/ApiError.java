@@ -856,9 +856,10 @@ public enum ApiError implements Serializable {
     IS_DEMAND_OVERSEAS_WAREHOUSE_PUSH_DOWN(99137,"只有备货海外仓的发货单允许下推入库单"),
     APPROVE_ING_CAN_TO_OVERSEAS_WAREHOUSE_INBOUND(99138,"只有待审核的数据允许下推海外仓入库单"),
     OVERSEAS_WAREHOUSE_INBOUND_EXIST(99139,"已下推入库单【{}】，不允许重复操作"),
-    REQUISITION_APPLICATION_NOT_EXIST(99139,"货件【{}】没有下推【要货申请】的单据不允许下推发货单"),
-    ONWAY_WAREHOUSE_NOT_EXIST(99140,"目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核"),
-    WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST(99140,"未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码"),
+    REQUISITION_APPLICATION_NOT_EXIST(99140,"货件【{}】没有下推【要货申请】的单据不允许下推发货单"),
+    ONWAY_WAREHOUSE_NOT_EXIST(99141,"目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核"),
+    WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST(99142,"未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码"),
+    PACKING_QTY_NOT_GT_WAIT_PACKING_QTY(99143,"箱规【{}】中sku【{}】装箱数量不能大于待装箱数量"),
 
 
     /**
