@@ -56,6 +56,10 @@ public class BiFilterDTO extends SortDTO {
      */
     private Integer dataType;
     /**
+     * 汇总日期维度 dateTypeEnum
+     */
+    private String dateType;
+    /**
      * 1 新品
      * 0 老品
      */
