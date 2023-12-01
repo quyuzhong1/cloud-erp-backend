@@ -25,9 +25,9 @@ import javax.jms.Session;
  * 亚马逊SQS监听工厂
  */
 @Slf4j
-@Configuration
-@EnableJms
-@DependsOn("amazonSpApiConfigUtils")
+//@Configuration
+//@EnableJms
+//@DependsOn("amazonSpApiConfigUtils")
 public class ListenerContainerFactory {
 
 
