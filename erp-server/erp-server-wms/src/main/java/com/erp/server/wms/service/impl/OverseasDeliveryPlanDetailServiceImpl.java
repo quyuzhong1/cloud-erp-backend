@@ -59,7 +59,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         List<OverseasDeliveryPlanDetailEntity> list = BeanMapper.copyList(addDTO.getDetailList(), OverseasDeliveryPlanDetailEntity.class);
 
         // 数据处理
-        handleData(list, mainId, Boolean.FALSE);
+        handleData(list, mainId, Boolean.FALSE, addDTO.getToWarehouseId());
 
         log.info("开始新增发货计划详情单");
         boolean save = super.saveBatch(list);
@@ -91,7 +91,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
         List<OverseasDeliveryPlanDetailEntity> list = BeanMapperUtils.copyList(OverseasDeliveryPlanDetailEntity.class, detailList);
 
         // 数据处理
-        handleData(list, mainId, Boolean.TRUE);
+        handleData(list, mainId, Boolean.TRUE, updateDTO.getToWarehouseId());
 
         log.info("开始修改发货计划详情单");
         boolean save = super.saveOrUpdateBatch(list);
@@ -116,7 +116,7 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<OverseasDeliveryPlanDetailEntity> list, String mainId, Boolean isUpdate) {
+    private void handleData(List<OverseasDeliveryPlanDetailEntity> list, String mainId, Boolean isUpdate, String toWarehouseId) {
         //需要新增的数据
         List<OverseasDeliveryPlanDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -146,7 +146,8 @@ public class OverseasDeliveryPlanDetailServiceImpl extends SuperServiceImpl<Over
             //获取库存sku
             SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = ListStockSkuNoByProductSkuIdViews.stream()
                     .filter(req -> StringUtils.isNotBlank(req.getProductSkuId())
-                            && req.getProductSkuId().equals(detailEntity.getSkuId()))
+                            && req.getProductSkuId().equals(detailEntity.getSkuId())
+                            && req.getWarehouseId().equals(toWarehouseId))
                     .distinct().findFirst().orElse(null);
             if (ObjectUtil.isEmpty(listStockSkuNoByProductSkuIdView)) {
                 throw new ServiceException(ApiError.SKU_NOT_MAPPING_PLATFORM_SKU, detailEntity.getSkuNo());
