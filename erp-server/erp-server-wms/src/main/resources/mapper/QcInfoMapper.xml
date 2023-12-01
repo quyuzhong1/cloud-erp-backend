@@ -224,7 +224,7 @@
             qi.qc_sample_result AS qcSampleResult,
             qb.source_type AS sourceType,
             qb.source_id AS sourceId,
-            qb.source_code AS sourceCode
+            qb.source_code AS sourceCode,
             qb.qc_finish_time as qcFinishTime
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
