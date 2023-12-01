@@ -8,7 +8,7 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.GOOD_CANG)
 @BusinessType(BusinessTypeEnum.PRODUCT)
-public class GoodCangProductHandler extends AbstractThirdWarehouseHandler<GoodCangSkuResp, PlatformProductDTO> {
+public class GoodCangProductHandler extends AbstractPullThirdWarehouseHandler<GoodCangSkuResp, PlatformProductDTO> {
 
     @Resource
     private GoodCangService goodCangService;

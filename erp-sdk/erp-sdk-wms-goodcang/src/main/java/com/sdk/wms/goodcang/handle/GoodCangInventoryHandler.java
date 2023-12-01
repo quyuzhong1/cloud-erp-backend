@@ -5,27 +5,22 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformInventoryDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetInventoryReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangInventoryResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +32,7 @@ import java.util.List;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.GOOD_CANG)
 @BusinessType(BusinessTypeEnum.INVENTORY)
-public class GoodCangInventoryHandler extends AbstractThirdWarehouseHandler<GoodCangInventoryResp, PlatformInventoryDTO> {
+public class GoodCangInventoryHandler extends AbstractPullThirdWarehouseHandler<GoodCangInventoryResp, PlatformInventoryDTO> {
 
     @Resource
     private GoodCangService goodCangService;

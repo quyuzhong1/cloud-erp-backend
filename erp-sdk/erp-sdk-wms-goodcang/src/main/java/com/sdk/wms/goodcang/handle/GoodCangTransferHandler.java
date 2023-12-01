@@ -6,11 +6,10 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformTransferWarehouseDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -18,14 +17,12 @@ import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsAndWarehouseResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangTransferWarehouseResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,7 +33,7 @@ import java.util.List;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.GOOD_CANG)
 @BusinessType(BusinessTypeEnum.TRANSFER)
-public class GoodCangTransferHandler extends AbstractThirdWarehouseHandler<GoodCangTransferWarehouseResp, PlatformTransferWarehouseDTO> {
+public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<GoodCangTransferWarehouseResp, PlatformTransferWarehouseDTO> {
 
     @Resource
     private GoodCangService goodCangService;

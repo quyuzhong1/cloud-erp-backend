@@ -8,7 +8,7 @@ import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -33,7 +33,7 @@ import java.util.List;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.IML)
 @BusinessType(BusinessTypeEnum.INBOUND)
-public class ImlInboundHandler extends AbstractThirdWarehouseHandler<ImlReceiptResp, PlatformInboundDTO> {
+public class ImlInboundHandler extends AbstractPullThirdWarehouseHandler<ImlReceiptResp, PlatformInboundDTO> {
 
     @Resource
     private ImlService imlService;
