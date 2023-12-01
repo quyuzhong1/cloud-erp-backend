@@ -94,7 +94,7 @@
             fmcd.sku_no,
             SUM(fmdd.delivery_qty) AS deliveryQty,
             SUM(fmcd.pack_qty) AS packQty,
-            SUM(fmc.box_qty) AS boxQty
+            SUM(fmc.box_qty) AS boxQty,
             fmc.box_spec_no
         FROM first_mile_carton fmc
         INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
