@@ -1018,6 +1018,7 @@
         </choose>
         <include refid="sql_report_condition"/>
         GROUP BY o.source_platform
+        order by sales DESC
     </select>
 
     <select id="getByShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
@@ -1632,24 +1633,27 @@
 
     <select id="byCategory" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT
-        <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
+            round(SUM (o.sales_amount_currency_rate),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
+            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales,
+            round(SUM (o.sales_amount),2) AS sales,
         </if>
-        pi.category_id AS flagNo
-        FROM dmp_order_item i
-        LEFT JOIN dmp_order_info o
-        ON i.order_id = o.id
-        INNER JOIN product_detail pd
-        ON pd.sku_no=i.sku_no
-        INNER JOIN product_info pi
-        ON pi.id=pd.product_id
-        AND pi.is_deleted=FALSE
-        <include refid="joinCondition"></include>
-
-        GROUP BY pi.category_id
+        o.category_id AS flagNo
+        <choose>
+            <when test="params.timeType == '1'">
+                FROM dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                FROM dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="sql_report_condition"/>
+        GROUP BY o.category_id
+        order by sales DESC
     </select>
 
     <select id="byPlatform" resultType="com.erp.model.bi.vo.SalesCountVO">
@@ -4824,28 +4828,27 @@
     <!--产品等级销售额-->
     <select id="listProductGradeSales" resultType="java.util.Map">
         SELECT
-        <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
+            round(SUM (o.sales_amount_currency_rate),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
+            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales,
+            round(SUM (o.sales_amount),2) AS sales,
         </if>
-         pi.grade AS flag
-        FROM
-        dmp_order_item i
-        LEFT JOIN dmp_order_info o
-        ON i.order_id = o.id
-        INNER JOIN product_detail pd
-        ON pd.sku_no=i.sku_no
-        INNER JOIN product_info pi
-        ON pi.id=pd.product_id
-        AND pi.is_deleted=FALSE
-        AND pi.grade !=''
-        <include refid="joinCondition">
-
-       </include>
-        GROUP BY pi.grade
-
+         o.grade AS flag
+        <choose>
+            <when test="params.timeType == '1'">
+                FROM dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                FROM dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="sql_report_condition"/>
+        GROUP BY o.grade
+        order by sales DESC
     </select>
 
     <select id="customerLevelProportion" resultType="java.math.BigDecimal">
