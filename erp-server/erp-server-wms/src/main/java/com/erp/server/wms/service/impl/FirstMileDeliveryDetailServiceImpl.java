@@ -124,7 +124,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId);
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId, null);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
@@ -150,7 +150,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         //查询已装箱数
-        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId);
+        List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId, boxSpecNo);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()

@@ -70,8 +70,8 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
     }
 
     @Override
-    public List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId) {
-        return baseMapper.listPackingQtyByMainId(mainId);
+    public List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo) {
+        return baseMapper.listPackingQtyByMainId(mainId, boxSpecNo);
     }
 
     @Override

@@ -27,5 +27,5 @@ public interface FirstMileCartonMapper extends BaseMapper<FirstMileCartonEntity>
      * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId);
+    List<FirstMileCartonDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId, @Param("boxSpecNo") Integer boxSpecNo);
 }

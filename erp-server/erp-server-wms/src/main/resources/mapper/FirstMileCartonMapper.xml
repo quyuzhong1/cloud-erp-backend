@@ -50,6 +50,9 @@
         <if test="mainId != null and mainId != ''">
             AND fmc.main_id = #{mainId}
         </if>
+        <if test="boxSpecNo != null and boxSpecNo != ''">
+            AND fmc.box_spec_no = #{boxSpecNo}
+        </if>
         GROUP BY fmc.main_id,
         fmcd.sku_id,
         fmcd.sku_no
