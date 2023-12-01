@@ -84,4 +84,30 @@
         fmcd.sku_id,
         fmcd.sku_no
     </select>
+
+    <!--查询包装信息-->
+    <select id="listPackDate" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$PackDateDTO">
+        SELECT
+            fmcd.main_id AS id,
+            fmcd.carton_id,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmdd.delivery_qty) AS deliveryQty,
+            SUM(fmcd.pack_qty) AS packQty,
+            SUM(fmc.box_qty) AS boxQty
+            fmc.box_spec_no
+        FROM first_mile_carton fmc
+        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.main_id AND fmdd.sku_id = fmcd.sku_id AND
+        fmdd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND fmcd.main_id = #{mainId}
+        </if>
+        GROUP BY fmcd.main_id,
+        fmcd.carton_id,
+        fmcd.sku_id,
+        fmcd.sku_no,
+        fmc.box_spec_no
+    </select>
 </mapper>

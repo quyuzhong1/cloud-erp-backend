@@ -107,7 +107,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
-    THIRD_WAREHOUSE_GET_INBOUND_RECEIPT("thirdWarehouseGetInboundReceipt", "入第三方仓库单签收数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_INBOUND_RECEIPT("thirdWarehouseGetInboundReceipt", "第三方仓库单签收数据获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_INVENTORY("thirdWarehouseGetInventory", "第三方仓库存获取","dmp_pull_task"),
     THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC("thirdWarehouseGetTransitWarehouseAndLogistic", "第三方仓中转仓及支持的物流产品基础数据获取","dmp_pull_task"),
     THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓入库单创建接口","dmp_push_task"),

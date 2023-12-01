@@ -41,6 +41,7 @@ public interface GoodCangConverter {
 
     @Mappings({
             @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "warehouseName",  source = "warehouseName"),
@@ -52,6 +53,7 @@ public interface GoodCangConverter {
 
     @Mappings({
             @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "providerErpId",  source = "authId")
     })
@@ -61,6 +63,7 @@ public interface GoodCangConverter {
     @Mappings({
             @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "providerErpId",  source = "authId"),
             @Mapping(target = "productSku",  source = "productSku"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),

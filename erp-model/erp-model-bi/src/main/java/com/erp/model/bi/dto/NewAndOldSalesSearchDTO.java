@@ -28,6 +28,10 @@ public class NewAndOldSalesSearchDTO {
          * 日期年月
          */
         private String yearMonth;
+        /**
+         * 日期汇总格式 DateTypeEnum
+         */
+        private String dateType;
     }
 
     /**

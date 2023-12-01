@@ -1,9 +1,12 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -11,6 +14,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -47,6 +54,9 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
+    @Resource
+    private MQProducerService mqProducerService;
+
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
@@ -54,6 +64,9 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
+        DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
+        mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
     @Override
@@ -96,5 +109,17 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
         Optional.ofNullable(mqEntity.getCountry())
                 .map(sysUserFeign::getCountryById)
                 .ifPresent(dictCountryEntity -> mqEntity.setCountryName(dictCountryEntity.getNameCn()));
+    }
+
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTitle(StrUtil.format("仓库消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
+        warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
+        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        return warnMsgInfo;
     }
 }

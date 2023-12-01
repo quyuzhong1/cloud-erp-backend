@@ -18,6 +18,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
@@ -294,13 +295,14 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
 
         TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         //销售额
         if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-            resultList = dmpOrderInfoMapper.listSalesAmountBiFilter(dto, groupViewDTO);
+            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
         }
         //销量
         if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
-            resultList = dmpOrderInfoMapper.listSalesQtyBiFilter(dto, groupViewDTO);
+            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "qty");
         }
         //净销售额
         if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
@@ -313,7 +315,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             dto.setSku(null);
             dto.setBrand(null);
             dto.setDepartment(null);
-            resultList = dmpOrderInfoMapper.listNetSalesAmountBiFilter(dto, groupViewDTO);
+            resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
             if (CollectionUtils.isNotEmpty(resultList)) {
                 TargetFinishDTO.GroupViewDTO refundGroupViewDTO = handleRefundGroupData(dto);
                 //退款信息
