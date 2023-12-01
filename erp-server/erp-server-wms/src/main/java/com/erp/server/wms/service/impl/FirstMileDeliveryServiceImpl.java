@@ -1266,20 +1266,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //删除原装箱信息
         deleteCarton(dto.getId());
 
+
+
         //新增装箱信息
         for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
 
-            //根据主表id分组sku查询发货及待装箱数
-            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOS = firstMileDeliveryDetailService.listPackDate(dto.getId());
-            List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(addDTO.getBoxSpecNo())).collect(Collectors.toList());
-
-            for (FirstMileDeliveryDTO.PackDateDTO packDateDTO : packDateDTOList) {
-                //待装箱数量=发货数量-所有已装箱数量
-                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
-                if (packDateDTO.getDeliveryQty() < packQtySum) {
-                    throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, addDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
-                }
-            }
 
             //校验必填
             for (FirstMileCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
@@ -1296,6 +1287,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             //新增装箱信息
             firstMileCartonService.add(addDTO, dto.getId());
+        }
+        //根据主表id分组sku查询发货及待装箱数
+        List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOS = firstMileDeliveryDetailService.listPackDate(dto.getId());
+
+        for (FirstMileDeliveryDTO.PackDateDTO packDateDTO : packDateDTOS) {
+            //待装箱数量=发货数量-所有已装箱数量
+            int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(packDateDTO.getSkuId())).mapToInt(req -> req.getBoxQty() * req.getPackQty()).sum();
+            if (packDateDTO.getDeliveryQty() < packQtySum) {
+                throw new ServiceException(ApiError.PACKING_QTY_NOT_GT_WAIT_PACKING_QTY, packDateDTO.getBoxSpecNo(), packDateDTO.getSkuNo());
+            }
         }
 
         //根据主表id分组sku查询发货及待装箱数
