@@ -422,9 +422,5 @@ public class BiTargetYearDTO implements Serializable {
         @NotNull(message = "指标维度不能为空")
         @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
         private MetricsEnum metrics;
-        /**
-         * 日期类型 dateTypeEnum
-         */
-        private String dateType;
     }
 }

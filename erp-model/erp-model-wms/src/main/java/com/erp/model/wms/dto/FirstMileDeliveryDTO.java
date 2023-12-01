@@ -1005,9 +1005,14 @@ public class FirstMileDeliveryDTO implements Serializable {
         private Integer packQty;
 
         /**
-         * 箱规
+         * 箱规编号
          */
         private Integer boxSpecNo;
+
+        /**
+         * 箱数
+         */
+        private Integer boxQty;
     }
 
 
