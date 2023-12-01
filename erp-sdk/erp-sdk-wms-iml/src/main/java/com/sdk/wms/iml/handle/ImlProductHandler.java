@@ -4,12 +4,11 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformCityDictDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractThirdWarehouseHandler;
+import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,7 +34,7 @@ import java.util.stream.Collectors;
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.IML)
 @BusinessType(BusinessTypeEnum.PRODUCT)
-public class ImlProductHandler extends AbstractThirdWarehouseHandler<ImlProductResp, PlatformProductDTO> {
+public class ImlProductHandler extends AbstractPullThirdWarehouseHandler<ImlProductResp, PlatformProductDTO> {
 
     @Resource
     private ImlService imlService;

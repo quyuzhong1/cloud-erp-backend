@@ -6,6 +6,8 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformDataDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -15,7 +17,9 @@ import java.util.stream.Collectors;
 /**
  * 第三方仓处理器抽象类
  */
-public abstract class AbstractThirdWarehouseHandler<T extends CleanBaseDTO, R extends UniqueDto> implements IBusinessHandler<T, R> {
+@Slf4j
+@Service
+public abstract class AbstractPullThirdWarehouseHandler<T extends CleanBaseDTO, R extends UniqueDto> implements IBusinessHandler<T, R> {
 
     protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
