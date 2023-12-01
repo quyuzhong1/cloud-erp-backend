@@ -364,11 +364,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
-
-        //配置为空时默认FBA在途仓
+        //校验目的仓是否为FBA第三方仓
         List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
         DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getType())).findFirst().orElse(null);
+        //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
+
+            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
             if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
                 List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
                 if (CollectionUtils.isEmpty(warehouseEntities)) {
