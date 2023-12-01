@@ -1192,6 +1192,11 @@ public class SoB2cDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
          * 是否是组数据（第一条标记，前端有用）
          */
         private Boolean isMain;
