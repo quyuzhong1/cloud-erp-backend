@@ -33,6 +33,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
+import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
@@ -3309,7 +3310,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesFlagVO> list = baseMapper.deptNewAndOldSalesAmount(dto, settleRate);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
+        List<SalesFlagVO> list = baseMapper.newAndOldSalesAmount(dto, settleRate,"dept");
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
         paramDTO.setYear(startTime.getYear());
@@ -3395,8 +3397,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer newFlag = BiConstant.NEW;
         //老品
         Integer oldFlag = BiConstant.OLD;
-
-        List<SalesFlagVO> list = baseMapper.userNewAndOldSalesAmount(dto, settleRate);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
+        List<SalesFlagVO> list = baseMapper.newAndOldSalesAmount(dto, settleRate, "user");
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
         paramDTO.setYear(startTime.getYear());
