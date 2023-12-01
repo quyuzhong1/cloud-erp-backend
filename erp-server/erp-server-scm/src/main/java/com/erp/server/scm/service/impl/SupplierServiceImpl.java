@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -23,6 +24,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -1154,6 +1157,52 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(SupplierEntity::getName, supplierNames).list();
+    }
+
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        //根据ids查询
+        List<SupplierEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isNotEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("供应商撤销流程，ids=【{}】", ids);
+
+        //撤销现有流程
+        LoginUser userInfo = commonService.getUserInfo();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT);
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("供应商【%s】取消流程", ModuleTypeEnum.SUPPLIER.getCode(), pairList, "取消流程操作");
+
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 更新状态
+     * @author Will
+     * @date: 2023/12/1 16:05
+     * @param ids
+     * @param approveStatus
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids, ApproveStatusEnum approveStatus) {
+        this.lambdaUpdate().in(SupplierEntity::getId, ids)
+                .set(SupplierEntity::getApproveStatus, approveStatus)
+                .update();
     }
 
     /**
