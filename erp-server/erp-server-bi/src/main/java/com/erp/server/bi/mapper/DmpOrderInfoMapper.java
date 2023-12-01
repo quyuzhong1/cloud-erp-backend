@@ -75,6 +75,17 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return
      */
     Integer countSalesVolume(@Param("params") BiFilterDTO dto);
+
+    /**
+     * @description: 查询销售额
+     * @author Will
+     * @date: 2023/9/25 9:34
+     * @param dto
+     * @param dataType sales  qty
+     * @return List<ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO>  listSalesBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("dataType") String dataType);
+
     /**
      * @description: 查询销售额
      * @author Will

@@ -49,6 +49,10 @@ public class TargetFinishDTO implements Serializable {
          */
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
+        /**
+         * 时间类型 dateTypeEnum
+         */
+        private String dateType;
     }
 
 
