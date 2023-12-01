@@ -2318,7 +2318,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         if (ObjectUtils.isEmpty(soB2cFinanceEntity) && !isAdd) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
-        } else {
+        }
+        //新增时用新对象
+        if (isAdd) {
             soB2cFinanceEntity = new SoB2cFinanceEntity();
         }
 
@@ -2408,7 +2410,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 accessoriesCost = MathUtil.multiply(list.get(0).getTargetTaxCost(), soB2cLogisticsEntity.getAccessoriesQty());
             }
         }
-
+        //运费收入
+        financialInfoDTO.setShippingCost(ObjectUtil.isEmpty(financialInfoDTO.getShippingCost()) ? BigDecimal.ZERO : financialInfoDTO.getShippingCost());
+        //物流成本
+        financialInfoDTO.setLogisticsCost(ObjectUtil.isEmpty(financialInfoDTO.getLogisticsCost()) ? BigDecimal.ZERO : financialInfoDTO.getLogisticsCost());
 
         financialInfoDTO.setAccessoriesCost(accessoriesCost);
         //VAT税费,店铺计算
