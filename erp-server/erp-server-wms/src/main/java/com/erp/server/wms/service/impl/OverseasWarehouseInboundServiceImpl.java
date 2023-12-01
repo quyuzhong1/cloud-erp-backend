@@ -4,10 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,16 +14,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.entity.*;
@@ -34,7 +24,6 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
@@ -44,13 +33,15 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -92,7 +83,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasWarehouseInboundDTO.AddDTO addDTO) {
-        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getDeliveryId());
+        OverseasWarehouseInboundEntity oldEntity = this.getBySourceId(addDTO.getSourceId());
+        if (null != oldEntity){
+            throw new ServiceException("该发货单的入库单已存在");
+        }
+
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
@@ -101,11 +97,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
-        BeanMapperUtils.copy(addDTO, mainEntity);
-        mainEntity.setInstockType(addDTO.getInstockType().getCode());
-        mainEntity.setLogisticsMethod(addDTO.getLogisticsMethod().getCode());
         // 数据处理
-        handleData(mainEntity);
+        handleData(mainEntity, addDTO);
 
         // 明细处理
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
@@ -149,7 +142,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         old.setInstockType(updateDTO.getInstockType().getCode());
         old.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
         // 数据处理
-        handleData(overseasWarehouseInboundEntity);
+//        handleData(overseasWarehouseInboundEntity, updateDTO);
         log.info("编辑 开始修改海外仓入库单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(overseasWarehouseInboundEntity);
         if (!save) {
@@ -182,8 +175,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 新增修改处理数据
      */
-    private void handleData(OverseasWarehouseInboundEntity overseasWarehouseInboundEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(OverseasWarehouseInboundEntity mainEntity, OverseasWarehouseInboundDTO.AddDTO addDTO) {
+        BeanUtils.copyProperties(addDTO, mainEntity);
+        // 验证数据 & 数据赋值
+        mainEntity.setInstockType(addDTO.getInstockType().getCode());
+        mainEntity.setLogisticsMethod(addDTO.getLogisticsMethod().getCode());
+        mainEntity.setEstimatedArrivalDate(LocalDateTime.of(addDTO.getEstimatedArrivalDate(), LocalTime.MIN));
+        mainEntity.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
+        mainEntity.setOverseasWarehouseInboundId("");
     }
 
 
@@ -390,6 +389,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .in(OverseasWarehouseInboundEntity::getSourceId, sourceIds)
                 .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
                 .list();
+    }
+
+    @Override
+    public OverseasWarehouseInboundEntity getBySourceId(String sourceId) {
+        return lambdaQuery()
+                .eq(OverseasWarehouseInboundEntity::getSourceId, sourceId)
+                .last("LIMIT 1")
+                .one();
     }
 
     /**
