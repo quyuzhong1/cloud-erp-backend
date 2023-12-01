@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -166,6 +167,26 @@ public class SoB2cFinanceDTO implements Serializable {
         */
         @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal vatCost;
+
+
+        /**
+         * 平台费率
+         */
+        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal platformRate;
+
+        /**
+         * vat 费率
+         */
+        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal vatRate;
+
+        /**
+         * 转账费率
+         */
+        @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal transferRate;
+
 
         /**
          * 平台费类型
