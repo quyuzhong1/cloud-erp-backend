@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.feign;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,9 @@ public class DmpTaskFeignController {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
 
+    @Resource
+    private DmpPullTaskService dmpPullTaskService;
+
     @PostMapping("/createPlatformTask")
     public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
         return platformApiTaskService.createPlatformTask(dto);
@@ -46,5 +50,10 @@ public class DmpTaskFeignController {
     @PostMapping("/createThirdWarehouseTask")
     public Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto){
         return platformApiTaskService.createThirdWarehouseTask(dto);
+    }
+
+    @PostMapping("/getPullTaskById")
+    public DmpPullTaskEntity getPullTaskById(@RequestBody String id){
+        return dmpPullTaskService.getById(id);
     }
 }

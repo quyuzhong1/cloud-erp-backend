@@ -207,4 +207,12 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/createThirdWarehouseTask")
     Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto);
+
+
+    /**
+     * 创建第三方仓任务
+     * @return
+     */
+    @PostMapping("feign/dmp/getPullTaskById")
+    DmpPullTaskEntity getPullTaskById(@RequestBody String id);
 }
