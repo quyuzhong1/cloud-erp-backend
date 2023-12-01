@@ -163,7 +163,7 @@ public class AmazonSpApiConfigUtils {
         return AWSAuthenticationCredentialsProvider.builder()
                 //创建IAM职权的时候会生成这个ARN
 //                .roleArn(AmazonSpApiConfigUtils.roleArn)
-                .roleArn("role-arn: arn:aws:iam::115410190924:role/DehouRole")
+                .roleArn("arn:aws:iam::115410190924:role/DehouRole")
                 //唯一值，可以使用UUID
                 .roleSessionName(UUID.randomUUID().toString())
                 .build();

@@ -55,9 +55,36 @@ public interface RedisCacheConstants {
     String REDIS_AMAZON_REPORT_DOCUMENT_URL = "amazon-report-document-{}-{}";
 
 
+
+    // 授权相关
     /**
-     * 亚马逊授权state:{state}
+     * 邮箱验证码 有效期间600秒
+     */
+     Integer THIRD_PARTY_AUTH_EXPIRATION = 600;
+
+    /**
+     * 亚马逊授权:{state}
      * 内容店铺ID
      */
-    String AMAZON_STATE = "amazon_state:{}";
+    String AUTH_AMAZON_STATE = "third-party-auth:amazon_state:{}";
+
+    /**
+     * shopify授权:{shop}
+     * 内容店铺ID
+     */
+    String AUTH_SHOPIFY_SHOP = "third-party-auth:shopify_shop:{}";
+
+    /**
+     * 速卖通授权:{stare}
+     * 内容店铺ID
+     */
+    String AUTH_ALIEXPRESS_STATE = "third-party-auth:aliexpress_state:{}";
+
+    /**
+     * 虾皮授权:{id}
+     * 内容店铺ID
+     */
+    String AUTH_SHOPEE_ID = "third-party-auth:id:{}";
+
+
 }

@@ -12,6 +12,7 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -61,7 +62,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
      * 获取授权地址
      */
     @Override
-    public String getShopAuthorizeUrl(ShopAuthorizeDTO dto) {
+    public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         return null;
     }
 

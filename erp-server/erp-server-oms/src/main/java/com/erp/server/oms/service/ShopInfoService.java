@@ -4,10 +4,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.CancelAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
-import com.erp.model.oms.dto.ShopAuthDTO;
-import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 
@@ -122,7 +119,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return
      */
-    String getShopAuthorizeUrl(ShopAuthorizeDTO dto);
+    String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto);
 
     /**
      * @return List<ListTreeDTO>

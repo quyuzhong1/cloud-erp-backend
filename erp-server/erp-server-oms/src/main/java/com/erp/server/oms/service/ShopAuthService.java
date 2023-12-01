@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 
 import java.util.List;
@@ -63,7 +64,7 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      *
      * @return
      */
-    String getShopeeCodeUrl(ShopAuthorizeDTO dto);
+    String getShopeeCodeUrl(ShopAuthorizeUrlDTO dto);
 
     List<ShopAuthEntity> getShopeeShopList(String type, String stauts);
 
