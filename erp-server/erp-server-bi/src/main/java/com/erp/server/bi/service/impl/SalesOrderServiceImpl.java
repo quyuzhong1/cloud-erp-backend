@@ -2384,27 +2384,29 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
 
-        List<SalesFlagVO> salesList = new ArrayList();
-        switch (dateType) {
-            case "DAY":
-                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-                break;
-            case "MONTH":
-                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-                break;
-            case "WEEK":
-                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-                break;
-            case "QUARTER":
-                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-                break;
-            case "YEAR":
-                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
-                break;
-            default:
-                salesList = new ArrayList<>();
-                break;
-        }
+//        List<SalesFlagVO> salesList = new ArrayList();
+//        switch (dateType) {
+//            case "DAY":
+//                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
+//                break;
+//            case "MONTH":
+//                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
+//                break;
+//            case "WEEK":
+//                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
+//                break;
+//            case "QUARTER":
+//                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
+//                break;
+//            case "YEAR":
+//                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
+//                break;
+//            default:
+//                salesList = new ArrayList<>();
+//                break;
+//        }
+
+        List<SalesFlagVO> salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), dateType.toLowerCase(),groupName);
 
         //如果是季度
         if (dateType.equals("QUARTER")) {
@@ -2790,53 +2792,59 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 if (days > 31) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_THIRTY_ONE);
                 }
-                salesList = baseMapper.getByDay(dto, timeFlag, settleRate, dto.getSearchType());
-                dto.setStartTime(dto.getStartTime().minusYears(1));
-                dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate, dto.getSearchType());
+//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), DateTypeEnum.DAY.getCode());
+//                dto.setStartTime(dto.getStartTime().minusYears(1));
+//                dto.setEndTime(dto.getEndTime().minusYears(1));
+//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.DAY.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
+//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
                 break;
             case "WEEK":
                 long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (weekDay > 90) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
                 }
-                salesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
-                dto.setStartTime(dto.getStartTime().minusYears(1));
-                dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
+//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.WEEK.getCode());
+//                dto.setStartTime(dto.getStartTime().minusYears(1));
+//                dto.setEndTime(dto.getEndTime().minusYears(1));
+//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.WEEK.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "WEEK");
+//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "WEEK");
                 break;
             case "MONTH":
-                salesList = baseMapper.getByMonth(dto, timeFlag, settleRate, dto.getSearchType());
-                dto.setStartTime(dto.getStartTime().minusYears(1));
-                dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByMonth(dto, timeFlag, settleRate, dto.getSearchType());
+//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.MONTH.getCode());
+//                dto.setStartTime(dto.getStartTime().minusYears(1));
+//                dto.setEndTime(dto.getEndTime().minusYears(1));
+//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.MONTH.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH");
+//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH");
                 break;
             case "QUARTER":
-                salesList = baseMapper.getByQuarter(dto, timeFlag, settleRate, dto.getSearchType());
-                dto.setStartTime(dto.getStartTime().minusYears(1));
-                dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByQuarter(dto, timeFlag, settleRate, dto.getSearchType());
+//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.QUARTER.getCode());
+//                dto.setStartTime(dto.getStartTime().minusYears(1));
+//                dto.setEndTime(dto.getEndTime().minusYears(1));
+//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.QUARTER.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER");
+//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER");
                 break;
             case "YEAR":
-                salesList = baseMapper.getByYear(dto, timeFlag, settleRate, dto.getSearchType());
-                dto.setStartTime(dto.getStartTime().minusYears(1));
-                dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByYear(dto, timeFlag, settleRate, dto.getSearchType());
+//                salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.YEAR.getCode());
+//                dto.setStartTime(dto.getStartTime().minusYears(1));
+//                dto.setEndTime(dto.getEndTime().minusYears(1));
+//                lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),DateTypeEnum.YEAR.getCode());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR");
+//                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR");
                 break;
             default:
                 salesList = new ArrayList<>();
                 break;
         }
+
+        salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(), dateType.toLowerCase(),null);
+        dto.setStartTime(dto.getStartTime().minusYears(1));
+        dto.setEndTime(dto.getEndTime().minusYears(1));
+        lastYearSalesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),dateType.toLowerCase(), null);
+        dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, dateType);
 
         //如果是季度
         if (dateType.equals("QUARTER")) {
