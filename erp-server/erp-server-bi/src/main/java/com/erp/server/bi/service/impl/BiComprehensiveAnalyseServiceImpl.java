@@ -22,6 +22,8 @@ import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.DateTypeEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.lang.StringUtils;
@@ -692,6 +694,21 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     }
 
     /**
+     * 获取到结算汇率
+     *
+     * @param code
+     * @return
+     */
+    private String getSettleRate(Integer code) {
+        SettleMethodEnum settleMethod = SettleMethodEnum.getByCode(code);
+        if (settleMethod != null) {
+            return settleMethod.getField();
+        }
+        return "";
+    }
+
+
+    /**
      * 区域销售分析
      */
     @Override
@@ -702,9 +719,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 .stream()
                 // 过滤其他
                 .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
-                .collect(Collectors.toList());;
+                .collect(Collectors.toList());
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         // 国家销售额
-        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto,settleRate);
 
         // 区域Map<子区域Code, 国家List>
         Map<String, List<DictCountryDTO.ListDTO>> regionMap = countryList
@@ -787,9 +807,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 // 过滤其他
                 .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
                 .collect(Collectors.toList());
-                ;
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         // 国家销售额
-        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto, settleRate);
 
         // 国家销量Map<国家名称, 国家销量>
         Map<String, BigDecimal> countrySalesMap = countrySalesList

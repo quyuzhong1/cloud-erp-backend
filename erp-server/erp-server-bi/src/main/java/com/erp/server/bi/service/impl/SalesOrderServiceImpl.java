@@ -1133,7 +1133,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
-        dto.setDateType(DateTypeEnum.DAY.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         //这个是环比的查询出来的
         List<SalesBaseVO> chainList = baseMapper.byPeople(dto, settleRate);
 
@@ -1357,6 +1359,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        if(StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
@@ -1411,7 +1416,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime weekEnd = LocalDateUtil.getThisWeekEnd(nowDate);
         dto.setStartTime(weekStart);
         dto.setEndTime(weekEnd);
-        dto.setDateType(DateTypeEnum.WEEK.getType());
+        if(StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.WEEK.getType());
+        }
         //本周结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1477,7 +1484,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(nowDate);
         dto.setStartTime(monthStart);
         dto.setEndTime(monthEnd);
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.WEEK.getType());
+        }
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1543,7 +1552,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime quarterEnd = LocalDateUtil.getThisQuarterEnd(nowDate);
         dto.setStartTime(quarterStart);
         dto.setEndTime(quarterEnd);
-        dto.setDateType(DateTypeEnum.QUARTER.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.QUARTER.getType());
+        }
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1609,7 +1620,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime yearEnd = LocalDateUtil.getThisYearEnd(nowDate);
         dto.setStartTime(yearStart);
         dto.setEndTime(yearEnd);
-        dto.setDateType(DateTypeEnum.YEAR.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.YEAR.getType());
+        }
         //本年结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -2142,6 +2155,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesBaseVO> list = baseMapper.byCategory((BiCategoryDTO.FirstCategoryParamsDTO) dto, settleRate);
         //获取到sku 属性分类
         List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();

@@ -227,7 +227,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param dto BiCountryRegionFilterDTO
      * @return java.util.List<com.erp.model.bi.dto.BiCountryAnalyzeDTO>
      **/
-    List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto);
+    List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto, @Param("settleRate") String settleRate);
 
 
     /**
