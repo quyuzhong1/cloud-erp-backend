@@ -15,6 +15,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -479,7 +480,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 发货单ID
          */
         @NotBlank(message = "发货单ID不能为空")
-        private String deliveryId;
+        private String sourceId;
 
         /**
          * 入库类型
@@ -513,7 +514,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 预计到达时间
          */
         @NotNull(message = "预计到达时间不能为空")
-        private LocalDateTime estimatedArrivalDate;
+        private LocalDate estimatedArrivalDate;
 
         /**
          * 物流跟踪号

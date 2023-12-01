@@ -134,4 +134,9 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @return java.util.List<com.erp.model.wms.entity.OverseasWarehouseInboundEntity>
      **/
     List<OverseasWarehouseInboundEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 通过source_id查询
+     */
+    OverseasWarehouseInboundEntity getBySourceId(String sourceId);
 }
