@@ -357,6 +357,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         });
 
         //货件没有下推【要货申请】的单据不允许下推发货单（做配置开关，上线前先关闭） TODO
+/*
+            RequisitionApplicationEntity applicationEntity = requisitionApplicationEntities.stream()
+                    .filter(req -> req.getSourceId().equals(view.getMainId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(applicationEntity)) {
+                throw new ServiceException(ApiError.REQUISITION_APPLICATION_NOT_EXIST, view.getCode());
+            }
+*/
 
         //Delete和Cancel状态的货件不允许下推发货单
         List<FbaShipmentEntity> collect = fbaShipmentEntities.stream()
@@ -395,9 +403,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
-        //根据sku查询拥有的子sku
-        List<String> skuIdList = skuVOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-
         //查询已发货的货件信息
         List<String> sourceDetailIdList = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<FirstMileDeliveryDetailEntity> entities = firstMileDeliveryDetailService.listBySourceDetailIds(sourceDetailIdList);
@@ -422,8 +427,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             //拆分产品尺寸
             splitProductSizeView(detailDto, skuVO.getProductSize());
-
-
 
             //来源详情id
             detailDto.setSourceDetailId(detailEntity.getId());
