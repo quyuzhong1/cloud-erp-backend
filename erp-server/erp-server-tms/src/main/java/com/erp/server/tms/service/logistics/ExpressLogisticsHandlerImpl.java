@@ -90,7 +90,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), baseResult.getErrorMsg());
             }
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), e.getMessage());
         }
         if (success) {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
@@ -418,7 +418,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success("授权成功");
             }
         } catch (Exception e) {
-            return failure(e.getMessage());
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
 
