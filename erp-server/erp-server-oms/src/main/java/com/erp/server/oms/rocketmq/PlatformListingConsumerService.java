@@ -118,7 +118,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
         warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
-        warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
+        warnMsgInfo.setTableName(SourceTypeEnum.THIRD_WAREHOUSE_GET_SKU.getTableName());
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
         warnMsgInfo.setKeyInfo("");
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);

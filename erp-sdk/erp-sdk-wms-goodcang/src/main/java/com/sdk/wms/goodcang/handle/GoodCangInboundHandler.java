@@ -5,13 +5,13 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.*;
 import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
@@ -43,6 +43,11 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
     @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
 
+    @Resource
+    private MQProducerService mqProducerService;
+
+    private final String failureMsgHead = "调用谷仓获取入库数据接口异常";
+
     @Override
     public List<GoodCangReceiptBatchResp> download(JobTaskDTO data) {
         List<GoodCangReceiptBatchResp> respList = new ArrayList<>();
@@ -58,9 +63,23 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
 
     private void checkResponse(GoodCangResponse<?> response) {
         if (!isSuccess(response.getAsk())) {
-            log.error("谷仓查询入库数据失败," + response.getMessage());
-            throw new ServiceException("谷仓查询入库数据失败," + response.getMessage());
+            log.error(failureMsgHead + response.getMessage());
+            WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(response.getMessage());
+            mqProducerService.sendWarnMsg(msgInfoDTO);
+            throw new ServiceException(failureMsgHead + response.getMessage());
         }
+    }
+
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(String msg) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("调用谷仓获取入库数据接口");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_THIRD_SDK);
+        warnMsgInfo.setTitle(failureMsgHead);
+        warnMsgInfo.setTableName(this.getClass().getName());
+        warnMsgInfo.setTableId("");
+        warnMsgInfo.setKeyInfo(msg);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        return warnMsgInfo;
     }
 
     @Override
@@ -89,6 +108,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
     public String getTargetPlatform() {
         return PlatformEnum.ERP_WMS.getDesc();
     }
+
 
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
