@@ -72,6 +72,7 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "fnSku", source = "receiveDTO.fnSku", defaultValue = ""),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
             @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
+            @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
             @Mapping(target = "receiveQty", source = "receiveDTO.receiveQty"),
             @Mapping(target = "receiveDate", source = "receiveDTO.receiveDate"),
@@ -108,6 +109,7 @@ public interface FbaShipmentConsumerConverter {
                                                     List<String> hasChildrenSkuIds);
 
     @Mappings({
+            @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
             @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
     })

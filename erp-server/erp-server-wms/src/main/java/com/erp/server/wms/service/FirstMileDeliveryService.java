@@ -272,4 +272,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return com.erp.model.wms.dto.OverseasWarehouseInboundDTO.ViewDTO
      **/
     OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id);
+
+    /**
+     * 根据sourceId 查询下推的发货单
+     * @param sourceId
+     * @return
+     */
+    FirstMileDeliveryEntity findBySourceId(String sourceId);
 }
