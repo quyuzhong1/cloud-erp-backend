@@ -147,6 +147,11 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (null == shopInfo) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        // 店铺已授权
+        if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
+            throw new ServiceException(ApiError.ERROR_SHOP_ALREADY_AUTH);
+        }
+
         // 校验国家唯一
 //        boolean existSameCountry = shopInfoService.checkExist(shopInfo.getDictCountryCode(), shopInfo.getDictPlatform(), AuthStatusEnum.ALREADY.getCode());
 //        if (existSameCountry) {
