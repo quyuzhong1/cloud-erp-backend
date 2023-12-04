@@ -100,15 +100,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 数据处理
         handleData(mainEntity, addDTO);
 
-        // 明细处理
-        List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
-                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity))
-                .collect(Collectors.toList());
         log.info("开始新增海外仓入库单");
         boolean save = super.save(mainEntity);
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
+        // 明细处理
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
+                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity))
+                .collect(Collectors.toList());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】来源单号为【{}】", commonService.getUserInfo().getUserName(), "海外仓入库单", mainEntity.getSourceCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
