@@ -108,9 +108,9 @@ public class GoodCangServiceTest {
                 .transitType(0)
                 .receivingShippingType(0)
                 .warehouseCode("USEA")
-                .etaDate(LocalDate.parse("2023-11-20", DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                .trackingNumber("123")
-                .verify(1)
+                .etaDate(LocalDate.parse("2023-12-20", DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .trackingNumber("wjtest321")
+                .verify(0)
                 .items(Arrays.asList(GoodCangCreateInboundReq.Item.builder()
                         .boxNo("1")
                         .box_detailList(Arrays.asList(GoodCangCreateInboundReq.Item.BoxDetail.builder()
@@ -124,6 +124,28 @@ public class GoodCangServiceTest {
         System.out.println(response.getData());
     }
 
+    @Test
+    public void editInboundBillTest() {
+        GoodCangCreateInboundReq goodCangCreateInboundReq = GoodCangCreateInboundReq.builder()
+                .receivingCode("RVG1149-231204-0004")
+                .transitType(0)
+                .receivingShippingType(0)
+                .warehouseCode("USEA")
+                .etaDate(LocalDate.parse("2023-12-20", DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .trackingNumber("wjtest321")
+                .verify(1)
+                .items(Arrays.asList(GoodCangCreateInboundReq.Item.builder()
+                        .boxNo("1")
+                        .box_detailList(Arrays.asList(GoodCangCreateInboundReq.Item.BoxDetail.builder()
+                                .productSku("QC6SHR-031500US")
+                                .quantity(10)
+                                .build()))
+                        .build()))
+                .build();
+        GoodCangResponse<String> response = goodCangService.editInboundBill(goodCangCreateInboundReq);
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
     @Test
     public void cancelInboundBillTest() {
         GoodCangResponse<String> response = goodCangService.cancelInboundBill("RVG1149-231116-0004");
