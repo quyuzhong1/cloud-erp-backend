@@ -27,10 +27,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -96,6 +93,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private CustomerB2cService customerB2cService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -181,7 +181,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param shop
      */
     public void autoCreateShopCustomer(ShopInfoEntity shop) {
-        CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
+        CustomerDTO.AddDTO customer =new CustomerDTO.AddDTO();
         customer.setUseOrgId(shop.getSalesOrgId());
         customer.setInnerOrgId(shop.getSalesOrgId());
         //平台
@@ -207,19 +207,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
-        String id = customerB2cService.addAndSubmit(customer);
+        String id = customerInfoService.addAndSubmit(customer);
         if (StringUtils.isNotBlank(id)) {
-            CustomerB2cEntity customerB2c = customerB2cService.getById(id);
-            if (Objects.nonNull(customerB2c)) {
-                shop.setCustomerId(customerB2c.getId());
-                shop.setCustomerCode(customerB2c.getCode());
+            CustomerInfoEntity customerB2b = customerInfoService.getById(id);
+            if (Objects.nonNull(customerB2b)) {
+                shop.setCustomerId(customerB2b.getId());
+                shop.setCustomerCode(customerB2b.getCode());
                 this.updateById(shop);
             }
         }
         BaseApproveParamDTO approveParamDTO = new BaseApproveParamDTO();
         approveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
         approveParamDTO.setIds(Arrays.asList(id));
-        customerB2cService.approve(approveParamDTO);
+        customerInfoService.approve(approveParamDTO);
 
     }
 

@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -67,7 +68,8 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
@@ -107,7 +109,8 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        SpElExpressionDTO spElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression=spElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
@@ -179,9 +182,9 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
         BeanMapper.copy(ruleOrderApproval, view);
         String categoryDetailId = ruleOrderApproval.getCategoryDetailId();
-        if(StringUtils.isNotBlank(categoryDetailId)){
+        if (StringUtils.isNotBlank(categoryDetailId)) {
             view.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
-        }else{
+        } else {
             view.setCategoryDetailIdList(Collections.emptyList());
         }
 
@@ -206,7 +209,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         if (CollectionUtils.isEmpty(jsonObjectList)) {
             return ruleMatch;
         }
-        log.info("参数为=========={}",jsonObjectList);
+        log.info("参数为=========={}", jsonObjectList);
         List<RuleOrderApprovalEntity> ruleOrderApprovalList = this.listOrderByPriority();
         List<String> ruleIdList = ruleOrderApprovalList.stream().map(RuleOrderApprovalEntity::getId).collect(Collectors.toList());
         //规则条件
@@ -220,7 +223,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             for (JSONObject jsonObject : jsonObjectList) {
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject, jsonObjectList);
                 if (matchResult) {
                     ruleMatch.setFlowStatus(item.getFlowStatus());
                     String categoryDetailId = item.getCategoryDetailId();

@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.RedisService;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
@@ -143,7 +144,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 BigDecimal yearTotalTarget = value.stream().map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                 totalSlotDTO.setYearTotalTarget(yearTotalTarget);
                 //年实际
-                BigDecimal yearTotalReal = realList.stream().filter(obj -> obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal yearTotalReal = realList.stream().filter(obj -> StringUtils.isNotBlank(obj.getTypeName()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                 totalSlotDTO.setYearTotalReal(yearTotalReal);
                 BigDecimal yearRate = MathUtil.divide(yearTotalReal,yearTotalTarget);
                 totalSlotDTO.setRate(MathUtil.multiply(yearRate,MathUtil.BigDecimal_100));
@@ -296,6 +297,21 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
         dto.setDateType(DateTypeEnum.MONTH.getType());
+
+        Map<String, String> dataMap = new HashMap<>();
+        //部门和负责人 填充名称
+        if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())){
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            if (CollectionUtils.isNotEmpty(userList)){
+                dataMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+            }
+        }else if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())){
+            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+            if (CollectionUtils.isNotEmpty(deptList)){
+                dataMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getId, SysDepartmentDTO::getName));
+            }
+        }
+
         //销售额
         if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
             resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
@@ -317,13 +333,19 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             dto.setDepartment(null);
             resultList = dmpOrderInfoMapper.listSalesBiFilter(dto, "sales");
             if (CollectionUtils.isNotEmpty(resultList)) {
+
                 TargetFinishDTO.GroupViewDTO refundGroupViewDTO = handleRefundGroupData(dto);
                 //退款信息
                 List<TargetFinishDTO.ViewDTO> refundList = dmpOrderInfoMapper.listRefundBiFilter(dto, refundGroupViewDTO);
                 for (TargetFinishDTO.ViewDTO viewDTO : resultList) {
+                    //部门和负责人 填充名称
+                    if (StringUtils.isNotBlank(viewDTO.getTypeId()) && StringUtils.isBlank(viewDTO.getTypeName())){
+                        viewDTO.setTypeName(dataMap.get(viewDTO.getTypeId()));
+                    }
                     //退款金额
                     BigDecimal refundAmount = refundList.stream().filter(obj -> obj.getMonth().equals(viewDTO.getMonth()) && obj.getTypeName().equals(viewDTO.getTypeName())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse(BigDecimal.ZERO);
                     viewDTO.setValue(MathUtil.subtract(viewDTO.getValue(),refundAmount));
+
                 }
             }
         }
@@ -341,6 +363,14 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(dto.getMetrics())) {
 
             resultList = groupOrderSalesRatio(dto);
+        }
+        if (CollectionUtils.isNotEmpty(resultList)){
+            Map<String, String> finalDataMap = dataMap;
+            resultList.forEach(viewDTO -> {
+                if (StringUtils.isBlank(viewDTO.getTypeName()) && StringUtils.isNotBlank(viewDTO.getTypeId())){
+                    viewDTO.setTypeName(finalDataMap.get(viewDTO.getTypeId()));
+                }
+            });
         }
         return resultList;
     }
@@ -594,7 +624,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             Integer month = StringUtils.isBlank(key.split(",")[1]) ? null :  Integer.valueOf(key.split(",")[1]);
             TargetFinishDTO.ViewDTO viewDTO = new TargetFinishDTO.ViewDTO();
             viewDTO.setTypeName(typeName);
-            viewDTO.setMonth(month);
+            viewDTO.setMonth(String.valueOf(month));
             viewDTO.setValue(obj.getValue());
             resultList.add(viewDTO);
         });

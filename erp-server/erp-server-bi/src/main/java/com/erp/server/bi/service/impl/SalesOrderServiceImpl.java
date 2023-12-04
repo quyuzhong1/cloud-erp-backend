@@ -1076,7 +1076,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
         BigDecimal chinaSales = resultList.stream().
-                filter(s -> cnShopNoList.contains(s.getName())).
+                filter(s -> s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         chinaMap.put("value", chinaSales);
@@ -1085,7 +1085,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> abroadMap = new HashMap();
         abroadMap.put("name", "国外");
         BigDecimal abroadSales = resultList.stream().
-                filter(s -> !cnShopNoList.contains(s.getName())).
+                filter(s -> !s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);

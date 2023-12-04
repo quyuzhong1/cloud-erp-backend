@@ -1,5 +1,6 @@
 package com.common.core.server.rule;
 import cn.hutool.json.JSONObject;
+import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface SpElServer {
      * @param object
      * @return
      */
-    String getConditionExpression(List<ConditionElement> conditionElementList, Object object);
+    SpElExpressionDTO getConditionExpression(List<ConditionElement> conditionElementList, Object object);
 
     /**
      * 检查表达式是否正确
@@ -46,7 +47,7 @@ public interface SpElServer {
      * @param obj
      * @return
      */
-    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj);
+    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj,List<JSONObject> jsonList);
 
 
 }

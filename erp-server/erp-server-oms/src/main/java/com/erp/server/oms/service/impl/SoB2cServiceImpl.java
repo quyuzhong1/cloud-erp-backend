@@ -2082,7 +2082,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             jsonObject.set("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
             jsonObject.set("dictPlatform", soB2cEntity.getDictPlatform());
             //是否买家留言
-            jsonObject.set("isHavebuyerRemark",StringUtils.isBlank(soB2cEntity.getBuyerRemark()));
+            jsonObject.set("isHavebuyerRemark",!StringUtils.isBlank(soB2cEntity.getBuyerRemark()));
 
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();

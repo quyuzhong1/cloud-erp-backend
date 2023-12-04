@@ -508,19 +508,19 @@
                 and o.sku_no as typeName,
             </if>
             o.date_name AS month,
-            <if test="dataType != null and dataType = 'sales'">
+            <if test="dataType != null and dataType == 'sales'">
                 round(sum(o.sales_amount_currency_rate),2) as value
             </if>
-            <if test="dataType != null and dataType = 'qty'">
+            <if test="dataType != null and dataType == 'qty'">
                 SUM ( o.sales_qty ) as value
             </if>
 
         <choose>
             <when test="params.timeType == '1'">
-                dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                dmp_order_create_report AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>

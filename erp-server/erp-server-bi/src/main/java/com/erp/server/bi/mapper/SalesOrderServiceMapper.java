@@ -132,6 +132,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<ShopSalesVO> bySite(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
+    List<SalesBaseVO> byProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
     List<SalesBaseVO> byOldProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     List<SalesBaseVO> byNewProductTop(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);

@@ -20,7 +20,7 @@ import com.sdk.wms.iml.convert.ImlConverter;
 import com.sdk.wms.iml.dto.request.ImlGetProductReq;
 import com.sdk.wms.iml.dto.response.ImlProductResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
-import com.sdk.wms.iml.enums.ImlEnums;
+import com.common.business.enums.ImlEnums;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

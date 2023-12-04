@@ -847,7 +847,7 @@ public enum ApiError implements Serializable {
     OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
     NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
-    HANDLE_ING_FINISH(99134,"处理中状态的要货单才能完成"),
+    HANDLE_ING_FINISH(99134,"单号【{}】处理中状态的要货单才能完成"),
     NOT_FOUND_OVERSEAS_PROVIDE(99135,"未查询到服务商信息"),
     OVERSEAS_PROVIDE_NOT_AUTH(99136,"海外仓服务商未授权"),
     PACKING_SKU_IS_NOT_NULL(99134,"箱规【{}】中sku不能为空"),

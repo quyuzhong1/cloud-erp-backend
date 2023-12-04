@@ -83,7 +83,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 9:21
      */
-    Boolean addAndSubmit(CustomerDTO.AddDTO dto);
+    String addAndSubmit(CustomerDTO.AddDTO dto);
 
     /**
      * 客户详情

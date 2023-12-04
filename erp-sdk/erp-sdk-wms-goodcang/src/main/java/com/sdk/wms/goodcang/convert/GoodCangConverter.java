@@ -4,7 +4,6 @@ import com.common.business.dto.*;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.utils.MD5Util;
-import com.common.core.utils.Md5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.goodcang.dto.response.*;
 import org.mapstruct.Mapper;
@@ -78,7 +77,7 @@ public interface GoodCangConverter {
             @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "receivingCode",  source = "receivingCode"),
-            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
             @Mapping(target = "hasReceivedData", constant = "true"),
             @Mapping(target = "receivingDataList",  source = "gcReceivingDataList"),
