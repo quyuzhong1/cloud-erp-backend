@@ -348,7 +348,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
-                return failure(responseMsg.getMsg());
+                return failure(getPlatForm().getName() + ":" + responseMsg.getMsg());
             } else {
                 List<ChanelInfo> chanelInfos = JSONObject.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
@@ -384,7 +384,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success("授权成功");
             }
         } catch (Exception e) {
-            return failure(e.getMessage());
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
     @Override
