@@ -66,7 +66,7 @@ public interface ImlConverter {
             @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "receivingCode",  source = "receivingCode"),
-            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.common.business.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "items",  source = "items"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
     })
