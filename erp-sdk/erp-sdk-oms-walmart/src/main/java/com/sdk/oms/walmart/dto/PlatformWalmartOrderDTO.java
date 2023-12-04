@@ -86,6 +86,8 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
 
+
+
         // 是否拦截
         orderDTO.setIsIntercept(false);
 
