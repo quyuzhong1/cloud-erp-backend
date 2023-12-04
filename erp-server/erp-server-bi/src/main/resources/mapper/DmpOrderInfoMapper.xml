@@ -437,27 +437,24 @@
     </sql>
     <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
-         <if test="null != params.settleMethod and params.settleMethod == 0">
-             COALESCE(SUM(doit.amount_after * COALESCE(doit.currency_rate, 0)), 0)
-         </if>
-         <if test="null != params.settleMethod and params.settleMethod == 2">
-             COALESCE(SUM(doit.amount_after), 0)
-         </if>
-         <if test="null != params.settleMethod and params.settleMethod == 1">
-             COALESCE(SUM(doit.amount_after * COALESCE(doit.cny_settle_rate, 0)), 0)
-         </if>
-          AS salesAmount
-        FROM dmp_order_info  AS doi
-        left join  dmp_order_item AS doit on doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <where>
-           <include refid="conditionSql"/>
-            <!--新品-->
-            <if test="flag != null ">
-                AND doit.new_sign = flag
-            </if>
-        </where>
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
+            round(SUM (o.sales_amount_currency_rate),2) AS salesAmount
+        </if>
+        <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
+            round(SUM (o.sales_amount_cny_settle_rate),2) AS salesAmount
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (o.sales_amount),2) AS salesAmount
+        </if>
+        <choose>
+            <when test="params.timeType == '1'">
+                FROM dmp_order_delivery_report AS o
+            </when>
+            <otherwise>
+                FROM dmp_order_create_report AS o
+            </otherwise>
+        </choose>
+        <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
     </select>
     <select id="countSalePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         SELECT
