@@ -2,6 +2,7 @@ package com.erp.model.plm.vo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -183,4 +184,11 @@ public class SkuVO implements Serializable {
      * 净重
      */
     private BigDecimal netWeight;
+
+    public String checkAndGetSkuImagesUrl() {
+        if (StringUtils.isBlank(this.skuImagesUrl)){
+            return "";
+        }
+        return this.skuImagesUrl;
+    }
 }
