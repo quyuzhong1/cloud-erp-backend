@@ -285,7 +285,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
-        List<RequisitionApplicationDTO.FinishListDTO> resultList = new ArrayList<>();
         //字段映射处理
         for (RequisitionApplicationDTO.FinishListDTO finishListDTO : list) {
             //产品信息
@@ -305,7 +304,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             finishListDTO.setPickingQty(finishListDTO.getPickingQty());
         }
-        return resultList;
+        return list;
     }
 
     @Override
