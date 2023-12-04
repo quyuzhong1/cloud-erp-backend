@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
@@ -68,7 +69,8 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
@@ -105,7 +107,8 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
@@ -215,7 +218,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             for (JSONObject jsonObject : jsonObjectList) {
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject, jsonObjectList);
                 if (matchResult) {
                     ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                     ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());

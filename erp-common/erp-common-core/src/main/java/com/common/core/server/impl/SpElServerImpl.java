@@ -2,6 +2,8 @@ package com.common.core.server.impl;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.core.dto.SpElAddFieldDTO;
+import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
@@ -14,6 +16,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +37,7 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public String getConditionExpression(List<ConditionElement> conditionElementList, Object obj) {
+    public SpElExpressionDTO getConditionExpression(List<ConditionElement> conditionElementList, Object obj) {
         if (Objects.isNull(obj) || obj instanceof Map) {
             return getConditionExpressionByMap(conditionElementList);
         } else {
@@ -95,14 +98,42 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj) {
-        for(String key:obj.keySet()){
-            String value= obj.get(key).toString();
-            obj.set(key,value);
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj, List<JSONObject> jsonList) {
+        for (String key : obj.keySet()) {
+            String value = obj.get(key).toString();
+            obj.set(key, value);
         }
-        String expression = getConditionExpression(conditionList, obj);
-        return matchExpression(expression, obj);
+        SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
+        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
+        for (SpElAddFieldDTO item : addFieldList) {
+            //原始字段
+            String originalField = item.getOriginalField();
+            List<String> valueList = getValueList(originalField, jsonList);
+            String addField = item.getNeedAddField();
+            obj.set(addField,valueList);
+        }
 
+
+        return matchExpression(spElDTO.getExpression(), obj);
+
+    }
+
+    /**
+     * 获取对应字段的值
+     *
+     * @param originalField
+     * @param jsonList
+     * @return
+     */
+    private List<String> getValueList(String originalField, List<JSONObject> jsonList) {
+        List<String> list = new ArrayList<>(jsonList.size());
+        for (JSONObject obj : jsonList) {
+            String value = obj.getOrDefault(originalField, "").toString();
+            if (StringUtils.isNotBlank(value)) {
+                list.add(value);
+            }
+        }
+        return list;
     }
 
 
@@ -112,7 +143,11 @@ public class SpElServerImpl implements SpElServer {
      * @param conditionElementList
      * @return
      */
-    private String getConditionExpressionByMap(List<ConditionElement> conditionElementList) {
+    private SpElExpressionDTO getConditionExpressionByMap(List<ConditionElement> conditionElementList) {
+        SpElExpressionDTO spElDTO = new SpElExpressionDTO();
+        //需要加的字段
+        List<SpElAddFieldDTO> addFieldList = new ArrayList<>(5);
+
         StringBuilder expression = new StringBuilder();
         for (ConditionElement element : conditionElementList) {
             //左括号
@@ -128,16 +163,19 @@ public class SpElServerImpl implements SpElServer {
 
             //对应的值
             String value = element.getValue();
-
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
                 String content = new StringBuilder("['").append(field).append("'] ").append(compare).append(" '").append(value).append("'").toString();
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
+                            String addField = getAddField(field, addFieldList);
+                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
                             content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
+                            String addField1 = getAddField(field, addFieldList);
+                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
                             content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
@@ -161,8 +199,18 @@ public class SpElServerImpl implements SpElServer {
                 expression.append(logic).append(" ");
             }
         }
+        spElDTO.setExpression(expression.toString());
+        spElDTO.setSpElAddFieldList(addFieldList);
+        return spElDTO;
+    }
 
-        return expression.toString();
+    private String getAddField(String field, List<SpElAddFieldDTO> addFieldList) {
+        SpElAddFieldDTO addFieldDTO = new SpElAddFieldDTO();
+        String addField = field + "List";
+        addFieldDTO.setNeedAddField(addField);
+        addFieldDTO.setOriginalField(field);
+        addFieldList.add(addFieldDTO);
+        return addField;
     }
 
 
@@ -172,8 +220,12 @@ public class SpElServerImpl implements SpElServer {
      * @param conditionElementList
      * @return
      */
-    private String getConditionExpressionByObj(List<ConditionElement> conditionElementList) {
+    private SpElExpressionDTO getConditionExpressionByObj(List<ConditionElement> conditionElementList) {
+        SpElExpressionDTO spElDTO = new SpElExpressionDTO();
         StringBuilder expression = new StringBuilder();
+        //需要加的字段
+        List<SpElAddFieldDTO> addFieldList = new ArrayList<>(5);
+
         for (ConditionElement element : conditionElementList) {
             //左括号
             String leftBracket = element.getLeftBracket();
@@ -188,16 +240,20 @@ public class SpElServerImpl implements SpElServer {
 
             //对应的值
             String value = element.getValue();
-
+            String listFlag = "List";
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
                 String content = new StringBuilder().append(field).append(" ").append(compare).append(" '").append(value).append("'").toString();
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
+                            String addField = getAddField(field, addFieldList);
+                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
                             content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
+                            String addField1 = getAddField(field, addFieldList);
+                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
                             content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
@@ -222,7 +278,9 @@ public class SpElServerImpl implements SpElServer {
             }
         }
 
-        return expression.toString();
+        spElDTO.setExpression(expression.toString());
+        spElDTO.setSpElAddFieldList(addFieldList);
+        return spElDTO;
     }
 
 

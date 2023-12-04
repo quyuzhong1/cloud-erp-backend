@@ -116,7 +116,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
 
 
-
     @Resource
     private WorkflowFeign workflowFeign;
 
@@ -382,7 +381,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
 
@@ -413,13 +412,16 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(CustomerDTO.AddDTO dto) {
+    public String addAndSubmit(CustomerDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        if (result) {
+            return id;
+        }
+        return "";
 
     }
 
@@ -941,8 +943,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
-            queryWrapper.last(permissionSql +" ORDER BY create_time DESC");
-        }else{
+            queryWrapper.last(permissionSql + " ORDER BY create_time DESC");
+        } else {
             queryWrapper.last(" ORDER BY create_time DESC");
         }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
