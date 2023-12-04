@@ -39,6 +39,7 @@
     <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingQtyDTO">
         SELECT
             fmc.main_id,
+            fmcd.carton_id,
             SUM(fmc.box_qty) AS boxQty,
             fmcd.sku_id,
             fmcd.sku_no,
@@ -54,6 +55,7 @@
             AND fmc.box_spec_no = #{boxSpecNo}
         </if>
         GROUP BY fmc.main_id,
+        fmcd.carton_id,
         fmcd.sku_id,
         fmcd.sku_no
     </select>

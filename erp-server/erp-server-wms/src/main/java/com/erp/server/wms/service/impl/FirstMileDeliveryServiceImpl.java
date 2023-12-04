@@ -432,7 +432,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     detailAddDto.setQty(detailEntity.getDeliveryQty());
                     detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
                     detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-                    detailAddDto.setInWarehouseId(warehouseEntity.getOnwayWarehouseId());
+                    detailAddDto.setInWarehouseId(warehouseEntity.getId());
                     detailAddDto.setInWarehouseLocation("");
                     detailAddDto.setSourceDetailId(detailEntity.getId());
                     detailAddDtoList.add(detailAddDto);
@@ -447,7 +447,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 detailAddDto.setQty(detailEntity.getDeliveryQty());
                 detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
                 detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-                detailAddDto.setInWarehouseId(warehouseEntity.getOnwayWarehouseId());
+                detailAddDto.setInWarehouseId(warehouseEntity.getId());
                 detailAddDto.setInWarehouseLocation("");
                 detailAddDto.setSourceDetailId(detailEntity.getId());
                 detailAddDtoList.add(detailAddDto);
@@ -1266,8 +1266,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //删除原装箱信息
         deleteCarton(dto.getId());
 
-
-
         //新增装箱信息
         for (FirstMileCartonDTO.AddDTO addDTO : dto.getFirstMileCartonList()) {
 
@@ -1304,9 +1302,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //当所有产品待装箱数量为0时，状态自动变更为已装箱
         List<FirstMileDeliveryDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(req -> req.getWaitPackQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(groupSkuDTOList)) {
-            lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, PackingStatusEnum.PACKING.getCode())
-                    .eq(FirstMileDeliveryEntity::getId, dto.getId())
-                    .update();
+            updatePackingStatus(dto.getId(), PackingStatusEnum.PACKING.getCode());
+        } else {
+            updatePackingStatus(dto.getId(), PackingStatusEnum.NOT_PACKING.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1464,13 +1462,26 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private void deleteCarton(String id) {
         List<FirstMileCartonEntity> firstMileCartonEntities = firstMileCartonService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(firstMileCartonEntities)) {
-            List<String> cartonIds = firstMileCartonEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             //删除箱子明细信息
-            firstMileCartonBillService.deleteByCartonIds(Arrays.asList(id));
+            firstMileCartonBillService.deleteByMainIds(Arrays.asList(id));
             //删除原箱包装信息
             firstMileCartonDetailService.deleteByMainIds(Arrays.asList(id));
             //删除原箱信息
             firstMileCartonService.deleteByMainIds(Arrays.asList(id));
         }
+    }
+
+    /**
+     * 修改装箱状态
+     * @Author Luo_WG
+     * @Date 2023/12/4 16:17
+     * @param id 发货单id
+     * @param packingStatus 发货状态
+     * @return void
+     **/
+    private void updatePackingStatus(String id, String packingStatus){
+        lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, PackingStatusEnum.NOT_PACKING.getCode())
+                .eq(FirstMileDeliveryEntity::getId, id)
+                .update();
     }
 }

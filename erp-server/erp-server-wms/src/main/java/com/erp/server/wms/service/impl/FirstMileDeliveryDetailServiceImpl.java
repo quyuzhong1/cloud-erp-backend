@@ -127,14 +127,12 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileCartonDTO.PackingQtyDTO> packingQtyDTOS = firstMileCartonService.listPackingQtyByMainId(mainId, null);
         for (FirstMileDeliveryDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
-            FirstMileCartonDTO.PackingQtyDTO packingQtyDTO = packingQtyDTOS.stream()
+            int usePackQty = packingQtyDTOS.stream()
                     .filter(req -> req.getMainId().equals(groupSkuDTO.getId())
                             && req.getSkuId().equals(groupSkuDTO.getSkuId()))
-                    .findFirst().orElse(new FirstMileCartonDTO.PackingQtyDTO());
-            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packingQtyDTO.getUsePackQty());
-            groupSkuDTO.setPackQty(packingQtyDTO.getPackQty());
-            groupSkuDTO.setCartonId(packingQtyDTO.getCartonId());
-
+                    .mapToInt(req -> req.getUsePackQty()).sum();
+            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - usePackQty);
+            groupSkuDTO.setPackQty(usePackQty);
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
             groupSkuDTO.setProductName(skuVO.getSkuName());
         }
