@@ -119,7 +119,7 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-rpc-oms</artifactId>
+            <artifactId>erp-rpc-dmp</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
             <exclusions>

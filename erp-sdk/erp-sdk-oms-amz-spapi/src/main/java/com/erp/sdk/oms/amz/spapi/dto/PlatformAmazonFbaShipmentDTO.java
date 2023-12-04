@@ -3,10 +3,8 @@ package com.erp.sdk.oms.amz.spapi.dto;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentInfo;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItem;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,11 +12,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 平台亚马逊FBA货件DTO
@@ -76,10 +69,10 @@ public class PlatformAmazonFbaShipmentDTO extends CleanBaseDTO {
         return mongoDTO;
     }
 
-    public PlatformAmazonFbaShipmentDTO(InboundShipmentInfo shipmentInfo, ShopInfoEntity shop) {
+    public PlatformAmazonFbaShipmentDTO(InboundShipmentInfo shipmentInfo, String shopId, String shopName) {
         this.shipmentInfo = shipmentInfo;
-        this.shopId = shop.getId();
-        this.shopName = shop.getName();
+        this.shopId = shopId;
+        this.shopName = shopName;
         this.platformUpdateTime = LocalDateTime.now(ZoneId.systemDefault());
         this.downloadStatus = 0;
         this.detailList = new InboundShipmentItemList();

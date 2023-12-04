@@ -38,35 +38,37 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class NotificationsApiTest {
 
     public NotificationsApi amazonAuthorizationGrantScope(AmazonMarketplaceEnum marketplaceEnum, boolean isSandbox) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationScopeCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        NotificationsApi reportApi = new NotificationsApi.Builder()
-                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
-                .build();
-        if (null == reportApi) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        return reportApi;
+//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationScopeCredentials();
+//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+//        NotificationsApi reportApi = new NotificationsApi.Builder()
+//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+//                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
+//                .build();
+//        if (null == reportApi) {
+//            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+//        }
+//        return reportApi;
+        return null;
     }
 
     public NotificationsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum, boolean isSandbox) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        NotificationsApi reportApi = new NotificationsApi.Builder()
-                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
-                .build();
-        if (null == reportApi) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        return reportApi;
+//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+//        NotificationsApi reportApi = new NotificationsApi.Builder()
+//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+//                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
+//                .build();
+//        if (null == reportApi) {
+//            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+//        }
+//        return reportApi;
+        return null;
     }
 
 

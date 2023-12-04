@@ -84,7 +84,7 @@ public class AmazonAuthClientUtils {
     /**
      * 刷新店铺的授权信息
      */
-    public static JSONObject refreshAuthorizeInfo(
+    public static AmazonTokenDTO refreshAuthorizeInfo(
             String url,
             String clientId,
             String clientSecret,
@@ -120,7 +120,7 @@ public class AmazonAuthClientUtils {
             String msg = StrUtil.format("亚马逊刷新授权异常：错误信息={}， 错误描述={}", error, errorDescription);
             throw new ServiceException(msg);
         }
-        return jsonObject;
+        return JSONUtil.toBean(body, AmazonTokenDTO.class);
     }
 
 
@@ -129,7 +129,7 @@ public class AmazonAuthClientUtils {
         String clientSecret = "amzn1.oa2-cs.v1.d9a5911d1548c33ed5b7fd7ede1f2932ef3041fae9f1cd973a32bf6b07b12183";
         String refresh_token = "Atzr|IwEBIIAk0ZC6REzfuMKktAqsxNSwMAKUhtU60y0BV0BDBwhK70zqmX_10F_xz9xV-G2dosTUdhK0GJvdSDGNcnHO50t_9bYqulua1PdhNDSQsNnTXd9xpWeTbYhZfzdmQSy3UgmG1S0kKpOhy2XFyC1f93Tuq-uminDGYrqvitG1bbqqB9nBfd7eiK2csTVqrxpxLlmM49xm8a7iTrC8o7F7nmf3mDSz4biyE4qQZnIDd1oEv0q_rEz0QFXxm80cs8CcvLj15CJgOG-R7C5SfbaDXDaLFigamEEVp5JS5FAy7v6E8PUNkLQstrVwlxO9XEuQ7CNsX0aRy08jRkH01eb2Pamk";
         String url = "https://api.amazon.com/auth/o2/token";
-        JSONObject jsonObject = refreshAuthorizeInfo(url, clientId, clientSecret, refresh_token);
+        AmazonTokenDTO jsonObject = refreshAuthorizeInfo(url, clientId, clientSecret, refresh_token);
         System.out.println(jsonObject);
         // {"access_token":"Atza|IwEBIKC-nZq0hqQG0lU-pKps7mdRwtxEWxXrBieXxZrfM0NI91L3cF_o5SnjjoKimsmJPNI2VQMcCkUozJq-QatnQlvOZQi6T_gC0fTanCj8hUjrDqKxW2iel2gxhMwwsY2vIEmlUv3JzMNa-zjf5YIoh0m61AC8uWan-voXO0TU0tkg7MtFxu4Ze8OU-qBKiXHGmrI4VfF7cXPFQ2_0uYgqm4NjWYGUbsyIR1rlV1CMBdiHCrn_y0Y1zZaxt9apXFLAGp2sIsQtaEdOA-zd0pageVnLzrC9X4Tgw3WYPgSgmZB6LJM2d8mGndWQoCO9v8HM-u59Rse367sM_aii2Ff689lfQLr8EM3otD6ETXQfXzwqqg","refresh_token":"Atzr|IwEBIIAk0ZC6REzfuMKktAqsxNSwMAKUhtU60y0BV0BDBwhK70zqmX_10F_xz9xV-G2dosTUdhK0GJvdSDGNcnHO50t_9bYqulua1PdhNDSQsNnTXd9xpWeTbYhZfzdmQSy3UgmG1S0kKpOhy2XFyC1f93Tuq-uminDGYrqvitG1bbqqB9nBfd7eiK2csTVqrxpxLlmM49xm8a7iTrC8o7F7nmf3mDSz4biyE4qQZnIDd1oEv0q_rEz0QFXxm80cs8CcvLj15CJgOG-R7C5SfbaDXDaLFigamEEVp5JS5FAy7v6E8PUNkLQstrVwlxO9XEuQ7CNsX0aRy08jRkH01eb2Pamk","token_type":"bearer","expires_in":3600}
         /// {"access_token":"Atza|IwEBIBNH2Q3YxtjrAqr5ccUEDNKKt_qZpbR195bYb-AowjCL8kaTYw_civc2vLx900_ErdfCEUns2F6UpFem50J6rgRjkoiWw2MeUUB-nR_rg7TCpw25PDBiRnOp0TJ8aYyRgy7qUGf3QGsbp9DvDxK8DWg_Wfwfez3dZdXaZeFVe3Gb7HXqifFPudR18EckvUT65tp3pRCqP1TktUnf2_Jm50bvflSn-1KIgor3y0qIZj0YkPZn6qOLtKQsst380ae7WNhuIZEa0TencCocnhikql_KhSGme6ma8-EHN-jgTdEfFAxJrdd-SzkcScB4iDcGmTlLB5UvJJHJ0pokP7JDSU-Y2kZnl2pr09lzxFiwIaG_Og","refresh_token":"Atzr|IwEBIIAk0ZC6REzfuMKktAqsxNSwMAKUhtU60y0BV0BDBwhK70zqmX_10F_xz9xV-G2dosTUdhK0GJvdSDGNcnHO50t_9bYqulua1PdhNDSQsNnTXd9xpWeTbYhZfzdmQSy3UgmG1S0kKpOhy2XFyC1f93Tuq-uminDGYrqvitG1bbqqB9nBfd7eiK2csTVqrxpxLlmM49xm8a7iTrC8o7F7nmf3mDSz4biyE4qQZnIDd1oEv0q_rEz0QFXxm80cs8CcvLj15CJgOG-R7C5SfbaDXDaLFigamEEVp5JS5FAy7v6E8PUNkLQstrVwlxO9XEuQ7CNsX0aRy08jRkH01eb2Pamk","token_type":"bearer","expires_in":3600}

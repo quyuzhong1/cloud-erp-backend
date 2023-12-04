@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
@@ -12,6 +13,7 @@ import java.util.HashSet;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class LWAAuthorizationCredentials {
     /**
      * LWA Client Id

@@ -12,6 +12,8 @@
 
 package com.erp.sdk.oms.amz.spapi.api;
 
+import com.common.core.utils.UUID;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.Configuration;
@@ -54,10 +56,13 @@ public class CatalogApi {
     /**
      * 初始化Api
      */
-    public static CatalogApi initApi(AmazonEndpointsEnum endpointsEnum, boolean isSandbox) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+    public static CatalogApi init(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
+
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
+
         CatalogApi catalogApi = new CatalogApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)

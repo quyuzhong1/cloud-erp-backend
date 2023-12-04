@@ -1,14 +1,13 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
+import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -25,6 +24,8 @@ import javax.validation.Valid;
 public class DmpAmazonFeignController {
     @Resource
     private ReportHandleService reportHandleService;
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     /**
      * 拉取货件
@@ -36,6 +37,18 @@ public class DmpAmazonFeignController {
     public Boolean pullShipment(@RequestBody @Valid DmpPullShipmentDTO dto){
         return reportHandleService.pullShipment(dto);
     }
+
+    /**
+     * 缓存和获取亚马逊授权相关信息
+     *
+     * @Author Jim
+     * @since 2023-12-01
+     **/
+    @PostMapping ("/amazon/shop")
+    public AmazonShopInfoDTO getShopAuth(@RequestBody String shopId){
+        return cfgAppClientService.cacheAndFindShopAuth(shopId);
+    }
+
 
 
 

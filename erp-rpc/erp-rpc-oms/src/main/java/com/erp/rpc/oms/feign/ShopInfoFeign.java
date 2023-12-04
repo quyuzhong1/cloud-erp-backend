@@ -1,6 +1,5 @@
 package com.erp.rpc.oms.feign;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -74,4 +73,13 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/getShopAuthByShopId")
     ShopAuthEntity getShopAuthByShopId(String shopId);
+
+    /**
+     * 更新店铺授权信息
+     *
+     * @param shopAuthEntity
+     * @return
+     */
+    @PostMapping("feign/shop/updateShopAuthById")
+    Boolean updateShopAuthById(@RequestBody ShopAuthEntity shopAuthEntity);
 }

@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.authorize;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -12,8 +11,8 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
@@ -22,7 +21,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpReportFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.sdk.oms.amz.spapi.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
@@ -30,8 +29,6 @@ import com.erp.server.oms.service.AuthSaveData;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +41,7 @@ import javax.annotation.Resource;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -79,7 +77,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("店铺不存在");
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfo.getDictCountryCode());
-        if (null == marketplaceEnum){
+        if (null == marketplaceEnum) {
             throw new ServiceException("该店铺国家在亚马逊市场未开放");
         }
         // 获取客户端配置
@@ -132,13 +130,13 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto) {
-        if (StringUtils.isBlank(dto.getState())){
+        if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
         }
         // 校验是否是本系统发起
         String key = StrUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, dto.getState());
         Object shopIdObj = redisUtil.get(key);
-        if (null == shopIdObj){
+        if (null == shopIdObj) {
             throw new ServiceException("信息已失效, 请重新发起授权");
         }
         String shopId = shopIdObj.toString();
@@ -150,14 +148,14 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException(ApiError.ERROR_92058);
         }
         // 校验国家唯一
-        boolean existSameCountry = shopInfoService.checkExist(shopInfo.getDictCountryCode(), shopInfo.getDictPlatform(), AuthStatusEnum.ALREADY.getCode());
-        if (existSameCountry) {
-            throw new ServiceException(ApiError.ERROR_COUNTRY_COUNT_SHOP_EXIST, shopInfo.getCountryName());
-        }
-        if (StringUtils.isBlank(dto.getSpapi_oauth_code())){
+//        boolean existSameCountry = shopInfoService.checkExist(shopInfo.getDictCountryCode(), shopInfo.getDictPlatform(), AuthStatusEnum.ALREADY.getCode());
+//        if (existSameCountry) {
+//            throw new ServiceException(ApiError.ERROR_COUNTRY_COUNT_SHOP_EXIST, shopInfo.getCountryName());
+//        }
+        if (StringUtils.isBlank(dto.getSpapi_oauth_code())) {
             throw new ServiceException("信息Spapi_oauth_code不存在");
         }
-        if (StringUtils.isBlank(dto.getSelling_partner_id())){
+        if (StringUtils.isBlank(dto.getSelling_partner_id())) {
             throw new ServiceException("信息Selling_partner_id不存在");
         }
 
@@ -179,6 +177,11 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("亚马逊应用授权配置不存在");
         }
+        // 查询亚马逊SP-API配置
+        // 查询授权信息
+        Map<SettingEnum, String> configMap = dmpTaskFeign.getCfgSettingList("amazon_sp_api_config");
+        // 添加token信息到缓存并按失效时间消失
+        AmazonShopInfoDTO redisShopInfoDTO = initShopInfoDTO(shopInfo, configMap, cfgAppClient);
 
         // 发起授权请求
         AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.getShopAuthorizeInfo(
@@ -201,15 +204,16 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         shopAuth.setAppClientId(cfgAppClient.getId());
         shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfo.setAuthTime(LocalDateTime.now());
-        if (!shopAuthService.saveOrUpdate(shopAuth)){
+        if (!shopAuthService.saveOrUpdate(shopAuth)) {
             log.error("亚马逊授权信息更新失败:shopId={}, tokenDTO={}", shopId, JSONUtil.toJsonStr(tokenDTO));
             throw new ServiceException("亚马逊授权信息更新失败");
         }
-        // 添加token信息到缓存并按失效时间消失
-        ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, tokenDTO.getAccessToken());
+
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
-        redisUtil.set(tokenKey, shopInfoDTO, tokenDTO.getExpiresIn());
+        redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
+        redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
+        redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
 
         // 授权后添加任务
         dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
@@ -259,12 +263,28 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     /**
      * 亚马逊 Entity 转换DTO
      */
-    private ShopifyShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, String accessToken) {
-        return new ShopifyShopInfoDTO()
+    private AmazonShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, Map<SettingEnum, String> config, CfgAppClientEntity cfgAppClient) {
+        // 亚马逊SP-API用户
+        String spApiUser = config.getOrDefault(SettingEnum.AMAZON_SP_API_USER, "");
+        String accessKeyId = config.getOrDefault(SettingEnum.AMAZON_SP_API_ACCESS_KEY_ID, "");
+        String secretKey = config.getOrDefault(SettingEnum.AMAZON_SP_API_SECRET_KEY, "");
+        String roleArn = config.getOrDefault(SettingEnum.AMAZON_SP_API_ROLE_ARN, "");
+
+        if (StringUtils.isBlank(spApiUser) ||
+                StringUtils.isBlank(accessKeyId) ||
+                StringUtils.isBlank(secretKey) ||
+                StringUtils.isBlank(roleArn)
+        ) {
+            throw new ServiceException("亚马逊SP-API配置缺失");
+        }
+
+        return new AmazonShopInfoDTO()
                 // 店铺ID
                 .setId(shopInfo.getId())
                 // 访问token
-                .setAccessToken(accessToken)
+                .setAccessToken("")
+                // 刷新token
+                .setRefreshToken("")
                 // 店铺名称
                 .setName(shopInfo.getName())
                 // 区域id
@@ -273,7 +293,20 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
                 .setDictCountryCode(shopInfo.getDictCountryCode())
                 // 负责人id
                 .setChargeId(shopInfo.getChargeId())
-                // 店铺全域名: 无用
-                .setShopDomain(shopInfo.getDomain());
+                // 亚马逊客户端ID
+                .setClientId(cfgAppClient.getClientId())
+                // 亚马逊客户端密钥
+                .setClientSecret(cfgAppClient.getClientSecret())
+                // 亚马逊Sp-API 访问keyID
+                .setAccessKeyId(accessKeyId)
+                // 亚马逊Sp-API 密钥
+                .setSecretKey(secretKey)
+                // 亚马逊Sp-API 角色
+                .setRoleStr(roleArn)
+                // 亚马逊Sp-API 用户
+                .setUserStr(spApiUser)
+                // 授权地址
+                .setAuthUrl(cfgAppClient.getUrl())
+                ;
     }
 }

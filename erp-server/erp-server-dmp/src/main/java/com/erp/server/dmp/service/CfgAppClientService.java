@@ -1,4 +1,5 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -41,4 +42,12 @@ public interface CfgAppClientService extends SuperService<CfgAppClientEntity> {
      * @return com.erp.model.dmp.entity.CfgAppClientEntity
      */
     CfgAppClientEntity getCfgAppClient(CfgAppClientDTO.FindDTO dto);
+
+
+    /**
+     * 获取根据信息 缓存和获取亚马逊授权相关信息
+     * @author Jim
+     * @date 2023-12-01
+     */
+    AmazonShopInfoDTO cacheAndFindShopAuth(String shopId);
 }

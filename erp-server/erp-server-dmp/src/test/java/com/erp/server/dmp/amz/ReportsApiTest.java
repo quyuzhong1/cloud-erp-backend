@@ -45,23 +45,24 @@ import java.util.stream.Stream;
 public class ReportsApiTest {
 
     public ReportsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum, boolean isSandbox) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        ReportsApi reportApi = new ReportsApi.Builder()
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
-                //北美，https://sellingpartnerapi-na.amazon.com
-                //欧洲，https://sellingpartnerapi-eu.amazon.com
-                //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
-                .build();
-        if (null == reportApi) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        return reportApi;
+//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+//        ReportsApi reportApi = new ReportsApi.Builder()
+//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+//                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+//                //北美，https://sellingpartnerapi-na.amazon.com
+//                //欧洲，https://sellingpartnerapi-eu.amazon.com
+//                //远东，https://sellingpartnerapi-fe.amazon.com
+//                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
+//                .build();
+//        if (null == reportApi) {
+//            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+//        }
+//        return reportApi;
+        return null;
     }
 
     /**

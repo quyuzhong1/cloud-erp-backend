@@ -12,11 +12,14 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleCancelStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.model.dmp.dto.OrderMongoDTO;
@@ -98,6 +101,9 @@ public class PullAmazonJob {
     @Resource
     private WmsFbaInventoryFeign wmsFbaInventoryFeign;
 
+    @Resource
+    private DmpAmazonFeign dmpAmazonFeign;
+
     /**
      * 拉取亚马逊任务
      */
@@ -111,63 +117,6 @@ public class PullAmazonJob {
         return ReturnT.SUCCESS;
     }
 
-    /**
-     * 拉取亚马逊报表任务
-     */
-//    @XxlJob("amazonReportDownload")
-    public ReturnT<String> reportExecute() {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime yesterday = now.minusDays(1);
-        // 报表处理的开始时间
-        String createdSince = yesterday.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        String jobParamStr = XxlJobHelper.getJobParam();
-        if (StrUtil.isNotBlank(jobParamStr)) {
-            JSONObject jobParam = JSON.parseObject(jobParamStr);
-            createdSince = jobParam.getString("createdSince");
-        }
-        XxlJobHelper.log("[拉取亚马逊报表任务] 任务开始：报表处理的开始时间={}", createdSince);
-        // 查询以存在的店铺
-        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.list().getData();
-        if (CollectionUtil.isEmpty(shopInfoEntityList)) {
-            XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束：店铺列表为空");
-            return ReturnT.SUCCESS;
-        }
-        List<AmazonMarketplaceEnum> marketplaceEnumList = shopInfoEntityList.stream()
-                .filter(e -> PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(e.getDictPlatform())
-                        && AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(e.getAuthStatus()))
-                .map(e -> AmazonMarketplaceEnum.getByCountryCode(e.getCountryName()))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(marketplaceEnumList)) {
-            XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束：亚马逊已授权店铺列表为空");
-            return ReturnT.SUCCESS;
-        }
-
-        String finalCreatedSince = createdSince;
-        marketplaceEnumList.forEach(marketplaceEnum -> {
-            try {
-                // 查询当前marketplace的前一天到今日的所有报表
-                List<String> reportTypes = Collections.singletonList(AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA.getRecordType());
-                List<String> processingStatuses = null;
-                List<String> marketplaceIds = null;
-                Integer pageSize = null;
-                String createdUntil = null;
-                String nextToken = null;
-                ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
-                ReportList allReports = reportsApi.getAllReports(reportTypes, processingStatuses, marketplaceIds, pageSize, finalCreatedSince, createdUntil, nextToken);
-                platformDataThread.checkAndSaveMongo(allReports, marketplaceEnum.getMarketplaceId());
-            } catch (Exception e) {
-                String errorMsg = JSONUtil.toJsonStr(e);
-                XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：marketplaceId={}, error={}",
-                        marketplaceEnum.getMarketplaceId(),
-                        errorMsg
-                );
-                throw new ServiceException("拉取亚马逊报表失败:error=" + errorMsg);
-            }
-        });
-        XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束");
-        return ReturnT.SUCCESS;
-    }
 
 
     /**

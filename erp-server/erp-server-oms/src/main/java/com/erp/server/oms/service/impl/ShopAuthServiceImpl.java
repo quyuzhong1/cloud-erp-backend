@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -300,6 +301,11 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public void getOrderAll() {
 
+    }
+
+    @Override
+    public Boolean updateShopAuthById(ShopAuthEntity shopAuthEntity) {
+        return this.updateById(shopAuthEntity);
     }
 
 
