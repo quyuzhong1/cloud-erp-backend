@@ -15,6 +15,9 @@ import com.sdk.tms.ubi.model.catalog.response.ServiceCataLog;
 import com.sdk.tms.weishi.dto.response.WeiShiChannel;
 import com.sdk.tms.yanwen.dto.response.YanWenChannel;
 import com.sdk.tms.yuntu.dto.response.YunTuChannel;
+import com.sdk.wms.goodcang.dto.response.GoodCangInventoryResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsProductsResp;
+import com.sdk.wms.iml.dto.response.ImlInventoryLogisticsProductsResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -154,4 +157,29 @@ public interface LogisticsChannelConverter {
     List<RegisterRequest> registerTrackNoByTrack123(List<LogisticsRegisterVO> logisticsRegisterVOS);
     @Mapping(target = "trackNo",source = "trackNo")
     List<LogisticsRegisterVO> convertRegisterDataByTrack123(List<LogisticsBillDetailEntity> records);
+
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "name"),
+            @Mapping(target = "enName", source = "nameEn"),
+            @Mapping(target = "supplierName", source = "spCode"),
+            @Mapping(target = "isTrack", constant = "false"),
+            @Mapping(target = "logisticsPlatform", constant = "goodcang"),
+            @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByGoodCang(GoodCangLogisticsProductsResp data);
+    List<LogisticsSaleChannelEntity> channelConvertByGoodCang(List<GoodCangLogisticsProductsResp> data);
+
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "name"),
+            @Mapping(target = "enName", source = "nameEn"),
+            @Mapping(target = "isTrack", constant = "false"),
+            @Mapping(target = "logisticsPlatform", constant = "iml"),
+            @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertByIml(ImlInventoryLogisticsProductsResp data);
+    List<LogisticsSaleChannelEntity> channelConvertByIml(List<ImlInventoryLogisticsProductsResp> data);
 }

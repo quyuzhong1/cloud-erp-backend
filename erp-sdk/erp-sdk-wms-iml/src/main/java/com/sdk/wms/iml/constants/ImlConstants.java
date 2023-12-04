@@ -21,4 +21,6 @@ public class ImlConstants {
     public static final String METHOD_CANCEL_ORDER = "cancelOrder";
 
     public static final String METHOD_GET_PRODUCT_INVENTORY = "getProductInventory";
+
+    public static final String GET_SHIPPING_METHOD = "getShippingMethod";
 }

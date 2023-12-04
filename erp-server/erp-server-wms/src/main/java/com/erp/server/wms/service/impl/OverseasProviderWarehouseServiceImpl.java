@@ -9,12 +9,9 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
-import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +23,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 海外物流商仓库 服务实现类
@@ -43,6 +43,9 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     private CommonService commonService;
     @Autowired
     private WarehouseService warehouseService;
+
+    @Resource
+    private OverseasProviderService overseasProviderService;
 
     /**
     * 修改
@@ -94,6 +97,15 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(OverseasProviderWarehouseEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    public List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform) {
+        String mainId = overseasProviderService.getByPlatformCode(platform).getId();
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity :: getMainId,mainId)
+                .in(OverseasProviderWarehouseEntity :: getPlatformWarehouseCode,warehouseCodeList)
+                .list();
     }
 
     /**

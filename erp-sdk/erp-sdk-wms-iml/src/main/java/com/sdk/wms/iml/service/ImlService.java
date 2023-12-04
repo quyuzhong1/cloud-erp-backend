@@ -6,6 +6,7 @@ import com.sdk.wms.iml.constants.ImlConstants;
 import com.sdk.wms.iml.dto.request.*;
 import com.sdk.wms.iml.dto.response.*;
 import com.sdk.wms.iml.utils.ImlUtils;
+import io.seata.common.util.StringUtils;
 import jodd.util.StringUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -69,6 +70,19 @@ public class ImlService {
         String response = ImlUtils.callService(ImlConstants.METHOD_GET_PRODUCT_INVENTORY,imlGetInventoryReq);
         return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryResp>>>() {}.getType());
     }
+
+    /**
+     * 获取物流产品
+     */
+    public ImlResponse<List<ImlInventoryLogisticsProductsResp>> getShippingMethod(String warehouseCode){
+        Map<String,Object> paramsMap = new HashMap<>();
+        if(StringUtils.isNotBlank(warehouseCode)){
+            paramsMap.put("warehouseCode",warehouseCode);
+        }
+        String response = ImlUtils.callService(ImlConstants.GET_SHIPPING_METHOD,paramsMap);
+        return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlInventoryLogisticsProductsResp>>>() {}.getType());
+    }
+
     /**
      * 创建入库单
      */

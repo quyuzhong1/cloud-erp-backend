@@ -13,4 +13,5 @@ public class GoodCangConstants {
     public static final String METHOD_GET_CREATE_OUTBOUND_BILL = "/public_open/order/create_order";
     public static final String METHOD_GET_CANCEL_OUTBOUND_BILL = "/public_open/order/cancel_order";
     public static final String METHOD_GET_PRODUCT_INVENTORY = "/public_open/inventory/get_product_inventory";
+    public static final String METHOD_GET_SHIPPING_METHOD = "/public_open/base_data/get_shipping_method";
 }

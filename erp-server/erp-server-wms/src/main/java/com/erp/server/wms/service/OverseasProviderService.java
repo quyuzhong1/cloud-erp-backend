@@ -79,4 +79,11 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
      * @Date 2023/11/28
      */
     Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> mapByWarehouseIds();
+
+    /**
+     * 根据平台名称查询
+     * @param code
+     * @return
+     */
+    OverseasProviderEntity getByPlatformCode(String code);
 }

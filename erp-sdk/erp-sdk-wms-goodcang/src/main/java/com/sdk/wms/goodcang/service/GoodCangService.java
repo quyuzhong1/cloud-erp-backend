@@ -7,6 +7,7 @@ import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
+import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -79,6 +80,18 @@ public class GoodCangService {
         String json = JSON.toJSONString(goodCangGetInventoryReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_PRODUCT_INVENTORY,json);
         return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangInventoryResp>>>() {}.getType());
+    }
+
+    /**
+     * 获取物流产品
+     */
+    public GoodCangResponse<List<GoodCangLogisticsProductsResp>> getShippingMethod(String warehouseCode){
+        Map<String,Object> paramsMap = new HashMap<>();
+        if(StringUtils.isNotBlank(warehouseCode)){
+            paramsMap.put("warehouseCode",warehouseCode);
+        }
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_SHIPPING_METHOD,paramsMap);
+        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangLogisticsProductsResp>>>() {}.getType());
     }
 
     /**

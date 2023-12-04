@@ -85,6 +85,12 @@ public class ImlServerTest {
     }
 
     @Test
+    public void getShippingMethodTest() {
+        ImlResponse<List<ImlInventoryLogisticsProductsResp>> response = imlServer.getShippingMethod("");
+        System.out.println(response);
+    }
+
+    @Test
     public void createInboundBillTest() {
         ImlCreateInboundReq imlGetReceiptReq = ImlCreateInboundReq.builder()
                 .referenceNo("wjtest20231116001")
