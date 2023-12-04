@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 省/市
@@ -32,6 +34,16 @@ public class DictCityServiceFeignController {
         return dictCityService.getById(id);
     }
 
+    /**
+     * 根据ids查询省/市
+     */
+    @PostMapping("/listByIds")
+    public List<DictCityEntity> listByIds(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
+        return dictCityService.listByIds(ids);
+    }
 
     /**
      * 获取省份城市列表
