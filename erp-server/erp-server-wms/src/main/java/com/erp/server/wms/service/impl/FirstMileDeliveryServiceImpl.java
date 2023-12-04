@@ -1461,6 +1461,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return viewDTO;
     }
 
+    @Override
+    public FirstMileDeliveryEntity findBySourceId(String sourceId) {
+        return lambdaQuery()
+                .eq(FirstMileDeliveryEntity::getSourceId, sourceId)
+                .orderByDesc(FirstMileDeliveryEntity::getCreateTime)
+                .last("LIMIT 1")
+                .one();
+    }
+
     /**
      * 删除原装箱信息
      * @param id

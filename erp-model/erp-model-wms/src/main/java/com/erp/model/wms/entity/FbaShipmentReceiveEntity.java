@@ -51,6 +51,11 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     @TableField("sku_no")
     private String skuNo;
     /**
+     * ERP的SKU ID
+     */
+    @TableField("sku_id")
+    private String skuId;
+    /**
     * 申报数量
     */
     @TableField("declare_qty")

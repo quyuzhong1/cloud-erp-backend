@@ -8,18 +8,31 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.OverseasInstockStatusEnum;
+import com.common.business.enums.RequestIdTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
@@ -28,28 +41,20 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -98,7 +103,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         // 数据处理
-        handleData(mainEntity, addDTO);
+        handleData(mainEntity, addDTO, deliveryEntity);
 
         log.info("开始新增海外仓入库单");
         boolean save = super.save(mainEntity);
@@ -176,14 +181,31 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 新增修改处理数据
      */
-    private void handleData(OverseasWarehouseInboundEntity mainEntity, OverseasWarehouseInboundDTO.AddDTO addDTO) {
-        BeanUtils.copyProperties(addDTO, mainEntity);
+    private void handleData(OverseasWarehouseInboundEntity mainEntity,
+                            OverseasWarehouseInboundDTO.CommonDTO commonDTO,
+                            FirstMileDeliveryEntity deliveryEntity
+    ) {
+        // 校验参数
+        // 入库类型=自发头程
+        if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())){
+            if (null == commonDTO.getLogisticsMethod()){
+                throw new ServiceException("设置入库类型=自发头程, 运输方式不能为空");
+            }
+        }
+        // TODO 校验
+
+        BeanUtils.copyProperties(commonDTO, mainEntity);
         // 验证数据 & 数据赋值
-        mainEntity.setInstockType(addDTO.getInstockType().getCode());
-        mainEntity.setLogisticsMethod(addDTO.getLogisticsMethod().getCode());
-        mainEntity.setEstimatedArrivalDate(LocalDateTime.of(addDTO.getEstimatedArrivalDate(), LocalTime.MIN));
+        mainEntity.setInstockType(commonDTO.getInstockType().getCode());
+        mainEntity.setLogisticsMethod(commonDTO.getLogisticsMethod().getCode());
+        mainEntity.setEstimatedArrivalDate(LocalDateTime.of(commonDTO.getEstimatedArrivalDate(), LocalTime.MIN));
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         mainEntity.setOverseasWarehouseInboundId("");
+        if (null != deliveryEntity){
+            mainEntity.setSourceId(deliveryEntity.getId());
+            mainEntity.setSourceCode(deliveryEntity.getSourceCode());
+            mainEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        }
     }
 
 
@@ -237,7 +259,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<String> skuIds = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         Map<String, String> imageUrlMap = plmTaskFeign.getSkuInfoByIds(skuIds)
                 .stream()
-                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuImagesUrl));
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::checkAndGetSkuImagesUrl));
 
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailDTOList = detailEntityList.stream()
                 .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")))
@@ -338,7 +360,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public BatchResultDTO delete(String id) {
         OverseasWarehouseInboundEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
         // 只有取消的单据允许删除
-        if (Objects.equals(entity.getInstockStatus(), OverseasInstockStatusEnum.CANCELED.getCode())) {
+        if (!OverseasInstockStatusEnum.CANCELED.getCode().equalsIgnoreCase(entity.getInstockStatus())) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_DELETE);
         }
         // 更新状态

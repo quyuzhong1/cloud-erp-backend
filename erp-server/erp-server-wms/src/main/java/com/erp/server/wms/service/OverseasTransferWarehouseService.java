@@ -45,4 +45,10 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
      */
     List<BaseSelectDTO> baseSelectlist();
 
+    /**
+     * 中转仓列对应物流名称
+     * @author Jim
+     * @date: 2023-11-16
+     */
+    List<BaseSelectDTO> LogisticsProductList(String code);
 }
