@@ -67,7 +67,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
-            return failure(e.getMessage());
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
 
     }
@@ -102,7 +102,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YUN_TU.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,e.getMessage());
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
 
     }
@@ -304,7 +304,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 return success("授权成功");
             }
         } catch (Exception e) {
-            return failure(e.getMessage());
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
     private Boolean isFailure(String code){
