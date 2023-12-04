@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import okhttp3.Request;
+import org.springframework.util.CollectionUtils;
 
 /**
  * LWA Authorization Signer
@@ -19,7 +20,7 @@ public class LWAAuthorizationSigner {
 
     private void buildLWAAccessTokenRequestMeta(LWAAuthorizationCredentials lwaAuthorizationCredentials) {
         String tokenRequestGrantType;
-        if (!lwaAuthorizationCredentials.getScopes().isEmpty()) {
+        if (null != lwaAuthorizationCredentials.getScopes() && !CollectionUtils.isEmpty(lwaAuthorizationCredentials.getScopes().getScopes())) {
             tokenRequestGrantType = "client_credentials";
         } else {
             tokenRequestGrantType = "refresh_token";
