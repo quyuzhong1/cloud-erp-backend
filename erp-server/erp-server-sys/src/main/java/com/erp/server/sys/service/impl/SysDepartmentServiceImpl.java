@@ -254,6 +254,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentDTO> getDeptList() {
 
         return baseMapper.getDeptList();

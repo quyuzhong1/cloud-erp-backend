@@ -73,7 +73,7 @@ public class TargetFinishDTO implements Serializable {
         /**
          * 月份
          */
-        private Integer month;
+        private String month;
 
         /**
          * 对应值
