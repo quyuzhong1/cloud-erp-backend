@@ -366,7 +366,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //校验目的仓是否为FBA第三方仓
         List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getType())).findFirst().orElse(null);
+        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 
