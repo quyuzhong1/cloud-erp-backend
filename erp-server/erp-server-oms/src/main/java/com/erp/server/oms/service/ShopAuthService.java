@@ -2,7 +2,6 @@ package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ShopAuthDTO;
-import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 
@@ -83,4 +82,11 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
     void getProductAll();
 
     void getOrderAll();
+
+
+    /**
+     * 更改授权信息
+     *
+     */
+    Boolean updateShopAuthById(ShopAuthEntity shopAuthEntity);
 }

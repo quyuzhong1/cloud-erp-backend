@@ -7,23 +7,23 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
-import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractFbaShipmentHandler;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
-import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentItemsResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,23 +46,24 @@ import java.util.stream.Collectors;
 public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<PlatformAmazonFbaShipmentDTO, PlatformFbaShipmentDTO> {
 
     @Resource
-    private ShopInfoFeign shopInfoFeign;
+    private DmpAmazonFeign dmpAmazonFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<PlatformAmazonFbaShipmentDTO> download(JobTaskDTO data) {
         // 获取店铺信息
         String shopId = data.getShopId();
-        ShopInfoEntity shop = shopInfoFeign.getShopInfoById(shopId);
-        if (null == shop) {
-            throw new ServiceException("未找到店铺信息:shopId=" + shopId);
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
         }
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         try {
-            FbaInboundApi api = FbaInboundApi.initApi(marketplaceEnum);
+            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.DATE_RANGE.getCode();
-            String marketplaceId = marketplaceEnum.getMarketplaceId();
+            String marketplaceId = marketPlaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
             List<String> shipmentIdList = null;
             String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
@@ -72,7 +73,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
             InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
             // 返回下载源数据
             return responseList.stream()
-                    .map(e -> new PlatformAmazonFbaShipmentDTO(e, shop))
+                    .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopInfoDTO.getId(), shopInfoDTO.getName()))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
@@ -120,15 +121,15 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
     @Override
     public PlatformAmazonFbaShipmentDTO downloadDetail(PlatformAmazonFbaShipmentDTO dto, JSONObject extendObj) {
         String shopId = dto.getShopId();
-        // 获取店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
-        if (null == shopInfoEntity) {
-            throw new ServiceException("未找到店铺详情:" + shopId);
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + dto.getShopId());
         }
-        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             // 查询FBA货件item
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum);
+            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(dto.getShipmentInfo().getShipmentId(), marketPlaceEnum.getMarketplaceId());
             InboundShipmentItemList itemData = response.getPayload().getItemData();
             dto.setDetailList(itemData);

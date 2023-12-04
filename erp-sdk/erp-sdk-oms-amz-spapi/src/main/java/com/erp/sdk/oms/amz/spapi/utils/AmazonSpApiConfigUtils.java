@@ -114,22 +114,7 @@ public class AmazonSpApiConfigUtils {
 //        this.spEndPoint = marketplaceEnum.getEndpointsEnum().getEndpointsByProfile();
 //    }
 
-    /**
-     * 构建AWSAuthenticationCredentials
-     */
-    public static AWSAuthenticationCredentials buildAWSAuthenticationCredentials(AmazonEndpointsEnum endpointsEnum) {
-        //region分北美，欧洲，远东三个AWS区域
-        return AWSAuthenticationCredentials.builder()
-                //注册成为开发者时生成的AWS访问密钥ID
-//                .accessKeyId(AmazonSpApiConfigUtils.accessKeyId)
-                .accessKeyId("AKIARVXX3YJGDV2NGA4L")
-                //注册成为开发者时生成的AWS访问密钥
-//                .secretKey(AmazonSpApiConfigUtils.secretKey)
-                .secretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B")
-                //注意，这里的region分北美(us-east-1)，欧洲(eu-west-1)，远东(us-west-2)
-                .region(endpointsEnum.getRegion())
-                .build();
-    }
+
 
     /**
      * 构建免授权
@@ -159,35 +144,35 @@ public class AmazonSpApiConfigUtils {
     /**
      * 构建AWSAuthenticationCredentialsProvider
      */
-    public static AWSAuthenticationCredentialsProvider buildAWSAuthenticationCredentialsProvider() {
-        return AWSAuthenticationCredentialsProvider.builder()
-                //创建IAM职权的时候会生成这个ARN
-//                .roleArn(AmazonSpApiConfigUtils.roleArn)
-                .roleArn("arn:aws:iam::115410190924:role/DehouRole")
-                //唯一值，可以使用UUID
-                .roleSessionName(UUID.randomUUID().toString())
-                .build();
-    }
+//    public static AWSAuthenticationCredentialsProvider buildAWSAuthenticationCredentialsProvider() {
+//        return AWSAuthenticationCredentialsProvider.builder()
+//                //创建IAM职权的时候会生成这个ARN
+////                .roleArn(AmazonSpApiConfigUtils.roleArn)
+//                .roleArn("arn:aws:iam::115410190924:role/DehouRole")
+//                //唯一值，可以使用UUID
+//                .roleSessionName(UUID.randomUUID().toString())
+//                .build();
+//    }
 
     /**
      * 构建LWAAuthorizationCredentials
      */
-    public static LWAAuthorizationCredentials buildLWAAuthorizationCredentials() {
-        return LWAAuthorizationCredentials.builder()
-                //查看开发者信息的时候可看到LWA的客户端编码
-//                .clientId(AmazonSpApiConfigUtils.clientId)
-                .clientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287")
-                //查看开发者信息的时候可看到LWA的客户端秘钥
-//                .clientSecret(AmazonSpApiConfigUtils.clientSecret)
-                .clientSecret("amzn1.oa2-cs.v1.d9a5911d1548c33ed5b7fd7ede1f2932ef3041fae9f1cd973a32bf6b07b12183")
-                //根据上面的客户端编码和客户端秘钥请求客户端令牌
-//                .refreshToken(AmazonSpApiConfigUtils.refreshToken)
-                .refreshToken("Atzr|IwEBIIAk0ZC6REzfuMKktAqsxNSwMAKUhtU60y0BV0BDBwhK70zqmX_10F_xz9xV-G2dosTUdhK0GJvdSDGNcnHO50t_9bYqulua1PdhNDSQsNnTXd9xpWeTbYhZfzdmQSy3UgmG1S0kKpOhy2XFyC1f93Tuq-uminDGYrqvitG1bbqqB9nBfd7eiK2csTVqrxpxLlmM49xm8a7iTrC8o7F7nmf3mDSz4biyE4qQZnIDd1oEv0q_rEz0QFXxm80cs8CcvLj15CJgOG-R7C5SfbaDXDaLFigamEEVp5JS5FAy7v6E8PUNkLQstrVwlxO9XEuQ7CNsX0aRy08jRkH01eb2Pamk")
-                //"https://api.amazon.com/auth/o2/token"
-//                .endpoint(AmazonSpApiConfigUtils.lwaEndpoint)
-                .endpoint("https://api.amazon.com/auth/o2/token")
-                .build();
-    }
+//    public static LWAAuthorizationCredentials buildLWAAuthorizationCredentials() {
+//        return LWAAuthorizationCredentials.builder()
+//                //查看开发者信息的时候可看到LWA的客户端编码
+////                .clientId(AmazonSpApiConfigUtils.clientId)
+//                .clientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287")
+//                //查看开发者信息的时候可看到LWA的客户端秘钥
+////                .clientSecret(AmazonSpApiConfigUtils.clientSecret)
+//                .clientSecret("amzn1.oa2-cs.v1.d9a5911d1548c33ed5b7fd7ede1f2932ef3041fae9f1cd973a32bf6b07b12183")
+//                //根据上面的客户端编码和客户端秘钥请求客户端令牌
+////                .refreshToken(AmazonSpApiConfigUtils.refreshToken)
+//                .refreshToken("Atzr|IwEBIIAk0ZC6REzfuMKktAqsxNSwMAKUhtU60y0BV0BDBwhK70zqmX_10F_xz9xV-G2dosTUdhK0GJvdSDGNcnHO50t_9bYqulua1PdhNDSQsNnTXd9xpWeTbYhZfzdmQSy3UgmG1S0kKpOhy2XFyC1f93Tuq-uminDGYrqvitG1bbqqB9nBfd7eiK2csTVqrxpxLlmM49xm8a7iTrC8o7F7nmf3mDSz4biyE4qQZnIDd1oEv0q_rEz0QFXxm80cs8CcvLj15CJgOG-R7C5SfbaDXDaLFigamEEVp5JS5FAy7v6E8PUNkLQstrVwlxO9XEuQ7CNsX0aRy08jRkH01eb2Pamk")
+//                //"https://api.amazon.com/auth/o2/token"
+////                .endpoint(AmazonSpApiConfigUtils.lwaEndpoint)
+//                .endpoint("https://api.amazon.com/auth/o2/token")
+//                .build();
+//    }
 
     /**
      * 从sqsEndpoint解析出地区,如: us-west-1

@@ -1,7 +1,5 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -13,8 +11,8 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.convert.SdkListingConverter;
@@ -22,9 +20,7 @@ import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
-import com.netflix.client.IResponse;
-import org.apache.commons.lang.StringUtils;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -32,7 +28,6 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +43,7 @@ import java.util.stream.Collectors;
 public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonListingDTO, PlatformProductDTO> {
 
     @Resource
-    private ShopInfoFeign shopInfoFeign;
+    private DmpAmazonFeign dmpAmazonFeign;
 
 
     @Override
@@ -95,12 +90,12 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         if (null == shopId) {
             throw new ServiceException("未找到对应shopId， uniqueId=" + dto.getUniqueId() + "shopId="+ shopId);
         }
-        // 获取店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
-        if (null == shopInfoEntity) {
-            throw new ServiceException("未找到店铺详情:" + shopId);
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
         }
-        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         // 产品规格信息
         String productSpec;
@@ -110,7 +105,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         String imageUrl;
         try {
              //查询商品详情
-            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum.getEndpointsEnum(), false);
+            CatalogApi catalogApi =  CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             String asin = dto.getAsin1();
             List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
             List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();

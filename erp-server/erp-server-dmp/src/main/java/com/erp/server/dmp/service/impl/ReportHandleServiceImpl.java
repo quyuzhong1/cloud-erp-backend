@@ -17,6 +17,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
@@ -26,6 +27,7 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -89,6 +91,8 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     private BusinessServiceImpl businessService;
     @Resource
     private ReportScheduleService reportScheduleService;
+    @Resource
+    private DmpAmazonFeign dmpAmazonFeign;
 
 
     @Override
@@ -96,14 +100,16 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         // 获取店铺信息
-        ShopInfoEntity shop = shopInfoFeign.getShopInfoById(dto.getShopId());
-        if (null == shop) {
-            throw new ServiceException("未找到店铺信息:shopId=" + dto.getShopId());
+        String shopId = dto.getShopId();
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
         }
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         try {
-            FbaInboundApi api = FbaInboundApi.initApi(marketplaceEnum);
+            FbaInboundApi api = FbaInboundApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
             String marketplaceId = marketplaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
@@ -117,7 +123,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             }
             // 返回下载源数据
             List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()
-                    .map(e -> new PlatformAmazonFbaShipmentDTO(e, shop))
+                    .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopId, shopInfoDTO.getName()))
                     .collect(Collectors.toList());
 
             // 查询FBA货件item
@@ -176,6 +182,14 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 .orElseThrow(() -> new ServiceException("未找到市场信息"));
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId);
 
+        // 获取店铺信息
+        String shopId = reportSchedule.getShopId();
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+
         // 请求参数
         CreateReportScheduleSpecification body = new CreateReportScheduleSpecification();
         body.setReportType(reportSchedule.getReportType());
@@ -185,7 +199,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         body.setNextReportCreationTime(formatTime);
         body.setPeriod(periodEnum);
         // 请求
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO , true);
         // TODO 兼容已创建
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
@@ -213,6 +227,14 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             String msg = StrUtil.format("未找到Marketplace枚举类型,reportScheduleId={}, marketplaceId={}", reportSchedule.getId(), reportSchedule.getMarketplaceIds());
             throw new ServiceException(msg);
         }
+        // 获取店铺信息
+        String shopId = reportSchedule.getShopId();
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+
         CreateReportScheduleSpecification.PeriodEnum periodEnum = CreateReportScheduleSpecification.PeriodEnum.getByCode(reportSchedule.getPeriod());
         // 支持切换时间间隔
         // 修改下次创建时间
@@ -226,7 +248,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         }
 
         // 请求亚马逊接口
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum());
+        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(reportSchedule.getReportType());
         body.setMarketplaceIds(Stream.of(marketplaceSplit).collect(Collectors.toList()));
@@ -290,8 +312,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             log.info("未支持亚马逊报告通知忽略：{}", JSONUtil.toJsonStr(textMessageObj));
             return;
         }
+
         // 根据不同地区区分
-        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
+//        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
+        ReportsApi reportsApi = null;
         // 查询当前报告是否是属于系统计划报告
         Report report = reportsApi.getReport(sqsEntity.getPayload().getReportProcessingFinishedNotification().getReportId());
         if (!"DONE".equalsIgnoreCase(report.getProcessingStatus().getValue())){

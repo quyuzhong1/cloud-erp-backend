@@ -13,15 +13,11 @@
 
 package com.erp.sdk.oms.amz.spapi.model.orders;
 
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.apache.commons.lang.StringUtils;
-
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -1445,33 +1441,35 @@ public class Order {
     }
 
     public String convertBillStatus() {
+        // SoB2cBillStatusEnum
         if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus) || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)) {
             // 待发货
-            return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+            return "waitShipped";
         }
         // 已发货
         if (OrderStatusEnum.SHIPPED.equals(this.orderStatus)) {
-            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+            return "shipped";
         }
+
         // 待发货
-        return SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode();
+        return "waitDistribution";
     }
 
     public String convertPayStatus() {
         if (null == this.orderStatus) {
             //待付款
-            return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
+            return "payment";
         }
         if (OrderStatusEnum.PENDING.equals(this.orderStatus)) {
             //待付款
-            return SoB2cPayStatusEnum.ENUM_PAYMENT.getCode();
+            return "payment";
         }
         // 已付款
         if (OrderStatusEnum.UNSHIPPED.equals(this.orderStatus)
                 || OrderStatusEnum.PARTIALLYSHIPPED.equals(this.orderStatus)
                 || OrderStatusEnum.SHIPPED.equals(this.orderStatus)
         ) {
-            return SoB2cPayStatusEnum.ENUM_PAID.getCode();
+            return "paid";
         }
         // 未知
         return "unknow";

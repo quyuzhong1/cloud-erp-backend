@@ -33,22 +33,23 @@ public class ListenerContainerFactory {
 
     @Bean
     public SQSConnectionFactory connectionFactory() {
-        String region = parseRegionBySqsEndpoint();
-        // 创建AWSCredentialsProvider
-        AmazonEndpointsEnum endpointsEnum = AmazonEndpointsEnum.getByRegion(region);
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        BasicAWSCredentials awsBasicCredentials = new BasicAWSCredentials(awsAuthenticationCredentials.getAccessKeyId(), awsAuthenticationCredentials.getSecretKey());
-        return SQSConnectionFactory.builder()
-                .withRegion(Region.getRegion(Regions.US_EAST_1))
-                .withAWSCredentialsProvider(new STSAssumeRoleSessionCredentialsProvider.Builder(
-                        awsAuthenticationCredentialsProvider.getRoleArn(),
-                        awsAuthenticationCredentialsProvider.getRoleSessionName())
-                        .withStsClient(AWSSecurityTokenServiceClientBuilder.standard()
-                                .withRegion(awsAuthenticationCredentials.getRegion())
-                                .withCredentials(new AWSStaticCredentialsProvider(awsBasicCredentials)).build())
-                        .build())
-                .build();
+//        String region = parseRegionBySqsEndpoint();
+//        // 创建AWSCredentialsProvider
+//        AmazonEndpointsEnum endpointsEnum = AmazonEndpointsEnum.getByRegion(region);
+//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(endpointsEnum);
+//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+//        BasicAWSCredentials awsBasicCredentials = new BasicAWSCredentials(awsAuthenticationCredentials.getAccessKeyId(), awsAuthenticationCredentials.getSecretKey());
+//        return SQSConnectionFactory.builder()
+//                .withRegion(Region.getRegion(Regions.US_EAST_1))
+//                .withAWSCredentialsProvider(new STSAssumeRoleSessionCredentialsProvider.Builder(
+//                        awsAuthenticationCredentialsProvider.getRoleArn(),
+//                        awsAuthenticationCredentialsProvider.getRoleSessionName())
+//                        .withStsClient(AWSSecurityTokenServiceClientBuilder.standard()
+//                                .withRegion(awsAuthenticationCredentials.getRegion())
+//                                .withCredentials(new AWSStaticCredentialsProvider(awsBasicCredentials)).build())
+//                        .build())
+//                .build();
+        return null;
     }
 
 

@@ -266,7 +266,7 @@ public class JmsConsumerTest {
         List<ReportListingCsvEntity> cvsList = JSONUtil.toList(json, ReportListingCsvEntity.class);
 
         // 根据不同地区区分
-        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1);
+        ReportsApi reportsApi = ReportsApi.initApi(AmazonEndpointsEnum.US_EAST_1, null, true);
         // 查询当前报告是否是属于系统计划报告
 //        Report report = reportsApi.getReport("730602019674");
         String reportJson = "{\"marketplaceIds\":[\"ATVPDKIKX0DER\"],\"reportId\":\"730602019674\",\"reportType\":\"GET_MERCHANT_LISTINGS_DATA\",\"dataStartTime\":1699835310000,\"dataEndTime\":1699836210000,\"reportScheduleId\":\"50007019671\",\"createdTime\":1699836258000,\"processingStatus\":\"DONE\",\"processingStartTime\":1699836265000,\"processingEndTime\":1699836276000,\"reportDocumentId\":\"amzn1.spdoc.1.4.na.0c047a82-212d-4d0f-bd6d-eb2ca70c4793.TQLWD3FS907B4.300\"}";

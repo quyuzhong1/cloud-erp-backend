@@ -2,7 +2,6 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,7 +11,6 @@ import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,9 +41,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
      */
     private OrderItemList details;
 
-    public PlatformAmazonOrderDTO(Order order, ShopInfoEntity shopInfoEntity) {
+    public PlatformAmazonOrderDTO(Order order, String shopId) {
         this.order = order;
-        this.shopId = shopInfoEntity.getId();
+        this.shopId = shopId;
         this.setUniqueId(order.getAmazonOrderId());
         this.setPlatform(PlatformDictEnum.AMAZON.getCode());
         this.setDownloadStatus(0);

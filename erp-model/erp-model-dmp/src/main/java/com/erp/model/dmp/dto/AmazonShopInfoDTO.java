@@ -1,4 +1,4 @@
-package com.erp.sdk.oms.amz.spapi.dto;
+package com.erp.model.dmp.dto;
 
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -80,4 +80,11 @@ public class AmazonShopInfoDTO {
      * 亚马逊Sp-API 用户
      */
     private String userStr;
+
+    /**
+     * 授权地址
+     * <a href="https://api.amazon.com/auth/o2/token"></a>
+     */
+    private String authUrl;
+
 }

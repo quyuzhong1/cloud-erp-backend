@@ -101,4 +101,16 @@ public class ShopInfoFeignController extends BaseController {
     public ShopAuthEntity getShopAuth(@RequestBody String shopId) {
         return shopAuthService.getByShopId(shopId);
     }
+
+    /**
+     * 更新店铺信息
+     *
+     * @param shopAuthEntity
+     * @return
+     */
+    @PostMapping("/updateShopAuthById")
+    public Boolean updateShopAuthById(@RequestBody ShopAuthEntity shopAuthEntity){
+        return shopAuthService.updateShopAuthById(shopAuthEntity);
+    }
+
 }

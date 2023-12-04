@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
@@ -9,6 +10,7 @@ import lombok.NonNull;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class AWSAuthenticationCredentials {
     /**
      * AWS IAM User Access Key Id

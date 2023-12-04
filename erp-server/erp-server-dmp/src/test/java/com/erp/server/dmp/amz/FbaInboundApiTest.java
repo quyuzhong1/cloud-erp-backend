@@ -52,7 +52,7 @@ public class FbaInboundApiTest {
         String shipmentId = null;
         LocalDate needByDate = null;
         String marketplaceId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         ConfirmPreorderResponse response = api.confirmPreorder(shipmentId, needByDate, marketplaceId);
 
         // TODO: test validations
@@ -66,7 +66,7 @@ public class FbaInboundApiTest {
     @Test
     public void confirmTransportTest() throws ApiException {
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         ConfirmTransportResponse response = api.confirmTransport(shipmentId);
 
         // TODO: test validations
@@ -81,7 +81,7 @@ public class FbaInboundApiTest {
     public void createInboundShipmentTest() throws ApiException {
         InboundShipmentRequest body = null;
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         InboundShipmentResponse response = api.createInboundShipment(body, shipmentId);
 
         // TODO: test validations
@@ -95,7 +95,7 @@ public class FbaInboundApiTest {
     @Test
     public void createInboundShipmentPlanTest() throws ApiException {
         CreateInboundShipmentPlanRequest body = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         CreateInboundShipmentPlanResponse response = api.createInboundShipmentPlan(body);
 
         // TODO: test validations
@@ -109,7 +109,7 @@ public class FbaInboundApiTest {
     @Test
     public void estimateTransportTest() throws ApiException {
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         EstimateTransportResponse response = api.estimateTransport(shipmentId);
 
         // TODO: test validations
@@ -123,7 +123,7 @@ public class FbaInboundApiTest {
     @Test
     public void getBillOfLadingTest() throws ApiException {
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetBillOfLadingResponse response = api.getBillOfLading(shipmentId);
 
         // TODO: test validations
@@ -139,7 +139,7 @@ public class FbaInboundApiTest {
         String marketplaceId = null;
         List<String> sellerSKUList = null;
         List<String> asINList = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetInboundGuidanceResponse response = api.getInboundGuidance(marketplaceId, sellerSKUList, asINList);
 
         // TODO: test validations
@@ -158,7 +158,7 @@ public class FbaInboundApiTest {
         Integer numberOfPackages = null;
         List<String> packageLabelsToPrint = null;
         Integer numberOfPallets = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetLabelsResponse response = api.getLabels(shipmentId, pageType, labelType, numberOfPackages, packageLabelsToPrint, numberOfPallets);
 
         // TODO: test validations
@@ -173,7 +173,7 @@ public class FbaInboundApiTest {
     public void getPreorderInfoTest() throws ApiException {
         String shipmentId = "FBA17DZ9039Z";
         String marketplaceId = AmazonMarketplaceEnum.US.getMarketplaceId();
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetPreorderInfoResponse response = api.getPreorderInfo(shipmentId, marketplaceId);
         System.out.println("预购订单日期");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -190,7 +190,7 @@ public class FbaInboundApiTest {
         String shipToCountryCode = null;
         List<String> sellerSKUList = null;
         List<String> asINList = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetPrepInstructionsResponse response = api.getPrepInstructions(shipToCountryCode, sellerSKUList, asINList);
 
         // TODO: test validations
@@ -214,7 +214,7 @@ public class FbaInboundApiTest {
         String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
         String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(now).toString();
         String nextToken = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetShipmentItemsResponse response = api.getShipmentItems(queryType, marketplaceId, lastUpdatedAfter, lastUpdatedBefore, nextToken);
         System.out.println("货件详情:");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -232,7 +232,7 @@ public class FbaInboundApiTest {
         }
         String shipmentId = "FBA17DZ9039Z";
         String marketplaceId = AmazonMarketplaceEnum.US.getMarketplaceId();
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentId, marketplaceId);
         System.out.println("通过shipmentId查询货件详情");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -246,7 +246,7 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getShipmentsTest() throws ApiException {
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         String queryType = "SHIPMENT";
 //        String queryType = "DATE_RANGE";
 //        String queryType = AmazonFbaQueryTypeEnum.NEXT_TOKEN.getCode();
@@ -275,7 +275,7 @@ public class FbaInboundApiTest {
      */
     @Test
     public void getAllShipmentsTest() throws ApiException {
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         String queryType = "DATE_RANGE";
         String marketplaceId = "ATVPDKIKX0DER";
         List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
@@ -300,7 +300,7 @@ public class FbaInboundApiTest {
     @Test
     public void getTransportDetailsTest() throws ApiException {
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         GetTransportDetailsResponse response = api.getTransportDetails(shipmentId);
 
         // TODO: test validations
@@ -315,7 +315,7 @@ public class FbaInboundApiTest {
     public void putTransportDetailsTest() throws ApiException {
         String shipmentId = null;
         PutTransportDetailsRequest body = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         PutTransportDetailsResponse response = api.putTransportDetails(shipmentId, body);
 
         // TODO: test validations
@@ -330,7 +330,7 @@ public class FbaInboundApiTest {
     public void updateInboundShipmentTest() throws ApiException {
         InboundShipmentRequest body = null;
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         InboundShipmentResponse response = api.updateInboundShipment(body, shipmentId);
 
         // TODO: test validations
@@ -344,7 +344,7 @@ public class FbaInboundApiTest {
     @Test
     public void voidTransportTest() throws ApiException {
         String shipmentId = null;
-        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US);
+        FbaInboundApi api = FbaInboundApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null ,true);
         VoidTransportResponse response = api.voidTransport(shipmentId);
 
         // TODO: test validations

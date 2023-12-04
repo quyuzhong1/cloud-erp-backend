@@ -6,11 +6,10 @@ import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.SettingEnum;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -215,4 +214,11 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/getPullTaskById")
     DmpPullTaskEntity getPullTaskById(@RequestBody String id);
+
+
+    /**
+     * 根据type查询所有配置
+     */
+    @PostMapping("feign/dmp/cfgSetting/list")
+    Map<SettingEnum, String> getCfgSettingList(@RequestBody String type);
 }
