@@ -238,42 +238,48 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         List<String> mainIdList = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
         //数据库存在的
         List<CustomerSellerEntity> dbSellerList = this.listByMainIdList(mainIdList);
-        List<CustomerSellerEntity> batchAddList = new ArrayList<>(10);
-        //更改的
-        List<CustomerSellerEntity> batchUpdateList = new ArrayList<>(10);
-
+        List<CustomerSellerEntity> batchSaveOrUpdateList = new ArrayList<>(10);
+        LocalDate nowDate = LocalDate.now();
         //添加的
         for (CustomerInfoEntity item : list) {
+            //当前的销售员id
+            String currentSellerId = item.getSellerId();
             String mainId = item.getId();
             SysDepartmentUserNumberDTO deptUser = deptUserList.stream().filter(d -> d.getUserId().equals(item.getSellerId())).
                     findFirst().orElse(null);
-            CustomerSellerEntity addSeller = new CustomerSellerEntity();
-            if (deptUser != null) {
-                addSeller.setSellerName(deptUser.getUserName());
-                addSeller.setDeptId(deptUser.getDepartmentId());
-            }
-            addSeller.setSellerId(item.getSellerId());
-            addSeller.setMainId(mainId);
-            addSeller.setStartDate(LocalDate.now());
-            batchAddList.add(addSeller);
-            //存在的销售员 就要修改
+            Boolean isAdd = Boolean.TRUE;
+            //存在的销售员
             List<CustomerSellerEntity> existSellerList = dbSellerList.stream().filter(s -> s.getMainId().equals(mainId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(existSellerList)) {
                 existSellerList.sort(Comparator.comparing(CustomerSellerEntity::getId).reversed());
-                batchUpdateList.add(existSellerList.get(0));
+                CustomerSellerEntity lastSeller = existSellerList.get(0);
+                //历史最后一个
+                String lastSellerId = lastSeller.getSellerId();
+                //不相等才更改 并且添加
+                if (!currentSellerId.equals(lastSellerId)) {
+                    lastSeller.setEndDate(nowDate);
+                    //修改日期
+                    batchSaveOrUpdateList.add(lastSeller);
+                } else {
+                    isAdd = Boolean.FALSE;
+                }
+            }
+            if (isAdd) {
+                CustomerSellerEntity addSeller = new CustomerSellerEntity();
+                if (deptUser != null) {
+                    addSeller.setSellerName(deptUser.getUserName());
+                    addSeller.setDeptId(deptUser.getDepartmentId());
+                }
+                addSeller.setSellerId(item.getSellerId());
+                addSeller.setMainId(mainId);
+                addSeller.setStartDate(LocalDate.now());
+                batchSaveOrUpdateList.add(addSeller);
             }
         }
-        //批量添加
-        if (CollectionUtils.isNotEmpty(batchAddList)) {
-            this.saveBatch(batchAddList);
+        //批量添加修改
+        if (CollectionUtils.isNotEmpty(batchSaveOrUpdateList)) {
+            this.saveOrUpdateBatch(batchSaveOrUpdateList);
         }
-
-        //批量修改
-        if (CollectionUtils.isNotEmpty(batchUpdateList)) {
-            batchUpdateList.forEach(b->b.setEndDate(LocalDate.now()));
-            this.updateBatchById(batchUpdateList);
-        }
-
 
     }
 
