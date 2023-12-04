@@ -55,10 +55,10 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * 根据不同维度统计销售额
      *
      * @param dto
-     * @param flag
+     * @param settleRate
      * @return
      */
-    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
+    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     /**
      * 获取销售单价分布 汇总

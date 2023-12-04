@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -125,17 +126,19 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
         // 订单财务信息
         List<PlatformOrderFinanceDTO> financeDTOList = new LinkedList<>();
-        dto.getDetails().forEach(e-> {
-            Money money = e.getShippingPrice();
-            if (null == money){
-                return;
-            }
-            PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
-            financeDTO.setShippingCost(null == money.getAmount() ? BigDecimal.ZERO : new BigDecimal(money.getAmount()));
-            financeDTO.setCurrency(null == money.getCurrencyCode() ? "" : money.getCurrencyCode());
-            financeDTOList.add(financeDTO);
-        });
-        orderDTO.setFinancesList(financeDTOList);
+        if (!CollectionUtils.isEmpty(dto.getDetails())) {
+            dto.getDetails().forEach(e-> {
+                Money money = e.getShippingPrice();
+                if (null == money){
+                    return;
+                }
+                PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
+                financeDTO.setShippingCost(null == money.getAmount() ? BigDecimal.ZERO : new BigDecimal(money.getAmount()));
+                financeDTO.setCurrency(null == money.getCurrencyCode() ? "" : money.getCurrencyCode());
+                financeDTOList.add(financeDTO);
+            });
+            orderDTO.setFinancesList(financeDTOList);
+        }
 
         // TODO 订单物流信息
 

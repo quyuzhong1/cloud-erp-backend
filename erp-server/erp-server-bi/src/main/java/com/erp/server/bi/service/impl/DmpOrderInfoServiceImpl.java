@@ -43,6 +43,7 @@ import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.ChartType;
+import com.erp.server.bi.enums.DateTypeEnum;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
@@ -148,11 +149,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 //        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
 //        // 根据订单号获取订单详情，筛选sku
 //        amount = dmpOrderItemService.sumSales(orderIds, dto);
-        Integer flag = null;
+//        Integer flag = null;
         if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
-            flag = 1;
+            dto.setNewSign(1);
         }
-        BigDecimal amount = baseMapper.sumSales(dto, flag);
+        dto.setDateType(DateTypeEnum.DAY.getType());
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        BigDecimal amount = baseMapper.sumSales(dto, settleRate);
         return new TargetSaleSumVO(amount.setScale(4, RoundingMode.DOWN));
     }
 
