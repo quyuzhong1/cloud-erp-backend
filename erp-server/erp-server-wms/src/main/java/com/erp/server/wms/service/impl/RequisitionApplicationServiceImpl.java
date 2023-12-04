@@ -196,9 +196,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.HandleListDTO> handleList(List<String> ids) {
-
         List<RequisitionApplicationDTO.HandleListDTO> list = baseMapper.handleList(ids);
-        long count = list.stream().map(req -> !RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus().equals(req.getStatus())).count();
+        long count = list.stream().filter(req -> !RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus().equals(req.getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.WAIT_HANDLE_HANDLE);
         }
@@ -274,7 +273,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FinishListDTO> finishList(List<String> ids) {
         List<RequisitionApplicationDTO.FinishListDTO> list = baseMapper.finishList(ids);
-        long count = list.stream().map(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())).count();
+        long count = list.stream().filter(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.HANDLE_ING_FINISH);
         }

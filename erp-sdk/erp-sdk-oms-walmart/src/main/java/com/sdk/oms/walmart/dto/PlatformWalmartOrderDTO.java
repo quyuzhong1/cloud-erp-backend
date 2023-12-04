@@ -1,9 +1,12 @@
 package com.sdk.oms.walmart.dto;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
@@ -11,6 +14,7 @@ import com.sdk.oms.walmart.dto.walmart.order.ItemBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderLineBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderLineStatusBean;
+import com.sdk.oms.walmart.dto.walmart.ship.TrackingInfoBean;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,7 +24,10 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
@@ -115,6 +122,13 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
         orderDTO.setDetails(details);
+
+        //B2C销售订单买家信息表
+        orderDTO.setReceiverList(parseReceiverList(orderBean));
+        //B2C销售订单物流信息表
+        orderDTO.setLogisticsList(parseLogisticsList(orderBean.getOrderLines().getOrderLine()));
+        //B2C销售订单财务信息表
+        orderDTO.setFinancesList(parseFinancesList(orderBean));
         return orderDTO;
     }
 
@@ -240,5 +254,99 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 付款金额
         orderDTO.setPayAmount(amount);
     }
+
+    /**
+     * 买家信息字段处理
+     * @Author Luo_WG
+     * @Date 2023/12/4 9:38
+     * @param orderBean
+     * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
+     **/
+    private static List<PlatformOrderReceiverDTO> parseReceiverList(OrderBean orderBean) {
+        if (Objects.isNull(orderBean) || Objects.isNull(orderBean.getShippingInfo())) {
+            return Collections.emptyList();
+        }
+        List<PlatformOrderReceiverDTO> receiverDTOS = new ArrayList<>();
+        receiverDTOS.add(PlatformOrderReceiverDTO.builder()
+                .loginId("")
+                .customerId("")
+                .name(orderBean.getShippingInfo().getPostalAddress().getName())
+                .telNumber(orderBean.getShippingInfo().getPhone())
+                .receiverTelNumber(orderBean.getShippingInfo().getPhone())
+                .email("")
+                .country(orderBean.getShippingInfo().getPostalAddress().getCountry())
+                .provinceName(orderBean.getShippingInfo().getPostalAddress().getState())
+                .cityName(orderBean.getShippingInfo().getPostalAddress().getCity())
+                .districtName("")
+                .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
+                .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
+                .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
+                .build());
+        return receiverDTOS;
+    }
+
+    /**
+     * 物流信息字段处理
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
+     * @param orderLineBeanList
+     * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
+     **/
+    private static List<PlatformOrderLogisticsDTO> parseLogisticsList(List<OrderLineBean> orderLineBeanList) {
+        if (CollectionUtils.isEmpty(orderLineBeanList)) {
+            return Collections.emptyList();
+        }
+        List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
+        for (OrderLineBean orderLineBean : orderLineBeanList) {
+            List<OrderLineStatusBean> orderLineStatus = orderLineBean.getOrderLineStatuses().getOrderLineStatus();
+            if (CollectionUtils.isEmpty(orderLineStatus)) {
+                return Collections.emptyList();
+            }
+
+            for (OrderLineStatusBean lineStatus : orderLineStatus) {
+                TrackingInfoBean trackingInfo = lineStatus.getTrackingInfo();
+                if (ObjectUtil.isEmpty(trackingInfo)) {
+                    continue;
+                }
+                //chargeAmount中chargeType=SHIPPING时amount的订单行汇总
+                BigDecimal cost = orderLineBean.getCharges().getCharge().stream()
+                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
+                        .map(req -> req.getChargeAmount().getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                String currency = orderLineBean.getCharges().getCharge().stream()
+                        .filter(req -> "SHIPPING".equals(req.getChargeType()))
+                        .map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
+
+
+                Instant instant = Instant.ofEpochSecond(trackingInfo.getShipDateTime());
+                ZoneId zone = ZoneId.systemDefault();
+                PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
+                        .code(trackingInfo.getTrackingNumber())
+                        .name(trackingInfo.getMethodCode())
+                        .deliveryTime(LocalDateTime.ofInstant(instant, zone))
+                        .logisticsChannelId(trackingInfo.getCarrierName().getCarrier())
+                        .estimatedShippingCost(BigDecimal.ZERO)
+                        .actualShippingCost(cost)
+                        .accessoriesCostCurrency("")
+                        .actualShippingCurrency(currency)
+                        .estimatedShippingCurrency("")
+                        .build();
+                logisticsDTOS.add(dto);
+            }
+        }
+        return logisticsDTOS;
+    }
+
+    /**
+     * 财务信息表
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
+     * @param orderBean
+     * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
+     **/
+    private static List<PlatformOrderFinanceDTO> parseFinancesList(OrderBean orderBean) {
+        return Collections.emptyList();
+    }
+
 
 }
