@@ -17,6 +17,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductDetailShowDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -376,6 +377,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     BeanMapper.copy(requisitionApplicationDetailEntity, viewDTO);
                     viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
                     viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
+                        viewDTO.setPickingQty(requisitionApplicationDetailEntity.getApproveQty());
+                    }
+
                     //匹配sku信息
                     SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId())).distinct().findFirst().orElse(new SkuVO());
                     viewDTO.setProductName(skuVO.getSkuName());
@@ -389,6 +394,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).distinct().findFirst().orElse(new SkuVO());
                 viewDTO.setProductName(skuVO.getSkuName());
                 viewDTO.setWarehouseLocation(StringUtils.isBlank(skuVO.getWarehouseLocation()) ? "" : skuVO.getWarehouseLocation());
+                if (viewDTO.getPickingQty() == null || viewDTO.getPickingQty() == 0) {
+                    viewDTO.setPickingQty(requisitionApplicationDetailEntity.getApproveQty());
+                }
                 printPickingViewList.add(viewDTO);
             }
         }
@@ -557,7 +565,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         for (RequisitionApplicationDTO.ListDTO listDTO : list) {
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(listDTO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                listDTO.setIsCombination(Boolean.TRUE);
+            } else {
+                listDTO.setIsCombination(Boolean.FALSE);
+            }
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(listDTO.getSkuId())).findFirst().orElse(new SkuVO());
             listDTO.setProductName(skuVO.getSkuName());
@@ -573,7 +591,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private void validateSubmit(RequisitionApplicationEntity entity) {
         // 待提交允许提交
-        if(entity.getStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) ) {
+        if(!entity.getStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) ) {
             throw new ServiceException(ApiError.IS_SUBMIT_IN_SUBMIT);
         }
         return;
