@@ -66,7 +66,9 @@ public class FirstMileCartonServiceImpl extends SuperServiceImpl<FirstMileCarton
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FirstMileCartonEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(FirstMileCartonEntity::getMainId, mainIds)
+                .orderByAsc(FirstMileCartonEntity::getCreateTime, FirstMileCartonEntity::getId)
+                .list();
     }
 
     @Override
