@@ -1,8 +1,10 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -14,4 +16,10 @@ public interface WmsOverseasWarehouseFeign {
      **/
     @PostMapping("/feign/overseasWarehouse/getReceiptNumbersForStatus")
     List<String> getReceiptNumbersForStatus(@RequestBody List<String> statusList);
+
+    /**
+     * 根据仓库code查询仓库信息
+     **/
+    @PostMapping("/feign/overseasWarehouse/getOverseasWarehouseListByPlatformCodes")
+    List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCodes(@RequestParam(value = "warehouseCodeList") List<String> warehouseCodeList, @RequestParam(value = "platform")String platform);
 }

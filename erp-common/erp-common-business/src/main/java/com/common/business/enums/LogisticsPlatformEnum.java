@@ -22,7 +22,10 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     YAN_WEN("YanWen", "燕文物流(新)", "燕文物流(新)", ""),
     WEI_SHI("WeiShi", "纬狮", "深圳前海纬狮物流网络科技有限公司", ""),
     YUN_TU("YunTu", "云途(新)", "云途(新)", ""),
-    TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", "");
+    TONG_YOU("TongYou", "去发货(通邮)", "去发货(通邮)", ""),
+    GOOD_CANG(OmsPlatformEnum.OMS_GOOD_CANG.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getName(), "谷仓", ""),
+    IML(OmsPlatformEnum.OMS_IML.getCode(), OmsPlatformEnum.OMS_IML.getName(), "艾姆勒", ""),
+    ;
 
 
     @JsonValue

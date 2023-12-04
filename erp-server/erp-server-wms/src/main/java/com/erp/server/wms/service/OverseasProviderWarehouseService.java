@@ -57,4 +57,6 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @return java.util.List<com.erp.model.wms.entity.OverseasProviderWarehouseEntity>
      **/
     List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds);
+
+    List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform);
 }

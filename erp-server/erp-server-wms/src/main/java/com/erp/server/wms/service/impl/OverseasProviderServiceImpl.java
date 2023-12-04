@@ -193,4 +193,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         return list.stream().collect(Collectors.groupingBy(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
     }
+
+    @Override
+    public OverseasProviderEntity getByPlatformCode(String code) {
+        return lambdaQuery().eq(OverseasProviderEntity::getCode,code).one();
+    }
 }

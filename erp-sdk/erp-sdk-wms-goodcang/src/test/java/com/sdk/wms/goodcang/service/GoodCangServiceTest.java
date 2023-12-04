@@ -91,6 +91,17 @@ public class GoodCangServiceTest {
         System.out.println(response.getData());
     }
 
+
+    @Test
+    public void getShippingMethodTest() {
+        GoodCangGetInventoryReq goodCangGetSkuReq = GoodCangGetInventoryReq.builder()
+                .page(1)
+                .pageSize(200)
+                .build();
+        GoodCangResponse<List<GoodCangLogisticsProductsResp>> response = goodCangService.getShippingMethod("");
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
     @Test
     public void createInboundBillTest() {
         GoodCangCreateInboundReq goodCangCreateInboundReq = GoodCangCreateInboundReq.builder()
