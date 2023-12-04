@@ -1072,7 +1072,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
         BigDecimal chinaSales = resultList.stream().
-                filter(s -> s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> StringUtils.isNotBlank(s.getName()) && s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         chinaMap.put("value", chinaSales);
@@ -1081,7 +1081,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> abroadMap = new HashMap();
         abroadMap.put("name", "国外");
         BigDecimal abroadSales = resultList.stream().
-                filter(s -> !s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> StringUtils.isNotBlank(s.getName()) && !s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);
@@ -1116,6 +1116,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
+        dto.setDateType(DateTypeEnum.DAY.getType());
         //这个是环比的查询出来的
         List<SalesBaseVO> chainList = baseMapper.byPeople(dto, settleRate);
 
@@ -1394,6 +1395,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime weekEnd = LocalDateUtil.getThisWeekEnd(nowDate);
         dto.setStartTime(weekStart);
         dto.setEndTime(weekEnd);
+        dto.setDateType(DateTypeEnum.WEEK.getType());
         //本周结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1459,6 +1461,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(nowDate);
         dto.setStartTime(monthStart);
         dto.setEndTime(monthEnd);
+        dto.setDateType(DateTypeEnum.MONTH.getType());
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1524,6 +1527,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime quarterEnd = LocalDateUtil.getThisQuarterEnd(nowDate);
         dto.setStartTime(quarterStart);
         dto.setEndTime(quarterEnd);
+        dto.setDateType(DateTypeEnum.QUARTER.getType());
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1589,6 +1593,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime yearEnd = LocalDateUtil.getThisYearEnd(nowDate);
         dto.setStartTime(yearStart);
         dto.setEndTime(yearEnd);
+        dto.setDateType(DateTypeEnum.YEAR.getType());
         //本年结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -2066,37 +2071,37 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (ShopSiteVO item : shopCategoryList) {
             SalesCountVO vo = new SalesCountVO();
             //对应的店铺信息
-            List<String> shopNoList = item.getShopNo();
+            List<String> shopNameList = item.getShopName();
             String site = item.getSite();
             vo.setName(site);
             BigDecimal sales = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
+                    filter(s -> shopNameList.contains(s.getShopName()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setSalesRatio(getSalesRatio(totalSales, sales));
             vo.setSales(sales);
             Integer salesQuantity = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    filter(s -> shopNameList.contains(s.getShopName())).
                     mapToInt(ShopSalesVO::getSalesQuantity).
                     sum();
             vo.setSalesQuantity(salesQuantity);
 
             Integer orderCount = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    filter(s -> shopNameList.contains(s.getShopName())).
                     mapToInt(ShopSalesVO::getOrderCount).
                     sum();
             vo.setOrderCount(orderCount);
 
             BigDecimal chainSales = chainList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
+                    filter(c -> shopNameList.contains(c.getShopName()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainSales));
 
             BigDecimal yearBasisSales = yearBasisList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
+                    filter(c -> shopNameList.contains(c.getShopName()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisSales));
@@ -2190,7 +2195,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-        List<SalesBaseVO> list = baseMapper.byOldProductTop(dto, settleRate);
+        dto.setNewSign(0);
+        List<SalesBaseVO> list = baseMapper.byProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
@@ -2232,8 +2238,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-
-        List<SalesBaseVO> list = baseMapper.byNewProductTop(dto, settleRate);
+        dto.setNewSign(1);
+        List<SalesBaseVO> list = baseMapper.byProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
@@ -2380,8 +2386,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> siteList = SiteEnum.getSiteList(siteName);
             List<ShopSiteVO> siteShopList = shopCategoryList.stream().filter(s -> siteList.contains(s.getSite()))
                     .collect(Collectors.toList());
-            List<String> shopNoList = siteShopList.stream().flatMap(s -> s.getShopNo().stream()).collect(Collectors.toList());
-            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
+            List<String> shopNameList = siteShopList.stream().flatMap(s -> s.getShopName().stream()).collect(Collectors.toList());
+            BigDecimal value = list.stream().filter(s -> shopNameList.contains(s.getShopName()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             siteMap.put("value", value);
             dataList.add(siteMap);

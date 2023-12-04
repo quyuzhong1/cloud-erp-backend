@@ -242,6 +242,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             String site = item.getKey();
             vo.setSite(site);
             vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
+            vo.setShopName(shopInfoList.stream().map(DmpShopInfoEntity::getName).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
