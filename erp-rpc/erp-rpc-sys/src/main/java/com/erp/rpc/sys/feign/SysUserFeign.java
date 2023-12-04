@@ -392,12 +392,6 @@ public interface SysUserFeign {
     DictCityEntity getCityById(@RequestBody String id);
 
     /**
-     * 根据ids查询省/市
-     */
-    @PostMapping("feign/city/listByIds")
-    List<DictCityEntity> listCityByIds(@RequestBody List<String> ids);
-
-    /**
      * 根据用戶id 获取金蝶的对应岗位code
      *
      * @param userId
