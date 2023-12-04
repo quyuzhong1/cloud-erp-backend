@@ -19,7 +19,7 @@ public class PostalAddressBean {
     @SerializedName("address1")
     private String address1;
     @SerializedName("address2")
-    private Object address2;
+    private String address2;
     @SerializedName("city")
     private String city;
     @SerializedName("state")
@@ -47,11 +47,11 @@ public class PostalAddressBean {
         this.address1 = address1;
     }
 
-    public Object getAddress2() {
+    public String getAddress2() {
         return address2;
     }
 
-    public void setAddress2(Object address2) {
+    public void setAddress2(String address2) {
         this.address2 = address2;
     }
 

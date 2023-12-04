@@ -1,6 +1,8 @@
 package com.sdk.oms.walmart.dto.walmart.order;
 
 import com.google.gson.annotations.SerializedName;
+import com.sdk.oms.walmart.dto.walmart.ship.ReturnCenterAddressBean;
+import com.sdk.oms.walmart.dto.walmart.ship.TrackingInfoBean;
 
 public class OrderLineStatusBean {
     /**
@@ -19,11 +21,11 @@ public class OrderLineStatusBean {
     @SerializedName("statusQuantity")
     private StatusQuantityBean statusQuantity;
     @SerializedName("cancellationReason")
-    private Object cancellationReason;
+    private String cancellationReason;
     @SerializedName("trackingInfo")
-    private Object trackingInfo;
+    private TrackingInfoBean trackingInfo;
     @SerializedName("returnCenterAddress")
-    private Object returnCenterAddress;
+    private ReturnCenterAddressBean returnCenterAddress;
 
     public String getStatus() {
         return status;
@@ -49,27 +51,27 @@ public class OrderLineStatusBean {
         this.statusQuantity = statusQuantity;
     }
 
-    public Object getCancellationReason() {
+    public String getCancellationReason() {
         return cancellationReason;
     }
 
-    public void setCancellationReason(Object cancellationReason) {
+    public void setCancellationReason(String cancellationReason) {
         this.cancellationReason = cancellationReason;
     }
 
-    public Object getTrackingInfo() {
+    public TrackingInfoBean getTrackingInfo() {
         return trackingInfo;
     }
 
-    public void setTrackingInfo(Object trackingInfo) {
+    public void setTrackingInfo(TrackingInfoBean trackingInfo) {
         this.trackingInfo = trackingInfo;
     }
 
-    public Object getReturnCenterAddress() {
+    public ReturnCenterAddressBean getReturnCenterAddress() {
         return returnCenterAddress;
     }
 
-    public void setReturnCenterAddress(Object returnCenterAddress) {
+    public void setReturnCenterAddress(ReturnCenterAddressBean returnCenterAddress) {
         this.returnCenterAddress = returnCenterAddress;
     }
 }
