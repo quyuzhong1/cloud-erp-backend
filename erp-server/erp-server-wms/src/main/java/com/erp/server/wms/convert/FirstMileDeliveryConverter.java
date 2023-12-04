@@ -25,6 +25,7 @@ public interface FirstMileDeliveryConverter {
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
+            @Mapping(target = "code", ignore = true),
             @Mapping(target = "remark", ignore = true),
             @Mapping(target = "sourceId", source = "entity.id"),
             @Mapping(target = "sourceCode", source = "entity.code"),

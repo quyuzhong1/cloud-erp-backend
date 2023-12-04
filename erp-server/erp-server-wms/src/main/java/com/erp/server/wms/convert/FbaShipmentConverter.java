@@ -128,8 +128,7 @@ public interface FbaShipmentConverter {
             @Mapping(target = "handleUserId", constant = ""),
             @Mapping(target = "detailList", ignore = true),
             @Mapping(target = "handleUserName", constant = ""),
-            @Mapping(target = "requisitionWarehouseName", constant = ""),
-            @Mapping(target = "status", constant = "")
+            @Mapping(target = "requisitionWarehouseName", constant = "")
     })
     RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 

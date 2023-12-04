@@ -27,9 +27,9 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.sqlite.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -84,6 +84,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
+        if(StringUtils.isBlank(createInboundReq.getReceivingCode())){
+            return failure("第三方入库单号不能为空");
+        }
         return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_EDIT_INBOUND_BILL,createInboundReq.getReceivingCode());
     }
     @Override
