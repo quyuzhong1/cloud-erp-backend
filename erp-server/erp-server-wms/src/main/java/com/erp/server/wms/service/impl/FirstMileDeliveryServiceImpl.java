@@ -28,6 +28,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -54,6 +55,7 @@ import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -127,6 +129,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private OverseasDeliveryPlanService overseasDeliveryPlanService;
     @Autowired
     private DictBasicService dictBasicService;
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -659,6 +663,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if (ObjectUtil.isNotEmpty(planEntity)) {
                     overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
+
+//                thirdWarehouseRegistry.getHandler().cancelInboundBill()
             }
 
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
