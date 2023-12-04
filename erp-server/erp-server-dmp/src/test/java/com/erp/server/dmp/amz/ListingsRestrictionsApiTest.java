@@ -21,6 +21,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -39,7 +40,6 @@ import java.util.List;
 public class ListingsRestrictionsApiTest {
 
     private final ListingsRestrictionsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
-
     public ListingsRestrictionsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
 //        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
 //        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
