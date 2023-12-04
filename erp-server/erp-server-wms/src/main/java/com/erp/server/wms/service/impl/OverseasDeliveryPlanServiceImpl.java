@@ -608,13 +608,13 @@ public class OverseasDeliveryPlanServiceImpl extends SuperServiceImpl<OverseasDe
             List<OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> value = entry.getValue();
             //映射主表信息
             RequisitionApplicationDTO.AddDTO addDTO = OverseasDeliveryPlanConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
+            //要货仓库中文
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(value.get(MathUtil.ZERO).getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            addDTO.setRequisitionWarehouseName(updateDTO.getName());
 
             //映射详情信息
             List<RequisitionApplicationDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
-                //要货仓库中文
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                addDTO.setRequisitionWarehouseName(updateDTO.getName());
 
                 RequisitionApplicationDetailDTO.AddDTO detailAddDto = OverseasDeliveryPlanConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
 

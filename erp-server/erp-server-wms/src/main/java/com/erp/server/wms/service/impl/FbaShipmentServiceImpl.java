@@ -1019,12 +1019,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //映射主表信息
             RequisitionApplicationDTO.AddDTO addDTO = FbaShipmentConverter.INSTANCE.DeliveryPlanGRA(value.get(MathUtil.ZERO));
 
+            //要货仓库中文
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(value.get(MathUtil.ZERO).getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            addDTO.setRequisitionWarehouseName(updateDTO.getName());
+
             //映射详情信息
             List<RequisitionApplicationDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (FbaShipmentDTO.GenerateRequisitionApplicationViewDTO viewDTO : value) {
-                //要货仓库中文
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-                addDTO.setRequisitionWarehouseName(updateDTO.getName());
 
                 RequisitionApplicationDetailDTO.AddDTO detailAddDto = FbaShipmentConverter.INSTANCE.DeliveryPlanDetailGRA(viewDTO);
 
