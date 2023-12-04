@@ -66,6 +66,11 @@ public class CustomerDTO implements Serializable {
          */
         private String shortName;
 
+        /**
+         * 平台集合
+         */
+        private List<String> platformTypeList;
+
 
         /**
          * 审核列表集合
@@ -141,6 +146,16 @@ public class CustomerDTO implements Serializable {
          * 销售员
          */
         private String sellerName;
+
+        /**
+         * 平台类型
+         */
+        private String platformType;
+
+        /**
+         * 平台类型名称
+         */
+        private String platformTypeName;
 
         /**
          * 审核状态code
