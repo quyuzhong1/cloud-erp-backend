@@ -273,11 +273,11 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 .name(orderBean.getShippingInfo().getPostalAddress().getName())
                 .telNumber(orderBean.getShippingInfo().getPhone())
                 .receiverTelNumber(orderBean.getShippingInfo().getPhone())
-                .email("")
+                .email(orderBean.getCustomerEmailId())
                 .country(orderBean.getShippingInfo().getPostalAddress().getCountry())
                 .provinceName(orderBean.getShippingInfo().getPostalAddress().getState())
                 .cityName(orderBean.getShippingInfo().getPostalAddress().getCity())
-                .districtName("")
+                .districtName(orderBean.getShippingInfo().getPostalAddress().getCountry() + " " + orderBean.getShippingInfo().getPostalAddress().getCity())
                 .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
                 .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
                 .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
@@ -345,7 +345,13 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
     private static List<PlatformOrderFinanceDTO> parseFinancesList(OrderBean orderBean) {
-        return Collections.emptyList();
+
+        List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
+        PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
+                .currency("")
+                .build();
+        financeDTOList.add(dto);
+        return financeDTOList;
     }
 
 
