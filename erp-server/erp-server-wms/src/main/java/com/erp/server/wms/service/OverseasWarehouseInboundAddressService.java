@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * <p>
- *  服务类
+ * 海外入库单常用揽收地址 服务类
  * </p>
  *
  * @author Jim

@@ -137,6 +137,111 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     private String trackingNo;
 
     /**
+     * 快递单号
+     */
+    @TableField("express_no")
+    private String expressNo;
+
+    /**
+     * 报关方式代号:
+     * /api/wms/common/enumDropDown?type=CustomsTypeNew
+     */
+    @TableField("customs_type")
+    private String customsType;
+
+    /**
+     * 物流产品代码
+     */
+    @TableField("logistics_product_code")
+    private String logisticsProductCode;
+
+    /**
+     * 报关方式名称
+     */
+    @TableField("customs_type_name")
+    private String customsTypeName;
+    /**
+     * 物流产品名称
+     */
+    @TableField("logistics_product_name")
+    private String logisticsProductName;
+    /**
+     * 预计揽收日期
+     */
+    @TableField("estimated_collect_date")
+    private String estimatedCollectDate;
+    /**
+     * 字典)省ID
+     */
+    @TableField("dict_province_id")
+    private String dictProvinceId;
+    /**
+     * 字典)城市ID
+     */
+    @TableField("dict_city_id")
+    private String dictCityId;
+    /**
+     * 字典)地区ID
+     */
+    @TableField("dict_district_id")
+    private String dictDistrictId;
+    /**
+     * 字典)省名称
+     */
+    @TableField("dict_province_name")
+    private String dictProvinceName;
+    /**
+     * 字典)城市名称
+     */
+    @TableField("dict_city_name")
+    private String dictCityName;
+    /**
+     * 字典)地区名称
+     */
+    @TableField("dict_district_name")
+    private String dictDistrictName;
+    /**
+     * 平台)省ID
+     */
+    @TableField("platform_province_id")
+    private String platformProvinceId;
+    /**
+     * 平台)城市ID
+     */
+    @TableField("platform_city_id")
+    private String platformCityId;
+    /**
+     * 平台)地区ID
+     */
+    @TableField("platform_district_id")
+    private String platformDistrictId;
+    /**
+     * 姓
+     */
+    @TableField("first_name")
+    private String firstName;
+    /**
+     * 名
+     */
+    @TableField("last_name")
+    private String lastName;
+    /**
+     * 手机号
+     */
+    @TableField("mobile")
+    private String mobile;
+    /**
+     * 详情地址
+     */
+    @TableField("street")
+    private String street;
+    /**
+     * 全地址
+     */
+    @TableField("full_address")
+    private String fullAddress;
+
+    /**
      * 数量
      */
     @TableField(exist = false)

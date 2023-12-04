@@ -111,8 +111,25 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if(CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
+        Map<String, List<OverseasTransferWarehouseEntity>> groupMap = list.stream().collect(Collectors.groupingBy(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode));
+
+        return groupMap.values().stream()
+                .map(overseasTransferWarehouseEntities -> {
+                    OverseasTransferWarehouseEntity e = overseasTransferWarehouseEntities.stream().findFirst().orElse(null);
+                    return new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getPlatformToWarehouseName());
+                }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BaseSelectDTO> LogisticsProductList(String code) {
+        List<OverseasTransferWarehouseEntity> list = lambdaQuery()
+                .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, code)
+                .list();
+        if(CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
         return list.stream()
-                .map(e-> new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getPlatformToWarehouseName()))
+                .map(e-> new BaseSelectDTO(e.getId(), e.getLogisticsProductCode(), e.getLogisticsProductName()))
                 .collect(Collectors.toList());
     }
 

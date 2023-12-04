@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 /**
  * <p>
- *  服务实现类
+ * 海外入库单常用揽收地址 服务实现类
  * </p>
  *
  * @author Jim

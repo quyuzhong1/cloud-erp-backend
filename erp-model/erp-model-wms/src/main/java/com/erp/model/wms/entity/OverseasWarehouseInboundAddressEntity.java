@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * 
+ * 海外入库单常用揽收地址
  * </p>
  *
  * @author Jim

@@ -201,6 +201,24 @@ public class OverseasWarehouseInboundController extends BaseController {
     }
 
     /**
+     * 中转仓对应物流名称
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @GetMapping("/transferWareHouse/logisticsProductList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:paging",
+            tableAlias = "owi"
+    )
+    public ApiResult<List<BaseSelectDTO>> transferWareHouseLogisticsProductList(@RequestParam(value = "code") String code) {
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.LogisticsProductList(code);
+        return success(result);
+    }
+
+    /**
      * 手动签收
      *
      * @return ApiResult

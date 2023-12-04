@@ -17,9 +17,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * <p>
- *  海外入库单常用揽收地址 前端控制器
- * </p>
+ * 海外入库单常用揽收地址
  *
  * @author Jim
  * @since 2023-12-04
