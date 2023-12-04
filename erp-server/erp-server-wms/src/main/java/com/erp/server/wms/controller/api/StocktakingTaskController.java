@@ -187,14 +187,6 @@ public class StocktakingTaskController extends BaseController {
                                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
                         redisUtil.keys(key).forEach(item -> redisUtil.del(item));
                     });
-                    // 批量审核 待审核的
-                    List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.listBySourceId(id);
-                    for (StocktakingProfitLossEntity profitLoss : profitLossList) {
-                        ApproveOneDTO approveOne = new ApproveOneDTO();
-                        approveOne.setType(ApproveTypeEnum.PASS.getStatus());
-                        approveOne.setId(profitLoss.getId());
-                        stocktakingProfitLossService.approveEnd(approveOne, profitLoss);
-                    }
                 }
 
             } catch (Exception e) {
