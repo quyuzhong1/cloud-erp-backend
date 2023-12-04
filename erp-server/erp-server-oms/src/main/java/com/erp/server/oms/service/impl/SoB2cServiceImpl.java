@@ -30,6 +30,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -304,6 +305,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             old.setShopName(oldShopName);
             String newShopName = shopList.stream().filter(obj -> obj.getId().equals(soB2cEntity.getShopId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             soB2cEntity.setShopName(newShopName);
+        }
+        //明细信息
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        List<JSONObject> jsonList = new ArrayList<>();
+        //自动匹配订单规则
+        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList,jsonList);
+        if (isSuccess) {
+            //自动匹配配货规则
+            distributionRule(soB2cEntity.getId(), detailList,jsonList);
         }
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
@@ -2046,7 +2059,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : detailList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId",detailEntity.getId());
-            jsonObject.set("payTime", soB2cEntity.getPayTime());
+            LocalDateTime payTime=soB2cEntity.getPayTime();
+            String payTimeStr=Objects.nonNull(payTime)? LocalDateUtil.formatTime(payTime,DateUtil.fmt):"";
+            jsonObject.set("payTime",payTimeStr );
             jsonObject.set("dictPayMethod", soB2cEntity.getDictPayMethod());
             jsonObject.set("platformSkuNo", detailEntity.getPlatformSkuNo());
             jsonObject.set("sellerSkuNo", detailEntity.getSellerSkuNo());
@@ -2610,7 +2625,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public List<JSONObject> getJson(String id) {
         List<SoB2cDetailEntity> soB2cDetailList=soB2cDetailService.listByMainId(id);
        List<JSONObject> list= handleMatchJson(id,soB2cDetailList,new ArrayList<>());
+
+        RuleOrderApprovalDTO.RuleMatchDTO result=  ruleOrderApprovalService.getRuleOrderMatchResult(list);
+        System.out.println(result.getFlowStatus()+"===="+result.getCategoryDetailIdList());
         return list;
     }
 
+    public static void main(String[] args) {
+        LocalDateTime now=LocalDateTime.now();
+        JSONObject jsonObject=new JSONObject();
+        jsonObject.set("payTime",now);
+        System.out.println(jsonObject.get("payTime"));
+    }
 }
