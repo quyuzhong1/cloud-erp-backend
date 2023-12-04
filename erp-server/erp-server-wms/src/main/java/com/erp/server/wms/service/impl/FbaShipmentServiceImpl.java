@@ -809,7 +809,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         // 批量更新或保存签收列表
-        List<FbaShipmentReceiveEntity> saveOrUpdateReceiveList = new LinkedList<>();
+        List<FbaShipmentReceiveEntity> saveReceiveList = new LinkedList<>();
 
         // 查询历史签收记录
         List<String> oldDetailIds = oldfbaShipmentDetailEntityList.stream().map(FbaShipmentDetailEntity::getId).collect(Collectors.toList());
@@ -844,7 +844,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (CollectionUtils.isEmpty(receiveEntityList)) {
                 // 新增
                 e = FbaShipmentConsumerConverter.INSTANCE.receiveSetSkuMappingInfo(e, listingInfoMap.get(e.getMsku()));
-                saveOrUpdateReceiveList.add(e);
+                saveReceiveList.add(e);
             } else {
                 int historyReceiveQty = receiveEntityList.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
                 // 判断历史数量是否相同
@@ -860,13 +860,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     // 新增签收记录
                     // ERP当前签收数量 = 亚马逊当前签收数量 - ERP历史记录签收数量
                     e.setReceiveQty(e.getReceiveQty() - historyReceiveQty);
-                    saveOrUpdateReceiveList.add(e);
+                    saveReceiveList.add(e);
                 }
             }
         });
 
-        if (CollectionUtils.isNotEmpty(saveOrUpdateReceiveList)){
-            if (!fbaShipmentReceiveService.saveOrUpdateBatch(saveOrUpdateReceiveList)) {
+        if (CollectionUtils.isNotEmpty(saveReceiveList)){
+            if (!fbaShipmentReceiveService.saveBatch(saveReceiveList)) {
                 throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
             }
         }
