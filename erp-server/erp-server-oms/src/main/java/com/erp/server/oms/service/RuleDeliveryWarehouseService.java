@@ -66,8 +66,8 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
 
     /**
      * 获取到订单审核匹配结果
-     * @param jsonObjectList
+     * @param jsonObject
      * @return
      */
-    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
+    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(JSONObject jsonObject);
 }

@@ -119,8 +119,8 @@ public class RuleOrderApprovalController extends BaseController {
     }
 
     @PostMapping("/test")
-    public ApiResult test(@RequestBody List<JSONObject> jsonObjectList) {
-        RuleOrderApprovalDTO.RuleMatchDTO ruleMatchDTO = ruleOrderApprovalService.getRuleOrderMatchResult(jsonObjectList);
+    public ApiResult test(@RequestBody JSONObject jsonObject) {
+        RuleOrderApprovalDTO.RuleMatchDTO ruleMatchDTO = ruleOrderApprovalService.getRuleOrderMatchResult(jsonObject);
         return success(ruleMatchDTO);
     }
 

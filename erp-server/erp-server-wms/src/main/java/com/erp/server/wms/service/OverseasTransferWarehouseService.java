@@ -1,5 +1,4 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -43,6 +42,12 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
      * @author Jim
      * @date: 2023-11-16
      */
-    List<BaseSelectDTO> baseSelectlist();
+    List<BaseSelectDTO> baseSelectlist(String dictPlatform);
 
+    /**
+     * 中转仓列对应物流名称
+     * @author Jim
+     * @date: 2023-11-16
+     */
+    List<BaseSelectDTO> LogisticsProductList(String code);
 }

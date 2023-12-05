@@ -2,7 +2,9 @@ package com.erp.server.wms.service;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.common.business.service.SuperService;
@@ -203,4 +205,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      **/
     Boolean deliveryDisApprove(FirstMileDeliveryEntity deliveryEntity);
 
+    /**
+     * 生成直接调拨单
+     * @Author Jim
+     * @Date 2023/12/04
+     */
+    String generateTransferOut(ShopInfoEntity entity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList);
 }

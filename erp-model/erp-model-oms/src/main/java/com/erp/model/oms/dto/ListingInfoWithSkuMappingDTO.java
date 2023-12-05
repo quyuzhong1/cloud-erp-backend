@@ -163,4 +163,11 @@ public class ListingInfoWithSkuMappingDTO {
         }
         return "";
     }
+
+    public String checkAndGetProductSpuNo() {
+        if (StringUtils.isNotBlank(this.platformSpuNo)){
+            return this.platformSpuNo;
+        }
+        return "";
+    }
 }

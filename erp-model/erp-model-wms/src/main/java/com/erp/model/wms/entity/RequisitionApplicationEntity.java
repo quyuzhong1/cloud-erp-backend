@@ -105,6 +105,11 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
     */
     @TableField("handle_time")
     private LocalDateTime handleTime;
+    /**
+    * 备注
+    */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String CODE = "code";

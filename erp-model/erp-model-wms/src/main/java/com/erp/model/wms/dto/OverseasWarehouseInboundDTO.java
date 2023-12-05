@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,6 +41,8 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        private String code;
 
         /**
          * 来源单号
@@ -334,6 +337,87 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 签收类型：system=平台系统签收，manual=手动签收
          */
         private String receiveType;
+
+        /**
+         * 报关方式名称
+         */
+        private String customsTypeName;
+
+        /**
+         * 报关方式代号
+         */
+        private String customsType;
+
+        /**
+         * 快递单号
+         */
+        private String expressNo;
+
+        /**
+         * 物流产品代码
+         * /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+         */
+        private String logisticsProductCode;
+
+        /**
+         * 物流产品名称
+         */
+        private String logisticsProductName;
+
+        /**
+         * 预计揽收日期
+         */
+        private LocalDate estimatedCollectDate;
+
+        /**
+         * 字典)省ID
+         */
+        private String dictProvinceId;
+
+        /**
+         * 字典)城市ID
+         */
+        private String dictCityId;
+
+        /**
+         * 字典)地区ID
+         */
+        private String dictDistrictId;
+
+        /**
+         * 字典)省名称
+         */
+        private String dictProvinceName;
+
+        /**
+         * 字典)城市名称
+         */
+        private String dictCityName;
+
+        /**
+         * 字典)地区名称
+         */
+        private String dictDistrictName;
+
+        /**
+         * 姓
+         */
+        private String firstName;
+
+        /**
+         * 名
+         */
+        private String lastName;
+
+        /**
+         * 手机号
+         */
+        private String mobile;
+
+        /**
+         * 详情地址
+         */
+        private String street;
     }
 
 
@@ -468,76 +552,118 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 报关方式名称
+         */
+        private String customsTypeName;
+
+        /**
+         * 报关方式代号
+         * /api/wms/common/enumDropDown?type=CustomsTypeNew
+         */
+        private String customsType;
+
+        /**
+         * 交货方式
+         * /api/wms/common/enumDropDown?type=OverseasDeliveryMode
+         */
+        private String deliveryMode;
+
+        /**
+         * 快递单号
+         */
+        private String expressNo;
+
+        /**
+         * 物流产品代码
+         * /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+         */
+        private String logisticsProductCode;
+
+        /**
+         * 物流产品名称
+         */
+        private String logisticsProductName;
+
+        /**
+         * 预计揽收日期
+         */
+        private LocalDate estimatedCollectDate;
+
+        /**
+         * 字典)省ID
+         */
+        private String dictProvinceId;
+
+        /**
+         * 字典)城市ID
+         */
+        private String dictCityId;
+
+        /**
+         * 字典)地区ID
+         */
+        private String dictDistrictId;
+
+        /**
+         * 字典)省名称
+         */
+        private String dictProvinceName;
+
+        /**
+         * 字典)城市名称
+         */
+        private String dictCityName;
+
+        /**
+         * 字典)地区名称
+         */
+        private String dictDistrictName;
+
+        /**
+         * 姓
+         */
+        private String firstName;
+
+        /**
+         * 名
+         */
+        private String lastName;
+
+        /**
+         * 手机号
+         */
+        private String mobile;
+
+        /**
+         * 详情地址
+         */
+        private String street;
     }
 
     /**
      * 新增
      */
     @Data
+    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends CommonDTO {
         /**
          * 发货单ID
          */
         @NotBlank(message = "发货单ID不能为空")
         private String sourceId;
 
-        /**
-         * 入库类型
-         * selfHeadway=自发头程
-         * transferAgent=中转代发
-         */
-        @NotNull(message = "入库类型不能为空")
-        @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
-        private OverseasInstockTypeEnum instockType;
-
-        /**
-         * 物流方式
-         * airfreight=空运
-         * express=快递
-         * oceanFreightBulk=海运散装
-         * oceanFreightFCL=海运整箱
-         * railwayTransportationBulk=铁运散装
-         * railwayTransportationFCL=铁运整箱
-         */
-        @NotNull(message = "物流方式不能为空")
-        @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
-        private LogisticsMethodEnum logisticsMethod;
-
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 预计到达时间
-         */
-        @NotNull(message = "预计到达时间不能为空")
-        private LocalDate estimatedArrivalDate;
-
-        /**
-         * 物流跟踪号
-         */
-        private String trackingNo;
-
-        /**
-         * 附件名集合
-         */
-        private List<String> attachNameList;
-
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
     }
 
     /**
      * 修改
      */
     @Data
+    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主键id
@@ -545,46 +671,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
-        /**
-         * 入库类型
-         */
-        @NotNull(message = "入库类型不能为空")
-        @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
-        private OverseasInstockTypeEnum instockType;
-
-        /**
-         * 物流方式
-         */
-        @NotNull(message = "物流方式不能为空")
-        @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
-        private LogisticsMethodEnum logisticsMethod;
-
-        /**
-         * 备注
-         */
-        @Size(max = 255, message = "备注最大长度不能超过255位")
-        private String remark;
-
-        /**
-         * 预计到达时间
-         */
-        @NotNull(message = "预计到达时间不能为空")
-        private LocalDateTime estimatedArrivalDate;
-
-        /**
-         * 物流跟踪号
-         */
-        private String trackingNo;
-
-        /**
-         * 附件名集合
-         */
-        private List<String> attachNameList;
-
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
     }
 
     /**
@@ -632,135 +718,155 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 平台类型: goodcang=谷仓，iml=艾姆勒
-         */
-        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
-        @Size(max = 30, message = "平台类型: goodcang=谷仓，iml=艾姆勒最大长度不能超过30位")
-        private String dictPlatform;
-
-        /**
-         * 来源单号
-         */
-        @NotBlank(message = "来源单号不能为空")
-        @Size(max = 50, message = "来源单号最大长度不能超过50位")
-        private String sourceCode;
-
-        /**
-         * 来源ID
-         */
-        @NotBlank(message = "来源ID不能为空")
-        @Size(max = 19, message = "来源ID最大长度不能超过19位")
-        private String sourceId;
-
-        /**
-         * 来源类型
-         */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 30, message = "来源类型最大长度不能超过30位")
-        private String sourceType;
-
-        /**
          * 入库类型
          */
-        @NotBlank(message = "入库类型不能为空")
-        @Size(max = 30, message = "入库类型最大长度不能超过30位")
-        private String instockType;
-
-        /**
-         * 入库状态
-         */
-        @NotBlank(message = "入库状态不能为空")
-        @Size(max = 64, message = "入库状态最大长度不能超过64位")
-        private String instockStatus;
-
-        /**
-         * 发货仓名称
-         */
-        @NotBlank(message = "发货仓名称不能为空")
-        @Size(max = 255, message = "发货仓名称最大长度不能超过255位")
-        private String deliveryWarehouseName;
-
-        /**
-         * 发货仓ID
-         */
-        @NotBlank(message = "发货仓ID不能为空")
-        @Size(max = 19, message = "发货仓ID最大长度不能超过19位")
-        private String deliveryWarehouseId;
-
-        /**
-         * 中转仓名称
-         */
-        @NotBlank(message = "中转仓名称不能为空")
-        @Size(max = 255, message = "中转仓名称最大长度不能超过255位")
-        private String transferWarehouseName;
-
-        /**
-         * 中转仓ID
-         */
-        @NotBlank(message = "中转仓ID不能为空")
-        @Size(max = 19, message = "中转仓ID最大长度不能超过19位")
-        private String transferWarehouseId;
-
-        /**
-         * 目的仓名称
-         */
-        @NotBlank(message = "目的仓名称不能为空")
-        @Size(max = 255, message = "目的仓名称最大长度不能超过255位")
-        private String toWarehouseName;
-
-        /**
-         * 目的仓ID
-         */
-        @NotBlank(message = "目的仓ID不能为空")
-        @Size(max = 19, message = "目的仓ID最大长度不能超过19位")
-        private String toWarehouseId;
+        @NotNull(message = "入库类型不能为空")
+        @JsonDeserialize(using = OverseasInstockTypeEnum.OverseasInStockTypeDeserializer.class)
+        private OverseasInstockTypeEnum instockType;
 
         /**
          * 物流方式
          */
-        @NotBlank(message = "物流方式不能为空")
-        @Size(max = 64, message = "物流方式最大长度不能超过64位")
-        private String logisticsMethod;
+//        @NotNull(message = "物流方式不能为空")
+        @JsonDeserialize(using = LogisticsMethodEnum.LogisticsMethodDeserializer.class)
+        private LogisticsMethodEnum logisticsMethod;
 
         /**
          * 备注
          */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
-         * 最新签收时间
-         */
-        private LocalDateTime receiveTime;
-
-        /**
          * 预计到达时间
          */
-        private LocalDateTime estimatedArrivalDate;
+        @NotNull(message = "预计到达时间不能为空")
+        private LocalDate estimatedArrivalDate;
 
         /**
-         * 手动完结原因
+         * 物流跟踪号
          */
-        @NotBlank(message = "手动完结原因不能为空")
-        @Size(max = 255, message = "手动完结原因最大长度不能超过255位")
-        private String finishReason;
+        private String trackingNo;
 
         /**
-         * 完结状态: not=未完结, auto=自动完结，manual=手动完结
+         * 附件名集合
          */
-        @NotBlank(message = "完结状态: not=未完结, auto=自动完结，manual=手动完结不能为空")
-        @Size(max = 64, message = "完结状态: not=未完结, auto=自动完结，manual=手动完结最大长度不能超过64位")
-        private String finishStatus;
+        private List<String> attachNameList;
 
         /**
-         * 第三方唯一编码
+         * 附件url集合
          */
-        @NotBlank(message = "第三方唯一编码不能为空")
-        @Size(max = 255, message = "第三方唯一编码最大长度不能超过255位")
-        private String overseasWarehouseInboundId;
+        private List<String> attachUrlList;
+
+        /**
+         * 交货方式
+         * /api/wms/common/enumDropDown?type=OverseasDeliveryMode
+         */
+        private String deliveryMode;
+
+        /**
+         * 快递单号
+         */
+        private String expressNo;
+
+        /**
+         * 中转仓ID
+         */
+        private String transferWarehouseId;
+
+        /**
+         * 报关方式代号:
+         * /api/wms/common/enumDropDown?type=CustomsTypeNew
+         */
+        private String customsType;
+
+        /**
+         * 物流产品代码
+         * /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+         */
+        private String logisticsProductCode;
 
 
+        /**
+         * 预计揽收日期
+         */
+        private LocalDate estimatedCollectDate;
+
+        /**
+         * 字典)省ID
+         */
+        private String dictProvinceId;
+
+        /**
+         * 字典)城市ID
+         */
+        private String dictCityId;
+
+        /**
+         * 字典)地区ID
+         */
+        private String dictDistrictId;
+
+        /**
+         * 姓
+         */
+        private String firstName;
+
+        /**
+         * 名
+         */
+        private String lastName;
+
+        /**
+         * 手机号
+         */
+        private String mobile;
+
+        /**
+         * 详情地址
+         */
+        private String street;
+
+
+        /**
+         * 所有ID
+         */
+        public List<String> getAllDictCityId() {
+            return Arrays.asList(this.dictProvinceId, this.dictCityId, this.dictDistrictId);
+        }
+
+        public void setBlankOtherBySelfHeadway() {
+            // TODO
+        }
+
+        public void setBlankOtherByTransferAgentAndSelfDelivery() {
+            //TODO
+        }
+
+        public void setBlankOtherByTransferAgentAndCollectAtHome() {
+            //TODO
+        }
+
+        public CommonDTO(OverseasInstockTypeEnum instockType, LogisticsMethodEnum logisticsMethod, String remark, LocalDate estimatedArrivalDate, String trackingNo, String deliveryMode, String expressNo, String transferWarehouseId, String customsType, String logisticsProductCode, LocalDate estimatedCollectDate, String dictProvinceId, String dictCityId, String dictDistrictId, String firstName, String lastName, String mobile, String street) {
+            this.instockType = instockType;
+            this.logisticsMethod = logisticsMethod;
+            this.remark = remark;
+            this.estimatedArrivalDate = estimatedArrivalDate;
+            this.trackingNo = trackingNo;
+            this.deliveryMode = deliveryMode;
+            this.expressNo = expressNo;
+            this.transferWarehouseId = transferWarehouseId;
+            this.customsType = customsType;
+            this.logisticsProductCode = logisticsProductCode;
+            this.estimatedCollectDate = estimatedCollectDate;
+            this.dictProvinceId = dictProvinceId;
+            this.dictCityId = dictCityId;
+            this.dictDistrictId = dictDistrictId;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.mobile = mobile;
+            this.street = street;
+        }
     }
 
     /**

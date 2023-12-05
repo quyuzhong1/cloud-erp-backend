@@ -15,6 +15,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -120,8 +121,8 @@ public class CustomerInfoController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交客户信息")
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
-        Boolean result = customerInfoService.addAndSubmit(dto);
-        return result ? success() : failure();
+        String result = customerInfoService.addAndSubmit(dto);
+        return StringUtils.isNotBlank(result) ? success() : failure();
     }
 
 

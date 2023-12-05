@@ -195,8 +195,26 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
-    public ApiResult<List<BaseSelectDTO>> transferWareHouseList() {
-        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist();
+    public ApiResult<List<BaseSelectDTO>> transferWareHouseList(@RequestParam(value = "dictPlatform", required = false) String dictPlatform) {
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist(dictPlatform);
+        return success(result);
+    }
+
+    /**
+     * 中转仓对应物流名称
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @GetMapping("/transferWareHouse/logisticsProductList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:paging",
+            tableAlias = "owi"
+    )
+    public ApiResult<List<BaseSelectDTO>> transferWareHouseLogisticsProductList(@RequestParam(value = "code") String code) {
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.LogisticsProductList(code);
         return success(result);
     }
 

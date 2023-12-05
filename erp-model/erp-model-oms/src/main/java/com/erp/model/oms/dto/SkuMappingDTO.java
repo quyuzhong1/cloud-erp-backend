@@ -864,6 +864,8 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformProductName;
 
+        private String type;
+
 
     }
 

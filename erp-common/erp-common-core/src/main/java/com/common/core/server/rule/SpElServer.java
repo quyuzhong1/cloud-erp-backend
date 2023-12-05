@@ -47,7 +47,7 @@ public interface SpElServer {
      * @param obj
      * @return
      */
-    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj,List<JSONObject> jsonList);
+    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj);
 
 
 }

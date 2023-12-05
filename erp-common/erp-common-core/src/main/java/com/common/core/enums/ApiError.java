@@ -839,7 +839,7 @@ public enum ApiError implements Serializable {
     OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
     NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
-    HANDLE_ING_FINISH(99134,"处理中状态的要货单才能完成"),
+    HANDLE_ING_FINISH(99134,"单号【{}】处理中状态的要货单才能完成"),
     NOT_FOUND_OVERSEAS_PROVIDE(99135,"未查询到服务商信息"),
     OVERSEAS_PROVIDE_NOT_AUTH(99136,"海外仓服务商未授权"),
     PACKING_SKU_IS_NOT_NULL(99134,"箱规【{}】中sku不能为空"),
@@ -852,6 +852,9 @@ public enum ApiError implements Serializable {
     ONWAY_WAREHOUSE_NOT_EXIST(99141,"目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核"),
     WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST(99142,"未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码"),
     PACKING_QTY_NOT_GT_WAIT_PACKING_QTY(99143,"箱规【{}】中sku【{}】装箱数量不能大于待装箱数量"),
+    HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING(99144,"处理中和已处理才能打印拣货单"),
+    NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE(99145,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
+    DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
 
 
     /**

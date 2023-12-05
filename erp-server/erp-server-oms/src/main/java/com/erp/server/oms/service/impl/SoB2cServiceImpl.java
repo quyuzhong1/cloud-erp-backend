@@ -246,18 +246,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
-
+        JSONObject jsonObject = new JSONObject();
         //明细信息
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        List<JSONObject> jsonList = new ArrayList<>();
+
         //自动匹配订单规则
-        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList,jsonList);
+        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList, jsonObject);
         if (isSuccess) {
             //自动匹配配货规则
-            distributionRule(soB2cEntity.getId(), detailList,jsonList);
+            distributionRule(soB2cEntity.getId(), detailList, jsonObject);
         }
         return soB2cEntity;
     }
@@ -311,12 +311,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        List<JSONObject> jsonList = new ArrayList<>();
+        JSONObject jsonObject = new JSONObject();
         //自动匹配订单规则
-        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList,jsonList);
+        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList, jsonObject);
         if (isSuccess) {
             //自动匹配配货规则
-            distributionRule(soB2cEntity.getId(), detailList,jsonList);
+            distributionRule(soB2cEntity.getId(), detailList, jsonObject);
         }
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
@@ -634,7 +634,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE, entity.getCode());
         }
-        LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity,soB2cLogisticsEntity);
+        LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
 
 
         //货取物流单号，TODO
@@ -1359,7 +1359,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         Map<String, SkuVO> skuVOMap = new HashMap<>();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        if (CollectionUtils.isNotEmpty(skuList)){
+        if (CollectionUtils.isNotEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
 
@@ -1566,8 +1566,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //                    throw new ServiceException(ApiError.ERROR_95084);
 //                }
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
-                detailDTO.setVariantProperty(null == skuVO ? "": skuVO.getVariantProperty());
-                detailDTO.setProductName(null == skuVO ? "": skuVO.getSkuName());
+                detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
+                detailDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
                 //是否是组合SKU
                 if (CollectionUtils.isNotEmpty(bomChildrenList)) {
                     long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())).count();
@@ -1967,12 +1967,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2023/8/24 15:18
      */
     @Override
-    public Boolean approveRule(String id, List<SoB2cDetailEntity> detailList,List<JSONObject> jsonList) {
+    public Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, JSONObject jsonObject) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //匹配审核规则
-        handleMatchJson(id, detailList,jsonList);
-        RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonList);
+        handleMatchJson(id, detailList);
+        RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonObject);
         //审核规则是否通过
         Boolean approveSuccess = (CollectionUtils.isEmpty(ruleOrderMatchResult.getCategoryDetailIdList()) || StrUtil.isBlank(ruleOrderMatchResult.getFlowStatus())) ? Boolean.FALSE : Boolean.TRUE;
         //匹配审核规则通过,自动提交并审核
@@ -2023,7 +2023,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/11/16 15:27
      */
-    private List<JSONObject> handleMatchJson(String id, List<SoB2cDetailEntity> detailList,List<JSONObject> jsonList) {
+    private JSONObject handleMatchJson(String id, List<SoB2cDetailEntity> detailList) {
+        JSONObject jsonObject = new JSONObject();
         SoB2cEntity soB2cEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -2058,81 +2059,167 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoB2cFinanceEntity(soB2cFinanceEntity);
         dto.setSoB2cDetailList(detailList);
         SoB2cDTO.FinancialInfoDTO financialInfo = getFinancialInfo(dto, Boolean.FALSE);
+        jsonObject.set("dictPayMethod", soB2cEntity.getDictPayMethod());
+        jsonObject.set("goodsTotalQty", skuIdList.size());
+        LocalDateTime payTime = soB2cEntity.getPayTime();
+        String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
+        jsonObject.set("payTime", payTimeStr);
+        jsonObject.set("packageWeight", logisticsEntity.getWeight());
+        jsonObject.set("packageLength", logisticsEntity.getLength());
+        jsonObject.set("packageHeight", logisticsEntity.getHeight());
+        jsonObject.set("shop", soB2cEntity.getShopId());
+        jsonObject.set("dictLogisticsMethod", logisticsEntity.getLogisticsChannelId());
+        jsonObject.set("actualShippingCost", logisticsEntity.getActualShippingCost());
+        jsonObject.set("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
+        jsonObject.set("dictPlatform", soB2cEntity.getDictPlatform());
+        //是否买家留言
+        Boolean isHavebuyerRemark=!StringUtils.isBlank(soB2cEntity.getBuyerRemark());
+
+        jsonObject.set("isHavebuyerRemark", isHavebuyerRemark);
+        //主表标签处理
+        String mainLabelJson = soB2cEntity.getLabelJson();
+        Boolean isAmazonFBA=Boolean.FALSE;
+        if (StrUtil.isNotBlank(mainLabelJson)) {
+            SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(mainLabelJson, SoB2cDTO.LabelJsonDTO.class);
+            //FBA
+            if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
+                isAmazonFBA=Boolean.TRUE;
+            }
+        }
+        jsonObject.set("isAmazonFBA", isAmazonFBA);
+        jsonObject.set("packageWidth", logisticsEntity.getWidth());
 
         //仓库数量
         long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
-        for (SoB2cDetailEntity detailEntity : detailList) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.set("detailId",detailEntity.getId());
-            LocalDateTime payTime=soB2cEntity.getPayTime();
-            String payTimeStr=Objects.nonNull(payTime)? LocalDateUtil.formatTime(payTime,DateUtil.fmt):"";
-            jsonObject.set("payTime",payTimeStr );
-            jsonObject.set("dictPayMethod", soB2cEntity.getDictPayMethod());
-            jsonObject.set("platformSkuNo", detailEntity.getPlatformSkuNo());
-            jsonObject.set("sellerSkuNo", detailEntity.getSellerSkuNo());
-            jsonObject.set("skuQty", detailEntity.getQty());
-            jsonObject.set("goodsTotalQty", soB2cEntity.getAmount());
-            jsonObject.set("packageWeight", logisticsEntity.getWeight());
-            jsonObject.set("packageLength", logisticsEntity.getLength());
-            jsonObject.set("packageHeight", logisticsEntity.getHeight());
-            jsonObject.set("shop", soB2cEntity.getShopId());
-            jsonObject.set("skuNo", detailEntity.getSkuNo());
-            jsonObject.set("dictLogisticsMethod", logisticsEntity.getLogisticsChannelId());
-            jsonObject.set("actualShippingCost", logisticsEntity.getActualShippingCost());
-            jsonObject.set("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
-            jsonObject.set("dictPlatform", soB2cEntity.getDictPlatform());
-            //是否买家留言
-            jsonObject.set("isHavebuyerRemark",!StringUtils.isBlank(soB2cEntity.getBuyerRemark()));
+        jsonObject.set("deliveryWarehouseQty", warehouseCount);
+        jsonObject.set("sellerLogistics", logisticsEntity.getName());
+        jsonObject.set("destCountry", receiverEntity.getCountry());
+        jsonObject.set("destCity", receiverEntity.getCityName());
+        jsonObject.set("orderTaxCost", totalTaxCost);
+        jsonObject.set("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
+        jsonObject.set("orderProfitRate", financialInfo.getProfitRate());
 
+        List<JSONObject> jsonObjectList = new ArrayList<>(detailList.size());
+        for (SoB2cDetailEntity detailEntity : detailList) {
+            JSONObject detailJson = new JSONObject();
+            detailJson.set("detailId", detailEntity.getId());
+            detailJson.set("platformSkuNo", detailEntity.getPlatformSkuNo());
+            detailJson.set("sellerSkuNo", detailEntity.getSellerSkuNo());
+            detailJson.set("skuQty", detailEntity.getQty());
+            detailJson.set("skuNo", detailEntity.getSkuNo());
+
+            detailJson.set("dictPayMethod", soB2cEntity.getDictPayMethod());
+            detailJson.set("goodsTotalQty", skuIdList.size());
+
+            detailJson.set("payTime", payTimeStr);
+            detailJson.set("packageWeight", logisticsEntity.getWeight());
+            detailJson.set("packageLength", logisticsEntity.getLength());
+            detailJson.set("packageHeight", logisticsEntity.getHeight());
+            detailJson.set("shop", soB2cEntity.getShopId());
+
+            detailJson.set("dictLogisticsMethod", logisticsEntity.getLogisticsChannelId());
+            detailJson.set("actualShippingCost", logisticsEntity.getActualShippingCost());
+            detailJson.set("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
+            detailJson.set("dictPlatform", soB2cEntity.getDictPlatform());
+            detailJson.set("isHavebuyerRemark", isHavebuyerRemark);
+
+            detailJson.set("deliveryWarehouseQty", warehouseCount);
+            detailJson.set("sellerLogistics", logisticsEntity.getName());
+            detailJson.set("destCountry", receiverEntity.getCountry());
+            detailJson.set("destCity", receiverEntity.getCityName());
+            detailJson.set("orderTaxCost", totalTaxCost);
+            detailJson.set("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
+            detailJson.set("orderProfitRate", financialInfo.getProfitRate());
+            detailJson.set("isAmazonFBA", isAmazonFBA);
+            detailJson.set("packageWidth", logisticsEntity.getWidth());
+            detailJson.set("deliveryWarehouseQty", warehouseCount);
+            detailJson.set("sellerLogistics", logisticsEntity.getName());
+            detailJson.set("destCountry", receiverEntity.getCountry());
+            detailJson.set("destCity", receiverEntity.getCityName());
+            detailJson.set("orderTaxCost", totalTaxCost);
+            detailJson.set("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
+            detailJson.set("orderProfitRate", financialInfo.getProfitRate());
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {
                 SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabelJson, SoB2cDetailDTO.LabelJsonDTO.class);
                 //速卖通已税
                 if ("U_TAXED".equals(labelJsonDTO.getAlreadyTaxed()) || "I_TAXED".equals(labelJsonDTO.getAlreadyTaxed())) {
-                    jsonObject.set("isAliExpressTaxOrder", Boolean.TRUE);
+                    detailJson.set("isAliExpressTaxOrder", Boolean.TRUE);
                 }
                 //菜鸟官方仓
                 if ("cainiaoInternationalWarehouse".equals(labelJsonDTO.getLogisticsWarehouseType())) {
-                    jsonObject.set("isAliExpressNewbieWarehouse", Boolean.TRUE);
-                }
-            }
-            //主表标签处理
-            String mainLabelJson = soB2cEntity.getLabelJson();
-            if (StrUtil.isNotBlank(mainLabelJson)) {
-                SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(mainLabelJson, SoB2cDTO.LabelJsonDTO.class);
-                //FBA
-                if ("AFN".equals(labelJsonDTO.getFulfillmentChannel())) {
-                    jsonObject.set("isAmazonFBA", Boolean.TRUE);
+                    detailJson.set("isAliExpressNewbieWarehouse", Boolean.TRUE);
                 }
             }
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
                 long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailEntity.getSkuId())).count();
                 if (count > 0) {
-                    jsonObject.set("isCombinationOrder", Boolean.TRUE);
+                    detailJson.set("isCombinationOrder", Boolean.TRUE);
                 }
             }
-
-
             ProductDetailDTO.ProductDTO productDTO = productList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDTO)) {
-                jsonObject.set("category", productDTO.getCategory());
-                jsonObject.set("property", productDTO.getProperty());
+                detailJson.set("category", productDTO.getCategory());
+                detailJson.set("property", productDTO.getProperty());
             }
-            jsonObject.set("deliveryWarehouseId", detailEntity.getWarehouseId());
-            jsonObject.set("deliveryWarehouseLocation", detailEntity.getWarehouseLocation());
-            jsonObject.set("packageWidth", logisticsEntity.getWidth());
-            jsonObject.set("deliveryWarehouseQty", warehouseCount);
-            jsonObject.set("sellerLogistics", logisticsEntity.getName());
-            jsonObject.set("destCountry", receiverEntity.getCountry());
-            jsonObject.set("destCity", receiverEntity.getCityName());
-            jsonObject.set("orderTaxCost", totalTaxCost);
-            jsonObject.set("amount", MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
-            jsonObject.set("orderProfitRate", financialInfo.getProfitRate());
-            jsonList.add(jsonObject);
+            detailJson.set("deliveryWarehouseId", detailEntity.getWarehouseId());
+            detailJson.set("deliveryWarehouseLocation", detailEntity.getWarehouseLocation());
+            jsonObjectList.add(detailJson);
         }
-        return jsonList;
+        jsonObject.set("detailList", jsonObjectList);
+        String skuNo=getByField("skuNo",jsonObjectList);
+        jsonObject.set("skuNo",skuNo);
+
+        String sellerSkuNo=getByField("sellerSkuNo",jsonObjectList);
+        jsonObject.set("sellerSkuNo",sellerSkuNo);
+
+        String platformSkuNo=getByField("platformSkuNo",jsonObjectList);
+        jsonObject.set("platformSkuNo",platformSkuNo);
+
+        String skuQty=getByField("skuQty",jsonObjectList);
+        jsonObject.set("skuQty",skuQty);
+
+        String deliveryWarehouseId=getByField("deliveryWarehouseId",jsonObjectList);
+        jsonObject.set("deliveryWarehouseId",deliveryWarehouseId);
+
+        String deliveryWarehouseLocation=getByField("deliveryWarehouseLocation",jsonObjectList);
+        jsonObject.set("deliveryWarehouseLocation",deliveryWarehouseLocation);
+
+        String category=getByField("category",jsonObjectList);
+        jsonObject.set("category",category);
+
+        String property=getByField("property",jsonObjectList);
+        jsonObject.set("property",property);
+
+        String isAliExpressTaxOrder=getByField("isAliExpressTaxOrder",jsonObjectList);
+        jsonObject.set("isAliExpressTaxOrder",isAliExpressTaxOrder);
+
+        String isAliExpressNewbieWarehouse=getByField("isAliExpressNewbieWarehouse",jsonObjectList);
+        jsonObject.set("isAliExpressNewbieWarehouse",isAliExpressNewbieWarehouse);
+
+        String isCombinationOrder=getByField("isCombinationOrder",jsonObjectList);
+        jsonObject.set("isCombinationOrder",isCombinationOrder);
+
+
+        return jsonObject;
+    }
+
+    /**
+     * 根据 字段获取值
+     * @author yl
+     * @date 2023-12-05 10:25
+     * @param fieldCode
+     * @return jsonObjectList
+     */
+
+    private String getByField(String fieldCode, List<JSONObject> jsonObjectList) {
+        Set<String> list=new HashSet<>(jsonObjectList.size());
+        for(JSONObject jsonObject:jsonObjectList){
+            list.add(jsonObject.getOrDefault(fieldCode,"").toString());
+        }
+       return list.stream().collect(Collectors.joining(","));
     }
 
     /**
@@ -2143,18 +2230,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2023/8/24 15:19
      */
     @Override
-    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList,List<JSONObject> jsonList) {
+    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, JSONObject jsonObject) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //进行配货规则匹配
-        List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> list = ruleDeliveryWarehouseService.getRuleOrderMatchResult(jsonList);
+        List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> list = ruleDeliveryWarehouseService.getRuleOrderMatchResult(jsonObject);
         //配货规则是否通过
-        Boolean distributionSuccess = CollectionUtils.isNotEmpty(list) && list.size() == jsonList.size() ? Boolean.TRUE : Boolean.FALSE;
+        Boolean distributionSuccess = CollectionUtils.isNotEmpty(list);
         if (distributionSuccess) {
             //更新明细仓库信息
             for (SoB2cDetailEntity detailEntity : detailList) {
                 //比较json
-                JSONObject jsonObject = jsonList.stream().filter(obj -> detailEntity.getId().equals(obj.get("detailId"))).findFirst().orElse(null);
                 String warehouseId = list.stream().filter(obj -> obj.getJsonObject().equals(jsonObject)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseId())).orElse("");
                 detailEntity.setWarehouseId(warehouseId);
             }
@@ -2369,7 +2455,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
             financialInfoDTO.setAmount(soB2cEntity.getAmount());
-            financialInfoDTO.setItemCost(MathUtil.divide(itemCost,soB2cEntity.getExchangeRate()));
+            financialInfoDTO.setItemCost(MathUtil.divide(itemCost, soB2cEntity.getExchangeRate()));
         }
 
         String platformOption = soB2cFinanceEntity.getPlatformCostType();
@@ -2538,6 +2624,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<ShopInfoEntity> shopInfoList = CollectionUtils.isNotEmpty(shopIdList) ? shopInfoService.listByIds(shopIdList) : Collections.emptyList();
         //平台skuno
         List<String> platformSkuNoList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getPlatformSkuNo).collect(Collectors.toList());
+
         List<SkuMappingDTO.SkuDTO> skuInfoList = skuMappingService.listByPlatformSkuNoList(platformSkuNoList);
         for (ReportDTO.ProductSalesPagingViewDTO item : list) {
             String shopId = item.getShopId();
@@ -2597,7 +2684,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return entity;
         } else {
             // 历史异常记录修复
-            if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")){
+            if (StringUtils.isBlank(oldEntity.getCode()) && !BusinessCommonConstants.hasProfile("prod")) {
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
                 oldEntity.setCode(code);
             }
@@ -2607,7 +2694,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (!oldEntity.toString().equals(entity.toString())) {
-                if (!this.updateById(entity)){
+                if (!this.updateById(entity)) {
                     throw new ServiceException("soB2c订单更新失败");
                 }
             }
@@ -2627,19 +2714,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<JSONObject> getJson(String id) {
-        List<SoB2cDetailEntity> soB2cDetailList=soB2cDetailService.listByMainId(id);
-       List<JSONObject> list= handleMatchJson(id,soB2cDetailList,new ArrayList<>());
+    public JSONObject getJson(String id) {
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
+        JSONObject list = handleMatchJson(id, soB2cDetailList);
 
-        RuleOrderApprovalDTO.RuleMatchDTO result=  ruleOrderApprovalService.getRuleOrderMatchResult(list);
-        System.out.println(result.getFlowStatus()+"===="+result.getCategoryDetailIdList());
+        RuleOrderApprovalDTO.RuleMatchDTO result = ruleOrderApprovalService.getRuleOrderMatchResult(list);
+        System.out.println(result.getFlowStatus() + "====" + result.getCategoryDetailIdList());
         return list;
     }
 
     public static void main(String[] args) {
-        LocalDateTime now=LocalDateTime.now();
-        JSONObject jsonObject=new JSONObject();
-        jsonObject.set("payTime",now);
+        LocalDateTime now = LocalDateTime.now();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("payTime", now);
         System.out.println(jsonObject.get("payTime"));
     }
 }

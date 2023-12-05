@@ -2,6 +2,7 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -81,8 +82,23 @@ public class ReportInfoMongoDTO {
     @Panno(findType = PannoEnum.EQ, field = "shopId")
     private String shopId;
 
+    /**
+     * 数据下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
+    private Integer downloadStatus;
+
     public ReportInfoMongoDTO(String reportId) {
         this.reportId = reportId;
+    }
+
+    public static ReportInfoMongoDTO getByNotCheckDownload() {
+        ReportInfoMongoDTO mongoDTO = new ReportInfoMongoDTO();
+        mongoDTO.setDownloadStatus(0);
+        mongoDTO.setProcessingStatus(null);
+        return mongoDTO;
     }
 
     public static ReportInfoMongoDTO getReportId(String reportId) {

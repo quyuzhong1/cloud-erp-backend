@@ -118,20 +118,28 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 //年度的
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
-                    dto.setDateType(DateTypeEnum.YEAR.getCode());
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.YEAR.getType());
+                    }
                 } else {
                     setMonthDate(dto, yearMonth);
-                    dto.setDateType(DateTypeEnum.MONTH.getCode());
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.MONTH.getCode());
+                    }
                 }
                 return salesOrderServiceMapper.getQty(dto);
             case SALES_AMOUNT:
                 //年度
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
-                    dto.setDateType(DateTypeEnum.YEAR.getCode());
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.YEAR.getType());
+                    }
                 } else {
                     setMonthDate(dto, yearMonth);
-                    dto.setDateType(DateTypeEnum.MONTH.getCode());
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.MONTH.getCode());
+                    }
                 }
                 return salesOrderServiceMapper.getAmount(dto, settleRate);
             case NET_SALES_AMOUNT:
@@ -139,6 +147,9 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 //年度
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.YEAR.getType());
+                    }
                     //销售额
                     BigDecimal yearOrderAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);
                     //年退款金额
@@ -146,6 +157,9 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     return MathUtil.subtract(yearOrderAmount, yearRefundOrderAmount);
                 } else {
                     setMonthDate(dto, yearMonth);
+                    if (StringUtils.isBlank(dto.getDateType())){
+                        dto.setDateType(DateTypeEnum.MONTH.getCode());
+                    }
                     //退款金额
                     BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
                     BigDecimal monthAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);

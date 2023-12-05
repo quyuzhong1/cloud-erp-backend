@@ -20,7 +20,7 @@ public enum RequisitionApplicationStatusEnum implements EnumMessage  {
     WAIT_SUBMIT("waitSubmit", "待提交"),
     WAIT_HANDLE("waitHandle", "待处理"),
     HANDLE_ING("handleIng", "处理中"),
-    HANDLE("handle", "已审核");
+    HANDLE("handle", "已处理");
 
     @EnumValue
     @JsonValue

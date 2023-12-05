@@ -430,16 +430,16 @@
         ORDER BY sm.create_time DESC
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
-        SELECT li.id           AS listingId,
+        SELECT li.id AS listingId,
                sm.product_sku_id,
                sm.product_sku_no,
-               li.platform_sku_no       AS flagSkuNo,
-               li.platform_sku_name AS flagProductName,
                li.platform_sku_no,
-               li.platform_product_name
-        FROM sku_mapping sm
-                 INNER JOIN listing_info li
-                            ON sm.listing_id = li.id AND li.is_deleted = FALSE
+               li.platform_sku_name,
+               li.type
+        FROM listing_info li
+        LEFT JOIN sku_mapping sm
+        ON sm.listing_id = li.id
+        AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE and sm.is_expire=FALSE
         <if test="platformSkuNoList !=null and platformSkuNoList.size>0">
             AND li.platform_sku_no IN
@@ -491,7 +491,7 @@
             li.platform_sku_name AS stockSkuName
         FROM sku_mapping sm
         INNER JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE
         WHERE sm.is_deleted=FALSE
         <if test="productSkuIdList !=null and productSkuIdList.size>0">
             AND sm.product_sku_id IN

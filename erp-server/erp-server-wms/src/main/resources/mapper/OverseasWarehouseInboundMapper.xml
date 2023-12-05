@@ -52,16 +52,20 @@
         owi.is_deleted = FALSE
         AND owid.is_deleted = FALSE
         <!--来源单号-->
+        <if test="params.code != null and params.code != ''">
+            AND owi.code ILIKE concat('%',#{params.code}::text,'%')
+        </if>
+        <!--来源单号-->
         <if test="params.sourceCode != null and params.sourceCode != ''">
             AND owi.sourceCode ILIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <!--入库类型-->
-        <if test="params.instockType != null and params.instockType.size > 0">
-            AND owi.instock_type = #{instockType}
+        <if test="params.instockType != null ">
+            AND owi.instock_type = #{params.instockType}
         </if>
         <!--交货方式-->
-        <if test="params.deliveryMode != null and params.deliveryMode.size > 0">
-            AND owi.delivery_mode = #{deliveryMode}
+        <if test="params.deliveryMode != null ">
+            AND owi.delivery_mode = #{params.deliveryMode}
         </if>
         <!--入库状态-->
         <if test="params.instockStatusList != null and params.instockStatusList.size > 0">

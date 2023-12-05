@@ -57,6 +57,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -671,6 +672,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:getAllUserList",keyGenerator = "myKeyGenerator")
     public List<FindUserDTO> getAllUserList() {
         List<FindUserDTO> resultList = new LinkedList<>();
         List<SysUserInfoEntity> list = this.list();

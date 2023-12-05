@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
-import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
@@ -13,6 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,14 +105,32 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public List<BaseSelectDTO> baseSelectlist() {
+    public List<BaseSelectDTO> baseSelectlist(String dictPlatform) {
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()
+                .eq(StringUtils.isNotBlank(dictPlatform), OverseasTransferWarehouseEntity::getDictPlatform, dictPlatform)
+                .list();
+        if(CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        Map<String, List<OverseasTransferWarehouseEntity>> groupMap = list.stream().collect(Collectors.groupingBy(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode));
+
+        return groupMap.values().stream()
+                .map(overseasTransferWarehouseEntities -> {
+                    OverseasTransferWarehouseEntity e = overseasTransferWarehouseEntities.stream().findFirst().orElse(null);
+                    return new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getName());
+                }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BaseSelectDTO> LogisticsProductList(String code) {
+        List<OverseasTransferWarehouseEntity> list = lambdaQuery()
+                .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, code)
                 .list();
         if(CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
         return list.stream()
-                .map(e-> new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getPlatformToWarehouseName()))
+                .map(e-> new BaseSelectDTO(e.getId(), e.getLogisticsProductCode(), e.getLogisticsProductName()))
                 .collect(Collectors.toList());
     }
 

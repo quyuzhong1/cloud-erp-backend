@@ -68,10 +68,11 @@ public interface FbaShipmentConsumerConverter {
             @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
-            @Mapping(target = "asin", source = "listingInfoWithSkuMappingDTO.platformSpuNo"),
             @Mapping(target = "msku", source = "receiveDTO.sellerSku", defaultValue = ""),
             @Mapping(target = "fnSku", source = "receiveDTO.fnSku", defaultValue = ""),
-            @Mapping(target = "skuNo", source = "listingInfoWithSkuMappingDTO.productSkuNo", defaultValue = ""),
+            @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
+            @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
+            @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "declareQty", source = "receiveDTO.declareQty"),
             @Mapping(target = "receiveQty", source = "receiveDTO.receiveQty"),
             @Mapping(target = "receiveDate", source = "receiveDTO.receiveDate"),
@@ -100,7 +101,7 @@ public interface FbaShipmentConsumerConverter {
     @Mappings({
             @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
-            @Mapping(target = "asin", source = "listingInfoWithSkuMappingDTO.platformSpuNo"),
+            @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
             @Mapping(target = "isCombination", expression = "java(null != listingInfoWithSkuMappingDTO && hasChildrenSkuIds.contains(listingInfoWithSkuMappingDTO.getProductSkuId()))"),
     })
     FbaShipmentDetailEntity detailSetSkuMappingInfo(FbaShipmentDetailEntity detailEntity,
@@ -108,8 +109,9 @@ public interface FbaShipmentConsumerConverter {
                                                     List<String> hasChildrenSkuIds);
 
     @Mappings({
+            @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
-            @Mapping(target = "asin", source = "listingInfoWithSkuMappingDTO.platformSpuNo"),
+            @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
     })
     FbaShipmentReceiveEntity receiveSetSkuMappingInfo(FbaShipmentReceiveEntity receiveEntity,
                                                       ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO);

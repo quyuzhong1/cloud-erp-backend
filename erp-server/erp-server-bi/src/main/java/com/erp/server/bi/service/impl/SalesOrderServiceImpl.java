@@ -223,7 +223,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        params.setDateType(DateTypeEnum.DAY.getType());
+        if (StringUtils.isBlank(params.getDateType())){
+            params.setDateType(DateTypeEnum.DAY.getType());
+        }
         IPage pageData = baseMapper.getBySku(query, params, settleRate);
         List<SkuSalesDTO.PagingSalesInfoDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -238,7 +240,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (params.getTimeType() != null && params.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
-        params.setDateType(DateTypeEnum.DAY.getType());
+        if (StringUtils.isBlank(params.getDateType())){
+            params.setDateType(DateTypeEnum.DAY.getType());
+        }
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
 
@@ -434,7 +438,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(params.getSettleMethod());
         LocalDateTime paramsEndTime = params.getEndTime();
         params.setEndTime(paramsEndTime, 1);
-        params.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(params.getDateType())){
+            params.setDateType(DateTypeEnum.MONTH.getType());
+        }
         //产品销售等级销售额
         List<Map<String, Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
         int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
@@ -569,7 +575,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
         //获取各个平台的销售额
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<Map<String, Object>> resultList = baseMapper.getPlatformSales(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         statistical.setName("平台销售额与占比");
@@ -618,6 +626,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         //获取各个平台的销售额
         List<SalesFlagVO> resultList = baseMapper.byTobToc(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
@@ -1072,7 +1083,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
         BigDecimal chinaSales = resultList.stream().
-                filter(s -> s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> StringUtils.isNotBlank(s.getName()) && s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         chinaMap.put("value", chinaSales);
@@ -1081,7 +1092,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> abroadMap = new HashMap();
         abroadMap.put("name", "国外");
         BigDecimal abroadSales = resultList.stream().
-                filter(s -> !s.getName().contains(chinaName) && s.getSales() != null).
+                filter(s -> StringUtils.isNotBlank(s.getName()) && !s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);
@@ -1116,6 +1127,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         //这个是环比的查询出来的
         List<SalesBaseVO> chainList = baseMapper.byPeople(dto, settleRate);
 
@@ -1243,6 +1257,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         List<SalesCountVO> resultList = baseMapper.byCountry(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
@@ -1339,7 +1356,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
@@ -1394,6 +1413,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime weekEnd = LocalDateUtil.getThisWeekEnd(nowDate);
         dto.setStartTime(weekStart);
         dto.setEndTime(weekEnd);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.WEEK.getType());
+        }
         //本周结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1459,6 +1481,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(nowDate);
         dto.setStartTime(monthStart);
         dto.setEndTime(monthEnd);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1524,6 +1549,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime quarterEnd = LocalDateUtil.getThisQuarterEnd(nowDate);
         dto.setStartTime(quarterStart);
         dto.setEndTime(quarterEnd);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.QUARTER.getType());
+        }
         //本月结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1589,6 +1617,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime yearEnd = LocalDateUtil.getThisYearEnd(nowDate);
         dto.setStartTime(yearStart);
         dto.setEndTime(yearEnd);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.YEAR.getType());
+        }
         //本年结果
         List<SalesBaseVO> list = baseMapper.byPeopleRank(dto, settleRate);
 
@@ -1919,6 +1950,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer oldFlag = BiConstant.OLD;
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         List<SalesFlagVO> list = baseMapper.byPeopleNewAndOld(dto, settleRate);
 
         Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
@@ -2066,37 +2100,37 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (ShopSiteVO item : shopCategoryList) {
             SalesCountVO vo = new SalesCountVO();
             //对应的店铺信息
-            List<String> shopNoList = item.getShopNo();
+            List<String> shopNameList = item.getShopName();
             String site = item.getSite();
             vo.setName(site);
             BigDecimal sales = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
+                    filter(s -> shopNameList.contains(s.getShopName()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setSalesRatio(getSalesRatio(totalSales, sales));
             vo.setSales(sales);
             Integer salesQuantity = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    filter(s -> shopNameList.contains(s.getShopName())).
                     mapToInt(ShopSalesVO::getSalesQuantity).
                     sum();
             vo.setSalesQuantity(salesQuantity);
 
             Integer orderCount = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    filter(s -> shopNameList.contains(s.getShopName())).
                     mapToInt(ShopSalesVO::getOrderCount).
                     sum();
             vo.setOrderCount(orderCount);
 
             BigDecimal chainSales = chainList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
+                    filter(c -> shopNameList.contains(c.getShopName()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainSales));
 
             BigDecimal yearBasisSales = yearBasisList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
+                    filter(c -> shopNameList.contains(c.getShopName()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisSales));
@@ -2121,7 +2155,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesBaseVO> list = baseMapper.byCategory((BiCategoryDTO.FirstCategoryParamsDTO) dto, settleRate);
         //获取到sku 属性分类
         List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();
@@ -2190,7 +2226,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-        List<SalesBaseVO> list = baseMapper.byOldProductTop(dto, settleRate);
+        dto.setNewSign(0);
+        List<SalesBaseVO> list = baseMapper.byProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
@@ -2232,8 +2269,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-
-        List<SalesBaseVO> list = baseMapper.byNewProductTop(dto, settleRate);
+        dto.setNewSign(1);
+        List<SalesBaseVO> list = baseMapper.byProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
@@ -2286,6 +2323,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年
         int lastYear = now.minusYears(1).getYear();
         String lastYearStr = String.valueOf(lastYear);
+        if(StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag, settleRate, thisYear);
         List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate, lastYearStr);
         //上个月开始时间
@@ -2295,6 +2335,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setStartTime(lastMonthStart);
         dto.setEndTime(lastMonthEnd);
         //获取上个月
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         SalesFlagVO lastMonth = baseMapper.byLastMonth(dto, settleRate);
 
         //获取到当前月
@@ -2356,7 +2399,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
-
+        if(StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         List<ShopSalesVO> list = baseMapper.byShop(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("亚马逊欧美日占比趋势分析");
@@ -2380,8 +2425,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> siteList = SiteEnum.getSiteList(siteName);
             List<ShopSiteVO> siteShopList = shopCategoryList.stream().filter(s -> siteList.contains(s.getSite()))
                     .collect(Collectors.toList());
-            List<String> shopNoList = siteShopList.stream().flatMap(s -> s.getShopNo().stream()).collect(Collectors.toList());
-            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
+            List<String> shopNameList = siteShopList.stream().flatMap(s -> s.getShopName().stream()).collect(Collectors.toList());
+            BigDecimal value = list.stream().filter(s -> shopNameList.contains(s.getShopName()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             siteMap.put("value", value);
             dataList.add(siteMap);
@@ -3334,7 +3379,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesFlagVO> list = baseMapper.newAndOldSalesAmount(dto, settleRate, "dept");
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
@@ -3421,7 +3468,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer newFlag = BiConstant.NEW;
         //老品
         Integer oldFlag = BiConstant.OLD;
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         List<SalesFlagVO> list = baseMapper.newAndOldSalesAmount(dto, settleRate, "user");
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
