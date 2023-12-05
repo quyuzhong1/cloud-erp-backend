@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.ErpServerTmsApplication;
+import com.erp.server.tms.service.LogisticsSaleChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,6 +24,9 @@ public class GoodCangLogisticsHandlerImplTest {
     @Resource
     private GoodCangLogisticsHandlerImpl goodCangLogisticsHandler;
 
+    @Resource
+    private LogisticsSaleChannelService logisticsSaleChannelService;
+
     @Test
     public void getChannel() {
         Map<String,String> authMap = new HashMap<>();
@@ -31,6 +35,9 @@ public class GoodCangLogisticsHandlerImplTest {
         ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
         chanelQueryVO.setAuthMap(authMap);
         ApiResult<List<LogisticsSaleChannelEntity>> result = goodCangLogisticsHandler.getChannel(chanelQueryVO);
+        for(LogisticsSaleChannelEntity logisticsSaleChannelEntity : result.getData()){
+            logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
+        }
         System.out.println(result);
     }
 

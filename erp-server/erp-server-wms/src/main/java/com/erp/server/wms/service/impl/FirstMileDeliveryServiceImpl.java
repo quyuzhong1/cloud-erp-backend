@@ -423,51 +423,24 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
-
         addDTO.setSourceId(entity.getSourceId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
 
-        //根据sku查询拥有的子sku
-        List<String> skuIdList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
         for (FirstMileDeliveryDetailEntity detailEntity : detailEntityList) {
-            //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                detailEntity.setIsCombination(Boolean.TRUE);
-                //拆分子件
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    //映射产品信息
-                    TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-                    detailAddDto.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    detailAddDto.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    detailAddDto.setQty(detailEntity.getDeliveryQty());
-                    detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
-                    detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-                    detailAddDto.setInWarehouseId(warehouseEntity.getId());
-                    detailAddDto.setInWarehouseLocation("");
-                    detailAddDto.setSourceDetailId(detailEntity.getId());
-                    detailAddDtoList.add(detailAddDto);
-                }
-
-            } else {
-                detailEntity.setIsCombination(Boolean.FALSE);
-                //映射产品信息
-                TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-                detailAddDto.setSkuId(detailEntity.getSkuId());
-                detailAddDto.setSkuNo(detailEntity.getSkuNo());
-                detailAddDto.setQty(detailEntity.getDeliveryQty());
-                detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
-                detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-                detailAddDto.setInWarehouseId(warehouseEntity.getId());
-                detailAddDto.setInWarehouseLocation("");
-                detailAddDto.setSourceDetailId(detailEntity.getId());
-                detailAddDtoList.add(detailAddDto);
-            }
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+            //映射产品信息
+            detailAddDto.setSkuId(detailEntity.getSkuId());
+            detailAddDto.setSkuNo(detailEntity.getSkuNo());
+            detailAddDto.setQty(detailEntity.getDeliveryQty());
+            detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
+            detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+            detailAddDto.setInWarehouseId(warehouseEntity.getId());
+            detailAddDto.setInWarehouseLocation("");
+            detailAddDto.setSourceDetailId(detailEntity.getId());
+            detailAddDtoList.add(detailAddDto);
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
@@ -690,13 +663,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
 
+                //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
                 if (CollectionUtils.isEmpty(overseasProviderWarehouseEntities)) {
                     throw new ServiceException(ApiError.DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE);
                 }
 
-/*                OverseasProviderEntity providerEntity = overseasProviderService.getById(overseasProviderWarehouseEntities.get(MathUtil.ZERO).getMainId());
-                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
+                OverseasProviderEntity providerEntity = overseasProviderService.getById(overseasProviderWarehouseEntities.get(MathUtil.ZERO).getMainId());
+/*                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
 
                 req.setReceivingCode("");
                 req.setReferenceNo(entity.getCode());

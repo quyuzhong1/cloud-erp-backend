@@ -88,6 +88,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SysDictService sysDictService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -138,6 +140,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String type = tableName.value();
         wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
 
+        // 推送到草稿
+
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
 
@@ -152,14 +156,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = BeanMapperUtils.map(OverseasWarehouseInboundEntity.class, updateDTO);
         old.setInstockType(updateDTO.getInstockType().getCode());
         old.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
+        Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
         // 数据处理
-//        handleData(overseasWarehouseInboundEntity, updateDTO);
+        handleData(old, updateDTO, deliveryEntity);
         log.info("编辑 开始修改海外仓入库单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(overseasWarehouseInboundEntity);
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
         log.info("编辑 开始记录海外仓入库单日志数据，单号：【{}】", overseasWarehouseInboundEntity.getCode());
@@ -279,9 +285,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 commonDTO.setBlankOtherByTransferAgentAndCollectAtHome();
             }
         }
+        // 查询发货目的仓平台
+        String dictPlatform = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
 
         BeanUtils.copyProperties(commonDTO, mainEntity);
         // 验证数据 & 数据赋值
+        mainEntity.setDictPlatform(dictPlatform);
         mainEntity.setInstockType(commonDTO.getInstockType().getCode());
         mainEntity.setLogisticsMethod(commonDTO.getLogisticsMethod().getCode());
         mainEntity.setEstimatedArrivalDate(LocalDateTime.of(commonDTO.getEstimatedArrivalDate(), LocalTime.MIN));

@@ -5,12 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
-import com.erp.server.wms.service.OverseasTransferWarehouseService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -41,6 +43,10 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -105,13 +111,32 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public List<BaseSelectDTO> baseSelectlist(String dictPlatform) {
+    public List<BaseSelectDTO> baseSelectlist(String sourceId) {
+        // 空返回所有
+        if (StringUtils.isBlank(sourceId)){
+            List<OverseasTransferWarehouseEntity> list = lambdaQuery().list();
+            return convertResult(list);
+        }
+        // 查询发货单
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(sourceId);
+        if (null == deliveryEntity){
+            return Collections.emptyList();
+        }
+        // 查询关联的海外入库仓
+        OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(deliveryEntity.getDestWarehouseId());
+        if (null == entity){
+            return Collections.emptyList();
+        }
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dictPlatform), OverseasTransferWarehouseEntity::getDictPlatform, dictPlatform)
+                .eq(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode, entity.getPlatformWarehouseCode())
                 .list();
         if(CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
+        return convertResult(list);
+    }
+
+    private List<BaseSelectDTO> convertResult(List<OverseasTransferWarehouseEntity> list) {
         Map<String, List<OverseasTransferWarehouseEntity>> groupMap = list.stream().collect(Collectors.groupingBy(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode));
 
         return groupMap.values().stream()
