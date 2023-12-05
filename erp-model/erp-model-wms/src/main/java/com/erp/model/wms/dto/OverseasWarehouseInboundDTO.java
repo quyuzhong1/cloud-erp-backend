@@ -795,10 +795,20 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String transferWarehouseId;
 
         /**
+         * 前端不用传
+         */
+        private String transferWarehouseName;
+
+        /**
          * 报关方式代号:
          * /api/wms/common/enumDropDown?type=CustomsTypeNew
          */
         private Integer customsType;
+
+        /**
+         * 前端不用传
+         */
+        private String customsTypeName;
 
         /**
          * 物流产品代码
