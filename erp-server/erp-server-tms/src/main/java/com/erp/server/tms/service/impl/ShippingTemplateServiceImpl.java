@@ -134,7 +134,6 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ShippingTemplateDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
-        //清空明细数据
         List<ShippingTemplateDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);

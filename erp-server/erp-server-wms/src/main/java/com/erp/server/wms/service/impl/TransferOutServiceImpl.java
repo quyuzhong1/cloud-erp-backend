@@ -158,8 +158,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
         // 数据填充处理
         filling(records);
-        // 明细信息多行第一行赋值，其他行赋空（主单属性）
-        listHideMainData(records);
         return new PagingVO<>(pageData);
     }
 
@@ -685,31 +683,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             member.setCurInventoryQty(curInventoryQty);
         });
         data.setDetailList(viewDetailList);
-    }
-
-    /**
-     * 分页列表多行明细只显示第一行数据，其他行赋空值
-     * @param records
-     */
-    private void listHideMainData(List<TransferOutDTO.PagingViewDTO> records) {
-        Set<String> mainIds = Sets.newHashSet();
-        // 同一个主单的其他行明细数据，只保留第一行
-        for(TransferOutDTO.PagingViewDTO data : records) {
-            if (mainIds.contains(data.getId())) {
-                data.setCode(null);
-                data.setTransferDirection(null);
-                data.setTransferDirectionName(null);
-                data.setApproveStatus(null);
-                data.setApproveStatusName(null);
-                data.setInvalidStatus(null);
-                data.setInvalidStatusName(null);
-                data.setApproveUserName(null);
-                data.setCreateUserName(null);
-                data.setCreateTime(null);
-                continue;
-            }
-            mainIds.add(data.getId());
-        }
     }
 
     /**

@@ -162,18 +162,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setPurchaseOrderCode(null);
-                    obj.setSupplierName(null);
-                    obj.setApproveStatusName(null);
-//                    obj.setApproveStatus(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
@@ -185,7 +174,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 if (ObjectUtils.isNotEmpty(purchaseOrderDetailEntity)) {
                     obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
                 }
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);

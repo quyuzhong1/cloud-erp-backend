@@ -150,24 +150,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //数据处理
         doOpHandleData(records);
-        List<String> list = new ArrayList<>();
-        //清空明细数据
-        records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setTransferDirection(null);
-                obj.setTransferDirectionName(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setApplyUserName(null);
-                obj.setApproveUserName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
-            list.add(obj.getId());
-        });
         return new PagingVO(pageData);
     }
 

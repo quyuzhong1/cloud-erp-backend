@@ -189,16 +189,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setType(null);
-                    obj.setCustomerName(null);
-                    obj.setInventoryOrgName(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatusName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
 

@@ -632,15 +632,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        /*
-        * 审核通过生成分步式调出单：
-              审核通过发货单，系统自动创建分步式调出单，并自动审核扣减库存，每个发货单对应一个调出单
-              库存调拨方向：发货仓->目的仓
-              在途归属：调入方
-              调出单备注：发货单【发货单号】审核通过自动创建
-        * */
+        //审核通过
         if (ApproveType.PASS.equals(dto.getType())) {
-
             //如果是FBA货件来源，审核通过修改货件发货状态为已发货
             if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
                 FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
@@ -648,20 +641,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     fbaShipmentService.deliveryStatus(entity);
                 }
             }
-
             //如果是发货计划来源
             if (SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode().equals(entity.getSourceType())) {
-                //查询是否生成了海外仓入库单，要生成后才可以审核通过
-                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
-                if (ObjectUtil.isEmpty(inboundEntity)) {
-                    throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
-                }
-
                 //审核通过修改发货状态为已发货
                 OverseasDeliveryPlanEntity planEntity = overseasDeliveryPlanService.getById(entity.getSourceId());
                 if (ObjectUtil.isNotEmpty(planEntity)) {
                     overseasDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
+            }
+
+            //查询是否生成了海外仓入库单，未对接海外仓API：发货单审核通过，入库单自动变更为待签收
+            OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+            if (ObjectUtil.isEmpty(inboundEntity)) {
+                overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
+//                throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
+            } else {
+                //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
 
                 //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
@@ -670,26 +665,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
 
                 OverseasProviderEntity providerEntity = overseasProviderService.getById(overseasProviderWarehouseEntities.get(MathUtil.ZERO).getMainId());
-/*                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
 
+/*                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
                 req.setReceivingCode("");
                 req.setReferenceNo(entity.getCode());
                 req.setReceivingType(OverseasInstockTypeEnum.getByCode(inboundEntity.getInstockType()).getTransitTypeEnum().getCode());
-
-
-
                 thirdWarehouseRegistry.getHandler(providerEntity.getCode()).editInboundBill(req, providerEntity.getId());*/
-
-
-                //发货单审核通过，入库单自动变更为待签收
-                overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
 
-            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
             //新增直接调拨单
+            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
-
                 //提交
                 transferInfoService.submit(Arrays.asList(transferOutId));
                 //审核

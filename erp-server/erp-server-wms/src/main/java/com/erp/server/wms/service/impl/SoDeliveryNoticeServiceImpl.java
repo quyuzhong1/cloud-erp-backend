@@ -158,21 +158,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setCustomerName(null);
-                    obj.setWarehouseOrgName(null);
-                    obj.setApproveStatusName(null);
-                    obj.setApproveStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setDeliveryStatusName(null);
-                    obj.setDeliveryStatus(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
@@ -188,7 +174,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);

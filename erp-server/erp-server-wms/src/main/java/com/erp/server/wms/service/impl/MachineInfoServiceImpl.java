@@ -128,24 +128,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //数据处理
         doOpHandleData(records);
-        List<String> list = new ArrayList<>();
-        //清空明细数据
-        records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setWorkType(null);
-                obj.setWorkTypeName(null);
-                obj.setApproveUserName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
-            list.add(obj.getId());
-        });
         return new PagingVO(pageData);
     }
 

@@ -124,27 +124,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         //数据处理
         doOpHandleData(records);
-        List<String> list = new ArrayList<>();
-        //清空明细数据
-        records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setCustomerName(null);
-                obj.setType(null);
-                obj.setTypeName(null);
-                obj.setInventoryDirection(null);
-                obj.setInventoryDirectionName(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setApproveUserName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
-            list.add(obj.getId());
-        });
         return new PagingVO(pageData);
     }
 
