@@ -24,6 +24,10 @@
        <result column="source_data" property="sourceData" />
        <result column="is_track" property="isTrack" />
        <result column="aging" property="aging" />
+       <result column="origin_country" property="originCountry" />
+       <result column="destination_country" property="destinationCountry" />
+       <result column="overseas_warehouse_id" property="overseasWarehouseId" />
+       <result column="platform_warehouse_code" property="platformWarehouseCode" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -37,9 +41,7 @@
         update_time,
         version,
         is_deleted,
-        platform_channel_id, cn_name, en_name, code, channel_status, supplier_name, supplier_code, shipment_method,
-        logistics_platform, source_data, is_track, aging,
-        origin_country,destination_country,overseas_warehouse_id
+        platform_channel_id, cn_name, en_name, code, channel_status, supplier_name, supplier_code, shipment_method, logistics_platform, source_data, is_track, aging, origin_country, destination_country, overseas_warehouse_id, platform_warehouse_code
     </sql>
 
     <select id="listByType" resultType="com.erp.model.tms.dto.SaleChannelDTO">
