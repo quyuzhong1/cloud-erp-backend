@@ -5,8 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -26,6 +28,8 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 海外仓签收记录 服务实现类
@@ -41,6 +45,8 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -105,9 +111,14 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public List<BaseSelectDTO> baseSelectlist(String dictPlatform) {
+    public List<BaseSelectDTO> baseSelectlist(String toWarehouseId) {
+        // 查询关联的海外入库仓
+        OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(toWarehouseId);
+        if (null == entity){
+            throw new ServiceException("目的仓未关联海外目的仓");
+        }
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dictPlatform), OverseasTransferWarehouseEntity::getDictPlatform, dictPlatform)
+                .eq(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode, entity.getPlatformWarehouseCode())
                 .list();
         if(CollectionUtils.isEmpty(list)){
             return Collections.emptyList();

@@ -42,7 +42,7 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
      * @author Jim
      * @date: 2023-11-16
      */
-    List<BaseSelectDTO> baseSelectlist(String dictPlatform);
+    List<BaseSelectDTO> baseSelectlist(String toWarehouseId);
 
     /**
      * 中转仓列对应物流名称
