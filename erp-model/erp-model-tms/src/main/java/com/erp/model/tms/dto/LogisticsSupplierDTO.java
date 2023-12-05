@@ -1,7 +1,9 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -44,6 +46,9 @@ public class LogisticsSupplierDTO implements Serializable {
         private Integer count;
 
     }
+
+
+
 
     @Data
     @NoArgsConstructor

@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,7 +36,7 @@ public class BaseChildDTO implements Serializable {
          */
         private Boolean disabled;
 
-
+        @JsonInclude(value= JsonInclude.Include.NON_NULL)
         private List<ListChildTreeDTO> children;
 
 
