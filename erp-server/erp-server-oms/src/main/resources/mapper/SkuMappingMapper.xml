@@ -491,7 +491,7 @@
             li.platform_sku_name AS stockSkuName
         FROM sku_mapping sm
         INNER JOIN listing_info li
-        ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE
         WHERE sm.is_deleted=FALSE
         <if test="productSkuIdList !=null and productSkuIdList.size>0">
             AND sm.product_sku_id IN
