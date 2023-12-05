@@ -196,9 +196,9 @@ public class OverseasWarehouseInboundController extends BaseController {
             tableAlias = "owi"
     )
     public ApiResult<List<BaseSelectDTO>> transferWareHouseList(
-            @RequestParam(value = "toWarehouseId", required = false) String toWarehouseId
+            @RequestParam(value = "sourceId", required = false) String sourceId
     ) {
-        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist(toWarehouseId);
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist(sourceId);
         return success(result);
     }
 
