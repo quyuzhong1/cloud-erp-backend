@@ -245,13 +245,12 @@ public class RuleLogisticsDTO implements Serializable {
         /**
          * 物流商 来源  http://172.16.100.11:3002/project/128/interface/api/26440
          */
-        @NotBlank(message = "物流商不能为空")
+
         private String logisticsSupplierId;
 
         /**
          * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/26908
          */
-        @NotBlank(message = "物流方式不能为空")
         private String logisticsChannelId;
 
         /**
