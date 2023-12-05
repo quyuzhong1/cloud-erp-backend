@@ -303,6 +303,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtils.isBlank(commonDTO.getTransferWarehouseId())){
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
+                // 查询设置中转仓信息
+                OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(commonDTO.getTransferWarehouseId());
+                if (null == entity){
+                    throw new ServiceException("未找到中转仓");
+                }
+                commonDTO.setTransferWarehouseName(entity.getPlatformWarehouseName());
+
                 if (null == commonDTO.getCustomsType()){
                     throw new ServiceException("【customsType】报关方式不能为空");
                 }
@@ -310,6 +317,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (null == customsTypeNewEnum){
                     throw new ServiceException("【customsType】报关方式不存在");
                 }
+                commonDTO.setCustomsTypeName(customsTypeNewEnum.getName());
                 // 谷仓校验
                 // logisticsProductCode
                 // 物流产品代码
@@ -367,6 +375,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         mainEntity.setOverseasWarehouseInboundId("");
         mainEntity.setSourceCode(deliveryEntity.getCode());
+        // 设置仓库
+        mainEntity.setToWarehouseId(deliveryEntity.getDestWarehouseId());
+        mainEntity.setToWarehouseName(deliveryEntity.getDestWarehouseName());
+        mainEntity.setDeliveryWarehouseId(deliveryEntity.getDeliveryWarehouseId());
+        mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
+
+
+        if (null != commonDTO.getCustomsType()){
+            mainEntity.setCustomsType(commonDTO.getCustomsType().toString());
+        }
+
         if (StringUtils.isBlank(dictPlatform)){
             if (StringUtils.isBlank(commonDTO.getCode())){
                 throw new ServiceException("发货单未对接海外仓, 单号不能为空");

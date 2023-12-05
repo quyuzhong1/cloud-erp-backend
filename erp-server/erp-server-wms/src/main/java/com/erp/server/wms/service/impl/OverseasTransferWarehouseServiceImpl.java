@@ -5,7 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
@@ -47,6 +49,8 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Resource
+    private OverseasProviderService overseasProviderService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -127,6 +131,18 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (null == entity){
             return Collections.emptyList();
         }
+        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
+        if (null == providerEntity){
+            return Collections.emptyList();
+        }
+        // iml返回所有
+        if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(providerEntity.getCode())){
+            List<OverseasTransferWarehouseEntity> list = lambdaQuery()
+                    .eq(OverseasTransferWarehouseEntity::getDictPlatform, providerEntity.getCode())
+                    .list();
+            return convertResult(list);
+        }
+
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()
                 .eq(OverseasTransferWarehouseEntity::getPlatformToWarehouseCode, entity.getPlatformWarehouseCode())
                 .list();
