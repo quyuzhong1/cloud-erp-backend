@@ -337,7 +337,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public BatchResultDTO cancel(String id) {
         OverseasWarehouseInboundEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
         // 只有待提交的单据允许撤销
-        if (Objects.equals(entity.getInstockStatus(), OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode())) {
+        if (!OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equalsIgnoreCase(entity.getInstockStatus())) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_CANCEL);
         }
         // 更新状态
