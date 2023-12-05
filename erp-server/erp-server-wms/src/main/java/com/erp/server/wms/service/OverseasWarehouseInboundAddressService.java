@@ -30,4 +30,9 @@ public interface OverseasWarehouseInboundAddressService extends SuperService<Ove
      * 删除-常用地址
      */
     Boolean deleteById(String id);
+
+    /**
+     * 常用地址编辑
+     */
+    void update(OverseasWarehouseInboundAddressDTO.UpdateDTO dto);
 }

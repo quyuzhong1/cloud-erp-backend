@@ -9,7 +9,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundAddressDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.server.wms.service.OverseasWarehouseInboundAddressService;
+import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +49,26 @@ public class OverseasWarehouseInboundAddressController extends BaseController {
             keyIdName = "owia")
     public ApiResult<?> add(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.AddDTO dto) {
         overseasWarehouseInboundAddressService.add(dto);
+        return success();
+    }
+
+    /**
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-12-04
+     */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "海外入库单常用揽收地址-修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInboundAddress:update",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "owi")
+    public ApiResult<?> update(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
+        overseasWarehouseInboundAddressService.update(dto);
         return success();
     }
 

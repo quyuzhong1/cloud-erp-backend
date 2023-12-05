@@ -40,7 +40,7 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
     @Override
     public List<OverseasWarehouseInboundAddressDTO.ListDTO> addressList() {
         List<OverseasWarehouseInboundAddressEntity> list = this.list();
-        if (CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
         // 查询关联名称
@@ -53,39 +53,43 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
         Map<String, String> dictCountryEntityMap = dictCityEntities.stream().collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
 
         return list.stream()
-                .map(e-> new OverseasWarehouseInboundAddressDTO.ListDTO(e, dictCountryEntityMap))
+                .map(e -> new OverseasWarehouseInboundAddressDTO.ListDTO(e, dictCountryEntityMap))
                 .collect(Collectors.toList());
     }
 
     @Override
     public void add(OverseasWarehouseInboundAddressDTO.AddDTO dto) {
+        checkParams(dto);
+        OverseasWarehouseInboundAddressEntity entity = new OverseasWarehouseInboundAddressEntity();
+        BeanUtils.copyProperties(dto, entity);
+        if (!this.save(entity)) {
+            throw new ServiceException("保存失败");
+        }
+    }
+
+    private void checkParams(OverseasWarehouseInboundAddressDTO.CommonDTO dto) {
         List<DictCityEntity> dictCityEntities = sysDictFeign.listCityByIdList(dto.getAllDictCityId());
-        if (CollectionUtils.isEmpty(dictCityEntities)){
+        if (CollectionUtils.isEmpty(dictCityEntities)) {
             throw new ServiceException("未找到对应地址");
         }
         Map<String, DictCityEntity> dictCountryEntityMap = dictCityEntities.stream().collect(Collectors.toMap(DictCityEntity::getId, Function.identity()));
         DictCityEntity provinceEntity = dictCountryEntityMap.get(dto.getDictProvinceId());
         DictCityEntity cityEntity = dictCountryEntityMap.get(dto.getDictCityId());
         DictCityEntity districtEntity = dictCountryEntityMap.get(dto.getDictDistrictId());
-        if (null == provinceEntity){
+        if (null == provinceEntity) {
             throw new ServiceException("省ID信息不存在");
         }
-        if (null == cityEntity){
+        if (null == cityEntity) {
             throw new ServiceException("城市ID信息不存在");
         }
-        if (null == districtEntity){
+        if (null == districtEntity) {
             throw new ServiceException("地区ID信息不存在");
         }
-        if (!districtEntity.getParentId().equalsIgnoreCase(cityEntity.getId())){
+        if (!districtEntity.getParentId().equalsIgnoreCase(cityEntity.getId())) {
             throw new ServiceException("地区对应城市不匹配");
         }
-        if (!cityEntity.getParentId().equalsIgnoreCase(provinceEntity.getId())){
+        if (!cityEntity.getParentId().equalsIgnoreCase(provinceEntity.getId())) {
             throw new ServiceException("城市对应省不匹配");
-        }
-        OverseasWarehouseInboundAddressEntity entity = new OverseasWarehouseInboundAddressEntity();
-        BeanUtils.copyProperties(dto, entity);
-        if (!this.save(entity)){
-            throw new ServiceException("保存失败");
         }
     }
 
@@ -96,9 +100,23 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException("记录已被删除");
         }
-        if (!this.removeById(entity.getId())){
+        if (!this.removeById(entity.getId())) {
             throw new ServiceException("[OverseasWarehouseInboundAddressEntity]删除失败");
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
+        OverseasWarehouseInboundAddressEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95146);
+        }
+        checkParams(dto);
+        BeanUtils.copyProperties(dto, entity);
+        if (!this.updateById(entity)) {
+            throw new ServiceException("更新失败");
+        }
     }
 }
