@@ -548,14 +548,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        //已经有签收数量的发货单不允许反审核
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
-        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
-        if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
-            throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
-        }
 
+        //已经有签收数量的发货单不允许反审核
+        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
+            FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(shipmentEntity)) {
+                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
+                List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+                List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
+                if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
+                    throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
+                }
+            }
+        }
         return true;
     }
 

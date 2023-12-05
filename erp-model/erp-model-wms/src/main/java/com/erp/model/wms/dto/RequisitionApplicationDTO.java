@@ -163,6 +163,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private LocalDateTime handleTime;
 
         /**
+         * 备注
+         */
+        private String remark;
+
+        /**
          * 详情
          */
         private List<RequisitionApplicationDetailDTO.ViewDTO> detailList;
@@ -287,6 +292,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 处理时间
          */
         private LocalDateTime handleTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
