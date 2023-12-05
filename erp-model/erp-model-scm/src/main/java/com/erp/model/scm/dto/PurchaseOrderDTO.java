@@ -195,6 +195,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 申请人
          */
         private String purchaseUserName;

@@ -68,6 +68,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -820,6 +821,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
+
+
+
+            //最新审核人
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            list.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+                listApiResult = workflowFeign.curApprover(dtoList);
+                Integer code = listApiResult.getCode();
+                if (200 != code) {
+                    throw new ServiceException(ApiError.ERROR_500);
+                }
+            }
+
             for (SupplierDTO.PagingViewDTO item : list) {
                 String id = item.getId();
                 SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
@@ -862,7 +880,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
                 exportExcel.setPurchasesCount((int) purchasesCount);
 
-
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                    exportExcel.setApproveUserName(curApprove);
+                }
+                exportExcel.setApproveTime(item.getApproveTime());
                 resultList.add(exportExcel);
 
             }
@@ -1272,8 +1295,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * 更改状态
      */
     private Boolean updateApproveStatus(List<SupplierEntity> list, ApproveStatusEnum statusEnum) {
+        LoginUser userInfo = commonService.getUserInfo();
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
+                    obj.setApproveTime(LocalDateTime.now());
+                    obj.setApproveUserId(userInfo.getUid());
+                    obj.setApproveUserName(userInfo.getUserName());
+                } else {
+                    obj.setApproveTime(null);
+                    obj.setApproveUserId("");
+                    obj.setApproveUserName("");
+                }
                 obj.setApproveStatus(statusEnum);
             });
             return this.updateBatchById(list);

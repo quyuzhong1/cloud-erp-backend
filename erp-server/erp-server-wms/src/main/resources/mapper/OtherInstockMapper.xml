@@ -46,6 +46,7 @@
             oi.warehouse_name as warehouseName,
             oid.warehouse_location as warehouseLocation,
             oi.approve_user_name as approveUserName,
+            oi.approve_time as approveTime,
             oi.create_user_name as createUserName,
             oi.create_time as createTime
         from other_instock oi
@@ -147,6 +148,7 @@
             oi.warehouse_name as warehouseName,
             oid.warehouse_location as warehouseLocation,
             oi.approve_user_name as approveUserName,
+            oi.approve_time as approveTime,
             oi.create_user_name as createUserName,
             oi.create_time as createTime
         from other_instock oi

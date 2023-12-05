@@ -52,6 +52,7 @@
         sod.qty,
         sod.delivery_qty as deliveryQty,
         so.approve_user_name as approveUserName,
+        so.approve_time as approveTime,
         so.purchaser_name as purchaserName,
         so.create_time as createTime,
         so.create_user_name as createUserName

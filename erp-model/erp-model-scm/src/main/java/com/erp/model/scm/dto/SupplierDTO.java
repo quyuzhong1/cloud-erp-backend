@@ -681,6 +681,11 @@ public class SupplierDTO implements Serializable {
         private String approveUserName;
 
         /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -690,6 +695,8 @@ public class SupplierDTO implements Serializable {
          * 创建人
          */
         private String createUserName;
+
+
 
     }
 
