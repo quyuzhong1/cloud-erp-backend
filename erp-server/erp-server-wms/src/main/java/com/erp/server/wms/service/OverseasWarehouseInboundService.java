@@ -139,4 +139,13 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * 通过source_id查询
      */
     OverseasWarehouseInboundEntity getBySourceId(String sourceId);
+
+    /**
+     * 修改入库单状态
+     * @Author Luo_WG
+     * @Date 2023/12/5 14:48
+     * @param status
+     * @return java.lang.Boolean
+     **/
+    Boolean updateInstockStatus(List<String> ids, String status);
 }
