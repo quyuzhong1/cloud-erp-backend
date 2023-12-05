@@ -67,7 +67,7 @@ public class GoodCangInventoryHandler extends AbstractPullThirdWarehouseHandler<
             page++;
         }
         respList.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.INVENTORY.getCode()+v.getWarehouseCode()+v.getProductSku()));
+            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.INVENTORY.getCode()+v.getWarehouseCode()+v.getProductSku()));
             v.setAuthId(data.getShopId());
         });
         return respList;
@@ -99,7 +99,9 @@ public class GoodCangInventoryHandler extends AbstractPullThirdWarehouseHandler<
     public List<PlatformInventoryDTO> convert(List<GoodCangInventoryResp> sourceDataList) {
         return GoodCangConverter.INSTANCE.inventoryConversion(sourceDataList);
     }
-
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.GOOD_CANG;
+    }
     @Override
     public String getTargetPlatform() {
         return PlatformEnum.ERP_WMS.getDesc();

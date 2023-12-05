@@ -454,4 +454,42 @@ public class PullAmazonJob {
         return ReturnT.SUCCESS;
     }
 
+    /**
+     * 拉取亚马逊报表任务
+     */
+    @XxlJob("amazonReportDownload")
+    public ReturnT<String> reportDownload() {
+        // 报表处理的开始时间
+        String jobParamStr = XxlJobHelper.getJobParam();
+        Integer size = 10;
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        XxlJobHelper.log("[拉取亚马逊报表任务] 任务开始：size={}", size);
+
+        // 根据状态查询未下载数据
+        ReportInfoMongoDTO orderMongoDTO = ReportInfoMongoDTO.getByNotCheckDownload();
+        List<ReportInfoMongoDTO> reportInfoMongoDTOList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_REPORT, ReportInfoMongoDTO.class);
+
+        if (CollectionUtil.isEmpty(reportInfoMongoDTOList)) {
+            XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束：亚马逊已授权店铺列表为空");
+            return ReturnT.SUCCESS;
+        }
+
+        reportInfoMongoDTOList.forEach(mongoDTO -> {
+            try {
+                reportHandleService.checkAndDownload(mongoDTO);
+            } catch (Exception e) {
+                String errorMsg = JSONUtil.toJsonStr(e);
+                XxlJobHelper.log("[拉取亚马逊报表任务] 拉取亚马逊报表失败：reportId={}, error={}",
+                        mongoDTO.getReportId(),
+                        errorMsg
+                );
+                throw new ServiceException("拉取亚马逊报表失败:error=" + errorMsg);
+            }
+        });
+        XxlJobHelper.log("[拉取亚马逊报表任务] 任务结束");
+        return ReturnT.SUCCESS;
+    }
 }

@@ -33,6 +33,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     GET_TRACK("getTrack","物流轨迹", SourceTypeEnum.LOGISTICS_SUPPLIER),
     TRANSFER("transfer","中转仓数据", SourceTypeEnum.THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC),
     INBOUND("inbound","获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE_GET_INBOUND_RECEIPT),
+    OUTBOUND("outbound","获取出库单状态", SourceTypeEnum.THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT),
     INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE_GET_INVENTORY)
     ;
 

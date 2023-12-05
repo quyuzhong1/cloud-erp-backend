@@ -59,7 +59,7 @@ public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<G
         processList(response.getData().getLclList(), respList);
 
         respList.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.TRANSFER.getCode()+v.getLogisticsChannelCode()+v.getTransferWarehouseCode()+v.getDestinationWarehouseCode()));
+            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.TRANSFER.getCode()+v.getLogisticsChannelCode()+v.getTransferWarehouseCode()+v.getDestinationWarehouseCode()));
             v.setAuthId(data.getShopId());
         });
         return respList;
@@ -119,6 +119,10 @@ public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<G
     @Override
     public String getTargetPlatform() {
         return PlatformEnum.ERP_WMS.getDesc();
+    }
+
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.GOOD_CANG;
     }
 
     public boolean isSuccess(String ask){

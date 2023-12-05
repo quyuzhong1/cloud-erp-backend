@@ -20,11 +20,9 @@ public interface FirstMileDeliveryLogisticsService extends SuperService<FirstMil
      * @Author Luo_WG
      * @Date 2023/11/3 15:32
      * @param dto 新增参数
-     * @param mainId 主表id
-     * @param code 主单据编号
      * @return java.lang.String
      **/
-    String add(FirstMileDeliveryLogisticsDTO.AddDTO dto, String mainId, String code);
+    String add(FirstMileDeliveryLogisticsDTO.AddDTO dto);
 
     /**
     * 修改
@@ -33,7 +31,7 @@ public interface FirstMileDeliveryLogisticsService extends SuperService<FirstMil
     * @param dto
     * @return
     */
-    Boolean update(FirstMileDeliveryLogisticsDTO.UpdateDTO dto, String mainId);
+    Boolean update(FirstMileDeliveryLogisticsDTO.UpdateDTO dto);
 
     /**
      * 根据主键id删除物流信息
@@ -78,5 +76,5 @@ public interface FirstMileDeliveryLogisticsService extends SuperService<FirstMil
      * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean saveUpdateLogistics(List<FirstMileDeliveryLogisticsEntity> dto);
+    Boolean saveUpdateLogistics(List<FirstMileDeliveryLogisticsEntity> dto, Boolean isUpdate);
 }

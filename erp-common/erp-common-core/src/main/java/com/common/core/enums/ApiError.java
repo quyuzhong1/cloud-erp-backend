@@ -861,6 +861,8 @@ public enum ApiError implements Serializable {
     WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST(99142,"未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码"),
     PACKING_QTY_NOT_GT_WAIT_PACKING_QTY(99143,"箱规【{}】中sku【{}】装箱数量不能大于待装箱数量"),
     HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING(99144,"处理中和已处理才能打印拣货单"),
+    NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE(99145,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
+    DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
 
 
     /**

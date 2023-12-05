@@ -252,12 +252,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 匹配审核规则
      */
-    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, List<JSONObject> jsonList);
+    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, JSONObject json);
 
     /**
      * 匹配配货规则
      */
-    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, List<JSONObject> jsonList);
+    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, JSONObject json);
 
     /**
      * 报表管理 销售统计
@@ -318,5 +318,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
 
-    List<JSONObject> getJson(String id);
+    JSONObject getJson(String id);
 }

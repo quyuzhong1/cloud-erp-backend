@@ -740,8 +740,8 @@ public class SoB2cController extends BaseController {
 
 
     @GetMapping("/getJson")
-    public ApiResult<List<JSONObject>>  getJson(@RequestParam("id")String id){
-        List<JSONObject>  list=soB2cService.getJson(id);
+    public ApiResult<JSONObject>  getJson(@RequestParam("id")String id){
+        JSONObject  list=soB2cService.getJson(id);
         return success(list);
 
     }

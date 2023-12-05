@@ -4,7 +4,7 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformWarehouseDTO;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.PlatformCategoryEnum;
@@ -17,25 +17,29 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.sdk.wms.iml.convert.ImlConverter;
-import com.sdk.wms.iml.dto.request.ImlBaseRequest;
+import com.sdk.wms.iml.dto.request.ImlGetOutboundReq;
+import com.sdk.wms.iml.dto.response.ImlOutboundResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
-import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * 艾姆勒拉取仓库数据
+ * 艾姆勒拉取入库单数据
  **/
 @Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.IML)
-@BusinessType(BusinessTypeEnum.WAREHOUSE)
-public class ImlWarehouseHandler extends AbstractPullThirdWarehouseHandler<ImlWarehouseResp, PlatformWarehouseDTO> {
+@BusinessType(BusinessTypeEnum.OUTBOUND)
+public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOutboundResp, PlatformOutboundDTO> {
 
     @Resource
     private ImlService imlService;
@@ -43,18 +47,41 @@ public class ImlWarehouseHandler extends AbstractPullThirdWarehouseHandler<ImlWa
     @Resource
     private MQProducerService mqProducerService;
 
-    private final String failureMsgHead = "调用艾姆勒获取仓库数据接口异常";
+    private final String failureMsgHead = "调用艾姆勒获取出库数据接口异常";
 
     @Override
-    public List<ImlWarehouseResp> download(JobTaskDTO data) {
-        ImlResponse<List<ImlWarehouseResp>> response = imlService.getWarehouse(ImlBaseRequest.builder().build());
-        checkResponse(response);
-        List<ImlWarehouseResp> imlWarehouseData = response.getData();
-        imlWarehouseData.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.WAREHOUSE.getCode()+v.getWarehouseCode()));
+    public List<ImlOutboundResp> download(JobTaskDTO data) {
+        LocalDateTime lastTime = data.getLastTime();
+        LocalDateTime nextTime = data.getNextTime();
+        if (lastTime.isEqual(nextTime)){
+            //nextTime +30分钟
+            nextTime = lastTime.plusMinutes(30);
+        }
+        //查询数据
+        ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
+                .modifyDateFrom(lastTime)
+                .modifyDateTo(nextTime)
+                .pageSize(100)
+                .build();
+
+        List<ImlOutboundResp> respList = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            imlGetOutboundReq.setPage(page);
+            ImlResponse<List<ImlOutboundResp>> response = imlService.getOutboundBatch(imlGetOutboundReq);
+            checkResponse(response);
+            respList.addAll(response.getData());
+            if (response.getCount() <= page * 100) {
+                break;
+            }
+            page++;
+        }
+        respList.forEach(v->{
+            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.OUTBOUND.getCode()+v.getOrderCode()));
             v.setAuthId(data.getShopId());
         });
-        return imlWarehouseData;
+
+        return respList;
     }
 
     private void checkResponse(ImlResponse<?> response) {
@@ -66,9 +93,9 @@ public class ImlWarehouseHandler extends AbstractPullThirdWarehouseHandler<ImlWa
         }
     }
 
-    public WarnMsgInfoDTO buildWarnMsgInfoDTO(String msg) {
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-        warnMsgInfo.setBizName("调用艾姆勒获取产品数据接口");
+        warnMsgInfo.setBizName("调用艾姆勒获取出库数据接口");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_THIRD_SDK);
         warnMsgInfo.setTitle(failureMsgHead);
         warnMsgInfo.setTableName(this.getClass().getName());
@@ -77,9 +104,12 @@ public class ImlWarehouseHandler extends AbstractPullThirdWarehouseHandler<ImlWa
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }
+
     @Override
-    public List<PlatformWarehouseDTO> convert(List<ImlWarehouseResp> sourceDataList) {
-        return ImlConverter.INSTANCE.warehouseConversion(sourceDataList);
+    public List<PlatformOutboundDTO> convert(List<ImlOutboundResp> sourceDataList) {
+        List<PlatformOutboundDTO> resultList = ImlConverter.INSTANCE.outboundConversion(sourceDataList);
+        resultList = resultList.stream().filter(v-> StringUtils.isNotBlank(v.getOrderStatus())).collect(Collectors.toList());
+        return resultList;
     }
 
     @Override

@@ -1,10 +1,14 @@
 package com.sdk.wms.goodcang.service;
 
 
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformDataDTO;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.enums.GoodCangEnums;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.goodcang.handle.GoodCangOutboundHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +27,9 @@ public class GoodCangServiceTest {
 
     @Resource
     private GoodCangService goodCangService;
+
+    @Resource
+    private GoodCangOutboundHandler goodCangOutboundHandler;
 
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
@@ -68,6 +75,18 @@ public class GoodCangServiceTest {
     @Test
     public void getReceiptBatchTest() {
         GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-230613-0002");
+        System.out.println(response);
+    }
+
+    @Test
+    public void getOutboundTest() {
+        GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
+                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
+                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
+                .page(1)
+                .pageSize(20)
+                .build();
+        GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
         System.out.println(response);
     }
 
@@ -180,5 +199,15 @@ public class GoodCangServiceTest {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-0005",null);
         System.out.println(response);
         System.out.println(response.getData());
+    }
+
+    @Test
+    public void goodCangOutboundHandlerTest(){
+        JobTaskDTO data = new JobTaskDTO();
+        data.setLastTime(LocalDateTime.of(2020,12,20, 0, 0, 0));
+        data.setNextTime(LocalDateTime.of(2021,12,20, 0, 0, 0));
+        data.setApiParam(ThirdWarehouseContext.getAuthMap());
+        PlatformDataDTO<GoodCangOutboundResp, PlatformOutboundDTO> result = goodCangOutboundHandler.pullHandle(data);
+        System.out.println(result);
     }
 }

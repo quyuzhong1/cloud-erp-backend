@@ -68,7 +68,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
             List<String> shipmentIdList = null;
             String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
 //            String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(LocalDateTime.of(2023, 11, 1, 0, 0, 0)).toString();
-            String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(LocalDateTime.now()).toString();
+            String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
             String nextToken = null;
             InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
             // 返回下载源数据

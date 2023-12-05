@@ -63,6 +63,7 @@ public interface DmpReportConverter {
             @Mapping(target = "processingStartTime", expression = "java(report.getProcessingStartTime().toString())"),
             @Mapping(target = "processingEndTime", expression = "java(report.getProcessingEndTime().toString())"),
             @Mapping(target = "processingStatus", expression = "java(report.getProcessingStatus().getValue())"),
+            @Mapping(target = "downloadStatus", constant = "1"),
     })
     ReportInfoMongoDTO updateReportInfoMongoDTO(ReportInfoMongoDTO mongoDTO, ReportDocument reportDocument, Report report);
 }

@@ -12,6 +12,7 @@ public enum ImlEnums {
     INCOME_TYPE("incomeType",IncomeTypeEnum.class),
     RECEIVING_STATUS("receivingStatus",ReceivingStatusEnum.class),
     CANCEL_STATUS("cancelStatus",CancelStatusEnum.class),
+    ORDER_STATUS("orderStatus",OrderStatusEnum.class),
     ;
 
     private final String fieldName;
@@ -120,6 +121,38 @@ public enum ImlEnums {
         CancelStatusEnum(Integer code, String name) {
             this.code = code;
             this.name = name;
+        }
+    }
+
+
+    /**
+     * 入库单状态
+     */
+    @Getter
+    public enum OrderStatusEnum {
+        NEW("C","待发货审核", "waitShipped"),
+        FIRST_JOURNEY_ON_THE_WAY("W","待发货", "waitShipped"),
+        INITIAL_RECEIVING("D","已发货", "shipped"),
+        IN_TRANSIT("H","暂存", null),
+        RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", null),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
+        ABANDONMENT("X","废弃", null)
+        ;
+        private final String code;
+        private final String name;
+        //本来应该是引用枚举SoB2cBillStatusEnum，但是枚举不在common包下，引包会导致循环依赖
+        private final String erpsoStatus;
+        OrderStatusEnum(String code, String name, String erpsoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpsoStatus = erpsoStatus;
+        }
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(ImlEnums.OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(ImlEnums.OrderStatusEnum::getErpsoStatus)
+                    .orElse(null);
         }
     }
 }

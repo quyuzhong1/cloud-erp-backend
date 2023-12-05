@@ -92,6 +92,17 @@ public interface GoodCangConverter {
     })
     PlatformInboundDTO.Receiving inboundReceiveConversion(GoodCangReceiptBatchResp.GcReceiving data);
 
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(GoodCangConverter.getWarehousePlatformType())"),
+            @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
+            @Mapping(target = "orderCode",  source = "orderCode"),
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+    })
+    PlatformOutboundDTO outboundConversion(GoodCangOutboundResp sourceData);
+    List<PlatformOutboundDTO> outboundConversion(List<GoodCangOutboundResp> sourceDataList);
+
     static String getNowTime(){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return LocalDateTime.now().format(formatter);
@@ -112,5 +123,4 @@ public interface GoodCangConverter {
     static String getWarehousePlatformType(){
         return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
     }
-
 }

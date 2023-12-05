@@ -68,6 +68,6 @@ public interface RuleLogisticsService extends SuperService<RuleLogisticsEntity> 
      * @param jsonObjectList
      * @return
      */
-    RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
+    RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(JSONObject jsonObject);
 
 }
