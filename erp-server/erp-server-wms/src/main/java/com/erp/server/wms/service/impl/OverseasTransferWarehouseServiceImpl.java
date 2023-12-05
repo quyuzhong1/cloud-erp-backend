@@ -170,7 +170,9 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if(CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
+
         return list.stream()
+                .filter(e-> StringUtils.isNotBlank(e.getLogisticsProductCode()))
                 .map(e-> new BaseSelectDTO(e.getId(), e.getLogisticsProductCode(), e.getLogisticsProductName()))
                 .collect(Collectors.toList());
     }

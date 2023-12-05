@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 
 import java.util.Map;
 
@@ -20,4 +21,13 @@ public interface SysDictService {
      * @return
      */
     Map<String, DictCityEntity> mapAndCheckDictCityIds(String dictProvinceId, String dictCityId, String dictDistrictId);
+
+    /**
+     * iml 艾姆勒 查询并校验DictCityId
+     * @param dictProvinceId
+     * @param dictCityId
+     * @param dictDistrictId
+     * @return
+     */
+    Map<String, ImlDictCityEntity> mapAndCheckImlCityIds(String dictProvinceId, String dictCityId, String dictDistrictId);
 }

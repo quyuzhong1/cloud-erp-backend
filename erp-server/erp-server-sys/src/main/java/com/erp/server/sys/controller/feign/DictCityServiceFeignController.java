@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.server.sys.service.DictCityService;
+import com.erp.server.sys.service.ImlDictCityService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -24,6 +26,8 @@ public class DictCityServiceFeignController {
 
     @Resource
     private DictCityService dictCityService;
+    @Resource
+    private ImlDictCityService imlDictCityService;
 
     /**
      * 根据id查询省/市
@@ -62,6 +66,16 @@ public class DictCityServiceFeignController {
 
         return dictCityService.listByIdList(idList);
 
+    }
+
+    /**
+     * 获取艾姆勒城市
+     * @param dictIds
+     * @return
+     */
+    @PostMapping("/listImlCityByDictIdList")
+    public List<ImlDictCityEntity> listImlCityByDictIdList(@RequestBody List<String> dictIds) {
+        return imlDictCityService.listByDictIdList(dictIds);
     }
 
 

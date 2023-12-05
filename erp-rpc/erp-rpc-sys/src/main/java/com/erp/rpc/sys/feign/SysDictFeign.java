@@ -4,6 +4,7 @@ import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,4 +65,12 @@ public interface SysDictFeign {
      */
     @PostMapping("/feign/city/listByIdList")
     List<DictCityEntity> listCityByIdList(List<String> idList);
+
+    /**
+     * 获取艾姆勒城市
+     * @param dictIds
+     * @return
+     */
+    @PostMapping("/feign/city/listImlCityByDictIdList")
+    List<ImlDictCityEntity> listImlCityByDictIdList(List<String> dictIds);
 }

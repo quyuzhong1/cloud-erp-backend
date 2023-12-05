@@ -110,12 +110,12 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
         /**
          * 签收时间
          */
-        private List<OffsetDateTime> receiveTimeList;
+        private List<LocalDate> receiveTimeList;
 
         /**
          * 收发差异：/wms/common/enumDropDown?type=DiffRule
@@ -571,6 +571,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String deliveryMode;
 
         /**
+         * 交货方式名称
+         */
+        private String deliveryModeName;
+
+        /**
          * 快递单号
          */
         private String expressNo;
@@ -817,6 +822,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String logisticsProductCode;
 
         /**
+         * 前端不传
+         */
+        private String logisticsProductName;
+
+        /**
          * 预计揽收日期
          */
         private LocalDate estimatedCollectDate;
@@ -835,6 +845,36 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 字典)地区ID
          */
         private String dictDistrictId;
+
+        /**
+         * 前端不传
+         */
+        private String dictProvinceName;
+
+        /**
+         * 前端不传
+         */
+        private String dictCityName;
+
+        /**
+         * 前端不传
+         */
+        private String dictDistrictName;
+
+        /**
+         * 前端不传
+         */
+        private String platformProvinceId;
+
+        /**
+         * 前端不传
+         */
+        private String platformCityId;
+
+        /**
+         * 前端不传
+         */
+        private String platformDistrictId;
 
         /**
          * 姓
@@ -898,9 +938,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         public void setBlankOtherByTransferAgentAndCollectAtHome() {
             this.setLogisticsMethod(null);
             this.setTrackingNo("");
-            this.setDeliveryMode("");
             this.setExpressNo("");
-
         }
     }
 
