@@ -79,8 +79,8 @@
             ra.handle_user_name,
             ra.handle_time,
             ra.create_time
-        FROM requisition_application_detail rad
-        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        FROM requisition_application ra
+        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE
         <!--状态-->
         <if test="params.tabFlag != null and params.tabFlag != ''">
@@ -187,8 +187,8 @@
             rad.bom_version,
             rad.requisition_qty AS requisitionQty,
             rad.approve_qty AS approveQty
-        FROM requisition_application_detail rad
-        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        FROM requisition_application ra
+        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND ra.id IN
@@ -216,8 +216,8 @@
             rad.bom_version,
             rad.approve_qty AS approveQty,
             rad.picking_qty AS pickingQty
-        FROM requisition_application_detail rad
-        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        FROM requisition_application ra
+        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND ra.id IN
@@ -252,8 +252,8 @@
         ra.handle_user_name,
         ra.handle_time,
         ra.create_time
-        FROM requisition_application_detail rad
-        LEFT JOIN requisition_application ra ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        FROM requisition_application ra
+        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted = FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0 ">
