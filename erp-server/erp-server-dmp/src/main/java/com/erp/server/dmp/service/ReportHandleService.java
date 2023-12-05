@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
+import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
@@ -103,4 +104,22 @@ public interface ReportHandleService {
      * @since 2023-11-22
      **/
     void saveOrUpdateAllReportFbaInventoryPlanning(ReportInfoMongoDTO mongoDTO, List<ReportFbaInventoryPlanningMongoDTO> planningMongoDTOList);
+
+    /**
+     * 通用处理
+     * 处理和下载报告
+     *
+     * @Author Jim
+     * @since 2023-12-04
+     **/
+    void handleReport(ReportsApi reportsApi, Report report, AmazonReportRecordTypeEnum recordTypeEnum) throws Exception;
+
+    /**
+     * 定时任务处理
+     * 检查和下载报告
+     *
+     * @Author Jim
+     * @since 2023-12-04
+     **/
+    void checkAndDownload(ReportInfoMongoDTO mongoDTO)throws Exception;
 }
