@@ -508,6 +508,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .one();
     }
 
+    @Override
+    public Boolean updateInstockStatus(List<String> ids, String status) {
+        return lambdaUpdate()
+                .set(OverseasWarehouseInboundEntity::getInstockStatus, status)
+                .in(OverseasWarehouseInboundEntity::getId, ids)
+                .update();
+    }
+
     /**
      * 分页查询、导出 数据处理
      */

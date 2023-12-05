@@ -46,7 +46,6 @@ public class FirstMileDeliveryLogisticsController extends BaseController {
         return success(result);
     }
 
-
     /**
      * 更新物流信息列表保存
      * @Author Luo_WG
@@ -55,10 +54,11 @@ public class FirstMileDeliveryLogisticsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.FbaDeliveryDTO.DeliveryLogisticsView>>
      **/
     @PostMapping("/saveUpdateLogistics")
-    public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FirstMileDeliveryLogisticsDTO.DeliveryLogisticsSave> dto) {
-        List<FirstMileDeliveryLogisticsEntity> fbaDeliveryLogisticsEntities = BeanMapper.copyList(dto, FirstMileDeliveryLogisticsEntity.class);
-        Boolean flag = firstMileDeliveryLogisticsService.saveUpdateLogistics(fbaDeliveryLogisticsEntities);
-        return flag ? success() : failure();
+    public ApiResult saveUpdateLogistics(@RequestBody @Validated List<FirstMileDeliveryLogisticsDTO.UpdateDTO> dto) {
+        for (FirstMileDeliveryLogisticsDTO.UpdateDTO updateDTO : dto) {
+            firstMileDeliveryLogisticsService.update(updateDTO);
+        }
+        return success();
     }
 
 
