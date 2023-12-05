@@ -1435,7 +1435,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException("目的仓信息为空");
         }
         // 所属平台:未绑定海外仓为空
-        String dictPlatform = overseasProviderWarehouseService.findPlatformByWarehouseId(destWarehouseId);;
+        OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(destWarehouseId);
+        String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         //物流信息
         FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);

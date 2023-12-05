@@ -20,8 +20,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.oms.enums.DeliveryModeEnum;
-import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -29,16 +27,13 @@ import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.*;
@@ -52,11 +47,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -107,10 +100,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细");
         }
+        // 查询发货目的仓平台
+        OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
+        String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         // 数据处理
-        handleData(mainEntity, addDTO, deliveryEntity);
+        handleData(mainEntity, addDTO, deliveryEntity, dictPlatform);
 
         log.info("开始新增海外仓入库单");
         boolean save = super.save(mainEntity);
@@ -141,8 +137,75 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
 
         // 推送到草稿
-
+//        if (null != providerEntity){
+//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity);
+//            thirdWarehouseService.createInboundBill(createInboundReq, providerEntity.getId());
+//        }
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
+    }
+
+    /**
+     * 构建请求参数
+     */
+    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity) {
+        return ThirdWarehouseCreateInboundReq.builder()
+                // 发货单号
+                .referenceNo(mainEntity.getSourceCode())
+                // 交货方式 （自送，揽收）
+                .incomeType("1")
+                .transitType("0")
+                .receivingShippingType("2")
+                .trackingNumber("123")
+                .warehouseCode("UAW1")
+                .etaDate(LocalDateTime.now())
+                .verify("0")
+                .transitWarehouseCode("DG")
+                .smCode("USEAAIRFREIGHT6000D1")
+                .customsType("1")
+                .collectingService("1")
+                .deliveryCode("deliveryCode")
+                //发货信息
+                .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
+                        .contacterName("mark")
+                        .phone("123")
+                        .countryCode("CN")
+                        .stateName("广东")
+                        .cityName("深圳")
+                        .region("龙岗")
+                        .address1("星河")
+                        .build())
+                .collect(ThirdWarehouseCreateInboundReq.Collect.builder()
+                        .contacterName("mark")
+                        .contacterFirstName("1")
+                        .contacterLastName("2")
+                        .contactPhone("123")
+                        .collectCountryCode("CN")
+                        .collectStateId("6")
+                        .collectCityId("77")
+                        .collectAreaId("709")
+                        .collectStateName("广东")
+                        .collectCityName("深圳")
+                        .collectZipcode("13214564")
+                        .collectStreet("21")
+                        .build())
+                .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
+                        .productSku("2823A")
+                        .boxNo(1)
+                        .quantity(1)
+                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
+                        .productSku("2823A")
+                        .boxNo(1)
+                        .quantity(3)
+                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
+                        .productSku("C003GBB1")
+                        .boxNo(3)
+                        .quantity(10)
+                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
+                        .productSku("C003GBB1")
+                        .boxNo(2)
+                        .quantity(11)
+                        .build()))
+                .build();
     }
 
     /**
@@ -159,8 +222,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+
+        // 查询发货目的仓平台
+        OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
+        String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
+
         // 数据处理
-        handleData(old, updateDTO, deliveryEntity);
+        handleData(old, updateDTO, deliveryEntity, dictPlatform);
         log.info("编辑 开始修改海外仓入库单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(overseasWarehouseInboundEntity);
         if (!save) {
@@ -194,7 +262,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      */
     private void handleData(OverseasWarehouseInboundEntity mainEntity,
                             OverseasWarehouseInboundDTO.CommonDTO commonDTO,
-                            FirstMileDeliveryEntity deliveryEntity
+                            FirstMileDeliveryEntity deliveryEntity,
+                            String dictPlatform
     ) {
         // 校验参数
         // 入库类型=自发头程
@@ -219,9 +288,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtils.isBlank(commonDTO.getExpressNo())){
                     throw new ServiceException("【expressNo】快递单号不能为空");
                 }
+                // 设置其他参数为空
+                commonDTO.setBlankOtherByTransferAgentAndSelfDelivery();
             }
-            // 设置其他参数为空
-            commonDTO.setBlankOtherByTransferAgentAndSelfDelivery();
         }
 
         // 入库类型=自发头程, 交货方式=上面揽收
@@ -234,13 +303,21 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtils.isBlank(commonDTO.getTransferWarehouseId())){
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
-                if (StringUtils.isBlank(commonDTO.getCustomsType())){
+                // 查询设置中转仓信息
+                OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(commonDTO.getTransferWarehouseId());
+                if (null == entity){
+                    throw new ServiceException("未找到中转仓");
+                }
+                commonDTO.setTransferWarehouseName(entity.getPlatformWarehouseName());
+
+                if (null == commonDTO.getCustomsType()){
                     throw new ServiceException("【customsType】报关方式不能为空");
                 }
-                GoodCangEnums.CustomsTypeNewEnum customsTypeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(Integer.valueOf(commonDTO.getCustomsType()));
+                GoodCangEnums.CustomsTypeNewEnum customsTypeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
                 if (null == customsTypeNewEnum){
                     throw new ServiceException("【customsType】报关方式不存在");
                 }
+                commonDTO.setCustomsTypeName(customsTypeNewEnum.getName());
                 // 谷仓校验
                 // logisticsProductCode
                 // 物流产品代码
@@ -281,21 +358,44 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtils.isBlank(commonDTO.getStreet())){
                     throw new ServiceException("【street】详情地址不能为空");
                 }
+                if (StringUtils.isBlank(commonDTO.getZipcode())){
+                    throw new ServiceException("【zipcode】邮编不能为空");
+                }
                 // 设置其他参数为空
                 commonDTO.setBlankOtherByTransferAgentAndCollectAtHome();
             }
         }
-        // 查询发货目的仓平台
-        String dictPlatform = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
 
         BeanUtils.copyProperties(commonDTO, mainEntity);
         // 验证数据 & 数据赋值
         mainEntity.setDictPlatform(dictPlatform);
         mainEntity.setInstockType(commonDTO.getInstockType().getCode());
-        mainEntity.setLogisticsMethod(commonDTO.getLogisticsMethod().getCode());
+        mainEntity.setLogisticsMethod(null == commonDTO.getLogisticsMethod() ? "" : commonDTO.getLogisticsMethod().getCode());
         mainEntity.setEstimatedArrivalDate(LocalDateTime.of(commonDTO.getEstimatedArrivalDate(), LocalTime.MIN));
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         mainEntity.setOverseasWarehouseInboundId("");
+        mainEntity.setSourceCode(deliveryEntity.getCode());
+        // 设置仓库
+        mainEntity.setToWarehouseId(deliveryEntity.getDestWarehouseId());
+        mainEntity.setToWarehouseName(deliveryEntity.getDestWarehouseName());
+        mainEntity.setDeliveryWarehouseId(deliveryEntity.getDeliveryWarehouseId());
+        mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
+
+
+        if (null != commonDTO.getCustomsType()){
+            mainEntity.setCustomsType(commonDTO.getCustomsType().toString());
+        }
+
+        if (StringUtils.isBlank(dictPlatform)){
+            if (StringUtils.isBlank(commonDTO.getCode())){
+                throw new ServiceException("发货单未对接海外仓, 单号不能为空");
+            }
+            OverseasWarehouseInboundEntity oldEntity = this.getByCode(commonDTO.getCode());
+            if (null != oldEntity){
+                throw new ServiceException("code单号已存在");
+            }
+            mainEntity.setCode(commonDTO.getCode());
+        }
         if (null != deliveryEntity){
             mainEntity.setSourceId(deliveryEntity.getId());
             mainEntity.setSourceCode(deliveryEntity.getSourceCode());

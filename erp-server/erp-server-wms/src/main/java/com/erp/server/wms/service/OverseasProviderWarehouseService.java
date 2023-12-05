@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -67,5 +68,5 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @Author Jim
      * @Date 2023/12/05
      **/
-    String findPlatformByWarehouseId(String destWarehouseId);
+    OverseasProviderEntity findPlatformByWarehouseId(String destWarehouseId);
 }
