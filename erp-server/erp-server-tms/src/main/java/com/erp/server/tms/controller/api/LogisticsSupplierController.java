@@ -208,9 +208,20 @@ public class LogisticsSupplierController extends BaseController {
      * 所有物流商下拉
      * @return
      */
-    @GetMapping("listAll")
+    @GetMapping("/listAll")
     public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAll(){
         return success(logisticsSupplierService.listAll());
     }
+
+
+    /**
+     * 物流商渠道树形结构
+     * @return
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<BaseChildDTO.ListChildTreeDTO>> tree(){
+        return success(logisticsSupplierService.tree());
+    }
+
 
 }

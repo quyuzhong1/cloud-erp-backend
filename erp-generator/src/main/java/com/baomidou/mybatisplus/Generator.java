@@ -23,7 +23,7 @@ public class Generator {
     /**
        模块名（需要更改）
      */
-    private static final String MODEL = "wms";
+    private static final String MODEL = "tms";
     /**
      * 作者（需要更改）
      */
@@ -78,7 +78,7 @@ public class Generator {
     public static void main(String[] args) {
         // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
         // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
-        String[] tableNames = {"overseas_inventory"};
+        String[] tableNames = {"logistics_sale_channel"};
         generateByTables(tableNames);
     }
 

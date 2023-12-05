@@ -2,7 +2,6 @@ package com.erp.model.tms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import lombok.Data;
@@ -16,8 +15,8 @@ import com.common.business.enums.ApproveStatusEnum;
  * 销售平台物流渠道表
  * </p>
  *
- * @author zdy
- * @since 2023-11-08
+ * @author lrp
+ * @since 2023-12-05
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -76,7 +75,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("source_data")
     private String sourceData;
     /**
-    * 是否可跟踪轨迹0是 1否（默认0）
+    * 是否可跟踪轨迹t是 f否（默认0）
     */
     @TableField("is_track")
     private Boolean isTrack;
@@ -86,22 +85,25 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     @TableField("aging")
     private String aging;
     /**
-     * 发货地
-     */
+    * 发货地国家二字码
+    */
     @TableField("origin_country")
     private String originCountry;
     /**
-     * 目的地
-     */
+    * 目的地国家二字码
+    */
     @TableField("destination_country")
     private String destinationCountry;
-
     /**
-     * 海外仓id
-     */
+    * 海外仓id
+    */
     @TableField("overseas_warehouse_id")
     private String overseasWarehouseId;
-
+    /**
+    * 平台仓库code
+    */
+    @TableField("platform_warehouse_code")
+    private String platformWarehouseCode;
 
 
     public static final String PLATFORM_CHANNEL_ID = "platform_channel_id";
@@ -111,8 +113,6 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     public static final String EN_NAME = "en_name";
 
     public static final String CODE = "code";
-
-    public static final String EXPIRE_TIME = "expire_time";
 
     public static final String CHANNEL_STATUS = "channel_status";
 
@@ -129,6 +129,14 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
     public static final String IS_TRACK = "is_track";
 
     public static final String AGING = "aging";
+
+    public static final String ORIGIN_COUNTRY = "origin_country";
+
+    public static final String DESTINATION_COUNTRY = "destination_country";
+
+    public static final String OVERSEAS_WAREHOUSE_ID = "overseas_warehouse_id";
+
+    public static final String PLATFORM_WAREHOUSE_CODE = "platform_warehouse_code";
 
     @Override
     public Serializable pkVal() {
