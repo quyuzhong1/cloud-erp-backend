@@ -60,4 +60,12 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds);
 
     List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform);
+
+    /**
+     * 根据仓库ID信息查询海外仓平台
+     *
+     * @Author Jim
+     * @Date 2023/12/05
+     **/
+    String findPlatformByWarehouseId(String destWarehouseId);
 }
