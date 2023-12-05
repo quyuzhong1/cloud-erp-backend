@@ -85,6 +85,11 @@ public class OverseasWarehouseInboundAddressDTO implements Serializable {
          */
         private String street;
 
+        /**
+         * 地址邮编
+         */
+        private String zipcode;
+
         public ListDTO(OverseasWarehouseInboundAddressEntity entity, Map<String, String> dictCountryEntityMap) {
             this.id = entity.getId();
             this.dictProvinceId = entity.getDictProvinceId();
@@ -97,6 +102,7 @@ public class OverseasWarehouseInboundAddressDTO implements Serializable {
             this.lastName = entity.getLastName();
             this.mobile = entity.getMobile();
             this.street = entity.getStreet();
+            this.zipcode = entity.getZipcode();
         }
     }
 
