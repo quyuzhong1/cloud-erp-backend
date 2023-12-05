@@ -90,4 +90,10 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * 通过子类id或名称获取到父级的分类
      */
     BasicCategoryDTO getParentCategoryByParam(Map<String, String> params);
+
+    /**
+     * 获取品类列表
+     * @return
+     */
+    List<BasicCategoryEntity> getCategoryList();
 }
