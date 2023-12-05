@@ -1182,7 +1182,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         addDTO.setSourceId(shipmentEntity.getId());
         addDTO.setSourceCode(shipmentEntity.getCode());
-        addDTO.setRemark(String.format("FBA货件【%s】签收自动创建", shipmentEntity.getId()));
+        addDTO.setRemark(String.format("FBA货件【%s】签收自动创建", shipmentEntity.getCode()));
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
@@ -1191,7 +1191,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
-            detailAddDto.setQty(detailEntity.getDeliveryQty());
+            detailAddDto.setQty(detailEntity.getReceiveQty());
             detailAddDto.setOutWarehouseId(warehouseEntity.getId());
             detailAddDto.setOutWarehouseLocation("");
             detailAddDto.setInWarehouseId(destWarehouse.getId());
