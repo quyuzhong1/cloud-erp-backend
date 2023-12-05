@@ -389,7 +389,6 @@ public class SoOutstockDTO implements Serializable {
         private String orderType;
 
 
-        private String neSourceType;
         /**
          * 审核列表集合
          */
