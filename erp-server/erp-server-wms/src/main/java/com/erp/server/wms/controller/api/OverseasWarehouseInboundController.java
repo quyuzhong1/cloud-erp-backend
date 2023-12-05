@@ -195,8 +195,8 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
-    public ApiResult<List<BaseSelectDTO>> transferWareHouseList() {
-        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist();
+    public ApiResult<List<BaseSelectDTO>> transferWareHouseList(@RequestParam(value = "dictPlatform", required = false) String dictPlatform) {
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.baseSelectlist(dictPlatform);
         return success(result);
     }
 

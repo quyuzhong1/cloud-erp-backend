@@ -192,7 +192,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("设置入库类型=自发头程, 运输方式不能为空");
             }
         }
-        // TODO 校验
 
         BeanUtils.copyProperties(commonDTO, mainEntity);
         // 验证数据 & 数据赋值
