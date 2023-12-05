@@ -18,12 +18,13 @@ import java.util.List;
 public interface OverseasProviderWarehouseService extends SuperService<OverseasProviderWarehouseEntity> {
 
     /**
-    * 修改
-    * @author Luo_WG
-    * @date: 2023-11-16
-    * @param dto
-    * @return
-    */
+     * 修改
+     * @Author Luo_WG
+     * @Date 2023/12/5 11:49
+     * @param dto
+     * @param mainId
+     * @return java.lang.Boolean
+     **/
     Boolean update(OverseasProviderDTO.UpdateDTO dto, String mainId);
 
     /**
@@ -59,4 +60,12 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     List<OverseasProviderWarehouseEntity> listByMainIds(List<String> mainIds);
 
     List<OverseasProviderWarehouseEntity> listByPlatformWarehouseCode(List<String> warehouseCodeList,String platform);
+
+    /**
+     * 根据仓库ID信息查询海外仓平台
+     *
+     * @Author Jim
+     * @Date 2023/12/05
+     **/
+    String findPlatformByWarehouseId(String destWarehouseId);
 }

@@ -338,17 +338,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         checkExist(id, listing.getId());
         // listing 更新匹配关系
         listing.setMatchResult(true);
-        if (!listingInfoService.updateById(listing)){
+        if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
         // 无修改
-        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)){
+        if (skuMaping.getProductSkuId().equalsIgnoreCase(productSkuId)) {
             return skuMaping.getId();
         }
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
-        if (!this.updateById(skuMaping)){
+        if (!this.updateById(skuMaping)) {
             throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
         SkuMappingEntity addSkuMaping = new SkuMappingEntity();
@@ -362,7 +362,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMaping.setIsExpire(Boolean.FALSE);
         addSkuMaping.setEffectiveTime(now);
         addSkuMaping.setExpireTime(now.plusYears(100));
-        if (!this.save(addSkuMaping)){
+        if (!this.save(addSkuMaping)) {
             throw new ServiceException("[SkuMapping] 映射修改新增失败");
         }
         return addSkuMaping.getId();
@@ -417,7 +417,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
         // 产品SKU在该仓库是否已绑定
         SkuMappingEntity oldSkuMappingEntity = this.getByAttribute(productSkuId, warehouseId, warehouseType);
-        if (null != oldSkuMappingEntity){
+        if (null != oldSkuMappingEntity) {
             // 产品SKU【{}】已在【{}】仓库绑定
             throw new ServiceException(ApiError.ERROR_DUPLICATE_MAPPING_SKU_ID, oldSkuMappingEntity.getProductSkuNo(), oldSkuMappingEntity.getWarehouseName());
         }
@@ -435,7 +435,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         WarehouseDTO.ListDTO currenWareHouse = warehouseList.stream().findFirst().orElse(null);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(currenWareHouse.getDictPlatform());
-        if (null != platformEnum){
+        if (null != platformEnum) {
             throw new ServiceException(platformEnum.getName() + "服务商仓库不允许新增");
         }
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
@@ -538,7 +538,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listingId = listingInfo.getId();
             // listing 更新匹配关系
             listingInfo.setMatchResult(true);
-            if (!listingInfoService.updateById(listingInfo)){
+            if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
         } else {
@@ -622,7 +622,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             //查询平台sku信息
             SkuMappingEntity platformSkuMapping = list.stream()
                     .filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId())
-                            && StringUtils.isEmpty( obj.getWarehouseId())
+                            && StringUtils.isEmpty(obj.getWarehouseId())
                             && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
@@ -653,7 +653,20 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(platformSkuNoList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listByPlatformSkuNoList(platformSkuNoList);
+        List<SkuMappingDTO.SkuDTO> list = baseMapper.listByPlatformSkuNoList(platformSkuNoList);
+        String platformCode = RuleTypeEnum.PLATFORM.getCode();
+        for (SkuMappingDTO.SkuDTO item : list) {
+            String type = item.getType();
+            String platformSkuNo=item.getPlatformSkuNo();
+            String platformProductName=item.getPlatformProductName();
+            if(!platformCode.equals(type)){
+                item.setFlagSkuNo(platformSkuNo);
+                item.setFlagProductName(platformProductName);
+                item.setPlatformSkuNo("");
+                item.setPlatformProductName("");
+            }
+        }
+        return list;
     }
 
     @Override
@@ -757,7 +770,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingEntity> list = this.lambdaQuery().
-                ne(StringUtils.isNotBlank(id),SkuMappingEntity::getId,id).
+                ne(StringUtils.isNotBlank(id), SkuMappingEntity::getId, id).
                 eq(SkuMappingEntity::getWarehouseId, warehouseId).
                 eq(SkuMappingEntity::getProductSkuId, skuId).
                 eq(SkuMappingEntity::getType, RuleTypeEnum.WAREHOUSE).list();

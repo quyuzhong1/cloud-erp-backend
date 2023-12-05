@@ -68,9 +68,9 @@ public interface RuleOrderApprovalService extends SuperService<RuleOrderApproval
 
     /**
      * 获取到订单审核匹配结果
-     * @param jsonObjectList
+     * @param jsonObject
      * @return
      */
-    RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
+    RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(JSONObject jsonObject);
 
 }

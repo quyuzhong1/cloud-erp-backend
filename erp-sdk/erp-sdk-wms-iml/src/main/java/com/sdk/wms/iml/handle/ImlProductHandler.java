@@ -67,7 +67,7 @@ public class ImlProductHandler extends AbstractPullThirdWarehouseHandler<ImlProd
             page++;
         }
         respList = respList.stream().filter(v->v.getProductStatus().equals(ImlEnums.ProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
-        respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.PRODUCT.getCode()+v.getProductSku())));
+        respList.forEach(v->v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.PRODUCT.getCode()+v.getProductSku())));
         return respList;
     }
 
@@ -101,7 +101,9 @@ public class ImlProductHandler extends AbstractPullThirdWarehouseHandler<ImlProd
     public String getTargetPlatform() {
         return PlatformEnum.ERP_OMS.getDesc();
     }
-
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.IML;
+    }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }

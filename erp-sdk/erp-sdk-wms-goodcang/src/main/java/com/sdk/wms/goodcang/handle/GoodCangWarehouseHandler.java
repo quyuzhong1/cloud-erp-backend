@@ -50,7 +50,7 @@ public class GoodCangWarehouseHandler extends AbstractPullThirdWarehouseHandler<
         checkResponse(response);
         List<GoodCangWarehouseResp> goodCangGetSkuReq = response.getData();
         goodCangGetSkuReq.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+v.getWarehouseCode()));
+            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+v.getWarehouseCode()));
             v.setAuthId(data.getShopId());
         });
         return goodCangGetSkuReq;
@@ -87,6 +87,9 @@ public class GoodCangWarehouseHandler extends AbstractPullThirdWarehouseHandler<
         return PlatformEnum.ERP_WMS.getDesc();
     }
 
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.GOOD_CANG;
+    }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }

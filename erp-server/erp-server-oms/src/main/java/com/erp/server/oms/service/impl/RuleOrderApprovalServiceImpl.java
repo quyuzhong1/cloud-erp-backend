@@ -110,7 +110,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                         c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
         SpElExpressionDTO spElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
-        String expression=spElDTO.getExpression();
+        String expression = spElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
@@ -200,16 +200,16 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     /**
      * 获取到订单审核匹配结果
      *
-     * @param jsonObjectList
+     * @param jsonObject
      * @return
      */
     @Override
-    public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+    public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(JSONObject jsonObject) {
         RuleOrderApprovalDTO.RuleMatchDTO ruleMatch = new RuleOrderApprovalDTO.RuleMatchDTO();
-        if (CollectionUtils.isEmpty(jsonObjectList)) {
+        if (Objects.isNull(jsonObject)) {
             return ruleMatch;
         }
-        log.info("参数为=========={}", jsonObjectList);
+        log.info("参数为=========={}", jsonObject);
         List<RuleOrderApprovalEntity> ruleOrderApprovalList = this.listOrderByPriority();
         List<String> ruleIdList = ruleOrderApprovalList.stream().map(RuleOrderApprovalEntity::getId).collect(Collectors.toList());
         //规则条件
@@ -222,14 +222,12 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            for (JSONObject jsonObject : jsonObjectList) {
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject, jsonObjectList);
-                if (matchResult) {
-                    ruleMatch.setFlowStatus(item.getFlowStatus());
-                    String categoryDetailId = item.getCategoryDetailId();
-                    ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
-                    return ruleMatch;
-                }
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            if (matchResult) {
+                ruleMatch.setFlowStatus(item.getFlowStatus());
+                String categoryDetailId = item.getCategoryDetailId();
+                ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
+                return ruleMatch;
             }
         }
         return ruleMatch;

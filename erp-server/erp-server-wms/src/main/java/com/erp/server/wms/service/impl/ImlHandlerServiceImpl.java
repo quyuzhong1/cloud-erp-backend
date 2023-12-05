@@ -69,8 +69,6 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         ImlCreateOutboundReq imlCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToIml(createOutboundReq);
-        // TODO 艾姆勒没有测试环境，测试时默认不审核，上生产去掉
-        imlCreateOutboundReq.setVerify(0);
         // 艾姆勒同个客户同个参考号5分钟内不允许重复提交
         String key = "wms-iml:"+createOutboundReq.getReferenceNo();
         if(redisUtil.get(key) != null){

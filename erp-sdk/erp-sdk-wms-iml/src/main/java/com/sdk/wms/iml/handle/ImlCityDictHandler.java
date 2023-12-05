@@ -50,7 +50,7 @@ public class ImlCityDictHandler extends AbstractPullThirdWarehouseHandler<ImlReg
         checkResponse(response);
         List<ImlRegionResp> imlWarehouseData = response.getData();
         imlWarehouseData.forEach(v->{
-            v.setUniqueId(MD5Util.toMD5(getTargetPlatform()+BusinessTypeEnum.CITY_DICT.getCode()+v.getRegionName()));
+            v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.CITY_DICT.getCode()+v.getRegionName()));
             v.setAuthId(data.getShopId());
         });
         return imlWarehouseData;
@@ -87,6 +87,9 @@ public class ImlCityDictHandler extends AbstractPullThirdWarehouseHandler<ImlReg
         return PlatformEnum.ERP_SYS.getDesc();
     }
 
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.IML;
+    }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }

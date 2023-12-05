@@ -74,6 +74,15 @@ public class GoodCangService {
     }
 
     /**
+     * 获取出库数据
+     */
+    public GoodCangResponse<List<GoodCangOutboundResp>> getOutboundBatch(GoodCangGetOutBoundReq goodCangGetOutBoundReq){
+        String json = JSON.toJSONString(goodCangGetOutBoundReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_ORDER_LIST,json);
+        return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangOutboundResp>>>() {}.getType());
+    }
+
+    /**
      * 获取库存
      */
     public GoodCangResponse<List<GoodCangInventoryResp>> getProductInventory(@Valid GoodCangGetInventoryReq goodCangGetInventoryReq){
