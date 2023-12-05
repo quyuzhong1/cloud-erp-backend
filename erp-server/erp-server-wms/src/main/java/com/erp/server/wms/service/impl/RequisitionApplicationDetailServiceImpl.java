@@ -87,7 +87,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         // 数据处理
         handleData(list, mainId, Boolean.FALSE);
 
-        boolean save = super.updateBatchById(list);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("要货申请单明细单保存失败");
         }

@@ -1389,7 +1389,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //只有已装箱的发货单可以查看/导出装箱数据
-        long count = list.stream().map(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
+        long count = list.stream().filter(req -> PackingStatusEnum.NOT_PACKING.getCode().equals(req.getPackingStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.NOT_PACKING_NOT_EXPORT);
         }
