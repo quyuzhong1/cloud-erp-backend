@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -846,36 +845,39 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         }
 
         public void setBlankOtherBySelfHeadway() {
-            // TODO
+            this.setDeliveryMode("");
+            this.setExpressNo("");
+            this.setTransferWarehouseId("");
+            setBankWithoutCollectAtHome();
         }
 
+
+
         public void setBlankOtherByTransferAgentAndSelfDelivery() {
-            //TODO
+            this.setLogisticsMethod(null);
+            this.setTrackingNo("");
+            setBankWithoutCollectAtHome();
+        }
+
+        private void setBankWithoutCollectAtHome() {
+            this.setCustomsType("");
+            this.setLogisticsProductCode("");
+            this.setEstimatedCollectDate(null);
+            this.setDictProvinceId("");
+            this.setDictCityId("");
+            this.setDictDistrictId("");
+            this.setFirstName("");
+            this.setLastName("");
+            this.setMobile("");
+            this.setStreet("");
         }
 
         public void setBlankOtherByTransferAgentAndCollectAtHome() {
-            //TODO
-        }
+            this.setLogisticsMethod(null);
+            this.setTrackingNo("");
+            this.setDeliveryMode("");
+            this.setExpressNo("");
 
-        public CommonDTO(OverseasInstockTypeEnum instockType, LogisticsMethodEnum logisticsMethod, String remark, LocalDate estimatedArrivalDate, String trackingNo, String deliveryMode, String expressNo, String transferWarehouseId, String customsType, String logisticsProductCode, LocalDate estimatedCollectDate, String dictProvinceId, String dictCityId, String dictDistrictId, String firstName, String lastName, String mobile, String street) {
-            this.instockType = instockType;
-            this.logisticsMethod = logisticsMethod;
-            this.remark = remark;
-            this.estimatedArrivalDate = estimatedArrivalDate;
-            this.trackingNo = trackingNo;
-            this.deliveryMode = deliveryMode;
-            this.expressNo = expressNo;
-            this.transferWarehouseId = transferWarehouseId;
-            this.customsType = customsType;
-            this.logisticsProductCode = logisticsProductCode;
-            this.estimatedCollectDate = estimatedCollectDate;
-            this.dictProvinceId = dictProvinceId;
-            this.dictCityId = dictCityId;
-            this.dictDistrictId = dictDistrictId;
-            this.firstName = firstName;
-            this.lastName = lastName;
-            this.mobile = mobile;
-            this.street = street;
         }
     }
 
