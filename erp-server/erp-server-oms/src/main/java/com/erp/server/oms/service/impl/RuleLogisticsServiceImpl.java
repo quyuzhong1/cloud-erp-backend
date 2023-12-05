@@ -196,13 +196,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     /**
      * 获取到物流匹配结果
      *
-     * @param jsonObjectList
+     * @param jsonObject
      * @return
      */
     @Override
-    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(JSONObject jsonObject) {
         RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
-        if (CollectionUtils.isEmpty(jsonObjectList)) {
+        if (Objects.isNull(jsonObject)) {
             return ruleMatchResult;
         }
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
@@ -217,15 +217,15 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            for (JSONObject jsonObject : jsonObjectList) {
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject, jsonObjectList);
-                if (matchResult) {
-                    ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
-                    ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
-                    ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
-                    return ruleMatchResult;
-                }
+
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            if (matchResult) {
+                ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
+                ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
+                ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
+                return ruleMatchResult;
             }
+
         }
         return ruleMatchResult;
     }

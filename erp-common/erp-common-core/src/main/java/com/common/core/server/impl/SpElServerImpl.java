@@ -98,11 +98,12 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj, List<JSONObject> jsonList) {
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj) {
         for (String key : obj.keySet()) {
             String value = obj.get(key).toString();
             obj.set(key, value);
         }
+        List<JSONObject> jsonList=obj.getBeanList("detailList",JSONObject.class);
         SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         for (SpElAddFieldDTO item : addFieldList) {
