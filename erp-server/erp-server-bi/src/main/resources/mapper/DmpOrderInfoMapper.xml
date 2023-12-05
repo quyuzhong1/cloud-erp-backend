@@ -496,16 +496,16 @@
                 o.dept_id as typeId,
             </if>
             <if test="params.searchType == 'user'">
-                and o.charge_id as typeId,
+                o.charge_id as typeId,
             </if>
             <if test="params.searchType == 'shop'">
-                and o.shop_name as typeName,
+                o.shop_name as typeName,
             </if>
             <if test="params.searchType == 'category'">
-                and o.category_id as typeId,
+                o.category_id as typeId,
             </if>
             <if test="params.searchType == 'sku'">
-                and o.sku_no as typeName,
+                o.sku_no as typeName,
             </if>
             o.date_name AS month,
             <if test="dataType != null and dataType == 'sales'">
