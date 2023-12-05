@@ -1500,7 +1500,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @return void
      **/
     private void updatePackingStatus(String id, String packingStatus){
-        lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, PackingStatusEnum.NOT_PACKING.getCode())
+        lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
     }

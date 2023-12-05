@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -826,6 +827,46 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private String street;
 
+
+        /**
+         * 所有ID
+         */
+        public List<String> getAllDictCityId() {
+            return Arrays.asList(this.dictProvinceId, this.dictCityId, this.dictDistrictId);
+        }
+
+        public void setBlankOtherBySelfHeadway() {
+            // TODO
+        }
+
+        public void setBlankOtherByTransferAgentAndSelfDelivery() {
+            //TODO
+        }
+
+        public void setBlankOtherByTransferAgentAndCollectAtHome() {
+            //TODO
+        }
+
+        public CommonDTO(OverseasInstockTypeEnum instockType, LogisticsMethodEnum logisticsMethod, String remark, LocalDate estimatedArrivalDate, String trackingNo, String deliveryMode, String expressNo, String transferWarehouseId, String customsType, String logisticsProductCode, LocalDate estimatedCollectDate, String dictProvinceId, String dictCityId, String dictDistrictId, String firstName, String lastName, String mobile, String street) {
+            this.instockType = instockType;
+            this.logisticsMethod = logisticsMethod;
+            this.remark = remark;
+            this.estimatedArrivalDate = estimatedArrivalDate;
+            this.trackingNo = trackingNo;
+            this.deliveryMode = deliveryMode;
+            this.expressNo = expressNo;
+            this.transferWarehouseId = transferWarehouseId;
+            this.customsType = customsType;
+            this.logisticsProductCode = logisticsProductCode;
+            this.estimatedCollectDate = estimatedCollectDate;
+            this.dictProvinceId = dictProvinceId;
+            this.dictCityId = dictCityId;
+            this.dictDistrictId = dictDistrictId;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.mobile = mobile;
+            this.street = street;
+        }
     }
 
     /**

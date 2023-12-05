@@ -13,6 +13,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundAddressMapper;
 import com.erp.server.wms.service.OverseasWarehouseInboundAddressService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.wms.service.SysDictService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,8 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
 
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private SysDictService sysDictService;
 
     @Override
     public List<OverseasWarehouseInboundAddressDTO.ListDTO> addressList() {
@@ -58,8 +61,12 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(OverseasWarehouseInboundAddressDTO.AddDTO dto) {
-        checkParams(dto);
+        sysDictService.mapAndCheckDictCityIds(
+                dto.getDictProvinceId(),
+                dto.getDictCityId(),
+                dto.getDictDistrictId());
         OverseasWarehouseInboundAddressEntity entity = new OverseasWarehouseInboundAddressEntity();
         BeanUtils.copyProperties(dto, entity);
         if (!this.save(entity)) {
@@ -67,31 +74,6 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
         }
     }
 
-    private void checkParams(OverseasWarehouseInboundAddressDTO.CommonDTO dto) {
-        List<DictCityEntity> dictCityEntities = sysDictFeign.listCityByIdList(dto.getAllDictCityId());
-        if (CollectionUtils.isEmpty(dictCityEntities)) {
-            throw new ServiceException("未找到对应地址");
-        }
-        Map<String, DictCityEntity> dictCountryEntityMap = dictCityEntities.stream().collect(Collectors.toMap(DictCityEntity::getId, Function.identity()));
-        DictCityEntity provinceEntity = dictCountryEntityMap.get(dto.getDictProvinceId());
-        DictCityEntity cityEntity = dictCountryEntityMap.get(dto.getDictCityId());
-        DictCityEntity districtEntity = dictCountryEntityMap.get(dto.getDictDistrictId());
-        if (null == provinceEntity) {
-            throw new ServiceException("省ID信息不存在");
-        }
-        if (null == cityEntity) {
-            throw new ServiceException("城市ID信息不存在");
-        }
-        if (null == districtEntity) {
-            throw new ServiceException("地区ID信息不存在");
-        }
-        if (!districtEntity.getParentId().equalsIgnoreCase(cityEntity.getId())) {
-            throw new ServiceException("地区对应城市不匹配");
-        }
-        if (!cityEntity.getParentId().equalsIgnoreCase(provinceEntity.getId())) {
-            throw new ServiceException("城市对应省不匹配");
-        }
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,7 +95,11 @@ public class OverseasWarehouseInboundAddressServiceImpl extends SuperServiceImpl
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95146);
         }
-        checkParams(dto);
+        sysDictService.mapAndCheckDictCityIds(
+                dto.getDictProvinceId(),
+                dto.getDictCityId(),
+                dto.getDictDistrictId());
+
         BeanUtils.copyProperties(dto, entity);
         if (!this.updateById(entity)) {
             throw new ServiceException("更新失败");
