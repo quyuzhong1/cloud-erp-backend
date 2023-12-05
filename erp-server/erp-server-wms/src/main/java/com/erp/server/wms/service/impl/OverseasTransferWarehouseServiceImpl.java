@@ -117,7 +117,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         return groupMap.values().stream()
                 .map(overseasTransferWarehouseEntities -> {
                     OverseasTransferWarehouseEntity e = overseasTransferWarehouseEntities.stream().findFirst().orElse(null);
-                    return new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getPlatformToWarehouseName());
+                    return new BaseSelectDTO(e.getId(), e.getPlatformWarehouseCode(), e.getName());
                 }).collect(Collectors.toList());
     }
 
