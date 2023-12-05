@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.server.plm.service.BasicCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,5 +30,13 @@ public class BasicCategoryFeignController extends BaseController {
     public List<BasicCategoryDTO> tree() {
         List<BasicCategoryDTO> treeList = categoryService.getTree();
         return treeList;
+    }
+
+    /**
+     * 获取分类列表
+     */
+    @GetMapping("/getCategoryList")
+    public List<BasicCategoryEntity> getCategoryList() {
+        return categoryService.getCategoryList();
     }
 }

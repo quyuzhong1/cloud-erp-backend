@@ -23,6 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -434,6 +435,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         BeanUtils.copyProperties(parentEntity, dto);
         return dto;
 
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:plm:getCategoryList",keyGenerator = "myKeyGenerator")
+    public List<BasicCategoryEntity> getCategoryList() {
+        return lambdaQuery().list();
     }
 
     /**

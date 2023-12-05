@@ -330,7 +330,15 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/category/tree")
     List<BasicCategoryDTO> listCategoryTree();
-
+    /**
+     * 获取分类列表
+     * @author yl
+     * @date 2023-09-26 16:51
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     */
+    @GetMapping("feign/category/getCategoryList")
+    List<BasicCategoryEntity> getCategoryList();
     /**
      * 获取到父级的分类
      *

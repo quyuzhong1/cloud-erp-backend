@@ -231,7 +231,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        //TODO list 组装 itemName
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
