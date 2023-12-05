@@ -3803,7 +3803,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
-                throw new ServiceException(ApiError.ERROR_9046);
+                throw new ServiceException(ApiError.ERROR_9046, dto.getUpdateFiledCode());
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }

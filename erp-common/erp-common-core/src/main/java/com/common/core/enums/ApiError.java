@@ -138,7 +138,7 @@ public enum ApiError implements Serializable {
     ERROR_9043(9043, "账号不存在"),
     ERROR_9044(9044, "账号未绑定邮箱，请绑定邮箱后操作"),
     ERROR_9045(9045, "通知不存在"),
-    ERROR_9046(9046, "字段编号不正确"),
+    ERROR_9046(9046, "字段编号【{}】不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
     ERROR_CURRENCY_NOT_EXIST(9049, "币别[{}]不存在"),
