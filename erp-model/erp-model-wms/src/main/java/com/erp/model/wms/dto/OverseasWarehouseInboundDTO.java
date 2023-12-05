@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -649,6 +650,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 平台类型名称
          */
         private String dictPlatformName;
+
+        /**
+         * 地址邮编
+         */
+        private String zipcode;
     }
 
     /**
@@ -727,6 +733,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 单号
+         */
+        private String code;
+
+        /**
          * 入库类型
          */
         @NotNull(message = "入库类型不能为空")
@@ -787,14 +798,13 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 报关方式代号:
          * /api/wms/common/enumDropDown?type=CustomsTypeNew
          */
-        private String customsType;
+        private Integer customsType;
 
         /**
          * 物流产品代码
          * /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
          */
         private String logisticsProductCode;
-
 
         /**
          * 预计揽收日期
@@ -836,6 +846,10 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private String street;
 
+        /**
+         * 地址邮编
+         */
+        private String zipcode;
 
         /**
          * 所有ID
@@ -860,9 +874,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         }
 
         private void setBankWithoutCollectAtHome() {
-            this.setCustomsType("");
             this.setLogisticsProductCode("");
-            this.setEstimatedCollectDate(null);
             this.setDictProvinceId("");
             this.setDictCityId("");
             this.setDictDistrictId("");
@@ -870,6 +882,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
             this.setLastName("");
             this.setMobile("");
             this.setStreet("");
+            this.setZipcode("");
         }
 
         public void setBlankOtherByTransferAgentAndCollectAtHome() {

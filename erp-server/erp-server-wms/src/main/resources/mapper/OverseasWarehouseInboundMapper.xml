@@ -57,7 +57,7 @@
         </if>
         <!--来源单号-->
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            AND owi.sourceCode ILIKE concat('%',#{params.sourceCode}::text,'%')
+            AND owi.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <!--入库类型-->
         <if test="params.instockType != null ">

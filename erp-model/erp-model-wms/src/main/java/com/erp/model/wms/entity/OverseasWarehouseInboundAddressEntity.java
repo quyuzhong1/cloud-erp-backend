@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Arrays;
 import java.util.List;
 
@@ -73,6 +74,12 @@ public class OverseasWarehouseInboundAddressEntity extends BaseEntity<OverseasWa
      */
     @TableField("street")
     private String street;
+
+    /**
+     * 地址邮编
+     */
+    @TableField("zipcode")
+    private String zipcode;
 
 
     public static final String DICT_PLATFORM = "dict_platform";
