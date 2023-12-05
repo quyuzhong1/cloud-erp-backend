@@ -236,6 +236,13 @@ public enum GoodCangEnums {
             this.code = code;
             this.name = name;
         }
+
+        public static CustomsTypeNewEnum getByCode(Integer code) {
+            return Arrays.stream(CustomsTypeNewEnum.values())
+                    .filter(e -> e.getCode().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     /**

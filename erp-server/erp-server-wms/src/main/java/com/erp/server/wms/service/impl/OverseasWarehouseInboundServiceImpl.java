@@ -13,18 +13,18 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
-import com.common.business.enums.RequestIdTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
@@ -38,6 +38,7 @@ import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.*;
@@ -51,9 +52,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -83,6 +86,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private WmsAttachmentService wmsAttachmentService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SysDictService sysDictService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -189,7 +194,89 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 入库类型=自发头程
         if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())){
             if (null == commonDTO.getLogisticsMethod()){
-                throw new ServiceException("设置入库类型=自发头程, 运输方式不能为空");
+                throw new ServiceException("设置入库类型=自发头程：【logisticsMethod】运输方式不能为空");
+            }
+            // 设置其他参数为空
+            commonDTO.setBlankOtherBySelfHeadway();
+        }
+
+        // 入库类型=自发头程, 交货方式=自送货物
+        if (OverseasInstockTypeEnum.TRANSFER_AGENT.equals(commonDTO.getInstockType())){
+            if (StringUtils.isBlank(commonDTO.getDeliveryMode())){
+                throw new ServiceException("【deliveryMode】交货方式不能为空");
+            }
+            // 自送货物
+            if (OverseasDeliveryModeEnum.SELF_DELIVERY.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())){
+                if (StringUtils.isBlank(commonDTO.getTransferWarehouseId())){
+                    throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
+                }
+                if (StringUtils.isBlank(commonDTO.getExpressNo())){
+                    throw new ServiceException("【expressNo】快递单号不能为空");
+                }
+            }
+            // 设置其他参数为空
+            commonDTO.setBlankOtherByTransferAgentAndSelfDelivery();
+        }
+
+        // 入库类型=自发头程, 交货方式=上面揽收
+        if (OverseasInstockTypeEnum.TRANSFER_AGENT.equals(commonDTO.getInstockType())){
+            if (StringUtils.isBlank(commonDTO.getDeliveryMode())){
+                throw new ServiceException("【deliveryMode】交货方式不能为空");
+            }
+            // 上门揽收
+            if (OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())){
+                if (StringUtils.isBlank(commonDTO.getTransferWarehouseId())){
+                    throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
+                }
+                if (StringUtils.isBlank(commonDTO.getCustomsType())){
+                    throw new ServiceException("【customsType】报关方式不能为空");
+                }
+                GoodCangEnums.CustomsTypeNewEnum customsTypeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(Integer.valueOf(commonDTO.getCustomsType()));
+                if (null == customsTypeNewEnum){
+                    throw new ServiceException("【customsType】报关方式不存在");
+                }
+                // 谷仓校验
+                // logisticsProductCode
+                // 物流产品代码
+                // /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+
+                if (null == commonDTO.getEstimatedCollectDate()){
+                    throw new ServiceException("预计揽收日期不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getDictProvinceId())){
+                    throw new ServiceException("【dictProvinceId】省ID不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getDictCityId())){
+                    throw new ServiceException("【dictCityId】城市ID不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getDictDistrictId())){
+                    throw new ServiceException("【dictDistrictId】地区ID不能为空");
+                }
+                Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
+                        commonDTO.getDictProvinceId(),
+                        commonDTO.getDictCityId(),
+                        commonDTO.getDictDistrictId());
+
+                if (StringUtils.isBlank(commonDTO.getFirstName())){
+                    throw new ServiceException("【firstName】姓不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getLastName())){
+                    throw new ServiceException("【lastName】名不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getMobile())){
+                    throw new ServiceException("【mobile】手机号不能为空");
+                }
+
+                if (StringUtils.isBlank(commonDTO.getStreet())){
+                    throw new ServiceException("【street】详情地址不能为空");
+                }
+                // 设置其他参数为空
+                commonDTO.setBlankOtherByTransferAgentAndCollectAtHome();
             }
         }
 
