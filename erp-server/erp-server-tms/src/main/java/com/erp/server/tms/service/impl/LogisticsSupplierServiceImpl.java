@@ -237,13 +237,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
-        List<String> deleteSyncSourceIdList=saleChannelList.stream().filter(l->l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
-        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList,id);
+        List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(l -> l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList, id);
         //这个是对应删除的渠道id集合
-        List<String> deleteChannelIdList=channelList.stream().filter(c->deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+        List<String> deleteChannelIdList = channelList.stream().filter(c -> deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
 
         //这个是海外仓物流
-        List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId())&&!s.getIsDeleted()).collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseLogisticsList)) {
             syncWarehouseLogistics(id, warehouseLogisticsList, channelList);
         }
@@ -251,7 +251,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         Integer zeroFlag = MathUtil.ZERO;
 
         //这个不是海外仓物流
-        List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId())&&!s.getIsDeleted()).collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(logisticsList)) {
             List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
             for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
@@ -277,12 +277,12 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             }
             logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
         }
-        if(CollectionUtils.isNotEmpty(deleteChannelIdList)){
+        if (CollectionUtils.isNotEmpty(deleteChannelIdList)) {
             logisticsChannelService.removeByIdList(deleteChannelIdList);
         }
 
 
-        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功"+logisticsList.size()+"个渠道");
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + logisticsList.size() + "个渠道");
 
     }
 
@@ -380,6 +380,22 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto) {
         return this.lambdaUpdate().eq(LogisticsSupplierEntity::getSupplierId, dto.getSupplierId()).
                 set(LogisticsSupplierEntity::getDisabled, dto.getDisabled()).update();
+    }
+
+    @Override
+    public List<BaseChildDTO.ListChildTreeDTO> tree() {
+        List<LogisticsSupplierEntity> dbList = this.list();
+        List<BaseChildDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+        List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
+        for (BaseChildDTO.ListChildTreeDTO item : list) {
+            String id = item.getId();
+            List<LogisticsChannelEntity> channelList=allChannelList.stream().
+                    filter(c->c.getMainId().equals(id)).collect(Collectors.toList());
+            List<BaseChildDTO.ListChildTreeDTO> childrenList=LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            item.setChildren(childrenList);
+        }
+
+        return list;
     }
 
 

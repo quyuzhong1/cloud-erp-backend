@@ -1,7 +1,9 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
@@ -38,7 +40,12 @@ public interface LogisticsSupplierConverter {
     BaseDropDownDTO.DisabledDTO convertBySupplierDown(LogisticsSupplierEntity logisticsChannel);
     List<BaseDropDownDTO.DisabledDTO> convertBySupplierDown(List<LogisticsSupplierEntity> list);
 
+    @Mappings({
+            @Mapping(target = "id", source = "id"),
+            @Mapping(target = "name", source = "supplierName"),
+            @Mapping(target = "disabled", source = "disabled"),
 
-
-
+    })
+    BaseChildDTO.ListChildTreeDTO convertTree(LogisticsSupplierEntity entity);
+    List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsSupplierEntity> dbList);
 }

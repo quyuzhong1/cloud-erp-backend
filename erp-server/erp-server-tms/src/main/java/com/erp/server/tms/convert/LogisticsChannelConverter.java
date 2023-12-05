@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BooleanMapperWork;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -36,6 +37,8 @@ import java.util.List;
 public interface LogisticsChannelConverter {
 
     LogisticsChannelConverter INSTANCE = Mappers.getMapper(LogisticsChannelConverter.class);
+
+
 
     @Mappings({
             @Mapping(target = "platformChannelId", source = "id"),
@@ -182,4 +185,15 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByIml(ImlInventoryLogisticsProductsResp data);
     List<LogisticsSaleChannelEntity> channelConvertByIml(List<ImlInventoryLogisticsProductsResp> data);
+
+
+    @Mappings({
+            @Mapping(target = "id", source = "id"),
+            @Mapping(target = "name", source = "name"),
+            @Mapping(target = "disabled", source = "disabled"),
+
+    })
+    BaseChildDTO.ListChildTreeDTO convertTree(LogisticsChannelEntity entity);
+     List<BaseChildDTO.ListChildTreeDTO> convertTree(List<LogisticsChannelEntity> channelList);
+
 }

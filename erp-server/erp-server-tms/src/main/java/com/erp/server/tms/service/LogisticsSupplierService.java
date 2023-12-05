@@ -107,4 +107,13 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      *@date 2023-11-20
      */
     Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto);
+
+    /**
+     * 获取物流商树形结构
+     *@parms
+     *@return 
+     *@author yl
+     *@date 2023-12-05
+     */
+    List<BaseChildDTO.ListChildTreeDTO> tree();
 }
