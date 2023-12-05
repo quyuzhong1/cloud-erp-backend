@@ -883,8 +883,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 if (StringUtils.isBlank(transferOutId)){
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
+            } else {
+                log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
             }
-            log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
         }
     }
 
