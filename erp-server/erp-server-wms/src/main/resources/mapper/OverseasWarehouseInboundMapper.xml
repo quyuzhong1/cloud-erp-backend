@@ -105,7 +105,7 @@
         </if>
         <!--   是否组合品     -->
         <if test="params.isCombination != null">
-            and owi.is_combination = #{params.isCombination}
+            and owid.is_combination = #{params.isCombination}
         </if>
 
         <!--海外仓库存SKU列表-->
@@ -135,7 +135,7 @@
         </if>
         <!--收发差异（大于0，小于0，等于0，不等于0）-->
         <if test="params.diffRule != null and params.diffRule != ''">
-            AND fsd.diff_qty ${params.diffRule} 0
+            AND owid.diff_qty ${params.diffRule} 0
         </if>
 
         <!--数据权限-->

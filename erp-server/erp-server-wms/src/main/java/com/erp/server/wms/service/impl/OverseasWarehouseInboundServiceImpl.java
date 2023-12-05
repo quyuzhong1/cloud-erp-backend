@@ -20,6 +20,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -86,6 +87,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
     private OverseasTransferWarehouseService overseasTransferWarehouseService;
+    @Resource
+    private OverseasProviderService overseasProviderService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -322,9 +325,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }
                 commonDTO.setCustomsTypeName(customsTypeNewEnum.getName());
                 // 谷仓校验
-                // logisticsProductCode
-                // 物流产品代码
-                // /api/wms/overseasWarehouseInbound/transferWareHouseList?code=中转仓代号
+                if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform)){
+                    if (StringUtils.isBlank(commonDTO.getLogisticsProductCode())){
+                        throw new ServiceException("【logisticsProductCode】 物流产品代码不能为空");
+                    }
+                    // 物流产品代码
+                    commonDTO.setLogisticsProductName(transferEntity.getLogisticsProductName());
+                }
 
                 if (null == commonDTO.getEstimatedCollectDate()){
                     throw new ServiceException("预计揽收日期不能为空");
@@ -469,6 +476,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setInstockTypeName(OverseasInstockTypeEnum.getNameByCode(resultDTO.getInstockType()));
         // 入库状态名称
         resultDTO.setInstockStatusName(OverseasInstockStatusEnum.getName(resultDTO.getInstockStatus()));
+        // 报关方式
+        resultDTO.setCustomsTypeName(GoodCangEnums.CustomsTypeNewEnum.getNameByCode(Integer.parseInt(resultDTO.getCustomsType())));
+        // 交货方式名称
+        resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
 
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());

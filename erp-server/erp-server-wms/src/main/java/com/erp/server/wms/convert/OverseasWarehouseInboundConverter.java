@@ -74,7 +74,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receiveQty",  constant = "0"),
             @Mapping(target = "transportQty",  constant = "0"),
             @Mapping(target = "packQty",  source = "detailEntity.deliveryQty"),
-            @Mapping(target = "diffQty",  constant = "0"),
+            @Mapping(target = "diffQty",  expression = "java(-detailEntity.getDeclareQty())"),
             @Mapping(target = "receiveStatus",  constant = "not"),
             @Mapping(target = "receiveType",  constant = ""),
     })
