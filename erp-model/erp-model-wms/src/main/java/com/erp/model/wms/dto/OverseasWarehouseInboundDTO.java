@@ -640,6 +640,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 详情地址
          */
         private String street;
+
+        /**
+         * 平台类型: goodcang=谷仓，iml=艾姆勒，空=手动添加
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台类型名称
+         */
+        private String dictPlatformName;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
@@ -70,6 +71,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .orderByAsc(OverseasProviderWarehouseEntity::getId)
                 .last("LIMIT 1")
                 .one();
     }
@@ -106,6 +108,19 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .eq(OverseasProviderWarehouseEntity :: getMainId,mainId)
                 .in(OverseasProviderWarehouseEntity :: getPlatformWarehouseCode,warehouseCodeList)
                 .list();
+    }
+
+    @Override
+    public String findPlatformByWarehouseId(String warehouseId) {
+        OverseasProviderWarehouseEntity entity = getByWarehouseId(warehouseId);
+        if (null == entity){
+            return "";
+        }
+        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
+        if (null == providerEntity){
+            throw new ServiceException("目的仓数据异常：未找到关联服务：id" + entity.getMainId());
+        }
+        return providerEntity.getCode();
     }
 
     /**

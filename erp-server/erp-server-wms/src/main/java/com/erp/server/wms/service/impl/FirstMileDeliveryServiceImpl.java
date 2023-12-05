@@ -1468,6 +1468,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(overseasWarehouseInboundEntities)) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInboundEntities.get(0).getCode());
         }
+        // 查询关联目的仓
+        String destWarehouseId = entity.getDestWarehouseId();
+        if (StringUtils.isBlank(destWarehouseId)) {
+            throw new ServiceException("目的仓信息为空");
+        }
+        // 所属平台:未绑定海外仓为空
+        String dictPlatform = overseasProviderWarehouseService.findPlatformByWarehouseId(destWarehouseId);;
 
         //物流信息
         FirstMileDeliveryLogisticsEntity logisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
@@ -1476,6 +1483,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setTrackingNo(StringUtils.join(logisticsEntity.getTrackingNoList(), ","));
         viewDTO.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
+        // 平台信息
+        viewDTO.setDictPlatform(dictPlatform);
+        OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);
+        viewDTO.setDictPlatformName(null == platformEnum ? "" : platformEnum.getName());
 
         //明细信息
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(id));
