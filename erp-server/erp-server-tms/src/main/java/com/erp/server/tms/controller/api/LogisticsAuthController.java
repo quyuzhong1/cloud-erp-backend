@@ -135,8 +135,8 @@ public class LogisticsAuthController extends BaseController {
                 cancelResult = logisticsAuthService.cancel(id);
             } catch (Exception e) {
                 log.error("物流商取消授权失败{}", e);
-                LogisticsAuthEntity entity = logisticsAuthService.getById(id);
-                if (!ObjectUtil.isEmpty(entity)) {
+                LogisticsAuthEntity entity = logisticsAuthService.getByMainId("",id);
+                if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, entity.getName(), "物流授权不存在, 取消授权失败");
                     resultDTOS.add(cancelResult);
                     continue;
