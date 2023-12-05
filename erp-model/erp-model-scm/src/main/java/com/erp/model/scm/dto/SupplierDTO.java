@@ -185,12 +185,14 @@ public class SupplierDTO implements Serializable {
          * 供应商联系信息
          */
         @Valid
+        @NotEmpty(message = "联系信息至少有一条")
         private List<SupplierContactDTO.UpdateDTO> contactList;
 
         /**
          * 供应商银行账户信息
          */
         @Valid
+        @NotEmpty(message = "银行账户信息至少有一条")
         private List<SupplierAccountDTO.UpdateDTO> bankAccountList;
 
         /**
