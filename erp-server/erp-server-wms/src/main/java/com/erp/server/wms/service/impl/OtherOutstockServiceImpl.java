@@ -398,73 +398,73 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<OtherOutstockEntity> list = getList(ids);
+    public BatchResultDTO approve(String id, String type, String comment) {
+        //根据id查询
+        OtherOutstockEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99061);
+        }
         //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
-        String type = baseApproveParamDTO.getType();
-
-        log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
 
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            log.info("其他出库单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            log.info("其他出库单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            updateInventoryTransCore(list);
+            updateInventoryTransCore(entity);
             //发送金蝶
-            list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            syncKingdeeOtherOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个其他出库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他出库单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单审核");
     }
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
-        //根据ids查询
-        List<OtherOutstockEntity> list = getList(ids);
+    public BatchResultDTO disApprove(String id) {
+        //根据id查询
+        OtherOutstockEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99061);
+        }
         //已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
 
-        log.info("其他出库单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("其他出库单反审核，ids=【{}】", JSONUtil.toJsonStr(id));
 
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_OUTSTOCK,ids);
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_OUTSTOCK,Arrays.asList(id));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        syncKingdeeOtherOutstockService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个其他出库单【%s】", ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他出库单【{}】",entity.getCode()), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单反审核");
     }
 
     @Override
@@ -523,19 +523,16 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
      * @description: 其他出库变更库存
      * @author Will
      * @date: 2023/5/22 17:26
-     * @param list
+     * @param entity
      */
-    private void updateInventoryTransCore (List<OtherOutstockEntity> list) {
-        List<String> ids = list.stream().map(OtherOutstockEntity::getId).collect(Collectors.toList());
+    private void updateInventoryTransCore (OtherOutstockEntity entity) {
         //其他入库明细
-        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainIds(ids);
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99062);
         }
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
         for (OtherOutstockDetailEntity detailEntity : detailList) {
-            //其他出库信息
-            OtherOutstockEntity entity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
 
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
@@ -554,7 +551,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //其他出库减少库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.OTHER_OUT.getCode());
+        //根据库存方向判断
+        String code = InventoryBusinessTypeEnum.OTHER_OUT.getCode();
+        if (InventoryDirectionEnum.RETURN_GOODS.getCode().equals(entity.getInventoryDirection())) {
+            code = InventoryBusinessTypeEnum.OTHER_OUT_RETURN_GOODS.getCode();
+        }
+        inventoryInOutStockDTO.setBusinessType(code);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
