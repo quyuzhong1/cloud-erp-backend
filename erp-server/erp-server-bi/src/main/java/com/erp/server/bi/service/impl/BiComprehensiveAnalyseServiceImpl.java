@@ -485,7 +485,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         LocalDateTime endTime = LocalDateTime.of(biFilterDTO.getEndTime().minusYears(1).toLocalDate(), LocalTime.MAX);
 //        biFilterDTO.setDateType(StrUtil.isNotBlank(biFilterDTO.getDateType()) ? biFilterDTO.getDateType() : "DAY");
         // 固定是天
-//        biFilterDTO.setDateType(DateTypeEnum.DAY.getType());
+        if (StringUtils.isBlank(biFilterDTO.getDateType())){
+            biFilterDTO.setDateType(DateTypeEnum.DAY.getType());
+        }
         // 组装去年filter
         SkuDateFilterDTO lastYearBiFilterDTO = new SkuDateFilterDTO();
         BeanUtils.copyProperties(biFilterDTO, lastYearBiFilterDTO);
@@ -722,7 +724,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 .collect(Collectors.toList());
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         // 国家销售额
         List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto,settleRate);
 
@@ -809,7 +813,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 .collect(Collectors.toList());
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
         // 国家销售额
         List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto, settleRate);
 
