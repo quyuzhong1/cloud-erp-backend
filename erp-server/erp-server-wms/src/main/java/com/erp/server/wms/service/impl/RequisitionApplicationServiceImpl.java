@@ -257,15 +257,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //修改处理信息
         List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        Boolean flag = updateHandleDate(raIds);
+        Boolean flag = updateHandleDate(raIds, RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
 
         //保存处理选择的调出,调入,批准数量等信息
         updateHandleDetailDate(list, warehouseList);
 
-        //修改状态到处理中
-        Map<String, List<RequisitionApplicationDTO.HandleListDTO>> listMap = list.stream().collect(Collectors.groupingBy(req -> req.getSourceId()));
-        for (Map.Entry<String, List<RequisitionApplicationDTO.HandleListDTO>> stringListEntry : listMap.entrySet()) {
-            updateApproveStatus(stringListEntry.getKey(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
+        //新增日志
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
+        for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
+            String msg = StrUtil.format("用户【{}】处理了一个单号为【{}】的【{}】单", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "处理保存");
         }
         return flag;
     }
@@ -334,21 +335,30 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //修改处理信息
         List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        Boolean flag = updateHandleDate(raIds);
+        Boolean flag = updateHandleDate(raIds, RequisitionApplicationStatusEnum.HANDLE.getStatus());
 
         //保存完成输入的拣货数量
         updateFinishDetailPickingQty(list);
 
-        //修改状态到已审核
-        Map<String, List<RequisitionApplicationDTO.FinishListDTO>> listMap = list.stream().collect(Collectors.groupingBy(req -> req.getSourceId()));
-        for (Map.Entry<String, List<RequisitionApplicationDTO.FinishListDTO>> stringListEntry : listMap.entrySet()) {
-            updateApproveStatus(stringListEntry.getKey(), RequisitionApplicationStatusEnum.HANDLE.getStatus());
+        //新增日志
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
+        for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
+            String msg = StrUtil.format("用户【{}】完成了一个单号为【{}】的【{}】单", commonService.getUserInfo().getUserName(), entity.getCode(), "要货申请");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "完成保存");
         }
         return flag;
     }
 
     @Override
     public List<RequisitionApplicationDTO.printPickingViewDTO> printPickingView(List<String> ids) {
+        List<RequisitionApplicationEntity> list = this.listByIds(ids);
+        long count = list.stream()
+                .filter(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())
+                        && !RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(req.getStatus()))
+                .count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+        }
 
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(ids);
 
@@ -615,11 +625,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @return java.lang.Boolean
      **/
 
-    private Boolean updateHandleDate(List<String> raIds) {
+    private Boolean updateHandleDate(List<String> raIds, String status) {
         LoginUser userInfo = commonService.getUserInfo();
         return lambdaUpdate().set(RequisitionApplicationEntity::getHandleUserId, userInfo.getUid())
                 .set(RequisitionApplicationEntity::getHandleUserName, userInfo.getUserName())
                 .set(RequisitionApplicationEntity::getHandleTime, LocalDateTime.now())
+                .set(RequisitionApplicationEntity::getStatus, status)
                 .in(RequisitionApplicationEntity::getId, raIds)
                 .update();
     }
