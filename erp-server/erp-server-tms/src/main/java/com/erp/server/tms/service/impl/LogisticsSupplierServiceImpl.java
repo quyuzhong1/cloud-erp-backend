@@ -172,8 +172,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
                 LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
-                channelView.setWarehouseId(item.getWarehouseId());
-                channelView.setWarehouseName(item.getWarehouseName());
+                channelView.setWarehouseId(item.getOverseasWarehouseId());
+                channelView.setWarehouseName(item.getOverseasWarehouseName());
                 List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> c.getSourceId().equals(item.getId())).collect(Collectors.toList());
                 channelView.setChannelList(channelList);
                 viewList.add(channelView);
@@ -244,6 +244,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
         //这个是海外仓物流
         List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
+        Integer totalSize = warehouseLogisticsList.size();
         if (CollectionUtils.isNotEmpty(warehouseLogisticsList)) {
             syncWarehouseLogistics(id, warehouseLogisticsList, channelList);
         }
@@ -252,6 +253,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
 
         //这个不是海外仓物流
         List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
+        totalSize = totalSize + logisticsList.size();
         if (CollectionUtils.isNotEmpty(logisticsList)) {
             List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
             for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
@@ -282,7 +284,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
 
 
-        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + logisticsList.size() + "个渠道");
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + totalSize + "个渠道");
 
     }
 
@@ -293,6 +295,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      * @param warehouseLogisticsList
      */
     public void syncWarehouseLogistics(String logisticsSupplierId, List<LogisticsSaleChannelEntity> warehouseLogisticsList, List<LogisticsChannelEntity> channelList) {
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(logisticsSupplierId);
         //海外仓库id
         List<String> overseasWarehouseIdList = warehouseLogisticsList.stream().
                 map(LogisticsSaleChannelEntity::getOverseasWarehouseId).distinct().collect(Collectors.toList());
@@ -305,16 +308,24 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             String overseasWarehouseId = item.getKey();
             OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasWarehouseList.stream().
                     filter(o -> o.getId().equals(overseasWarehouseId)).findFirst().orElse(null);
-            LogisticsWarehouseEntity logisticsWarehouse = new LogisticsWarehouseEntity();
-            String id = IdWorker.getIdStr();
-            logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
-            logisticsWarehouse.setMainId(logisticsSupplierId);
-            logisticsWarehouse.setId(id);
-            if (Objects.nonNull(overseasProviderWarehouse)) {
-                logisticsWarehouse.setWarehouseId(overseasProviderWarehouse.getWarehouseId());
-                logisticsWarehouse.setWarehouseName(overseasProviderWarehouse.getWarehouseName());
+            LogisticsWarehouseEntity logisticsWarehouse = logisticsWarehouseList.stream().
+                    filter(l -> l.getOverseasWarehouseId().equals(overseasWarehouseId)).findFirst().orElse(null);
+            String id;
+            Boolean nonNull = Objects.nonNull(logisticsWarehouse);
+            if (nonNull) {
+                id = logisticsWarehouse.getId();
+            } else {
+                logisticsWarehouse=new LogisticsWarehouseEntity();
+                id = IdWorker.getIdStr();
+                logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
+                logisticsWarehouse.setMainId(logisticsSupplierId);
+                logisticsWarehouse.setId(id);
+                if (Objects.nonNull(overseasProviderWarehouse)) {
+                    logisticsWarehouse.setOverseasWarehouseName(overseasProviderWarehouse.getPlatformWarehouseName());
+                    logisticsWarehouse.setOverseasWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+                }
+                logisticsWarehouseService.save(logisticsWarehouse);
             }
-            logisticsWarehouseService.save(logisticsWarehouse);
             List<LogisticsSaleChannelEntity> saleChannelList = item.getValue();
             if (CollectionUtils.isNotEmpty(saleChannelList)) {
                 List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(saleChannelList.size());
@@ -324,7 +335,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                             findFirst().orElse(new LogisticsChannelEntity());
                     channelEntity.setSyncSourceId(syncSourceId);
                     channelEntity.setCode(saleChannel.getCode());
-                    channelEntity.setMainId(id);
+                    channelEntity.setMainId(logisticsSupplierId);
                     channelEntity.setSourceType(sourceType);
                     channelEntity.setSourceId(id);
                     channelEntity.setName(saleChannel.getCnName());
@@ -389,9 +400,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
         for (BaseChildDTO.ListChildTreeDTO item : list) {
             String id = item.getId();
-            List<LogisticsChannelEntity> channelList=allChannelList.stream().
-                    filter(c->c.getMainId().equals(id)).collect(Collectors.toList());
-            List<BaseChildDTO.ListChildTreeDTO> childrenList=LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            List<LogisticsChannelEntity> channelList = allChannelList.stream().
+                    filter(c -> c.getMainId().equals(id)).collect(Collectors.toList());
+            List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
             item.setChildren(childrenList);
         }
 
