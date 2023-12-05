@@ -111,16 +111,16 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public String findPlatformByWarehouseId(String warehouseId) {
+    public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
         OverseasProviderWarehouseEntity entity = getByWarehouseId(warehouseId);
         if (null == entity){
-            return "";
+            return null;
         }
         OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
         if (null == providerEntity){
             throw new ServiceException("目的仓数据异常：未找到关联服务：id" + entity.getMainId());
         }
-        return providerEntity.getCode();
+        return providerEntity;
     }
 
     /**

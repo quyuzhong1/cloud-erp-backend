@@ -150,6 +150,12 @@ public class OverseasWarehouseInboundAddressDTO implements Serializable {
         private String street;
 
         /**
+         * 地址邮编
+         */
+        @NotBlank(message = "【zipcode】地址邮编不能为空")
+        private String zipcode;
+
+        /**
          * 所有ID
          */
         public List<String> getAllDictCityId() {

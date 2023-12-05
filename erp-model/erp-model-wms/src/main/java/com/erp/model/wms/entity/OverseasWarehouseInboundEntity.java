@@ -242,6 +242,12 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     private String fullAddress;
 
     /**
+     * 地址邮编
+     */
+    @TableField("zipcode")
+    private String zipcode;
+
+    /**
      * 数量
      */
     @TableField(exist = false)
