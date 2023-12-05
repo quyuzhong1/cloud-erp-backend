@@ -166,6 +166,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "isTrack", constant = "true"),
             @Mapping(target = "logisticsPlatform", constant = "goodcang"),
             @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByGoodCang(GoodCangLogisticsProductsResp data);
@@ -178,6 +179,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "isTrack", constant = "true"),
             @Mapping(target = "logisticsPlatform", constant = "iml"),
             @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByIml(ImlInventoryLogisticsProductsResp data);

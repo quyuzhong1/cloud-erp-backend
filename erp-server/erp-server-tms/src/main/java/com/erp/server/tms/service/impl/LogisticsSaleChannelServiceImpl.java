@@ -123,6 +123,9 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getShipmentMethod())){
             queryWrapper.eq(LogisticsSaleChannelEntity::getShipmentMethod, logisticsSaleChannelEntity.getShipmentMethod());
         }
+        if (StringUtils.isNotEmpty(logisticsSaleChannelEntity.getPlatformWarehouseCode())){
+            queryWrapper.eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, logisticsSaleChannelEntity.getPlatformWarehouseCode());
+        }
         queryWrapper.eq(LogisticsSaleChannelEntity::getIsDeleted, false);
         queryWrapper.last("limit 1");
         LogisticsSaleChannelEntity one  = baseMapper.selectOne(queryWrapper);
