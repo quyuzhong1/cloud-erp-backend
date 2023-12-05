@@ -1,6 +1,5 @@
 package com.common.business.enums;
 
-import com.common.business.enums.OverseasInstockStatusEnum;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -24,6 +23,7 @@ public enum GoodCangEnums {
     CUSTOMER_PACKAGE_REQUIREMENT("customerPackageRequirement",PackageReqEnum.class),
     PRODUCT_FREEZE_STATUS("productFreezeStatus",InventoryProductFreezeStatusEnum.class),
     CANCEL_STATUS("cancelStatus",OrderCancelStatusEnum.class),
+    ORDER_STATUS("orderStatus",OrderCancelStatusEnum.class),
     ;
 
     private final String fieldName;
@@ -359,6 +359,38 @@ public enum GoodCangEnums {
         OrderCancelStatusEnum(Integer code, String name) {
             this.code = code;
             this.name = name;
+        }
+    }
+
+
+    /**
+     * 出库单状态
+     */
+    @Getter
+    public enum OrderStatusEnum {
+        TO_BE_SHIPPED("W","待发货","waitShipped"),
+        SHIPPED("D","已发货","shipped"),
+        ABNORMAL("N","异常订单",null),
+        PROBLEM("P","问题件",null),
+        REMOVED("X","已删除",null),
+        ;
+        private final String code;
+        private final String name;
+        //本来应该是引用枚举SoB2cBillStatusEnum，但是枚举不在common包下，引包会导致循环依赖
+        private final String erpSoStatus;
+
+        OrderStatusEnum(String code, String name,String erpSoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpSoStatus;
+        }
+
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OrderStatusEnum::getErpSoStatus)
+                    .orElse(null);
         }
     }
 }

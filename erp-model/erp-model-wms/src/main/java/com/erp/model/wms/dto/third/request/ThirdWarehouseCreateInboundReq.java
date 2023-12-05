@@ -19,7 +19,7 @@ import java.util.List;
 public class ThirdWarehouseCreateInboundReq {
 
     /**
-     * 第三方入库单号（只有编辑才需要填写）
+     * 第三方入库单号（编辑时必填）
      */
     private String receivingCode;
 

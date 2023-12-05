@@ -1,0 +1,30 @@
+package com.sdk.wms.iml.dto.response;
+
+import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.dto.CleanBaseDTO;
+import lombok.*;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@NoArgsConstructor
+@ToString
+@AllArgsConstructor
+public class ImlOutboundResp extends CleanBaseDTO implements Serializable {
+
+    //订单号
+    @JSONField(name = "order_code")
+    private String orderCode;
+
+    //入库单状态
+    @JSONField(name = "reference_no")
+    private String referenceNo;
+
+    //订单状态
+    @JSONField(name = "order_status")
+    private String orderStatus;
+}

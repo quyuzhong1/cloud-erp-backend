@@ -4,5 +4,6 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
    com.sdk.wms.goodcang.handle.GoodCangWarehouseHandler,\
    com.sdk.wms.goodcang.handle.GoodCangTransferHandler,\
    com.sdk.wms.goodcang.handle.GoodCangInventoryHandler,\
-   com.sdk.wms.goodcang.handle.GoodCangInboundHandler
+   com.sdk.wms.goodcang.handle.GoodCangInboundHandler,\
+   com.sdk.wms.goodcang.handle.GoodCangOutboundHandler
 

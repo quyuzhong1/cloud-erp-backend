@@ -5,6 +5,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
@@ -213,8 +214,12 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
             entity.setLastTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()).minusSeconds(task.getIntervalTime()));
             entity.setNextTime(LocalDateTimeUtil.beginOfDay(LocalDateTime.now()));
         }else{
-            //调整时间，拉取一次全量数据
-            entity.setLastTime(LocalDateTime.parse("2015-01-01T00:00:00"));
+            //产品数据拉取全量
+            LocalDateTime baseTime = (task.getBillType().equals(BusinessTypeEnum.PRODUCT.getCode())) ?
+                    LocalDateTime.parse("2015-01-01T00:00:00") :
+                    LocalDateTime.now().minusSeconds(task.getIntervalTime());
+
+            entity.setLastTime(baseTime);
             entity.setNextTime(LocalDateTime.now());
         }
         entity.setStatus(1);

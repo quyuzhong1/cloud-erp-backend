@@ -113,5 +113,14 @@ public interface ImlConverter {
     static String getWarehousePlatformType(){
         return WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode();
     }
-
+    @Mappings({
+            @Mapping(target = "warehousePlatformType", expression = "java(ImlConverter.getWarehousePlatformType())"),
+            @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())"),
+            @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
+            @Mapping(target = "orderCode",  source = "orderCode"),
+            @Mapping(target = "referenceNo",  source = "referenceNo"),
+            @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.ImlEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+    })
+    PlatformOutboundDTO outboundConversion(ImlOutboundResp sourceData);
+    List<PlatformOutboundDTO> outboundConversion(List<ImlOutboundResp> sourceDataList);
 }

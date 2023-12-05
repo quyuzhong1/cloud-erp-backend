@@ -7,6 +7,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractPullThirdWarehouseHandler;
+import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -56,6 +57,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
         for(String receiveCode : receiveCodeList){
             GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch(receiveCode);
             checkResponse(response);
+            response.getData().setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.INBOUND.getCode()+receiveCode));
             respList.add(response.getData());
         }
         return respList;
@@ -109,6 +111,9 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
         return PlatformEnum.ERP_WMS.getDesc();
     }
 
+    private PlatformDictEnum getPlatformDictEnum(){
+        return PlatformDictEnum.GOOD_CANG;
+    }
 
     public boolean isSuccess(String ask){
         return "Success".equals(ask);

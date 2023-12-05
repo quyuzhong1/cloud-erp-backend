@@ -84,6 +84,14 @@ public class ImlService {
     }
 
     /**
+     * 获取出库单
+     */
+    public ImlResponse<List<ImlOutboundResp>> getOutboundBatch(ImlGetOutboundReq imlGetOutboundReq){
+        String response = ImlUtils.callService(ImlConstants.GET_ORDER_LIST,imlGetOutboundReq);
+        return JSONObject.parseObject(response,new TypeReference<ImlResponse<List<ImlOutboundResp>>>() {}.getType());
+    }
+
+    /**
      * 创建入库单
      */
     public ImlResponse<String> createInboundBill(@Valid ImlCreateInboundReq imlGetReceiptReq){

@@ -7,6 +7,8 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.sdk.wms.goodcang.dto.response.GoodCangOutboundResp;
 import com.sdk.wms.goodcang.handle.GoodCangOutboundHandler;
+import com.sdk.wms.iml.dto.response.ImlOutboundResp;
+import com.sdk.wms.iml.handle.ImlOutboundHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,34 +19,35 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
-public class PullGoodCangJobTest {
+public class PulImlJobTest {
 
     @Resource
-    private PullGoodCangJob pullGoodCangJob;
+    private PullImlJob pullImlJob;
 
     @Resource
-    private GoodCangOutboundHandler goodCangOutboundHandler;
+    private ImlOutboundHandler imlOutboundHandler;
 
     @Test
     public void execute() {
-        pullGoodCangJob.execute();
+        pullImlJob.execute();
     }
 
 
     @Test
-    public void goodCangOutboundHandlerTest(){
+    public void imlOutboundHandlerTest(){
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appToken","7013991264f611e98ea200e01b680258");
-        authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
+        authMap.put("appToken","44ac3ae1211d416a080858e57833cc14");
+        authMap.put("appKey","fa0c90d7dbb434fa2160209756db677c");
         ThirdWarehouseContext.setAuthMap(authMap);
         JobTaskDTO data = new JobTaskDTO();
         data.setLastTime(LocalDateTime.of(2020,12,20, 0, 0, 0));
-        data.setNextTime(LocalDateTime.of(2021,12,20, 0, 0, 0));
+        data.setNextTime(LocalDateTime.of(2021,1,10, 0, 0, 0));
         data.setApiParam(authMap);
-        PlatformDataDTO<GoodCangOutboundResp, PlatformOutboundDTO> result = goodCangOutboundHandler.pullHandle(data);
+        PlatformDataDTO<ImlOutboundResp, PlatformOutboundDTO> result = imlOutboundHandler.pullHandle(data);
         System.out.println(result);
     }
 
