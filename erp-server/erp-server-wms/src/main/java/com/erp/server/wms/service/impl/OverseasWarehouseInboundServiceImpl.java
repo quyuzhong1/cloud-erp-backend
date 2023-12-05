@@ -23,6 +23,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
@@ -83,6 +84,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private SysDictService sysDictService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private OverseasTransferWarehouseService overseasTransferWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -304,11 +307,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 // 查询设置中转仓信息
-                OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(commonDTO.getTransferWarehouseId());
-                if (null == entity){
+                OverseasTransferWarehouseEntity transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
+                if (null == transferEntity){
                     throw new ServiceException("未找到中转仓");
                 }
-                commonDTO.setTransferWarehouseName(entity.getPlatformWarehouseName());
+                commonDTO.setTransferWarehouseName(transferEntity.getName());
 
                 if (null == commonDTO.getCustomsType()){
                     throw new ServiceException("【customsType】报关方式不能为空");
@@ -338,10 +341,32 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtils.isBlank(commonDTO.getDictDistrictId())){
                     throw new ServiceException("【dictDistrictId】地区ID不能为空");
                 }
+                // 查询和校验地区
                 Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
                         commonDTO.getDictProvinceId(),
                         commonDTO.getDictCityId(),
                         commonDTO.getDictDistrictId());
+                // 省
+                commonDTO.setDictProvinceName(dictCityEntityMap.get(commonDTO.getDictProvinceId()).getName());
+                // 市
+                commonDTO.setDictCityName(dictCityEntityMap.get(commonDTO.getDictCityId()).getName());
+                // 区
+                commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
+                // iml
+                if(OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)){
+                    // 查询关联
+                    Map<String, ImlDictCityEntity> imlCityEntityMap =sysDictService.mapAndCheckImlCityIds(
+                            commonDTO.getDictProvinceId(),
+                            commonDTO.getDictCityId(),
+                            commonDTO.getDictDistrictId());
+                    // 省
+                    commonDTO.setPlatformProvinceId(imlCityEntityMap.get(commonDTO.getDictProvinceId()).getRegionId());
+                    // 市
+                    commonDTO.setPlatformCityId(imlCityEntityMap.get(commonDTO.getDictCityId()).getRegionId());
+                    // 区
+                    commonDTO.setPlatformDistrictId(imlCityEntityMap.get(commonDTO.getDictDistrictId()).getRegionId());
+
+                }
 
                 if (StringUtils.isBlank(commonDTO.getFirstName())){
                     throw new ServiceException("【firstName】姓不能为空");
@@ -373,8 +398,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setLogisticsMethod(null == commonDTO.getLogisticsMethod() ? "" : commonDTO.getLogisticsMethod().getCode());
         mainEntity.setEstimatedArrivalDate(LocalDateTime.of(commonDTO.getEstimatedArrivalDate(), LocalTime.MIN));
         mainEntity.setInstockStatus(OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode());
+        if (null != commonDTO.getEstimatedCollectDate()){
+            mainEntity.setEstimatedCollectDate(LocalDateTime.of(commonDTO.getEstimatedCollectDate(), LocalTime.MIN));
+        }
         mainEntity.setOverseasWarehouseInboundId("");
-        mainEntity.setSourceCode(deliveryEntity.getCode());
         // 设置仓库
         mainEntity.setToWarehouseId(deliveryEntity.getDestWarehouseId());
         mainEntity.setToWarehouseName(deliveryEntity.getDestWarehouseName());
@@ -396,11 +423,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
             mainEntity.setCode(commonDTO.getCode());
         }
-        if (null != deliveryEntity){
-            mainEntity.setSourceId(deliveryEntity.getId());
-            mainEntity.setSourceCode(deliveryEntity.getSourceCode());
-            mainEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        }
+        mainEntity.setSourceId(deliveryEntity.getId());
+        mainEntity.setSourceCode(deliveryEntity.getCode());
+        mainEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
     }
 
 

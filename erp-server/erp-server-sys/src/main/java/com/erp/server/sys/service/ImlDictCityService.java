@@ -1,8 +1,11 @@
 package com.erp.server.sys.service;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.ImlDictCityDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +18,6 @@ import com.erp.model.sys.dto.ImlDictCityDTO;
 public interface ImlDictCityService extends SuperService<ImlDictCityEntity> {
 
     boolean saveOrUpdateByRegionId(ImlDictCityEntity entity);
+
+    List<ImlDictCityEntity> listByDictIdList(List<String> dictIds);
 }

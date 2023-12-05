@@ -837,6 +837,36 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String dictDistrictId;
 
         /**
+         * 前端不传
+         */
+        private String dictProvinceName;
+
+        /**
+         * 前端不传
+         */
+        private String dictCityName;
+
+        /**
+         * 前端不传
+         */
+        private String dictDistrictName;
+
+        /**
+         * 前端不传
+         */
+        private String platformProvinceId;
+
+        /**
+         * 前端不传
+         */
+        private String platformCityId;
+
+        /**
+         * 前端不传
+         */
+        private String platformDistrictId;
+
+        /**
          * 姓
          */
         private String firstName;

@@ -169,7 +169,7 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
      * 预计揽收日期
      */
     @TableField("estimated_collect_date")
-    private String estimatedCollectDate;
+    private LocalDateTime estimatedCollectDate;
     /**
      * 字典)省ID
      */
