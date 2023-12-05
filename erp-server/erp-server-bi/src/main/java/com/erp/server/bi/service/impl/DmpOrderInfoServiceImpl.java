@@ -153,7 +153,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
             dto.setNewSign(1);
         }
-        dto.setDateType(DateTypeEnum.DAY.getType());
+        if (StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         BigDecimal amount = baseMapper.sumSales(dto, settleRate);

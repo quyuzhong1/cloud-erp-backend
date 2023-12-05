@@ -296,7 +296,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
 
         TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+        if (org.apache.commons.lang.StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.MONTH.getType());
+        }
 
         Map<String, String> dataMap = new HashMap<>();
         //部门和负责人 填充名称
