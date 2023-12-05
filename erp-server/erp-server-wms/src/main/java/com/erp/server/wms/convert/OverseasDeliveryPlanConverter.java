@@ -27,7 +27,6 @@ public interface OverseasDeliveryPlanConverter {
             @Mapping(target = "detailList", ignore = true),
             @Mapping(target = "handleUserName", constant = ""),
             @Mapping(target = "requisitionWarehouseName", constant = ""),
-            @Mapping(target = "status", constant = "")
     })
     RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);
 
