@@ -123,7 +123,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
-        //清空明细数据
         List<PurchaseChangeDTO.ListDTO> records = pageData.getRecords();
         //格式化变更数据
         formatPurchaseChange(records);
@@ -616,26 +615,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
-        List<String> ids = records.stream().map(PurchaseChangeDTO.ListDTO::getId).collect(Collectors.toList());
-        //查询流程id判断是否存在流程 TODO
-
-        List<String> list = new ArrayList<>();
+        //查询流程id判断是否存在流程
         records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setSupplierName(null);
-                obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-            list.add(obj.getId());
         });
     }
 

@@ -69,7 +69,6 @@ public class ShippingCalculationServiceImpl  implements ShippingCalculationServi
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ShippingCalculationDTO.ListDTO> pageData = shippingTemplateOtherCostService.paging(query, params);
-        //清空明细数据
         List<ShippingCalculationDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);

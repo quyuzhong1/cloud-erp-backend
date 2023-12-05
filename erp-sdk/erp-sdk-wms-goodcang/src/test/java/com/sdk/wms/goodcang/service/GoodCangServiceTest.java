@@ -1,14 +1,10 @@
 package com.sdk.wms.goodcang.service;
 
 
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.enums.GoodCangEnums;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
-import com.sdk.wms.goodcang.handle.GoodCangOutboundHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,9 +23,6 @@ public class GoodCangServiceTest {
 
     @Resource
     private GoodCangService goodCangService;
-
-    @Resource
-    private GoodCangOutboundHandler goodCangOutboundHandler;
 
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
@@ -201,13 +194,4 @@ public class GoodCangServiceTest {
         System.out.println(response.getData());
     }
 
-    @Test
-    public void goodCangOutboundHandlerTest(){
-        JobTaskDTO data = new JobTaskDTO();
-        data.setLastTime(LocalDateTime.of(2020,12,20, 0, 0, 0));
-        data.setNextTime(LocalDateTime.of(2021,12,20, 0, 0, 0));
-        data.setApiParam(ThirdWarehouseContext.getAuthMap());
-        PlatformDataDTO<GoodCangOutboundResp, PlatformOutboundDTO> result = goodCangOutboundHandler.pullHandle(data);
-        System.out.println(result);
-    }
 }

@@ -180,20 +180,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
             List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
 
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setPurchaseOrderCode(null);
-                    obj.setSupplierName(null);
-                    obj.setApproveStatus(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setReturnOrderSource(null);
-                    obj.setReturnOrderSourceName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -201,7 +188,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getReturnWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
                 obj.setWarehouseLocationName(warehouseLocationEntity.getName());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);

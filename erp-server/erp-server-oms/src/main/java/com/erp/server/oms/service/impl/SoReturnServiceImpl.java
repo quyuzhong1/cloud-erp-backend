@@ -148,21 +148,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> soDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setType(null);
-                    obj.setApproveStatusName(null);
-                    obj.setApproveStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setCustomerName(null);
-                    obj.setSalesOrgName(null);
-                    obj.setSellerName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setTypeName(BillTypeEnum.getName(obj.getType()));
@@ -179,7 +165,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setCurrency(soDetailEntity.getCurrency());
                 obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);

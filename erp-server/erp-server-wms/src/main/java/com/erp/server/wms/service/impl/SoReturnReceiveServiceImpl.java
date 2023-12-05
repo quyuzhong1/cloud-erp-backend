@@ -139,18 +139,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setCustomerName(null);
-                    obj.setInventoryOrgName(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
@@ -161,7 +150,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 obj.setSalesQty(soDetailEntity.getQty());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);

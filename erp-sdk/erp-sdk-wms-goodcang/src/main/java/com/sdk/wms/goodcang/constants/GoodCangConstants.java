@@ -2,7 +2,7 @@ package com.sdk.wms.goodcang.constants;
 
 public class GoodCangConstants {
     public static final String BASE_URL = "https://uat-oms.eminxing.com";
-//    public static final String BASE_URL_2 = "https://oms.goodcang.net";
+//    public static final String BASE_URL = "https://oms.goodcang.net";
     public static final String METHOD_GET_SKU_LIST = "/public_open/product/get_product_sku_list";
     public static final String METHOD_GET_WAREHOUSE = "/public_open/base_data/get_warehouse";
     public static final String METHOD_GET_RECEIPT_BATCH = "/public_open/inbound_order/get_receipt_batch";

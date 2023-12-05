@@ -179,29 +179,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
-        //清空明细数据
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
         //数据赋值处理
         doOpHandlePurchaseOrder(records);
-        List<String> list = new ArrayList<>();
-        for (PurchaseOrderDTO.ListDTO obj : records) {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setTypeName(null);
-                obj.setSupplierName(null);
-                obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setCreateUserName(null);
-                continue;
-            }
-            list.add(obj.getId());
-        }
         return new PagingVO(pageData);
     }
 
