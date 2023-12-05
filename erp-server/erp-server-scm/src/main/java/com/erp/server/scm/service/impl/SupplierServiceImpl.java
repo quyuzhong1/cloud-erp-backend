@@ -1163,11 +1163,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean cancelProcess(List<String> ids) {
         //根据ids查询
         List<SupplierEntity> list = this.listByIds(ids);
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
 
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
