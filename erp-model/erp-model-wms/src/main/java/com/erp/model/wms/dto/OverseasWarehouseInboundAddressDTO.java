@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.erp.model.wms.entity.OverseasWarehouseInboundAddressEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
@@ -101,11 +102,11 @@ public class OverseasWarehouseInboundAddressDTO implements Serializable {
 
 
     /**
-     * 新增
+     * 通用
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class CommonDTO {
         /**
          * 省ID
          */
@@ -154,6 +155,30 @@ public class OverseasWarehouseInboundAddressDTO implements Serializable {
         public List<String> getAllDictCityId() {
             return Arrays.asList(this.dictProvinceId, this.dictCityId, this.dictDistrictId);
         }
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+
+    }
+
+    /**
+     * 编辑
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+        /**
+         * ID
+         */
+        @NotBlank(message = "ID不能为空")
+        private String id;
     }
 
 
