@@ -864,10 +864,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             axes.setLabel(categoryName);
             columnList.add(axes);
         }
-
+        if(StringUtils.isBlank(dto.getDateType())){
+            dto.setDateType(DateTypeEnum.DAY.getType());
+        }
         List<ShopSalesVO> list = baseMapper.byShopCategory(dto, settleRate);
         Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
+                collect(Collectors.groupingBy(ShopSalesVO::getShopName));
         int initSize = groupMap.size();
 
         List<Map<String, Object>> rowAxesList = new ArrayList<>(initSize);
