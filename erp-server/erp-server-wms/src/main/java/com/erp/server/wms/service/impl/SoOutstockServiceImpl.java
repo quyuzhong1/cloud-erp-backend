@@ -1061,7 +1061,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
-        params.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -1204,7 +1203,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
         List<String> approveList = listBySearchType(searchType);
-        dto.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         //处理国家数据
         handleCountryIdList(dto);
         //获取导出数据
@@ -1995,7 +1993,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-        params.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         String searchType = params.getSearchType();
         //根据搜索类型获取到审核状态
         List<String> approveList = listBySearchType(searchType);
