@@ -172,8 +172,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
             for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
                 LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
-                channelView.setWarehouseId(item.getWarehouseId());
-                channelView.setWarehouseName(item.getWarehouseName());
+                channelView.setWarehouseId(item.getOverseasWarehouseId());
+                channelView.setWarehouseName(item.getOverseasWarehouseName());
                 List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> c.getSourceId().equals(item.getId())).collect(Collectors.toList());
                 channelView.setChannelList(channelList);
                 viewList.add(channelView);
@@ -321,8 +321,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                 logisticsWarehouse.setMainId(logisticsSupplierId);
                 logisticsWarehouse.setId(id);
                 if (Objects.nonNull(overseasProviderWarehouse)) {
-                    logisticsWarehouse.setWarehouseId(overseasProviderWarehouse.getWarehouseId());
-                    logisticsWarehouse.setWarehouseName(overseasProviderWarehouse.getWarehouseName());
+                    logisticsWarehouse.setOverseasWarehouseName(overseasProviderWarehouse.getPlatformWarehouseName());
+                    logisticsWarehouse.setOverseasWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
                 }
                 logisticsWarehouseService.save(logisticsWarehouse);
             }
