@@ -85,6 +85,16 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField("transfer_warehouse_id")
     private String transferWarehouseId;
     /**
+     * 海外中转仓库代号
+     */
+    @TableField("platform_transfer_warehouse_code")
+    private String platformTransferWarehouseCode;
+    /**
+     * 海外目的仓库代号
+     */
+    @TableField("platform_to_warehouse_code")
+    private String platformToWarehouseCode;
+    /**
      * 目的仓名称
      */
     @TableField("to_warehouse_name")
@@ -144,7 +154,7 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
 
     /**
      * 报关方式代号:
-     * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNewEnum
+     * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNew
      */
     @TableField("customs_type")
     private String customsType;

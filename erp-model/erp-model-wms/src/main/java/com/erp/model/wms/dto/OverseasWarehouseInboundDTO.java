@@ -560,7 +560,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         /**
          * 报关方式代号
-         * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNewEnum
+         * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNew
          */
         private String customsType;
 
@@ -806,7 +806,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         /**
          * 报关方式代号:
-         * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNewEnum
+         * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNew
          */
         private String customsType;
 
