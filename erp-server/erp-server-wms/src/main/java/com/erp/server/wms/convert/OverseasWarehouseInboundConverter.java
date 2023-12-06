@@ -1,6 +1,7 @@
 package com.erp.server.wms.convert;
 
 import com.common.business.mapper.DateMapperWork;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
@@ -64,9 +65,9 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId",  source = "mainEntity.id"),
-            // TODO 确定?
-            @Mapping(target = "platformProductName",  source = "detailEntity.productName"),
-            @Mapping(target = "platformSkuNo",  source = "detailEntity.stockSku"),
+
+            @Mapping(target = "platformProductName",  source = "skuMappingView.stockSkuName"),
+            @Mapping(target = "platformSkuNo",  source = "skuMappingView.stockSku"),
             @Mapping(target = "productName",  source = "detailEntity.productName"),
             @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
             @Mapping(target = "skuId",  source = "detailEntity.skuId"),
@@ -78,7 +79,10 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receiveStatus",  constant = "not"),
             @Mapping(target = "receiveType",  constant = ""),
     })
-    OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity, OverseasWarehouseInboundEntity mainEntity);
+    OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity,
+                                                                OverseasWarehouseInboundEntity mainEntity,
+                                                                SkuMappingDTO.ListStockSkuNoByProductSkuIdView skuMappingView
+    );
 
     @Mappings({
             @Mapping(target = "receivingCode",  source = "receivingCode"),

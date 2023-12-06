@@ -21,6 +21,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -36,6 +37,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -54,6 +56,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -93,6 +96,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private OverseasProviderService overseasProviderService;
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -123,9 +128,31 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
+        List<String> skuIds = deliveryDetailEntityList.stream()
+                .map(FirstMileDeliveryDetailEntity::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        // 查询关联信息
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuList = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuList = skuList.stream().filter(e -> e.getDictPlatform().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(currentSkuList) && StringUtils.isNotBlank(dictPlatform)){
+            throw new ServiceException("数据异常：未找到SKU的映射关系");
+        }
+        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap = currentSkuList.stream()
+                .collect(Collectors.toMap(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId, Function.identity()));
+        // 校验映射关系
+        if (StringUtils.isNotBlank(dictPlatform)){
+            deliveryDetailEntityList.forEach(e-> {
+                SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = currentSkuMap.get(e.getSkuId());
+                if (null == view){
+                    throw new ServiceException("未找到映射关系：skuId=" + e.getSkuId());
+                }
+            });
+        }
+
         // 明细处理
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
-                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity))
+                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity, currentSkuMap.get(e.getSkuId())))
                 .collect(Collectors.toList());
 
         // 操作日志
@@ -159,6 +186,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity, String verifyCode) {
+        // 交货方式
+        String inStockType = "";
+        if(StringUtils.isBlank(mainEntity.getInstockType())){
+            OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
+        }
+
         // 物流方式
         String receivingShippingType = "";
         if (StringUtils.isNotBlank(mainEntity.getLogisticsMethod())){

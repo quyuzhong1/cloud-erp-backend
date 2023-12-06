@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.GoodCangEnums;
 import com.common.business.enums.ImlEnums;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
