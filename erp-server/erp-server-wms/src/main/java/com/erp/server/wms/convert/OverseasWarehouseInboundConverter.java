@@ -87,16 +87,16 @@ public interface OverseasWarehouseInboundConverter {
     @Mappings({
             @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "transitType",  source = "transitType"),
+            @Mapping(target = "transitType",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenTransitTypeEnum.getCodeByErp(sourceData.getTransitType()))"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
             @Mapping(target = "smCode",  source = "smCode"),
-            @Mapping(target = "receivingShippingType",  source = "receivingShippingType"),
+            @Mapping(target = "receivingShippingType",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.ProductCodeEnum.getCodeByErp(sourceData.getReceivingShippingType()))"),
             @Mapping(target = "trackingNumber",  source = "trackingNumber"),
             @Mapping(target = "etaDate",  source = "etaDate"),
             @Mapping(target = "verify",  source = "verify"),
-            @Mapping(target = "customsType",  source = "customsType"),
-            @Mapping(target = "collectingService",  source = "collectingService"),
+            @Mapping(target = "customsType",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.CustomsTypeNewEnum.getCodeByErp(sourceData.getCustomsType()))"),
+            @Mapping(target = "collectingService",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenCollectingServiceEnum.getCodeByErp(sourceData.getCollectingService()))"),
             @Mapping(target = "customersSendInfo.deliveryCode",  source = "deliveryCode"),
             @Mapping(target = "collectingTime",  source = "collect.collectingTime"),
             @Mapping(target = "clearanceService",  source = "clearanceService"),
@@ -110,7 +110,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "shiperAddress.saAddress2",  source = "shiperInfo.address2"),
             @Mapping(target = "items",  source = "items"),
     })
-    GoodCangCreateInboundReq inboundDtoToGoodCang(ThirdWarehouseCreateInboundReq createInboundReq);
+    GoodCangCreateInboundReq inboundDtoToGoodCang(ThirdWarehouseCreateInboundReq sourceData);
 
     @Mappings({
             @Mapping(target = "caFirstName",  source = "collect.contacterFirstName"),
@@ -128,8 +128,8 @@ public interface OverseasWarehouseInboundConverter {
     @Mappings({
             @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "incomeType",  source = "incomeType"),
-            @Mapping(target = "receivingType",  source = "receivingType"),
+            @Mapping(target = "incomeType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.IncomeTypeEnum.getCodeByErp(sourceData.getIncomeType()))"),
+            @Mapping(target = "receivingType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.TransitTypeEnum.getCodeByErp(sourceData.getReceivingType()))"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
             @Mapping(target = "smCode",  source = "smCode"),
@@ -144,7 +144,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "street",  source = "collect.collectStreet"),
             @Mapping(target = "items",  source = "items"),
     })
-    ImlCreateInboundReq inboundDtoToIml(ThirdWarehouseCreateInboundReq createInboundReq);
+    ImlCreateInboundReq inboundDtoToIml(ThirdWarehouseCreateInboundReq sourceData);
 
     @Mappings({
             @Mapping(target = "productSku",  source = "productSku"),

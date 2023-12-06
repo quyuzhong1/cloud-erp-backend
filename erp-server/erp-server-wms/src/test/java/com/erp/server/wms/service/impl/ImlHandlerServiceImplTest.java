@@ -7,6 +7,10 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -41,17 +45,19 @@ public class ImlHandlerServiceImplTest {
     public void testCreateInboundBill() {
         final ThirdWarehouseCreateInboundReq createInboundReq = ThirdWarehouseCreateInboundReq.builder()
                 .referenceNo("wjtest20231120")
-                .transitType("0")
-                .incomeType("1")
-                .receivingShippingType("2")
+                .incomeType(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())
+                .receivingCode(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())
+                .transitType(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())
+                .receivingType(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())
+                .receivingShippingType(LogisticsMethodEnum.AIRFREIGHT.getCode())
+                .customsType(OverseasCustomsTypeNewEnum.AGENCY_CUSTOMS_DECLARATION.getCode())
+                .collectingService(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())
                 .trackingNumber("123")
                 .warehouseCode("UAW1")
                 .etaDate(LocalDateTime.now())
                 .verify("0")
                 .transitWarehouseCode("DG")
                 .smCode("USEAAIRFREIGHT6000D1")
-                .customsType("1")
-                .collectingService("1")
                 .deliveryCode("deliveryCode")
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName("mark")

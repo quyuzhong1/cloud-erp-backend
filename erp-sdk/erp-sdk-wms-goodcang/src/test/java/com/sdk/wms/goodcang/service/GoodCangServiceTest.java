@@ -1,7 +1,6 @@
 package com.sdk.wms.goodcang.service;
 
 
-import com.common.business.enums.GoodCangEnums;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
