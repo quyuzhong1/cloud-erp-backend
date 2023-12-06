@@ -124,11 +124,9 @@ public class FirstMileCartonDetailServiceImpl extends SuperServiceImpl<FirstMile
             sb.append(detailEntityList.get(i).getSkuNo());
             sb.append(StringPool.ASTERISK);
             sb.append(detailEntityList.get(i).getPackQty());
-            sb.append(StringPool.PLUS);
+            sb.append(StringPool.SEMICOLON);
         }
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1); // 去掉最后的+号
-        }
+
         for (Integer i = maxBoxNo+1; i <= maxBoxNo+boxQty; i++) {
             FirstMileCartonBillDTO.AddDTO billAdd = new FirstMileCartonBillDTO.AddDTO();
             billAdd.setBoxDesc(sb.toString());
