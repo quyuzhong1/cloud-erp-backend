@@ -41,6 +41,11 @@ public interface SoB2cFinanceService extends SuperService<SoB2cFinanceEntity> {
      */
     SoB2cFinanceEntity getByMainId(String mainId);
 
+    /**
+     * 根据父级id集合查询
+     */
+    List<SoB2cFinanceEntity> listByMainIds(List<String> mainIds);
+
     Boolean deleteByMainIds(List<String> mainIds);
     /**
      * 平台订单明细更新或保存

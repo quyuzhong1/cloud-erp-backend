@@ -77,6 +77,7 @@
         sb2c.invalid_status as invalidStatus,
         sb2c.amount as amount,
         sb2c.currency as currency,
+        sb2c.exchange_rate as exchangeRate,
         sb2c.pay_time as payTime,
         sb2c.buyer_remark as buyerRemark,
         sb2c.remark as remark,

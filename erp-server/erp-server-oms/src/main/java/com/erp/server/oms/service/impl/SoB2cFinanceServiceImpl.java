@@ -89,6 +89,14 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         return  lambdaQuery().eq(SoB2cFinanceEntity::getMainId,mainId).one();
     }
 
+    @Override
+    public List<SoB2cFinanceEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SoB2cFinanceEntity::getMainId,mainIds).list();
+    }
+
     public List<SoB2cFinanceEntity> getListByMainId(String mainId) {
         return  lambdaQuery().eq(SoB2cFinanceEntity::getMainId,mainId).list();
     }

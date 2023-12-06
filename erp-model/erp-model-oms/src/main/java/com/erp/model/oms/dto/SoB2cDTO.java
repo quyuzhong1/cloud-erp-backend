@@ -217,6 +217,10 @@ public class SoB2cDTO implements Serializable {
          */
         private BigDecimal profitRate;
 
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
 
         /**
         * 订单状态（审核状态、订单状态，取最后一级状态）
