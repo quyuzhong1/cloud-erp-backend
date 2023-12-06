@@ -1,9 +1,7 @@
 package com.erp.server.wms.handler;
 
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -41,7 +39,7 @@ public class ThirdWarehouseRegistry {
         return handlers.get(platform);
     }
 
-    public ThirdWarehouseService getHandlerByAuthID(String authId) {
+    public ThirdWarehouseService getHandlerByAuthId(String authId) {
         OverseasProviderEntity authEntity = overseasProviderService.getById(authId);
         if(Objects.isNull(authEntity)){
             throw new ServiceException(ApiError.NOT_FOUND_OVERSEAS_PROVIDE);
