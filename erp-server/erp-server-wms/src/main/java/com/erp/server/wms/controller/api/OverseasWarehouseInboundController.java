@@ -251,7 +251,12 @@ public class OverseasWarehouseInboundController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+                String code = "";
+                OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
+                if (!ObjectUtil.isEmpty(entity)) {
+                    code = mainEntity.getCode();
+                }
+                submit = BatchResultDTO.fail(entity.getId(), code , e.getMessage());
             }
             resultDTOS.add(submit);
         }

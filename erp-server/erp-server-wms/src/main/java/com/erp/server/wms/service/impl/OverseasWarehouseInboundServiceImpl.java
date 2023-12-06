@@ -327,9 +327,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public Boolean update(OverseasWarehouseInboundDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单"));
-        OverseasWarehouseInboundEntity mainEntity = BeanMapperUtils.map(OverseasWarehouseInboundEntity.class, updateDTO);
-        old.setInstockType(updateDTO.getInstockType().getCode());
-        old.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
+        BeanUtils.copyProperties(old, mainEntity);
+        BeanUtils.copyProperties(updateDTO, mainEntity);
+
+        mainEntity.setInstockType(updateDTO.getInstockType().getCode());
+        mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));

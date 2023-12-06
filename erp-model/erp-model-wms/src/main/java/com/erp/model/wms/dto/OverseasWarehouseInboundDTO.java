@@ -531,12 +531,12 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 最新签收时间
          */
-        private LocalDateTime receiveTime;
+        private LocalDate receiveTime;
 
         /**
          * 预计到达时间
          */
-        private LocalDateTime estimatedArrivalDate;
+        private LocalDate estimatedArrivalDate;
 
         /**
          * 手动完结原因
