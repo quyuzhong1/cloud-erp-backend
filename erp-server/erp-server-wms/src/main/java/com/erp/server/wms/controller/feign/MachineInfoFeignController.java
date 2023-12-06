@@ -41,5 +41,17 @@ public class MachineInfoFeignController extends BaseController {
         return machineInfoService.listBySku(dto);
     }
 
+    /**
+     * 新增加工单
+     * @author Will
+     * @date: 2023/12/6 14:16
+     * @param dto
+     * @return String
+     */
+    @PostMapping("/addMachineInfo")
+    public String addMachineInfo(@RequestBody MachineInfoDTO.AddDTO dto) {
+        String id = machineInfoService.add(dto);
+        return id;
+    }
 
 }
