@@ -489,6 +489,7 @@ public enum ApiError implements Serializable {
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
+    ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
 
 
     /**
@@ -835,6 +836,10 @@ public enum ApiError implements Serializable {
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
     WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
+    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】已下推加工单"),
+
+
+
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
