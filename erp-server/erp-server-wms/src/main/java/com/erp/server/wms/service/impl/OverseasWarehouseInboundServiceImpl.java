@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -22,7 +21,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -100,6 +98,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private WarehouseService warehouseService;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private FirstMileCartonBillService firstMileCartonBillService;
+    @Resource
+    private FirstMileCartonService firstMileCartonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -177,7 +179,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 推送到第三方草稿
 //        if (null != providerEntity){
-//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, GoodCangEnums.VerifyEnum.INIT.getCode());
+//            // 查询包装信息
+//
+//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
 //            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
 //            handlerService.createInboundBill(createInboundReq, providerEntity.getId());
 //        }
@@ -187,7 +191,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 构建请求参数
      */
-    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity, String verifyCode) {
+    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
+                                                                     List<OverseasWarehouseInboundDetailEntity> detailEntityList,
+                                                                     String verifyCode
+    ) {
         // 交货方式
         OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
         String inStockType = null == inStockTypeEnum ? "" : inStockTypeEnum.getCode();
@@ -203,6 +210,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
         String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
+
+        // item
+        List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+//            ThirdWarehouseCreateInboundReq.Item.builder()
+//                    .productSku(detailEntity.getPlatformSkuNo())
+//                    .boxNo(detailEntity.getPackQty())
+//                    .quantity(d)
+//                    .build()
+        }
+
 
 
         return ThirdWarehouseCreateInboundReq.builder()
@@ -249,23 +267,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         .collectZipcode(mainEntity.getZipcode())
                         .collectStreet(mainEntity.getStreet())
                         .build())
-                .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("2823A")
-                        .boxNo(1)
-                        .quantity(1)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("2823A")
-                        .boxNo(1)
-                        .quantity(3)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("C003GBB1")
-                        .boxNo(3)
-                        .quantity(10)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("C003GBB1")
-                        .boxNo(2)
-                        .quantity(11)
-                        .build()))
+                .items(itemList)
                 .build();
     }
 
@@ -555,7 +557,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::checkAndGetSkuImagesUrl));
 
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailDTOList = detailEntityList.stream()
-                .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")))
+                .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")) )
                 .collect(Collectors.toList());
         resultDTO.setDetailList(detailDTOList);
 
