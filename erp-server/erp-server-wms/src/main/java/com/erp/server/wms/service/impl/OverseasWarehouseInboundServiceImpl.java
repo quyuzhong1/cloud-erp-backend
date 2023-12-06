@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -22,14 +21,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.plm.enums.CustomsTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
@@ -50,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -95,6 +92,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Resource
+    private TransferInfoService transferInfoService;
+    @Resource
+    private WarehouseService warehouseService;
+    @Resource
+    private DictBasicService dictBasicService;
+    @Resource
+    private FirstMileCartonBillService firstMileCartonBillService;
+    @Resource
+    private FirstMileCartonService firstMileCartonService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -172,7 +179,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 推送到第三方草稿
 //        if (null != providerEntity){
-//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, GoodCangEnums.VerifyEnum.INIT.getCode());
+//            // 查询包装信息
+//
+//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
 //            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
 //            handlerService.createInboundBill(createInboundReq, providerEntity.getId());
 //        }
@@ -182,7 +191,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 构建请求参数
      */
-    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity, String verifyCode) {
+    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
+                                                                     List<OverseasWarehouseInboundDetailEntity> detailEntityList,
+                                                                     String verifyCode
+    ) {
         // 交货方式
         OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
         String inStockType = null == inStockTypeEnum ? "" : inStockTypeEnum.getCode();
@@ -198,6 +210,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
         String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
+
+        // item
+        List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+//            ThirdWarehouseCreateInboundReq.Item.builder()
+//                    .productSku(detailEntity.getPlatformSkuNo())
+//                    .boxNo(detailEntity.getPackQty())
+//                    .quantity(d)
+//                    .build()
+        }
+
 
 
         return ThirdWarehouseCreateInboundReq.builder()
@@ -244,23 +267,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         .collectZipcode(mainEntity.getZipcode())
                         .collectStreet(mainEntity.getStreet())
                         .build())
-                .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("2823A")
-                        .boxNo(1)
-                        .quantity(1)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("2823A")
-                        .boxNo(1)
-                        .quantity(3)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("C003GBB1")
-                        .boxNo(3)
-                        .quantity(10)
-                        .build(),ThirdWarehouseCreateInboundReq.Item.builder()
-                        .productSku("C003GBB1")
-                        .boxNo(2)
-                        .quantity(11)
-                        .build()))
+                .items(itemList)
                 .build();
     }
 
@@ -550,7 +557,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::checkAndGetSkuImagesUrl));
 
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailDTOList = detailEntityList.stream()
-                .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")))
+                .map(e-> OverseasWarehouseInboundConverter.INSTANCE.detailEntityToViewDTO(e, imageUrlMap.getOrDefault(e.getSkuId(), "")) )
                 .collect(Collectors.toList());
         resultDTO.setDetailList(detailDTOList);
 
@@ -716,6 +723,78 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .set(OverseasWarehouseInboundEntity::getInstockStatus, status)
                 .in(OverseasWarehouseInboundEntity::getId, ids)
                 .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public String generateTransferOut(OverseasWarehouseInboundEntity mainEntity, OverseasWarehouseInboundDetailEntity detailEntity, OverseasWarehouseInboundReceivedEntity receivedEntity) {
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
+
+        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
+        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()
+                .filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+
+        //校验目的仓是否为FBA第三方仓
+        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        //如果是FBA第三方仓
+        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
+            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
+            if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                if (CollectionUtils.isEmpty(warehouseEntities)) {
+                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                }
+                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
+                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
+            }
+        }
+
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+
+        //查询在途仓
+        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //默认来源类型：FBA货件
+        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        //默认调出日期：当前日期
+        addDTO.setBillDate(LocalDate.now());
+        //默认调拨方向：普通
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调入组织
+        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        //调出组织
+        WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        //调拨类型
+        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId()))  {
+            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        } else {
+            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        addDTO.setSourceId(mainEntity.getId());
+        addDTO.setSourceCode(mainEntity.getCode());
+        addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", mainEntity.getCode()));
+
+        //详情信息
+        TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+        //映射产品信息
+        detailAddDto.setSkuId(detailEntity.getSkuId());
+        detailAddDto.setSkuNo(detailEntity.getSkuNo());
+        detailAddDto.setQty(receivedEntity.getReceiveQty());
+        detailAddDto.setOutWarehouseId(mainEntity.getDeliveryWarehouseId());
+        detailAddDto.setOutWarehouseLocation("");
+        detailAddDto.setInWarehouseId(warehouseEntity.getId());
+        detailAddDto.setInWarehouseLocation("");
+        detailAddDto.setSourceDetailId(detailEntity.getId());
+
+        addDTO.setDetailList(Collections.singletonList(detailAddDto));
+        return transferInfoService.add(addDTO);
     }
 
     /**

@@ -67,7 +67,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO splElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = splElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -108,7 +108,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO spElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = spElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -200,16 +200,16 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     /**
      * 获取到订单审核匹配结果
      *
-     * @param jsonObject
+     * @param map
      * @return
      */
     @Override
-    public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(JSONObject jsonObject) {
+    public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(Map<String,Object> map) {
         RuleOrderApprovalDTO.RuleMatchDTO ruleMatch = new RuleOrderApprovalDTO.RuleMatchDTO();
-        if (Objects.isNull(jsonObject)) {
+        if (Objects.isNull(map)) {
             return ruleMatch;
         }
-        log.info("参数为=========={}", jsonObject);
+        log.info("参数为=========={}", map);
         List<RuleOrderApprovalEntity> ruleOrderApprovalList = this.listOrderByPriority();
         List<String> ruleIdList = ruleOrderApprovalList.stream().map(RuleOrderApprovalEntity::getId).collect(Collectors.toList());
         //规则条件
@@ -222,7 +222,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
                 ruleMatch.setFlowStatus(item.getFlowStatus());
                 String categoryDetailId = item.getCategoryDetailId();

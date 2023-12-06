@@ -33,12 +33,17 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
         /**
          * 主键id
          */
-        private String id;
+        private String detailId;
 
         /**
          * 主表id
          */
         private String mainId;
+
+        /**
+         * 单号
+         */
+        private String code;
 
         /**
          * 来源ID

@@ -3,10 +3,12 @@ package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -148,4 +150,14 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @return java.lang.Boolean
      **/
     Boolean updateInstockStatus(List<String> ids, String status);
+
+    /**
+     * 海外单生成直接调拨单
+     * @Author Jim
+     * @Date 2023/12/5
+     **/
+    String generateTransferOut(OverseasWarehouseInboundEntity mainEntity,
+                               OverseasWarehouseInboundDetailEntity detailEntity,
+                               OverseasWarehouseInboundReceivedEntity receivedEntity
+    );
 }

@@ -14,6 +14,7 @@ import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,6 +168,14 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
 
         }
         return resultList;
+    }
+
+    @Override
+    public List<CfgConditionEntity> listByFields(List<String> fieldList) {
+        if(CollectionUtils.isEmpty(fieldList)){
+           return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(CfgConditionEntity::getConditionField,fieldList).list();
     }
 
 

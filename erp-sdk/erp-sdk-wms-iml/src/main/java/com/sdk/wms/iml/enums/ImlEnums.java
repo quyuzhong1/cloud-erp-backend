@@ -1,6 +1,9 @@
 package com.sdk.wms.iml.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -28,14 +31,28 @@ public enum ImlEnums {
      */
     @Getter
     public enum TransitTypeEnum {
-        DRAFT("D","自发头程"),
-        AVAILABLE("T","T中转代发")
+        DRAFT("D","自发头程", OverseasInstockTypeEnum.SELF_HEADWAY),
+        AVAILABLE("T","T中转代发",OverseasInstockTypeEnum.TRANSFER_AGENT)
         ;
         private final String code;
         private final String name;
-        TransitTypeEnum(String code, String name) {
+        private final OverseasInstockTypeEnum erpEnum;
+
+        TransitTypeEnum(String code, String name, OverseasInstockTypeEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static String getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(TransitTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(TransitTypeEnum::getCode)
+                    .orElse(null);
         }
     }
     /**
@@ -62,14 +79,28 @@ public enum ImlEnums {
      */
     @Getter
     public enum IncomeTypeEnum {
-        SELF_DELIVERY(0,"自送"),
-        COLLECT(1,"揽收")
+        SELF_DELIVERY(0,"自送", OverseasDeliveryModeEnum.SELF_DELIVERY),
+        COLLECT(1,"揽收", OverseasDeliveryModeEnum.COLLECT_AT_HOME)
         ;
         private final Integer code;
         private final String name;
-        IncomeTypeEnum(Integer code, String name) {
+        private final OverseasDeliveryModeEnum erpEnum;
+
+        IncomeTypeEnum(Integer code, String name, OverseasDeliveryModeEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(IncomeTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(IncomeTypeEnum::getCode)
+                    .orElse(null);
         }
     }
 
