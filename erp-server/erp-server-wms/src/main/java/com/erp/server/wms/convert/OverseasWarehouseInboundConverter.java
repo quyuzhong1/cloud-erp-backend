@@ -41,7 +41,8 @@ public interface OverseasWarehouseInboundConverter {
     OverseasWarehouseInboundDetailDTO.ViewDTO detailEntityToViewDTO(OverseasWarehouseInboundDetailEntity entity, String imageUrl);
 
     @Mappings({
-            @Mapping(target = "id",  source = "entity.id"),
+            @Mapping(target = "detailId",  source = "entity.id"),
+            @Mapping(target = "code",  source = "mainEntity.code"),
             @Mapping(target = "receiveTime",  source = "entity.receiveTime"),
             @Mapping(target = "sourceId", source = "mainEntity.sourceId"),
             @Mapping(target = "deliveryWarehouseName", source = "mainEntity.deliveryWarehouseName"),
