@@ -442,7 +442,6 @@
             fmcb.box_desc
         FROM first_mile_delivery fmd
         INNER JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
-        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
         INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         AND fmd.id = #{id}
@@ -460,7 +459,6 @@
         fmcb.box_desc
         FROM first_mile_delivery fmd
         LEFT JOIN first_mile_carton fmc ON fmc.main_id = fmd.id AND fmc.is_deleted = FALSE
-        LEFT JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
         LEFT JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         <choose>
