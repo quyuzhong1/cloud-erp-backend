@@ -263,13 +263,11 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         for (Map.Entry<String, List<BomSkuEntity>> stringListEntry : map.entrySet()) {
             ProductBomInfoDTO.skuBomVersion bomVersion = new ProductBomInfoDTO.skuBomVersion();
             bomVersion.setSkuNo(stringListEntry.getKey());
-            List<String> bomVersionList = productBomHistoryEntities.stream().map(req -> req.getBomVersion()).distinct().collect(Collectors.toList());
+            List<String> bomVersionList = productBomHistoryEntities.stream().filter(req -> req.getBomId().equals(stringListEntry.getValue().get(0).getBomId())).map(req -> req.getBomVersion()).distinct().collect(Collectors.toList());
             Collections.reverse(bomVersionList);
             bomVersion.setBomVersionList(bomVersionList);
             skuBomVersionList.add(bomVersion);
-
         }
-
         return skuBomVersionList;
     }
 }
