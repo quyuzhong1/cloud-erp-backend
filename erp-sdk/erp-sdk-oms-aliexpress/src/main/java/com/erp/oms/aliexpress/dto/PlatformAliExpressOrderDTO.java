@@ -216,8 +216,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // skuNo
         detailDTO.setSkuNo("");
 
-        // 卖家sku编号
-        detailDTO.setSellerSkuNo("");
+
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSkuCode());
         // 库存sku编号

@@ -46,7 +46,7 @@
         <result column="image_url" property="imageUrl"/>
         <result column="sku_id" property="skuId"/>
         <result column="sku_no" property="skuNo"/>
-        <result column="platform_sku_no" property="platformSkuNo"/>
+        <result column="platform_spu_no" property="platformSkuNo"/>
         <result column="seller_sku_no" property="sellerSkuNo"/>
         <result column="weight" property="weight"/>
         <result column="tax_cost" property="taxCost"/>
@@ -124,7 +124,7 @@
                 and sb2c.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
-                and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
+                and sb2cd.platform_spu_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
             </if>
             <if test="params.sellerSkuNo != null and params.sellerSkuNo != '' ">
                 and sb2cd.seller_sku_no iLIKE concat('%',#{params.sellerSkuNo}::text,'%')
@@ -382,7 +382,7 @@
         sb2cd.image_url,
         sb2cd.sku_id,
         sb2cd.sku_no,
-        sb2cd.platform_sku_no,
+        sb2cd.platform_spu_no,
         sb2cd.seller_sku_no,
         sb2cl.weight,
         sb2cd.tax_cost,
@@ -473,7 +473,7 @@
         SELECT
         sb.dict_platform,
         sb.shop_id,
-        sbd.platform_sku_no,
+        sbd.platform_spu_no,
         COUNT ( sb.ID ) AS orderCount,
         SUM ( sbd.qty ) AS qty,
         ROUND( SUM ( sb.amount * sb.exchange_rate ), 2 ) AS amount
@@ -490,7 +490,7 @@
             sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
-            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ))
         </if>
         <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
@@ -518,14 +518,14 @@
         GROUP BY
         sb.dict_platform,
         sb.shop_id,
-        sbd.platform_sku_no
+        sbd.platform_spu_no
     </select>
 
     <select id="listProductSalesExport" resultType="com.erp.model.oms.dto.ReportDTO$ProductSalesPagingViewDTO">
         SELECT
         sb.dict_platform,
         sb.shop_id,
-        sbd.platform_sku_no,
+        sbd.platform_spu_no,
         COUNT ( sb.ID ) AS orderCount,
         SUM ( sbd.qty ) AS qty,
         ROUND( SUM ( sb.amount * sb.exchange_rate ), 2 ) AS amount
@@ -542,7 +542,7 @@
             sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
-            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ))
         </if>
         <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
@@ -570,7 +570,7 @@
         GROUP BY
         sb.dict_platform,
         sb.shop_id,
-        sbd.platform_sku_no
+        sbd.platform_spu_no
     </select>
 
 

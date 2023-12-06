@@ -154,8 +154,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         detailDTO.setSkuId("");
         // skuNo
         detailDTO.setSkuNo("");
-        // 卖家sku编号
-        detailDTO.setSellerSkuNo("");
+
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSku());
         // 库存sku编号
