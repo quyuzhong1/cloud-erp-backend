@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -37,6 +38,7 @@ import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -89,6 +91,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private OverseasTransferWarehouseService overseasTransferWarehouseService;
     @Resource
     private OverseasProviderService overseasProviderService;
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -142,10 +146,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String type = tableName.value();
         wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
 
-        // 推送到草稿
+        // 推送到第三方草稿
 //        if (null != providerEntity){
-//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity);
-//            thirdWarehouseService.createInboundBill(createInboundReq, providerEntity.getId());
+//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, GoodCangEnums.VerifyEnum.INIT.getCode());
+//            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
+//            handlerService.createInboundBill(createInboundReq, providerEntity.getId());
 //        }
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
@@ -153,46 +158,69 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 构建请求参数
      */
-    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity) {
+    private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity, String verifyCode) {
+        // 物流方式
+        String receivingShippingType = "";
+        if (StringUtils.isNotBlank(mainEntity.getLogisticsMethod())){
+            LogisticsMethodEnum logisticsMethodEnum = LogisticsMethodEnum.getByCode(mainEntity.getLogisticsMethod());
+            receivingShippingType = null == logisticsMethodEnum ? "" : logisticsMethodEnum.getProductCodeEnum().getCode().toString();
+        }
+
+        // 报关方式
+        String customsTypeValue = "";
+        if (StringUtils.isNotBlank(mainEntity.getCustomsType())){
+            GoodCangEnums.CustomsTypeNewEnum typeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(Integer.parseInt(mainEntity.getCustomsType()));
+            customsTypeValue = null == typeNewEnum ? "" : typeNewEnum.getCode().toString();
+        }
+
+        // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
+        OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
+        String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getServiceEnum().getCode().toString();
+
+
         return ThirdWarehouseCreateInboundReq.builder()
                 // 发货单号
                 .referenceNo(mainEntity.getSourceCode())
-                // 交货方式 （自送，揽收）
+                // 交货方式，0自送，1揽收
                 .incomeType("1")
+                // 入库单类型 （标准入库单，中转入库单(标准货运单)，FBA入库单）
                 .transitType("0")
-                .receivingShippingType("2")
-                .trackingNumber("123")
+                // 物流方式
+                .receivingShippingType(receivingShippingType)
+                .trackingNumber(mainEntity.getTrackingNo())
                 .warehouseCode("UAW1")
-                .etaDate(LocalDateTime.now())
-                .verify("0")
+                .etaDate(mainEntity.getEstimatedArrivalDate())
+                // 入库单创建时取0，发货单审核通过更新为1
+                .verify(verifyCode)
                 .transitWarehouseCode("DG")
-                .smCode("USEAAIRFREIGHT6000D1")
-                .customsType("1")
-                .collectingService("1")
-                .deliveryCode("deliveryCode")
+                .smCode(mainEntity.getLogisticsProductName())
+                .customsType(customsTypeValue)
+                //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
+                .collectingService(collectingService)
+                .deliveryCode(mainEntity.getExpressNo())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
-                        .contacterName("mark")
-                        .phone("123")
-                        .countryCode("CN")
-                        .stateName("广东")
-                        .cityName("深圳")
-                        .region("龙岗")
-                        .address1("星河")
+                        .contacterName(mainEntity.getFirstName().concat(mainEntity.getLastName()))
+                        .phone(mainEntity.getMobile())
+                        .countryCode(mainEntity.getCollectCountryCode())
+                        .stateName(mainEntity.getDictProvinceName())
+                        .cityName(mainEntity.getDictCityName())
+                        .region(mainEntity.getDictDistrictName())
+                        .address1(mainEntity.getStreet())
                         .build())
                 .collect(ThirdWarehouseCreateInboundReq.Collect.builder()
-                        .contacterName("mark")
-                        .contacterFirstName("1")
-                        .contacterLastName("2")
-                        .contactPhone("123")
-                        .collectCountryCode("CN")
-                        .collectStateId("6")
-                        .collectCityId("77")
-                        .collectAreaId("709")
-                        .collectStateName("广东")
-                        .collectCityName("深圳")
-                        .collectZipcode("13214564")
-                        .collectStreet("21")
+                        .contacterName(mainEntity.getFirstName().concat(mainEntity.getLastName()))
+                        .contacterFirstName(mainEntity.getFirstName())
+                        .contacterLastName(mainEntity.getLastName())
+                        .contactPhone(mainEntity.getMobile())
+                        .collectCountryCode(mainEntity.getCollectCountryCode())
+                        .collectStateId(mainEntity.getPlatformProvinceId())
+                        .collectCityId(mainEntity.getPlatformCityId())
+                        .collectAreaId(mainEntity.getPlatformDistrictId())
+                        .collectStateName(mainEntity.getDictProvinceName())
+                        .collectCityName(mainEntity.getDictCityName())
+                        .collectZipcode(mainEntity.getZipcode())
+                        .collectStreet(mainEntity.getStreet())
                         .build())
                 .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
                         .productSku("2823A")
@@ -409,6 +437,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             mainEntity.setEstimatedCollectDate(LocalDateTime.of(commonDTO.getEstimatedCollectDate(), LocalTime.MIN));
         }
         mainEntity.setOverseasWarehouseInboundId("");
+        mainEntity.setCollectCountryCode("CN");
         // 设置仓库
         mainEntity.setToWarehouseId(deliveryEntity.getDestWarehouseId());
         mainEntity.setToWarehouseName(deliveryEntity.getDestWarehouseName());

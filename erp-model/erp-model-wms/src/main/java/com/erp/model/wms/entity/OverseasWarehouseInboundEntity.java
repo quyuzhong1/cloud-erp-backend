@@ -248,6 +248,12 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     private String zipcode;
 
     /**
+     * 揽收地址国家代号
+     */
+    @TableField("collect_country_code")
+    private String collectCountryCode;
+
+    /**
      * 数量
      */
     @TableField(exist = false)
