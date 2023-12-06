@@ -93,6 +93,11 @@ public class FirstMileCartonDetailServiceImpl extends SuperServiceImpl<FirstMile
         return lambdaUpdate().in(FirstMileCartonDetailEntity::getMainId, mainIds).remove();
     }
 
+    @Override
+    public List<FirstMileCartonDTO.PackingItemDTO> boxInfoByMainId(String mainId) {
+        return this.baseMapper.boxInfoByMainId(mainId);
+    }
+
     /**
     * 新增修改处理数据
     */

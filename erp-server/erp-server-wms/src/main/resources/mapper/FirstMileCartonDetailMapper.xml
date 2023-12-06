@@ -32,5 +32,19 @@
         carton_id, sku_id, sku_no, pack_qty
     </sql>
 
-
+    <select id="boxInfoByMainId" resultType="com.erp.model.wms.dto.FirstMileCartonDTO$PackingItemDTO">
+        SELECT
+            fmcd.main_id,
+            fmcd.carton_id,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            fmcb.box_no,
+            fmcd.pack_qty
+        FROM
+            first_mile_carton_detail fmcd
+            INNER JOIN first_mile_carton_bill fmcb ON fmcd.carton_id = fmcb.carton_id
+        WHERE
+            fmcd.is_deleted = FALSE AND fmcb.is_deleted = FALSE
+          and fmcd.main_id = #{mainId};
+    </select>
 </mapper>

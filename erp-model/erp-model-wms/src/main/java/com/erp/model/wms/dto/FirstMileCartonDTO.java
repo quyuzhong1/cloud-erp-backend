@@ -244,4 +244,46 @@ public class FirstMileCartonDTO implements Serializable {
             this.usePackQty = 0;
         }
     }
+
+    /**
+     * 装箱详情清单(以箱号和SKU号维度)
+     */
+    @Data
+    public static class PackingItemDTO {
+        /**
+         * 发货单id
+         */
+        private String mainId;
+
+        /**
+         * 箱子id
+         */
+        private String cartonId;
+
+        /**
+         * 箱号
+         */
+        private String boxNo;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品编码
+         */
+        private String platformSkuNo;
+
+    }
 }
