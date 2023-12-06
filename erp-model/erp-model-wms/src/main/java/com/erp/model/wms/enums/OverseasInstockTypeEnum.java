@@ -1,8 +1,6 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.GoodCangEnums;
-import com.common.business.enums.ImlEnums;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -13,7 +11,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.rmi.ServerException;
 import java.util.stream.Stream;
 
 /**
@@ -26,14 +23,13 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum OverseasInstockTypeEnum implements EnumMessage {
-    SELF_HEADWAY("selfHeadway", "自发头程", ImlEnums.TransitTypeEnum.DRAFT),
-    TRANSFER_AGENT("transferAgent", "中转代发", ImlEnums.TransitTypeEnum.AVAILABLE),
+    SELF_HEADWAY("selfHeadway", "自发头程"),
+    TRANSFER_AGENT("transferAgent", "中转代发"),
     ;
 
     @EnumValue
     private final String code;
     private final String name;
-    private final ImlEnums.TransitTypeEnum transitTypeEnum;
 
     /**
      * 通过code查询

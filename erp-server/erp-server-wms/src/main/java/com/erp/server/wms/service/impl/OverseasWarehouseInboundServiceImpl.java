@@ -33,10 +33,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
-import com.erp.model.wms.enums.OverseasFinishStatusEnum;
-import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -187,45 +184,37 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity, String verifyCode) {
         // 交货方式
-        String inStockType = "";
-        if(StringUtils.isBlank(mainEntity.getInstockType())){
-            OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
-        }
+        OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
+        String inStockType = null == inStockTypeEnum ? "" : inStockTypeEnum.getCode();
 
         // 物流方式
-        String receivingShippingType = "";
-        if (StringUtils.isNotBlank(mainEntity.getLogisticsMethod())){
-            LogisticsMethodEnum logisticsMethodEnum = LogisticsMethodEnum.getByCode(mainEntity.getLogisticsMethod());
-            receivingShippingType = null == logisticsMethodEnum ? "" : logisticsMethodEnum.getProductCodeEnum().getCode().toString();
-        }
+        LogisticsMethodEnum logisticsMethodEnum = LogisticsMethodEnum.getByCode(mainEntity.getLogisticsMethod());
+        String receivingShippingType = null == logisticsMethodEnum ? "" : logisticsMethodEnum.getCode();
 
         // 报关方式
-        String customsTypeValue = "";
-        if (StringUtils.isNotBlank(mainEntity.getCustomsType())){
-            GoodCangEnums.CustomsTypeNewEnum typeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(Integer.parseInt(mainEntity.getCustomsType()));
-            customsTypeValue = null == typeNewEnum ? "" : typeNewEnum.getCode().toString();
-        }
+        OverseasCustomsTypeNewEnum typeNewEnum = OverseasCustomsTypeNewEnum.getByCode(mainEntity.getCustomsType());
+        String customsTypeValue = null == typeNewEnum ? "" : typeNewEnum.getCode();
 
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
-        String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getServiceEnum().getCode().toString();
+        String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
 
 
         return ThirdWarehouseCreateInboundReq.builder()
                 // 发货单号
                 .referenceNo(mainEntity.getSourceCode())
                 // 交货方式，0自送，1揽收
-                .incomeType("1")
+                .incomeType(inStockType)
                 // 入库单类型 （标准入库单，中转入库单(标准货运单)，FBA入库单）
-                .transitType("0")
+                .transitType(inStockType)
                 // 物流方式
                 .receivingShippingType(receivingShippingType)
                 .trackingNumber(mainEntity.getTrackingNo())
-                .warehouseCode("UAW1")
+                .warehouseCode(mainEntity.getPlatformToWarehouseCode())
                 .etaDate(mainEntity.getEstimatedArrivalDate())
                 // 入库单创建时取0，发货单审核通过更新为1
                 .verify(verifyCode)
-                .transitWarehouseCode("DG")
+                .transitWarehouseCode(mainEntity.getPlatformTransferWarehouseCode())
                 .smCode(mainEntity.getLogisticsProductName())
                 .customsType(customsTypeValue)
                 //  OpenCollectingServiceEnum： 0=自送货物，1=上门提货
@@ -332,6 +321,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                             FirstMileDeliveryEntity deliveryEntity,
                             String dictPlatform
     ) {
+        // 查询目的仓
+        OverseasProviderWarehouseEntity toEntity = overseasProviderWarehouseService.getByWarehouseId(deliveryEntity.getDestWarehouseId());
+
         // 校验参数
         // 入库类型=自发头程
         if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())){
@@ -360,6 +352,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
 
+        OverseasTransferWarehouseEntity transferEntity = null;
         // 入库类型=自发头程, 交货方式=上面揽收
         if (OverseasInstockTypeEnum.TRANSFER_AGENT.equals(commonDTO.getInstockType())){
             if (StringUtils.isBlank(commonDTO.getDeliveryMode())){
@@ -371,7 +364,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 // 查询设置中转仓信息
-                OverseasTransferWarehouseEntity transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
+                transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
                 if (null == transferEntity){
                     throw new ServiceException("未找到中转仓");
                 }
@@ -380,7 +373,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (null == commonDTO.getCustomsType()){
                     throw new ServiceException("【customsType】报关方式不能为空");
                 }
-                GoodCangEnums.CustomsTypeNewEnum customsTypeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
+                OverseasCustomsTypeNewEnum customsTypeNewEnum = OverseasCustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
                 if (null == customsTypeNewEnum){
                     throw new ServiceException("【customsType】报关方式不存在");
                 }
@@ -476,6 +469,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         mainEntity.setToWarehouseName(deliveryEntity.getDestWarehouseName());
         mainEntity.setDeliveryWarehouseId(deliveryEntity.getDeliveryWarehouseId());
         mainEntity.setDeliveryWarehouseName(deliveryEntity.getDeliveryWarehouseName());
+        mainEntity.setPlatformToWarehouseCode(null == toEntity ? "" : toEntity.getPlatformWarehouseCode());
+        mainEntity.setPlatformTransferWarehouseCode(null == transferEntity ? "" : transferEntity.getPlatformWarehouseCode());
 
 
         if (null != commonDTO.getCustomsType()){
@@ -539,7 +534,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 入库状态名称
         resultDTO.setInstockStatusName(OverseasInstockStatusEnum.getName(resultDTO.getInstockStatus()));
         // 报关方式
-        resultDTO.setCustomsTypeName(GoodCangEnums.CustomsTypeNewEnum.getNameByCode(Integer.parseInt(resultDTO.getCustomsType())));
+        resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
 

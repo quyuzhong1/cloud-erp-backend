@@ -1,4 +1,4 @@
-package com.common.business.enums;
+package com.sdk.wms.iml.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
 import lombok.Getter;

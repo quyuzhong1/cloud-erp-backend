@@ -43,7 +43,7 @@ public class ThirdWarehouseCreateInboundReq {
 
     /**
      * 入库单类型 （标准入库单，中转入库单(标准货运单)，FBA入库单）
-     * {@link com.erp.model.wms.enums.OverseasInstockTypeEnum}?
+     * {@link com.erp.model.wms.enums.OverseasInstockTypeEnum}
      */
     private String transitType;
 
