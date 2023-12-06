@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -71,6 +72,6 @@ public interface RuleOrderApprovalService extends SuperService<RuleOrderApproval
      * @param jsonObject
      * @return
      */
-    RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(JSONObject jsonObject);
+    RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(Map<String,Object> jsonObject);
 
 }

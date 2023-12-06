@@ -68,7 +68,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -106,7 +106,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);

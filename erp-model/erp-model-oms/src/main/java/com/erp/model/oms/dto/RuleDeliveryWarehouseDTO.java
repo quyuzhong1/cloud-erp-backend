@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -215,7 +216,7 @@ public class RuleDeliveryWarehouseDTO implements Serializable {
          */
         private String warehouseId;
 
-        private JSONObject jsonObject;
+        private Map<String,Object> map;
 
     }
 

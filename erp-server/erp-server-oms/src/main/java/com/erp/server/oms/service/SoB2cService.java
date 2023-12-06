@@ -14,6 +14,7 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -252,12 +253,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     /**
      * 匹配审核规则
      */
-    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, JSONObject json);
+    Boolean approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 匹配配货规则
      */
-    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, JSONObject json);
+    Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
     /**
      * 报表管理 销售统计
@@ -318,5 +319,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
 
-    JSONObject getJson(String id);
+    Map<String,Object> getJson(String id);
 }

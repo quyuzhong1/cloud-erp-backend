@@ -64,6 +64,12 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     @TableField("index")
     private Integer index;
 
+    /**
+     * 对应的值类型
+     */
+    @TableField(exist = false)
+    private String valueType;
+
 
     public static final String LEFT_BRACKET = "left_bracket";
 

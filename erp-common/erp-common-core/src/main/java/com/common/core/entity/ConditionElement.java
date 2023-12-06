@@ -35,6 +35,7 @@ public class ConditionElement {
      */
     private String value;
 
+
     /**
      * 右括号
      */
@@ -44,6 +45,14 @@ public class ConditionElement {
      * 逻辑关系 and 或者or
      */
     private String logic;
+
+    /**
+     * 对应的值类型
+     */
+    private String valueType;
+
+
+
 
 
 }

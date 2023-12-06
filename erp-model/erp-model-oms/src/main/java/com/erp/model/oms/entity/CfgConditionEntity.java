@@ -78,6 +78,11 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
     @TableField("index")
     private Integer index;
 
+    /**
+     * 值的类型
+     */
+    @TableField("value_type")
+    private String valueType;
 
 
 

@@ -1,10 +1,4 @@
-package com.erp.oms.aliexpress.dto;/**
- * @author Lambda
- * @Classname PlatformAliExpressOrderDTO
- * @Description TODO
- * @Date 2023-11-29 10:13
- * @Created by yl
- */
+package com.erp.oms.aliexpress.dto;
 
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
