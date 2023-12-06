@@ -541,7 +541,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
                 List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
-                if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
+                int sum = fbaShipmentReceiveEntities.stream().mapToInt(req -> req.getReceiveQty()).sum();
+                if (sum > 0) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
                 }
             }
