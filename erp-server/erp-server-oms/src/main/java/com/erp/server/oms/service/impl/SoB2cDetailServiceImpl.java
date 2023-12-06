@@ -369,8 +369,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             //平台SKU
             SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-                detailEntity.setSellerSkuNo(platformListSkuDTO.getSellerSkuNo());
-
+                detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
+                detailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
             }
 
             //操作日志
