@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -441,6 +442,22 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Cacheable(cacheNames = "cache:plm:getCategoryList",keyGenerator = "myKeyGenerator")
     public List<BasicCategoryEntity> getCategoryList() {
         return lambdaQuery().list();
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:plm:listCategoryDropDown",keyGenerator = "myKeyGenerator")
+    public List<CategoryControllerDTO.CategoryDropDownDTO> listCategoryDropDown(Integer grade) {
+        List<BasicCategoryEntity> list = this.lambdaQuery()
+                .ne(2 == grade, BasicCategoryEntity::getPid,"0")
+                .eq(1 == grade, BasicCategoryEntity::getPid,"0")
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<CategoryControllerDTO.CategoryDropDownDTO> result = list.stream()
+                .map(CategoryControllerDTO.CategoryDropDownDTO::new)
+                .collect(Collectors.toList());
+        return result;
     }
 
     /**

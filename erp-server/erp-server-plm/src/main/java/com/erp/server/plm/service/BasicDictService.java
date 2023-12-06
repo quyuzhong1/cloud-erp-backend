@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BasicDictDTO;
+import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 
 import java.util.List;
@@ -39,4 +40,10 @@ public interface BasicDictService extends IService<BasicDictEntity> {
      **/
     BasicDictEntity checkBasicDict(String type, String value);
 
+    /**
+     * 字典下拉框
+     * @param code
+     * @return
+     */
+    List<DictControllerDTO.DictDropDownDTO> listDictDropDown(String code);
 }
