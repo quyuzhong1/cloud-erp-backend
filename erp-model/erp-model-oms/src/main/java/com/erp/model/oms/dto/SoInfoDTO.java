@@ -564,6 +564,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
+        /**
+         * 是否组合产品
+         */
+        private Boolean isConstitute;
 
     }
 
