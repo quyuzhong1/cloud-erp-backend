@@ -85,7 +85,7 @@ public class ThirdWarehouseCreateInboundReq {
 
     /**
      * 报关方式
-     * {@link com.common.business.enums.GoodCangEnums.CustomsTypeNewEnum}
+     * {@link com.erp.model.wms.enums.OverseasCustomsTypeNewEnum}
      */
     private String customsType;
 
