@@ -56,6 +56,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -1050,6 +1051,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }
