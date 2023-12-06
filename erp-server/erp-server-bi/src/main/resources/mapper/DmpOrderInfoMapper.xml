@@ -507,7 +507,7 @@
             <if test="params.searchType == 'sku'">
                 o.sku_no as typeName,
             </if>
-            o.date_name AS month,
+            to_char(o.date_time,'MM') as month,
             <if test="dataType != null and dataType == 'sales'">
                 round(sum(o.sales_amount_currency_rate),2) as value
             </if>
@@ -525,7 +525,7 @@
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
         <include refid="base_where_sql_report"/>
-        group by o.date_name
+        group by month
         <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
             ,o.dept_id
         </if>
