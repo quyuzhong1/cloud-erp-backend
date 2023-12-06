@@ -77,7 +77,7 @@ public interface GoodCangConverter {
             @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "receivingCode",  source = "receivingCode"),
-            @Mapping(target = "receivingStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
             @Mapping(target = "hasReceivedData", constant = "true"),
             @Mapping(target = "receivingDataList",  source = "gcReceivingDataList"),
@@ -98,8 +98,8 @@ public interface GoodCangConverter {
             @Mapping(target = "provider",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "orderCode",  source = "orderCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
-            @Mapping(target = "thirdOrderStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
+            @Mapping(target = "orderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+            @Mapping(target = "thirdOrderStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
     })
     PlatformOutboundDTO outboundConversion(GoodCangOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<GoodCangOutboundResp> sourceDataList);

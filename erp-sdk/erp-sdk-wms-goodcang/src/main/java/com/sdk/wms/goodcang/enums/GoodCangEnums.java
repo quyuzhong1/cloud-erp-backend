@@ -1,6 +1,7 @@
-package com.common.business.enums;
+package com.sdk.wms.goodcang.enums;
 
-import lombok.AllArgsConstructor;
+
+import com.common.business.enums.OverseasInstockStatusEnum;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -243,20 +244,6 @@ public enum GoodCangEnums {
                     .filter(e -> e.getCode().equals(code))
                     .findFirst()
                     .orElse(null);
-        }
-
-        public static String getNameByCode(Integer code) {
-            if (null == code){
-                return "";
-            }
-            CustomsTypeNewEnum customsTypeNewEnum = Arrays.stream(CustomsTypeNewEnum.values())
-                    .filter(e -> e.getCode().equals(code))
-                    .findFirst()
-                    .orElse(null);
-            if (null == customsTypeNewEnum){
-                return "";
-            }
-            return customsTypeNewEnum.getName();
         }
     }
 

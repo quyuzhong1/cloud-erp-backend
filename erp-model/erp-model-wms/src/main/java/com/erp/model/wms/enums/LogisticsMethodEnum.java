@@ -23,12 +23,12 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum LogisticsMethodEnum implements EnumMessage {
-    AIRFREIGHT("airfreight", "空运", GoodCangEnums.ProductCodeEnum.AIR_TRANSPORT),
-    EXPRESS("express", "快递", GoodCangEnums.ProductCodeEnum.EXPRESS),
-    OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装", GoodCangEnums.ProductCodeEnum.SEA_FREIGHT_BULK_CARGO),
-    OCEAN_FREIGHT_FCL("oceanFreightFCL", "海运整柜", GoodCangEnums.ProductCodeEnum.OCEAN_FREIGHT_FULL_CONTAINER),
-    RAILWAY_TRANSPORTATION_BULK("railwayTransportationBulk", "铁运散装", GoodCangEnums.ProductCodeEnum.RAIL_FREIGHT_BULK_CARGO),
-    RAILWAY_TRANSPORTATION_FCL("railwayTransportationFCL", "铁运整柜", GoodCangEnums.ProductCodeEnum.RAIL_TRANSPORT_FULL_CONTAINER),
+    AIRFREIGHT("airfreight", "空运"),
+    EXPRESS("express", "快递"),
+    OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装"),
+    OCEAN_FREIGHT_FCL("oceanFreightFCL", "海运整柜"),
+    RAILWAY_TRANSPORTATION_BULK("railwayTransportationBulk", "铁运散装"),
+    RAILWAY_TRANSPORTATION_FCL("railwayTransportationFCL", "铁运整柜"),
 
     ;
     /**
@@ -41,8 +41,6 @@ public enum LogisticsMethodEnum implements EnumMessage {
      * 名称
      */
     private final String name;
-
-    private final GoodCangEnums.ProductCodeEnum productCodeEnum;
 
 
     @Override

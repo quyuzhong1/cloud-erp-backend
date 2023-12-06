@@ -66,7 +66,7 @@ public interface ImlConverter {
             @Mapping(target = "platform",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "receivingCode",  source = "receivingCode"),
-            @Mapping(target = "receivingStatus",  expression = "java(com.common.business.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
+            @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.ReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "items",  source = "items"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
     })
@@ -119,8 +119,8 @@ public interface ImlConverter {
             @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "orderCode",  source = "orderCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
-            @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.ImlEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
-            @Mapping(target = "thirdOrderStatus",  expression = "java(com.common.business.enums.ImlEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
+            @Mapping(target = "orderStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+            @Mapping(target = "thirdOrderStatus",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
     })
     PlatformOutboundDTO outboundConversion(ImlOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<ImlOutboundResp> sourceDataList);

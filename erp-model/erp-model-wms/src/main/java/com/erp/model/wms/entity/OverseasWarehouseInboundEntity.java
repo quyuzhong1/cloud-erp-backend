@@ -144,7 +144,7 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
 
     /**
      * 报关方式代号:
-     * /api/wms/common/enumDropDown?type=CustomsTypeNew
+     * /api/wms/common/enumDropDown?type=OverseasCustomsTypeNewEnum
      */
     @TableField("customs_type")
     private String customsType;

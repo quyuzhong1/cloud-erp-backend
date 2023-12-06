@@ -33,10 +33,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
-import com.erp.model.wms.enums.OverseasFinishStatusEnum;
-import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -196,19 +193,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String receivingShippingType = "";
         if (StringUtils.isNotBlank(mainEntity.getLogisticsMethod())){
             LogisticsMethodEnum logisticsMethodEnum = LogisticsMethodEnum.getByCode(mainEntity.getLogisticsMethod());
-            receivingShippingType = null == logisticsMethodEnum ? "" : logisticsMethodEnum.getProductCodeEnum().getCode().toString();
+            receivingShippingType = null == logisticsMethodEnum ? "" : logisticsMethodEnum.getCode();
         }
 
         // 报关方式
         String customsTypeValue = "";
         if (StringUtils.isNotBlank(mainEntity.getCustomsType())){
-            GoodCangEnums.CustomsTypeNewEnum typeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(Integer.parseInt(mainEntity.getCustomsType()));
-            customsTypeValue = null == typeNewEnum ? "" : typeNewEnum.getCode().toString();
+            OverseasCustomsTypeNewEnum typeNewEnum = OverseasCustomsTypeNewEnum.getByCode(mainEntity.getCustomsType());
+            customsTypeValue = null == typeNewEnum ? "" : typeNewEnum.getCode();
         }
 
         // OpenCollectingServiceEnum： 0=自送货物，1=上门提货
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
-        String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getServiceEnum().getCode().toString();
+        String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
 
 
         return ThirdWarehouseCreateInboundReq.builder()
@@ -380,7 +377,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (null == commonDTO.getCustomsType()){
                     throw new ServiceException("【customsType】报关方式不能为空");
                 }
-                GoodCangEnums.CustomsTypeNewEnum customsTypeNewEnum = GoodCangEnums.CustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
+                OverseasCustomsTypeNewEnum customsTypeNewEnum = OverseasCustomsTypeNewEnum.getByCode(commonDTO.getCustomsType());
                 if (null == customsTypeNewEnum){
                     throw new ServiceException("【customsType】报关方式不存在");
                 }
@@ -539,7 +536,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 入库状态名称
         resultDTO.setInstockStatusName(OverseasInstockStatusEnum.getName(resultDTO.getInstockStatus()));
         // 报关方式
-        resultDTO.setCustomsTypeName(GoodCangEnums.CustomsTypeNewEnum.getNameByCode(Integer.parseInt(resultDTO.getCustomsType())));
+        resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
 
