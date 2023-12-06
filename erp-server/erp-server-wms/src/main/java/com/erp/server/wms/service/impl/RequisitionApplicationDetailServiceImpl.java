@@ -85,7 +85,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
 
         // 数据处理
-        handleData(list, mainId, Boolean.FALSE);
+        handleData(list, mainId, Boolean.TRUE);
 
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {

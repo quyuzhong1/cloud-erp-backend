@@ -1,11 +1,10 @@
 package com.cloud.erp.gateway.option;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
  * The LogType Of Plugin Filter
- * @author chenggang
- * @date 2019/01/29
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:28
+ **/
 public enum GatewayLogTypeEnum {
 
     /**

@@ -9,12 +9,10 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
  * remove gatewayContext Attribute
- * @author chenggang
- * @date 2019/06/19
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:29
+ **/
 @Slf4j
 public class RemoveGatewayContextFilter implements GlobalFilter, Ordered {
 

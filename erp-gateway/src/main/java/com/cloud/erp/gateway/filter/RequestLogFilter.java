@@ -25,12 +25,10 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
  * Filter To Log Request And Response(exclude response body)
- * @author chenggang
- * @date 2019/01/29
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:29
+ **/
 @Log4j2
 @AllArgsConstructor
 public class RequestLogFilter implements GlobalFilter, Ordered {

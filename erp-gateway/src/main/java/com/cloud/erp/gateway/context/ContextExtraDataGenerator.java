@@ -3,10 +3,9 @@ package com.cloud.erp.gateway.context;
 import org.springframework.web.server.ServerWebExchange;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- * @author: chenggang
- * @date 2019-11-04.
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:27
+ **/
 public interface ContextExtraDataGenerator<T> {
 
     /**
