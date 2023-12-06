@@ -1,13 +1,9 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 订单DTO 所有平台(订单明细)通用数据，转换为此类后发送mq统一消费处理
@@ -30,10 +26,7 @@ public class PlatformOrderDetailDTO {
      * 产品sku编号
      */
     private String skuNo;
-    /**
-     * 卖家sku编号
-     */
-    private String sellerSkuNo;
+
     /**
      * 平台sku编号
      */

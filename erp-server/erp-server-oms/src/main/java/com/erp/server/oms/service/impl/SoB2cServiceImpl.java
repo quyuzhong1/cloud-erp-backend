@@ -2110,7 +2110,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : detailList) {
             Map<String,Object> detailMap = new HashMap<>();
             detailMap.put("detailId", detailEntity.getId());
-            detailMap.put("platformSkuNo", detailEntity.getPlatformSkuNo());
             detailMap.put("sellerSkuNo", detailEntity.getSellerSkuNo());
             detailMap.put("skuQty", detailEntity.getQty());
             detailMap.put("skuNo", detailEntity.getSkuNo());
