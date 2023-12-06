@@ -1,6 +1,5 @@
-package com.cloud.erp.gateway.config;
+package com.cloud.erp.gateway.context;
 
-import com.cloud.erp.gateway.context.GatewayContextExtraData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,12 +9,12 @@ import org.springframework.util.MultiValueMap;
 
 /**
  * @Author Luo_WG
- * @Date 2023/12/6 12:30
+ * @Date 2023/12/6 14:00
  **/
 @Getter
 @Setter
 @ToString
-public class GatewayConfig {
+public class GatewayContext {
 
     public static final String CACHE_GATEWAY_CONTEXT = "cacheGatewayContext";
     /**

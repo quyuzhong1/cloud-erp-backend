@@ -116,7 +116,7 @@ public class SpElServerImpl implements SpElServer {
      * 获取对应字段的值
      *
      * @param originalField
-     * @param jsonList
+     * @param mapList
      * @return
      */
     private List<Object> getValueList(String originalField, List<Map<String, Object>> mapList) {
@@ -156,22 +156,24 @@ public class SpElServerImpl implements SpElServer {
 
             //对应的值
             String value = element.getValue();
+            //值的类型
             String valueType = element.getValueType();
             Object conversionValue = conversionValue(value, valueType);
+            Boolean isStr="String".equals(valueType);
 
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
-                String content = new StringBuilder("['").append(field).append("'] ").append(compare).append(conversionValue).toString();
+                String content = getContent(field,compare,conversionValue,isStr);
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+                            content = getContent(addField,compare,conversionValue,isStr);
                             content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+                            content = getContent(addField1,compare,conversionValue,isStr);
                             content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
@@ -198,6 +200,31 @@ public class SpElServerImpl implements SpElServer {
         spElDTO.setExpression(expression.toString());
         spElDTO.setSpElAddFieldList(addFieldList);
         return spElDTO;
+    }
+
+    /**
+     * 获取contemt的值
+     * @author yl
+     * @date 2023-12-06 15:27
+     * @param field 字段
+     * @param compare 比较符号
+     * @param targetValue 目标值
+     * @param isStr 是否是String
+     * @return
+     */
+
+    private String getContent(String field, String compare, Object targetValue,Boolean isStr) {
+        StringBuilder sb=new StringBuilder("['");
+        sb.append(field).append("'] ");
+        sb.append(compare);
+        if(isStr){
+            sb.append("'");
+            sb.append(targetValue);
+            sb.append("'");
+        }else{
+            sb.append(targetValue);
+        }
+        return sb.toString();
     }
 
     /**
@@ -388,21 +415,14 @@ public class SpElServerImpl implements SpElServer {
 //        System.out.println(flag);
 
         ExpressionParser parser = new SpelExpressionParser();
-        String conditionExpression = "([estimatedShippingCost] > 10)";
-//  User user=new User();
-//  user.setEstimatedShippingCost(new BigDecimal("5.0000"));
+        String conditionExpression = "( ['estimatedShippingCost'] >10.0000 )  ";
         Map<String, Object> jsonObject = new HashMap<>();
-        jsonObject.put("estimatedShippingCost", new BigDecimal("10.0001"));
+        jsonObject.put("estimatedShippingCost", 9);
         Expression exp = parser.parseExpression(conditionExpression);
         EvaluationContext context2 = new StandardEvaluationContext(jsonObject);
         boolean result2 = exp.getValue(context2, Boolean.class);
         System.out.println(result2);
     }
 
-    @Data
-    public static class User {
 
-        private BigDecimal estimatedShippingCost;
-
-    }
 }
