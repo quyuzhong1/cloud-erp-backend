@@ -43,7 +43,6 @@
         code, name, shop_id, shop_name, country_id, country_name, fulfillment_center, delivery_status, platform_shipment_status, shipment_create_time, shipment_receive_time, label_type, pack_type, delivery_from_address, delivery_to_address
     </sql>
 
-
     <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
         SELECT
@@ -61,9 +60,10 @@
         fs.platform_shipment_status,
         fs.shipment_create_time,
         fs.shipment_receive_time,
-        fsd.asin,
-        fsd.fn_sku,
+        fsd.platform_spu_no,
+        fsd.platform_sku_no,
         fsd.msku,
+        fsd.fn_sku,
         fsd.sku_no,
         fsd.declare_qty,
         fsd.diff_qty,
@@ -115,17 +115,17 @@
                 #{platformShipmentStatus}
             </foreach>
         </if>
-        <!--平台sku-->
-        <if test="params.asin != null and params.asin != ''">
-            AND fsd.asin ILIKE concat('%',#{params.asin}::text,'%')
+        <!--平台产品id-->
+        <if test="params.platformSpuNo != null and params.platformSpuNo != ''">
+            AND fsd.platform_spu_no ILIKE concat('%',#{params.platformSpuNo}::text,'%')
         </if>
         <!--fnSku-->
         <if test="params.fnSku != null and params.fnSku != ''">
             AND fsd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
         </if>
-        <!--卖家sku-->
-        <if test="params.msku != null and params.msku != ''">
-            AND fsd.msku ILIKE concat('%',#{params.msku}::text,'%')
+        <!--平台sku-->
+        <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
+            AND fsd.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
         </if>
 
         <if test="params.isCombination != null">
@@ -170,8 +170,8 @@
             fs.shop_name,
             fs.country_id,
             fs.country_name,
-            fsd.asin,
-            fsd.msku,
+            fsd.platform_spu_no,
+            fsd.platform_sku_no,
             fsd.fn_sku,
             fsd.sku_no,
             fsd.declare_qty,
@@ -194,8 +194,8 @@
             fs.code AS sourceCode,
             fs.shop_id AS channelId,
             fs.shop_name AS channelName,
-            fsd.asin,
-            fsd.msku,
+            fsd.platform_spu_no,
+            fsd.platform_sku_no,
             fsd.fn_sku,
             fsd.sku_id,
             fsd.sku_no,

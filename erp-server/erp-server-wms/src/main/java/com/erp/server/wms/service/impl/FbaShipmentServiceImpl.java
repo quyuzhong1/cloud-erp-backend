@@ -132,10 +132,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         //根据平台sku查询映射信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
+        listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getPlatformSkuNo()));
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
+        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
@@ -167,7 +167,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByIds(Arrays.asList(dto.getDetailId()));
 
             //操作日志
-            List<Pair<String, String>> pairList = fbaShipmentDetailEntities.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getMsku() + " 映射 " + dto.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = fbaShipmentDetailEntities.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getPlatformSkuNo() + " 映射 " + dto.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("映射了一个sku【%s】", ModuleTypeEnum.FBA_SHIPMENT.getCode(), pairList, "编辑信息");
             fbaShipmentDetailService.updateById(detailEntity);
         }
@@ -291,7 +291,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSpuNo());
             }
         });
 
@@ -355,7 +355,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSkuNo());
             }
         });
 
@@ -396,7 +396,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         viewDTO.setApproveStatusName(ApproveStatusEnum.WAIT_SUBMIT.getName());
 
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(id));
-        List<String> mskuList = fbaShipmentDetailEntities.stream().filter(req -> StringUtils.isBlank(req.getSkuNo())).map(req -> req.getMsku()).collect(Collectors.toList());
+        List<String> mskuList = fbaShipmentDetailEntities.stream().filter(req -> StringUtils.isBlank(req.getSkuNo())).map(req -> req.getPlatformSkuNo()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(mskuList)) {
             throw new ServiceException(ApiError.NOT_MAPPER_SKU, StrUtil.join(",", mskuList));
         }
@@ -696,7 +696,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         // 设置绑定的SKU
         newDetailEntityList = newDetailEntityList.stream()
-                .map(e -> FbaShipmentConsumerConverter.INSTANCE.detailSetSkuMappingInfo(e, listingInfoMap.get(e.getMsku()), hasChildrenSkuIds))
+                .map(e -> FbaShipmentConsumerConverter.INSTANCE.detailSetSkuMappingInfo(e, listingInfoMap.get(e.getPlatformSkuNo()), hasChildrenSkuIds))
                 .collect(Collectors.toList());
 
         if (!fbaShipmentDetailService.saveBatch(newDetailEntityList)) {
@@ -705,7 +705,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         Map<String, String> detailIdMap = newDetailEntityList
                 .stream()
                 .collect(Collectors.toMap(
-                        e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()),
+                        e -> StrUtil.format("{}_{}", e.getFnSku() + e.getPlatformSkuNo()),
                         FbaShipmentDetailEntity::getId
                 ));
 
@@ -774,7 +774,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 历史详情
         List<FbaShipmentDetailEntity> oldfbaShipmentDetailEntityList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(oldEntity.getId()));
         Map<String, FbaShipmentDetailEntity> entityMap = oldfbaShipmentDetailEntityList.stream()
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()), Function.identity()));
+                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}", e.getFnSku() + e.getPlatformSkuNo()), Function.identity()));
         // 批量更新或保存详情列表
         List<FbaShipmentDetailEntity> saveOrUpdateDetailList = new LinkedList<>();
 
@@ -789,12 +789,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 设置绑定的SKU和更新判断
         newDetailEntityList.forEach(e -> {
             // 详情Key
-            String entityKey = StrUtil.format("{}_{}", e.getFnSku() + e.getMsku());
+            String entityKey = StrUtil.format("{}_{}", e.getFnSku() + e.getPlatformSkuNo());
             FbaShipmentDetailEntity detailEntity = entityMap.get(entityKey);
             // 新增
             if (null == detailEntity) {
                 // 转换
-                e = FbaShipmentConsumerConverter.INSTANCE.detailSetSkuMappingInfo(e, listingInfoMap.get(e.getMsku()), hasChildrenSkuIds);
+                e = FbaShipmentConsumerConverter.INSTANCE.detailSetSkuMappingInfo(e, listingInfoMap.get(e.getPlatformSkuNo()), hasChildrenSkuIds);
                 saveOrUpdateDetailList.add(e);
             } else {
                 // 修改
@@ -824,7 +824,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         Map<String, String> detailIdMap = saveOrUpdateDetailList
                 .stream()
                 .collect(Collectors.toMap(
-                        e -> StrUtil.format("{}_{}", e.getFnSku() + e.getMsku()),
+                        e -> StrUtil.format("{}_{}", e.getFnSku() + e.getPlatformSkuNo()),
                         FbaShipmentDetailEntity::getId
                 ));
 
@@ -935,7 +935,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
         }
 
-        List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getMsku()).collect(Collectors.toList());
+        List<String> mskuList = fbaShipmentDetailEntities.stream().map(req -> req.getPlatformSkuNo()).collect(Collectors.toList());
         //根据平台sku查询Listing信息
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(mskuList);
@@ -947,7 +947,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             FbaShipmentDetailEntity old = new FbaShipmentDetailEntity();
             BeanMapper.copy(detailEntity, old);
 
-            SkuMappingDTO.MappingSkuViewDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).findFirst().orElse(null);
+            SkuMappingDTO.MappingSkuViewDTO skuDTO = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
@@ -960,7 +960,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
                 fbaShipmentDetailService.updateById(detailEntity);
             } else {
-                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getMsku(), "更新失败，无对照关系！");
+                return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getPlatformSkuNo(), "更新失败，无对照关系！");
             }
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
@@ -973,7 +973,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSpuNo());
             }
         });
 
