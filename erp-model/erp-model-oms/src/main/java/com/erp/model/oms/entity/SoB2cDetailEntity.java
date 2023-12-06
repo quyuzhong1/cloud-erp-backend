@@ -46,10 +46,10 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 卖家sku编号
+    * 平台sku编号
     */
-    @TableField("seller_sku_no")
-     private String sellerSkuNo;
+    @TableField("platform_sku_no")
+     private String platformSkuNo;
     /**
     * 平台 产品id
     */
@@ -59,7 +59,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     * 库存sku编号
     */
     @TableField("warehouse_sku_no")
-     private String warehouseSkuNo;
+    private String warehouseSkuNo;
     /**
     * 数量
     */
@@ -185,7 +185,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
                 "imageUrl='" + imageUrl + '\'' +
                 ", skuId='" + skuId + '\'' +
                 ", skuNo='" + skuNo + '\'' +
-                ", sellerSkuNo='" + sellerSkuNo + '\'' +
+                ", platformSkuNo='" + platformSkuNo + '\'' +
                 ", platformSpuNo='" + platformSpuNo + '\'' +
                 ", warehouseSkuNo='" + warehouseSkuNo + '\'' +
                 ", qty=" + qty +

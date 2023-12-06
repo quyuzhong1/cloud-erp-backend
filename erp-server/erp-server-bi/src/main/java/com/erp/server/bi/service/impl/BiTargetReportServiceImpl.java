@@ -144,7 +144,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 BigDecimal yearTotalTarget = value.stream().map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                 totalSlotDTO.setYearTotalTarget(yearTotalTarget);
                 //年实际
-                BigDecimal yearTotalReal = realList.stream().filter(obj -> StringUtils.isNotBlank(obj.getTypeName()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal yearTotalReal = realList.stream().filter(obj -> StringUtils.isNotBlank(obj.getTypeName())
+                        && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).
+                        reduce(BigDecimal.ZERO, BigDecimal::add);
                 totalSlotDTO.setYearTotalReal(yearTotalReal);
                 BigDecimal yearRate = MathUtil.divide(yearTotalReal,yearTotalTarget);
                 totalSlotDTO.setRate(MathUtil.multiply(yearRate,MathUtil.BigDecimal_100));
@@ -152,10 +154,10 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 for (MonthEnum monthEnum : values) {
                     TargetFinishDTO.SlotDTO slotDTO = new TargetFinishDTO.SlotDTO();
                     //目标值
-                    BigDecimal targetValue = value.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal targetValue = value.stream().filter(obj -> obj.getMonth().equals(String.valueOf(monthEnum.getValue()))).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setTargetValue(targetValue);
                     //实际值
-                    BigDecimal realValue = realList.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal realValue = realList.stream().filter(obj -> obj.getMonth().equals(String.valueOf(monthEnum.getValue())) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setValue(realValue);
                     BigDecimal rate = BigDecimal.ZERO;
                     if (TargetFinishViewTypeEnum.FINISH_RATE.getCode().equals(dto.getViewType())) {
@@ -626,7 +628,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             Integer month = StringUtils.isBlank(key.split(",")[1]) ? null :  Integer.valueOf(key.split(",")[1]);
             TargetFinishDTO.ViewDTO viewDTO = new TargetFinishDTO.ViewDTO();
             viewDTO.setTypeName(typeName);
-            viewDTO.setMonth(String.valueOf(month));
+            viewDTO.setMonth(month);
             viewDTO.setValue(obj.getValue());
             resultList.add(viewDTO);
         });

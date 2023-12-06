@@ -1483,6 +1483,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
+
+        List<SoB2cEntity> allList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
         List<SoB2cDetailEntity> allDetailList = soB2cDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(allDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
@@ -1643,7 +1649,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
             dto.setId(data.getId());
             dto.setIsCny(Boolean.FALSE);
-            dto.setSoB2cEntity(BeanMapperUtils.map(SoB2cEntity.class,data));
+            SoB2cEntity soB2cEntity = allList.stream().filter(obj -> obj.getId().equals(data.getId())).findFirst().orElse(new SoB2cEntity());
+            dto.setSoB2cEntity(soB2cEntity);
 
             //物流信息
             SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).findFirst().orElse(new SoB2cFinanceEntity());
@@ -2138,7 +2145,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : detailList) {
             Map<String,Object> detailMap = new HashMap<>();
             detailMap.put("detailId", detailEntity.getId());
-            detailMap.put("sellerSkuNo", detailEntity.getSellerSkuNo());
+            detailMap.put("platformSkuNo", detailEntity.getPlatformSkuNo());
             detailMap.put("skuQty", detailEntity.getQty());
             detailMap.put("skuNo", detailEntity.getSkuNo());
             detailMap.put("dictPayMethod", soB2cEntity.getDictPayMethod());
