@@ -857,6 +857,7 @@ public enum ApiError implements Serializable {
     DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
     OVERSEAS_PROVIDE_NOT_SERVICE(99147,"服务商服务未开发"),
     NOT_PACKING_NOT_GENERATE_INBOUND(99148,"单据编号【{}】装箱状态未装箱，不能下推入库单"),
+    WAREHOUSE_REPEAT_BINDING(99149,"仓库【{}】绑定了多个第三方仓，一个仓库只能绑定一个第三方仓"),
 
 
     /**

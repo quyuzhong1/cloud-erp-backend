@@ -130,16 +130,34 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
+
+        //查询绑定的仓库
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = this.listByWarehouseIds(warehouseIds);
+
         for (OverseasProviderWarehouseEntity detailEntity : list) {
+            //仓库信息
+            WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(new WarehouseDTO.UpdateDTO());
+
             //如果启用，校验仓库是否绑定
             if (!detailEntity.getDisabled()) {
                 if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
                     throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
                 }
+
+                //已绑定第三方供应商仓，一个仓库只能绑定一个第三方仓
+                long warehouseCount = list.stream()
+                        .filter(req -> !req.getDisabled()
+                                && req.getWarehouseId().equals(detailEntity.getWarehouseId()))
+                        .count();
+                if (warehouseCount > 1) {
+                    throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
+                }
+                long count = overseasProviderWarehouseEntities.stream().filter(req -> req.getWarehouseId().equals(detailEntity.getWarehouseId())).count();
+                if (count > 1) {
+                    throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
+                }
             }
             detailEntity.setMainId(mainId);
-            //仓库信息
-            WarehouseDTO.UpdateDTO updateDTO = warehouseDtoList.stream().filter(req -> req.getId().equals(detailEntity.getWarehouseId())).distinct().findFirst().orElse(new WarehouseDTO.UpdateDTO());
             detailEntity.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
             detailEntity.setWarehouseName(updateDTO.getName());
 
