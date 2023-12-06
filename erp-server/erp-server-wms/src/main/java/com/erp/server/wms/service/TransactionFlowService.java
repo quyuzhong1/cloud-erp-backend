@@ -125,4 +125,21 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * @param txnFlow 原交易流水
      */
     void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty);
+
+    /**
+     * @description: 每日库存
+     * @author Will
+     * @date: 2023/12/6 17:14
+     * @param dto
+     * @return PagingVO<ListDailyInventoryDTO>
+     */
+    PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPaging(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto);
+    /**
+     * @description: 每日库存导出
+     * @author Will
+     * @date: 2023/12/6 17:14
+     * @param dto
+     * @param response
+     */
+    void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response);
 }
