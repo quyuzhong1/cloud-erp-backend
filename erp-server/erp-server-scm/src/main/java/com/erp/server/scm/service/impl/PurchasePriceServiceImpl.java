@@ -591,7 +591,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
-        List<String> flagList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -616,7 +615,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             for (PurchasePriceDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
-                boolean contains = flagList.contains(item.getId());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
@@ -631,18 +629,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                     item.setApproveUserName(curApprove);
                 }
-
-                if (contains) {
-                    item.setCode("");
-                    item.setSupplierName("");
-                    item.setPurchaseOrgId("");
-                    item.setPurchaseOrgName("");
-                    item.setApproveStatus(null);
-                    item.setApproveStatusName("");
-                    item.setCreateUserName("");
-                    item.setCreateTime(null);
-                }
-                flagList.add(item.getId());
             }
         }
         return new PagingVO<>(pageData);

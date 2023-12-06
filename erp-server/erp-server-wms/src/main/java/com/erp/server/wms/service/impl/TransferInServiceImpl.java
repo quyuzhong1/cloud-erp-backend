@@ -228,9 +228,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        List<String> flagList = new ArrayList<>();
         for (TransferInDTO.PagingViewDTO item : list) {
-            boolean contains = flagList.contains(item.getId());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             TransferDirectionEnum transferDirection = item.getTransferDirection();
@@ -242,18 +240,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
-            if (contains) {
-                item.setCode("");
-                item.setSourceCode("");
-                item.setTransferDirectionName("");
-                item.setApproveStatusName("");
-                item.setOutWarehouseName("");
-                item.setInWarehouseName("");
-                item.setCreateUserName("");
-                item.setCreateTime(null);
-                item.setApproveUserName("");
-            }
-            flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
     }

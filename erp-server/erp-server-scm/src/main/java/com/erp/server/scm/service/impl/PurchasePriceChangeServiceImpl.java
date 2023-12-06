@@ -635,7 +635,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
-            List<String> flagIdList = new ArrayList<>(10);
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -654,7 +653,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 }
             }
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
-                boolean contains = flagIdList.contains(item.getId());
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
@@ -671,19 +669,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                     item.setApproveUserName(curApprove);
                 }
-
-                if (contains) {
-                    item.setCode("");
-                    item.setSupplierName("");
-                    item.setPurchaseOrgId("");
-                    item.setPurchaseOrgName("");
-                    item.setApproveStatus(null);
-                    item.setApproveStatusName("");
-                    item.setCreateUserName("");
-                    item.setCreateTime(null);
-                }
-
-                flagIdList.add(item.getId());
             }
         }
 
