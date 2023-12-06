@@ -186,6 +186,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getSellerSKU());
+
+        // 平台产品id
+        detailDTO.setPlatformSpuNo("");
         // 库存sku编号
         detailDTO.setWarehouseName("");
         // 仓库名称

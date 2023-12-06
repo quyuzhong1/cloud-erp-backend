@@ -1,17 +1,23 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BasicDictDTO;
+import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -87,5 +93,20 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
         queryWrapper.eq(BasicDictEntity::getValue, value);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:plm:listDictDropDown",keyGenerator = "myKeyGenerator")
+    public List<DictControllerDTO.DictDropDownDTO> listDictDropDown(String code) {
+        List<BasicDictEntity> list = this.lambdaQuery()
+                .eq(StrUtil.isNotBlank(code), BasicDictEntity::getType, code)
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<DictControllerDTO.DictDropDownDTO> result = list.stream()
+                .map(DictControllerDTO.DictDropDownDTO::new)
+                .collect(Collectors.toList());
+        return result;
     }
 }

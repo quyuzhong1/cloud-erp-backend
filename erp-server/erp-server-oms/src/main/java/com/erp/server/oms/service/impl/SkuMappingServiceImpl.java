@@ -588,6 +588,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
         }
+        //获取到skumappping 的对应关系
         List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
 
         List<ListingInfoEntity> listingList = new ArrayList<>();
@@ -595,7 +596,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
             listingList = listingInfoService.listByIds(listingIds);
         }
-
+        //库存
+        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
         for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : dataList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
@@ -610,13 +612,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setWarehouseId(listSkuParamDTO.getWarehouseId());
             listSkuDTO.setDictPlatform(listSkuParamDTO.getDictPlatform());
             //查询库存sku映射
-            SkuMappingEntity warehouseSkuMapping = list.stream().filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) && obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())).findFirst().orElse(null);
+            SkuMappingEntity warehouseSkuMapping = list.stream().filter(
+                    obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) &&
+                            obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())&&
+                            warehouseType.equals(obj.getType())
+            ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
                 //库存sku信息
                 ListingInfoEntity warehouseListing = listingList.stream().filter(obj -> obj.getId().equals(warehouseSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(warehouseListing)) {
                     listSkuDTO.setWarehouseSkuNo(warehouseListing.getPlatformSkuNo());
                     listSkuDTO.setWarehouseProductName(warehouseListing.getPlatformSkuName());
+
                 }
             }
             //查询平台sku信息
@@ -624,15 +631,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     .filter(obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId())
                             && StringUtils.isEmpty(obj.getWarehouseId())
                             && obj.getDictPlatform().equals(listSkuParamDTO.getDictPlatform())
+                            && !warehouseType.equals(obj.getType())
                     ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(platformSkuMapping)) {
                 //库存sku信息
                 ListingInfoEntity platformListing = listingList.stream().filter(obj -> obj.getId().equals(platformSkuMapping.getListingId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(platformListing)) {
-                    listSkuDTO.setSellerSkuNo(platformListing.getPlatformSkuNo());
-                    listSkuDTO.setSellerProductName(platformListing.getPlatformSkuName());
                     listSkuDTO.setPlatformSkuNo(platformListing.getPlatformSkuNo());
                     listSkuDTO.setPlatformProductName(platformListing.getPlatformSkuName());
+                    listSkuDTO.setPlatformSpuNo(platformListing.getPlatformSpuNo());
                 }
             }
             resultList.add(listSkuDTO);
@@ -657,9 +664,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String platformCode = RuleTypeEnum.PLATFORM.getCode();
         for (SkuMappingDTO.SkuDTO item : list) {
             String type = item.getType();
-            String platformSkuNo=item.getPlatformSkuNo();
-            String platformProductName=item.getPlatformProductName();
-            if(!platformCode.equals(type)){
+            String platformSkuNo = item.getPlatformSkuNo();
+            String platformProductName = item.getPlatformProductName();
+            if (!platformCode.equals(type)) {
                 item.setFlagSkuNo(platformSkuNo);
                 item.setFlagProductName(platformProductName);
                 item.setPlatformSkuNo("");

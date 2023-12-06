@@ -252,12 +252,16 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             detailDTO.setImageUrl(image.getImageUrl());
         }
         // skuId
-        detailDTO.setSkuId(String.valueOf(item.getItemId()));
+        detailDTO.setSkuId("");
         // skuNo
-        detailDTO.setSkuNo(item.getItemSku());
+        detailDTO.setSkuNo("");
 
         // 平台sku编号
-        detailDTO.setPlatformSkuNo(item.getModelSku());
+        detailDTO.setPlatformSkuNo(item.getItemSku());
+
+        // 平台产品id
+        detailDTO.setPlatformSpuNo(item.getItemId().toString());
+
         // 库存sku编号
         detailDTO.setWarehouseName("");
         // 仓库名称
