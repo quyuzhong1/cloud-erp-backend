@@ -11,10 +11,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
 @Slf4j
-@ComponentScan(basePackages = "com.cloud")
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
-
 public class ErpGatewayApplication {
 
     public static void main(String[] args) {

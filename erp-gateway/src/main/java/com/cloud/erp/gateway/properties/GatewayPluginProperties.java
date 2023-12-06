@@ -11,11 +11,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
+ * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
+ *
  * Gateway Plugin Properties
- * @Author Luo_WG
- * @Date 2023/12/6 14:02
- **/
+ * @author chenggang
+ * @date 2019/04/12
+ */
 @Slf4j
 @Getter
 @Setter
@@ -33,7 +46,7 @@ public class GatewayPluginProperties implements InitializingBean {
     /**
      * Enable Or Disable
      */
-    private Boolean enable = true;
+    private Boolean enable = false;
 
     /**
      * LogProperties
@@ -63,12 +76,12 @@ public class GatewayPluginProperties implements InitializingBean {
     @Getter
     @Setter
     @ToString
-    public static class LogProperties implements InitializingBean{
+    public static class LogProperties implements InitializingBean {
 
         /**
          * Enable Or Disable Log Request Detail
          */
-        private Boolean enable = true;
+        private Boolean enable = false;
 
         /**
          * Enable Or Disable Read Request Data
@@ -101,10 +114,10 @@ public class GatewayPluginProperties implements InitializingBean {
 
         @Override
         public void afterPropertiesSet() throws Exception {
-            if(!CollectionUtils.isEmpty(serviceIdList)){
+            if (!CollectionUtils.isEmpty(serviceIdList)) {
                 serviceIdList = serviceIdList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
-            if(!CollectionUtils.isEmpty(pathList)){
+            if (!CollectionUtils.isEmpty(pathList)) {
                 pathList = pathList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
         }
@@ -116,12 +129,12 @@ public class GatewayPluginProperties implements InitializingBean {
     @Getter
     @Setter
     @ToString
-    public static class SqlInjectionProperties implements InitializingBean{
+    public static class SqlInjectionProperties implements InitializingBean {
 
         /**
          * Enable Or Disable
          */
-        private Boolean enable = true;
+        private Boolean enable = false;
 
         /**
          * Enable Read Request Data When use discover route by serviceId
@@ -135,10 +148,10 @@ public class GatewayPluginProperties implements InitializingBean {
 
         @Override
         public void afterPropertiesSet() {
-            if(!CollectionUtils.isEmpty(serviceIdList)){
+            if (!CollectionUtils.isEmpty(serviceIdList)) {
                 serviceIdList = serviceIdList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
-            if(!CollectionUtils.isEmpty(pathList)){
+            if (!CollectionUtils.isEmpty(pathList)) {
                 pathList = pathList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
         }
@@ -150,12 +163,12 @@ public class GatewayPluginProperties implements InitializingBean {
     @Getter
     @Setter
     @ToString
-    public static class XssInjectionProperties implements InitializingBean{
+    public static class XssInjectionProperties implements InitializingBean {
 
         /**
          * Enable Or Disable
          */
-        private Boolean enable = true;
+        private Boolean enable = false;
 
         /**
          * Enable Read Request Data When use discover route by serviceId
@@ -169,10 +182,10 @@ public class GatewayPluginProperties implements InitializingBean {
 
         @Override
         public void afterPropertiesSet() {
-            if(!CollectionUtils.isEmpty(serviceIdList)){
+            if (!CollectionUtils.isEmpty(serviceIdList)) {
                 serviceIdList = serviceIdList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
-            if(!CollectionUtils.isEmpty(pathList)){
+            if (!CollectionUtils.isEmpty(pathList)) {
                 pathList = pathList.stream().map(String::toLowerCase).collect(Collectors.toList());
             }
         }
