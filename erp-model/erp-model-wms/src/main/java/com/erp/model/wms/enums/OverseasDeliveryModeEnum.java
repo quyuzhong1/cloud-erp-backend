@@ -1,7 +1,6 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.GoodCangEnums;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -12,7 +11,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.rmi.ServerException;
 import java.util.stream.Stream;
 
 /**
