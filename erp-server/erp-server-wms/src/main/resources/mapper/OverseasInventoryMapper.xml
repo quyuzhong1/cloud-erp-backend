@@ -85,6 +85,10 @@
         </if>
     </sql>
 
+    <sql id="page_where_sql">
+        opw.is_deleted = false AND opw.disabled = false AND
+    </sql>
+
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
         oi.id,
@@ -118,7 +122,7 @@
         LEFT JOIN overseas_provider_warehouse as opw
         on opw.platform_warehouse_code = oi.warehouse_code
         <where>
-            opw.is_deleted = false AND opw.disabled = false
+            <include refid="page_where_sql"/>
             <include refid="conditionSql"/>
         </where>
     </select>

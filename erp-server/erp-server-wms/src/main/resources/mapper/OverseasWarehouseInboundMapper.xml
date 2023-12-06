@@ -108,9 +108,24 @@
             and owid.is_combination = #{params.isCombination}
         </if>
 
+        <if test="params.skuNo != null and params.skuNo != ''">
+            AND owid.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+        </if>
+
+        <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
+            AND owid.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
+        </if>
+
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            AND owid.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
         <!--海外仓库存SKU列表-->
         <if test="params.platformSkuNoList != null and params.platformSkuNoList.size > 0">
-            AND owi.platform_sku_no in
+            AND owid.platform_sku_no in
             <foreach collection="params.platformSkuNoList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
