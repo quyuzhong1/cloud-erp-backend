@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Entity com.erp.model.plm.entity.DmpOrderInfo
@@ -23,6 +24,11 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
 
     List<CleanAmountAfterVO> getCleanList();
 
+    /**
+     * 执行函数
+     * @param code
+     */
+    Map runSalesDataToPhysicalSql(@Param("code") String code);
 }
 
 

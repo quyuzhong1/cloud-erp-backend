@@ -2,10 +2,13 @@ package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
+import com.erp.model.dmp.vo.SyncDataReportVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 订单服务类
@@ -100,4 +103,10 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      */
     List<CleanAmountAfterVO> getCleanOrderList();
 
+    /**
+     * 同步销售函数到物理库
+     *
+     * @return
+     */
+    CompletableFuture<SyncDataReportVO> salesDataToPhysical(SalesDataReportEnum reportEnum);
 }

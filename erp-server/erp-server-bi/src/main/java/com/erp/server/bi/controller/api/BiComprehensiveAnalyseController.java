@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.BiSkuDetailTopDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
 import com.erp.model.bi.dto.SkuDetailDTO;
 import com.erp.model.bi.vo.SaleDetailVO;
+import com.erp.model.bi.vo.SalesPriceRangeVO;
 import com.erp.model.bi.vo.SkuDateSaleTrendVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
@@ -116,9 +117,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/salePriceDistribution")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<StatisticalDataVO> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
-        return success(statisticalDataVO);
+    public ApiResult<List<SalesPriceRangeVO>> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<SalesPriceRangeVO> salesPriceRangeVOS = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
+        return success(salesPriceRangeVOS);
     }
 
     /**

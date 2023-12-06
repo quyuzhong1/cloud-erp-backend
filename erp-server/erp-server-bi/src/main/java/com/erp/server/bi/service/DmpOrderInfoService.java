@@ -42,7 +42,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    StatisticalDataVO salePriceDistribution(BiFilterDTO dto);
+    List<SalesPriceRangeVO> salePriceDistribution(BiFilterDTO dto);
 
     /**
      * 统计销量
