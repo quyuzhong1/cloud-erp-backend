@@ -6,22 +6,22 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
 import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
-import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.wms.service.OverseasWarehouseInboundReceivedService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +57,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     private CommonService commonService;
     @Resource
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
+    @Resource
+    private OverseasWarehouseInboundService overseasWarehouseInboundService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -136,11 +138,29 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto) {
         // 查询详情
         OverseasWarehouseInboundDetailEntity entity = this.getById(dto.getDetailId());
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST));
-        // TODO 校验
+        // 校验
+        // 查询提交的平台
+        OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
+        Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+        // 非手动单
+        if (StringUtils.isNotBlank(mainEntity.getDictPlatform())){
+            String msg = StrUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+            throw new ServiceException(msg);
+        }
+        if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
+                !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
+        ){
+            String msg = StrUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
+            throw new ServiceException(msg);
+        }
+        if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
+            throw new ServiceException("当前签收数量大于剩余签收数量");
+        }
 
         entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
         // 详情更新签收数量
@@ -156,7 +176,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         if (!overseasWarehouseInboundReceivedService.save(receivedEntity)) {
             throw new ServiceException("海外仓入库单签收保存失败");
         }
-
+        // 生成直接调拨单
+        String transferNum = overseasWarehouseInboundService.generateTransferOut(mainEntity, entity, receivedEntity);
+        if (StringUtils.isBlank(transferNum)){
+            throw new ServiceException("生成直接调拨单失败");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
     }
 
