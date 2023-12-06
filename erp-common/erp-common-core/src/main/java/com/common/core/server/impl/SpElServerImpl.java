@@ -7,6 +7,7 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.EvaluationContext;
@@ -16,10 +17,8 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * @Description
@@ -98,23 +97,17 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj) {
-        for (String key : obj.keySet()) {
-            String value = obj.get(key).toString();
-            obj.set(key, value);
-        }
-        List<JSONObject> jsonList=obj.getBeanList("detailList",JSONObject.class);
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get("detailList");
         SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
             String originalField = item.getOriginalField();
-            List<String> valueList = getValueList(originalField, jsonList);
+            List<Object> valueList = getValueList(originalField, mapList);
             String addField = item.getNeedAddField();
-            obj.set(addField,valueList);
+            obj.put(addField, valueList);
         }
-
-
         return matchExpression(spElDTO.getExpression(), obj);
 
     }
@@ -126,13 +119,11 @@ public class SpElServerImpl implements SpElServer {
      * @param jsonList
      * @return
      */
-    private List<String> getValueList(String originalField, List<JSONObject> jsonList) {
-        List<String> list = new ArrayList<>(jsonList.size());
-        for (JSONObject obj : jsonList) {
-            String value = obj.getOrDefault(originalField, "").toString();
-            if (StringUtils.isNotBlank(value)) {
-                list.add(value);
-            }
+    private List<Object> getValueList(String originalField, List<Map<String, Object>> mapList) {
+        List<Object> list = new ArrayList<>(mapList.size());
+        for (Map<String, Object> obj : mapList) {
+            Object value = obj.get(originalField);
+            list.add(value);
         }
         return list;
     }
@@ -151,6 +142,7 @@ public class SpElServerImpl implements SpElServer {
 
         StringBuilder expression = new StringBuilder();
         for (ConditionElement element : conditionElementList) {
+
             //左括号
             String leftBracket = element.getLeftBracket();
             if (StringUtils.isNotBlank(leftBracket)) {
@@ -164,8 +156,11 @@ public class SpElServerImpl implements SpElServer {
 
             //对应的值
             String value = element.getValue();
+            String valueType = element.getValueType();
+            Object conversionValue = conversionValue(value, valueType);
+
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
-                String content = new StringBuilder("['").append(field).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+                String content = new StringBuilder("['").append(field).append("'] ").append(compare).append(conversionValue).toString();
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
@@ -205,6 +200,24 @@ public class SpElServerImpl implements SpElServer {
         return spElDTO;
     }
 
+    /**
+     * 转化值
+     *
+     * @param value
+     * @param valueType
+     * @return
+     */
+    private Object conversionValue(String value, String valueType) {
+        if ("String".equals(valueType)) {
+            return value;
+        }
+
+        if ("BigDecimal".equals(valueType)) {
+            return new BigDecimal(value);
+        }
+        return value;
+    }
+
     private String getAddField(String field, List<SpElAddFieldDTO> addFieldList) {
         SpElAddFieldDTO addFieldDTO = new SpElAddFieldDTO();
         String addField = field + "List";
@@ -241,7 +254,7 @@ public class SpElServerImpl implements SpElServer {
 
             //对应的值
             String value = element.getValue();
-            String listFlag = "List";
+
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
                 String content = new StringBuilder().append(field).append(" ").append(compare).append(" '").append(value).append("'").toString();
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
@@ -363,5 +376,33 @@ public class SpElServerImpl implements SpElServer {
         expression.append("['").append(field).append("']");
         expression.append(" != ''");
         return expression.toString();
+    }
+
+
+    public static void main(String[] args) {
+//        SpElServerImpl spElServer = new SpElServerImpl();
+//        String str = "( ['estimatedShippingCost'] > '10.0000' ) ";
+//        Map<String, String> map = new HashMap<>();
+//        map.put("estimatedShippingCost","5.0000");
+//       Boolean flag= spElServer.matchExpression(str, map);
+//        System.out.println(flag);
+
+        ExpressionParser parser = new SpelExpressionParser();
+        String conditionExpression = "([estimatedShippingCost] > 10)";
+//  User user=new User();
+//  user.setEstimatedShippingCost(new BigDecimal("5.0000"));
+        Map<String, Object> jsonObject = new HashMap<>();
+        jsonObject.put("estimatedShippingCost", new BigDecimal("10.0001"));
+        Expression exp = parser.parseExpression(conditionExpression);
+        EvaluationContext context2 = new StandardEvaluationContext(jsonObject);
+        boolean result2 = exp.getValue(context2, Boolean.class);
+        System.out.println(result2);
+    }
+
+    @Data
+    public static class User {
+
+        private BigDecimal estimatedShippingCost;
+
     }
 }

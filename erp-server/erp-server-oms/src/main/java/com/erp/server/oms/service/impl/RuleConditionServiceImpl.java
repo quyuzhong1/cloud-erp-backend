@@ -9,15 +9,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
-import com.erp.server.oms.service.CommonService;
-import com.erp.server.oms.service.DictRuleConditionService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.RuleConditionService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,6 +49,9 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
 
     @Autowired
     private DictRuleConditionService dictRuleConditionService;
+
+    @Autowired
+    private CfgConditionService cfgConditionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -212,7 +213,17 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         if (CollectionUtils.isEmpty(ruleIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(RuleConditionEntity::getRuleId, ruleIdList).orderByAsc(RuleConditionEntity::getIndex).list();
+        List<RuleConditionEntity> list = this.lambdaQuery().in(RuleConditionEntity::getRuleId, ruleIdList).orderByAsc(RuleConditionEntity::getIndex).list();
+        List<String> fieldList = list.stream().map(RuleConditionEntity::getField).distinct().collect(Collectors.toList());
+        //配置的字段
+        List<CfgConditionEntity> cfgConditionList = cfgConditionService.listByFields(fieldList);
+        for (RuleConditionEntity item : list) {
+            String fieldFlag = item.getField();
+            String valueType=  cfgConditionList.stream().filter(c->c.getConditionField().equals(fieldFlag)).
+                    findFirst().map(CfgConditionEntity::getValueType).orElse("String");
+            item.setValueType(valueType);
+        }
+        return  list;
     }
 
     /**

@@ -4,6 +4,7 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -47,7 +48,7 @@ public interface SpElServer {
      * @param obj
      * @return
      */
-    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, JSONObject obj);
+    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
 
 
 }

@@ -22,6 +22,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 订单规则
@@ -119,8 +120,8 @@ public class RuleOrderApprovalController extends BaseController {
     }
 
     @PostMapping("/test")
-    public ApiResult test(@RequestBody JSONObject jsonObject) {
-        RuleOrderApprovalDTO.RuleMatchDTO ruleMatchDTO = ruleOrderApprovalService.getRuleOrderMatchResult(jsonObject);
+    public ApiResult test(@RequestBody Map<String,Object> obj) {
+        RuleOrderApprovalDTO.RuleMatchDTO ruleMatchDTO = ruleOrderApprovalService.getRuleOrderMatchResult(obj);
         return success(ruleMatchDTO);
     }
 

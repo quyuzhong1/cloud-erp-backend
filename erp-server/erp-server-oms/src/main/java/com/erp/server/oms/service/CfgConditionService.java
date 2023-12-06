@@ -57,4 +57,13 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
      * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>
      */
     List<CfgConditionDTO.TreeDTO> tree();
+
+    /**
+     * 根据字段获取信息
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-12-06
+     */
+    List<CfgConditionEntity> listByFields(List<String> fieldList);
 }
