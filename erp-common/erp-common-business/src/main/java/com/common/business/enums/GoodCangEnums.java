@@ -414,20 +414,13 @@ public enum GoodCangEnums {
                     .map(OrderStatusEnum::getErpSoStatus)
                     .orElse(null);
         }
-    }
 
-    /**
-     * 提交状态
-     */
-    @Getter
-    @AllArgsConstructor
-    public enum VerifyEnum {
-        // 入库单创建时取0，发货单审核通过更新为1
-        INIT("0","入库单创建"),
-        PASS("1","发货单审核通过")
-        ;
-        private final String code;
-        private final String name;
-
+        public static String getName(String code){
+            return Arrays.stream(OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OrderStatusEnum::getName)
+                    .orElse(null);
+        }
     }
 }

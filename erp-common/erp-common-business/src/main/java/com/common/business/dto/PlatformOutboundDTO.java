@@ -37,5 +37,7 @@ public class PlatformOutboundDTO extends UniqueDto {
     //erp订单状态
     private String orderStatus;
 
+    //第三方订单状态
+    private String thirdOrderStatus;
 
 }

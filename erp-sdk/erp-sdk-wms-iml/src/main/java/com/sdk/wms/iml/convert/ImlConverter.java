@@ -120,6 +120,7 @@ public interface ImlConverter {
             @Mapping(target = "orderCode",  source = "orderCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
             @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.ImlEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+            @Mapping(target = "thirdOrderStatus",  expression = "java(com.common.business.enums.ImlEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
     })
     PlatformOutboundDTO outboundConversion(ImlOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<ImlOutboundResp> sourceDataList);

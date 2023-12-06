@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third.request;
 
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,16 +31,19 @@ public class ThirdWarehouseCreateInboundReq {
 
     /**
      * 交货方式 （自送，揽收）
+     * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
      */
     private String incomeType;
 
     /**
      * 入库类型 （自发头程,中转代发）
+     * {@link com.erp.model.wms.enums.OverseasInstockTypeEnum}
      */
     private String receivingType;
 
     /**
      * 入库单类型 （标准入库单，中转入库单(标准货运单)，FBA入库单）
+     * {@link com.erp.model.wms.enums.OverseasInstockTypeEnum}?
      */
     private String transitType;
 
@@ -60,6 +64,7 @@ public class ThirdWarehouseCreateInboundReq {
 
     /**
      * 物流方式
+     * {@link com.erp.model.wms.enums.LogisticsMethodEnum}
      */
     private String receivingShippingType;
     /**
@@ -74,16 +79,19 @@ public class ThirdWarehouseCreateInboundReq {
 
     /**
      * 入库单创建时取0，发货单审核通过更新为1
+     * {@link com.common.business.enums.OverseasVerifyEnum}
      */
     private String verify;
 
     /**
      * 报关方式
+     * {@link com.common.business.enums.GoodCangEnums.CustomsTypeNewEnum}
      */
     private String customsType;
 
     /**
      * 交货方式
+     * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
      */
     private String collectingService;
 
@@ -211,6 +219,7 @@ public class ThirdWarehouseCreateInboundReq {
         private String collectZipcode;
 
     }
+
     /**
      * 入库单明细
      */

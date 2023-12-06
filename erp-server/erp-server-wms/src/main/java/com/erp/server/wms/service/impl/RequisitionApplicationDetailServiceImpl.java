@@ -131,6 +131,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     * 新增修改处理数据
     */
     private void handleData(List<RequisitionApplicationDetailEntity> list, String mainId, Boolean isUpdate) {
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+
         //需要新增的数据
         List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -146,7 +148,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
-                RequisitionApplicationDetailEntity old = list.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
+                RequisitionApplicationDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
                 }
