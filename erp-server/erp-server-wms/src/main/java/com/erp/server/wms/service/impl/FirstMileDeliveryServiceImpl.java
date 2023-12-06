@@ -546,6 +546,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
+        //已下推入库单
+        OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+        if (ObjectUtil.isNotEmpty(inboundEntity)) {
+            throw new ServiceException(ApiError.GENERATE_INBOUND_NOT_DIS_APPROVE, inboundEntity.getCode());
+        }
         return true;
     }
 
