@@ -99,6 +99,7 @@ public interface GoodCangConverter {
             @Mapping(target = "orderCode",  source = "orderCode"),
             @Mapping(target = "referenceNo",  source = "referenceNo"),
             @Mapping(target = "orderStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OrderStatusEnum.getErpOrderStatus(sourceData.getOrderStatus()))"),
+            @Mapping(target = "thirdOrderStatus",  expression = "java(com.common.business.enums.GoodCangEnums.OrderStatusEnum.getName(sourceData.getOrderStatus()))"),
     })
     PlatformOutboundDTO outboundConversion(GoodCangOutboundResp sourceData);
     List<PlatformOutboundDTO> outboundConversion(List<GoodCangOutboundResp> sourceDataList);

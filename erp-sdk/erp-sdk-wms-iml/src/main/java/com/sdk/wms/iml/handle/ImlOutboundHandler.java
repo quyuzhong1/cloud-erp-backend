@@ -5,10 +5,7 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.*;
 import com.common.business.handler.AbstractPullThirdWarehouseHandler;
 import com.common.business.utils.MD5Util;
 import com.common.core.exception.ServiceException;
@@ -76,6 +73,8 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
             }
             page++;
         }
+        //过滤掉代发货状态
+        respList = respList.stream().filter(v->!(v.getOrderStatus().equals(ImlEnums.OrderStatusEnum.NEW.getCode()) || v.getOrderStatus().equals(ImlEnums.OrderStatusEnum.FIRST_JOURNEY_ON_THE_WAY.getCode()))).collect(Collectors.toList());
         respList.forEach(v->{
             v.setUniqueId(MD5Util.toMD5(getPlatformDictEnum().getCode()+BusinessTypeEnum.OUTBOUND.getCode()+v.getOrderCode()));
             v.setAuthId(data.getShopId());
@@ -108,7 +107,6 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
     @Override
     public List<PlatformOutboundDTO> convert(List<ImlOutboundResp> sourceDataList) {
         List<PlatformOutboundDTO> resultList = ImlConverter.INSTANCE.outboundConversion(sourceDataList);
-        resultList = resultList.stream().filter(v-> StringUtils.isNotBlank(v.getOrderStatus())).collect(Collectors.toList());
         return resultList;
     }
 
