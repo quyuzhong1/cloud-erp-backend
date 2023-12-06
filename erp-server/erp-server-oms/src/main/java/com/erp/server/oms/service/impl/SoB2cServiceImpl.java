@@ -1513,6 +1513,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
 
+
+        //物流信息
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(logisticsEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        //财务信息
+        List<SoB2cFinanceEntity> soB2cFinanceEntityList = soB2cFinanceService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(soB2cFinanceEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+        }
+
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
 
@@ -1627,13 +1639,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 detailDTO.setDetailLabelDTO(detailLabelDTO);
             }
+
+            SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
+            dto.setId(data.getId());
+            dto.setIsCny(Boolean.FALSE);
+            dto.setSoB2cEntity(BeanMapperUtils.map(SoB2cEntity.class,data));
+
+            //物流信息
+            SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).findFirst().orElse(new SoB2cFinanceEntity());
+            dto.setSoB2cFinanceEntity(soB2cFinanceEntity);
+            //物流信息
+            SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            dto.setSoB2cLogisticsEntity(logisticsEntity);
+            dto.setSoB2cDetailList(detailList);
+            SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto, Boolean.FALSE);
+            data.setTotalProfit(financialInfoDTO.getProfit());
+            data.setProfitCurrency(data.getCurrency());
+            data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%","")));
             data.setDetailList(soB2cDetailList);
             //明细存在一条数据时组合SKU则标识
             labelDTO.setIsCombination(isCombination);
             data.setLabelDTO(labelDTO);
         }
     }
-
 
     /**
      * 分页查询、导出 数据处理

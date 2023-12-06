@@ -445,6 +445,7 @@
         INNER JOIN first_mile_carton_bill fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
         WHERE fmd.is_deleted = FALSE
         AND fmd.id = #{id}
+        ORDER BY CAST(fmcb.box_no AS INTEGER)
     </select>
 
     <!--导出装箱清单Excel-->
@@ -552,6 +553,6 @@
             </otherwise>
         </choose>
         ORDER BY fmd.code,
-        fmcb.box_no
+        CAST(fmcb.box_no AS INTEGER)
     </select>
 </mapper>
