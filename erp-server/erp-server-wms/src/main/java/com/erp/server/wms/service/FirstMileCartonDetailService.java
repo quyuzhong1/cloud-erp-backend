@@ -63,4 +63,10 @@ public interface FirstMileCartonDetailService extends SuperService<FirstMileCart
     Boolean deleteByMainIds(List<String> mainIds);
 
 
+    /**
+     * 装箱详情清单(以箱号和SKU号维度)
+     * @param mainId
+     * @return
+     */
+    List<FirstMileCartonDTO.PackingItemDTO> boxInfoByMainId(String mainId);
 }

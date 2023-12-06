@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,10 +17,12 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -30,6 +33,7 @@ import com.erp.model.wms.dto.excel.ExportOverseasWarehouseInboundExcelDTO;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -99,9 +103,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DictBasicService dictBasicService;
     @Resource
-    private FirstMileCartonBillService firstMileCartonBillService;
+    private FirstMileCartonDetailService firstMileCartonDetailService;
     @Resource
-    private FirstMileCartonService firstMileCartonService;
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -114,6 +118,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+        if (!PackingStatusEnum.PACKING.getCode().equalsIgnoreCase(deliveryEntity.getPackingStatus())){
+            String msg = StrUtil.format("【{}】发货单未装箱完", deliveryEntity.getCode());
+            throw new ServiceException(msg);
+        }
+
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)){
@@ -128,7 +137,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         handleData(mainEntity, addDTO, deliveryEntity, dictPlatform);
 
         log.info("开始新增海外仓入库单");
-        boolean save = super.save(mainEntity);
+        mainEntity.setIsDeleted(false);
+        mainEntity.setVersion(0);
+        boolean save = this.save(mainEntity);
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
         }
@@ -167,24 +178,42 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!overseasWarehouseInboundDetailService.saveBatch(detailEntityList)){
             throw new ServiceException("海外仓入库单明细保存失败");
         }
-        if (CollectionUtils.isEmpty(addDTO.getAttachUrlList())){
-            return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
+        if (!CollectionUtils.isEmpty(addDTO.getAttachUrlList())){
+            //保存附件
+            Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
         }
-        //保存附件
-        Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
-        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
-        //获取到表名
-        String type = tableName.value();
-        wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
+
+        // 查询包装信息
+        List<FirstMileCartonDTO.PackingItemDTO> packingQtyDTOS = firstMileCartonDetailService.boxInfoByMainId(deliveryEntity.getId());
+        if (CollectionUtils.isEmpty(packingQtyDTOS)){
+            String format = StrUtil.format("【{}】发货单：未找到包装信息", deliveryEntity.getCode());
+            throw new ServiceException(format);
+        }
 
         // 推送到第三方草稿
-//        if (null != providerEntity){
-//            // 查询包装信息
-//
-//            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, detailEntityList, OverseasVerifyEnum.INIT.getCode());
-//            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
-//            handlerService.createInboundBill(createInboundReq, providerEntity.getId());
-//        }
+        if (null != providerEntity){
+            Map<SettingEnum, String> shipperInfo = dmpTaskFeign.getCfgSettingList(SettingEnum.WMS_OVERSEAS_INBOUND);
+
+            // 请求第三方
+            ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, currentSkuMap,shipperInfo,OverseasVerifyEnum.INIT.getCode());
+            ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
+            log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
+            ApiResult<String> resultInfo = handlerService.createInboundBill(createInboundReq, providerEntity.getId());
+            if (200 != resultInfo.getCode()){
+                log.error("推送第三方仓库失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                throw new ServiceException("推送第三方仓库失败:" + resultInfo.getMsg());
+            }
+            log.info("推送第三方仓库结果: ={}", JSONUtil.toJsonStr(resultInfo));
+            // 记录单号
+            mainEntity.setCode(resultInfo.getData());
+            if (!this.updateById(mainEntity)){
+                throw new ServiceException("更新单号失败");
+            }
+        }
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
 
@@ -192,9 +221,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      * 构建请求参数
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
-                                                                     List<OverseasWarehouseInboundDetailEntity> detailEntityList,
+                                                                     List<FirstMileCartonDTO.PackingItemDTO> itemDTOList,
+                                                                     Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap,
+                                                                     Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode
     ) {
+
         // 交货方式
         OverseasInstockTypeEnum inStockTypeEnum = OverseasInstockTypeEnum.getByCode(mainEntity.getInstockType());
         String inStockType = null == inStockTypeEnum ? "" : inStockTypeEnum.getCode();
@@ -211,16 +243,28 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         OverseasDeliveryModeEnum deliveryModeEnum = OverseasDeliveryModeEnum.getByCode(mainEntity.getDeliveryMode());
         String collectingService = null == deliveryModeEnum ? "" : deliveryModeEnum.getCode();
 
-        // item
+        // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
-//            ThirdWarehouseCreateInboundReq.Item.builder()
-//                    .productSku(detailEntity.getPlatformSkuNo())
-//                    .boxNo(detailEntity.getPackQty())
-//                    .quantity(d)
-//                    .build()
+        for (FirstMileCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = currentSkuMap.get(itemDTO.getSkuId());
+            if (null == view){
+                String msg = StrUtil.format("未找到绑定的库存SKU, skuId={}，skuNo={}", itemDTO.getSkuId(), itemDTO.getSkuNo());
+                throw new ServiceException(msg);
+            }
+            ThirdWarehouseCreateInboundReq.Item currentItem = ThirdWarehouseCreateInboundReq.Item.builder()
+                    .productSku(view.getStockSku())
+                    .boxNo(Integer.parseInt(itemDTO.getBoxNo()))
+                    .quantity(itemDTO.getPackQty())
+                    .build();
+            itemList.add(currentItem);
         }
-
+        String contactName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_FIRST_NAME) + shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_LAST_NAME);
+        String phone = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_MOBILE);
+        String countryCode = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_COUNTRY_CODE);
+        String stateName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_PROVINCE_NAME);
+        String cityName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_CITY_NAME);
+        String region = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_DISTRICT_NAME);
+        String address1 = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_COUNTRY_CODE);
 
 
         return ThirdWarehouseCreateInboundReq.builder()
@@ -245,13 +289,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .deliveryCode(mainEntity.getExpressNo())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
-                        .contacterName(mainEntity.getFirstName().concat(mainEntity.getLastName()))
-                        .phone(mainEntity.getMobile())
-                        .countryCode(mainEntity.getCollectCountryCode())
-                        .stateName(mainEntity.getDictProvinceName())
-                        .cityName(mainEntity.getDictCityName())
-                        .region(mainEntity.getDictDistrictName())
-                        .address1(mainEntity.getStreet())
+                        .contacterName(contactName)
+                        .phone(phone)
+                        .countryCode(countryCode)
+                        .stateName(stateName)
+                        .cityName(cityName)
+                        .region(region)
+                        .address1(address1)
                         .build())
                 .collect(ThirdWarehouseCreateInboundReq.Collect.builder()
                         .contacterName(mainEntity.getFirstName().concat(mainEntity.getLastName()))
