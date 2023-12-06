@@ -6,6 +6,10 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -37,16 +41,18 @@ public class GoodCangHandlerServiceImplTest {
     public void testCreateInboundBill() {
         final ThirdWarehouseCreateInboundReq createInboundReq = ThirdWarehouseCreateInboundReq.builder()
                 .referenceNo("wj132123412")
-                .transitType("0")
-                .receivingShippingType("2")
+                .incomeType(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())
+                .receivingCode(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())
+                .transitType(OverseasInstockTypeEnum.SELF_HEADWAY.getCode())
+                .receivingShippingType(LogisticsMethodEnum.AIRFREIGHT.getCode())
+                .customsType(OverseasCustomsTypeNewEnum.AGENCY_CUSTOMS_DECLARATION.getCode())
+                .collectingService(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())
                 .trackingNumber("123")
                 .warehouseCode("USEA")
                 .etaDate(LocalDateTime.now())
                 .verify("0")
                 .transitWarehouseCode("DG")
                 .smCode("USEAAIRFREIGHT6000D")
-                .customsType("1")
-                .collectingService("1")
                 .deliveryCode("deliveryCode")
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName("mark")

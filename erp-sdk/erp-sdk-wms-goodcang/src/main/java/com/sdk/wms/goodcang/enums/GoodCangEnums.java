@@ -2,6 +2,11 @@ package com.sdk.wms.goodcang.enums;
 
 
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
+import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -188,16 +193,29 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum OpenTransitTypeEnum {
-        STANDARD_RECEIPT(0,"标准入库单"),
-        TRANSFER_RECEIPT(3,"中转入库单(标准货运单)"),
-        FBA_WAREHOUSE_RECEIPT(5,"FBA入库单"),
+        STANDARD_RECEIPT(0,"标准入库单",OverseasInstockTypeEnum.SELF_HEADWAY),
+        TRANSFER_RECEIPT(3,"中转入库单(标准货运单)", OverseasInstockTypeEnum.TRANSFER_AGENT),
+        FBA_WAREHOUSE_RECEIPT(5,"FBA入库单",null),
         ;
         private final Integer code;
         private final String name;
+        private final OverseasInstockTypeEnum erpEnum;
 
-        OpenTransitTypeEnum(Integer code, String name) {
+        OpenTransitTypeEnum(Integer code, String name, OverseasInstockTypeEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(OpenTransitTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(OpenTransitTypeEnum::getCode)
+                    .orElse(null);
         }
     }
 
@@ -206,19 +224,32 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum ProductCodeEnum {
-        AIR_TRANSPORT(0,"空运"),
-        SEA_FREIGHT_BULK_CARGO(1,"海运散货"),
-        EXPRESS(2,"快递"),
-        RAIL_TRANSPORT_FULL_CONTAINER(3,"铁运整柜"),
-        OCEAN_FREIGHT_FULL_CONTAINER(4,"海运整柜"),
-        RAIL_FREIGHT_BULK_CARGO(5,"铁运散货")
+        AIR_TRANSPORT(0,"空运", LogisticsMethodEnum.AIRFREIGHT),
+        SEA_FREIGHT_BULK_CARGO(1,"海运散货", LogisticsMethodEnum.OCEAN_FREIGHT_BULK),
+        EXPRESS(2,"快递", LogisticsMethodEnum.EXPRESS),
+        RAIL_TRANSPORT_FULL_CONTAINER(3,"铁运整柜", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL),
+        OCEAN_FREIGHT_FULL_CONTAINER(4,"海运整柜", LogisticsMethodEnum.OCEAN_FREIGHT_FCL),
+        RAIL_FREIGHT_BULK_CARGO(5,"铁运散货", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK)
         ;
         private final Integer code;
         private final String name;
+        private final LogisticsMethodEnum erpEnum;
 
-        ProductCodeEnum(Integer code, String name) {
+        ProductCodeEnum(Integer code, String name, LogisticsMethodEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(ProductCodeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(ProductCodeEnum::getCode)
+                    .orElse(null);
         }
     }
 
@@ -227,16 +258,29 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum CustomsTypeNewEnum {
-        AGENCY_CUSTOMS_DECLARATION(0,"贸易代理报关"),
-        REFUND_CUSTOMS_DECLARATION(1,"退税报关"),
-        SELF_CUSTOMS_DECLARATION(2,"报关自理")
+        AGENCY_CUSTOMS_DECLARATION(0,"贸易代理报关", OverseasCustomsTypeNewEnum.AGENCY_CUSTOMS_DECLARATION),
+        REFUND_CUSTOMS_DECLARATION(1,"退税报关", OverseasCustomsTypeNewEnum.REFUND_CUSTOMS_DECLARATION),
+        SELF_CUSTOMS_DECLARATION(2,"报关自理", OverseasCustomsTypeNewEnum.SELF_CUSTOMS_DECLARATION)
         ;
         private final Integer code;
         private final String name;
+        private final OverseasCustomsTypeNewEnum erpEnum;
 
-        CustomsTypeNewEnum(Integer code, String name) {
+        CustomsTypeNewEnum(Integer code, String name, OverseasCustomsTypeNewEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(CustomsTypeNewEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(CustomsTypeNewEnum::getCode)
+                    .orElse(null);
         }
 
         public static CustomsTypeNewEnum getByCode(Integer code) {
@@ -252,15 +296,28 @@ public enum GoodCangEnums {
      */
     @Getter
     public enum OpenCollectingServiceEnum {
-        SELF_DELIVERED_GOODS(0,"自送货物"),
-        PICK_UP(1,"上门提货")
+        SELF_DELIVERED_GOODS(0,"自送货物",OverseasDeliveryModeEnum.SELF_DELIVERY),
+        PICK_UP(1,"上门提货", OverseasDeliveryModeEnum.COLLECT_AT_HOME)
         ;
         private final Integer code;
         private final String name;
+        private final OverseasDeliveryModeEnum erpEnum;
 
-        OpenCollectingServiceEnum(Integer code, String name) {
+        OpenCollectingServiceEnum(Integer code, String name, OverseasDeliveryModeEnum erpEnum) {
             this.code = code;
             this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(OpenCollectingServiceEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(OpenCollectingServiceEnum::getCode)
+                    .orElse(null);
         }
     }
 
