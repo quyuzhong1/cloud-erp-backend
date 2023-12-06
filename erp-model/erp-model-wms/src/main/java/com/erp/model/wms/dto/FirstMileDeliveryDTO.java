@@ -624,8 +624,6 @@ public class FirstMileDeliveryDTO implements Serializable {
         /**
         * 国家二字码
         */
-        @NotBlank(message = "国家二字码不能为空")
-        @Size(max = 10,message = "国家二字码最大长度不能超过10位")
         private String countryId;
 
         /**

@@ -1429,6 +1429,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(overseasWarehouseInboundEntities)) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInboundEntities.get(0).getCode());
         }
+
+        //未装箱不能下推入库单
+        if (PackingStatusEnum.NOT_PACKING.equals(entity.getPackingStatus())) {
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND, entity.getCode());
+        }
+
         // 查询关联目的仓
         String destWarehouseId = entity.getDestWarehouseId();
         if (StringUtils.isBlank(destWarehouseId)) {
@@ -1458,7 +1464,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //获取库存sku信息
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailViewList = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundDetailView(firstMileDeliveryDetailEntities);
+
+        //查询已装箱信息
+        List<FirstMileDeliveryDTO.PackDateDTO> packDateDTOList = firstMileDeliveryDetailService.listPackDate(entity.getId());
+
         for (OverseasWarehouseInboundDetailDTO.ViewDTO dto : detailViewList) {
+            //装箱数量
+            int packQty = packDateDTOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(req -> req.getPackQty() * req.getBoxQty()).sum();
+            dto.setPackQty(packQty);
 
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
