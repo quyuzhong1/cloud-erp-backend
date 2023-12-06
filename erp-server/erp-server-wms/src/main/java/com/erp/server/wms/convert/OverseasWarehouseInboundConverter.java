@@ -66,8 +66,8 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId",  source = "mainEntity.id"),
 
-            @Mapping(target = "platformProductName",  source = "skuMappingView.stockSkuName"),
-            @Mapping(target = "platformSkuNo",  source = "skuMappingView.stockSku"),
+            @Mapping(target = "platformProductName",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSkuName())"),
+            @Mapping(target = "platformSkuNo",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSku())"),
             @Mapping(target = "productName",  source = "detailEntity.productName"),
             @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
             @Mapping(target = "skuId",  source = "detailEntity.skuId"),

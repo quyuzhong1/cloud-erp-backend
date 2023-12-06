@@ -8,6 +8,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -66,8 +67,8 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
 
     /**
      * 获取到订单审核匹配结果
-     * @param jsonObject
+     * @param map
      * @return
      */
-    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(JSONObject jsonObject);
+    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(Map<String,Object> map);
 }

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * B2C销售订单表
@@ -740,9 +741,9 @@ public class SoB2cController extends BaseController {
 
 
     @GetMapping("/getJson")
-    public ApiResult<JSONObject>  getJson(@RequestParam("id")String id){
-        JSONObject  list=soB2cService.getJson(id);
-        return success(list);
+    public ApiResult<Map<String,Object>>  getJson(@RequestParam("id")String id){
+        Map<String,Object> map=soB2cService.getJson(id);
+        return success(map);
 
     }
 }
