@@ -49,5 +49,5 @@ public interface OverseasTransferWarehouseService extends SuperService<OverseasT
      * @author Jim
      * @date: 2023-11-16
      */
-    List<BaseSelectDTO> LogisticsProductList(String code);
+    List<BaseSelectDTO> LogisticsProductList(String code, String s);
 }

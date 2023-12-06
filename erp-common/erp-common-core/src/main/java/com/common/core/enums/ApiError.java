@@ -863,6 +863,7 @@ public enum ApiError implements Serializable {
     HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING(99144,"处理中和已处理才能打印拣货单"),
     NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE(99145,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
     DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE(99146,"目的仓未绑定第三方仓，请在【海外仓设置】绑定"),
+    OVERSEAS_PROVIDE_NOT_SERVICE(99147,"服务商服务未开发"),
 
 
     /**

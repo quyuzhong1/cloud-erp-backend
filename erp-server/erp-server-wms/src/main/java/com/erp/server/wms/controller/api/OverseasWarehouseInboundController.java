@@ -215,8 +215,11 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
-    public ApiResult<List<BaseSelectDTO>> transferWareHouseLogisticsProductList(@RequestParam(value = "code") String code) {
-        List<BaseSelectDTO> result = overseasTransferWarehouseService.LogisticsProductList(code);
+    public ApiResult<List<BaseSelectDTO>> transferWareHouseLogisticsProductList(
+            @RequestParam(value = "id", required = false) String id,
+            @RequestParam(value = "code", required = false) String code
+    ) {
+        List<BaseSelectDTO> result = overseasTransferWarehouseService.LogisticsProductList(id, code);
         return success(result);
     }
 

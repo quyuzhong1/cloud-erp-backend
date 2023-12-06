@@ -1,12 +1,11 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -14,15 +13,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
-import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
-import com.erp.server.wms.service.OverseasWarehouseInboundReceivedService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -30,12 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * 下载平台入库数据消费服务
@@ -76,7 +61,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
         warnMsgInfo.setTitle(StrUtil.format("平台入库消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());

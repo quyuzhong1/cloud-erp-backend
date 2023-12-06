@@ -93,7 +93,7 @@ public class ImlServerTest {
     @Test
     public void createInboundBillTest() {
         ImlCreateInboundReq imlGetReceiptReq = ImlCreateInboundReq.builder()
-                .referenceNo("wjtest20231116001")
+                .referenceNo("wjtest20231205")
                 .warehouseCode("UAW1")
                 .verify(0)
                 .items(Arrays.asList(ImlCreateInboundReq.Item.builder()
@@ -105,10 +105,25 @@ public class ImlServerTest {
         ImlResponse<String> response = imlServer.createInboundBill(imlGetReceiptReq);
         System.out.println(response);
     }
-
+    @Test
+    public void editInboundBillTest() {
+        ImlCreateInboundReq imlGetReceiptReq = ImlCreateInboundReq.builder()
+                .receivingCode("RV86526-231205-0001")
+                .referenceNo("wjtest20231205")
+                .warehouseCode("UAW1")
+                .verify(1)
+                .items(Arrays.asList(ImlCreateInboundReq.Item.builder()
+                        .productSku("2898")
+                        .boxNo(1)
+                        .quantity(1)
+                        .build()))
+                .build();
+        ImlResponse<String> response = imlServer.editInboundBill(imlGetReceiptReq);
+        System.out.println(response);
+    }
     @Test
     public void cancelInboundBillTest() {
-        ImlResponse<String> response = imlServer.cancelInboundBill("RV86526-231116-0006");
+        ImlResponse<String> response = imlServer.cancelInboundBill("RV86526-231205-0001");
         System.out.println(response);
     }
 
