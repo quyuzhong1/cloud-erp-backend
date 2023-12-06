@@ -546,6 +546,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
+        //已下推入库单
+        OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+        if (ObjectUtil.isNotEmpty(inboundEntity)) {
+            throw new ServiceException(ApiError.GENERATE_INBOUND_NOT_DIS_APPROVE, inboundEntity.getCode());
+        }
         return true;
     }
 
@@ -650,20 +655,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
 
-            //查询是否生成了海外仓入库单，未对接海外仓API：发货单审核通过，入库单自动变更为待签收
+            //查询是否下推了入库单
             OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
             if (ObjectUtil.isEmpty(inboundEntity)) {
-//                overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
                 throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
-            } else {
-                //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
+            }
 
-                //用目的仓查询是否绑定第三方仓
-                List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
-                if (CollectionUtils.isEmpty(overseasProviderWarehouseEntities)) {
-                    throw new ServiceException(ApiError.DEST_WAREHOUSE_BINDING_PLATFORM_WAREHOUSE);
-                }
+            //用目的仓查询是否绑定第三方仓
+            List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
 
+            //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
+            if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
                 OverseasProviderEntity providerEntity = overseasProviderService.getById(overseasProviderWarehouseEntities.get(MathUtil.ZERO).getMainId());
 
 /*                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
@@ -671,7 +673,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 req.setReferenceNo(entity.getCode());
                 req.setReceivingType(OverseasInstockTypeEnum.getByCode(inboundEntity.getInstockType()).getTransitTypeEnum().getCode());
                 thirdWarehouseRegistry.getHandler(providerEntity.getCode()).editInboundBill(req, providerEntity.getId());*/
+
+                //入库单状态修改为待签收
+                overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
+
+            //入库单状态修改为待签收
+            overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
 
             //新增直接调拨单
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
