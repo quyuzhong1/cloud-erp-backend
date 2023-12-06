@@ -957,12 +957,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        List<String> flagList = new ArrayList<>();
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
 
         for (SoOutstockDTO.PagingViewDTO item : list) {
-            boolean contains = flagList.contains(item.getId());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
@@ -1021,25 +1019,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
                 item.setCountryName(countryName);
             }
-            if (contains) {
-                item.setCode("");
-                item.setSoCode("");
-                item.setSourceCode("");
-                item.setOrderType("");
-                item.setOrderTypeName("");
-                item.setApproveStatusName("");
-                item.setCustomerName("");
-                item.setWarehouseOrgName("");
-                item.setSalesOrgName("");
-                item.setPlanDeliveryDate(null);
-                item.setPackDate(null);
-                item.setActualDeliveryDate(null);
-                item.setBillDate(null);
-                item.setCreateUserName("");
-                item.setCreateTime(null);
-                item.setCustomerOrderNo("");
-            }
-            flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
     }
