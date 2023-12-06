@@ -50,6 +50,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 系统SKU
+         */
+        private String skuNo;
+
+        /**
+         * 海外仓SKU
+         */
+        private String platformSkuNo;
+
+        /**
          * 入库类型
          * /api/wms/common/enumDropDown?type=OverseasInstockType
          */
