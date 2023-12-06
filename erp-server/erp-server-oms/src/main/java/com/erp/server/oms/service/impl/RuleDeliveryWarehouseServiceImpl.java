@@ -74,7 +74,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO expressionDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = expressionDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -112,7 +112,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -200,11 +200,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     /**
      * 获取到发货仓库匹配的结果
      *
-     * @param jsonObjectList
+     * @param map
      * @return
      */
     @Override
-    public List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(JSONObject jsonObject) {
+    public List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(Map<String,Object> map) {
         List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> ruleMatchResultList = new ArrayList<>(10);
         //根据优先级获取规则列表
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
@@ -219,11 +219,11 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
                 RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
                 ruleMatchResult.setWarehouseId(item.getWarehouseId());
-                ruleMatchResult.setJsonObject(jsonObject);
+                ruleMatchResult.setMap(map);
                 ruleMatchResultList.add(ruleMatchResult);
             }
 

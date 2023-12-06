@@ -5,6 +5,7 @@ import com.common.business.enums.GoodCangEnums;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
