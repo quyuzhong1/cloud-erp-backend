@@ -41,4 +41,7 @@
         order by doit.id ASC
         limit 10000
     </select>
+    <select id="runSalesDataToPhysicalSql" resultType="java.util.Map">
+        select ${code};
+    </select>
 </mapper>
