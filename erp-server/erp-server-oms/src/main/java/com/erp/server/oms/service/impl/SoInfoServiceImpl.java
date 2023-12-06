@@ -60,6 +60,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -1270,6 +1271,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         Integer scmCount = scmTaskFeign.getPushDownBySourceIds(soIds);
         if (scmCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
+        List<MachineRefSoEntity> machineRefSoList = machineInfoFeign.listBySoIdList(soIds);
+        if (CollectionUtils.isNotEmpty(machineRefSoList)) {
             throw new ServiceException(ApiError.ERROR_92040);
         }
     }
@@ -2778,6 +2783,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
         if (CollectionUtils.isEmpty(soInfoEntityList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        String codes = soInfoEntityList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).map(SoInfoEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_SO_PUSH_APPROVE_STATUS,codes);
         }
 
         //非组合品不能下推加工单
