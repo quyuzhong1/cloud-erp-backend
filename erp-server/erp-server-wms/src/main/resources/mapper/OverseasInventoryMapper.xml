@@ -47,7 +47,7 @@
     </sql>
 
     <sql id="conditionSql">
-        oi.is_deleted = false AND opw.is_deleted = false AND opw.disabled = false
+        oi.is_deleted = false
         <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -118,6 +118,7 @@
         LEFT JOIN overseas_provider_warehouse as opw
         on opw.platform_warehouse_code = oi.warehouse_code
         <where>
+            opw.is_deleted = false AND opw.disabled = false
             <include refid="conditionSql"/>
         </where>
     </select>
