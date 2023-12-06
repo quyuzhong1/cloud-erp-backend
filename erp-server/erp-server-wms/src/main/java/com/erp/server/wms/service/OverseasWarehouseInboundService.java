@@ -1,17 +1,18 @@
 package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -130,10 +131,11 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
 
     /**
      * 根据来源id查询入库单
-     * @Author Luo_WG
-     * @Date 2023/11/27 17:36
+     *
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.entity.OverseasWarehouseInboundEntity>
+     * @Author Luo_WG
+     * @Date 2023/11/27 17:36
      **/
     List<OverseasWarehouseInboundEntity> listBySourceIds(List<String> sourceIds);
 
@@ -144,15 +146,17 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
 
     /**
      * 修改入库单状态
-     * @Author Luo_WG
-     * @Date 2023/12/5 14:48
+     *
      * @param status
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/5 14:48
      **/
     Boolean updateInstockStatus(List<String> ids, String status);
 
     /**
      * 海外单生成直接调拨单
+     *
      * @Author Jim
      * @Date 2023/12/5
      **/
@@ -160,4 +164,29 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
                                OverseasWarehouseInboundDetailEntity detailEntity,
                                OverseasWarehouseInboundReceivedEntity receivedEntity
     );
+
+    /**
+     * 推动海外入库单到第三方
+     *
+     * @Author Jim
+     * @Date 2023/12/6
+     **/
+    ApiResult<String> pullThirdOverseasPlatform(OverseasProviderEntity providerEntity,
+                                                OverseasWarehouseInboundEntity mainEntity,
+                                                List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
+                                                String verityCode);
+
+    /**
+     * 推动海外入库单到第三方
+     *
+     * @Author Jim
+     * @Date 2023/12/6
+     **/
+    ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(
+            Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuViewMap,
+            OverseasProviderEntity providerEntity,
+            OverseasWarehouseInboundEntity mainEntity,
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
+            String verityCode);
+
 }
