@@ -88,15 +88,7 @@ public class BasicDictController extends BaseController {
         if (null == enumByType){
             return success(new ArrayList<>());
         }
-        List<BasicDictEntity> list = basicDictService.lambdaQuery()
-                .eq(StrUtil.isNotBlank(type), BasicDictEntity::getType, enumByType.getCode())
-                .list();
-        if(CollectionUtil.isEmpty(list)){
-            return success(new ArrayList<>());
-        }
-        List<DictControllerDTO.DictDropDownDTO> result = list.stream()
-                .map(DictControllerDTO.DictDropDownDTO::new)
-                .collect(Collectors.toList());
+        List<DictControllerDTO.DictDropDownDTO> result = basicDictService.listDictDropDown(enumByType.getCode());
         return success(result);
     }
 
