@@ -1016,6 +1016,7 @@ public enum ApiError implements Serializable {
     ERROR_WALMART_CLIENT_ID_NOT_NULL(92101,"沃尔玛授权ClientId不能为空"),
     ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
     ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
+    ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
