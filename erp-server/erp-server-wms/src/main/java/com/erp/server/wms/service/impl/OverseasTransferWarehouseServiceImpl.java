@@ -163,7 +163,16 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     }
 
     @Override
-    public List<BaseSelectDTO> LogisticsProductList(String code) {
+    public List<BaseSelectDTO> LogisticsProductList(String id, String code) {
+        // 兼容传递ID
+        if (StringUtils.isNotBlank(id)){
+            OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(id);
+            if (null == entity){
+                return Collections.emptyList();
+            }
+            code = entity.getPlatformWarehouseCode();
+        }
+
         List<OverseasTransferWarehouseEntity> list = lambdaQuery()
                 .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, code)
                 .list();
