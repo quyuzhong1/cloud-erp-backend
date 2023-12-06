@@ -414,6 +414,14 @@ public enum GoodCangEnums {
                     .map(OrderStatusEnum::getErpSoStatus)
                     .orElse(null);
         }
+
+        public static String getName(String code){
+            return Arrays.stream(OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OrderStatusEnum::getName)
+                    .orElse(null);
+        }
     }
 
     /**

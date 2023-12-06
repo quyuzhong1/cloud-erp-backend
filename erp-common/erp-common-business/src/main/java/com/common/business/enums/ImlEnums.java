@@ -154,5 +154,13 @@ public enum ImlEnums {
                     .map(ImlEnums.OrderStatusEnum::getErpsoStatus)
                     .orElse(null);
         }
+
+        public static String getName(String code){
+            return Arrays.stream(ImlEnums.OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(ImlEnums.OrderStatusEnum::getName)
+                    .orElse(null);
+        }
     }
 }

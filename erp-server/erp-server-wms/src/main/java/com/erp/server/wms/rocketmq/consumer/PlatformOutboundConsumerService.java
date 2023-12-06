@@ -1,8 +1,11 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.dto.PlatformInboundDTO;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -13,6 +16,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -54,7 +58,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
-
+        PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
+        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
+            //TODO 已发货自动生成销售出库单并自动审核,扣减可用库存
+        }
         return ApiResult.success();
     }
 
