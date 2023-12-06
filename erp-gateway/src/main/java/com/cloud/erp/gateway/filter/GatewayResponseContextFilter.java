@@ -27,12 +27,9 @@ import java.util.Optional;
 
 /**
  * 读取并缓存响应数据
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
- * @author: chenggang
- * @createTime: 2019-04-11
- * @version: v1.2.0
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:29
+ **/
 @Slf4j
 public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
 

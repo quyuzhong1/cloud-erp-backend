@@ -18,12 +18,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
  * Gateway Plugin Config
- * @author chenggang
- * @date 2019/01/29
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:26
+ **/
 @Slf4j
 @Configuration
 @ConditionalOnProperty(prefix = GatewayPluginProperties.GATEWAY_PLUGIN_PROPERTIES_PREFIX, value = { "enable"}, havingValue = "true")
