@@ -112,10 +112,10 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 Integer thisSignNumber = item.getReceivedQuantity() - detailEntity.getReceiveQty();
                 detailEntity.setReceiveQty(item.getReceivedQuantity());
                 detailEntity.setDiffQty(detailEntity.getReceiveQty() - detailEntity.getPackQty());
-                detailEntity.setTransportQty(detailEntity.getPackQty() - detailEntity.getReceiveQty());
+                detailEntity.setTransportQty(Math.max((detailEntity.getPackQty() - detailEntity.getReceiveQty()), 0));
                 detailEntity.setReceiveTime(dto.getDownloadTime());
-//                detailEntity.setReceiveStatus("already");
-//                detailEntity.setReceiveType("system");
+                detailEntity.setReceiveStatus("already");
+                detailEntity.setReceiveType("system");
                 updateList.add(detailEntity);
                 //如果没有签收数据，在这里封装签收记录
                 if(!dto.getHasReceivedData()){

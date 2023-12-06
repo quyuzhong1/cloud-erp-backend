@@ -66,7 +66,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "mainId",  source = "mainEntity.id"),
             // TODO 确定?
             @Mapping(target = "platformProductName",  source = "detailEntity.productName"),
-            @Mapping(target = "platformSkuNo",  source = "detailEntity.stockSku"),
+            @Mapping(target = "platformSkuNo",  source = "detailEntity."),
             @Mapping(target = "productName",  source = "detailEntity.productName"),
             @Mapping(target = "skuNo",  source = "detailEntity.skuNo"),
             @Mapping(target = "skuId",  source = "detailEntity.skuId"),

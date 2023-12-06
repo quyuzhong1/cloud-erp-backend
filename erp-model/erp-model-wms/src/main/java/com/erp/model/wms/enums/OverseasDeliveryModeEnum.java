@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.GoodCangEnums;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -24,13 +25,14 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum OverseasDeliveryModeEnum implements EnumMessage {
-    SELF_DELIVERY("selfDelivery", "自送货物"),
-    COLLECT_AT_HOME("collectAtHome", "上门揽收"),
+    SELF_DELIVERY("selfDelivery", "自送货物", GoodCangEnums.OpenCollectingServiceEnum.SELF_DELIVERED_GOODS),
+    COLLECT_AT_HOME("collectAtHome", "上门揽收", GoodCangEnums.OpenCollectingServiceEnum.PICK_UP),
     ;
 
     @EnumValue
     private final String code;
     private final String name;
+    private final GoodCangEnums.OpenCollectingServiceEnum serviceEnum;
 
     /**
      * 通过code查询

@@ -275,10 +275,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.FinishListDTO> finishList(List<String> ids) {
         List<RequisitionApplicationDTO.FinishListDTO> list = baseMapper.finishList(ids);
-        long count = list.stream().filter(req -> !RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(req.getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.HANDLE_ING_FINISH);
-        }
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -289,6 +285,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //字段映射处理
         for (RequisitionApplicationDTO.FinishListDTO finishListDTO : list) {
+            if (!RequisitionApplicationStatusEnum.HANDLE_ING.getStatus().equals(finishListDTO.getStatus())) {
+                throw new ServiceException(ApiError.HANDLE_ING_FINISH, finishListDTO.getSourceCode());
+            }
+
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(finishListDTO.getSkuId())).findFirst().orElse(new SkuVO());
             finishListDTO.setProductName(skuVO.getSkuName());

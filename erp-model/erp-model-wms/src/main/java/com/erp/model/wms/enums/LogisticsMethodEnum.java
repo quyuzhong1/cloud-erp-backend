@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.GoodCangEnums;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
@@ -22,12 +23,13 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum LogisticsMethodEnum implements EnumMessage {
-    AIRFREIGHT("airfreight", "空运"),
-    EXPRESS("express", "快递"),
-    OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装"),
-    OCEAN_FREIGHT_FCL("oceanFreightFCL", "海运整箱"),
-    RAILWAY_TRANSPORTATION_BULK("railwayTransportationBulk", "铁运散装"),
-    RAILWAY_TRANSPORTATION_FCL("railwayTransportationFCL", "铁运整箱"),
+    AIRFREIGHT("airfreight", "空运", GoodCangEnums.ProductCodeEnum.AIR_TRANSPORT),
+    EXPRESS("express", "快递", GoodCangEnums.ProductCodeEnum.EXPRESS),
+    OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装", GoodCangEnums.ProductCodeEnum.SEA_FREIGHT_BULK_CARGO),
+    OCEAN_FREIGHT_FCL("oceanFreightFCL", "海运整柜", GoodCangEnums.ProductCodeEnum.OCEAN_FREIGHT_FULL_CONTAINER),
+    RAILWAY_TRANSPORTATION_BULK("railwayTransportationBulk", "铁运散装", GoodCangEnums.ProductCodeEnum.RAIL_FREIGHT_BULK_CARGO),
+    RAILWAY_TRANSPORTATION_FCL("railwayTransportationFCL", "铁运整柜", GoodCangEnums.ProductCodeEnum.RAIL_TRANSPORT_FULL_CONTAINER),
+
     ;
     /**
      * 类型
@@ -39,6 +41,8 @@ public enum LogisticsMethodEnum implements EnumMessage {
      * 名称
      */
     private final String name;
+
+    private final GoodCangEnums.ProductCodeEnum productCodeEnum;
 
 
     @Override

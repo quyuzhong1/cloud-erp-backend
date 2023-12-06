@@ -150,7 +150,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
                 }
-                operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationDetailEntity.getId(),"", String.format("【%s】", old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old, requisitionApplicationDetailEntity, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
             }
         }
         //添加操作日志
