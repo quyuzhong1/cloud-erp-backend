@@ -26,6 +26,7 @@ import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -477,6 +478,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
             listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()

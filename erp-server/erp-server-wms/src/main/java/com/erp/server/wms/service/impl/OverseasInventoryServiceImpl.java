@@ -10,7 +10,10 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -144,6 +147,26 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
     private void filList(List<OverseasInventoryDTO.ListDTO> list) {
         // 查询库存映射关系
+        List<String> plaformSkuNoList = list.stream().map(OverseasInventoryDTO.ListDTO::getPlatformSku).distinct().collect(Collectors.toList());
+        //获取库存sku信息
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatformSkuNoList(plaformSkuNoList);
+        paramDTO.setMatchResult(true);
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+
+        // 属性赋值
+        for(OverseasInventoryDTO.ListDTO data : list) {
+            ListingInfoWithSkuMappingDTO view = listingedInfoWithSkuMappingList.stream()
+                    .filter(e -> e.getDictPlatform().equalsIgnoreCase(data.getDictPlatform()) && e.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku()))
+                    .findFirst()
+                    .orElse(null);
+            if (null != view){
+                data.setSkuId(view.getProductSkuId());
+                data.setSkuNo(view.getProductSkuNo());
+                data.setPlatformSkuName(view.getPlatformSkuName());
+            }
+        }
+
         //查询产品信息
         List<String> skuIdList = list.stream()
                 .map(OverseasInventoryDTO.ListDTO::getSkuId)
@@ -152,26 +175,14 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-
-        //获取库存sku信息
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
-        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewMap = ListStockSkuNoByProductSkuIdViews
-                .stream()
-                .collect(Collectors.toMap(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId, Function.identity()));
-
-        // 属性赋值
-        for(OverseasInventoryDTO.ListDTO data : list) {
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewMap.get(data.getSkuId());
-            if (null != view){
-                data.setPlatformSku(view.getStockSku());
-                data.setPlatformSkuName(view.getStockSkuName());
-            }
-            SkuVO skuVO = skuVOMap.get(data.getSkuId());
-            if (null != skuVO){
-                data.setProductName(skuVO.getSkuName());
+        for (OverseasInventoryDTO.ListDTO data : list) {
+            if (StringUtils.isNotBlank(data.getSkuId())){
+                SkuVO skuVO = skuVOMap.get(data.getSkuId());
+                if (null != skuVO){
+                    data.setProductName(skuVO.getSkuName());
+                }
             }
         }
-
     }
 
     @Override

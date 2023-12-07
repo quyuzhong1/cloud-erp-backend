@@ -113,6 +113,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .eq(StringUtils.isNotBlank(dto.getPlatform()), ListingInfoEntity::getPlatform, dto.getPlatform())
                 .in(!CollectionUtils.isEmpty(dto.getPlatformSkuNoList()), ListingInfoEntity::getPlatformSkuNo, dto.getPlatformSkuNoList())
                 .eq(null != dto.getMatchResult(), ListingInfoEntity::getMatchResult, dto.getMatchResult())
+                .eq(StringUtils.isNotBlank(dto.getType()), ListingInfoEntity::getType, dto.getType())
                 .list();
         if (CollectionUtils.isEmpty(list)){
             return Collections.emptyList();

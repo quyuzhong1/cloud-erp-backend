@@ -30,4 +30,9 @@ public class ListingInfoParamDTO {
      * 匹配结果吧true 已匹配 false 未匹配
      */
     private Boolean matchResult;
+
+    /**
+     * 类型: warehouse,platform
+     */
+    private String type;
 }
