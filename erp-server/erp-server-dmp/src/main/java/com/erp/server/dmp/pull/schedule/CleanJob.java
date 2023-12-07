@@ -18,7 +18,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 清洗数据job
@@ -40,20 +42,42 @@ public class CleanJob {
     public ReturnT skuCostClean(){
         String jobParam = XxlJobHelper.getJobParam();
         //默认now表示用当前时间，不是now就用第二个参数的日期
-        String flag = "now";
-        List<LocalDate> localDateList = new ArrayList<>();
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now();
         if(StrUtil.isNotBlank(jobParam)){
             XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
-            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
-            flag = jsonParam.getStr("flag", "now");
-            JSONArray listDate = jsonParam.getJSONArray("listDate");
-            for (Object o : listDate) {
-                LocalDate ldt = LocalDate.parse(o.toString());
-                localDateList.add(ldt);
+            String[] listDateArray = jobParam.split(",");
+            if (1 == listDateArray.length) {
+                startDate = LocalDate.parse(listDateArray[0]);
+            }
+            if (listDateArray.length > 1) {
+                startDate = LocalDate.parse(listDateArray[0]);
+                endDate = LocalDate.parse(listDateArray[1]);
             }
         }
-
-        dmpSkuCostService.syncPurchaseOrderSkuCost(flag, localDateList);
+        List<LocalDate> localDateList = Arrays.asList(startDate, endDate);
+        dmpSkuCostService.syncPurchaseOrderSkuCost(localDateList);
         return ReturnT.SUCCESS;
     }
+
+    /**
+     * 根据sku编码清洗成本
+     * @author Will
+     * @date: 2023/11/23 14:48
+     * @return ReturnT
+     */
+    @XxlJob("cleanSkuCostBySKuNos")
+    public ReturnT cleanSkuCostBySKuNos(){
+        String jobParam = XxlJobHelper.getJobParam();
+
+        if(StrUtil.isBlank(jobParam)){
+            XxlJobHelper.log("未找到录入参数，cleanSkuCostBySKuNos jobParam:{}",jobParam);
+            return ReturnT.FAIL;
+        }
+        XxlJobHelper.log("cleanSkuCostBySKuNos jobParam:{}", jobParam);
+        List<String> skuNoList = Arrays.stream(jobParam.split(",")).collect(Collectors.toList());
+        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList);
+        return ReturnT.SUCCESS;
+    }
+
 }

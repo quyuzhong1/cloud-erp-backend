@@ -51,6 +51,7 @@ public enum SourceTypeEnum {
     FIRST_MILE_DELIVERY("firstMileDelivery", "发货单","first_mile_delivery"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
     OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "海外发货计划","overseas_delivery_plan"),
+    OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
 
 

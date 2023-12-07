@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -173,20 +174,6 @@ public class BomInfoController extends BaseController {
     }
 
 
-    /**
-     * 提交审核
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/test")
-    public ApiResult test(@RequestBody @Validated BaseIdDTO dto) {
-
-        List<BomSkuDTO> skuList = bomSkuService.getByBomId(dto.getId());
-        bomInfoService.checkAuditor(skuList);
-
-        return success();
-    }
 
     /**
      * 重启流程
@@ -395,6 +382,7 @@ public class BomInfoController extends BaseController {
         List<ApproveNodeRecordVO> list=bomInfoService.auditInfo(dto.getId());
         return success(list);
     }
+
 
 
     /**

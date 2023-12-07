@@ -59,6 +59,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnReceiveDTO.Add dto, String id) {
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         //如果有退货订单号
@@ -121,11 +122,15 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             list.add(detailEntity);
         }
-        return this.saveBatch(list);
+        this.saveBatch(list);
+        //标记SKU
+        plmTaskFeign.updateOccupyStatus(skuIds);
+        return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnReceiveDetailDTO.Update::getId).collect(Collectors.toList());
         //如果有退货订单号
@@ -240,7 +245,10 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<Pair<String, String>> addPairList = returnNoticeDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), addPairList, "编辑操作");
         }
-        return this.saveOrUpdateBatch(list);
+        this.saveOrUpdateBatch(list);
+        //标记SKU
+        plmTaskFeign.updateOccupyStatus(skuIds);
+        return Boolean.TRUE;
     }
 
     private List<String> getDeleteIds(List<SoReturnReceiveDetailDTO.Update> newList, List<SoReturnReceiveDetailEntity> oldList) {

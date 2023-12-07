@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -89,7 +90,14 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public void sendMqAndSaveTask(DmpPushTaskFeignDTO dto) {
         // 保存任务表
         DmpPushTaskEntity entity = new DmpPushTaskEntity(dto);
+
+        //查询来源上级单据
+        Boolean isSend = isSendParentBillTask(entity);
         String entityId = saveOrUpdateDmpSyncTask(entity);
+        //判断是否存在上级单据，并且推送成功
+        if (!isSend) {
+            return;
+        }
         // 发送MQ消息
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(entityId, dto.getMqData());
         String mqData = dmpSyncMqDTO.getMqData();
@@ -222,6 +230,8 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_DMP_PUSH_TASK);
         }
+        //需要修改备注信息
+        List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity dmpPushTaskEntity : list) {
             try {
                 // 发送MQ消息
@@ -229,6 +239,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 String mqData = dmpSyncMqDTO.getMqData();
                 JSONObject jsonObject = JSONUtil.parseObj(mqData);
                 jsonObject.set("dmpSyncTaskId",dmpPushTaskEntity.getId());
+                //查询来源上级单据
+                Boolean isSend = isSendParentBillTask(dmpPushTaskEntity);
+                //判断是否存在上级单据，并且推送成功
+                if (!isSend) {
+                    updateList.add(dmpPushTaskEntity);
+                    continue;
+                }
                 SendResult result = mqProducerService.syncClassMsg(dmpPushTaskEntity.getMqTopic(), dmpPushTaskEntity.getMqTag(), JSONUtil.toJsonStr(jsonObject), dmpPushTaskEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
@@ -237,6 +254,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 String sourceTypeName = SourceTypeEnum.getName(dmpPushTaskEntity.getSourceType());
                 log.error("从{}推送{}到{}发送消息异常", dmpPushTaskEntity.getSourcePlatformName(), sourceTypeName, dmpPushTaskEntity.getTargetPlatformName(), e);
             }
+        }
+        //更新信息
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
@@ -285,6 +306,26 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     }
 
 
+    @Override
+    public Boolean isSendParentBillTask (DmpPushTaskEntity entity) {
+        if (StrUtil.isBlank(entity.getParentId())) {
+            return Boolean.TRUE;
+        }
+        DmpPushTaskEntity dmpPushTaskEntity = this.lambdaQuery().eq(DmpPushTaskEntity::getSourceId,entity.getParentId()).last("limit 1").one();
+
+        if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
+            entity.setReturnMsg("未找到上级单据推送任务");
+            entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+            return Boolean.FALSE;
+        }
+        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(dmpPushTaskEntity.getStatus())) {
+            entity.setReturnMsg("上级单据未推送成功，不支持推送下级单据");
+            entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+            return Boolean.FALSE;
+        }
+        return  Boolean.TRUE;
+    }
+
 
     /**
      * @description: 重新查询数据发送MQ
@@ -296,11 +337,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO(paramDetailList,sourceTypeEnum);
         switch (SourceTypeEnum.getEnum(sourceType)) {
             case BASIC_CATEGORY:
-                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PRODUCT_DETAIL:
-                plmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PRODUCT_BOM_INFO:
                 plmTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
@@ -308,71 +345,31 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
                 sysUserFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case PURCHASE_ORDER:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PURCHASE_CHANGE:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PURCHASE_PRICE:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PURCHASE_PRICE_CHANGE:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SUBCONTRACT_CHANGE:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SUBCONTRACT_ORDER:
-                scmTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SUPPLIER:
                 scmTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case MACHINE_INFO:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case OTHER_OUTSTOCK:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case OTHER_INSTOCK:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PO_INSTOCK:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PO_RECEIVE:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case PO_RETURN:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SO_OUTSTOCK:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SO_RETURN:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case STOCKTAKING_PROFIT_LOSS:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case TRANSFER_INFO:
-                wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case WAREHOUSE:
                 wmsTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case CUSTOMER_INFO:
-                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case CUSTOMER_CONTACT:
-                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case CUSTOMER_GROUP:
-                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SO_INFO:
-                omsTaskFeign.findDataSendSyncTask(syncParamDTO);
-                return;
             case SO_CHANGE:
                 omsTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
@@ -416,4 +413,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         this.saveOrUpdate(entity);
         return entity.getId();
     }
+
+
 }

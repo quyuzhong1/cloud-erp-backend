@@ -12,7 +12,6 @@ import java.math.BigDecimal;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class SalesCountVO extends SalesRatioVO {
 
 
@@ -25,17 +24,23 @@ public class SalesCountVO extends SalesRatioVO {
     /**
      * 销量
      */
-    private Integer salesQuantity=0;
+    private Integer salesQuantity;
 
 
     /**
      * 销售额
      */
-    private BigDecimal sales=BigDecimal.ZERO;
+    private BigDecimal sales;
 
 
     /**
      *订单量
      */
-    private Integer orderCount=0;
+    private Integer orderCount;
+
+    public SalesCountVO(){
+        this.salesQuantity=0;
+        this.sales=BigDecimal.ZERO;
+        this.orderCount=0;
+    }
 }

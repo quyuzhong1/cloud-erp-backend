@@ -75,6 +75,17 @@
             <if test="params.subContractCode != null and params.subContractCode != ''">
                 and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
             </if>
+            <if test="params.sourceCode != null and params.sourceCode != '' ">
+                and
+                case when subString(#{params.sourceCode},1,2) != 'PL' then
+                    po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
+                     else
+                    EXISTS (
+                    select pa.id from purchase_application pa
+                    left join purchase_application_ref_po parp on parp.is_deleted = false and pa.id = parp.purchase_application_id
+                    where parp.purchase_order_id = po.id and pa.code ILIKE concat('%',#{params.sourceCode}::text,'%')
+                    ) end
+            </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
             </if>
@@ -176,6 +187,9 @@
             </if>
             <if test="params.subContractCode != null and params.subContractCode != ''">
                 and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != ''">
+                and po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -303,6 +317,9 @@
                 </if>
                 <if test="params.subContractCode != null and params.subContractCode != ''">
                     and so.code ILIKE concat('%',#{params.subContractCode}::text,'%')
+                </if>
+                <if test="params.sourceCode != null and params.sourceCode != ''">
+                    and po.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and pod.is_urgent = #{params.isUrgent}
@@ -629,70 +646,95 @@
         ORDER BY po.create_time DESC
     </select>
 
+    <!--获取首批采购日期-->
+    <select id="listFirstPlaceOrderDate" resultType="com.erp.model.scm.dto.FirstPlaceOrderDTO">
+        SELECT
+        min(po.purchase_date) AS purchaseDate,
+        pod.sku_id
+        FROM purchase_order po
+        INNER JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND po.is_deleted = FALSE
+        WHERE pod.is_deleted = FALSE
+        AND po.is_first_mass_product = TRUE
+        <if test="ids != null and ids.size > 0">
+            AND po.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY pod.sku_id
+    </select>
+
 
     <select id="listPurchaseOrderByPurchaseDate" resultType="com.erp.model.scm.dto.SkuCostDTO">
         SELECT
+        T.sku_id as skuId,
+        T."sku_no" AS skuNo,
+        T."LatestPurchaseDate" AS costDate,
+        ROUND(AVG(D."tax_price"),4) AS costPrice,
+        ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+        D.currency,
+        CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
+        CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
+        FROM
+        (
+        SELECT
+        pod.sku_id,
+        pod.sku_no,
+        MAX(po.purchase_date) AS "LatestPurchaseDate"
+        FROM purchase_order po
+        LEFT JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.is_deleted = FALSE
+        WHERE po.is_deleted = FALSE
+        AND purchase_date >= #{purchaseDateList[0]} and purchase_date &lt;= #{purchaseDateList[1]}
+        GROUP BY pod.sku_no ,pod.sku_id
+        ) AS T
+        JOIN purchase_order S
+        LEFT JOIN purchase_order_detail D ON S.id = D.purchase_order_id AND D.is_deleted = FALSE
+        ON
+        T."sku_no" = D."sku_no"
+        AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+        GROUP BY
+        T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
+    </select>
+
+    <select id="listPurchaseOrderCost" resultType="com.erp.model.scm.dto.SkuCostDTO">
+        SELECT
+            T.sku_id as skuId,
             T."sku_no" AS skuNo,
             T."LatestPurchaseDate" AS costDate,
             ROUND(AVG(D."tax_price"),4) AS costPrice,
+            ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+            D.currency,
             CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
             CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
         FROM
             (
                 SELECT
+                    pod.sku_id,
                     pod.sku_no,
                     MAX(po.purchase_date) AS "LatestPurchaseDate"
                 FROM purchase_order po
-                LEFT JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.is_deleted = FALSE
+                         LEFT JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.is_deleted = FALSE
                 WHERE po.is_deleted = FALSE
-                <if test="purchaseDateList != null and purchaseDateList.size > 0">
-                    AND purchase_date IN
-                    <foreach collection="purchaseDateList" item="purchaseDate" open="(" close=")" separator=",">
-                        #{purchaseDate}
-                    </foreach>
-                </if>
-                GROUP BY pod.sku_no
+                    <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                        AND pod.sku_id in
+                        <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </if>
+                    <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                        AND pod.sku_no in
+                        <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </if>
+                GROUP BY pod.sku_no ,pod.sku_id
             ) AS T
-        JOIN purchase_order S
-        LEFT JOIN purchase_order_detail D ON S.id = D.purchase_order_id AND D.is_deleted = FALSE
-        ON
-            T."sku_no" = D."sku_no"
-            AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+                JOIN purchase_order S
+                LEFT JOIN purchase_order_detail D ON S.id = D.purchase_order_id AND D.is_deleted = FALSE
+                ON
+                T."sku_no" = D."sku_no"
+                AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         GROUP BY
-            T."sku_no", T."LatestPurchaseDate";
-    </select>
-    <!--获取首批采购日期-->
-    <select id="listFirstPlaceOrderDate" resultType="com.erp.model.scm.dto.FirstPlaceOrderDTO">
-        SELECT
-        min(po.purchase_date) AS purchaseDate,
-        pod.sku_id
-        FROM purchase_order po
-        INNER JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND po.is_deleted = FALSE
-        WHERE pod.is_deleted = FALSE
-        AND po.is_first_mass_product = TRUE
-        <if test="ids != null and ids.size > 0">
-            AND po.id IN
-            <foreach collection="ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-        GROUP BY pod.sku_id
-    </select>
-    <!--获取首批采购日期-->
-    <select id="listFirstPlaceOrderDate" resultType="com.erp.model.scm.dto.FirstPlaceOrderDTO">
-        SELECT
-        min(po.purchase_date) AS purchaseDate,
-        pod.sku_id
-        FROM purchase_order po
-        INNER JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND po.is_deleted = FALSE
-        WHERE pod.is_deleted = FALSE
-        AND po.is_first_mass_product = TRUE
-        <if test="ids != null and ids.size > 0">
-            AND po.id IN
-            <foreach collection="ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-        GROUP BY pod.sku_id
+            T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
     </select>
 </mapper>

@@ -165,6 +165,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
+            base.setSourceId(item.getSourceId());
             resultList.add(base);
         }
         return resultList;

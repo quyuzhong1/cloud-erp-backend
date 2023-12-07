@@ -36,7 +36,7 @@ public interface RequisitionApplicationConverter {
 
     @Mappings({
             @Mapping(target = "qty", source = "pickingQty"),
-            @Mapping(target = "outWarehouseId", source = "pickingWarehouseId"),
+            @Mapping(target = "outWarehouseId", source = "toWarehouseId"),
             @Mapping(target = "inWarehouseId", source = "requisitionWarehouseId"),
             @Mapping(target = "inWarehouseLocation", source = "requisitionWarehouseLocation"),
             @Mapping(target = "sourceDetailId", constant = "")

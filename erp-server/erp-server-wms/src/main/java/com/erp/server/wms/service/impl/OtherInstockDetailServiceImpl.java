@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
@@ -14,6 +15,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OtherInstockDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<OtherInstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -52,10 +55,14 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
         doOpHandleDetails(list,mainId,Boolean.FALSE);
 
         this.saveBatch(list);
+        //标记SKU
+        List<String> skuIds = list.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<OtherInstockDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();
@@ -77,6 +84,9 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
         //新增或修改明细
         this.saveOrUpdateBatch(newList);
+        //标记SKU
+        List<String> skuIds = newList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
 

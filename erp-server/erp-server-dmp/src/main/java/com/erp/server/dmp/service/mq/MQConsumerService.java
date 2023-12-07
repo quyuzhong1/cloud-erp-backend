@@ -95,22 +95,28 @@ public class MQConsumerService {
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
         public void onMessage(DmpOrderInfoEntity ext) {
-            log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpOrderInfoService.checkOrder(ext);
-            MapUtil mapUtil = getMapParam();
+            try{
+                log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
+                // 调用订单写入与更新
+                dmpOrderInfoService.checkOrder(ext);
+                log.info("dmpOrderInfoService.checkOrder(ext) after");
+                MapUtil mapUtil = getMapParam();
 
-            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getSalesRecordNumber());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-            }
-            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
-            }
-            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
-                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
-                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+                if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getSalesRecordNumber());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+                }
+                if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+                }
+                if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                    OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
+                    finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+                }
+            }catch (Exception e){
+                log.error("rocketmq 监听到销售订单消息异常：entity={}", JSONUtil.toJsonStr(ext), e);
+                log.error("rocketmq 监听到销售订单消息异常：", e);
             }
         }
     }

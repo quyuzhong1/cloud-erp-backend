@@ -289,6 +289,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         List<DmpShopInfoEntity> list = this.lambdaQuery()
                 .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
+                .orderByAsc(DmpShopInfoEntity::getName)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.emptyList();
@@ -315,6 +316,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 .filter(x -> StrUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return result;
+    }
+
+    @Override
+    public List<DmpShopInfoEntity> listByStoreSign() {
+        return this.lambdaQuery().ne(DmpShopInfoEntity::getStoreSign,"").list();
     }
 
     private List<DmpShopInfoEntity> getSiteShopList() {

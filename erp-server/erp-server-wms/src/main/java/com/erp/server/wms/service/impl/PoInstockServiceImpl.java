@@ -323,7 +323,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
 
         //存在收货单,且收货单下面的质检单未质检完成则不允许提交
-        checkQcInfo(podIds);
+        checkQcInfo(list,thisDetailList);
         //已下推入库明细信息
         List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
@@ -1019,7 +1019,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98025);
         }
         entity.setSubcontractType(getOneDTO.getSubcontractType());
-
+        //采购订单类型
+        entity.setPurchaseType(getOneDTO.getType());
     }
 
     /**
@@ -1631,21 +1632,59 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     }
 
     /**
-     * @param podIds
+     * @param detailList
      * @description: 质检信息校验
      * @author Will
      * @date: 2023/7/3 11:33
      */
-    private void checkQcInfo(List<String> podIds) {
-        //收货信息
-        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-        if (CollectionUtils.isEmpty(receiveDetailList)) {
+    private void checkQcInfo(List<PoInstockEntity> list,List<PoInstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(list) || CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        /**
+         * 1、入库单是收货单下推则根据收货单明细查询质检单
+         * 2、入库单非收货单下推则根据采购订单明细查询收货单后查询质检单
+         * 3、入库单非收货单下推且采购订单没有对应收货单，则根据采购订单明细查询质检单
+         */
+        List<String> receiveDetailIdList = new ArrayList<>();
+        List<String> podIdList = new ArrayList<>();
 
-        List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        for (PoInstockEntity poInstockEntity : list) {
+            //明细
+            List<PoInstockDetailEntity> poInstockDetailList = detailList.stream().filter(obj -> obj.getMainId().equals(poInstockEntity.getId())).collect(Collectors.toList());
+            //收货单下推的采购订单
+            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(poInstockEntity.getSourceType())) {
+                List<String> idList = poInstockDetailList.stream().map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+                receiveDetailIdList.addAll(idList);
+                continue;
+            }
+            //非收货单下推的入库单
+            List<String> idList = poInstockDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            podIdList.addAll(idList);
+        }
+        List<WarehouseReceiveDetailEntity> resultReceiveDetailList = new ArrayList<>();
+        //收货单下推对应的收货明细
+        if (CollectionUtils.isNotEmpty(receiveDetailIdList)) {
+            List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listByIds(receiveDetailIdList);
+            resultReceiveDetailList.addAll(receiveDetailList);
+        }
+        //不含收货单的采购订单明细
+        List<String> notHasPodIdList = new ArrayList<>();
+        //非收货单下推对应的收货明细
+        if (CollectionUtils.isNotEmpty(podIdList)) {
+            //收货信息
+            List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIdList);
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                List<String> receivePodIdList = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+                notHasPodIdList = podIdList.stream().filter(obj -> !receivePodIdList.contains(obj)).collect(Collectors.toList());
+            } else {
+                notHasPodIdList = podIdList;
+            }
+            resultReceiveDetailList.addAll(receiveDetailList);
+        }
+
         //质检信息
-        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(receiveDetailIds);
+        List<QcInfoEntity> qcInfoList = getReceiveQcInfo(resultReceiveDetailList,notHasPodIdList);
         if (CollectionUtils.isEmpty(qcInfoList)) {
             return;
         }
@@ -1654,6 +1693,28 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
             throw new ServiceException(new ApiResult(1, String.format("采购订单【%s】未质检完成不支持审核", qcCodes)));
         }
+
+    }
+
+    /**
+     * @description: 查询收货单质检信息
+     * @author Will
+     * @date: 2023/11/23 15:06
+     * @param resultReceiveDetailList
+     * @return List<QcInfoEntity>
+     */
+    private List<QcInfoEntity> getReceiveQcInfo (List<WarehouseReceiveDetailEntity> resultReceiveDetailList,List<String> notHasPodIdList) {
+
+        if (CollectionUtils.isEmpty(resultReceiveDetailList) && CollectionUtils.isEmpty(notHasPodIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        //收货单明细id
+        List<String> receiveDetailIds = resultReceiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).distinct().collect(Collectors.toList());
+
+        notHasPodIdList.addAll(receiveDetailIds);
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(notHasPodIdList);
+        return qcInfoList;
     }
 
     @Override

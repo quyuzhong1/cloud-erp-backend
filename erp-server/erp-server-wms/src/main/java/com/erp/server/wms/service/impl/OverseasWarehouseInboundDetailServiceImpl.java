@@ -163,6 +163,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         }
 
         entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
+        entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
         if (Objects.equals(entity.getReceiveQty(), entity.getPackQty())){
             entity.setReceiveStatus("already");
         }

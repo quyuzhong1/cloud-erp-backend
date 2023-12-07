@@ -155,7 +155,7 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
         //1、根据sku查询马帮bom检查是否有bom，有就需要拆单
         List<String> skuList = itemEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据财务编码查询ERP的bom
-        List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(new ArrayList<>());
+        List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(skuList);
         //根据sku查询加工件
         List<DmpBomEntity> machining = dmpBomService.listFindBomBySkuList(skuList, PlatformEnum.MABANG.getDesc(), "machining");
         //获取财务编码
@@ -163,8 +163,6 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
         if (PlatformEnum.MABANG.getDesc().equals(platformSign)) {
             allBomList = plmTaskFeign.listBomChildBySkuNos(financialCodeList);
         }
-        //获取所有成本
-        List<DmpSkuCostEntity> allSkuCostList = dmpSkuCostService.list();
         //遍历订单详情
         for (DmpReturnOrderItemEntity itemEntity : itemEntityList) {
             //设置通用参数
@@ -183,7 +181,7 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
             splitSkuDTO.setQuantity(itemEntity.getQuantity());
             splitSkuDTO.setAmountAfter(itemEntity.getAmountAfter());
             //拆单
-            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
+            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpReturnOrderItemEntity entity = new DmpReturnOrderItemEntity();
                 BeanMapper.copy(itemEntity, entity);

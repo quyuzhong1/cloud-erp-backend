@@ -85,6 +85,24 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     @TableField(exist = false)
     private Integer index;
 
+    /**
+     * 关联id，用于销售单下推
+     */
+    @TableField(exist = false)
+    private String refId;
+
+    /**
+     * 关联编码，用于销售单下推
+     */
+    @TableField(exist = false)
+    private String refCode;
+
+    /**
+     * 关联明细id，用于销售单下推
+     */
+    @TableField(exist = false)
+    private String refDetailId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

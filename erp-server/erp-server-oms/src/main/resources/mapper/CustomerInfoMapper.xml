@@ -10,7 +10,8 @@
         approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
-        create_user_name,create_time
+        create_user_name,create_time,
+        ci.platform_type as platformType
         FROM customer_info ci
         WHERE ci.is_deleted=FALSE
         <if test="params.code !=null and params.code!=''">
@@ -26,6 +27,12 @@
             AND ci.approve_status IN
             <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
                 #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.platformTypeList !=null and params.platformTypeList.size>0">
+            AND ci.platform_type IN
+            <foreach collection="params.platformTypeList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
@@ -77,7 +84,8 @@
         approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
-        create_user_name,create_time
+        create_user_name,create_time,
+        ci.platform_type as platformType
         FROM customer_info ci
         WHERE ci.is_deleted=FALSE
         <choose>
@@ -101,6 +109,12 @@
                     AND ci.id IN
                     <foreach collection="params.customerIdList" item="id" open="(" separator="," close=")">
                         #{id}
+                    </foreach>
+                </if>
+                <if test="params.platformTypeList !=null and params.platformTypeList.size>0">
+                    AND ci.platform_type IN
+                    <foreach collection="params.platformTypeList" item="item" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 </if>
                 <if test="params.sellerIdList !=null and params.sellerIdList.size>0">

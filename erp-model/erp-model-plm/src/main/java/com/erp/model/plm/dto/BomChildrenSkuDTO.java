@@ -31,6 +31,11 @@ public class BomChildrenSkuDTO  implements Serializable {
 
 
     /**
+     * bom 编号
+     */
+    private String serialNumber;
+
+    /**
      * bom历史id
      */
     private String bomHistoryId;

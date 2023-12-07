@@ -304,10 +304,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
         //根据调出调入仓id查询仓库信息
-        List<String> pickingWarehouseIds = list.stream().map(req -> req.getPickingWarehouseId()).collect(Collectors.toList());
+        List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
-        pickingWarehouseIds.addAll(requisitionWarehouseIds);
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(pickingWarehouseIds);
+        toWarehouseIds.addAll(requisitionWarehouseIds);
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(toWarehouseIds);
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.FinishListDTO::getSkuId).collect(Collectors.toList());
@@ -404,7 +404,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         List<RequisitionApplicationDTO.printPickingViewDTO> resultList = printPickingViewList.stream()
                 .sorted(Comparator.comparing(RequisitionApplicationDTO.printPickingViewDTO::getSkuNo).reversed()
-                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getToWarehouseName).reversed()
+                    .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getFromWarehouseName).reversed()
                     .thenComparing(RequisitionApplicationDTO.printPickingViewDTO::getWarehouseLocation).reversed()
                 ).collect(Collectors.toList());
         return resultList;
@@ -771,14 +771,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调出仓
-        WarehouseDTO.UpdateDTO pickingWarehouse = warehouseList.stream().filter(req -> req.getId().equals(detailEntityList.get(MathUtil.ZERO).getPickingWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        addDTO.setOutOrgId(pickingWarehouse.getOrgId());
+        WarehouseDTO.UpdateDTO toWarehouse = warehouseList.stream().filter(req -> req.getId().equals(detailEntityList.get(MathUtil.ZERO).getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        addDTO.setOutOrgId(toWarehouse.getOrgId());
         //调入仓
         WarehouseDTO.UpdateDTO requisitionWarehouse = warehouseList.stream().filter(req -> req.getId().equals(detailEntityList.get(MathUtil.ZERO).getRequisitionWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         addDTO.setInOrgId(requisitionWarehouse.getOrgId());
 
         //调拨类型
-        if (pickingWarehouse.getOrgId().equals(requisitionWarehouse.getOrgId()))  {
+        if (toWarehouse.getOrgId().equals(requisitionWarehouse.getOrgId()))  {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());

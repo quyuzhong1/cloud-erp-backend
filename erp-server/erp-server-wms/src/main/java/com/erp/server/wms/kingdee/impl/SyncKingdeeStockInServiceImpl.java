@@ -140,7 +140,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库组织
         resultMap.put("receiveOrgName", entity.getReceiveOrgName());
         //单据类型
-        resultMap.put("billType",entity.getSubcontractType());
+        resultMap.put("billType",purchaseOrderEntity.getType());
 
 
         //获取用户部门id
@@ -253,6 +253,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //采购数量
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
 
+            //赠品
+            jsonObject.set("isGift", purchaseOrderDetailEntity.getIsGift());
             //计价数量
             jsonObject.set("priceBaseQty", detail.getStockInQty());
             //含税单价
@@ -307,6 +309,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
+        dmpSyncTaskDTO.setParentId(entity.getPurchaseOrderId());
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 }

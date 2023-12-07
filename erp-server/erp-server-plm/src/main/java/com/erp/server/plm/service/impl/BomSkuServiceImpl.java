@@ -7,8 +7,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * bom 与sku关系表(BomRefSku)表服务实现类
@@ -77,6 +80,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         if (CollectionUtils.isNotEmpty(saveBatchList)) {
             this.saveBatch(saveBatchList);
+            //标记SKU
+            List<String> skuIds = saveBatchList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+            productDetailService.updateOccupyStatus(skuIds);
         }
 
     }
@@ -210,6 +216,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return baseMapper.listAllBomByParentSkuNos(parentSkuNos);
     }
 
+    @Override
+    public List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(BomSkuPageDTO.AllSkuParamDTO params) {
+        return baseMapper.listAllParentSku(params);
+    }
+
+
     /**
      * 根据Bomid 删除 bom sku 信息
      *
@@ -250,7 +262,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Override
     public List<BomSkuEntity> listBomSkuByBomId(String bomId) {
-        return this.lambdaQuery().eq(BomSkuEntity::getBomId,bomId).list();
+        return this.lambdaQuery().eq(BomSkuEntity::getBomId, bomId).list();
+    }
+
+    @Override
+    public List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySkuIds(skuIdList);
     }
 
     @Override
