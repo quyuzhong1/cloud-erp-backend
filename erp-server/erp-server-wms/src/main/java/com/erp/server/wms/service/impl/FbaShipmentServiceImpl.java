@@ -874,7 +874,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             // 查询是否有发货单号
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
-            if (null != deliveryEntity){
+            if (null != deliveryEntity ){
+
+                // TODO 校验是否手动完结，如果已经完结，多余的放到其他入库，状态改成已发货
+
                 // 当前店铺
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
 
@@ -883,8 +886,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 if (StringUtils.isBlank(transferOutId)){
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
+
             } else {
                 log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
+                // TODO 找不到货件 直接生成其他入库到目的仓，备注：没找到货件，
             }
         }
     }
