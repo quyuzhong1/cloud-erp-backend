@@ -1658,6 +1658,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             entity.setPurchaseDeptName(purchaseUser.getDepartmentName());
         }
 
+        //委外订单来源
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getId());
+            if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            entity.setSourceCode(subcontractOrderEntity.getCode());
+        }
+        //采购退货订单来源
+        if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
+            List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(Arrays.asList(entity.getId()));
+            if (CollectionUtils.isEmpty(purchaseReturnOrderList)) {
+                throw new ServiceException(ApiError.ERROR_99008);
+            }
+            entity.setSourceCode(purchaseReturnOrderList.get(0).getCode());
+        }
+
         //仓库信息
         if (ObjectUtils.isNotEmpty(entity.getDeliveryWarehouseId())) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
