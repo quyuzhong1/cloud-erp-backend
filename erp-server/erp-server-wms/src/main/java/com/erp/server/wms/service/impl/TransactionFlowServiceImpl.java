@@ -60,6 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -255,7 +256,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.InOutStockSummaryPagingViewDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
-        fillTransactionSummary(pageData.getRecords());
+        fillTransactionSummary(pageData.getRecords(),pagingParamDTO.getParams());
         return new PagingVO(pageData);
     }
 
@@ -265,7 +266,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
 
         // 填充数据
-        fillTransactionSummary(dataList);
+        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
+        fillTransactionSummary(dataList,paramD);
 
         // 导出
         exportTransactionSummaryExcel(dataList, response);
@@ -395,7 +397,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
-        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.exportDailyInventory(params);
+        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.listDailyInventory(params);
         // 填充
         handleDailyInventory(dataList);
         StringBuffer sb = new StringBuffer();
@@ -527,7 +529,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         });
     }
 
-    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList) {
+    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList,InventoryDTO.InOutStockSummarySearchParamDTO paramDTO) {
         if(CollUtil.isEmpty(dataList)) {
             return;
         }
@@ -547,12 +549,30 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
                 data.setWarehouseName(warehouseDetail.getName());
             }
-            // 查询期初库存（后续出现性能问题，单独出接口改前端调用）
-            InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();
-            condition.setWarehouseId(data.getWarehouseId());
-            condition.setSkuId(data.getSkuId());
-            Integer iniQty = initStockService.getInitQty(condition);
-            data.setInitQty(iniQty);
+            // 查询期初库存
+            InventoryReportDTO.DailyInventoryParamDTO startParams = new InventoryReportDTO.DailyInventoryParamDTO();
+            startParams.setDateType(paramDTO.getDateType());
+            startParams.setWarehouseIdList(Arrays.asList(data.getWarehouseId()));
+            startParams.setSkuNoList(Arrays.asList(data.getSkuNo()));
+            startParams.setDate(paramDTO.getDateList().get(0));
+            List<InventoryReportDTO.ListDailyInventoryDTO> startList = baseMapper.listDailyInventory(startParams);
+            Integer initQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(startList)) {
+                initQty = startList.get(0).getBalanceQty();
+            }
+            data.setInitQty(initQty);
+            // 查询结余库存
+            InventoryReportDTO.DailyInventoryParamDTO endParams = new InventoryReportDTO.DailyInventoryParamDTO();
+            endParams.setDateType(paramDTO.getDateType());
+            endParams.setWarehouseIdList(Arrays.asList(data.getWarehouseId()));
+            endParams.setSkuNoList(Arrays.asList(data.getSkuNo()));
+            endParams.setDate(paramDTO.getDateList().get(1));
+            List<InventoryReportDTO.ListDailyInventoryDTO> endList = baseMapper.listDailyInventory(endParams);
+            Integer balanceQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(endList)) {
+                balanceQty = endList.get(0).getBalanceQty();
+            }
+            data.setBalanceQty(balanceQty);
         }
     }
 
