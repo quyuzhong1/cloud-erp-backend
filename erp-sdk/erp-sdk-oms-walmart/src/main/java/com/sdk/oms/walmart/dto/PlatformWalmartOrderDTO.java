@@ -37,14 +37,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
     private OrderBean orderBean;
 
-    private WalmartShopInfoDTO walmartShopInfoDTO;
+    private String shopId;
 
     /**
      * 初始化
      */
-    public PlatformWalmartOrderDTO(OrderBean orderBean, JobTaskDTO dto, WalmartShopInfoDTO walmartShopInfoDTO) {
+    public PlatformWalmartOrderDTO(OrderBean orderBean, JobTaskDTO dto, String shopId) {
         this.orderBean = orderBean;
-        this.walmartShopInfoDTO = walmartShopInfoDTO;
+        this.shopId = shopId;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.WALMART.getCode());
         this.setUniqueId(orderBean.getCustomerOrderId());
@@ -67,9 +67,6 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //获取原始订单信息
         OrderBean orderBean = dto.getOrderBean();
 
-        //店铺信息
-        WalmartShopInfoDTO walmartShopInfoDTO = dto.getWalmartShopInfoDTO();
-
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
@@ -80,7 +77,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setDictPlatform(PlatformDictEnum.WALMART.getCode());
 
         // 店铺ID
-        orderDTO.setShopId(walmartShopInfoDTO.getId());
+        orderDTO.setShopId(dto.getShopId());
 
         // 付款状态（待付款、已付款）
         orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
