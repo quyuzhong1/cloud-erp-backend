@@ -2,6 +2,7 @@ package com.sdk.oms.walmart.handler;
 
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -20,7 +21,9 @@ import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
+import com.sdk.oms.walmart.dto.walmart.order.OrderLineBean;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
+import jodd.util.ObjectUtil;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -72,6 +75,9 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
         String nextCursor = "";
 
         StringBuffer sb = new StringBuffer();
+
+        List<ItemResponseBean> itemResponseBeans = listListing(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), walmartTokenDTO.getAccessToken());
+
         //获取新创建的订单
         while(true) {
             sb.setLength(0);
@@ -99,8 +105,17 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
                 break;
             }
 
-            orderBeanList.addAll(walmartOrderDTO.getList().getElements().getOrder());
+            //查询平台产品id放到订单产品信息里
+            for (OrderBean orderBean : walmartOrderDTO.getList().getElements().getOrder()) {
+                for (OrderLineBean orderLineBean : orderBean.getOrderLines().getOrderLine()) {
+                    ItemResponseBean itemResponseBean = itemResponseBeans.stream().filter(req -> req.getSku().equals(orderLineBean.getItem().getSku())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(itemResponseBean)) {
+                        orderLineBean.getItem().setWpid(itemResponseBean.getWpid());
+                    }
+                }
+            }
 
+            orderBeanList.addAll(walmartOrderDTO.getList().getElements().getOrder());
             nextCursor = walmartOrderDTO.getList().getMeta().getNextCursor();//下一页
             if (StringUtil.isBlank(nextCursor)) {
                 break;
@@ -128,5 +143,36 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.WALMART.getCode();
+    }
+
+
+    private List<ItemResponseBean> listListing(String clientId, String clientSecret, String accessToken) {
+        String baseUrl = WalmartStaticKey.baseUrl + "items";
+        List<ItemResponseBean> itemResponseList = new ArrayList<>();
+        //请求参数
+        HashMap<String, Object> paramMap = new HashMap<>();
+        //每次最多获取200条
+        Integer pageSize = 200;
+        //当前页数
+        Integer pageNo = 0;
+        //总页数
+        Integer pageCount = 1;
+        paramMap.put("offset", pageNo);
+        paramMap.put("limit", pageSize);
+        while(pageNo < pageCount) {
+            //拉取数据
+            String date = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, accessToken, paramMap);
+
+            WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
+            if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
+                break;
+            }
+            pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
+
+            pageNo++;
+
+            itemResponseList.addAll(walmartItemDTO.getItemResponse());
+        }
+        return itemResponseList;
     }
 }

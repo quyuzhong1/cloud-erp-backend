@@ -18,11 +18,11 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public enum AmazonEndpointsEnum {
     // 北美（加拿大、美国、墨西哥和巴西商城）
-    US_EAST_1("us-east-1", "北美", "https://sellingpartnerapi-na.amazon.com", "https://sandbox.sellingpartnerapi-na.amazon.com"),
+    US_EAST_1("us-east-1", "北美", "https://sellingpartnerapi-na.amazon.com", "https://sandbox.sellingpartnerapi-na.amazon.com","https://sellercentral.amazon.com"),
     // 欧洲（西班牙、英国、法国、荷兰、德国、意大利、瑞典、波兰、埃及、土耳其、阿联酋和印度商城）
-    EN_WAST_1("eu-west-1", "欧洲", "https://sellingpartnerapi-eu.amazon.com", "https://sandbox.sellingpartnerapi-eu.amazon.com"),
+    EN_WAST_1("eu-west-1", "欧洲", "https://sellingpartnerapi-eu.amazon.com", "https://sandbox.sellingpartnerapi-eu.amazon.com","https://sellercentral-europe.amazon.com"),
     // 远东（新加坡、澳大利亚和日本商城）
-    US_WAST_2("us-west-2", "远东", "https://sellingpartnerapi-fe.amazon.com", "https://sandbox.sellingpartnerapi-fe.amazon.com"),
+    US_WAST_2("us-west-2", "远东", "https://sellingpartnerapi-fe.amazon.com", "https://sandbox.sellingpartnerapi-fe.amazon.com",null),
 
     ;
 
@@ -44,6 +44,11 @@ public enum AmazonEndpointsEnum {
      * 沙箱环境端点
      */
     private final String sandboxEndpoints;
+
+    /**
+     * 批量授权的卖家平台URL
+     */
+    private final String batchSellerCentralUrl;
 
 
     /**

@@ -332,11 +332,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<String> generateBill(LogisticsBillDTO.GenerateBillDTO dto) {
         String channelId = dto.getChannelId();
-        Map<String, String> authMap = new HashMap<>();
-
-        //测试环境账号
-        authMap.put("clientId","dcfe81e2059c1f0e6e6263dbcb764885");
-        authMap.put("clientSecret","dcfe81e2059c1f0e6e6263dbcb7648850d0c1386bae3caf82229e7cf472d7b53");
+        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
+        if (Objects.isNull(auth)) {
+            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+        }
+        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
         LogisticsChannelEntity logisticsChannel = logisticsChannelService.getById(channelId);
         if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
@@ -350,12 +350,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //发货人信息
         SenderInfo senderInfo = new SenderInfo();
         BeanMapperUtils.copy(deliverList.get(0), senderInfo);
-        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
-        if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
-        }
-//        Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), auth.getLogisticsPlatform());
-
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
@@ -390,7 +384,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(saleChannel)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
-        saleChannel.setCode("MX1001");
+//        saleChannel.setCode("MX1001");
         LogisticsOrderVO logisticsOrderVO = LogisticsOrderVO.builder().authMap(authMap).
                 orderSource(sourceType).
                 deliveryNo(dto.getOrderId()).

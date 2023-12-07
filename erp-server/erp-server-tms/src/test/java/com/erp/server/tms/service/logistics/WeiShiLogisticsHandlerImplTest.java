@@ -74,7 +74,8 @@ public class WeiShiLogisticsHandlerImplTest {
         logisticsProductVO.setWeight(1999);
         logisticsProductVO.setQuantity(10);
         LogisticsSaleChannelEntity logisticsSaleChannel = new LogisticsSaleChannelEntity();
-        logisticsSaleChannel.setCode("MX1001");
+//        logisticsSaleChannel.setCode("MX1001");
+        logisticsSaleChannel.setCode("MX100100");
         logisticsSaleChannel.setShipmentMethod("Express-Post");
         logisticsSaleChannel.setPlatformChannelId("155");
 
@@ -108,6 +109,7 @@ public class WeiShiLogisticsHandlerImplTest {
                         .totalWeight(123)
                         .width(123)
                         .build())
+                .logisticsSaleChannel(logisticsSaleChannel)
                 .logisticsProductVOList(Arrays.asList(
                         logisticsProductVO
                 ))

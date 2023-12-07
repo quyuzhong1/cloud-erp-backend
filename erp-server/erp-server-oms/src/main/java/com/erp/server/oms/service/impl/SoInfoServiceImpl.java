@@ -652,7 +652,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String userName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(userName);
-            boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
             String salesDeptId = item.getSalesDeptId();
             String deptName = departmentList.stream().filter(d -> d.getId().equals(salesDeptId)).
@@ -802,24 +801,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
-            if (contains) {
-                item.setCode("");
-                item.setOrderTypeName("");
-                item.setApproveStatusName("");
-                item.setInvalidStatusName("");
-                item.setCustomerName("");
-                item.setSalesOrgName("");
-                item.setSellerName("");
-                item.setCreateTime(null);
-                item.setCreateUserName("");
-                item.setApproveUserName("");
-                item.setRequireDate(null);
-                item.setAllAmountLc(null);
-                item.setReceiveAmount(null);
-                item.setRemark("");
-                item.setCustomerOrderNo("");
-            }
-            flagList.add(item.getId());
         }
 
 
