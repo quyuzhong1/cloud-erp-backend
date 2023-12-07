@@ -44,7 +44,7 @@ public class ImlHandlerServiceImplTest {
     @Test
     public void testCreateInboundBill() {
         final ThirdWarehouseCreateInboundReq createInboundReq = ThirdWarehouseCreateInboundReq.builder()
-                .referenceNo("wjtest202312070001")
+                .referenceNo("wjtest202312070003")
                 .incomeType(OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode())
                 .transitType(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())
                 .receivingType(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())

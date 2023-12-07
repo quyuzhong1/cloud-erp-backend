@@ -60,7 +60,7 @@ public class ImlCreateInboundReq {
 
     //预计到达日期
     @JSONField(name = "eta_date")
-    private Date etaDate;
+    private String etaDate;
 
     //联系人，交货方式为揽收时，必填
     @JSONField(name = "contacter")
