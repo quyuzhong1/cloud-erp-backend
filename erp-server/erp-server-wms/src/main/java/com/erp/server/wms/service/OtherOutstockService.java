@@ -8,6 +8,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -162,4 +165,20 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return java.util.List<com.erp.model.wms.dto.OtherOutstockDTO.PdaListStatusCountDTO>
      **/
     List<OtherOutstockDTO.PdaListStatusCountDTO> PdaListCount(PermissionsDTO dto);
+
+    /**
+     * 海外仓入库生成其他出库单
+     * @param entity
+     * @param detailEntityList
+     * @param remark
+     */
+    String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark);
+
+
+    /**
+     * 封装报损出库单主记录
+     * @param warehouse 目的仓
+     * @return OtherOutstockDTO.AddDTO
+     */
+    OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse);
 }

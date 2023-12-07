@@ -86,8 +86,24 @@ public class ShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "添加并授权店铺:name={name}")
     @PostMapping("/addAndAuth")
     public ApiResult<?> addAndAuth(@RequestBody @Validated ShopDTO.AddDTO dto) {
-        String resultUrl = shopInfoService.addAndAuth(dto);
-        return success(resultUrl);
+        ShopDTO.RedirectDTO redirectDTO = shopInfoService.addAndAuth(dto);
+        return success(redirectDTO);
+    }
+
+
+    /**
+     * 修改并授权店铺
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改并授权店铺")
+    @PostMapping("/updateAndAuth")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:update",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateAndAuth(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
+        ShopDTO.RedirectDTO redirectDTO = shopInfoService.updateAndAuth(dto);
+        return success(redirectDTO);
     }
 
 
@@ -103,9 +119,9 @@ public class ShopInfoController extends BaseController {
             menuCode = "oms:shop:update",
             serviceClass = ShopInfoService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
-        String id = shopInfoService.updateShop(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
+        ShopInfoEntity shopInfoEntity = shopInfoService.updateShop(dto);
+        return null != shopInfoEntity ? success() : failure();
     }
 
     /**

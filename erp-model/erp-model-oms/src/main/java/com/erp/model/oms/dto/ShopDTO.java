@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -628,6 +629,24 @@ public class ShopDTO implements Serializable {
          */
         private String dictTransferOption;
 
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RedirectDTO  {
+
+
+        /**
+         * 店铺id
+         */
+        private String id;
+
+        /**
+         * 授权地址
+         */
+        private String url;
 
     }
 }

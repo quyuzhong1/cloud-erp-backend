@@ -63,4 +63,11 @@ public enum OverseasInstockStatusEnum implements EnumMessage {
                 .findFirst().orElse(null);
     }
 
+    public static boolean canManualFinish(String code){
+        //没有状态，默认可以完结
+        if(StringUtils.isBlank(code)){
+            return true;
+        }
+        return SIGNED.code.equals(code) || FINISH.code.equals(code) || CANCELED.code.equals(code);
+    }
 }

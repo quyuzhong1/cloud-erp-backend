@@ -110,6 +110,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private OtherOutstockService otherOutstockService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -613,16 +616,34 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualFinish(OverseasWarehouseInboundDTO.FinishDTO dto) {
-
-        OverseasWarehouseInboundEntity entity = this.getById(dto.getId());
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
-        // TODO 校验
-
-        entity.setFinishStatus(OverseasFinishStatusEnum.MANUAL.getCode());
-        entity.setFinishReason(dto.getFinishReason());
+        // 根据入库单ID获取入库单实体
+        OverseasWarehouseInboundEntity entity = Optional.ofNullable(this.getById(dto.getId()))
+                .orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
+        if (StringUtils.isBlank(entity.getDictPlatform())){
+            // 没有平台对接的入库单
+            entity.setFinishStatus(OverseasFinishStatusEnum.MANUAL.getCode());
+            entity.setFinishReason(dto.getFinishReason());
+        }else{
+            //有平台对接的入库单，判断入库状态
+            if(!OverseasInstockStatusEnum.canManualFinish(entity.getInstockStatus())){
+                throw new ServiceException("平台状态未签收完成，不能手动完结");
+            }
+            //签收数小于发货数情况下手动完结生成其他出库单（报损）在途仓
+            detailEntityList = detailEntityList.stream().filter(v->v.getDiffQty()<0).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(detailEntityList)){
+                otherOutstockService.generateByOverseasInbound(entity,detailEntityList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()));
+            }
+        }
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+            detailEntity.setDiffQty(0);
+        }
         // 详情更新签收数量
         if (!this.updateById(entity)) {
             throw new ServiceException("海外仓入库单更新失败");
+        }
+        if(CollectionUtils.isNotEmpty(detailEntityList) && !overseasWarehouseInboundDetailService.updateBatchById(detailEntityList)){
+            throw new ServiceException("海外仓入库明细更新失败");
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
     }
