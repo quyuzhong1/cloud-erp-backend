@@ -3,17 +3,14 @@ package com.erp.server.sys.controller.feign;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.ImlDictCityService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 省/市
