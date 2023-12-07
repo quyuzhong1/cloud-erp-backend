@@ -855,16 +855,16 @@
 
     <select id="getPlatformSales" resultType="java.util.Map">
         SELECT
-            o.source_platform AS platform,
         <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
-            round(SUM (o.sales_amount_currency_rate),2) AS sales
+            round(SUM (o.sales_amount_currency_rate),2) AS sales,
         </if>
         <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
-            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales
+            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (o.sales_amount),2) AS sales
+            round(SUM (o.sales_amount),2) AS sales,
         </if>
+        o.source_platform AS platform
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o

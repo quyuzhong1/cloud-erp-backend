@@ -156,7 +156,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         BigDecimal amount = baseMapper.sumSales(dto, settleRate);
-        return new TargetSaleSumVO(amount.setScale(4, RoundingMode.DOWN));
+        if (Objects.nonNull(amount)){
+            return new TargetSaleSumVO(amount);
+        }else {
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
     }
 
     @Override
