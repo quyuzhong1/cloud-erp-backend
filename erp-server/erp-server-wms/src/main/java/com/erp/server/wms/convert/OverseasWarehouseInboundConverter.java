@@ -30,7 +30,8 @@ public interface OverseasWarehouseInboundConverter {
     OverseasWarehouseInboundConverter INSTANCE = Mappers.getMapper(OverseasWarehouseInboundConverter.class);
 
     @Mappings({
-//            @Mapping(target = "id",  ignore = true)
+            @Mapping(target = "receiveTime", expression = "java(null == entity.getReceiveTime() ? null : entity.getReceiveTime().toLocalDate())"),
+            @Mapping(target = "estimatedArrivalDate", expression = "java(null == entity.getEstimatedArrivalDate() ? null : entity.getEstimatedArrivalDate().toLocalDate())"),
     })
     OverseasWarehouseInboundDTO.ViewDTO entityToViewDTO(OverseasWarehouseInboundEntity entity);
 
@@ -76,7 +77,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receiveQty",  constant = "0"),
             @Mapping(target = "transportQty",  constant = "0"),
             @Mapping(target = "packQty",  source = "detailEntity.deliveryQty"),
-            @Mapping(target = "diffQty",  expression = "java(-detailEntity.getDeclareQty())"),
+            @Mapping(target = "diffQty",  expression = "java(-detailEntity.getDeliveryQty())"),
             @Mapping(target = "receiveStatus",  constant = "not"),
             @Mapping(target = "receiveType",  constant = ""),
     })

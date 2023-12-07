@@ -23,12 +23,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
  * Gateway Plugin Properties
- * @author chenggang
- * @date 2019/04/12
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:28
+ **/
 @Slf4j
 @Getter
 @Setter

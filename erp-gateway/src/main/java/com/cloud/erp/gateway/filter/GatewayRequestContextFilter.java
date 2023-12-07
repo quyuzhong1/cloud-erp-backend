@@ -46,12 +46,9 @@ import java.util.Objects;
 
 /**
  * 读取并缓存请求数据
- * Quoted from @see https://github.com/chenggangpro/spring-cloud-gateway-plugin
- *
- * Gateway Context Filter
- * @author chenggang
- * @date 2019/01/29
- */
+ * @Author Luo_WG
+ * @Date 2023/12/6 18:28
+ **/
 @Slf4j
 @AllArgsConstructor
 public class GatewayRequestContextFilter implements GlobalFilter, Ordered {

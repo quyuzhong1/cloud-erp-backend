@@ -1,55 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.FirstMileDeliveryMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FirstMileDeliveryEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="code" property="code" />
-       <result column="approve_status" property="approveStatus" />
-       <result column="approve_time" property="approveTime" />
-       <result column="approve_user_id" property="approveUserId" />
-       <result column="approve_user_name" property="approveUserName" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
-       <result column="source_id" property="sourceId" />
-       <result column="source_type" property="sourceType" />
-       <result column="source_code" property="sourceCode" />
-       <result column="demand_type" property="demandType" />
-       <result column="shop_id" property="shopId" />
-       <result column="shop_name" property="shopName" />
-       <result column="country_id" property="countryId" />
-       <result column="country_name" property="countryName" />
-       <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
-       <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
-       <result column="dest_warehouse_id" property="destWarehouseId" />
-       <result column="dest_warehouse_name" property="destWarehouseName" />
-       <result column="remark" property="remark" />
-       <result column="fulfillment_center" property="fulfillmentCenter" />
-       <result column="inventory_org_id" property="inventoryOrgId" />
-       <result column="inventory_org_name" property="inventoryOrgName" />
-    </resultMap>
-
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        code, approve_status, approve_time, approve_user_id, approve_user_name, invalid_status, invalid_remark, source_id, source_type, source_code, demand_type, shop_id, shop_name, country_id, country_name, delivery_warehouse_id, delivery_warehouse_name, dest_warehouse_id, dest_warehouse_name, remark, fulfillment_center, inventory_org_id, inventory_org_name
-    </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListDTO">
         SELECT
@@ -69,8 +20,8 @@
         fd.dest_warehouse_id,
         fd.dest_warehouse_name,
         fdl.logistics_method,
-        fdd.asin,
-        fdd.msku,
+        fdd.platform_spu_no,
+        fdd.platform_sku_no,
         fdd.fn_sku,
         fdd.sku_id,
         fdd.sku_no,
@@ -160,16 +111,16 @@
             </foreach>
         </if>
         <!--平台sku-->
-        <if test="params.asin != null and params.asin != ''">
-            AND fdd.asin ILIKE concat('%',#{params.asin}::text,'%')
+        <if test="params.platformSpuNo != null and params.platformSpuNo != ''">
+            AND fdd.platform_spu_no ILIKE concat('%',#{params.platformSpuNo}::text,'%')
         </if>
         <!--fnSku-->
         <if test="params.fnSku != null and params.fnSku != ''">
             AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
         </if>
         <!--卖家sku-->
-        <if test="params.msku != null and params.msku != ''">
-            AND fdd.msku ILIKE concat('%',#{params.msku}::text,'%')
+        <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
+            AND fdd.platform_sku_no concat('%',#{params.platformSkuNo}::text,'%')
         </if>
         <!--审核时间-->
         <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
@@ -228,8 +179,8 @@
         fd.dest_warehouse_id,
         fd.dest_warehouse_name,
         fdl.logistics_method,
-        fdd.asin,
-        fdd.msku,
+        fdd.platform_spu_no,
+        fdd.platform_sku_no,
         fdd.fn_sku,
         fdd.sku_id,
         fdd.sku_no,
@@ -326,16 +277,16 @@
                     </foreach>
                 </if>
                 <!--平台sku-->
-                <if test="params.asin != null and params.asin != ''">
-                    AND fdd.asin ILIKE concat('%',#{params.asin}::text,'%')
+                <if test="params.platformSpuNo != null and params.platformSpuNo != ''">
+                    AND fdd.platform_spu_no ILIKE concat('%',#{params.platformSpuNo}::text,'%')
                 </if>
                 <!--fnSku-->
                 <if test="params.fnSku != null and params.fnSku != ''">
                     AND fdd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
                 </if>
                 <!--卖家sku-->
-                <if test="params.msku != null and params.msku != ''">
-                    AND fdd.msku ILIKE concat('%',#{params.msku}::text,'%')
+                <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
+                    AND fdd.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
                 </if>
                 <!--审核时间-->
                 <if test="params.approveTimeList !=null and params.approveTimeList.size>0">

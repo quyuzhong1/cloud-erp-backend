@@ -3,13 +3,12 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+
 import java.time.LocalDateTime;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -32,12 +31,12 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("main_id")
     private String mainId;
     /**
-    * 平台sku
+    * 平台产品id（ASIN）
     */
     @TableField("asin")
     private String asin;
     /**
-    * 卖家sku
+    * 平台sku（mSku）
     */
     @TableField("msku")
     private String msku;

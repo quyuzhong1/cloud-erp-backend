@@ -85,7 +85,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             //根据sku汇总数量
             this.groupBySku(dto);
             //通过单号查询主表记录
-            OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getByCode(dto.getReceivingCode());
+            OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getByCode(dto.getReceivingCode(), null);
             if (Objects.isNull(mainEntity)) {
                 return ApiResult.success();
             }

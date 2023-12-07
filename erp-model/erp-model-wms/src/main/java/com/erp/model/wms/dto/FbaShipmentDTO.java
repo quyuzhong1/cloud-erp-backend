@@ -330,19 +330,19 @@ public class FbaShipmentDTO implements Serializable {
         private List<String> platformShipmentStatusList;
 
         /**
-         * 平台sku
+         * 平台产品id
          */
         private String asin;
+
+        /**
+         * 平台sku
+         */
+        private String msku;
 
         /**
          * fnSku
          */
         private String fnSku;
-
-        /**
-         * 卖家sku
-         */
-        private String msku;
 
         /**
          * 是否组合品 true 是
@@ -422,17 +422,18 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String platformShipmentStatus;
         /**
-         * 平台sku
+         * 平台产品id
          */
         private String asin;
+
+        /**
+         * 平台sku
+         */
+        private String msku;
         /**
          * FNSKU
          */
         private String fnSku;
-        /**
-         * 卖家sku
-         */
-        private String msku;
         /**
          * sku编号
          */
@@ -562,11 +563,12 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String destWarehouseName;
         /**
-         * 平台sku
+         * 平台产品id
          */
         private String asin;
+
         /**
-         * 卖家sku
+         * 平台sku
          */
         private String msku;
         /**
@@ -652,12 +654,12 @@ public class FbaShipmentDTO implements Serializable {
         private String channelName;
 
         /**
-         * 平台sku
+         * 平台产品id
          */
         private String asin;
 
         /**
-         * 买家sku
+         * 平台sku
          */
         private String msku;
 

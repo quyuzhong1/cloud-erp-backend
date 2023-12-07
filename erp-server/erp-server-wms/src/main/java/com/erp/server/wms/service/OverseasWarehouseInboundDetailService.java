@@ -73,4 +73,12 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
      * @return entityList
      */
     List<OverseasWarehouseInboundDetailEntity> getByIds(List<String> idList);
+
+
+    /**
+     * 通过mainId查询是否所有签收
+     * @author Jim
+     * @date: 2023-12-06
+     */
+    Boolean checkAllReceiveByMainId(String mainId);
 }

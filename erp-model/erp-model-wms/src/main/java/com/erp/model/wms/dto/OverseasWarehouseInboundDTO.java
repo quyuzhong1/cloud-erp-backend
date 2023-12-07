@@ -50,6 +50,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 系统SKU
+         */
+        private String skuNo;
+
+        /**
+         * 海外仓SKU
+         */
+        private String platformSkuNo;
+
+        /**
          * 入库类型
          * /api/wms/common/enumDropDown?type=OverseasInstockType
          */
@@ -521,12 +531,12 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         /**
          * 最新签收时间
          */
-        private LocalDateTime receiveTime;
+        private LocalDate receiveTime;
 
         /**
          * 预计到达时间
          */
-        private LocalDateTime estimatedArrivalDate;
+        private LocalDate estimatedArrivalDate;
 
         /**
          * 手动完结原因

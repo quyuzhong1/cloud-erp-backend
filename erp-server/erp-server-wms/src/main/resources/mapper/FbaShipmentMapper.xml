@@ -1,48 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.FbaShipmentMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaShipmentEntity">
-       <result column="id" property="id" />
-       <result column="create_time" property="createTime" />
-       <result column="update_time" property="updateTime" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="code" property="code" />
-       <result column="name" property="name" />
-       <result column="shop_id" property="shopId" />
-       <result column="shop_name" property="shopName" />
-       <result column="country_id" property="countryId" />
-       <result column="country_name" property="countryName" />
-       <result column="fulfillment_center" property="fulfillmentCenter" />
-       <result column="delivery_status" property="deliveryStatus" />
-       <result column="platform_shipment_status" property="platformShipmentStatus" />
-       <result column="shipment_create_time" property="shipmentCreateTime" />
-       <result column="shipment_receive_time" property="shipmentReceiveTime" />
-       <result column="label_type" property="labelType" />
-       <result column="pack_type" property="packType" />
-       <result column="delivery_from_address" property="deliveryFromAddress" />
-       <result column="delivery_to_address" property="deliveryToAddress" />
-    </resultMap>
-
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        code, name, shop_id, shop_name, country_id, country_name, fulfillment_center, delivery_status, platform_shipment_status, shipment_create_time, shipment_receive_time, label_type, pack_type, delivery_from_address, delivery_to_address
-    </sql>
-
 
     <!--分页查询-->
     <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$ListDTO">
@@ -62,8 +20,8 @@
         fs.shipment_create_time,
         fs.shipment_receive_time,
         fsd.asin,
-        fsd.fn_sku,
         fsd.msku,
+        fsd.fn_sku,
         fsd.sku_no,
         fsd.declare_qty,
         fsd.diff_qty,
@@ -115,7 +73,7 @@
                 #{platformShipmentStatus}
             </foreach>
         </if>
-        <!--平台sku-->
+        <!--平台产品id-->
         <if test="params.asin != null and params.asin != ''">
             AND fsd.asin ILIKE concat('%',#{params.asin}::text,'%')
         </if>
@@ -123,7 +81,7 @@
         <if test="params.fnSku != null and params.fnSku != ''">
             AND fsd.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
         </if>
-        <!--卖家sku-->
+        <!--平台sku-->
         <if test="params.msku != null and params.msku != ''">
             AND fsd.msku ILIKE concat('%',#{params.msku}::text,'%')
         </if>

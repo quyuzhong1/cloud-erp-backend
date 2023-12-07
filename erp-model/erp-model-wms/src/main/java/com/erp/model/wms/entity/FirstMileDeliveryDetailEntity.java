@@ -31,16 +31,17 @@ public class FirstMileDeliveryDetailEntity extends BaseEntity<FirstMileDeliveryD
     */
     @TableField("main_id")
     private String mainId;
+
     /**
-    * 平台sku
+    * 平台产品id（ASIN）
     */
-    @TableField("asin")
-    private String asin;
+    @TableField("platform_spu_no")
+    private String platformSpuNo;
     /**
-    * 卖家sku
+    * 平台sku（msku）
     */
-    @TableField("msku")
-    private String msku;
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
     /**
     * FNSKU
     */
