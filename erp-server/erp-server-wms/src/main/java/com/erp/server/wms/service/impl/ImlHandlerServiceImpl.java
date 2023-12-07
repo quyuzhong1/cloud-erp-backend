@@ -47,7 +47,6 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         ImlCreateInboundReq imlCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToIml(createInboundReq);
-        // 修改入库单
         ImlResponse<String> imlResponse = imlService.createInboundBill(imlCreateInboundReq);
         return isSuccess(imlResponse.getAsk()) ? success(imlResponse.getData()) : failure(imlResponse.getMessage());
     }
