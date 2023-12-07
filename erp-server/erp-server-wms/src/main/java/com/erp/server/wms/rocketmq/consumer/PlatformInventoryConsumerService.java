@@ -18,6 +18,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -82,6 +83,7 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(entity.getDictPlatform());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
+                paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
                 // 查询ListingInfo和skuMapping的关系
                 List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
