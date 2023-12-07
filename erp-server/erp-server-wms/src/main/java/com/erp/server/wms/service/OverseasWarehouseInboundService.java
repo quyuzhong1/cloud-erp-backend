@@ -45,7 +45,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     Boolean update(OverseasWarehouseInboundDTO.UpdateDTO dto);
 
 
-    OverseasWarehouseInboundEntity getByCode(String receivingCode);
+    OverseasWarehouseInboundEntity getByCode(String receivingCode, String notInStockStatus);
 
     /**
      * 分页查询
@@ -141,8 +141,9 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
 
     /**
      * 通过source_id查询
+     * @param notInStockStatus 指定不属于的入库状态
      */
-    OverseasWarehouseInboundEntity getBySourceId(String sourceId);
+    OverseasWarehouseInboundEntity getBySourceId(String sourceId, String notInStockStatus);
 
     /**
      * 修改入库单状态
