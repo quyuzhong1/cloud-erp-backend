@@ -1,6 +1,7 @@
 package com.erp.model.bi.dto;
 
 import com.erp.model.bi.vo.LabelVO;
+import com.erp.model.bi.vo.SalesBaseVO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -106,6 +107,10 @@ public class SkuSalesDTO implements Serializable {
          * 销售趋势
          */
         private List<Integer> salesTrend;
+        /**
+         * 销售趋势 带时间
+         */
+        private List<SalesBaseVO> salesTrendList;
 
         /**
          * 标签列表
