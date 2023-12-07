@@ -397,10 +397,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setWarehouseName(updateDTO.getName());
         shopInfo.setWarehouseId(dto.getWarehouseId());
         Boolean result = this.updateById(shopInfo);
-        if (result) {
-            return shopInfo.getId();
+        if (!result) {
+            throw new ServiceException("更新失败");
         }
-        return "";
+        return shopInfo;
     }
 
 
