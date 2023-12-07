@@ -1662,7 +1662,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //委外订单来源
         if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
-            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getId());
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
@@ -1670,7 +1670,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //采购退货订单来源
         if (SourceTypeEnum.PO_RETURN.getCode().equals(entity.getSourceType())) {
-            List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(Arrays.asList(entity.getId()));
+            List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(Arrays.asList(entity.getSourceId()));
             if (CollectionUtils.isEmpty(purchaseReturnOrderList)) {
                 throw new ServiceException(ApiError.ERROR_99008);
             }
