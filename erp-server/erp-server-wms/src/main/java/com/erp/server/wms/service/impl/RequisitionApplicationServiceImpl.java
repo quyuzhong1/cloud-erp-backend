@@ -304,7 +304,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
         //根据调出调入仓id查询仓库信息
-        List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
+        List<String> toWarehouseIds = list.stream().map(req -> req.getPickingWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
         toWarehouseIds.addAll(requisitionWarehouseIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(toWarehouseIds);
@@ -765,7 +765,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
 
         //默认来源类型：海外发货计划
-        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_DELIVERY_PLAN.getCode());
+        addDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
