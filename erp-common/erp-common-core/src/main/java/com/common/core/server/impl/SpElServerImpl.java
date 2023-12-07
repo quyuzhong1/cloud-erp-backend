@@ -98,16 +98,7 @@ public class SpElServerImpl implements SpElServer {
      */
     @Override
     public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
-        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get("detailList");
         SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
-        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
-        for (SpElAddFieldDTO item : addFieldList) {
-            //原始字段
-            String originalField = item.getOriginalField();
-            List<Object> valueList = getValueList(originalField, mapList);
-            String addField = item.getNeedAddField();
-            obj.put(addField, valueList);
-        }
         return matchExpression(spElDTO.getExpression(), obj);
 
     }
@@ -167,13 +158,9 @@ public class SpElServerImpl implements SpElServer {
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
-                            String addField = getAddField(field, addFieldList);
-                            content = getContent(addField,compare,conversionValue,isStr);
                             content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
-                            String addField1 = getAddField(field, addFieldList);
-                            content = getContent(addField1,compare,conversionValue,isStr);
                             content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
@@ -240,6 +227,9 @@ public class SpElServerImpl implements SpElServer {
         }
 
         if ("BigDecimal".equals(valueType)) {
+            if(StringUtils.isBlank(value)){
+               return "null";
+            }
             return new BigDecimal(value);
         }
         return value;
@@ -332,7 +322,7 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     private String convertToContainsExpression(String content) {
-        return content.replace(" contains ", ".contains(") + ")";
+        return content.replace("contains", ".contains(") + ")";
     }
 
     /**
@@ -407,19 +397,12 @@ public class SpElServerImpl implements SpElServer {
 
 
     public static void main(String[] args) {
-//        SpElServerImpl spElServer = new SpElServerImpl();
-//        String str = "( ['estimatedShippingCost'] > '10.0000' ) ";
-//        Map<String, String> map = new HashMap<>();
-//        map.put("estimatedShippingCost","5.0000");
-//       Boolean flag= spElServer.matchExpression(str, map);
-//        System.out.println(flag);
-
         ExpressionParser parser = new SpelExpressionParser();
-        String conditionExpression = "( ['estimatedShippingCost'] >10.0000 )  ";
-        Map<String, Object> jsonObject = new HashMap<>();
-        jsonObject.put("estimatedShippingCost", 9);
+        String conditionExpression = "( ['skuNo'].contains('3306') )";
+        Map<String, Object> map = new HashMap<>();
+        map.put("skuNo", "3307,3305");
         Expression exp = parser.parseExpression(conditionExpression);
-        EvaluationContext context2 = new StandardEvaluationContext(jsonObject);
+        EvaluationContext context2 = new StandardEvaluationContext(map);
         boolean result2 = exp.getValue(context2, Boolean.class);
         System.out.println(result2);
     }
