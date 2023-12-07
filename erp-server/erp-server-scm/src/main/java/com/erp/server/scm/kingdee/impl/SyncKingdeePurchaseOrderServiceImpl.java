@@ -258,7 +258,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
             taskFeignDTO.setParentId(entity.getSourceId());
         }
-        taskFeignDTO.setParentId(entity.getSyncKingdeeId());
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
     }
 }
