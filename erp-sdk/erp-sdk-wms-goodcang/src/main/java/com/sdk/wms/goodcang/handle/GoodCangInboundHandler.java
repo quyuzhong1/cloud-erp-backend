@@ -18,6 +18,7 @@ import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.service.GoodCangService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +55,9 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
         List<GoodCangReceiptBatchResp> respList = new ArrayList<>();
         //查询待签收、部分签收状态的入库单
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode(),OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()));
+        if(CollectionUtils.isEmpty(receiveCodeList)){
+            return new ArrayList<>();
+        }
         for(String receiveCode : receiveCodeList){
             GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch(receiveCode);
             checkResponse(response);

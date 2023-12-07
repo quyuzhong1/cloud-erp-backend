@@ -62,7 +62,6 @@
         fs.shipment_receive_time,
         fsd.platform_spu_no,
         fsd.platform_sku_no,
-        fsd.msku,
         fsd.fn_sku,
         fsd.sku_no,
         fsd.declare_qty,
