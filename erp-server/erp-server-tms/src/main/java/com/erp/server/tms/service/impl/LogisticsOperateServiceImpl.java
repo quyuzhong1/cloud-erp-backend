@@ -42,7 +42,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
         dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.ERP_TMS.getDesc());
         dmpPullTaskEntity.setSourceType(businessType);
-        dmpPullTaskEntity.setSourceId("");
+        dmpPullTaskEntity.setSourceId(sourceId);
         dmpPullTaskEntity.setSourceCode(logisticsPlatform);
         dmpPullTaskEntity.setTargetPlatformName(LogisticsPlatformEnum.getByCode(logisticsPlatform).getName());
         //请求状态（0请求中 1请求成功 2请求失败）
