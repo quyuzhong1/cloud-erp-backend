@@ -60,8 +60,6 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
             }
         }
         PlatformProductDTO resultDto = new PlatformProductDTO();
-
-
         //平台sku
         resultDto.setPlatformSkuNo(itemResponseBean.getSku());
         // 平台产品名称
@@ -72,7 +70,6 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
         resultDto.setProductSpec(spec);
         // 平台
         resultDto.setPlatform(dto.getPlatform());
-
         //平台产品id
         resultDto.setPlatformProductNo(itemResponseBean.getWpid());
         // 平台产品名称
