@@ -332,12 +332,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 平台产品id
          */
-        private String platformSpuNo;
+        private String asin;
 
         /**
          * 平台sku
          */
-        private String platformSkuNo;
+        private String msku;
 
         /**
          * fnSku
@@ -424,12 +424,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 平台产品id
          */
-        private String platformSpuNo;
+        private String asin;
 
         /**
          * 平台sku
          */
-        private String platformSkuNo;
+        private String msku;
         /**
          * FNSKU
          */
@@ -565,12 +565,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 平台产品id
          */
-        private String platformSpuNo;
+        private String asin;
 
         /**
          * 平台sku
          */
-        private String platformSkuNo;
+        private String msku;
         /**
          * fnSku
          */
@@ -656,12 +656,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 平台产品id
          */
-        private String platformSpuNo;
+        private String asin;
 
         /**
          * 平台sku
          */
-        private String platformSkuNo;
+        private String msku;
 
         /**
          * FNSKU

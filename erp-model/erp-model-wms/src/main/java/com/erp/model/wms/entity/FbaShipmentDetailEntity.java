@@ -33,13 +33,13 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     /**
     * 平台产品id（ASIN）
     */
-    @TableField("platform_spu_no")
-    private String platformSpuNo;
+    @TableField("asin")
+    private String asin;
     /**
     * 平台sku（mSku）
     */
-    @TableField("platform_sku_no")
-    private String platformSkuNo;
+    @TableField("msku")
+    private String msku;
     /**
     * FNSKU
     */
@@ -111,7 +111,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @Override
     public String toString() {
         return "FbaShipmentDetailEntity{" +
-                "platformSkuNo='" + platformSkuNo + '\'' +
+                "msku='" + msku + '\'' +
                 ", fnSku='" + fnSku + '\'' +
                 ", declareQty=" + declareQty +
                 ", diffQty=" + diffQty +
