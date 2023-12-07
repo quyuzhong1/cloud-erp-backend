@@ -15,7 +15,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -140,6 +142,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         log.info("开始新增海外仓入库单");
         mainEntity.setIsDeleted(false);
         mainEntity.setVersion(0);
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        mainEntity.setCreateUserId(loginUser.getUid());
+        mainEntity.setCreateUserName(loginUser.getUserName());
+        mainEntity.setCreateTime(LocalDateTime.now());
         boolean save = this.save(mainEntity);
         if (!save) {
             throw new ServiceException("海外仓入库单保存失败");
@@ -149,11 +155,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .distinct()
                 .collect(Collectors.toList());
         // 查询关联信息
-        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap = checkAdnQuerySkuMap(skuIds, dictPlatform, deliveryDetailEntityList);
+        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = checkAdnQuerySkuMap(skuIds, dictPlatform, deliveryDetailEntityList);
 
         // 明细处理
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = deliveryDetailEntityList.stream()
-                .map(e -> OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity, currentSkuMap.get(e.getSkuId())))
+                .map(e -> {
+                            List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(e.getSkuId());
+                            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = null;
+                            if (!CollectionUtils.isEmpty(viewList)){
+                                view = viewList.stream().findFirst().orElse(null);
+                            }
+                            return OverseasWarehouseInboundConverter.INSTANCE.deliveryDetailToDetail(e, mainEntity, view, mainEntity.getCreateUserId(), mainEntity.getCreateUserName(), mainEntity.getCreateTime());
+                        })
                 .collect(Collectors.toList());
 
         // 操作日志
@@ -194,19 +207,19 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     /**
      * 查询和校验映射关系
      */
-    private Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> checkAdnQuerySkuMap(List<String> skuIds, String dictPlatform, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList) {
+    private Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> checkAdnQuerySkuMap(List<String> skuIds, String dictPlatform, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList) {
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuList = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIds);
         List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuList = skuList.stream().filter(e -> e.getDictPlatform().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(currentSkuList) && StringUtils.isNotBlank(dictPlatform)) {
             throw new ServiceException("数据异常：未找到SKU的映射关系");
         }
-        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap = currentSkuList.stream()
-                .collect(Collectors.toMap(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId, Function.identity()));
+        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = currentSkuList.stream()
+                .collect(Collectors.groupingBy(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId));
         // 校验映射关系
         if (StringUtils.isNotBlank(dictPlatform)) {
             deliveryDetailEntityList.forEach(e -> {
-                SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = currentSkuMap.get(e.getSkuId());
-                if (null == view) {
+                List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = currentSkuMap.get(e.getSkuId());
+                if (CollectionUtils.isEmpty(listStockSkuNoByProductSkuIdViews)) {
                     throw new ServiceException("未找到映射关系：skuId=" + e.getSkuId());
                 }
             });
@@ -219,7 +232,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
      */
     private ThirdWarehouseCreateInboundReq entityToCreateInboundBill(OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileCartonDTO.PackingItemDTO> itemDTOList,
-                                                                     Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap,
+                                                                     Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap,
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
                                                                      String code
@@ -244,7 +257,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
         for (FirstMileCartonDTO.PackingItemDTO itemDTO : itemDTOList) {
-            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = currentSkuMap.get(itemDTO.getSkuId());
+            List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewList = currentSkuMap.get(itemDTO.getSkuId());
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewList.stream().findFirst().orElse(null);
             if (null == view) {
                 String msg = StrUtil.format("未找到绑定的库存SKU, skuId={}，skuNo={}", itemDTO.getSkuId(), itemDTO.getSkuNo());
                 throw new ServiceException(msg);
@@ -843,25 +857,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     public String generateTransferOut(OverseasWarehouseInboundEntity mainEntity, OverseasWarehouseInboundDetailEntity detailEntity, OverseasWarehouseInboundReceivedEntity receivedEntity) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
 
-        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
+        //仓库列表配置的在途归属仓库
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()
                 .filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-
-        //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
-        //如果是FBA第三方仓
-        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
-            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
-            if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
-                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
-                if (CollectionUtils.isEmpty(warehouseEntities)) {
-                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
-                }
-                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
-                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
-            }
-        }
 
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
@@ -873,7 +871,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
+        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         //默认调出日期：当前日期
         addDTO.setBillDate(LocalDate.now());
         //默认调拨方向：普通
@@ -891,7 +889,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceCode(mainEntity.getCode());
-        addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", mainEntity.getCode()));
+        addDTO.setRemark(String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
 
         //详情信息
         TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
@@ -899,9 +897,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         detailAddDto.setSkuId(detailEntity.getSkuId());
         detailAddDto.setSkuNo(detailEntity.getSkuNo());
         detailAddDto.setQty(receivedEntity.getReceiveQty());
-        detailAddDto.setOutWarehouseId(mainEntity.getDeliveryWarehouseId());
+        detailAddDto.setOutWarehouseId(destWarehouse.getOnwayWarehouseId());
         detailAddDto.setOutWarehouseLocation("");
-        detailAddDto.setInWarehouseId(warehouseEntity.getId());
+        detailAddDto.setInWarehouseId(mainEntity.getToWarehouseId());
         detailAddDto.setInWarehouseLocation("");
         detailAddDto.setSourceDetailId(detailEntity.getId());
 
@@ -923,7 +921,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .distinct()
                 .collect(Collectors.toList());
         // 查询关联信息
-        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> currentSkuMap = checkAdnQuerySkuMap(skuIds, mainEntity.getDictPlatform(), deliveryDetailEntityList);
+        Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> currentSkuMap = checkAdnQuerySkuMap(skuIds, mainEntity.getDictPlatform(), deliveryDetailEntityList);
         // 调用
         return this.pullThirdOverseasPlatformWithSkuMapping(currentSkuMap, providerEntity, mainEntity, deliveryDetailEntityList, verityCode);
     }
@@ -931,7 +929,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuViewMap,
+    public ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> skuViewMap,
                                                                      OverseasProviderEntity providerEntity,
                                                                      OverseasWarehouseInboundEntity mainEntity,
                                                                      List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,

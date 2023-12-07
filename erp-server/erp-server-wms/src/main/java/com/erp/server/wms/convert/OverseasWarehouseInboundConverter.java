@@ -20,6 +20,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 /**
  * 海外仓入库单
  **/
@@ -58,15 +60,15 @@ public interface OverseasWarehouseInboundConverter {
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
-            @Mapping(target = "createTime", ignore = true),
-            @Mapping(target = "createUserId", ignore = true),
-            @Mapping(target = "createUserName", ignore = true),
-            @Mapping(target = "updateTime", ignore = true),
-            @Mapping(target = "updateUserId", ignore = true),
-            @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId",  source = "mainEntity.id"),
+            @Mapping(target = "createTime", source = "createTime"),
+            @Mapping(target = "createUserId", source = "createUserId"),
+            @Mapping(target = "createUserName", source = "createUserName"),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
 
             @Mapping(target = "platformProductName",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSkuName())"),
             @Mapping(target = "platformSkuNo",  expression = "java(null == skuMappingView ? \"\" : skuMappingView.getStockSku())"),
@@ -83,8 +85,8 @@ public interface OverseasWarehouseInboundConverter {
     })
     OverseasWarehouseInboundDetailEntity deliveryDetailToDetail(FirstMileDeliveryDetailEntity detailEntity,
                                                                 OverseasWarehouseInboundEntity mainEntity,
-                                                                SkuMappingDTO.ListStockSkuNoByProductSkuIdView skuMappingView
-    );
+                                                                SkuMappingDTO.ListStockSkuNoByProductSkuIdView skuMappingView,
+                                                                String createUserId, String createUserName, LocalDateTime createTime);
 
     @Mappings({
             @Mapping(target = "receivingCode",  source = "receivingCode"),

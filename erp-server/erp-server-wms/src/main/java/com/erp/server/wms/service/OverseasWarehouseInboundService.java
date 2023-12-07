@@ -184,7 +184,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @Date 2023/12/6
      **/
     ApiResult<String> pullThirdOverseasPlatformWithSkuMapping(
-            Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> skuViewMap,
+            Map<String, List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView>> skuViewMap,
             OverseasProviderEntity providerEntity,
             OverseasWarehouseInboundEntity mainEntity,
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,

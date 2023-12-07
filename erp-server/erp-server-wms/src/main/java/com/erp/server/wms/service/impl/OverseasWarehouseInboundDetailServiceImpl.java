@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -59,6 +61,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
+    @Resource
+    private TransferInfoService transferInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -194,9 +198,17 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             throw new ServiceException("海外仓入库单签收保存失败");
         }
         // 生成直接调拨单
-        String transferNum = overseasWarehouseInboundService.generateTransferOut(mainEntity, entity, receivedEntity);
-        if (StringUtils.isBlank(transferNum)){
-            throw new ServiceException("生成直接调拨单失败");
+        String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entity, receivedEntity);
+        if (StringUtils.isNotBlank(transferOutId)) {
+            //提交
+            transferInfoService.submit(Collections.singletonList(transferOutId));
+            //审核
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
+            baseApproveParamDTO.setType(ApproveType.PASS);
+            transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+        } else {
+            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
     }
