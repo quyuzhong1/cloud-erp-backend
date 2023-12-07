@@ -81,7 +81,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
         PlatformInboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformInboundDTO.class);
         //海外仓
         if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
-            boolean updateMainFlag = Boolean.FALSE;
+            boolean changeFlag = Boolean.FALSE;
             //根据sku汇总数量
             this.groupBySku(dto);
             //通过单号查询主表记录
@@ -108,7 +108,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (item.getReceivedQuantity().equals(detailEntity.getReceiveQty())) {
                     continue;
                 }
-                updateMainFlag = true;
+                changeFlag = true;
                 Integer thisSignNumber = item.getReceivedQuantity() - detailEntity.getReceiveQty();
                 detailEntity.setReceiveQty(item.getReceivedQuantity());
                 detailEntity.setDiffQty(detailEntity.getReceiveQty() - detailEntity.getPackQty());
@@ -142,7 +142,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if(receivedEntityMap.containsKey(key)){
                         continue;
                     }
-                    updateMainFlag = true;
+                    changeFlag = true;
                     OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
                     receivedEntity.setDetailId(detailId);
                     receivedEntity.setReceiveQty(receiving.getReceiveQty());
@@ -152,19 +152,25 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
 
-            if(updateMainFlag){
+            if(changeFlag){
                 mainEntity.setReceiveTime(dto.getDownloadTime());
                 mainEntity.setInstockStatus(dto.getReceivingStatus());
-                mainEntity.setFinishStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus()));
+                //差异数量为0时 自动完结
+                boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
+                mainEntity.setFinishStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
+                //生成调拨单
             }
         }
         return ApiResult.success();
     }
 
-    private String getFinishStatusByReceiveStatus(String receiveStatus){
-        if(receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) || receiveStatus.equals(OverseasInstockStatusEnum.FINISH.getCode())|| receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())){
+    private String getFinishStatusByReceiveStatus(String receiveStatus,boolean isAllDiffZero){
+        if((receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) ||
+                receiveStatus.equals(OverseasInstockStatusEnum.FINISH.getCode())||
+                receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())) &&
+                isAllDiffZero){
             return OverseasFinishStatusEnum.AUTO.getCode();
         }
         return OverseasFinishStatusEnum.NOT.getCode();
