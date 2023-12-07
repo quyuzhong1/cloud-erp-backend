@@ -597,7 +597,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listingList = listingInfoService.listByIds(listingIds);
         }
         //库存
-        String warehouseType = RuleTypeEnum.WAREHOUSE.getCode();
+        RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
         for (SkuMappingDTO.ListSkuParamDTO listSkuParamDTO : dataList) {
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(listSkuParamDTO.getSkuNo())).findFirst().orElse(new SkuVO());
