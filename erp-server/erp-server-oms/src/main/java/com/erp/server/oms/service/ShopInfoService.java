@@ -40,7 +40,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @author yl
      * @date 2023-07-03 9:05
      */
-    String updateShop(ShopDTO.UpdateDTO dto);
+    ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto);
 
 
     /**
@@ -192,7 +192,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     /**
      * 添加并授权店铺
      */
-    String addAndAuth(ShopDTO.AddDTO dto);
+    ShopDTO.RedirectDTO addAndAuth(ShopDTO.AddDTO dto);
 
     /**
      * 添加亚马逊店铺
@@ -200,4 +200,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     List<ShopInfoEntity> handleAmazonShop(ShopDTO.AddDTO dto);
+
+
+    /**
+     * 更新亚马逊店铺
+     * @param dto
+     * @return
+     */
+    ShopDTO.RedirectDTO updateAndAuth(ShopDTO.UpdateDTO dto);
 }

@@ -345,6 +345,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public ShopDTO.RedirectDTO updateAndAuth(ShopDTO.UpdateDTO dto) {
+        ShopInfoEntity entity = this.updateShop(dto);
+        ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
+        authorizeUrlDTO.setShopId(entity.getId());
+        authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
+
+        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        return new ShopDTO.RedirectDTO(entity.getId(), shopAuthorizeUrl);
+    }
+
 
     /**
      * 修改店铺
@@ -355,7 +368,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @date 2023-07-03 9:05
      */
     @Override
-    public String updateShop(ShopDTO.UpdateDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto) {
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
@@ -892,7 +907,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addAndAuth(ShopDTO.AddDTO dto) {
+    public ShopDTO.RedirectDTO addAndAuth(ShopDTO.AddDTO dto) {
         List<ShopInfoEntity> list = this.add(dto);
         if (CollectionUtils.isEmpty(list)){
             throw new ServiceException("添加店铺失败");
@@ -906,6 +921,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setShopIdList(shopIds);
         authorizeUrlDTO.setPlatformCode(infoEntity.getDictPlatform());
 
-        return this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
     }
 }
