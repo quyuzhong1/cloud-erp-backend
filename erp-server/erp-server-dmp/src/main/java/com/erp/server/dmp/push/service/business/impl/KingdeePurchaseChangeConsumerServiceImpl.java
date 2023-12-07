@@ -118,14 +118,16 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate";
+        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         if (CollectionUtils.isEmpty(queryList)) {
             throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("sourceCode").toString()));
         }
         Object financeId = queryList.get(0).get("FPOOrderFinance_FEntryID");
         Object exchangeRate = queryList.get(0).get("FExchangeRate");
+        Object payConditionId = queryList.get(0).get("FPayConditionId.FNumber");
         map.put("financeId",financeId);
         map.put("exchangeRate",exchangeRate);
+        map.put("payConditionId",payConditionId);
     }
 }
