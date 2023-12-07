@@ -132,6 +132,10 @@ public class BiSalesMonitoringTableDTO {
         /**
          * 类型名称 （部门、人员、店铺、品类、SKU）
          */
+        private String typeId;
+        /**
+         * 类型名称 （部门、人员、店铺、品类、SKU）
+         */
         private String typeName;
 
         /**
