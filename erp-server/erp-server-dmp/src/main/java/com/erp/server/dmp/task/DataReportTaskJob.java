@@ -1,22 +1,17 @@
 package com.erp.server.dmp.task;
 
-import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.SyncDataReportVO;
 import com.erp.server.dmp.service.DmpOrderInfoService;
-import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.joda.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
 /**
