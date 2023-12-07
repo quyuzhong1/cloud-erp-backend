@@ -2110,7 +2110,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("packageLength", logisticsEntity.getLength());
         map.put("packageHeight", logisticsEntity.getHeight());
         map.put("shop", soB2cEntity.getShopId());
-        map.put("dictLogisticsMethod", logisticsEntity.getLogisticsChannelId());
+        map.put("logisticsChannelId", logisticsEntity.getLogisticsChannelId());
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
         map.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
@@ -2139,7 +2139,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("destCity", receiverEntity.getCityName());
         map.put("orderTaxCost", totalTaxCost);
         map.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-        map.put("orderProfitRate", financialInfo.getProfitRate());
+        map.put("orderProfitRate", financialInfo.getProfitRateFlag());
 
         List<Map<String,Object>> mapList = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity detailEntity : detailList) {
@@ -2175,7 +2175,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("destCity", receiverEntity.getCityName());
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-            detailMap.put("orderProfitRate", financialInfo.getProfitRate());
+            detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
             //明细标签处理
             String detailLabelJson = detailEntity.getLabelJson();
             if (StrUtil.isNotBlank(detailLabelJson)) {
@@ -2600,6 +2600,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         financialInfoDTO.setVatCostProfitRate(MathUtil.compareTo(vatCostProfitRate, MathUtil.ZERO) == MathUtil.ZERO ? "0%" : vatCostProfitRate + "%");
 
         BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+
+        BigDecimal profitRateFlag=MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()));
+        financialInfoDTO.setProfitRateFlag(profitRateFlag);
         financialInfoDTO.setProfitRate(MathUtil.compareTo(profitRate, MathUtil.ZERO) == MathUtil.ZERO ? "0%" : profitRate + "%");
         return financialInfoDTO;
     }

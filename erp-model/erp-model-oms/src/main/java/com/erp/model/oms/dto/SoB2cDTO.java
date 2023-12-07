@@ -588,6 +588,11 @@ public class SoB2cDTO implements Serializable {
         private String profitRate;
 
         /**
+         * 总利润率表示
+         */
+        private BigDecimal profitRateFlag;
+
+        /**
          * 平台费率
          */
         private BigDecimal platformRate;
