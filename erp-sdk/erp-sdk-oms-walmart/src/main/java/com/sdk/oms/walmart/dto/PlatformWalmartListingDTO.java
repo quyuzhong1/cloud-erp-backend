@@ -60,20 +60,21 @@ public class PlatformWalmartListingDTO extends CleanBaseDTO {
             }
         }
         PlatformProductDTO resultDto = new PlatformProductDTO();
-
         //平台sku
         resultDto.setPlatformSkuNo(itemResponseBean.getSku());
         // 平台产品名称
         resultDto.setPlatformSkuName(itemResponseBean.getProductName());
-        // 平台产品名称
-        resultDto.setPlatformProductName(itemResponseBean.getProductName());
         // 类型 platform 平台  warehouse 仓库
         resultDto.setPlatformType("platform");
         //产品规格
         resultDto.setProductSpec(spec);
         // 平台
         resultDto.setPlatform(dto.getPlatform());
-        resultDto.setUniqueId(itemResponseBean.getWpid());
+        //平台产品id
+        resultDto.setPlatformProductNo(itemResponseBean.getWpid());
+        // 平台产品名称
+        resultDto.setPlatformProductName(itemResponseBean.getProductName());
+        resultDto.setUniqueId(itemResponseBean.getSku());
         return resultDto;
     }
 }

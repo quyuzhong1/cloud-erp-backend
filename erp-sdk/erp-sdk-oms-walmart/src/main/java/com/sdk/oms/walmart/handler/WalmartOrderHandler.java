@@ -113,7 +113,7 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
 
         // 返回下载源数据
         return orderBeanList.stream()
-                .map(e -> new PlatformWalmartOrderDTO(e, data, shopInfoDTO))
+                .map(e -> new PlatformWalmartOrderDTO(e, data, shopInfoDTO.getId()))
                 .collect(Collectors.toList());
     }
 

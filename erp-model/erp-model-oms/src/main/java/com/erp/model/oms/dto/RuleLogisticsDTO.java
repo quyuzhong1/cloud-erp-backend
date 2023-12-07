@@ -156,15 +156,12 @@ public class RuleLogisticsDTO implements Serializable {
          */
         private String modeTypeName;
 
-        /**
-         * 物流供应商
-         */
-        private String supplier;
+        private String logisticsSupplierId;
 
         /**
-         * 物流方式
+         * 物流渠道 来源 http://172.16.100.11:3002/project/128/interface/api/26908
          */
-        private String mode;
+        private String logisticsChannelId;
 
         /**
          * 是否自动获取物流单号

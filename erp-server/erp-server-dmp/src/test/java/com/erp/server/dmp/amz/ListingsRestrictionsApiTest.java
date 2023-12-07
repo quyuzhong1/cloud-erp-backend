@@ -21,6 +21,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -39,25 +40,25 @@ import java.util.List;
 public class ListingsRestrictionsApiTest {
 
     private final ListingsRestrictionsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
-
     public ListingsRestrictionsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-        ListingsRestrictionsApi listingsRestrictionsApi = new ListingsRestrictionsApi.Builder()
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
-                //北美，https://sellingpartnerapi-na.amazon.com
-                //欧洲，https://sellingpartnerapi-eu.amazon.com
-                //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
-                .build();
-        if (null == listingsRestrictionsApi) {
-            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-        }
-        return listingsRestrictionsApi;
+//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+//        ListingsRestrictionsApi listingsRestrictionsApi = new ListingsRestrictionsApi.Builder()
+//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+//                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+//                //北美，https://sellingpartnerapi-na.amazon.com
+//                //欧洲，https://sellingpartnerapi-eu.amazon.com
+//                //远东，https://sellingpartnerapi-fe.amazon.com
+//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+//                .build();
+//        if (null == listingsRestrictionsApi) {
+//            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+//        }
+//        return listingsRestrictionsApi;
+        return null;
     }
 
     

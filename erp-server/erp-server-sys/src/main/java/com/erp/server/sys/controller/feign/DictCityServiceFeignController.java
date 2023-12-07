@@ -3,7 +3,6 @@ package com.erp.server.sys.controller.feign;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.ImlDictCityEntity;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.ImlDictCityService;
