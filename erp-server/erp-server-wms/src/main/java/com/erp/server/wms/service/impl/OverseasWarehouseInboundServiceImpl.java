@@ -334,6 +334,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         mainEntity.setInstockType(updateDTO.getInstockType().getCode());
         mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        if (null != updateDTO.getEstimatedArrivalDate()){
+            mainEntity.setEstimatedArrivalDate(LocalDateTime.of(updateDTO.getEstimatedArrivalDate(), LocalTime.MIN));
+        }
+        if (null != updateDTO.getEstimatedCollectDate()){
+            mainEntity.setEstimatedCollectDate(LocalDateTime.of(updateDTO.getEstimatedCollectDate(), LocalTime.MIN));
+        }
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
         Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
