@@ -690,6 +690,14 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String pickingWarehouseName;
         /**
+         * 目的仓库id
+         */
+        private String toWarehouseId;
+        /**
+         * 目的仓库中文
+         */
+        private String toWarehouseName;
+        /**
          * 拣货仓仓位
          */
         private String pickingWarehouseLocation;
@@ -732,11 +740,11 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 仓库Id
          */
-        private String toWarehouseId;
+        private String fromWarehouseId;
         /**
          * 仓库名称
          */
-        private String toWarehouseName;
+        private String fromWarehouseName;
         /**
          * 推荐仓位
          */

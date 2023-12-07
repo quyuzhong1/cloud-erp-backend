@@ -57,7 +57,7 @@ public class SysLoginAuthController extends BaseController {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.accountLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {
-            return failure(code, apiResult.getMsg(), apiResult.getMsg());
+            return failure(code, apiResult.getMsg(), null);
         } else {
             SysUserDTO info = apiResult.getData();
             String ip = IpUtils.getIpAddress(request);
@@ -92,7 +92,7 @@ public class SysLoginAuthController extends BaseController {
         ApiResult<SysUserDTO> apiResult = sysUserFeign.scanCodeLogin(loginDTO);
         int code = apiResult.getCode();
         if (code != 200) {
-            return failure(code, apiResult.getMsg(), apiResult.getMsg());
+            return failure(code, apiResult.getMsg(), null);
         } else {
             SysUserDTO info = apiResult.getData();
             String ip = IpUtils.getIpAddress(request);

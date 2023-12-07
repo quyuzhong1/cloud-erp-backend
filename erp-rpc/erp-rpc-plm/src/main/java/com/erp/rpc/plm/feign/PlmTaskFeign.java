@@ -460,4 +460,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listProductBySkuIds")
     List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIdList);
+
+    /**
+     * @description: 查询所有父级SKU
+     * @author Will
+     * @date: 2023/11/23 18:13
+     * @param params
+     * @return List<ListAllSkuDTO>
+     */
+    @PostMapping("/feign/bom/listAllParentSku")
+    List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params);
 }

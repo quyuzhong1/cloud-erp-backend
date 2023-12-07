@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
@@ -110,4 +111,15 @@ public class BomSkuFeignController {
         return bomSkuService.listBomVersionBySkuNos(skuNos);
     }
 
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/11/23 18:10
+     * @param params
+     * @return List<ListAllSkuDTO>
+     */
+    @PostMapping("/listAllParentSku")
+    public List<BomSkuPageDTO.ListAllSkuDTO> listAllParentSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params) {
+        return bomSkuService.listAllParentSku(params);
+    }
 }

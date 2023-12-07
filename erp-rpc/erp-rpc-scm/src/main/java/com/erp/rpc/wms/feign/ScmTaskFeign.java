@@ -385,6 +385,16 @@ public interface ScmTaskFeign {
     List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList);
 
 
+   /**
+    * @description: 根据skuId集合查询采购订单成本数据
+    * @author Will
+    * @date: 2023/11/23 16:23
+    * @param paramDTO
+    * @return List<SkuCostDTO>
+    */
+    @PostMapping("feign/purchaseOrder/listPurchaseOrderCost")
+    List<SkuCostDTO> listPurchaseOrderCost(@RequestBody SkuCostDTO.ParamDTO paramDTO);
+
     /**
      * 根据bom sku id 查询委外的数据
      * @author yl

@@ -28,4 +28,16 @@ public class RedisKeyConstant {
      */
     public static String INVENTORY_LOCK_CODE="INVENTORY_LOCK:{}_*";
 
+
+    /**
+     * 库存锁定无法操作
+     * 计划单号
+     */
+    public static String SKU_OCCUPY_CODE="SKU_OCCUPY_CODE:{}_{}";
+    /**
+     * SKU含税成本
+     * skuNo
+     */
+    public static String DMP_SKU_COST_CODE = "DMP_SKU_COST:{}_*";
+
 }

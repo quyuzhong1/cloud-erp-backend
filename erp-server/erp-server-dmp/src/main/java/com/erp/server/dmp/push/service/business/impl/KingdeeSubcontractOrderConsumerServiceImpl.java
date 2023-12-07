@@ -219,7 +219,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         //反审核
         operateDisapprove(apiUtils,platformEntity, map);
         //删除
-        kingdeeCommonService.delete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode(),operate);
         return;
     }
 

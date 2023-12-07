@@ -360,7 +360,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public List<CategorySubjectVO> homePage(String searchKeyword) {
         List<CategorySubjectVO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
-        List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
+
+        List<BiDictEntity> dictList = dictService.listEntityByType(DictEnum.DASHBOARD.getType());
         // 查询用户当前角色
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
 
@@ -391,12 +392,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         List<SubjectVO> subjectList = baseMapper.getSubjectByIds(subjectIdList, searchKeyword);
         String finalDashboardCategoryId = dashboardCategoryId;
-        pairList = pairList.stream().filter(p -> !p.getKey().equals(finalDashboardCategoryId)).collect(Collectors.toList());
-        for (Pair<String, String> pair : pairList) {
-            String categoryId = pair.getKey();
+        dictList = dictList.stream().filter(p -> !p.getId().equals(finalDashboardCategoryId)).collect(Collectors.toList());
+        for (BiDictEntity dictItem : dictList) {
+            String categoryId = dictItem.getId();
             CategorySubjectVO result = new CategorySubjectVO();
             result.setCategoryId(categoryId);
-            result.setCategoryName(pair.getValue());
+            result.setCategoryName(dictItem.getName());
             List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
             for (SubjectVO item : subjectResultList) {
                 //分享给我

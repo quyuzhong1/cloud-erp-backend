@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,14 +71,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         JSON json = JSONUtil.parseFromXml(xmlContent);
         // 2. 解析文件
         JSONObject jsonObject = JSONUtil.parseObj(json.toString());
-//        System.out.println(jsonObject);
+        System.out.println(JSONUtil.toJsonStr(jsonObject));
         JSONArray jsonArray = jsonObject.getJSONObject("Location").getJSONArray("CountryRegion");
-        List<Object> name = jsonArray.stream().map(o -> new JSONObject(o).get("Name")).collect(Collectors.toList());
-        List<Object> code = jsonArray.stream().map(o -> new JSONObject(o).get("Code")).collect(Collectors.toList());
-        System.out.println(name);
-        System.out.println(name.size());
-        System.out.println(code);
-        System.out.println(code.size());
+        LinkedHashMap<Object, Object> collect = jsonArray.stream().collect(Collectors.toMap(item -> new JSONObject(item).get("Name"),
+                item -> new JSONObject(item).get("Code"),
+                (oldValue, newValue) -> oldValue,
+                LinkedHashMap::new
+        ));
+        System.out.println(JSONUtil.toJsonStr(collect));
     }
 
     @Override
@@ -97,7 +94,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         JSONObject jsonObject = JSONUtil.parseObj(json.toString());
         // 3. 生成sql
         JSONArray countryList = jsonObject.getJSONObject("Location").getJSONArray("CountryRegion");
-        countryList.stream().forEach(x -> {
+        countryList.stream().forEach( x -> {
 
             JSONObject temp = (JSONObject) x;
             // 3.1 生成国家sql
@@ -107,15 +104,20 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             DictCountryEntity dictCountry = lambdaQuery()
                     .eq(DictCountryEntity::getId, countryCode)
                     .one();
-            if (StrUtil.isBlank(country) && ObjectUtil.isEmpty(dictCountry)) {
+            if(StrUtil.isBlank(country) && ObjectUtil.isEmpty(dictCountry)){
                 return;
-            } else if (StrUtil.isNotBlank(country) && !country.equals(countryName)) {
+            }else if(StrUtil.isNotBlank(country) && !country.equals(countryName)){
                 return;
             }
+//            if(StrUtil.isBlank(code) && 1 == provinceTemp.size()){
+//                JSONArray city = ((JSONObject) province).getJSONArray("City");
+//                addCity(provinceTemp, countryCode, levelCode + 1, parentId);
+//            }
             // 3.2 生成省份sql
-            addCity(temp, countryCode, 1, "0");
+            addCity(temp,countryCode, 1, "0" ,0);
         });
     }
+
 
     /**
      * 根据国家ids 获取信息
@@ -207,48 +209,54 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         return this.lambdaQuery().eq(DictCountryEntity::getDataFlag, dataFlag).list();
     }
 
-    private boolean addCity(JSONObject temp, String countryCode, Integer levelCode, String parentId) {
+    private boolean addCity(JSONObject temp, String countryCode,Integer levelCode,String parentId, Integer skipLevel) {
         int level = 1;
         String type = "province";
         String key = "State";
-        if (2 == levelCode) {
+        if(2 == levelCode){
             level = 2;
             type = "city";
             key = "City";
         }
-        if (3 == levelCode) {
+        if(3 == levelCode){
             level = 3;
             type = "district";
             key = "Region";
         }
         JSONArray stateList = new JSONArray();
         String stateStr = temp.getStr(key);
-        if (!JSONUtil.isTypeJSONArray(stateStr)) {
+        if(!JSONUtil.isTypeJSONArray(stateStr)){
             stateList.add(JSONUtil.parse(stateStr));
-        } else {
+        }else {
             stateList = temp.getJSONArray(key);
         }
         stateList = stateList.stream().filter(ObjectUtil::isNotEmpty).distinct().collect(JSONArray::new, JSONArray::add, JSONArray::add);
-        if (CollectionUtil.isEmpty(stateList)) {
+        if(CollectionUtil.isEmpty(stateList)){
             return true;
         }
-        Integer finalLevel = level;
+        Integer finalLevel = level - skipLevel;
         String finalType = type;
         stateList.stream().forEach(province -> {
             JSONObject provinceTemp = (JSONObject) province;
             String provinceName = provinceTemp.getStr("Name");
             String code = provinceTemp.getStr("Code");
+            if(StrUtil.isBlank(code)){
+                Integer curSkipLevel = skipLevel + 1;
+                addCity(provinceTemp, countryCode, levelCode + 1, parentId, curSkipLevel);
+                return;
+            }
             DictCityEntity provinceCity = dictCityService.lambdaQuery()
                     .eq(DictCityEntity::getCode, code)
                     .eq(DictCityEntity::getLevel, finalLevel)
+                    .eq(DictCityEntity::getName, provinceName)
                     .one();
-            if (ObjectUtil.isEmpty(provinceCity)) {
+            if(ObjectUtil.isEmpty(provinceCity)){
                 boolean isNum = code.chars().allMatch(Character::isDigit);
                 provinceCity = new DictCityEntity(provinceName, countryCode, parentId, finalLevel, finalType, isNum ? Integer.parseInt(code) : 0, code);
                 dictCityService.save(provinceCity);
             }
 
-            addCity(provinceTemp, countryCode, levelCode + 1, provinceCity.getId());
+            addCity(provinceTemp, countryCode, levelCode + 1, provinceCity.getId(), skipLevel);
         });
         return false;
     }

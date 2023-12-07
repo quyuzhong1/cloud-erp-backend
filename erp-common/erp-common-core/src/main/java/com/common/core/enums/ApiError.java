@@ -481,12 +481,16 @@ public enum ApiError implements Serializable {
     ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
     ERROR_APPROVE_UPDATE_LOCATION(95258, "审核通过后才支持批量更新仓位"),
     ERROR_APPROVE_NOT_START(95259, "存在为空的审核人，流程启动失败"),
+    ERROR_BOM_CONTAIN(95259,"BOM【{}】子级SKU已包含SKU【{}】"),
+
     /**
      * TMS 错误
      * 从96000 开始
      */
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
+    ERROR_NOT_BOM_COMBINATION_PUSH_DOWN(95259, "SKU【{}】非组合产品，不支持下推"),
+
 
     /**
      * bi 错误
@@ -538,6 +542,8 @@ public enum ApiError implements Serializable {
     ERROR_SALE_RANGE_EXIST(97042, "区间类型不能为空"),
     //getSettleMethod
     ERROR_SETTLE_METHOD_EXIST(97043, "结算方式不能为空"),
+    ERP_DMP_SKU_NOT_COST(97044, "sku【{}】未发现成本数据！"),
+
 
     /**
      * SCM 错误
@@ -664,6 +670,9 @@ public enum ApiError implements Serializable {
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
     ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
     SUBMIT_IS_DELETE(98109,"只有待提交和审核不通过数据支持删除"),
+    ERROR_SO_INFO_CUSTOM_FEE_NOT_NULL(98109,"销售订单【{}】报关费用必须大于0"),
+
+
 
 
 
@@ -827,6 +836,10 @@ public enum ApiError implements Serializable {
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
     WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理的单据允许撤销"),
+    ERROR_SO_PUSH_MACHINE(99096, "销售订单【{}】已下推加工单"),
+
+
+
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
@@ -983,6 +996,7 @@ public enum ApiError implements Serializable {
     ERROR_WALMART_CLIENT_SECRET_NOT_NULL(92102,"沃尔玛授权ClientSecret不能为空"),
     ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
+    ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),

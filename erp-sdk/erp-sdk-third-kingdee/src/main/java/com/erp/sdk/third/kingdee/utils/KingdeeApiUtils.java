@@ -133,7 +133,7 @@ public class KingdeeApiUtils {
         String paramJson = JSONUtil.toJsonStr(param);
         try {
             List<List<Object>> apiResult = client.executeBillQuery(paramJson);
-            if (apiResult.isEmpty()) {
+            if (CollectionUtils.isEmpty(apiResult)) {
                 return dataList;
             }
             if (apiResult.size() == 1 && apiResult.get(0).get(0).toString().contains("IsSuccess=false")) {

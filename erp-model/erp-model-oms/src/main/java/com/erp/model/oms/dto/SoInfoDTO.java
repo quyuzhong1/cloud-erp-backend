@@ -534,6 +534,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerOrderNo;
 
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
 
         /**
          * 运单号
@@ -560,6 +564,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
+        /**
+         * 是否组合产品
+         */
+        private Boolean isConstitute;
 
     }
 
@@ -593,6 +601,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
 
         /**
          * 类型
@@ -769,6 +781,12 @@ public class SoInfoDTO implements Serializable {
          */
         @PositiveOrZero(message = "运费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
+
+        /**
+         * 是否报关
+         */
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
 
         /**
          * 报关费
@@ -1071,6 +1089,11 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal customsFee;
 
+        /**
+         * 是否报关
+         */
+        private Boolean isDeclare;
+
 
         /**
          * 收款账号
@@ -1317,6 +1340,11 @@ public class SoInfoDTO implements Serializable {
         private String tradeTerm;
 
 
+        /**
+         * 通讯地址
+         */
+        private String mailAddress;
+
     }
 
 
@@ -1400,6 +1428,11 @@ public class SoInfoDTO implements Serializable {
         @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
         private BigDecimal customsFee;
 
+        /**
+         * 是否报关
+         */
+        @NotNull(message = "是否报关不能为空")
+        private Boolean isDeclare;
 
         /**
          * 客户id
@@ -1707,6 +1740,11 @@ public class SoInfoDTO implements Serializable {
          * 纳税登记号
          */
         private String taxRegisterCode;
+
+        /**
+         * 通讯地址
+         */
+        private String mailAddress;
     }
 
 

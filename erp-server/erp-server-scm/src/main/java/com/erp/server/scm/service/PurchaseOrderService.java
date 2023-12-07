@@ -373,4 +373,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
     List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
+    /**
+     * @description: 根据skuId集合查询采购成本数据
+     * @author Will
+     * @date: 2023/11/23 16:24
+     * @param paramDTO
+     * @return List<SkuCostDTO>
+     */
+    List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO);
 }

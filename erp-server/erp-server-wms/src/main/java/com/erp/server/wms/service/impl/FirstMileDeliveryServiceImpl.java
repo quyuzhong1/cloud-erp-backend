@@ -1203,7 +1203,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
         }
     }
-
     /**
     * 分页查询、导出 数据处理
     */
@@ -1458,11 +1457,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.APPROVE_ING_CAN_TO_OVERSEAS_WAREHOUSE_INBOUND);
         }
 
-        //一个发货单只能下推一个入库单(取消状态不算)，否则提示：已下推入库单，不允许重复操作
+        //一个发货单只能下推一个入库单，否则提示：已下推入库单，不允许重复操作
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(entity.getId()));
-        List<OverseasWarehouseInboundEntity> collect = overseasWarehouseInboundEntities.stream().filter(req -> !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(collect)) {
-            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, collect.get(0).getCode());
+        if (CollectionUtils.isNotEmpty(overseasWarehouseInboundEntities)) {
+            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInboundEntities.get(0).getCode());
         }
 
         //未装箱不能下推入库单
