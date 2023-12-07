@@ -46,8 +46,8 @@
         <result column="image_url" property="imageUrl"/>
         <result column="sku_id" property="skuId"/>
         <result column="sku_no" property="skuNo"/>
-        <result column="platform_spu_no" property="platformSkuNo"/>
-        <result column="seller_sku_no" property="sellerSkuNo"/>
+        <result column="platform_spu_no" property="platformSpuNo"/>
+        <result column="platform_sku_no" property="platformSkuNo"/>
         <result column="weight" property="weight"/>
         <result column="tax_cost" property="taxCost"/>
         <result column="sourceAmount" property="sourceAmount"/>
@@ -386,7 +386,7 @@
         sb2cd.sku_id,
         sb2cd.sku_no,
         sb2cd.platform_spu_no,
-        sb2cd.seller_sku_no,
+        sb2cd.platform_sku_no,
         sb2cl.weight,
         sb2cd.tax_cost,
         sb2cd.amount as sourceAmount,
@@ -490,7 +490,7 @@
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ) OR (
-            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
             sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
@@ -542,7 +542,7 @@
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             ) OR (
-            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
             )
             OR (
             sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
