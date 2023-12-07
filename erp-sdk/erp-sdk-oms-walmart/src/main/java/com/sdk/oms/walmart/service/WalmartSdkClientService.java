@@ -47,9 +47,14 @@ public class WalmartSdkClientService {
         HashMap<String, Object> paramMap = new HashMap<>();
         Integer pageSize = 50;
         paramMap.put("limit", pageSize);
-
+        paramMap.put("lastModifiedStartDate", "2023-01-01T00:00:00");
+        paramMap.put("lastModifiedEndDate", "2023-12-27T00:00:00");
+        paramMap.put("createdStartDate", "2023-01-01T00:00:00");
+        paramMap.put("createdEndDate", "2023-12-27T00:00:00");
+        paramMap.put("status", "Acknowledged,Shipped");
+        paramMap.put("productInfo", "true");
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        baseUrl = WalmartStaticKey.baseUrl + "items";
+        baseUrl = WalmartStaticKey.baseUrl + "orders";
         String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
         System.out.println(s);
     }
