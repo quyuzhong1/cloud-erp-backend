@@ -983,9 +983,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(receivedEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(mainEntity.getDeliveryWarehouseId());
+            detailAddDto.setOutWarehouseId(warehouseEntity.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(warehouseEntity.getId());
+            detailAddDto.setInWarehouseId(destWarehouse.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(receivedEntity.getId());
             detailAddDtoList.add(detailAddDto);
