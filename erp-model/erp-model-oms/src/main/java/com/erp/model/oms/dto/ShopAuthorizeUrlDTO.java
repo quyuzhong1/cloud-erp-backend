@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 店铺授权DTO
@@ -74,5 +75,10 @@ public class ShopAuthorizeUrlDTO implements Serializable {
      * 亚马逊授权code
      */
     private String spapi_oauth_code;
+
+    /**
+     * 亚马逊批量授权的店铺id
+     */
+    private List<String> shopIdList;
 
 }

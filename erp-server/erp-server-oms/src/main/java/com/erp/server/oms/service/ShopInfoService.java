@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @author yl
      * @date 2023-06-29 10:39
      */
-    Boolean add(ShopDTO.AddDTO dto);
+    List<ShopInfoEntity> add(ShopDTO.AddDTO dto);
 
     /**
      * 修改店铺
@@ -187,4 +188,16 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
      **/
     List<ShopInfoEntity> listShopInfoByWarehouseIds(List<String> warehouseIds);
+
+    /**
+     * 添加并授权店铺
+     */
+    String addAndAuth(ShopDTO.AddDTO dto);
+
+    /**
+     * 添加亚马逊店铺
+     * @param dto
+     * @return
+     */
+    List<ShopInfoEntity> handleAmazonShop(ShopDTO.AddDTO dto);
 }
