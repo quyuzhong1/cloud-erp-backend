@@ -308,12 +308,19 @@
                     </foreach>
                 </if>
                 <if test="params.dateList != null and params.dateList.size > 0">
-                    and tf.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
-                    ) > tf.trade_time
+                    <if test="params.dateType != null and params.dateType != '' and params.dateType = 'approveDate'">
+                        and tf.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
+                        ) > tf.trade_time
+                    </if>
+                    <if test="params.dateType != null and params.dateType != '' and params.dateType = 'billDate'">
+                        and tf.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
+                        ) > tf.bill_date
+                    </if>
                 </if>
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
+
             </where>
             group by tf.warehouse_id, tf.sku_id
             ) m ORDER BY
@@ -685,7 +692,7 @@
         order by tf.sku_id,tf.warehouse_id
     </select>
 
-    <select id="exportDailyInventory"
+    <select id="listDailyInventory"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$ListDailyInventoryDTO">
         select
         sum(tf.qty) as balanceQty,

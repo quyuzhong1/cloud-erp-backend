@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto.third.request;
 
-import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
