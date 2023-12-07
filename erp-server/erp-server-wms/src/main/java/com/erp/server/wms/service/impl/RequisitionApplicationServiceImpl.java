@@ -304,10 +304,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishSave(List<RequisitionApplicationDTO.FinishListDTO> list) {
         //根据调出调入仓id查询仓库信息
-        List<String> pickingWarehouseIds = list.stream().map(req -> req.getPickingWarehouseId()).collect(Collectors.toList());
+        List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
         List<String> requisitionWarehouseIds = list.stream().map(req -> req.getRequisitionWarehouseId()).collect(Collectors.toList());
-        pickingWarehouseIds.addAll(requisitionWarehouseIds);
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(pickingWarehouseIds);
+        toWarehouseIds.addAll(requisitionWarehouseIds);
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(toWarehouseIds);
 
         //查询产品信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDTO.FinishListDTO::getSkuId).collect(Collectors.toList());
