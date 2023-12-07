@@ -298,7 +298,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
-            List<SalesBaseVO> salesTrendList = lastSevenDays.stream().filter(b -> b.getFlagNo().equals(item.getSkuNo()))
+            List<SalesBaseVO> salesTrendList = lastThirtyDays.stream().filter(b -> b.getFlagNo().equals(item.getSkuNo()))
                     .sorted(Comparator.comparing(SalesBaseVO::getFlagDate))
 //                    .map(SalesBaseVO::getSalesQuantity)
                     .collect(Collectors.toList());

@@ -22,6 +22,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
 import com.erp.server.wms.service.OverseasWarehouseInboundReceivedService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
+import com.erp.server.wms.service.TransferInfoService;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -59,6 +60,9 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
+
+    @Resource
+    private TransferInfoService transferInfoService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -161,6 +165,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
                 //生成调拨单
+                transferInfoService.generateFromOverseasInbound(mainEntity,detailList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
             }
         }
         return ApiResult.success();
