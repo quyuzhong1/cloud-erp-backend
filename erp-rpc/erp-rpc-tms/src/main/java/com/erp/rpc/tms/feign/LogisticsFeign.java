@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
@@ -43,4 +44,7 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/getChannelById")
     LogisticsChannelEntity getChannelById(@RequestBody String channelId);
+
+    @PostMapping("/feign/logistics/getChannelInfoById")
+    LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId);
 }

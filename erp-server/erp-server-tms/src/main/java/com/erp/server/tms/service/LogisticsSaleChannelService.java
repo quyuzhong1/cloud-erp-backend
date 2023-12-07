@@ -72,4 +72,14 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      * @return
      */
     List<LogisticsSaleChannelEntity> listByLogisticsPlatform(String logisticsPlatform);
+
+    /**
+     *
+     *@parms platform 平台
+     *@params code 编码
+     *@return
+     *@author yl
+     *@date 2023-12-07
+     */
+    LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String code);
 }

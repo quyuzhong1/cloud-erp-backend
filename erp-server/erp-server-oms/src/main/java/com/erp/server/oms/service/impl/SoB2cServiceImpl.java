@@ -2134,7 +2134,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //仓库数量
         long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
         map.put("deliveryWarehouseQty", warehouseCount);
-        map.put("sellerLogistics", logisticsEntity.getName());
+        map.put("buyLogisticsChannelId", logisticsEntity.getLogisticsChannelId());
         map.put("destCountry", receiverEntity.getCountry());
         map.put("destCity", receiverEntity.getCityName());
         map.put("orderTaxCost", totalTaxCost);

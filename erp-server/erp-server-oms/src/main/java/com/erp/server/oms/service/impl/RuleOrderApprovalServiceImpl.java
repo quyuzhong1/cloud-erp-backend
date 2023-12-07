@@ -131,7 +131,6 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         ruleConditionService.updateRuleCondition(id, conditionList);
 
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleOrderApprovalEntity, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), ruleOrderApprovalEntity.getId(), msg);
         return Boolean.TRUE;
     }

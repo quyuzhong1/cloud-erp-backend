@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
@@ -74,6 +75,16 @@ public class LogisticsFeignController {
     @PostMapping("/getChannelById")
     public LogisticsChannelEntity getChannelById(@RequestBody String channelId){
         return logisticsChannelService.getById(channelId);
+    }
+
+    /**
+     * 获取渠道 根据渠道id
+     * @param channelId
+     * @return
+     */
+    @PostMapping("/getChannelInfoById")
+    public LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId){
+        return logisticsChannelService.getInfoById(channelId);
     }
 
 }

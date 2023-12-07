@@ -110,7 +110,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private LogisticsChannelService logisticsChannelService;
 
     @Autowired
-    private LogisticsMappingService logisticsMappingService;
+    private LogisticsSaleChannelService logisticsSaleChannelService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -379,7 +379,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ParceInfoVO parceInfo = LogisticsBillConverter.INSTANCE.convertParceInfo(packageDTO);
         parceInfo.setTotalQuantity(logisticsProductList.size());
         //根据销售平台和渠道id 获取到原生的渠道
-        LogisticsSaleChannelEntity saleChannel = logisticsMappingService.getBySalesPlatform(salesPlatform, channelId);
+        LogisticsSaleChannelEntity saleChannel =  logisticsSaleChannelService.getBySalesPlatform(salesPlatform, logisticsChannel.getCode());
         if (Objects.isNull(saleChannel)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }

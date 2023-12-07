@@ -351,6 +351,22 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         return resultList;
     }
 
+    @Override
+    public LogisticsChannelDTO.BaseDTO getInfoById(String channelId) {
+        LogisticsChannelEntity entity=this.getById(channelId);
+        if(Objects.isNull(entity)){
+            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+        }
+        LogisticsChannelDTO.BaseDTO baseDTO=new LogisticsChannelDTO.BaseDTO();
+        BeanMapperUtils.copy(entity,baseDTO);
+        String mainId=entity.getMainId();
+        LogisticsSupplierEntity supplierEntity=logisticsSupplierService.getById(mainId);
+        if(Objects.nonNull(supplierEntity)){
+            baseDTO.setLogisticsSupplierName(supplierEntity.getSupplierName());
+        }
+        return baseDTO;
+    }
+
 
     private List<LogisticsChannelEntity> listDbByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {

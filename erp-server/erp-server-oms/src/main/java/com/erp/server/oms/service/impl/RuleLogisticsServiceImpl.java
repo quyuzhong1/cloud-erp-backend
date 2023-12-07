@@ -18,6 +18,9 @@ import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleLogisticsService;
@@ -60,6 +63,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     @Autowired
     private SpElServer spElServer;
 
+    @Autowired
+    private LogisticsFeign logisticsFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -68,7 +74,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(), "")).collect(Collectors.toList());
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -106,7 +112,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
-                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
+                        c.getRightBracket(), c.getLogic(), "")).collect(Collectors.toList());
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
@@ -116,6 +122,8 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
+        handleData(old);
+
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
@@ -247,5 +255,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
      */
     private void handleData(RuleLogisticsEntity ruleLogisticsEntity) {
         // TODO 验证数据 & 数据赋值
+        String logisticsChannelId = ruleLogisticsEntity.getLogisticsChannelId();
+        if (Objects.nonNull(ruleLogisticsEntity)) {
+            LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
+            ruleLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
+            ruleLogisticsEntity.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
+        }
+
     }
 }
