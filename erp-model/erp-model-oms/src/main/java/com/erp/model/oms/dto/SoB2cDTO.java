@@ -1129,9 +1129,9 @@ public class SoB2cDTO implements Serializable {
          */
         private String  platformSkuNo;
         /**
-         * 卖家sku
+         * 平台产品id
          */
-        private String sellerSkuNo;
+        private String platformSpuNo;
         /**
          * 产品名称
          */
