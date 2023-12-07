@@ -16,6 +16,8 @@ public class WalmartItemDTO {
     private int totalItems;
     @SerializedName("ItemResponse")
     private List<ItemResponseBean> ItemResponse;
+    @SerializedName("nextCursor")
+    private String nextCursor;
 
     public int getTotalItems() {
         return totalItems;
