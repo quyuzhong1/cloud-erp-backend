@@ -67,7 +67,7 @@ public class ImlServerTest {
                 .page(1)
                 .pageSize(2)
 //                .receivingCode("RV86526-230919-0005")
-                .receivingCodeArr(Arrays.asList("RV86526-231107-0003","RV86526-231107-0002"))
+                .receivingCodeArr(Arrays.asList("1234564"))
                 .build();
         ImlResponse<List<ImlReceiptResp>> response = imlServer.getReceiptBatch(imlGetReceiptReq);
         System.out.println(response);
