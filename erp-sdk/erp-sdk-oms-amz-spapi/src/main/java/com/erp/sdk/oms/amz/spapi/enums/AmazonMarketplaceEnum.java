@@ -35,9 +35,10 @@ public enum AmazonMarketplaceEnum {
     PL("A1C3SOZRARQ6R3", "波兰", "PL", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.pl"),
     EG("ARBP9OOSHTCHU", "埃及", "EG", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.eg"),
     TR("A33AVAJ2PDY3EV", "土耳其", "TR", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.com.tr"),
-    SA("A17E79C6D8DWNP", "沙特阿拉伯", "SA", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.sa"),
     AE("A2VIGQ35RCS4UG", "阿拉伯联合酋长国", "AE", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.ae"),
     IN("A21TJRUUN4KGV", "印度", "IN", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.in"),
+    // 分开
+    SA("A17E79C6D8DWNP", "沙特阿拉伯", "SA", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.sa"),
     // 远东
     SG("A19VAU5U5O7RUS", "新加坡", "SG", AmazonEndpointsEnum.US_WAST_2, "https://sellercentral.amazon.sg"),
     AU("A39IBJ37TRP1C6", "澳大利亚", "AU", AmazonEndpointsEnum.US_WAST_2, "https://sellercentral.amazon.com.au"),

@@ -22,6 +22,7 @@ import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,9 +74,20 @@ public class ShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
-        Boolean result = shopInfoService.add(dto);
-        return result ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
+       List<ShopInfoEntity> list = shopInfoService.add(dto);
+        return CollectionUtils.isEmpty(list) ? success() : failure();
+    }
+
+    /**
+     * 添加并授权店铺
+     *
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加并授权店铺")
+    @PostMapping("/addAndAuth")
+    public ApiResult<?> addAndAuth(@RequestBody @Validated ShopDTO.AddDTO dto) {
+        String resultUrl = shopInfoService.addAndAuth(dto);
+        return success(resultUrl);
     }
 
 

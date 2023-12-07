@@ -15,6 +15,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -56,6 +57,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -125,7 +128,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(ShopDTO.AddDTO dto) {
+    public List<ShopInfoEntity> add(ShopDTO.AddDTO dto) {
         ShopInfoEntity shop = new ShopInfoEntity();
         String dictPlatform = dto.getDictPlatform();
         //亚马逊
@@ -136,8 +139,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //如果是亚马逊
         if (amazon.getCode().equals(dictPlatform)) {
-            Boolean result = handleAmazonShop(dto);
-            return result;
+            return this.handleAmazonShop(dto);
         }
 
         if (shopify.getCode().equals(dictPlatform)) {
@@ -165,15 +167,27 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shop.setWarehouseName(updateDTO.getName());
         shop.setChargeName(chargeName);
 
-        Boolean result = this.save(shop);
+        boolean result = this.save(shop);
         if (result) {
             //店铺客户信息
             autoCreateShopCustomer(shop);
         }
-        return result;
+        return Collections.singletonList(shop);
 
     }
 
+    public static void main(String[] args) {
+        String ss = "http%3A%2F%2F172.16.100.12%3A8060%2Fstore-permission-result%3Fspapi_oauth_code%3DANLbKHVKmmWYqPkwZWpX%26\n" +
+                "state%3DGSA_WYJksOSGbQBhDpi9dbK7yh5fM9lWctivmxcrpnOKZcYfQuTUtkYd4IgbROvuzmrsm8cBX2%252FlZLGrFgqINlYyoAbpuAJW%252FuHOnffDv6HqUBGMyXkmsGPhvFX66kpHwMCItch796kr5u86dbANEyvodd%2520L%2520h%2520cCmB3epYW%2520vLKbHxvK2iGgXpDmocLDVleFJjzgGAWjqXQXkFPwGlQDc5snzDFZN3HlnRP0nsbXplpMJ4Uak6xPOue5%25207B4V4dthSqCGw81FFid8qEUsjaKi%252Fx3pKxOPos3sDMgIe%252Fd08B7FHx3t4CcbdZnwhbn9ZGKwaFgsuQ3PGN3W8Sw6qYaQ%26selling_partner_id%3DA14CMR6OBEUS8X%26spapi_oauth_code%3DANLbKHVKmmWYqPkwZWpX%26state%3DGSA_WYJksOSGbQBhDpi9dbK7yh5fM9lWctivmxcrpnOKZcYfQuTUtkYd4IgbROvuzmrsm8cBX2%252FlZLGrFgqINlYyoAbpuAJW%252FuHOnffDv6HqUBGMyXkmsGPhvFX66kpHwMCItch796kr5u86dbANEyvodd%2520L%2520h%2520cCmB3epYW%2520vLKbHxvK2iGgXpDmocLDVleFJjzgGAWjqXQXkFPwGlQDc5snzDFZN3HlnRP0nsbXplpMJ4Uak6xPOue5%25207B4V4dthSqCGw81FFid8qEUsjaKi%252Fx3pKxOPos3sDMgIe%252Fd08B7FHx3t4CcbdZnwhbn9ZGKwaFgsuQ3PGN3W8Sw6qYaQ%26selling_partner_id%3DA14CMR6OBEUS8X&type=1&isDemo=false\n";
+        try {
+            String decode = URLDecoder.decode(ss, CommonConstants.UTF8);
+            System.out.println(decode);
+            String s = decode.replaceAll("%2F", "/");
+            System.out.println(s);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * 店铺保存成功后 自动创建客户
@@ -274,7 +288,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @author yl
      * @date 2023-08-21 15:07
      */
-    public Boolean handleAmazonShop(ShopDTO.AddDTO dto) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ShopInfoEntity> handleAmazonShop(ShopDTO.AddDTO dto) {
         if (StringUtils.isBlank(dto.getDictAreaCode())) {
             throw new ServiceException("区域不能为空");
         }
@@ -321,9 +337,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-            return this.saveBatch(addList);
+             if (!this.saveBatch(addList)){
+                throw new ServiceException("批量保存失败");
+             }
         }
-        return Boolean.FALSE;
+        return addList;
 
     }
 
@@ -870,5 +888,24 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return Collections.emptyList();
         }
         return lambdaQuery().in(ShopInfoEntity::getWarehouseId, warehouseIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndAuth(ShopDTO.AddDTO dto) {
+        List<ShopInfoEntity> list = this.add(dto);
+        if (CollectionUtils.isEmpty(list)){
+            throw new ServiceException("添加店铺失败");
+        }
+        ShopInfoEntity infoEntity = list.stream().findFirst().orElse(null);
+        if (null == infoEntity){
+            throw new ServiceException("店铺为空");
+        }
+        List<String> shopIds = list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
+        authorizeUrlDTO.setShopIdList(shopIds);
+        authorizeUrlDTO.setPlatformCode(infoEntity.getDictPlatform());
+
+        return this.getShopAuthorizeUrl(authorizeUrlDTO);
     }
 }
