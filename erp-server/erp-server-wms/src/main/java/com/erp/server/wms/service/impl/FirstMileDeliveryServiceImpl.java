@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -69,7 +70,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
  * <p>
- * FBA发货单 服务实现类
+ * 发货单 服务实现类
  * </p>
  *
  * @author Luo_WG
@@ -150,13 +151,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 数据处理
         handleData(firstMileDeliveryEntity);
 
-        log.info("开始新增FBA发货单");
+        log.info("开始新增发货单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHD);
         firstMileDeliveryEntity.setCode(code);
         boolean save = super.save(firstMileDeliveryEntity);
         if(!save) {
-            throw new ServiceException("FBA发货单保存失败");
+            throw new ServiceException("发货单保存失败");
         }
 
         //保存附件
@@ -166,7 +167,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, idStr);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "FBA发货单" , firstMileDeliveryEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "发货单" , firstMileDeliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), "新增操作");
 
         //新增物流信息
@@ -186,7 +187,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public Boolean update(FirstMileDeliveryDTO.UpdateDTO updateDTO) {
         FirstMileDeliveryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA发货单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
         // 待提交和审核不通过允许修改
         if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || old.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -195,10 +196,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         // 数据处理
         handleData(firstMileDeliveryEntity);
-        log.info("编辑 开始修改FBA发货单数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改发货单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(firstMileDeliveryEntity);
         if(!save) {
-            throw new ServiceException("FBA发货单保存失败");
+            throw new ServiceException("发货单保存失败");
         }
 
         //保存附件
@@ -214,8 +215,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //修改明细数据
         firstMileDeliveryDetailService.update(updateDTO, firstMileDeliveryEntity.getId());
         // 记录主单操作日志
-        log.info("编辑 开始记录FBA发货单日志数据，单号：【{}】", firstMileDeliveryEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), firstMileDeliveryEntity.getCode(), "FBA发货单");
+        log.info("编辑 开始记录发货单日志数据，单号：【{}】", firstMileDeliveryEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), firstMileDeliveryEntity.getCode(), "发货单");
         operateLogService.addModuleOperateLogByObj(old, firstMileDeliveryEntity, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstMileDeliveryEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -266,7 +267,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/fbaDelivery.xlsx";
-        String name = "FBA发货单导出";
+        String name = "发货单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
@@ -281,19 +282,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public BatchResultDTO submit(String id) {
         FirstMileDeliveryEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到FBA发货单数据");
+            throw new ServiceException("未找到发货单数据");
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改FBA发货单状态数据，id：【{}】", id);
+        log.info("提交 开始修改发货单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
         // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动FBA发货单流程，id=：【{}】", entity.getId());
+        log.info("提交 开始启动发货单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录FBA发货单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
+        log.info("提交 开始记录发货单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -360,7 +361,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -476,7 +477,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单单数据"));
+        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
 
@@ -523,7 +524,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             transferInfoService.delete(deletedTransferOutIds);
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -541,7 +542,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
                 List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
-                if (CollectionUtils.isNotEmpty(fbaShipmentReceiveEntities)) {
+                int sum = fbaShipmentReceiveEntities.stream().mapToInt(req -> req.getReceiveQty()).sum();
+                if (sum > 0) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_RECEIVE_EXIST);
                 }
             }
@@ -557,7 +559,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
+        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1043);
@@ -567,12 +569,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
-        log.info("删除 开始删除FBA发货单主单数据，id：【{}】", id);
+        log.info("删除 开始删除发货单主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除FBA发货单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getCode(), "删除FBA发货单数据");
+        log.info("删除 开始删除发货单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getCode(), "删除发货单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -581,19 +583,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
+        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
         // 待提交或审核不通过并且未作废允许作废
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
-        log.info("作废 开始修改FBA发货单状态数据，id：【{}】", id);
+        log.info("作废 开始修改发货单状态数据，id：【{}】", id);
         lambdaUpdate().eq(FirstMileDeliveryEntity::getId, id)
             .set(FirstMileDeliveryEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(FirstMileDeliveryEntity::getInvalidRemark, remark)
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单", remark);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
@@ -605,7 +607,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
-        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到FBA发货单数据"));
+        FirstMileDeliveryEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -613,12 +615,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
-        log.info("撤销 开始修改FBA发货单状态，id：【{}】", id);
+        log.info("撤销 开始修改发货单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "FBA发货单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -637,8 +639,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
+
         //审核通过
         if (ApproveType.PASS.equals(dto.getType())) {
+            //查询发货详情
+            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
             //如果是FBA货件来源，审核通过修改货件发货状态为已发货
             if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
                 FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
@@ -657,24 +663,31 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             //如果是备货海外仓
             if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+                //查询是否下推了入库单
+                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+                if (ObjectUtil.isEmpty(inboundEntity)) {
+                    throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
+                }
+
                 //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
 
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
                 if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
-                    //调用第三方发货 //TODO
 
-                    /*                ThirdWarehouseCreateInboundReq req = new ThirdWarehouseCreateInboundReq();
-                req.setReceivingCode("");
-                req.setReferenceNo(entity.getCode());
-                req.setReceivingType(OverseasInstockTypeEnum.getByCode(inboundEntity.getInstockType()).getTransitTypeEnum().getCode());
-                thirdWarehouseRegistry.getHandler(providerEntity.getCode()).editInboundBill(req, providerEntity.getId());*/
-                }
+                    // 查询发货目的仓平台
+                    OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
 
-                //查询是否下推了入库单
-                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
-                if (ObjectUtil.isEmpty(inboundEntity)) {
-                    throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
+                    // 推送第三方发货单审核通过
+                    ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
+                    if (200 != resultInfo.getCode()) {
+                        log.error("推送第三方仓库【发货单审核通过】失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                        throw new ServiceException("推送第三方仓库【发货单审核通过】失败:" + resultInfo.getMsg());
+                    }
+                    log.info("推送第三方仓库【发货单审核通过】结果: ={}", JSONUtil.toJsonStr(resultInfo));
+
+                    String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据推送第三方仓库发货审核操作 平台返回结果：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单", JSONUtil.toJsonStr(resultInfo));
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "发货单审核");
                 }
 
                 //入库单状态修改为待签收
@@ -682,7 +695,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
 
             //新增直接调拨单
-            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
             String transferOutId = generateTransferOut(entity, detailEntityList);
             if (StringUtils.isNotBlank(transferOutId)) {
                 //提交
@@ -702,7 +714,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public FirstMileDeliveryDTO.ViewDTO view(String id) {
         //发货单主信息
-        FirstMileDeliveryEntity firstMileDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到FBA发货单数据"));
+        FirstMileDeliveryEntity firstMileDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货单数据"));
         FirstMileDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FirstMileDeliveryDTO.ViewDTO.class, firstMileDeliveryEntity);
         //物流信息
         FirstMileDeliveryLogisticsEntity firstMileDeliveryLogisticsEntity = firstMileDeliveryLogisticsService.listByMainId(id);
@@ -1027,7 +1039,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
             //普通加工单
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
-            //来源FBA发货单
+            //来源发货单
             addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
 
             List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
