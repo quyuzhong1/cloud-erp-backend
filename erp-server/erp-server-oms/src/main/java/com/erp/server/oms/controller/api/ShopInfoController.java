@@ -83,7 +83,7 @@ public class ShopInfoController extends BaseController {
      * 添加并授权店铺
      *
      */
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加并授权店铺")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "添加并授权店铺:name={name}")
     @PostMapping("/addAndAuth")
     public ApiResult<?> addAndAuth(@RequestBody @Validated ShopDTO.AddDTO dto) {
         String resultUrl = shopInfoService.addAndAuth(dto);
