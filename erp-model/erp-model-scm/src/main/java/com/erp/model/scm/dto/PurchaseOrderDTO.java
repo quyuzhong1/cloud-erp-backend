@@ -308,6 +308,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String subContractCode;
 
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
          * 产品名称
          */
         private String productName;
