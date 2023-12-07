@@ -167,7 +167,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderTest() throws ApiException {
         String orderId = "TEST_CASE_200";
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderResponse response = api.getOrder(orderId);
         System.out.println("根据ID查询订单");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -182,7 +182,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderAddressTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderAddressResponse response = api.getOrderAddress(orderId);
 
         // TODO: test validations
@@ -196,7 +196,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderBuyerInfoTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderBuyerInfoResponse response = api.getOrderBuyerInfo(orderId);
 
         // TODO: test validations
@@ -211,7 +211,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderItemsResponse response = api.getOrderItems(orderId, nextToken);
 
         // TODO: test validations
@@ -226,7 +226,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsBuyerInfoTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderItemsBuyerInfoResponse response = api.getOrderItemsBuyerInfo(orderId, nextToken);
 
         // TODO: test validations
@@ -240,7 +240,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderRegulatedInfoTest() throws ApiException {
         String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrderRegulatedInfoResponse response = api.getOrderRegulatedInfo(orderId);
 
         // TODO: test validations
@@ -275,7 +275,7 @@ public class OrdersV0ApiTest {
         String earliestDeliveryDateAfter = null;
         String latestDeliveryDateBefore = null;
         String latestDeliveryDateAfter = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, electronicInvoiceStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId, earliestDeliveryDateBefore, earliestDeliveryDateAfter, latestDeliveryDateBefore, latestDeliveryDateAfter);
 
         // TODO: test validations
@@ -291,7 +291,7 @@ public class OrdersV0ApiTest {
      */
 //    @Test
 //    public void updateVerificationStatusTest() throws ApiException {
-//        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+//        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
 //        String orderId = null;
 //        UpdateVerificationStatusRequest payload = null;
 //        api.updateVerificationStatus(orderId, payload);
@@ -329,7 +329,7 @@ public class OrdersV0ApiTest {
         orderItemList.add(orderItem);
         packageDetail.setOrderItems(orderItemList);
         body.setPackageDetail(packageDetail);
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
         String orderId = "902-1106328-1059050";
         api.confirmShipment(body, orderId);
 
