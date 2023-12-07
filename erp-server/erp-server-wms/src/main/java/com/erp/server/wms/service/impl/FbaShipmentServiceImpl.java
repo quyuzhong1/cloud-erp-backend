@@ -721,6 +721,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 记录签收详情
         List<FbaShipmentReceiveEntity> newReceiveEntityList = receiveDTOList
                 .stream()
+                .filter(e-> e.getReceiveQty() > 0)
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToReceiveEntity(
                         detailIdMap.get(StrUtil.format("{}_{}", e.getFnSku() + e.getSellerSku())),
                         e,
@@ -741,9 +742,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.receiveSetSkuMappingInfo(e, listingInfoMap.get(e.getMsku())))
                 .collect(Collectors.toList());
 
-
-        if (!fbaShipmentReceiveService.saveBatch(newReceiveEntityList)) {
-            throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
+        if (!CollectionUtils.isEmpty(newReceiveEntityList)){
+            if (!fbaShipmentReceiveService.saveBatch(newReceiveEntityList)) {
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
+            }
         }
     }
 
@@ -840,12 +842,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         // 记录签收详情和更新判断
         List<FbaShipmentReceiveEntity> newReceiveEntityList = receiveDTOList
                 .stream()
+                .filter(e-> e.getReceiveQty() > 0)
                 .map(e -> FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToReceiveEntity(
                         detailIdMap.get(StrUtil.format("{}_{}", e.getFnSku() + e.getSellerSku())),
                         e,
                         finalEntity,
                         listingInfoMap.get(e.getSellerSku())))
                 .collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(newReceiveEntityList)){
+            return;
+        }
 
         //查询用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
