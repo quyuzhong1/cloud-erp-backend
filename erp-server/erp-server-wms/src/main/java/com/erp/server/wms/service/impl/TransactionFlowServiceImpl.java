@@ -391,9 +391,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response) {
-
-        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.exportDailyInventory(dto);
+    public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params, HttpServletResponse response) {
+        if (ObjectUtils.isEmpty(params.getDate())) {
+            params.setDate(LocalDate.now());
+        }
+        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.exportDailyInventory(params);
         // 填充
         handleDailyInventory(dataList);
         StringBuffer sb = new StringBuffer();
