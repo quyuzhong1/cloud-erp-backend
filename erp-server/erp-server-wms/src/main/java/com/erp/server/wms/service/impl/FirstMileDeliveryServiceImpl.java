@@ -1193,7 +1193,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                     .filter(req -> req.getSourceId().equals(data.getId())
                             && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus()))
-            if (CollectionUtils.isNotEmpty(collect)) {
+            if (CollectionUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
             }
         }
