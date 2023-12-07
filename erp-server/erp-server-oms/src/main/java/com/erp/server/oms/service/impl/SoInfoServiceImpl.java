@@ -772,8 +772,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
             item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
-
-
             if (ignoreInventorySkuIds.contains(skuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
                 item.setIsScarce(Boolean.FALSE);
