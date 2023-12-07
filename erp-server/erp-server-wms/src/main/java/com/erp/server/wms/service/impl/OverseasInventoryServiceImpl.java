@@ -3,17 +3,27 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
-import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
-import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.PackingStatusEnum;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -21,6 +31,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +39,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -44,10 +59,14 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Service
 public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInventoryMapper, OverseasInventoryEntity> implements OverseasInventoryService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private CommonService commonService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -115,7 +134,44 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         params.setPermissionSql(dto.getPermissionSql());
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
+        if (CollectionUtils.isEmpty(pageData.getRecords())){
+            new PagingVO<>(pageData);
+        }
+        //填充分页数据
+        filList(pageData.getRecords());
         return new PagingVO<>(pageData);
+    }
+
+    private void filList(List<OverseasInventoryDTO.ListDTO> list) {
+        // 查询库存映射关系
+        //查询产品信息
+        List<String> skuIdList = list.stream()
+                .map(OverseasInventoryDTO.ListDTO::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+
+        //获取库存sku信息
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> ListStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
+        Map<String, SkuMappingDTO.ListStockSkuNoByProductSkuIdView> viewMap = ListStockSkuNoByProductSkuIdViews
+                .stream()
+                .collect(Collectors.toMap(SkuMappingDTO.ListStockSkuNoByProductSkuIdView::getProductSkuId, Function.identity()));
+
+        // 属性赋值
+        for(OverseasInventoryDTO.ListDTO data : list) {
+            SkuMappingDTO.ListStockSkuNoByProductSkuIdView view = viewMap.get(data.getSkuId());
+            if (null != view){
+                data.setPlatformSku(view.getStockSku());
+                data.setPlatformSkuName(view.getStockSkuName());
+            }
+            SkuVO skuVO = skuVOMap.get(data.getSkuId());
+            if (null != skuVO){
+                data.setProductName(skuVO.getSkuName());
+            }
+        }
+
     }
 
     @Override
