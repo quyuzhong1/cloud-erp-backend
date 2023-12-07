@@ -285,7 +285,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setProductName(skuItemNameMap.get(item.getSkuNo()));
             }
 
-            List<Integer> salesTrend = new ArrayList<>(7);
+            LinkedList<Integer> salesTrend = new LinkedList<>();
             //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
@@ -298,18 +298,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
-
+            List<SalesBaseVO> salesTrendList = lastSevenDays.stream().filter(b -> b.getFlagNo().equals(item.getSkuNo()))
+                    .sorted(Comparator.comparing(SalesBaseVO::getFlagDate))
+//                    .map(SalesBaseVO::getSalesQuantity)
+                    .collect(Collectors.toList());
+            item.setSalesTrendList(salesTrendList);
             for (int i = 6; i >= 0; i--) {
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
-                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                Integer salesQuantity = lastSevenDays.stream().
-                        filter(b -> b.getFlagDate().isAfter(startTime)
-                                && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getSkuNo())
-                                && b.getSales() != null
-                        ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
-                salesTrend.add(salesQuantity);
+                SalesBaseVO salesBaseVO = salesTrendList.stream().filter(b -> b.getFlagDate().toLocalDate().isEqual(flagDay)).findFirst().orElse(null);
+                if (Objects.nonNull(salesBaseVO)){
+                    salesTrend.add(salesBaseVO.getSalesQuantity());
+                }else {
+                    salesTrend.add(0);
+                }
+//                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
+//                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
+//                Integer salesQuantity = lastSevenDays.stream().
+//                        filter(b -> b.getFlagDate().isAfter(startTime)
+//                                && b.getFlagDate().isBefore(endTime)
+//                                && b.getFlagNo().equals(item.getSkuNo())
+//                                && b.getSales() != null
+//                        ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
+//                salesTrend.add(salesQuantity);
             }
             item.setSalesTrend(salesTrend);
 //            BigDecimal sales = item.getSales();
