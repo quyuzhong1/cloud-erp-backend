@@ -101,8 +101,8 @@ public interface FbaShipmentConsumerConverter {
     @Mappings({
             @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
             @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
-            @Mapping(target = "platformSpuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
-            @Mapping(target = "platformSkuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
+            @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
+            @Mapping(target = "msku", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
             @Mapping(target = "isCombination", expression = "java(null != listingInfoWithSkuMappingDTO && hasChildrenSkuIds.contains(listingInfoWithSkuMappingDTO.getProductSkuId()))"),
     })
     FbaShipmentDetailEntity detailSetSkuMappingInfo(FbaShipmentDetailEntity detailEntity,
