@@ -30,6 +30,8 @@ public class RuleConditionDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO extends CommonDTO {
 
+        private String id;
+
         /**
          * 字段名
          */
@@ -89,6 +91,8 @@ public class RuleConditionDTO implements Serializable {
         @NotBlank(message = "条件的字段不能为空")
         @Size(max = 30, message = "条件的字段最大长度不能超过30位")
         private String field;
+
+        private String fieldName;
 
         /**
          * 下拉逻辑关系

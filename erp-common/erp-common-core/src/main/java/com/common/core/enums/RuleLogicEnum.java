@@ -1,5 +1,7 @@
 package com.common.core.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @author Lambda
  * @Classname RuleCompareEnum
@@ -7,7 +9,7 @@ package com.common.core.enums;
  * @Date 2023-09-06 20:31
  * @Created by yl
  */
-public enum RuleLogicEnum {
+public enum RuleLogicEnum  implements EnumMessage {
 
 
 

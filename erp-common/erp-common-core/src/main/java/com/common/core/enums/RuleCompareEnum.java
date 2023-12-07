@@ -1,5 +1,7 @@
 package com.common.core.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @author Lambda
  * @Classname RuleCompareEnum
@@ -7,7 +9,7 @@ package com.common.core.enums;
  * @Date 2023-09-06 20:31
  * @Created by yl
  */
-public enum RuleCompareEnum {
+public enum RuleCompareEnum implements EnumMessage {
     GT(">", "大于"),
     GE(">=", "大于等于"),
     LT("<", "小于"),

@@ -34,6 +34,10 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     */
     @TableField("field")
     private String field;
+
+    @TableField(exist = false)
+    private String fieldName;
+
     /**
     * 比较浮
     */

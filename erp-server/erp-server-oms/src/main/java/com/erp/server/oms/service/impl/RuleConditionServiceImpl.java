@@ -25,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -179,15 +176,30 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRuleCondition(String ruleId, List<RuleConditionDTO.UpdateDTO> conditionList) {
+        List<CfgConditionEntity> cfgConditionList = cfgConditionService.list();
         List<RuleConditionDTO.UpdateDTO> updateList = conditionList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         int i = 1;
         for (RuleConditionDTO.UpdateDTO item : conditionList) {
             item.setIndex(i);
             i++;
         }
+        String moduleType = ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode();
         List<RuleConditionEntity> saveOrUpdateList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
-        saveOrUpdateList.forEach(s -> s.setRuleId(ruleId));
+        for (RuleConditionEntity obj : saveOrUpdateList) {
+            obj.setRuleId(ruleId);
+            String field = obj.getField();
+            String fieldName = cfgConditionList.stream().filter(c -> c.getConditionField().equals(field)).findFirst().
+                    map(CfgConditionEntity::getConditionFieldName).orElse(field);
+            obj.setFieldName(fieldName);
+        }
+
         List<RuleConditionEntity> dbList = this.listDbByRuleId(ruleId);
+        for (RuleConditionEntity item : dbList) {
+            String field = item.getField();
+            String fieldName = cfgConditionList.stream().filter(c -> c.getConditionField().equals(field)).findFirst().
+                    map(CfgConditionEntity::getConditionFieldName).orElse(field);
+            item.setFieldName(fieldName);
+        }
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         //获取到删除的ids
@@ -196,10 +208,21 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(ruleId, obj.getField())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), removePairList, "编辑操作");
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(ruleId, obj.getFieldName())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
+        //添加的条件
+        List<RuleConditionEntity> addList = saveOrUpdateList.stream().filter(r -> StringUtils.isBlank(r.getId())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(ruleId, obj.getFieldName())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("添加一个条件字段【%s】", moduleType, addPairList, "添加操作");
+        //修改的
+        List<RuleConditionEntity> updateRuleConditionList = saveOrUpdateList.stream().filter(r -> StringUtils.isNotBlank(r.getId())).collect(Collectors.toList());
+        for (RuleConditionEntity updateItem : updateRuleConditionList) {
+            RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(old)) {
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, "修改了订单规则");
+            }
+        }
         this.saveOrUpdateBatch(saveOrUpdateList);
-
     }
 
     /**
@@ -219,11 +242,11 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         List<CfgConditionEntity> cfgConditionList = cfgConditionService.listByFields(fieldList);
         for (RuleConditionEntity item : list) {
             String fieldFlag = item.getField();
-            String valueType=  cfgConditionList.stream().filter(c->c.getConditionField().equals(fieldFlag)).
+            String valueType = cfgConditionList.stream().filter(c -> c.getConditionField().equals(fieldFlag)).
                     findFirst().map(CfgConditionEntity::getValueType).orElse("String");
             item.setValueType(valueType);
         }
-        return  list;
+        return list;
     }
 
     /**

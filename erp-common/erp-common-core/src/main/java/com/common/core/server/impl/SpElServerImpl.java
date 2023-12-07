@@ -99,6 +99,15 @@ public class SpElServerImpl implements SpElServer {
     @Override
     public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
         SpElExpressionDTO spElDTO = getConditionExpression(conditionList, obj);
+        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get("detailList");
+        for (SpElAddFieldDTO item : addFieldList) {
+            //原始字段
+            String originalField = item.getOriginalField();
+            List<Object> valueList = getValueList(originalField, mapList);
+            String addField = item.getNeedAddField();
+            obj.put(addField, valueList);
+        }
         return matchExpression(spElDTO.getExpression(), obj);
 
     }
@@ -158,9 +167,13 @@ public class SpElServerImpl implements SpElServer {
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
+                            String addField = getAddField(field, addFieldList);
+                            content = getContent(addField,compare,conversionValue,isStr);
                             content = convertToContainsExpression(content);
                             break;
                         case NOT_CONTAINS:
+                            String addField1 = getAddField(field, addFieldList);
+                            content = getContent(addField1,compare,conversionValue,isStr);
                             content = convertToNotContainsExpression(content);
                             break;
                         case IS_NULL:
@@ -204,6 +217,7 @@ public class SpElServerImpl implements SpElServer {
         StringBuilder sb=new StringBuilder("['");
         sb.append(field).append("'] ");
         sb.append(compare);
+        sb.append(" ");
         if(isStr){
             sb.append("'");
             sb.append(targetValue);
@@ -399,12 +413,31 @@ public class SpElServerImpl implements SpElServer {
     public static void main(String[] args) {
         ExpressionParser parser = new SpelExpressionParser();
         String conditionExpression = "( ['skuNo'].contains('3306') )";
+        List<ConditionElement> conditionList=new ArrayList<>();
+        ConditionElement conditionElement=new ConditionElement();
+        conditionElement.setCompare("notContains");
+        conditionElement.setField("skuNo");
+        conditionElement.setLeftBracket("(");
+        conditionElement.setLogic("");
+        conditionElement.setRightBracket(")");
+        conditionElement.setValue("2.3100");
+        conditionElement.setValueType("BigDecimal");
+        conditionList.add(conditionElement);
         Map<String, Object> map = new HashMap<>();
-        map.put("skuNo", "3307,3305");
-        Expression exp = parser.parseExpression(conditionExpression);
-        EvaluationContext context2 = new StandardEvaluationContext(map);
-        boolean result2 = exp.getValue(context2, Boolean.class);
-        System.out.println(result2);
+        map.put("skuNo", "3305");
+        List<Map<String,Object>> list=new ArrayList<>();
+        Map<String,Object> m1=new HashMap<>();
+        m1.put("skuNo",2.32);
+
+        Map<String,Object> m2=new HashMap<>();
+        m2.put("skuNo",1.56);
+        list.add(m1);
+        list.add(m2);
+        map.put("detailList",list);
+
+        SpElServerImpl spElServer=new SpElServerImpl();
+        Boolean result= spElServer.matchExpressionByConditionList(conditionList,map);
+        System.out.println(result);
     }
 
 

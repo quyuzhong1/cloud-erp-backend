@@ -2101,7 +2101,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoB2cDetailList(detailList);
         SoB2cDTO.FinancialInfoDTO financialInfo = getFinancialInfo(dto, Boolean.FALSE);
         map.put("dictPayMethod", soB2cEntity.getDictPayMethod());
-        map.put("goodsTotalQty", skuIdList.size());
+        Integer goodsTotalQty=detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
+        map.put("goodsTotalQty", goodsTotalQty);
         LocalDateTime payTime = soB2cEntity.getPayTime();
         String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
         map.put("payTime", payTimeStr);
@@ -2148,7 +2149,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("skuQty", detailEntity.getQty());
             detailMap.put("skuNo", detailEntity.getSkuNo());
             detailMap.put("dictPayMethod", soB2cEntity.getDictPayMethod());
-            detailMap.put("goodsTotalQty", skuIdList.size());
+            detailMap.put("goodsTotalQty", goodsTotalQty);
             detailMap.put("payTime", payTimeStr);
             detailMap.put("packageWeight", logisticsEntity.getWeight());
             detailMap.put("packageLength", logisticsEntity.getLength());
