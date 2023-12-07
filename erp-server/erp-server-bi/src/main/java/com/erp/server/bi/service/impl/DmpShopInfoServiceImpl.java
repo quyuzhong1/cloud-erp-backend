@@ -293,6 +293,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         List<DmpShopInfoEntity> list = this.lambdaQuery()
                 .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
+                .orderByAsc(DmpShopInfoEntity::getName)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.emptyList();
