@@ -54,11 +54,17 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     */
     @TableField("logistics_supplier_id")
     private String logisticsSupplierId;
+
+    @TableField(exist = false)
+    private String logisticsSupplierName;
     /**
     * 物流渠道id
     */
     @TableField("logistics_channel_id")
     private String logisticsChannelId;
+
+    @TableField(exist = false)
+    private String logisticsChannelName;
     /**
     * 是否自动获取物流单号 
     */

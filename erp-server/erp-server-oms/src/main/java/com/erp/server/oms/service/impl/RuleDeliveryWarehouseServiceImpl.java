@@ -130,7 +130,6 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleDeliveryWarehouseEntity, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), ruleDeliveryWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }

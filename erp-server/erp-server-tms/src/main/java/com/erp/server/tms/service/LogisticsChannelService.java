@@ -151,4 +151,13 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      *@date 2023-11-28
      */
     List<BaseDropDownDTO.DisabledDTO> listByLogisticsSupplierId(String logisticsSupplierId);
+
+    /**
+     * 获取信息
+     * @author yl
+     * @date 2023-12-07 19:22
+     * @param channelId 渠道id
+     * @return
+     */
+    LogisticsChannelDTO.BaseDTO getInfoById(String channelId);
 }
