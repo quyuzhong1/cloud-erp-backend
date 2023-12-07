@@ -13,6 +13,8 @@ public class ItemBean {
     private String productName;
     @SerializedName("sku")
     private String sku;
+    @SerializedName("wpid")
+    private String wpid;
     @SerializedName("imageUrl")
     private String imageUrl;
 
@@ -30,6 +32,14 @@ public class ItemBean {
 
     public void setSku(String sku) {
         this.sku = sku;
+    }
+
+    public String getWpid() {
+        return wpid;
+    }
+
+    public void setWpid(String wpid) {
+        this.wpid = wpid;
     }
 
     public String getImageUrl() {
