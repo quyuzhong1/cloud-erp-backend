@@ -10,6 +10,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -27,14 +28,17 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -52,6 +56,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -191,6 +196,21 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         //提交
         this.submit(Arrays.asList(id));
+        return id;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndApprove(OtherOutstockDTO.AddDTO dto) {
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        //审核
+        this.approve(id,ApproveTypeEnum.PASS.getStatus(),"");
         return id;
     }
 
@@ -725,5 +745,53 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark) {
+        //目的仓
+        WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+        OtherOutstockDTO.AddDTO addDTO = this.buildLossMainDto(destWarehouse);
+        List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+            OtherOutstockDetailDTO.AddDTO detailAddDTO = new OtherOutstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(detailEntity.getSkuId());
+            detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+            detailAddDTO.setActualQty(Math.abs(detailEntity.getDiffQty()));
+            detailAddDTO.setRemark(remark);
+            detailAddDTOList.add(detailAddDTO);
+        }
+        addDTO.setDetailList(detailAddDTOList);
+        return this.addAndApprove(addDTO);
+    }
+
+    /**
+     * 封装报损出库单主记录
+     */
+    @Override
+    public OtherOutstockDTO.AddDTO buildLossMainDto(WarehouseEntity warehouse){
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (org.apache.commons.lang3.StringUtils.isBlank(warehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+        OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
+        //出库日期
+        addDTO.setBillDate(LocalDate.now());
+        //库存方向：普通
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        //发货仓库id
+        addDTO.setWarehouseId(warehouse.getOnwayWarehouseId());
+        //部门
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO =  sysUserFeign.getDeptByUserId(loginUser.getUid());
+        addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+        //出库类型：报损
+        addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
+        addDTO.setReceiveOrgId(warehouse.getOrgId());
+        return addDTO;
     }
 }
