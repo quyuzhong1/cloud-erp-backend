@@ -1186,10 +1186,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //产品名称
             data.setProductName(skuVO.getSkuName());
             //待审核人
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            List<String> curApproveName = processTaskManagementEntities.stream()
+                    .filter(req -> req.getBusinessId().equals(data.getId())
+                            && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING))
+                    .map(ProcessTaskManagementEntity::getCurApproveName)
+                    .distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
-
+            //查询已下推的入库单获取入库单号
             OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                     .filter(req -> req.getSourceId().equals(data.getId())
                             && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
