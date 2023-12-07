@@ -18,6 +18,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -54,6 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -104,6 +106,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private DictBasicService dictBasicService;
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private OtherInstockService otherInstockService;
+    @Resource
+    private OtherOutstockService otherOutstockService;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -269,7 +275,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         Boolean flag = lambdaUpdate()
-                .set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.IS_OVER.getCode())
+                .set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode())
                 .in(FbaShipmentEntity::getId, ids).update();
 
 
@@ -875,9 +881,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             // 查询是否有发货单号
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
             if (null != deliveryEntity ){
-
-                // TODO 校验是否手动完结，如果已经完结，多余的放到其他入库，状态改成已发货
-
                 // 当前店铺
                 ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
 
@@ -887,11 +890,109 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
 
+                // TODO 校验是否手动完结，如果已经手动完结，多余的放到其他入库，状态改成已发货
+                //FBA货件已完结，自动生成其他入库
+                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+
+                }
+
+
+                //如果收货数量等于申报数量，修改货件状态为自动完结
+                int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
+                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
+                int declareQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeclareQty()).sum();
+                if (receiveQtySum == declareQtySum) {
+                    this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
+                }
+
             } else {
                 log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
-                // TODO 找不到货件 直接生成其他入库到目的仓，备注：没找到货件，
+
+                // TODO 找不到货件 直接生成其他入库到目的仓的可用，备注：没找到货件，
             }
         }
+    }
+
+    /**
+     * 修改发货状态
+     * @Author Luo_WG
+     * @Date 2023/12/7 16:54
+     * @param id
+     * @param deliveryStatus
+     * @return java.lang.Boolean
+     **/
+    private Boolean updateDeliveryStatus(String id, String deliveryStatus) {
+        return lambdaUpdate().eq(FbaShipmentEntity::getId, id).set(FbaShipmentEntity::getDeliveryStatus, deliveryStatus).update();
+    }
+
+    /**
+     * 生成其他入库单
+     * @Author Luo_WG
+     * @Date 2023/12/7 16:15
+     * @param newReceiveEntityList
+     * @param remark
+     * @return void
+     **/
+    private void generateOtherInstock(List<FbaShipmentReceiveEntity> newReceiveEntityList, String remark) {
+        OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
+        //入库日期
+        addDTO.setBillDate(LocalDate.now());
+        //库存方向
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        //收货仓库id
+        addDTO.setWarehouseId("");
+        //部门
+        addDTO.setDeptId("");
+        //入库类型：报溢
+        addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
+        List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : newReceiveEntityList) {
+            OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
+            detailAddDTO.setSkuNo(fbaShipmentReceiveEntity.getSkuNo());
+            detailAddDTO.setActualQty(fbaShipmentReceiveEntity.getReceiveQty());
+            detailAddDTO.setRemark(remark);
+            detailAddDTOList.add(detailAddDTO);
+        }
+        addDTO.setDetailList(detailAddDTOList);
+        otherInstockService.add(addDTO);
+    }
+
+    /**
+     * 生成其他入库单
+     * @Author Luo_WG
+     * @Date 2023/12/7 16:15
+     * @param newReceiveEntityList
+     * @param remark
+     * @return void
+     **/
+    private void generateOtherOutstock(List<FbaShipmentReceiveEntity> newReceiveEntityList, String remark) {
+        OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
+        //出库日期
+        addDTO.setBillDate(LocalDate.now());
+        //库存方向：普通
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        //发货仓库id
+        addDTO.setWarehouseId("");
+        //部门
+        addDTO.setDeptId("");
+        //入库类型：报损
+        addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
+        //领料部门
+        addDTO.setDeptId("");
+        //入库类型：三无产品
+        addDTO.setDeptId(InstockTypeEnum.THREE_NO_PRODUCT.getCode());
+        List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : newReceiveEntityList) {
+            OtherOutstockDetailDTO.AddDTO detailAddDTO = new OtherOutstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
+            detailAddDTO.setSkuNo(fbaShipmentReceiveEntity.getSkuNo());
+            detailAddDTO.setActualQty(fbaShipmentReceiveEntity.getReceiveQty());
+            detailAddDTO.setRemark(remark);
+            detailAddDTOList.add(detailAddDTO);
+        }
+        addDTO.setDetailList(detailAddDTOList);
+        otherOutstockService.add(addDTO);
     }
 
     @Override
@@ -1091,7 +1192,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         }
         //完结不修改状态
-        if (!FbaDeliveryStatusEnum.IS_OVER.getCode().equals(shipmentEntity.getDeliveryStatus())) {
+        if (!FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+                &&!FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())) {
             lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.SHIPPED.getCode()).update();
         }
         return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);
@@ -1127,7 +1229,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(shipmentEntity.getId()));
         long count = deliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         //完结不修改状态
-        if (!FbaDeliveryStatusEnum.IS_OVER.getCode().equals(shipmentEntity.getDeliveryStatus()) && count <= 1) {
+        if (!FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+                &&!FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(shipmentEntity.getDeliveryStatus())
+                && count <= 1) {
             lambdaUpdate().eq(FbaShipmentEntity::getId, deliveryEntity.getSourceId()).set(FbaShipmentEntity::getDeliveryStatus, FbaDeliveryStatusEnum.UN_SHIPPED.getCode()).update();
         }
         return fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntities);

@@ -11,9 +11,10 @@ import org.apache.commons.lang3.StringUtils;
  * @Date 2023/10/31 16:01
  **/
 public enum FbaDeliveryStatusEnum implements EnumMessage {
-    SHIPPED("shipped", "已发货"),
-    IS_OVER("isOver", "已完结"),
     UN_SHIPPED("unShipped", "未发货"),
+    SHIPPED("shipped", "已发货"),
+    MANUAL_COMPLETION("manualCompletion", "手动完结"),
+    AUTOMATIC_COMPLETION("automaticCompletion", "自动完结"),
     ;
 
     /**

@@ -38,7 +38,7 @@ public class OtherOutstockDetailDTO implements Serializable {
         @NotNull(message = "实发数量不能为空")
         @Min(value = 1,message = "实发数量最小值为1")
         @Max(value = 999999999,message = "实发数量最大值为999999999")
-        private String actualQty;
+        private Integer actualQty;
 
         /**
          * 库位id
