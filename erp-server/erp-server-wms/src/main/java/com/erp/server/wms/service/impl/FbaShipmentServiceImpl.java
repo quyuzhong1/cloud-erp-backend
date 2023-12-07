@@ -7,12 +7,10 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -902,7 +900,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
                 //新增直接调拨单:在途仓-目的仓
                 String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  newReceiveEntityList);
-                if (StringUtils.isBlank(transferOutId)){
+                if (StringUtils.isNotBlank(transferOutId)) {
+                    //提交
+                    transferInfoService.submit(Arrays.asList(transferOutId));
+                    //审核
+                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                    baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+                    baseApproveParamDTO.setType(ApproveType.PASS);
+                    transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+                } else {
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
 
