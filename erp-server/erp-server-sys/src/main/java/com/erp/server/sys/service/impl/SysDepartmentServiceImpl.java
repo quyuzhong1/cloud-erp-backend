@@ -220,6 +220,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
+                .orderByAsc(SysDepartmentEntity::getName)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
