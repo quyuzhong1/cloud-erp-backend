@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -32,6 +33,7 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -40,6 +42,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
@@ -110,6 +113,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private OtherInstockService otherInstockService;
     @Resource
     private OtherOutstockService otherOutstockService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -844,6 +849,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                         listingInfoMap.get(e.getSellerSku())))
                 .collect(Collectors.toList());
 
+        //查询用户信息
+        FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
+
         // 设置绑定的SKU
         newReceiveEntityList.forEach(e -> {
             // 详情Key
@@ -880,9 +888,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             // 查询是否有发货单号
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
+
+
+            // 当前店铺
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
             if (null != deliveryEntity ){
-                // 当前店铺
-                ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(entity.getShopId());
+
+                // 校验是否手动完结，如果已经手动完结，多余的放到其他入库，入到目的仓然后return，不用调拨
+                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+                    this.generateOtherInstock(shopInfoEntity, newReceiveEntityList, userDTO, finalEntity, "FBA货件超收，自动生成其他入库报溢");
+                    return;
+                }
 
                 //新增直接调拨单
                 String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  newReceiveEntityList);
@@ -890,12 +906,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
 
-                // TODO 校验是否手动完结，如果已经手动完结，多余的放到其他入库，状态改成已发货
-                //FBA货件已完结，自动生成其他入库
-                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
-
+                // 校验是否自动完结，生成直接调拨单:在途仓-目的仓，状态改为已发货-已签收
+                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+                    this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
-
 
                 //如果收货数量等于申报数量，修改货件状态为自动完结
                 int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
@@ -908,7 +922,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             } else {
                 log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
 
-                // TODO 找不到货件 直接生成其他入库到目的仓的可用，备注：没找到货件，
+                // 找不到发货单 直接生成其他入库到目的仓的可用
+                this.generateOtherInstock(shopInfoEntity, newReceiveEntityList, userDTO, finalEntity, "未找到发货单，自动生成其他入库报溢");
+
             }
         }
     }
@@ -933,16 +949,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @param remark
      * @return void
      **/
-    private void generateOtherInstock(List<FbaShipmentReceiveEntity> newReceiveEntityList, String remark) {
+    private void generateOtherInstock(ShopInfoEntity shopInfoEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, FindUserDTO userDTO, FbaShipmentEntity finalEntity, String remark) {
         OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
         //入库日期
         addDTO.setBillDate(LocalDate.now());
         //库存方向
         addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         //收货仓库id
-        addDTO.setWarehouseId("");
+        addDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
         //部门
-        addDTO.setDeptId("");
+        addDTO.setDeptId(userDTO.getDepartmentId());
         //入库类型：报溢
         addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
         List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
@@ -980,7 +996,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
         //领料部门
         addDTO.setDeptId("");
-        //入库类型：三无产品
+        //入库类型：报溢
         addDTO.setDeptId(InstockTypeEnum.THREE_NO_PRODUCT.getCode());
         List<OtherOutstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : newReceiveEntityList) {

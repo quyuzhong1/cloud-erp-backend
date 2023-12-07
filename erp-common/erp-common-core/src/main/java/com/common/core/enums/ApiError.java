@@ -815,7 +815,7 @@ public enum ApiError implements Serializable {
     EXIST_GENERATE_MACHINE_INFO(99102,"已下推加工单"),
     IS_GENERATE_MACHINE(99103,"发货单【{}】包含组合产品，请先下推加工单并且审核通过后重试"),
     FBA_DELIVERY_INVENTORY_INSUFFICIENT(99104,"提示：SKU【{}】发货仓【{}】可用库存不足，无法审核发货单"),
-    ERROR_GENERATE_TRANSFER_OUT(99105,"生成分步式调出单失败!"),
+    ERROR_GENERATE_TRANSFER_OUT(99105,"生成直接调拨单失败!"),
     FBA_SHIPMENT_RECEIVE_EXIST(99106,"已经有货件签收数量的发货单不允许反审核!"),
     IS_DELIVERY_FINISH(99107,"只有已发货的货件才能完结!"),
     EXIST_SKU_MAPPING(99108,"此平台sku已存在sku映射关系!"),
