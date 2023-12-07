@@ -900,13 +900,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
 
-                //新增直接调拨单
+                //新增直接调拨单:在途仓-目的仓
                 String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  newReceiveEntityList);
                 if (StringUtils.isBlank(transferOutId)){
                     throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
                 }
 
-                // 校验是否自动完结，生成直接调拨单:在途仓-目的仓，状态改为已发货-已签收
+                // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
                 if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
