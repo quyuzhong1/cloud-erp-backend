@@ -445,11 +445,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             commonDTO.setBlankOtherBySelfHeadway();
         }
 
+        OverseasTransferWarehouseEntity transferEntity = null;
         // 入库类型=自发头程, 交货方式=自送货物
         if (OverseasInstockTypeEnum.TRANSFER_AGENT.equals(commonDTO.getInstockType())) {
             if (StringUtils.isBlank(commonDTO.getDeliveryMode())) {
                 throw new ServiceException("【deliveryMode】交货方式不能为空");
             }
+            // 查询设置中转仓信息
+            transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
+            if (null == transferEntity) {
+                throw new ServiceException("未找到中转仓");
+            }
+            commonDTO.setTransferWarehouseName(transferEntity.getName());
             // 自送货物
             if (OverseasDeliveryModeEnum.SELF_DELIVERY.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())) {
                 if (StringUtils.isBlank(commonDTO.getTransferWarehouseId())) {
@@ -463,7 +470,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
 
-        OverseasTransferWarehouseEntity transferEntity = null;
+
         // 入库类型=自发头程, 交货方式=上面揽收
         if (OverseasInstockTypeEnum.TRANSFER_AGENT.equals(commonDTO.getInstockType())) {
             if (StringUtils.isBlank(commonDTO.getDeliveryMode())) {
@@ -623,6 +630,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (StringUtils.isBlank(entity.getDictPlatform())){
             // 没有平台对接的入库单
             entity.setFinishStatus(OverseasFinishStatusEnum.MANUAL.getCode());
+            entity.setInstockStatus(OverseasInstockStatusEnum.FINISH.getCode());
             entity.setFinishReason(dto.getFinishReason());
         }else{
             //有平台对接的入库单，判断入库状态
