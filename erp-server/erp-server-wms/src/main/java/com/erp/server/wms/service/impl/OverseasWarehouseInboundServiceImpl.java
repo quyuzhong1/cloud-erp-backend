@@ -112,7 +112,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasWarehouseInboundDTO.AddDTO addDTO) {
-        OverseasWarehouseInboundEntity oldEntity = this.getBySourceId(addDTO.getSourceId());
+        OverseasWarehouseInboundEntity oldEntity = this.getBySourceId(addDTO.getSourceId(),  OverseasInstockStatusEnum.CANCELED.getCode());
         if (null != oldEntity) {
             throw new ServiceException("该发货单的入库单已存在");
         }
@@ -390,8 +390,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public OverseasWarehouseInboundEntity getByCode(String receivingCode) {
-        return lambdaQuery().eq(OverseasWarehouseInboundEntity::getCode, receivingCode).one();
+    public OverseasWarehouseInboundEntity getByCode(String receivingCode, String notInStockStatus) {
+        return lambdaQuery()
+                .eq(OverseasWarehouseInboundEntity::getCode, receivingCode)
+                .ne(StringUtils.isNotBlank(notInStockStatus), OverseasWarehouseInboundEntity::getInstockStatus, notInStockStatus)
+                .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
+                .last("LIMIT 1")
+                .one();
     }
 
 
@@ -556,16 +561,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
 
         if (null != commonDTO.getCustomsType()) {
-            mainEntity.setCustomsType(commonDTO.getCustomsType().toString());
+            mainEntity.setCustomsType(commonDTO.getCustomsType());
         }
 
         if (StringUtils.isBlank(dictPlatform)) {
             if (StringUtils.isBlank(commonDTO.getCode())) {
                 throw new ServiceException("发货单未对接海外仓, 单号不能为空");
-            }
-            OverseasWarehouseInboundEntity oldEntity = this.getByCode(commonDTO.getCode());
-            if (null != oldEntity) {
-                throw new ServiceException("code单号已存在");
             }
             mainEntity.setCode(commonDTO.getCode());
         }
@@ -812,9 +813,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     }
 
     @Override
-    public OverseasWarehouseInboundEntity getBySourceId(String sourceId) {
+    public OverseasWarehouseInboundEntity getBySourceId(String sourceId, String notInStockStatus) {
         return lambdaQuery()
                 .eq(OverseasWarehouseInboundEntity::getSourceId, sourceId)
+                .ne(StringUtils.isNotBlank(notInStockStatus), OverseasWarehouseInboundEntity::getInstockStatus, notInStockStatus)
+                .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
                 .last("LIMIT 1")
                 .one();
     }

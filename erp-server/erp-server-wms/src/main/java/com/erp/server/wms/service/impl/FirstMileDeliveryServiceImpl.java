@@ -549,7 +549,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
         }
         //已下推入库单
-        OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+        OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
         if (ObjectUtil.isNotEmpty(inboundEntity)) {
             throw new ServiceException(ApiError.GENERATE_INBOUND_NOT_DIS_APPROVE, inboundEntity.getCode());
         }
@@ -664,7 +664,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //如果是备货海外仓
             if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())) {
                 //查询是否下推了入库单
-                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId());
+                OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                 if (ObjectUtil.isEmpty(inboundEntity)) {
                     throw new ServiceException(ApiError.NOT_EXISTS_OVERSEAS_WAREHOUSE_INBOUND_NOT_APPROVE);
                 }
@@ -1355,7 +1355,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         view.setCode(entity.getCode());
 
         //已下推入库单，不允许修改装箱信息
-        OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId());
+        OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(entity.getId(),OverseasInstockStatusEnum.CANCELED.getCode());
         if (ObjectUtil.isNotEmpty(overseasWarehouseInbound)) {
             throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_EXIST, overseasWarehouseInbound.getCode());
         }
