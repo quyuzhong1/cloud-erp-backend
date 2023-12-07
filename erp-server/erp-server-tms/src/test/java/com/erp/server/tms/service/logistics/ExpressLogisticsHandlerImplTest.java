@@ -64,18 +64,18 @@ public class ExpressLogisticsHandlerImplTest {
     @Test
     public void createChannelData() {
         List<LogisticsSaleChannelEntity> entityList = new ArrayList<>();
-        entityList.add(new LogisticsSaleChannelEntity().setCode("1").setPlatformChannelId("1").setAging("T4").setCnName("顺丰特快"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("2").setPlatformChannelId("2").setAging("T6").setCnName("顺丰标快"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("6").setPlatformChannelId("6").setAging("T104").setCnName("顺丰即日"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("10").setPlatformChannelId("10").setAging("T14").setCnName("国际小包"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("23").setPlatformChannelId("23").setAging("T9").setCnName("顺丰国际特惠(文件)"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("24").setPlatformChannelId("24").setAging("T9").setCnName("顺丰国际特惠(包裹)"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("26").setPlatformChannelId("26").setAging("T7").setCnName("国际大件"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("60").setPlatformChannelId("60").setAging("T4").setCnName("顺丰特快（文件）"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("99").setPlatformChannelId("99").setAging("T4").setCnName("顺丰国际标快(文件)"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("100").setPlatformChannelId("100").setAging("T4").setCnName("顺丰国际标快(包裹)"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("242").setPlatformChannelId("242").setAging("T77").setCnName("丰网速运"));
-        entityList.add(new LogisticsSaleChannelEntity().setCode("247").setPlatformChannelId("247").setAging("T68").setCnName("电商标快"));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("1").setPlatformChannelId("1").setAging("T4").setCnName("顺丰特快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("2").setPlatformChannelId("2").setAging("T6").setCnName("顺丰标快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("6").setPlatformChannelId("6").setAging("T104").setCnName("顺丰即日").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("10").setPlatformChannelId("10").setAging("T14").setCnName("国际小包").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("23").setPlatformChannelId("23").setAging("T9").setCnName("顺丰国际特惠(文件)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("24").setPlatformChannelId("24").setAging("T9").setCnName("顺丰国际特惠(包裹)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("26").setPlatformChannelId("26").setAging("T7").setCnName("国际大件").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("60").setPlatformChannelId("60").setAging("T4").setCnName("顺丰特快（文件）").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("99").setPlatformChannelId("99").setAging("T4").setCnName("顺丰国际标快(文件)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("100").setPlatformChannelId("100").setAging("T4").setCnName("顺丰国际标快(包裹)").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("242").setPlatformChannelId("242").setAging("T77").setCnName("丰网速运").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
+        entityList.add(new LogisticsSaleChannelEntity().setCode("247").setPlatformChannelId("247").setAging("T68").setCnName("电商标快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));
         entityList.forEach(logisticsSaleChannelEntity -> {
             logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
         });
