@@ -158,11 +158,11 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         //明细
         orderDTO.setDetails(parseDetailDto(orderDetail));
         //B2C销售订单买家信息表
-        orderDTO.setReceiverList(parseReceiverList(orderDetail));
+        orderDTO.setReceiver(parseReceiver(orderDetail));
         //B2C销售订单物流信息表
         orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
         //B2C销售订单财务信息表
-        orderDTO.setFinancesList(parseFinancesList(orderDetail));
+        orderDTO.setFinances(parseFinances(orderDetail));
         return orderDTO;
     }
 
@@ -178,13 +178,13 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .collect(Collectors.toList());
     }
 
-    public static List<PlatformOrderReceiverDTO> parseReceiverList(OrderDetail orderDetail) {
+    public static PlatformOrderReceiverDTO parseReceiver(OrderDetail orderDetail) {
         if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getRecipientAddress())) {
-            return Collections.emptyList();
+            return null;
         }
         RecipientAddress recipientAddress = orderDetail.getRecipientAddress();
-        List<PlatformOrderReceiverDTO> receiverDTOS = new ArrayList<>();
-        receiverDTOS.add(PlatformOrderReceiverDTO.builder()
+
+       return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
                 .name(recipientAddress.getName())
@@ -198,8 +198,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .postCode(recipientAddress.getZipcode())
                 .firstAddress(recipientAddress.getFullAddress())
                 .fullAddress(recipientAddress.getFullAddress())
-                .build());
-        return receiverDTOS;
+                .build();
     }
 
     public static List<PlatformOrderLogisticsDTO> parseLogisticsList(OrderDetail orderDetail) {
@@ -227,9 +226,9 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         return logisticsDTOS;
     }
 
-    public static List<PlatformOrderFinanceDTO> parseFinancesList(OrderDetail orderDetail) {
+    public static PlatformOrderFinanceDTO parseFinances(OrderDetail orderDetail) {
         if (Objects.isNull(orderDetail) || Objects.isNull(orderDetail.getInvoice())) {
-            return Collections.emptyList();
+            return null;
         }
         List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
         PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
@@ -237,8 +236,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 .shippingCost(BigDecimal.valueOf(orderDetail.getReverseShippingFee()))
                 .logisticsCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                 .build();
-        financeDTOList.add(dto);
-        return financeDTOList;
+        return dto;
     }
 
     /**

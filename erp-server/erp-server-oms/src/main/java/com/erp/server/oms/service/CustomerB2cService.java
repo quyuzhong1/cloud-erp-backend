@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -9,6 +10,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -277,4 +280,8 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @return ViewReceiveDataDTO
      */
     SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
+
+    CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+
+    CustomerB2cEntity getBySourceId(String mainId);
 }

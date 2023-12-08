@@ -27,6 +27,7 @@ public class UniqueDto extends DmpSyncTaskIdDTO implements Serializable {
     /**
      * 平台code
      */
+    @Panno(findType = PannoEnum.EQ,field = "platform")
     private String platform;
 
 

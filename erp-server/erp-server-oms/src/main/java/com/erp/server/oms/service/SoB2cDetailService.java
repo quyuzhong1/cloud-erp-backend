@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 
@@ -90,7 +91,7 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-10
      **/
-    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap);
+    List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo);
 
     /**
      * 通过platformSkuNo查询关联关系

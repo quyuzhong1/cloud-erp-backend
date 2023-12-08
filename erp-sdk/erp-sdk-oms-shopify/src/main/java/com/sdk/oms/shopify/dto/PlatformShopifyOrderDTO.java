@@ -4,7 +4,6 @@ import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -159,7 +158,6 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setDetails(details);
 
         // 订单买家信息
-        List<PlatformOrderReceiverDTO> receiverList = new LinkedList<>();
         ShopifyCustomer customer = dto.getShopifyOrder().getCustomer();
         ShopifyAddress shippingAddress = dto.getShopifyOrder().getShippingAddress();
         if (null != customer) {
@@ -183,24 +181,23 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
             receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
             receiverDTO.setFullAddress("");
             receiverDTO.setPostCode(shippingAddress.getZip());
-            receiverList.add(receiverDTO);
+            orderDTO.setReceiver(receiverDTO);
         }
-        orderDTO.setReceiverList(receiverList);
 
         // 订单财务信息
-        List<PlatformOrderFinanceDTO> financesList = new LinkedList<>();
+
+        PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
         List<ShopifyShippingLine> shippingLines = dto.getShopifyOrder().getShippingLines();
+        BigDecimal totalShippingPrice = BigDecimal.ZERO;
         if (!CollectionUtils.isEmpty(shippingLines)){
-            PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
             // 合计
-            BigDecimal totalShippingPrice = dto.getShopifyOrder().getShippingLines()
+            totalShippingPrice = dto.getShopifyOrder().getShippingLines()
                     .stream()
                     .map(ShopifyShippingLine::getPrice)
                     .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            financeDTO.setShippingCost(totalShippingPrice);
-            financesList.add(financeDTO);
         }
-        orderDTO.setFinancesList(financesList);
+        financeDTO.setShippingCost(totalShippingPrice);
+        orderDTO.setFinances(financeDTO);
         // 设置下载其他详情
         orderDTO.setDownloadStatus(0);
         return orderDTO;

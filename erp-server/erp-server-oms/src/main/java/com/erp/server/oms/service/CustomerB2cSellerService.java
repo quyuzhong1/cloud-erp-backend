@@ -1,9 +1,11 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.CustomerB2cSellerEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 
 import java.util.List;
@@ -75,4 +77,9 @@ public interface CustomerB2cSellerService extends SuperService<CustomerB2cSeller
      * @return void
      */
     void batchSellerHistory(List<CustomerB2cEntity> list);
+
+    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity);
+
+    CustomerB2cSellerEntity getByMainId(String mainId);
+
 }

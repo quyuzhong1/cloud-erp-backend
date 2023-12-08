@@ -176,15 +176,13 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         }
         receiverDTO.setCustomerId(sourceOrder.getBuyerLoginId());
         receiverDTO.setLoginId(sourceOrder.getBuyerLoginId());
-        receiverList.add(receiverDTO);
 
-        orderDTO.setReceiverList(receiverList);
+
+        orderDTO.setReceiver(receiverDTO);
         // 订单财务信息
-        List<PlatformOrderFinanceDTO> financesList = new ArrayList<>(1);
         PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
         financeDTO.setShippingCost(shippingFee);
-        financesList.add(financeDTO);
-        orderDTO.setFinancesList(financesList);
+        orderDTO.setFinances(financeDTO);
 
         return orderDTO;
     }

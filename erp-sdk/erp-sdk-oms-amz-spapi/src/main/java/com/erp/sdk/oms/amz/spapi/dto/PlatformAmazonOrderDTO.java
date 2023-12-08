@@ -2,6 +2,8 @@ package com.erp.sdk.oms.amz.spapi.dto;
 
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 平台亚马逊订单DTO
@@ -28,6 +31,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
     private Order order;
 
+    @Panno(findType = PannoEnum.EQ,field = "shopId")
     private String shopId;
 
     /**
@@ -35,6 +39,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
 
     /**
@@ -123,21 +128,28 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 0=详情数据需要更新(不发送MQ)
         // 1=详情数据已更新(发送MQ)
         orderDTO.setDownloadStatus(isSendMq ? 1 : 0);
+        // 记录详情
+        List<PlatformOrderDetailDTO> detailDTO = dto.getDetails().stream()
+                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
+                .collect(Collectors.toList());
+        orderDTO.setDetails(detailDTO);
 
         // 订单财务信息
-        List<PlatformOrderFinanceDTO> financeDTOList = new LinkedList<>();
         if (!CollectionUtils.isEmpty(dto.getDetails())) {
+            final String[] currency = {""};
+            final BigDecimal[] shippingCost = {BigDecimal.ZERO};
             dto.getDetails().forEach(e-> {
                 Money money = e.getShippingPrice();
                 if (null == money){
                     return;
                 }
-                PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
-                financeDTO.setShippingCost(null == money.getAmount() ? BigDecimal.ZERO : new BigDecimal(money.getAmount()));
-                financeDTO.setCurrency(null == money.getCurrencyCode() ? "" : money.getCurrencyCode());
-                financeDTOList.add(financeDTO);
+                currency[0] = money.getCurrencyCode();
+                shippingCost[0] = shippingCost[0].add(new BigDecimal(money.getAmount()));
             });
-            orderDTO.setFinancesList(financeDTOList);
+            PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
+            financeDTO.setShippingCost(shippingCost[0]);
+            financeDTO.setCurrency(currency[0]);
+            orderDTO.setFinances(financeDTO);
         }
 
         // TODO 订单物流信息
@@ -166,9 +178,8 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
                 );
                 receiverDTO.setPostCode(shippingAddress.getPostalCode());
             }
-            receiverList.add(receiverDTO);
+            orderDTO.setReceiver(receiverDTO);
         }
-        orderDTO.setReceiverList(receiverList);
         return orderDTO;
     }
 
@@ -188,8 +199,9 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(item.getSellerSKU());
 
         // 平台产品id
-        detailDTO.setPlatformSpuNo("");
+        detailDTO.setPlatformSpuNo(item.getASIN());
         // 库存sku编号
+        detailDTO.setWarehouseSkuNo("");
         detailDTO.setWarehouseName("");
         // 仓库名称
         // 库存是否扣除

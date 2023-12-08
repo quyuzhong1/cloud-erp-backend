@@ -294,7 +294,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .transitType(inStockType)
                 // 物流方式
                 .receivingShippingType(receivingShippingType)
-                .trackingNumber(mainEntity.getTrackingNo())
+                // 跟踪号：当物流跟踪号为空的时候传快递单号
+                .trackingNumber(StringUtils.isBlank(mainEntity.getTrackingNo()) ?  mainEntity.getExpressNo() : mainEntity.getTrackingNo())
                 .warehouseCode(mainEntity.getPlatformToWarehouseCode())
                 .etaDate(mainEntity.getEstimatedArrivalDate())
                 // 入库单创建时取0，发货单审核通过更新为1

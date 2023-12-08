@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -8,6 +9,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerB2cContactEntity;
+import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerB2cContactMapper;
@@ -206,4 +209,27 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
                 .set(StringUtils.isNotBlank(syncOperate), CustomerB2cContactEntity::getSyncOperate, syncOperate)
                 .update();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity) {
+        CustomerB2cContactEntity entity = this.getByMainId(mainEntity.getId());
+        if (null == entity){
+            CustomerB2cContactEntity newEntity = new CustomerB2cContactEntity();
+            newEntity.setMainId(mainEntity.getId());
+            if (!save(newEntity)){
+                throw new ServiceException("[CustomerB2cSellerEntity] 保存失败");
+            }
+        } else {
+            if (!updateById(entity)){
+                throw new ServiceException("[CustomerB2cSellerEntity] 更新失败");
+            }
+        }
+    }
+
+    @Override
+    public CustomerB2cContactEntity getByMainId(String mainId) {
+        return lambdaQuery().eq(CustomerB2cContactEntity::getMainId, mainId).last("LIMIT 1").one();
+    }
+
 }

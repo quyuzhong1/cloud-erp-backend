@@ -195,7 +195,7 @@ public class PlatformOrderDTO extends UniqueDto {
     /**
      * 订单财务信息
      */
-    private List<PlatformOrderFinanceDTO> financesList;
+    private PlatformOrderFinanceDTO finances;
 
     /**
      * 订单物流信息
@@ -205,5 +205,5 @@ public class PlatformOrderDTO extends UniqueDto {
     /**
      * 订单买家信息
      */
-    private List<PlatformOrderReceiverDTO> receiverList;
+    private PlatformOrderReceiverDTO receiver;
 }
