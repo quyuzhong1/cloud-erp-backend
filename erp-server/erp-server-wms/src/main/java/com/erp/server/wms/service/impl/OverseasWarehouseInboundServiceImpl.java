@@ -632,15 +632,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         List<OverseasWarehouseInboundDetailEntity> updateDetailEntityList = new ArrayList<>();
-        if (StringUtils.isBlank(entity.getDictPlatform())){
-            // 没有平台对接的入库单
-        }else{
+        if (StringUtils.isNotBlank(entity.getDictPlatform())){
             //有平台对接的入库单，判断入库状态
             if(!OverseasInstockStatusEnum.SIGNED.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("平台状态未签收完成，不能手动完结");
             }
             if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getInstockStatus())
-            || OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getInstockStatus())){
+                    || OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("已经自动完结或手动完结，不能手动完结");
             }
             //签收数小于发货数情况下手动完结生成其他出库单（报损）在途仓
