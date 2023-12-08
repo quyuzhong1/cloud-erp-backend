@@ -33,6 +33,11 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
      */
     private ShopifyProduct shopifyProduct;
 
+    /**
+     * 店铺ID
+     */
+    private String shopId;
+
 
     /**
      * 初始化
@@ -44,6 +49,7 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
         this.setUniqueId(shopifyProduct.getId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
+        this.shopId = dto.getShopId();
     }
 
 
@@ -101,6 +107,8 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
                 .setProductPacking(packing)
                 // 平台最后修改时间
                 .setPlatformUpdateTime(variant.getCreatedAt())
+                // 店铺ID
+                .setShopId(dto.getShopId())
                 ;
 
         // 平台

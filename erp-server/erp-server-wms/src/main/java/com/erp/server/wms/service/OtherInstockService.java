@@ -13,6 +13,8 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -181,4 +183,12 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return java.lang.String
      **/
     String addAndApprove(OtherInstockDTO.AddDTO dto);
+
+    /**
+     * 海外仓入库生成其他出库单
+     * @param entity
+     * @param detailEntityList
+     * @param remark
+     */
+    String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse);
 }

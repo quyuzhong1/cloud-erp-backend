@@ -10,6 +10,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -27,18 +28,18 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
+import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -712,5 +713,54 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //审核
         this.approve(id,ApproveTypeEnum.PASS.getStatus(),"");
         return id;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse) {
+        //目的仓
+        WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
+        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse,isTransitWarehouse);
+        List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+            OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(detailEntity.getSkuId());
+            detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+            detailAddDTO.setActualQty(Math.abs(detailEntity.getDiffQty()));
+            detailAddDTO.setRemark(remark);
+            detailAddDTOList.add(detailAddDTO);
+        }
+        addDTO.setDetailList(detailAddDTOList);
+        return this.addAndApprove(addDTO);
+    }
+
+
+    /**
+     * 封装报损出库单主记录
+     */
+    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse,boolean isTransitWarehouse){
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (org.apache.commons.lang3.StringUtils.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+        OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
+        //出库日期
+        addDTO.setBillDate(LocalDate.now());
+        //库存方向：普通
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        //发货仓库id
+        if(isTransitWarehouse){
+            addDTO.setWarehouseId(warehouse.getOnwayWarehouseId());
+        }else{
+            addDTO.setWarehouseId(warehouse.getId());
+        }
+        //部门
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(loginUser.getUid());
+        addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+        //出库类型：报损
+        addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
+        addDTO.setTypeName(InstockTypeEnum.REPORT_OVERFLOW.getName());
+        return addDTO;
     }
 }

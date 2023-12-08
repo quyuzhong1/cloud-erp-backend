@@ -37,6 +37,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemLis
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
@@ -103,6 +104,8 @@ public class PullAmazonJob {
 
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
     /**
      * 拉取亚马逊任务
@@ -154,6 +157,8 @@ public class PullAmazonJob {
                 XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
                         e.getMessage());
+                // 发送预警
+                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         });
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束");
@@ -214,6 +219,8 @@ public class PullAmazonJob {
                 XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail，uniqueId={}, error={}",
                         dto.getUniqueId(),
                         e.getMessage());
+                // 发送预警
+                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         });
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束");
@@ -283,6 +290,8 @@ public class PullAmazonJob {
                 XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload下载失败，uniqueId={}, error={}",
                         dto.getUniqueId(),
                         e.getMessage());
+                // 发送预警
+                dmpPushTaskService.sendWarnMsg(dto.getDmpSyncTaskId());
             }
         });
         XxlJobHelper.log("[拉取亚马逊Fba货件详情任务] amazonFbaShipmentDetailDownload 任务结束");
