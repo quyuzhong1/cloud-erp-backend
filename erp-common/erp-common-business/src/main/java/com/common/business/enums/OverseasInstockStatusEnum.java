@@ -61,14 +61,6 @@ public enum OverseasInstockStatusEnum implements EnumMessage {
                 .findFirst().orElse(null);
     }
 
-    public static boolean canManualFinish(String code){
-        //没有状态，默认可以完结
-        if(StringUtils.isBlank(code)){
-            return true;
-        }
-        return SIGNED.code.equals(code) || AUTOMATIC_COMPLETION.code.equals(code) || MANUAL_COMPLETION.code.equals(code) || CANCELED.code.equals(code);
-    }
-
     public static List<String> getStatusList() {
         return Arrays.stream(OverseasInstockStatusEnum.values()).map(OverseasInstockStatusEnum::getCode).collect(Collectors.toList());
     }

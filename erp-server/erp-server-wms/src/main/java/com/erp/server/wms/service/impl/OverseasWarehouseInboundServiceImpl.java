@@ -636,7 +636,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             // 没有平台对接的入库单
         }else{
             //有平台对接的入库单，判断入库状态
-            if(!OverseasInstockStatusEnum.canManualFinish(entity.getInstockStatus())){
+            if(!OverseasInstockStatusEnum.SIGNED.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("平台状态未签收完成，不能手动完结");
             }
             if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getInstockStatus())

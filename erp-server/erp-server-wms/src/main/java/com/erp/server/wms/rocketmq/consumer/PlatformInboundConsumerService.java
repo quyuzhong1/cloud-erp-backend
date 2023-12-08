@@ -159,7 +159,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(changeFlag){
                 mainEntity.setReceiveTime(dto.getDownloadTime());
                 mainEntity.setInstockStatus(dto.getReceivingStatus());
-                //自动完结再签收完结状态变成未完结
+                //自动完结再签收完结状态变成已签收
                 if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
                 }else{
@@ -178,12 +178,11 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     private String getFinishStatusByReceiveStatus(String receiveStatus,boolean isAllDiffZero){
         if((receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) ||
-                receiveStatus.equals(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode())||
                 receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())) &&
                 isAllDiffZero){
             return OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode();
         }
-        return OverseasInstockStatusEnum.SIGNED.getCode();
+        return receiveStatus;
     }
 
     private void groupBySku(PlatformInboundDTO dto) {
