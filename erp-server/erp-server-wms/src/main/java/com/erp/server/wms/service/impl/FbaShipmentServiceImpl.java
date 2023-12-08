@@ -1008,15 +1008,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
                 // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
-                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
 
-                //如果收货数量等于申报数量，修改货件状态为自动完结
+                //如果收货数量等于发货数量，修改货件状态为自动完结
                 int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
-                int declareQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeclareQty()).sum();
-                if (receiveQtySum == declareQtySum) {
+                int deliveryQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+                if (receiveQtySum == deliveryQtySum) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
                 }
 
