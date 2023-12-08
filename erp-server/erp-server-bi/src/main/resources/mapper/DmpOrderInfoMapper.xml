@@ -448,10 +448,10 @@
         </if>
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
@@ -517,10 +517,10 @@
 
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
