@@ -350,7 +350,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         BeanUtils.copyProperties(updateDTO, mainEntity);
 
         mainEntity.setInstockType(updateDTO.getInstockType().getCode());
-        mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        if (null != updateDTO.getLogisticsMethod()){
+            mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        }
         if (null != updateDTO.getEstimatedArrivalDate()){
             mainEntity.setEstimatedArrivalDate(LocalDateTime.of(updateDTO.getEstimatedArrivalDate(), LocalTime.MIN));
         }
