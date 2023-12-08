@@ -276,7 +276,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .filter(req -> !FbaDeliveryStatusEnum.SHIPPED.getCode().equals(req.getDeliveryStatus())
                         && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(req.getDeliveryStatus()))
                 .collect(Collectors.toList());
-        // 只有已发货的单据才能完结
+        // 只有已发货或自动完结的单据才能完结
         if (list.size() > 0) {
             throw new ServiceException(ApiError.IS_DELIVERY_FINISH);
         }
