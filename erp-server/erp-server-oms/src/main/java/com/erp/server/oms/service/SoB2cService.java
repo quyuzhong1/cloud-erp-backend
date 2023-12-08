@@ -320,4 +320,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     SoB2cEntity getByPlatformInfo(String platformCode, String dictPlatform);
 
     Map<String,Object> getJson(String id);
+
+    /**
+     * 当拉取订单后 未自动匹配成功的 自动匹配
+     * @author yl
+     * @date 2023-12-08 9:21
+     * @param dto
+     * @return
+     */
+    Boolean matchSku(SoB2cDTO.MatchSkuDTO dto);
 }

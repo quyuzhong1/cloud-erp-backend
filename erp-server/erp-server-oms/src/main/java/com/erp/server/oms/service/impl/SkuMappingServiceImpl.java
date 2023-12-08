@@ -14,6 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -614,7 +615,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             //查询库存sku映射
             SkuMappingEntity warehouseSkuMapping = list.stream().filter(
                     obj -> obj.getProductSkuId().equals(listSkuDTO.getProductSkuId()) &&
-                            obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId())&&
+                            obj.getWarehouseId().equals(listSkuParamDTO.getWarehouseId()) &&
                             warehouseType.equals(obj.getType())
             ).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseSkuMapping)) {
@@ -854,6 +855,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getIsExpire, false)
                 .last(" LIMIT 1")
                 .one();
+    }
+
+    @Override
+    public Boolean add(SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO) {
+        SkuMappingEntity entity = new SkuMappingEntity();
+        BeanMapperUtils.copy(addSkuMappingDTO,entity);
+        LocalDateTime now=LocalDateTime.now();
+        entity.setEffectiveTime(LocalDateTime.now());
+        entity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        return this.save(entity);
     }
 
 }

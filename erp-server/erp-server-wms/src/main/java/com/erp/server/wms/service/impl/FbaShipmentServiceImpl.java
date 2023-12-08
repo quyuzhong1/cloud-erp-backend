@@ -276,7 +276,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .filter(req -> !FbaDeliveryStatusEnum.SHIPPED.getCode().equals(req.getDeliveryStatus())
                         && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(req.getDeliveryStatus()))
                 .collect(Collectors.toList());
-        // 只有已发货的单据才能完结
+        // 只有已发货或自动完结的单据才能完结
         if (list.size() > 0) {
             throw new ServiceException(ApiError.IS_DELIVERY_FINISH);
         }
@@ -309,7 +309,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
 
                 // 如果签收数大于发货数量，其他入库单报溢
-                if (detailEntity.getDeliveryQty() > detailEntity.getReceiveQty()) {
+                if (detailEntity.getReceiveQty() > detailEntity.getDeliveryQty()) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
@@ -321,13 +321,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     //收发差异设置为0
                     detailEntity.setDiffQty(0);
                     fbaShipmentDetailService.updateById(detailEntity);
-                } else if (detailEntity.getDeliveryQty() < detailEntity.getReceiveQty()) {
-                    // 如果签收数小于发货数量，其他出库单
+                } else if (detailEntity.getReceiveQty() < detailEntity.getDeliveryQty()) {
+                    // 如果签收数小于发货数量，其他出库单报损
                     OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getReceiveQty() - detailEntity.getDeliveryQty());
+                    addDTO.setActualQty(detailEntity.getDeliveryQty() - detailEntity.getReceiveQty());
                     addDTO.setRemark("FBA货件手动完结，自动生成其他出库报损");
                     outstockDetailList.add(addDTO);
 
@@ -1077,7 +1077,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     /**
-     * 生成其他入库单
+     * 生成其他出库单
      * @Author Luo_WG
      * @Date 2023/12/7 16:15
      * @param warehouseId 调入仓库
@@ -1086,13 +1086,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @return void
      **/
     private void generateOtherOutstock(String warehouseId, String deptId, List<OtherOutstockDetailDTO.AddDTO> detailAddList) {
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+
+        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
+        checkOnwayWarehouse(warehouseEntity);
+
         OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
         //出库日期
         addDTO.setBillDate(LocalDate.now());
         //库存方向：普通
         addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         //发货仓库id
-        addDTO.setWarehouseId(warehouseId);
+        addDTO.setWarehouseId(warehouseEntity.getOnwayWarehouseId());
         //入库类型：报损
         addDTO.setType(OutstockTypeEnum.REPORT_LOSSES.getCode());
         //领料部门
@@ -1348,35 +1353,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public String generateTransferOut(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList) {
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(shopEntity.getWarehouseId()));
-
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(shopEntity.getWarehouseId()));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
-        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(shopEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-
-        //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
-        //如果是FBA第三方仓
-        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
-            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
-            if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
-                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
-                if (CollectionUtils.isEmpty(warehouseEntities)) {
-                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
-                }
-                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
-                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
-            }
-        }
-
-        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
-        if (StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
-            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
-        }
+        WarehouseEntity warehouseEntity = warehouseList.stream().filter(req -> req.getId().equals(shopEntity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
+        checkOnwayWarehouse(warehouseEntity);
 
         //查询在途仓
-        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+        WarehouseEntity onwayWarehouse = warehouseService.getById(warehouseEntity.getOnwayWarehouseId());
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：FBA货件
@@ -1386,11 +1370,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(destWarehouse.getOrgId());
+        addDTO.setInOrgId(warehouseEntity.getOrgId());
         //调出组织
-        addDTO.setOutOrgId(warehouseEntity.getOrgId());
+        addDTO.setOutOrgId(onwayWarehouse.getOrgId());
         //调拨类型
-        if (warehouseEntity.getOrgId().equals(destWarehouse.getOrgId()))  {
+        if (warehouseEntity.getOrgId().equals(onwayWarehouse.getOrgId()))  {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -1408,9 +1392,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(detailEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(warehouseEntity.getId());
+            detailAddDto.setOutWarehouseId(onwayWarehouse.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(destWarehouse.getId());
+            detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             detailAddDtoList.add(detailAddDto);
@@ -1455,6 +1439,36 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     detailAdd.setProductSizeHeight(new BigDecimal(BigInteger.ZERO));
                 }
             }
+        }
+    }
+
+    /**
+     * 在途仓校验
+     * @Author Luo_WG
+     * @Date 2023/12/8 11:24
+     * @param warehouseEntity
+     * @return void
+     **/
+    private void checkOnwayWarehouse(WarehouseEntity warehouseEntity) {
+        //校验目的仓是否为FBA第三方仓
+        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        //如果是FBA第三方仓
+        if (listDTO.getId().equals(warehouseEntity.getTypeId())) {
+            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
+            if (StringUtils.isBlank(warehouseEntity.getOnwayWarehouseId())) {
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                if (CollectionUtils.isEmpty(warehouseEntities)) {
+                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
+                }
+                warehouseEntity.setOnwayWarehouseId(warehouseEntities.get(0).getId());
+                warehouseEntity.setOnwayWarehouseName(warehouseEntities.get(0).getName());
+            }
+        }
+
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (StringUtils.isBlank(warehouseEntity.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
     }
 }
