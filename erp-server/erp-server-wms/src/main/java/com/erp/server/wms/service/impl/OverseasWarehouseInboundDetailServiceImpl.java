@@ -1,25 +1,17 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.lang.Tuple;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.vo.LoginUser;
-import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
-import com.erp.server.wms.convert.FbaShipmentConverter;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.*;
@@ -27,7 +19,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -285,7 +276,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             // 检查是否完全签收
             Boolean allReceive = this.checkAllReceiveByMainId(entity.getMainId());
             if (allReceive){
-                mainEntity.setInstockStatus(OverseasInstockStatusEnum.FINISH.getCode());
+                mainEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
             } else {
                 mainEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
             }

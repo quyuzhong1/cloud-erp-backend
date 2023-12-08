@@ -45,6 +45,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * tab页
+         */
+        private String  tabFlag;
+
         private String code;
 
         /**
@@ -296,16 +301,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 手动完结原因
          */
         private String finishReason;
-
-        /**
-         * 完结状态: not=未完结, auto=自动完结，manual=手动完结
-         */
-        private String finishStatus;
-
-        /**
-         * 完结状态名称
-         */
-        private String finishStatusName;
 
         /**
          * 第三方唯一编码

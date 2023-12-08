@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -12,6 +13,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.rmi.ServerException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -75,5 +79,9 @@ public enum OverseasFinishStatusEnum implements EnumMessage {
             }
             return type;
         }
+    }
+
+    public static List<String> getStatusList() {
+        return Arrays.stream(OverseasFinishStatusEnum.values()).map(OverseasFinishStatusEnum::getCode).collect(Collectors.toList());
     }
 }

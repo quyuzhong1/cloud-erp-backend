@@ -130,11 +130,6 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField("finish_reason")
     private String finishReason;
     /**
-     * 完结状态: not=未完结, auto=自动完结，manual=手动完结
-     */
-    @TableField("finish_status")
-    private String finishStatus;
-    /**
      * 第三方唯一编码
      */
     @TableField("overseas_warehouse_inbound_id")
