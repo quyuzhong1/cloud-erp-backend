@@ -15,13 +15,18 @@ package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
+import com.common.business.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.csv.ReportListingCsvEntity;
+import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.mq.JmsAmazonSqsConsumer;
 import org.junit.Test;
@@ -45,6 +50,8 @@ public class JmsConsumerTest {
     private JmsAmazonSqsConsumer jmsAmazonSqsConsumer;
     @Resource
     private ReportHandleService reportHandleService;
+    @Resource
+    private MongoService mongoService;
 
 
     /**
@@ -314,5 +321,18 @@ public class JmsConsumerTest {
                 "    \"receiptHandle\": \"AQEBnamXijcgsRCU/kmWRWz0Hqo/XN5a+pvULbnK/9ZJ5DHdhlpaLc+IYpkGV3YJKyJtVapfJI5uhjxGjCxJnMn52bXhSz6vlWtEM1fRB7t2CqDQowcfcYEjo0dlpTbguOAkZqF92ZuSkVWI35ydwmZeyW4oBZxMOkeyMh68gA9convnJDWWK8tnXMY9Cu57B/xK6tLeMmEkZ+YtI6qmQdIQmFe6o5+pKFIain8hTA1w76A9Gp06We97pE2baodKPBWBnLKlauUX7/Z9ONb3mWG9ZsQFz+j5EAlDSfocNLa6BLOC1+D+BUw9MLH4C7g7kyL5NZjyANeWsWWkWULUhdqAKjrjRypGO1b35WDI0SNYdIbv17EK6IUQVycvlzu/iEW1t5IpTjoj/QlTq2B7WavVTw==\"\n" +
                 "}");
         jmsAmazonSqsConsumer.consumerListener(sqsTextMessage);
+    }
+
+    @Test
+    public void check() {
+        String shopId = "1720261566995107842";
+        String reportId = "125730019696";
+
+
+        ReportListingMongoDTO mongoDTO = new ReportListingMongoDTO();
+        mongoDTO.setReportId(reportId);
+        List<ReportListingMongoDTO> mongoData = mongoService.findMongoData(mongoDTO, 0, 0, MongoTableNameContant.REPORT_AMAZON_LISTING, ReportListingMongoDTO.class);
+
+        reportHandleService.pullBusinessHandler(shopId, reportId, mongoData);
     }
 }
