@@ -584,9 +584,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
         //获取各个平台的销售额
-        if (StringUtils.isBlank(dto.getDateType())){
-            dto.setDateType(DateTypeEnum.MONTH.getType());
-        }
         List<Map<String, Object>> resultList = baseMapper.getPlatformSales(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         statistical.setName("平台销售额与占比");
@@ -3371,7 +3368,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+//        dto.setDateType(DateTypeEnum.MONTH.getType());
         List<SalesFlagVO> list = baseMapper.newAndOldSalesAmount(dto, settleRate,"dept");
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();

@@ -1048,8 +1048,22 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (o.sales_amount),2) AS sales,
         </if>
-        sum (o.sales_qty) AS salesQuantity,
-        o.date_name as date
+        <if test="params.dateType != null and params.dateType == 'DAY'">
+            o.date_day as date,
+        </if>
+        <if test="params.dateType != null and params.dateType == 'WEEK'">
+            o.date_week as date,
+        </if>
+        <if test="params.dateType != null and params.dateType == 'MONTH'">
+            o.date_month as date,
+        </if>
+        <if test="params.dateType != null and params.dateType == 'QUARTER'">
+            o.date_quarter as date,
+        </if>
+        <if test="params.dateType != null and params.dateType == 'YEAR'">
+            o.date_year as date,
+        </if>
+        sum (o.sales_qty) AS salesQuantity
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o
