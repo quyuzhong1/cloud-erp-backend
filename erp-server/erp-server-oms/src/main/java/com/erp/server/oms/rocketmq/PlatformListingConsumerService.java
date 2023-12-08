@@ -63,9 +63,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
-        mqProducerService.sendWarnMsg(msgInfoDTO);
+        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

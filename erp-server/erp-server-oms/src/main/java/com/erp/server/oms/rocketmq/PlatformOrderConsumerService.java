@@ -12,6 +12,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -57,8 +59,9 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoB2cFinanceService soB2cFinanceService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -67,9 +70,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-
+        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
