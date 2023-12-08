@@ -23,9 +23,9 @@ public class CorsConfig {
             //跨域配置
             CorsConfiguration corsConfiguration = new CorsConfiguration();
             //支持哪些来源的请求跨域
-            corsConfiguration.addAllowedOrigin("*");
-
-            corsConfiguration.addAllowedHeader("*");
+//            corsConfiguration.addAllowedOrigin("*");
+//
+//            corsConfiguration.addAllowedHeader("*");
             corsConfiguration.addAllowedMethod("*");
             corsConfiguration.setAllowCredentials(true);
             //可以让所有的请求 来访问
