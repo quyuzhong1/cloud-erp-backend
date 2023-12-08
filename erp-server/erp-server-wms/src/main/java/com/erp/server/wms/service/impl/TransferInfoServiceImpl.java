@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -223,6 +224,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         //提交
         this.submit(Arrays.asList(id));
+        return id;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndApprove(TransferInfoDTO.AddDTO dto) {
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Collections.singletonList(id));
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        this.approve(baseApproveParamDTO,true);
         return id;
     }
 
@@ -992,79 +1011,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         addDTO.setDetailList(detailAddDtoList);
-        return this.add(addDTO);
-    }
-
-    @Override
-    public String generateFromFBA(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList, String remark) {
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(shopEntity.getWarehouseId()));
-
-        //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
-        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(shopEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-
-        //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
-        //如果是FBA第三方仓
-        if (listDTO.getId().equals(destWarehouse.getTypeId())) {
-            //如果配置为空时默认为“FBA在途仓-xgwj-fba”
-            if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
-                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
-                if (CollectionUtils.isEmpty(warehouseEntities)) {
-                    throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
-                }
-                destWarehouse.setOnwayWarehouseId(warehouseEntities.get(0).getId());
-                destWarehouse.setOnwayWarehouseName(warehouseEntities.get(0).getName());
-            }
-        }
-
-        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
-        if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
-            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
-        }
-
-        //查询在途仓
-        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
-
-        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //默认来源类型：FBA货件
-        addDTO.setSourceType(SourceTypeEnum.FBA_SHIPMENT.getCode());
-        //默认调出日期：当前日期
-        addDTO.setBillDate(LocalDate.now());
-        //默认调拨方向：普通
-        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
-        //调入组织
-        addDTO.setInOrgId(destWarehouse.getOrgId());
-        //调出组织
-        addDTO.setOutOrgId(warehouseEntity.getOrgId());
-        //调拨类型
-        if (warehouseEntity.getOrgId().equals(destWarehouse.getOrgId()))  {
-            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
-        } else {
-            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
-        }
-
-        addDTO.setSourceId(shipmentEntity.getId());
-        addDTO.setSourceCode(shipmentEntity.getCode());
-        addDTO.setRemark(String.format("FBA货件【%s】签收自动创建", shipmentEntity.getCode()));
-
-        //详情信息
-        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
-        for (FbaShipmentReceiveEntity detailEntity : newReceiveEntityList) {
-            //映射产品信息
-            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-            detailAddDto.setSkuId(detailEntity.getSkuId());
-            detailAddDto.setSkuNo(detailEntity.getSkuNo());
-            detailAddDto.setQty(detailEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(warehouseEntity.getId());
-            detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(destWarehouse.getId());
-            detailAddDto.setInWarehouseLocation("");
-            detailAddDto.setSourceDetailId(detailEntity.getId());
-            detailAddDtoList.add(detailAddDto);
-        }
-        addDTO.setDetailList(detailAddDtoList);
-        return this.add(addDTO);
+        return this.addAndApprove(addDTO);
     }
 
 }

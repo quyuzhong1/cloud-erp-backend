@@ -39,17 +39,17 @@ public class PlatformInboundConsumerServiceTest {
         dto.setItems(itemList);
         PlatformInboundDTO.Item item = new PlatformInboundDTO.Item();
         item.setProductSku("QC6SHR-045700EU-ML000");
-        item.setReceivedQuantity(10);
+        item.setReceivedQuantity(20);
         itemList.add(item);
-        dto.setHasReceivedData(true);
-        List<PlatformInboundDTO.Receiving> receivings = new ArrayList<>();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        PlatformInboundDTO.Receiving receiving = new PlatformInboundDTO.Receiving();
-        receiving.setProductSku("QC6SHR-045700EU-ML000");
-        receiving.setReceiveQty(10);
-        receiving.setReceiveTime(localDateTime);
-        receivings.add(receiving);
-        dto.setReceivingDataList(receivings);
+        dto.setHasReceivedData(false);
+//        List<PlatformInboundDTO.Receiving> receivings = new ArrayList<>();
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//        PlatformInboundDTO.Receiving receiving = new PlatformInboundDTO.Receiving();
+//        receiving.setProductSku("QC6SHR-045700EU-ML000");
+//        receiving.setReceiveQty(10);
+//        receiving.setReceiveTime(localDateTime);
+//        receivings.add(receiving);
+//        dto.setReceivingDataList(receivings);
         service.handle(JSONUtil.parse(dto));
     }
 }

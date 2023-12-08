@@ -193,13 +193,4 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      */
     String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark);
 
-    /**
-     * FBA 货件生成直接调拨
-     * @param shopEntity
-     * @param shipmentEntity
-     * @param newReceiveEntityList
-     * @param remark
-     * @return 调拨单主表id
-     */
-    String generateFromFBA(ShopInfoEntity shopEntity, FbaShipmentEntity shipmentEntity, List<FbaShipmentReceiveEntity> newReceiveEntityList,String remark);
 }
