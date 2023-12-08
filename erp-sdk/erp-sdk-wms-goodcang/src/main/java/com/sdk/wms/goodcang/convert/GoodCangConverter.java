@@ -85,10 +85,17 @@ public interface GoodCangConverter {
     PlatformInboundDTO inboundConversion(GoodCangReceiptBatchResp sourceData);
     List<PlatformInboundDTO> inboundConversion(List<GoodCangReceiptBatchResp> sourceDataList);
 
+//    @Mappings({
+//            @Mapping(target = "productSku", source = "productSku"),
+//            @Mapping(target = "receiveQty",  source = "receivedQty"),
+//            @Mapping(target = "receiveTime",  source = "receivedTime"),
+//    })
+//    PlatformInboundDTO.Item inboundReceiveConversion(GoodCangReceiptBatchResp.GcReceiving data);
+
     @Mappings({
             @Mapping(target = "productSku", source = "productSku"),
             @Mapping(target = "receiveQty",  source = "receivedQty"),
-            @Mapping(target = "receiveTime",  source = "receivedTime"),
+            @Mapping(target = "receiveTime",  expression = "java(java.time.LocalDateTime.now())"),
     })
     PlatformInboundDTO.Receiving inboundReceiveConversion(GoodCangReceiptBatchResp.GcReceiving data);
 
