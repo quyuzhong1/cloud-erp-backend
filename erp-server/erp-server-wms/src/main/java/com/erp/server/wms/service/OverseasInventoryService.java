@@ -65,4 +65,8 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
 
     Boolean saveOrUpdateByPlatform(OverseasInventoryEntity entity);
 
+    /**
+     * 处理没有映射关系
+     */
+    void handleNotMapping(String platform);
 }
