@@ -975,7 +975,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (null != deliveryEntity ){
 
                 // 校验是否手动完结，如果已经手动完结，多余的放到其他入库，入到目的仓然后return，不用调拨
-                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+                if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                     //查询原签收数量，比较新获取的签收数量，多的新增其他入库
                     for (FbaShipmentDetailEntity detailEntity : oldfbaShipmentDetailEntityList) {
                         int receiveQtySum = newReceiveEntityList.stream().filter(req -> req.getDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getReceiveQty()).sum();
@@ -1008,15 +1008,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
                 // 校验是否自动完结，生成直接调拨单后，状态改为已发货-已签收
-                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(deliveryEntity.getDeliveryStatus())) {
+                if (FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.SHIPPED.getCode());
                 }
 
-                //如果收货数量等于申报数量，修改货件状态为自动完结
+                //如果收货数量等于发货数量，修改货件状态为自动完结
                 int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
-                int declareQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeclareQty()).sum();
-                if (receiveQtySum == declareQtySum) {
+                int deliveryQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+                if (receiveQtySum == deliveryQtySum) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
                 }
 
