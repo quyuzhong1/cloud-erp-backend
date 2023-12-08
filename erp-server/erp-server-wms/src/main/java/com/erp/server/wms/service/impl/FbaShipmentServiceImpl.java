@@ -309,7 +309,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
 
                 // 如果签收数大于发货数量，其他入库单报溢
-                if (detailEntity.getDeliveryQty() > detailEntity.getReceiveQty()) {
+                if (detailEntity.getReceiveQty() > detailEntity.getDeliveryQty()) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
@@ -321,13 +321,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     //收发差异设置为0
                     detailEntity.setDiffQty(0);
                     fbaShipmentDetailService.updateById(detailEntity);
-                } else if (detailEntity.getDeliveryQty() < detailEntity.getReceiveQty()) {
+                } else if (detailEntity.getReceiveQty() < detailEntity.getDeliveryQty()) {
                     // 如果签收数小于发货数量，其他出库单报损
                     OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getReceiveQty() - detailEntity.getDeliveryQty());
+                    addDTO.setActualQty(detailEntity.getDeliveryQty() - detailEntity.getReceiveQty());
                     addDTO.setRemark("FBA货件手动完结，自动生成其他出库报损");
                     outstockDetailList.add(addDTO);
 
@@ -1370,9 +1370,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(onwayWarehouse.getOrgId());
+        addDTO.setInOrgId(warehouseEntity.getOrgId());
         //调出组织
-        addDTO.setOutOrgId(warehouseEntity.getOrgId());
+        addDTO.setOutOrgId(onwayWarehouse.getOrgId());
         //调拨类型
         if (warehouseEntity.getOrgId().equals(onwayWarehouse.getOrgId()))  {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
@@ -1392,9 +1392,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(detailEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(warehouseEntity.getId());
+            detailAddDto.setOutWarehouseId(onwayWarehouse.getId());
             detailAddDto.setOutWarehouseLocation("");
-            detailAddDto.setInWarehouseId(onwayWarehouse.getId());
+            detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             detailAddDtoList.add(detailAddDto);
