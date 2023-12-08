@@ -116,7 +116,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 Integer thisSignNumber = item.getReceivedQuantity() - detailEntity.getReceiveQty();
                 detailEntity.setReceiveQty(item.getReceivedQuantity());
                 detailEntity.setDiffQty(detailEntity.getReceiveQty() - detailEntity.getPackQty());
-                detailEntity.setTransportQty(Math.max((detailEntity.getPackQty() - detailEntity.getReceiveQty()), 0));
+                detailEntity.setTransportQty(detailEntity.getPackQty() - detailEntity.getReceiveQty());
                 detailEntity.setReceiveTime(dto.getDownloadTime());
                 detailEntity.setReceiveStatus("already");
                 detailEntity.setReceiveType("system");
@@ -159,9 +159,14 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(changeFlag){
                 mainEntity.setReceiveTime(dto.getDownloadTime());
                 mainEntity.setInstockStatus(dto.getReceivingStatus());
-                //差异数量为0时 自动完结
-                boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
-                mainEntity.setFinishStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
+                //自动完结再签收完结状态变成未完结
+                if(OverseasFinishStatusEnum.AUTO.getCode().equals(mainEntity.getFinishStatus())){
+                    mainEntity.setFinishStatus(OverseasFinishStatusEnum.NOT.getCode());
+                }else{
+                    //差异数量为0时 自动完结
+                    boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
+                    mainEntity.setFinishStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
+                }
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
                 //生成调拨单

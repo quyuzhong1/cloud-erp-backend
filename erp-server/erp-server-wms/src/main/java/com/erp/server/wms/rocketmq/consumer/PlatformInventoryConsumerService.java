@@ -95,6 +95,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 }
             }
             overseasInventoryService.saveOrUpdateByPlatform(entity);
+            //可能首次平台sku没有配置映射关系，在拉取数据时查没有映射关系的重新配置
+            overseasInventoryService.handleNotMapping(entity.getDictPlatform());
         }
         return ApiResult.success();
     }

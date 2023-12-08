@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -220,6 +221,46 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             return this.saveOrUpdate(entity,queryWrapper);
         }
         return false;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleNotMapping(String platform) {
+        LambdaQueryWrapper<OverseasInventoryEntity> queryWrapper = new LambdaQueryWrapper<OverseasInventoryEntity>()
+                .eq(OverseasInventoryEntity::getDictPlatform, platform)
+                .last(" and TRIM(both ' ' FROM sku_id) = ''");
+
+        List<OverseasInventoryEntity> notMappingEntityList = this.list(queryWrapper);
+
+        if (CollectionUtils.isEmpty(notMappingEntityList)) {
+            return;
+        }
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(platform);
+        paramDTO.setPlatformSkuNoList(notMappingEntityList.stream().map(OverseasInventoryEntity::getPlatformSku).distinct().collect(Collectors.toList()));
+        paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        paramDTO.setMatchResult(true);
+
+        // 查询ListingInfo和skuMapping的关系
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+        Map<String, ListingInfoWithSkuMappingDTO> mappingRelationMap = listingedInfoWithSkuMappingList.stream()
+                .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
+
+        List<OverseasInventoryEntity> updateList = notMappingEntityList.stream()
+                .filter(entity -> mappingRelationMap.containsKey(entity.getPlatformSku()))
+                .peek(entity -> {
+                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = mappingRelationMap.get(entity.getPlatformSku());
+                    entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+                    entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
+                    entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
+                    entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                })
+                .collect(Collectors.toList());
+
+        if (!updateList.isEmpty()) {
+            this.updateBatchById(updateList);
+        }
     }
 
 }

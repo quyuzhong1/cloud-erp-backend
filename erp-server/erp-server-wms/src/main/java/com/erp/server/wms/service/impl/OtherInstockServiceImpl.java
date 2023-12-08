@@ -29,6 +29,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
+import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -696,5 +697,20 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndApprove(OtherInstockDTO.AddDTO dto) {
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        //审核
+        this.approve(id,ApproveTypeEnum.PASS.getStatus(),"");
+        return id;
     }
 }
