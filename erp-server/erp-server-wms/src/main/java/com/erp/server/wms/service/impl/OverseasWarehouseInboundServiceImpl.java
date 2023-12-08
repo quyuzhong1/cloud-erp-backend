@@ -658,9 +658,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         entity.setInstockStatus(OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode());
         entity.setFinishReason(dto.getFinishReason());
-        for (OverseasWarehouseInboundDetailEntity detailEntity : updateDetailEntityList) {
-            detailEntity.setDiffQty(0);
-        }
         // 详情更新签收数量
         if (!this.updateById(entity)) {
             throw new ServiceException("海外仓入库单更新失败");

@@ -188,15 +188,11 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     private void groupBySku(PlatformInboundDTO dto) {
         List<PlatformInboundDTO.Item> items = dto.getItems();
-        Map<String, Integer> receivedQuantityMap = items.stream()
-                .collect(Collectors.groupingBy(PlatformInboundDTO.Item::getProductSku, Collectors.summingInt(PlatformInboundDTO.Item::getReceivedQuantity)));
-        items = items.stream()
-                .peek(item -> {
-                    item.setReceivedQuantity(receivedQuantityMap.get(item.getProductSku()));
-                })
-                .distinct()
-                .collect(Collectors.toList());
-        dto.setItems(items);
+        Map<String, Integer> mergedMap = items.stream()
+                .collect(Collectors.toMap(PlatformInboundDTO.Item::getProductSku, PlatformInboundDTO.Item::getReceivedQuantity, Integer::sum));
+        dto.setItems(mergedMap.entrySet().stream()
+                .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()));
     }
 
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
