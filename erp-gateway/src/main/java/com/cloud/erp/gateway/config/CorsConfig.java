@@ -1,6 +1,7 @@
 package com.cloud.erp.gateway.config;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -16,16 +17,21 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
  */
 @Configuration
 public class CorsConfig {
-
+    @Value("${spring.cloud.nacos.discovery.namespace}")
+    private String nacosNamespace;
     @Bean
     public CorsWebFilter corsWebFilter(){
             UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
             //跨域配置
             CorsConfiguration corsConfiguration = new CorsConfiguration();
             //支持哪些来源的请求跨域
-//            corsConfiguration.addAllowedOrigin("*");
-//
-//            corsConfiguration.addAllowedHeader("*");
+            if ("test".equalsIgnoreCase(nacosNamespace)){
+                corsConfiguration.addAllowedOrigin("http://erptest.ulanzi.cn:8060");
+                corsConfiguration.addAllowedHeader("Content-Type");
+            }else {
+                corsConfiguration.addAllowedOrigin("*");
+                corsConfiguration.addAllowedHeader("*");
+            }
             corsConfiguration.addAllowedMethod("*");
             corsConfiguration.setAllowCredentials(true);
             //可以让所有的请求 来访问
