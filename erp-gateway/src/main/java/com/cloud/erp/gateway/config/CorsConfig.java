@@ -15,29 +15,29 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
  * @Date 2022-07-07 12:27
  * @Created by yl
  */
-//@Configuration
-//public class CorsConfig {
-//    @Value("${spring.cloud.nacos.discovery.namespace}")
-//    private String nacosNamespace;
-//    @Bean
-//    public CorsWebFilter corsWebFilter(){
-//            UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-//            //跨域配置
-//            CorsConfiguration corsConfiguration = new CorsConfiguration();
-//            //支持哪些来源的请求跨域
-//            if ("test".equalsIgnoreCase(nacosNamespace)){
-//                corsConfiguration.addAllowedOrigin("http://erptest.ulanzi.cn:8060");
-//                corsConfiguration.addAllowedHeader("Content-Type");
-//            }else {
-//                corsConfiguration.addAllowedOrigin("*");
-//                corsConfiguration.addAllowedHeader("*");
-//            }
-//            corsConfiguration.addAllowedMethod("*");
-//            corsConfiguration.setAllowCredentials(true);
-//            //可以让所有的请求 来访问
-//            urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-//            return new CorsWebFilter(urlBasedCorsConfigurationSource);
-//
-//        }
-//    }
+@Configuration
+public class CorsConfig {
+    @Value("${spring.cloud.nacos.discovery.namespace}")
+    private String nacosNamespace;
+    @Bean
+    public CorsWebFilter corsWebFilter(){
+            UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
+            //跨域配置
+            CorsConfiguration corsConfiguration = new CorsConfiguration();
+            //支持哪些来源的请求跨域
+            if ("test".equalsIgnoreCase(nacosNamespace)){
+                corsConfiguration.addAllowedOrigin("http://erptest.ulanzi.cn:8060");
+                corsConfiguration.addAllowedHeader("Content-Type");
+            }else {
+                corsConfiguration.addAllowedOrigin("*");
+                corsConfiguration.addAllowedHeader("*");
+            }
+            corsConfiguration.addAllowedMethod("*");
+            corsConfiguration.setAllowCredentials(true);
+            //可以让所有的请求 来访问
+            urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
+            return new CorsWebFilter(urlBasedCorsConfigurationSource);
+
+        }
+    }
 
