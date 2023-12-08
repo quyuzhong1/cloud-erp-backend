@@ -179,7 +179,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         // 检查是否完全签收
         Boolean allReceive = this.checkAllReceiveByMainId(entity.getMainId());
         if (allReceive){
-            mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
+            mainEntity.setInstockStatus(OverseasInstockStatusEnum.FINISH.getCode());
         } else {
             mainEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
         }
@@ -233,6 +233,6 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         if (CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("数据异常：无详情");
         }
-        return detailEntityList.stream().allMatch(e-> e.getPackQty() <= e.getReceiveQty());}
+        return detailEntityList.stream().allMatch(e-> 0 == e.getDiffQty());}
 
 }
