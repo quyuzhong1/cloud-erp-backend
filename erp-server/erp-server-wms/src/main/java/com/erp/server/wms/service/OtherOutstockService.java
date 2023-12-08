@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
@@ -56,6 +57,14 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return String
      */
     String addAndSubmit(OtherOutstockDTO.AddDTO dto);
+    /**
+     * 新增并审核
+     * @Author Luo_WG
+     * @Date 2023/12/8 11:07
+     * @param dto
+     * @return java.lang.String
+     **/
+    String addAndApprove(OtherOutstockDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
