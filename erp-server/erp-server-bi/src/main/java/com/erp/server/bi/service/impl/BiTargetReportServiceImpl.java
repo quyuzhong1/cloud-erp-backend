@@ -297,10 +297,10 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
 
-        TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
-        if (org.apache.commons.lang.StringUtils.isBlank(dto.getDateType())){
-            dto.setDateType(DateTypeEnum.MONTH.getType());
-        }
+//        TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
+//        if (org.apache.commons.lang.StringUtils.isBlank(dto.getDateType())){
+//            dto.setDateType(DateTypeEnum.MONTH.getType());
+//        }
 
         Map<String, String> dataMap = new HashMap<>();
         //部门和负责人 填充名称

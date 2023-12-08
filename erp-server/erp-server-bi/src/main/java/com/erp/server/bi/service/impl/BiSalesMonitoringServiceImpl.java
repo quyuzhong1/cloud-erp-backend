@@ -135,7 +135,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         LocalDateTime lastsMonth = currentMonth.minusMonths(2);
 
 //        BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
-        dto.setDateType(DateTypeEnum.MONTH.getType());
+//        dto.setDateType(DateTypeEnum.MONTH.getType());
         dto.setStartTime(null);
         dto.setEndTime(null);
         List<BiSalesMonitoringTableDTO.ViewDTO> resultList = new ArrayList<>();
