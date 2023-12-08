@@ -57,7 +57,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -112,6 +111,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Resource
     private OtherOutstockService otherOutstockService;
+
     @Resource
     private OtherInstockService otherInstockService;
 
@@ -639,8 +639,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if(!OverseasInstockStatusEnum.canManualFinish(entity.getInstockStatus())){
                 throw new ServiceException("平台状态未签收完成，不能手动完结");
             }
-            if(OverseasFinishStatusEnum.AUTO.getCode().equals(entity.getFinishStatus())
-            || OverseasFinishStatusEnum.MANUAL.getCode().equals(entity.getFinishStatus())){
+            if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(entity.getInstockStatus())
+            || OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getInstockStatus())){
                 throw new ServiceException("已经自动完结或手动完结，不能手动完结");
             }
             //签收数小于发货数情况下手动完结生成其他出库单（报损）在途仓
@@ -656,8 +656,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 otherInstockService.generateByOverseasInbound(entity,profitDetailList,String.format("海外仓入库单【%s】差异数据完结自动生成", entity.getCode()),true);
             }
         }
-        entity.setFinishStatus(OverseasFinishStatusEnum.MANUAL.getCode());
-        entity.setInstockStatus(OverseasInstockStatusEnum.FINISH.getCode());
+        entity.setInstockStatus(OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode());
         entity.setFinishReason(dto.getFinishReason());
         for (OverseasWarehouseInboundDetailEntity detailEntity : updateDetailEntityList) {
             detailEntity.setDiffQty(0);
@@ -747,25 +746,26 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
     public List<OverseasWarehouseInboundDTO.CountDTO> listCount(PermissionsDTO dto) {
-        QueryChainWrapper<OverseasWarehouseInboundEntity> queryWrapper = query();
-
-        queryWrapper.select("count(id) as count", "instock_status")
-                .groupBy(OverseasWarehouseInboundEntity.INSTOCK_STATUS);
-        if (StringUtils.isNotBlank(dto.getPermissionSql())) {
-            queryWrapper.last(dto.getPermissionSql());
-        }
-        List<OverseasWarehouseInboundEntity> inStockStatusList = queryWrapper.list();
-
-        Map<String, Integer> countMap = new HashMap<>();
-        if (!CollectionUtils.isEmpty(inStockStatusList)) {
-            countMap = inStockStatusList
-                    .stream()
-                    .collect(Collectors.toMap(OverseasWarehouseInboundEntity::getInstockStatus, OverseasWarehouseInboundEntity::getCount));
-        }
-        Map<String, Integer> finalCountMap = countMap;
-        return Arrays.stream(OverseasInstockStatusEnum.values())
-                .map(e -> new OverseasWarehouseInboundDTO.CountDTO(e.getCode(), finalCountMap.getOrDefault(e.getCode(), 0)))
-                .collect(Collectors.toList());
+        List<OverseasWarehouseInboundDTO.CountDTO> list = baseMapper.tabList(dto);
+        // 获取入库状态列表
+        List<String> instockStatus = OverseasInstockStatusEnum.getStatusList();
+        // 获取入库状态列表
+        List<String> finishStatus = OverseasFinishStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(OverseasWarehouseInboundDTO.CountDTO::getTabFlag).collect(Collectors.toList());
+        instockStatus.parallelStream().forEach(status -> {
+            if(!existStatusList.contains(status)) {
+                list.add(new OverseasWarehouseInboundDTO.CountDTO(status, 0));
+            }
+        });
+        finishStatus.parallelStream().forEach(status -> {
+            if(!existStatusList.contains(status)) {
+                list.add(new OverseasWarehouseInboundDTO.CountDTO(status, 0));
+            }
+        });
+        list.add(new OverseasWarehouseInboundDTO.CountDTO("all", list.stream().mapToInt(OverseasWarehouseInboundDTO.CountDTO::getCount).sum()));
+        // 计算合计数量
+        return list;
     }
 
     @Override

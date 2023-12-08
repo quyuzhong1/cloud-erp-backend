@@ -1,6 +1,5 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.enums.OverseasInstockStatusEnum;
@@ -17,8 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerWmsApplication.class})
 public class PlatformInboundConsumerServiceTest {
@@ -34,7 +31,7 @@ public class PlatformInboundConsumerServiceTest {
         dto.setProvider("goodcang");
         dto.setPlatform("goodcang");
         dto.setDownloadTime(LocalDateTime.now());
-        dto.setReceivingStatus(OverseasInstockStatusEnum.FINISH.getCode());
+        dto.setReceivingStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
         List<PlatformInboundDTO.Item> itemList = new ArrayList<>();
         dto.setItems(itemList);
         PlatformInboundDTO.Item item = new PlatformInboundDTO.Item();

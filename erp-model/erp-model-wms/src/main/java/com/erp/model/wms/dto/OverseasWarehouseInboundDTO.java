@@ -45,6 +45,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * tab页
+         */
+        private String  tabFlag;
+
         private String code;
 
         /**

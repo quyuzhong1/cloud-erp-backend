@@ -3,16 +3,13 @@ package com.common.business.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.rmi.ServerException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 【海外仓入库单】
@@ -25,7 +22,8 @@ public enum OverseasInstockStatusEnum implements EnumMessage {
     TO_BE_SIGNED("toBeSigned", "待签收"),
     PARTIAL_SIGNED("partialSigned", "部分签收"),
     SIGNED("signed", "已签收"),
-    FINISH("finish", "已完结"),
+    AUTOMATIC_COMPLETION("automaticCompletion", "自动完结"),
+    MANUAL_COMPLETION("manualCompletion", "手动完结"),
     CANCELED("canceled", "已取消"),
     ABNORMAL("abnormal", "异常"),
     ;
@@ -68,6 +66,10 @@ public enum OverseasInstockStatusEnum implements EnumMessage {
         if(StringUtils.isBlank(code)){
             return true;
         }
-        return SIGNED.code.equals(code) || FINISH.code.equals(code) || CANCELED.code.equals(code);
+        return SIGNED.code.equals(code) || AUTOMATIC_COMPLETION.code.equals(code) || MANUAL_COMPLETION.code.equals(code) || CANCELED.code.equals(code);
+    }
+
+    public static List<String> getStatusList() {
+        return Arrays.stream(OverseasInstockStatusEnum.values()).map(OverseasInstockStatusEnum::getCode).collect(Collectors.toList());
     }
 }

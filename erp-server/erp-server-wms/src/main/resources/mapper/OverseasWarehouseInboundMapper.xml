@@ -269,4 +269,20 @@
             </if>
         </where>
     </select>
+
+    <select id="tabList" resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDTO$CountDTO">
+        SELECT
+        instock_status AS tabFlag,
+        COUNT(*) AS count
+        FROM overseas_warehouse_inbound
+        GROUP BY instock_status
+
+        UNION ALL
+
+        SELECT
+        finish_status AS tabFlag,
+        COUNT(*) AS count
+        FROM overseas_warehouse_inbound
+        GROUP BY finish_status
+    </select>
 </mapper>

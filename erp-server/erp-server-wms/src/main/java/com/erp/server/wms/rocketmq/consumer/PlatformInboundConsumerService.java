@@ -160,12 +160,12 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 mainEntity.setReceiveTime(dto.getDownloadTime());
                 mainEntity.setInstockStatus(dto.getReceivingStatus());
                 //自动完结再签收完结状态变成未完结
-                if(OverseasFinishStatusEnum.AUTO.getCode().equals(mainEntity.getFinishStatus())){
-                    mainEntity.setFinishStatus(OverseasFinishStatusEnum.NOT.getCode());
+                if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
+                    mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
                 }else{
                     //差异数量为0时 自动完结
                     boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
-                    mainEntity.setFinishStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
+                    mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
                 }
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
@@ -178,12 +178,12 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     private String getFinishStatusByReceiveStatus(String receiveStatus,boolean isAllDiffZero){
         if((receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) ||
-                receiveStatus.equals(OverseasInstockStatusEnum.FINISH.getCode())||
+                receiveStatus.equals(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode())||
                 receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())) &&
                 isAllDiffZero){
-            return OverseasFinishStatusEnum.AUTO.getCode();
+            return OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode();
         }
-        return OverseasFinishStatusEnum.NOT.getCode();
+        return OverseasInstockStatusEnum.SIGNED.getCode();
     }
 
     private void groupBySku(PlatformInboundDTO dto) {

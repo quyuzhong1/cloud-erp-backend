@@ -95,6 +95,9 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         //财务信息更新保存
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity);
 
+        //客户信息
+
+
         // TODO 校验
         //自动匹配订单规则
 //        Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList);
