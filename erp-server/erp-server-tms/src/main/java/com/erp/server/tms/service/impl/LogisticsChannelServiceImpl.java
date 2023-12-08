@@ -69,7 +69,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
     @Autowired
+    private LogisticsSaleChannelService logisticsSaleChannelService;
+
+    @Autowired
     private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
+
+    @Autowired
+    private LogisticsAuthService logisticsAuthService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -385,6 +391,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (Objects.isNull(logisticsSupplier)) {
             new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
         }
+
         //纸张大小
         String paperSize = logisticsChannelEntity.getPaperSize();
         PaperSizeEnum paperSizeEnum = PaperSizeEnum.getByCode(paperSize);
@@ -408,5 +415,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             maxWeight = zero;
         }
         logisticsChannelEntity.setMaxWeight(maxWeight);
+        String code=logisticsChannelEntity.getCode();
+        if(StringUtils.isNotBlank(code)){
+            LogisticsAuthEntity auth = logisticsAuthService.getByMainId("",mainId);
+            String platform=Objects.nonNull(auth)?auth.getLogisticsPlatform():"";
+            //根据销售平台和渠道code 获取到原生的渠道
+            LogisticsSaleChannelEntity saleChannel =  logisticsSaleChannelService.getByPlatform(platform, code);
+            if (Objects.isNull(saleChannel)) {
+                throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
+            }
+        }
+
+
     }
 }

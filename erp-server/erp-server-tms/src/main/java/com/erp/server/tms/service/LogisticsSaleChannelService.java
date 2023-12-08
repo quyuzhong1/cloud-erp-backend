@@ -81,5 +81,5 @@ public interface LogisticsSaleChannelService extends SuperService<LogisticsSaleC
      *@author yl
      *@date 2023-12-07
      */
-    LogisticsSaleChannelEntity getBySalesPlatform(String salesPlatform, String code);
+    LogisticsSaleChannelEntity getByPlatform(String platform, String code);
 }
