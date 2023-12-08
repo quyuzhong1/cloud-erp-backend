@@ -1,13 +1,15 @@
 package com.erp.server.dmp.task;
 
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.SyncDataReportVO;
+import com.erp.server.dmp.service.DmpDateDimensionService;
 import com.erp.server.dmp.service.DmpOrderInfoService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,7 +29,8 @@ public class DataReportTaskJob {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
+    @Resource
+    private DmpDateDimensionService dmpDateDimensionService;
     /**
      * 同步销售数据到物理表
      *
@@ -57,5 +60,30 @@ public class DataReportTaskJob {
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====同步销售数据到物理表 结束=====");
+    }
+
+    /**
+     *
+     * @throws InterruptedException
+     * @throws ExecutionException
+     */
+    @XxlJob("createTimeDimension")
+    public void createTimeDimension() throws InterruptedException, ExecutionException {
+        XxlJobHelper.log("createTimeDimension start");
+        String jobParam = XxlJobHelper.getJobParam();
+        int year = 2023;
+        if (StringUtils.isNotBlank(jobParam)){
+            year = Integer.parseInt(jobParam);
+        }else {
+            LocalDateTime now = LocalDateTime.now();
+            year = now.getYear();
+        }
+        //获取天列表
+        List<LocalDateTime> datesInYear = DateUtil.getDatesInYear(year);
+        //删除当前年维度的数据
+        dmpDateDimensionService.deleteByYear(String.valueOf(year));
+        //批量新增
+        dmpDateDimensionService.batchInsertDateDimensions(datesInYear);
+        XxlJobHelper.log("createTimeDimension end");
     }
 }
