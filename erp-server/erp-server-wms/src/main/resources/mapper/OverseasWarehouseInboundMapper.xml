@@ -276,13 +276,5 @@
         COUNT(*) AS count
         FROM overseas_warehouse_inbound
         GROUP BY instock_status
-
-        UNION ALL
-
-        SELECT
-        finish_status AS tabFlag,
-        COUNT(*) AS count
-        FROM overseas_warehouse_inbound
-        GROUP BY finish_status
     </select>
 </mapper>
