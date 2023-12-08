@@ -4,7 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.enums.RuleCompareEnum;
-import com.common.core.enums.RuleLogicEnum;
+
 import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;

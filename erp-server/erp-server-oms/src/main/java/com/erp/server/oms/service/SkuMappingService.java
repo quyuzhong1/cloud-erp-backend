@@ -175,4 +175,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @date 2023-11-17 11:40
      */
     SkuMappingEntity getByAttribute(String productSkuId, String warehouseId, RuleTypeEnum warehouseType);
+
+    /**
+     * 添加映射
+     * @param addSkuMappingDTO
+     * @return
+     */
+    Boolean add(SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO);
 }

@@ -35,6 +35,7 @@ public class SoB2cController extends BaseController {
     @Autowired
     private SoB2cService soB2cService;
 
+
     /**
      * 获取状态统计
      *
@@ -771,8 +772,9 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/matchSku")
-    public ApiResult matchSku() {
-        return success();
+    public ApiResult matchSku(@RequestBody @Validated SoB2cDTO.MatchSkuDTO dto) {
+       Boolean result= soB2cService.matchSku(dto);
+        return result?success():failure();
     }
 
     @GetMapping("/getJson")

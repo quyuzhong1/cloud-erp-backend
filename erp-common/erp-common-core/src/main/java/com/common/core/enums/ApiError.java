@@ -1005,6 +1005,7 @@ public enum ApiError implements Serializable {
     ERROR_AUTHORIZE_FAIL(92108,"授权失败【{}】"),
     ERROR_SHOP_TOKEN_IS_NULL(92109,"【{}】店铺获取token失败"),
     ERROR_SHOP_ALREADY_AUTH(92110,"店铺已授权"),
+    ERROR_LISTING_NOT_EXIST(92111,"未找到listing 信息"),
 
 
 

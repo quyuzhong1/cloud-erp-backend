@@ -3,8 +3,10 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -903,5 +905,60 @@ public class SkuMappingDTO implements Serializable {
          * 库存产品名称
          */
         private String stockSkuName;
+    }
+
+    /**
+     * 添加对照表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddSkuMappingDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 产品sku id
+         */
+        private String productSkuId;
+        /**
+         * 产品sku no
+         */
+        private String productSkuNo;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 类型
+         */
+        private RuleTypeEnum type;
+
+        /**
+         *
+         */
+        private String listingId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseId;
+
+
     }
 }
