@@ -25,13 +25,8 @@ public class CorsConfig {
             //跨域配置
             CorsConfiguration corsConfiguration = new CorsConfiguration();
             //支持哪些来源的请求跨域
-            if ("test".equalsIgnoreCase(nacosNamespace)){
-                corsConfiguration.addAllowedOrigin("http://erptest.ulanzi.cn:8060");
-                corsConfiguration.addAllowedHeader("Content-Type");
-            }else {
-                corsConfiguration.addAllowedOrigin("*");
-                corsConfiguration.addAllowedHeader("*");
-            }
+            corsConfiguration.addAllowedOrigin("*");
+            corsConfiguration.addAllowedHeader("*");
             corsConfiguration.addAllowedMethod("*");
             corsConfiguration.setAllowCredentials(true);
             //可以让所有的请求 来访问
