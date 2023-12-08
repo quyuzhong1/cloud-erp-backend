@@ -746,8 +746,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<OverseasWarehouseInboundDTO.CountDTO> list = baseMapper.tabList(dto);
         // 获取入库状态列表
         List<String> instockStatus = OverseasInstockStatusEnum.getStatusList();
-        // 获取入库状态列表
-        List<String> finishStatus = OverseasFinishStatusEnum.getStatusList();
+
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(OverseasWarehouseInboundDTO.CountDTO::getTabFlag).collect(Collectors.toList());
         instockStatus.parallelStream().forEach(status -> {
@@ -755,11 +754,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 list.add(new OverseasWarehouseInboundDTO.CountDTO(status, 0));
             }
         });
-        finishStatus.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-                list.add(new OverseasWarehouseInboundDTO.CountDTO(status, 0));
-            }
-        });
+
         list.add(new OverseasWarehouseInboundDTO.CountDTO("all", list.stream().mapToInt(OverseasWarehouseInboundDTO.CountDTO::getCount).sum()));
         // 计算合计数量
         return list;
@@ -1024,8 +1019,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             data.setInstockTypeName(OverseasInstockTypeEnum.getNameByCode(data.getInstockType()));
             // 入库状态名称
             data.setInstockStatusName(OverseasInstockStatusEnum.getName(data.getInstockStatus()));
-            // 完结状态名称
-            data.setFinishStatusName(OverseasFinishStatusEnum.getNameByCode(data.getFinishStatus()));
             // 物流方式
             data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
             // 交货方式
