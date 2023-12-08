@@ -162,9 +162,8 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @Date 2023/12/5
      **/
     String generateTransferOut(OverseasWarehouseInboundEntity mainEntity,
-                               OverseasWarehouseInboundDetailEntity detailEntity,
-                               OverseasWarehouseInboundReceivedEntity receivedEntity
-    );
+                               List<OverseasWarehouseInboundDetailEntity> detailEntityList,
+                               Map<String, Integer> receiverdMap);
 
     /**
      * 推动海外入库单到第三方

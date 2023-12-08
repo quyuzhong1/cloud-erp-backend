@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import cn.hutool.core.lang.Tuple;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.common.business.service.SuperService;
@@ -54,7 +55,7 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
      * @param dto 签收信息
      * @return 处理结果
      */
-    BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto);
+//    BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto);
 
     /**
      * 通过mainId列表查询
@@ -81,4 +82,9 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
      * @date: 2023-12-06
      */
     Boolean checkAllReceiveByMainId(String mainId);
+
+    /**
+     * 通用手动授权
+     */
+    List<BatchResultDTO> allManualReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList);
 }
