@@ -27,114 +27,116 @@ import java.util.List;
  *
  * @author Will
  * @since 2023-08-18
-*/
+ */
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
 
 
-     /**
+    /**
      * 状态统计
      */
-     @Data
-     @NoArgsConstructor
-     @AllArgsConstructor
-     public static class TabListDTO {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
 
-         /**
+        /**
          * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
          */
-         private String tabFlag;
+        private String tabFlag;
 
-         /**
+        /**
          * 数量
          */
-         private Integer count;
+        private Integer count;
 
-     }
-     /**
+    }
+
+    /**
      * 分页列表查询参数
      */
-     @Data
-     @NoArgsConstructor
-     public static class PagingParamDTO extends SortDTO {
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
-         /**
+        /**
          * 搜索类型（all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
          */
-         private String  tabFlag;
-         /**
-          * 销售单号
-          */
-         private String code;
-         /**
-          * 平台订单号
-          */
-         private String platformCode;
-         /**
-          * 作废状态
-          */
-         private Boolean invalidStatus;
-         /**
-          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-          */
-         private List<String> platformList;
-         /**
-          * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/16513
-          */
-         private List<String> shopIdList;
-         /**
-          * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
-          */
-         private List<String> countryList;
-         /**
-          * 平台sku
-          */
-         private String platformSkuNo;
-         /**
-          * 平台产品id
-          */
-         private String platformSpuNo;
-         /**
-          * 审核状态
-          */
-         private List<String> approveStatusList;
-         /**
-          * 订单状态 （soB2cBillStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-          */
-         private List<String> billStatusList;
-         /**
-          * 付款状态 （soB2cPayStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-          */
-         private List<String> payStatusList;
-         /**
-          * 分类集合 http://172.16.100.11:3002/project/110/interface/api/19699
-          */
-         private List<String> categoryList;
-         /**
-          * 标签集合 （soB2cLable字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-          */
-         private List<String> labelList;
-         /**
-          * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
-          */
-         private List<String> abnormalTypeList;
-     }
+        private String tabFlag;
+        /**
+         * 销售单号
+         */
+        private String code;
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> platformList;
+        /**
+         * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/16513
+         */
+        private List<String> shopIdList;
+        /**
+         * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
+         */
+        private List<String> countryList;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台产品id
+         */
+        private String platformSpuNo;
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+        /**
+         * 订单状态 （soB2cBillStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> billStatusList;
+        /**
+         * 付款状态 （soB2cPayStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> payStatusList;
+        /**
+         * 分类集合 http://172.16.100.11:3002/project/110/interface/api/19699
+         */
+        private List<String> categoryList;
+        /**
+         * 标签集合 （soB2cLable字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> labelList;
+        /**
+         * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+         */
+        private List<String> abnormalTypeList;
+    }
+
     /**
-    * 分页列表
-    */
+     * 分页列表
+     */
     @Data
     @NoArgsConstructor
     public static class ListDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 单据编码
-        */
+         * 单据编码
+         */
         private String code;
 
         /**
@@ -158,8 +160,8 @@ public class SoB2cDTO implements Serializable {
         private String shopName;
 
         /**
-        * 审核状态
-        */
+         * 审核状态
+         */
         private String approveStatus;
 
         /**
@@ -173,8 +175,8 @@ public class SoB2cDTO implements Serializable {
         private String billStatus;
 
         /**
-        * 作废状态（false未作废，true已作废）
-        */
+         * 作废状态（false未作废，true已作废）
+         */
         private Boolean invalidStatus;
 
         /**
@@ -223,8 +225,8 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
-        * 订单状态（审核状态、订单状态，取最后一级状态）
-        */
+         * 订单状态（审核状态、订单状态，取最后一级状态）
+         */
         private String status;
 
         /**
@@ -252,8 +254,8 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal amount;
 
         /**
-        * 币别（原币）
-        */
+         * 币别（原币）
+         */
         private String currency;
 
         /**
@@ -262,13 +264,13 @@ public class SoB2cDTO implements Serializable {
         private LocalDateTime payTime;
 
         /**
-        * 买家备注
-        */
+         * 买家备注
+         */
         private String buyerRemark;
 
         /**
-        * 订单备注
-        */
+         * 订单备注
+         */
         private String remark;
 
         /**
@@ -277,8 +279,8 @@ public class SoB2cDTO implements Serializable {
         private Boolean isIntercept;
 
         /**
-        * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-        */
+         * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
+         */
         private String abnormalType;
 
         /**
@@ -337,7 +339,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 速卖通状态（RISK_CONTROL，IN_FROZEN）时冻结中
          */
-         private String aliexpressStatus;
+        private String aliexpressStatus;
         /**
          * 亚马逊状态（Unfulfillable）冻结中
          */
@@ -345,19 +347,19 @@ public class SoB2cDTO implements Serializable {
         /**
          * 组合产品（映射SKU为组合产品）
          */
-         private Boolean isCombination;
+        private Boolean isCombination;
         /**
          * FBA（亚马逊订单FulfillmentChannel=AFN-亚马逊配送时）
          */
-         private String FulfillmentChannel;
+        private String FulfillmentChannel;
         /**
          * 手工订单（在ERP手动创建的订单）
          */
-         private Boolean isManual;
+        private Boolean isManual;
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
          */
-         private Boolean isIntercept;
+        private Boolean isIntercept;
         /**
          * 1、拆分生成的子订单 split
          * 2、合并生成的新订单 merge
@@ -371,28 +373,28 @@ public class SoB2cDTO implements Serializable {
     }
 
     /**
-    * 导出Excel
-    */
+     * 导出Excel
+     */
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
         /**
-        * 勾选的id集合
-        */
+         * 勾选的id集合
+         */
         private List<String> ids;
     }
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends CommonDTO{
+    public static class ViewDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
          * 销售单号
@@ -475,7 +477,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 销售订单
          */
-        private  SoB2cEntity soB2cEntity;
+        private SoB2cEntity soB2cEntity;
 
         /**
          * 销售订单物流信息
@@ -505,17 +507,17 @@ public class SoB2cDTO implements Serializable {
         /**
          * 币别
          */
-       private String currency;
+        private String currency;
 
         /**
          * 订单总金额
          */
-       private BigDecimal amount;
+        private BigDecimal amount;
 
-       /**
-        * 运费收入
-        */
-       private BigDecimal shippingCost;
+        /**
+         * 运费收入
+         */
+        private BigDecimal shippingCost;
 
         /**
          * 商品成本
@@ -626,8 +628,8 @@ public class SoB2cDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -677,15 +679,15 @@ public class SoB2cDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String id;
 
         /**
@@ -713,61 +715,61 @@ public class SoB2cDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台订单号
-        */
-        @Size(max = 32,message = "平台订单号最大长度不能超过32位")
+         * 平台订单号
+         */
+        @Size(max = 32, message = "平台订单号最大长度不能超过32位")
         private String platformCode;
 
         /**
-        * 销售平台
-        */
+         * 销售平台
+         */
         @NotBlank(message = "销售平台不能为空")
-        @Size(max = 32,message = "销售平台最大长度不能超过32位")
+        @Size(max = 32, message = "销售平台最大长度不能超过32位")
         private String dictPlatform;
 
         /**
-        * 店铺
-        */
+         * 店铺
+         */
         @NotBlank(message = "店铺不能为空")
-        @Size(max = 19,message = "店铺最大长度不能超过19位")
+        @Size(max = 19, message = "店铺最大长度不能超过19位")
         private String shopId;
 
         /**
-        * 订单金额
-        */
+         * 订单金额
+         */
         @NotNull(message = "订单金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
 
         /**
-        * 币别（原币）
-        */
+         * 币别（原币）
+         */
         @NotBlank(message = "币别（原币）不能为空")
-        @Size(max = 32,message = "币别（原币）最大长度不能超过32位")
+        @Size(max = 32, message = "币别（原币）最大长度不能超过32位")
         private String currency;
 
         /**
-        * 付款时间
-        */
+         * 付款时间
+         */
         @NotNull(message = "付款时间不能为空")
         private LocalDateTime payTime;
 
         /**
-        * 付款方式
-        */
-        @Size(max = 32,message = "付款方式最大长度不能超过32位")
+         * 付款方式
+         */
+        @Size(max = 32, message = "付款方式最大长度不能超过32位")
         private String dictPayMethod;
 
         /**
-        * 买家备注
-        */
-        @Size(max = 255,message = "买家备注最大长度不能超过255位")
+         * 买家备注
+         */
+        @Size(max = 255, message = "买家备注最大长度不能超过255位")
         private String buyerRemark;
 
         /**
-        * 订单备注
-        */
-        @Size(max = 255,message = "订单备注最大长度不能超过255位")
+         * 订单备注
+         */
+        @Size(max = 255, message = "订单备注最大长度不能超过255位")
         private String remark;
 
         /**
@@ -828,7 +830,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 重量
          */
-        private BigDecimal  weight;
+        private BigDecimal weight;
         /**
          * 仓库（逗号分隔）
          */
@@ -946,7 +948,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 平台编码
          */
-       private String dictPlatform;
+        private String dictPlatform;
         /**
          * 店铺id
          */
@@ -1119,7 +1121,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 产品skuId
          */
-        private String  skuId;
+        private String skuId;
         /**
          * 产品sku编号
          */
@@ -1127,7 +1129,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 平台sku
          */
-        private String  platformSkuNo;
+        private String platformSkuNo;
         /**
          * 平台产品id
          */
@@ -1135,11 +1137,11 @@ public class SoB2cDTO implements Serializable {
         /**
          * 产品名称
          */
-        private String  productName;
+        private String productName;
         /**
          * 包装重量
          */
-        private BigDecimal  weight;
+        private BigDecimal weight;
         /**
          * 含税成本
          */
@@ -1291,12 +1293,13 @@ public class SoB2cDTO implements Serializable {
         /**
          * 拆分前订单
          */
-        private String  parentB2cSoCode;
+        private String parentB2cSoCode;
         /**
          * 取消拆分明细
          */
         List<CheckCancelSplitDetailDTO> detailList;
     }
+
     @Data
     @NoArgsConstructor
     public static class CheckCancelSplitDetailDTO {
@@ -1309,6 +1312,7 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean invalidStatus;
     }
+
     /**
      * 拆分保存
      */
@@ -1411,6 +1415,18 @@ public class SoB2cDTO implements Serializable {
          * 收货人电话
          */
         private String receiverTelNumber;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class MatchSkuDTO {
+
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        @NotBlank(message = "明细不能为空")
+        private String id;
     }
 
 }

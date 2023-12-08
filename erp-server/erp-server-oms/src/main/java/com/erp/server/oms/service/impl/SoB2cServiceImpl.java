@@ -31,6 +31,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -168,6 +169,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private LogisticsFeign logisticsFeign;
 
+
+    @Autowired
+    private ListingInfoService listingInfoService;
 
     @Autowired
     private ShopAuthService shopAuthService;
@@ -594,8 +598,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
             }
         }
-        LogisticsChannelEntity logisticsChannel= logisticsFeign.getChannelById(logisticsChannelId);
-        if(Objects.isNull(logisticsChannel)){
+        LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(logisticsChannelId);
+        if (Objects.isNull(logisticsChannel)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
         //物流信息更新
@@ -607,8 +611,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //销售订单更新
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
         this.updateById(entity);
-
-
 
 
         //仓库信息
@@ -1662,7 +1664,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto, Boolean.FALSE);
             data.setTotalProfit(financialInfoDTO.getProfit());
             data.setProfitCurrency(data.getCurrency());
-            data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%","")));
+            data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%", "")));
             data.setDetailList(soB2cDetailList);
             //明细存在一条数据时组合SKU则标识
             labelDTO.setIsCombination(isCombination);
@@ -2013,7 +2015,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //匹配审核规则
-        handleMatchJson(id, detailList,map);
+        handleMatchJson(id, detailList, map);
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(map);
         //审核规则是否通过
         Boolean approveSuccess = (CollectionUtils.isEmpty(ruleOrderMatchResult.getCategoryDetailIdList()) || StrUtil.isBlank(ruleOrderMatchResult.getFlowStatus())) ? Boolean.FALSE : Boolean.TRUE;
@@ -2065,7 +2067,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/11/16 15:27
      */
-    private Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList,Map<String,Object> map) {
+    private Map<String, Object> handleMatchJson(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity soB2cEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
@@ -2101,7 +2103,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSoB2cDetailList(detailList);
         SoB2cDTO.FinancialInfoDTO financialInfo = getFinancialInfo(dto, Boolean.FALSE);
         map.put("dictPayMethod", soB2cEntity.getDictPayMethod());
-        Integer goodsTotalQty=detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
+        Integer goodsTotalQty = detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         map.put("goodsTotalQty", goodsTotalQty);
         LocalDateTime payTime = soB2cEntity.getPayTime();
         String payTimeStr = Objects.nonNull(payTime) ? LocalDateUtil.formatTime(payTime, DateUtil.fmt) : "";
@@ -2141,9 +2143,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
         map.put("orderProfitRate", financialInfo.getProfitRateFlag());
 
-        List<Map<String,Object>> mapList = new ArrayList<>(detailList.size());
+        List<Map<String, Object>> mapList = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity detailEntity : detailList) {
-            Map<String,Object> detailMap = new HashMap<>();
+            Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("detailId", detailEntity.getId());
             detailMap.put("platformSkuNo", detailEntity.getPlatformSkuNo());
             detailMap.put("skuQty", detailEntity.getQty());
@@ -2252,10 +2254,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date 2023-12-05 10:25
      */
 
-    private String getByField(String fieldCode, List<Map<String,Object>> mapList) {
+    private String getByField(String fieldCode, List<Map<String, Object>> mapList) {
         Set<String> list = new HashSet<>(mapList.size());
-        for (Map<String,Object> map : mapList) {
-            list.add(map.getOrDefault(fieldCode,"").toString());
+        for (Map<String, Object> map : mapList) {
+            list.add(map.getOrDefault(fieldCode, "").toString());
         }
         return list.stream().collect(Collectors.joining(","));
     }
@@ -2268,7 +2270,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @date: 2023/8/24 15:19
      */
     @Override
-    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map) {
+    public Boolean distributionRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //进行配货规则匹配
@@ -2601,7 +2603,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
 
-        BigDecimal profitRateFlag=MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()));
+        BigDecimal profitRateFlag = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost()));
         financialInfoDTO.setProfitRateFlag(profitRateFlag);
         financialInfoDTO.setProfitRate(MathUtil.compareTo(profitRate, MathUtil.ZERO) == MathUtil.ZERO ? "0%" : profitRate + "%");
         return financialInfoDTO;
@@ -2755,10 +2757,62 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Map<String,Object> getJson(String id) {
+    public Map<String, Object> getJson(String id) {
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
-        Map<String, Object> obj = handleMatchJson(id, soB2cDetailList,new HashMap<>());
+        Map<String, Object> obj = handleMatchJson(id, soB2cDetailList, new HashMap<>());
         return obj;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean matchSku(SoB2cDTO.MatchSkuDTO dto) {
+        //详情id
+        String detailId = dto.getId();
+        SoB2cDetailEntity detailEntity = soB2cDetailService.getById(detailId);
+        if (Objects.isNull(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        SoB2cEntity soB2cEntity = this.getById(detailEntity.getMainId());
+        if (Objects.isNull(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        String skuId = dto.getSkuId();
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(Arrays.asList(skuId));
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        ProductDetailEntity skuEntity = skuList.get(0);
+        //平台sku
+        String platformSkuNo = detailEntity.getPlatformSkuNo();
+        //平台产品id
+        String platformSpuNo = detailEntity.getPlatformSpuNo();
+
+        SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO = new SkuMappingDTO.AddSkuMappingDTO();
+        String skuNo=skuEntity.getSkuNo();
+        addSkuMappingDTO.setProductName(skuEntity.getName());
+        addSkuMappingDTO.setProductSkuId(skuEntity.getId());
+        addSkuMappingDTO.setProductSkuNo(skuNo);
+        addSkuMappingDTO.setShopId(soB2cEntity.getShopId());
+        String typeCode = RuleTypeEnum.PLATFORM.getCode();
+        addSkuMappingDTO.setType(RuleTypeEnum.PLATFORM);
+        String salesPlatform = soB2cEntity.getDictPlatform();
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(salesPlatform);
+        String salesPlatformName = Objects.nonNull(platformDictEnum) ? platformDictEnum.getName() : "";
+        addSkuMappingDTO.setDictPlatform(salesPlatform);
+        addSkuMappingDTO.setPlatformName(salesPlatformName);
+        ListingInfoEntity listingInfo = listingInfoService.getByPlatformSkuNoAndSpu(platformSkuNo, platformSpuNo, typeCode);
+        if (Objects.isNull(listingInfo)) {
+            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
+        }
+        addSkuMappingDTO.setListingId(listingInfo.getId());
+
+        detailEntity.setSkuId(skuId);
+        detailEntity.setSkuNo(skuNo);
+        soB2cDetailService.updateById(detailEntity);
+        //添加对应关系
+        return skuMappingService.add(addSkuMappingDTO);
+
     }
 
 }

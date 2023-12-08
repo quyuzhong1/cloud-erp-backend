@@ -187,4 +187,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .map(e -> ListingInfoDTO.BaseDropDownDTO.init(e.toString()))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode) {
+        return this.lambdaQuery().
+                eq(ListingInfoEntity::getPlatformSkuNo,platformSkuNo).
+                eq(ListingInfoEntity::getPlatformSpuNo,platformSpuNo).
+                eq(ListingInfoEntity::getType,typeCode).
+                last("LIMIT 1").one();
+    }
 }
