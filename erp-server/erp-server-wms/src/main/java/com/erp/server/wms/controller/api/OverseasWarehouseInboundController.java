@@ -238,28 +238,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
     public ApiResult<?> manualReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
-        for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
-            BatchResultDTO submit;
-            try {
-                submit = overseasWarehouseInboundDetailService.manualReceived(dto);
-            } catch (Exception e) {
-                log.error("海外仓入库单手动签收失败:{}", e.getMessage());
-                OverseasWarehouseInboundDetailEntity entity = overseasWarehouseInboundDetailService.getById(dto.getDetailId());
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(dto.getDetailId(), dto.getDetailId(), "海外仓入库单详情不存在, 提交失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                String code = "";
-                OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
-                if (!ObjectUtil.isEmpty(entity)) {
-                    code = mainEntity.getCode();
-                }
-                submit = BatchResultDTO.fail(entity.getId(), code , e.getMessage());
-            }
-            resultDTOS.add(submit);
-        }
+        List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allManualReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

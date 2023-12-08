@@ -136,7 +136,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receivingType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.TransitTypeEnum.getCodeByErp(sourceData.getReceivingType()))"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
-            @Mapping(target = "smCode",  source = "smCode" ,defaultValue = "PHLY1"),
+            @Mapping(target = "smCode",  expression = "java(org.apache.commons.lang.StringUtils.isBlank(sourceData.getSmCode()) ? \"PHLY1\" : sourceData.getSmCode())"),
             @Mapping(target = "trackingNumber",  source = "trackingNumber"),
             @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "toStrByDate"),
             @Mapping(target = "verify",  source = "verify"),

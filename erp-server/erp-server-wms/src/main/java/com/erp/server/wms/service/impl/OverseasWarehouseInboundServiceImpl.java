@@ -350,7 +350,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         BeanUtils.copyProperties(updateDTO, mainEntity);
 
         mainEntity.setInstockType(updateDTO.getInstockType().getCode());
-        mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        if (null != updateDTO.getLogisticsMethod()){
+            mainEntity.setLogisticsMethod(updateDTO.getLogisticsMethod().getCode());
+        }
         if (null != updateDTO.getEstimatedArrivalDate()){
             mainEntity.setEstimatedArrivalDate(LocalDateTime.of(updateDTO.getEstimatedArrivalDate(), LocalTime.MIN));
         }
@@ -883,7 +885,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String generateTransferOut(OverseasWarehouseInboundEntity mainEntity, OverseasWarehouseInboundDetailEntity detailEntity, OverseasWarehouseInboundReceivedEntity receivedEntity) {
+    public String generateTransferOut(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, Map<String, Integer> receiverdMap) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
 
         //仓库列表配置的在途归属仓库
@@ -921,18 +923,26 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         addDTO.setRemark(String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
 
         //详情信息
-        TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
-        //映射产品信息
-        detailAddDto.setSkuId(detailEntity.getSkuId());
-        detailAddDto.setSkuNo(detailEntity.getSkuNo());
-        detailAddDto.setQty(receivedEntity.getReceiveQty());
-        detailAddDto.setOutWarehouseId(destWarehouse.getOnwayWarehouseId());
-        detailAddDto.setOutWarehouseLocation("");
-        detailAddDto.setInWarehouseId(mainEntity.getToWarehouseId());
-        detailAddDto.setInWarehouseLocation("");
-        detailAddDto.setSourceDetailId(detailEntity.getId());
+        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new LinkedList<>();
+        for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
+            Integer receiverQty = receiverdMap.get(detailEntity.getId());
+            if (null == receiverQty){
+                throw new ServiceException("签收数据异常");
+            }
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+            //映射产品信息
+            detailAddDto.setSkuId(detailEntity.getSkuId());
+            detailAddDto.setSkuNo(detailEntity.getSkuNo());
+            detailAddDto.setQty(receiverQty);
+            detailAddDto.setOutWarehouseId(destWarehouse.getOnwayWarehouseId());
+            detailAddDto.setOutWarehouseLocation("");
+            detailAddDto.setInWarehouseId(mainEntity.getToWarehouseId());
+            detailAddDto.setInWarehouseLocation("");
+            detailAddDto.setSourceDetailId(detailEntity.getId());
+            detailAddDtoList.add(detailAddDto);
+        }
 
-        addDTO.setDetailList(Collections.singletonList(detailAddDto));
+        addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.add(addDTO);
     }
 
