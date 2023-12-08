@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
@@ -9,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -35,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -123,8 +126,16 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             if (Objects.nonNull(channelEntity)) {
                 entity.setLogisticsChannelName(channelEntity.getName());
             }
-
         }
+        entity.setEstimatedShippingCost(ObjectUtil.isEmpty(entity.getEstimatedShippingCost()) ? BigDecimal.ZERO : entity.getEstimatedShippingCost());
+        entity.setAccessoriesCost(ObjectUtil.isEmpty(entity.getAccessoriesCost()) ? BigDecimal.ZERO : entity.getAccessoriesCost());
+        entity.setActualShippingCost(ObjectUtil.isEmpty(entity.getActualShippingCost()) ? BigDecimal.ZERO : entity.getActualShippingCost());
+        entity.setAccessoriesQty(ObjectUtil.isEmpty(entity.getAccessoriesQty()) ? MathUtil.ZERO : entity.getAccessoriesQty());
+        entity.setAccessoriesNw(ObjectUtil.isEmpty(entity.getAccessoriesNw()) ? BigDecimal.ZERO : entity.getAccessoriesNw());
+        entity.setWeight(ObjectUtil.isEmpty(entity.getWeight()) ? BigDecimal.ZERO : entity.getWeight());
+        entity.setHeight(ObjectUtil.isEmpty(entity.getHeight()) ? BigDecimal.ZERO : entity.getHeight());
+        entity.setWidth(ObjectUtil.isEmpty(entity.getWidth()) ? BigDecimal.ZERO : entity.getWidth());
+        entity.setLength(ObjectUtil.isEmpty(entity.getLength()) ? BigDecimal.ZERO : entity.getLength());
     }
 
     @Override
