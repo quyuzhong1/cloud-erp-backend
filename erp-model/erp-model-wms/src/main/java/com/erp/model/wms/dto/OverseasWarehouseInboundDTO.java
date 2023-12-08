@@ -303,16 +303,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String finishReason;
 
         /**
-         * 完结状态: not=未完结, auto=自动完结，manual=手动完结
-         */
-        private String finishStatus;
-
-        /**
-         * 完结状态名称
-         */
-        private String finishStatusName;
-
-        /**
          * 第三方唯一编码
          */
         private String overseasWarehouseInboundId;
