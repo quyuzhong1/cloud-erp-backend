@@ -48,7 +48,7 @@ public interface OverseasWarehouseInboundConverter {
 
     @Mappings({
             @Mapping(target = "detailId",  source = "entity.id"),
-            @Mapping(target = "id",  source = "entity.id"),
+            @Mapping(target = "id",  source = "entity.mainId"),
             @Mapping(target = "code",  source = "mainEntity.code"),
             @Mapping(target = "receiveTime",  source = "entity.receiveTime"),
             @Mapping(target = "sourceId", source = "mainEntity.sourceId"),
