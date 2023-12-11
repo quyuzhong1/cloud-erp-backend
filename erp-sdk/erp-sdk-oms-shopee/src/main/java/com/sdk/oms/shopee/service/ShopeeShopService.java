@@ -1,7 +1,5 @@
 package com.sdk.oms.shopee.service;
 
-import com.sdk.oms.shopee.dto.base.ShopeeResponse;
-import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
 import com.sdk.oms.shopee.dto.shop.request.ShopRequest;
 import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import com.sdk.oms.shopee.utils.ShopeeApiUtils;
