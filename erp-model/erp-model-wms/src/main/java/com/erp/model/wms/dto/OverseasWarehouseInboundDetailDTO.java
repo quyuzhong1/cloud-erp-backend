@@ -37,6 +37,11 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
         private String detailId;
 
         /**
+         * 主键id
+         */
+        private String id;
+
+        /**
          * 主表id
          */
         private String mainId;
