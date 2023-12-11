@@ -333,10 +333,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setActualQty(detailEntity.getReceiveQty() - deliveryQtySum);
                     addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
                     instockDetailList.add(addDTO);
-
-                    //收发差异设置为0
-                    detailEntity.setDiffQty(0);
-                    fbaShipmentDetailService.updateById(detailEntity);
                 } else if (detailEntity.getReceiveQty() < deliveryQtySum) {
                     // 如果签收数小于发货数量，其他出库单报损
                     OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
@@ -346,10 +342,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setActualQty(deliveryQtySum - detailEntity.getReceiveQty());
                     addDTO.setRemark("FBA货件手动完结，自动生成其他出库报损");
                     outstockDetailList.add(addDTO);
-
-                    //收发差异设置为0
-                    detailEntity.setDiffQty(0);
-                    fbaShipmentDetailService.updateById(detailEntity);
                 }
             }
 
