@@ -192,6 +192,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
+        /**
+         * 平台SKU编号模糊搜索条件
+         */
+        private List<String> platformFnSkuList;
 
     }
 
