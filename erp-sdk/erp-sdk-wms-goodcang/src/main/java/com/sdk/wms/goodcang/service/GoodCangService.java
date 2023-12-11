@@ -56,22 +56,34 @@ public class GoodCangService {
     }
 
     /**
-     * 获取收货批次
+     * 获取入库单明细
      * @param receivingCode 入库单号
      */
-    public GoodCangResponse<GoodCangReceiptBatchResp> getReceiptBatch(@Valid @NotEmpty String receivingCode){
+    public GoodCangResponse<GoodCangReceiptBatchResp> getInboundDetail(@Valid @NotEmpty String receivingCode){
         Map<String,Object> paramsMap = new HashMap<>();
         paramsMap.put("receiving_code",receivingCode);
-        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT_BATCH,paramsMap);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_GRN_DETAIL,paramsMap);
         GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
-        //重新赋值，方便后面转换
-        if(Objects.nonNull(respDto.getData())){
-            respDto.getData().setReceivingStatus(respDto.getReceivingStatus());
-            respDto.getData().setTransitType(respDto.getTransitType());
-            respDto.getData().setReceivingCode(receivingCode);
-        }
         return respDto;
     }
+
+//    /**
+//     * 获取收货批次
+//     * @param receivingCode 入库单号
+//     */
+//    public GoodCangResponse<GoodCangReceiptBatchResp> getReceiptBatch(@Valid @NotEmpty String receivingCode){
+//        Map<String,Object> paramsMap = new HashMap<>();
+//        paramsMap.put("receiving_code",receivingCode);
+//        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RECEIPT_BATCH,paramsMap);
+//        GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
+//        //重新赋值，方便后面转换
+//        if(Objects.nonNull(respDto.getData())){
+//            respDto.getData().setReceivingStatus(respDto.getReceivingStatus());
+//            respDto.getData().setTransitType(respDto.getTransitType());
+//            respDto.getData().setReceivingCode(receivingCode);
+//        }
+//        return respDto;
+//    }
 
     /**
      * 获取出库数据

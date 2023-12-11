@@ -59,7 +59,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
             return new ArrayList<>();
         }
         for(String receiveCode : receiveCodeList){
-            GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch(receiveCode);
+            GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail(receiveCode);
             if(response.getMessage().contains("当前客户无此入库单")){
                 continue;
             }

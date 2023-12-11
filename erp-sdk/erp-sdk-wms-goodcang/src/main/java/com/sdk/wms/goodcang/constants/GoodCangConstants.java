@@ -15,4 +15,5 @@ public class GoodCangConstants {
     public static final String METHOD_GET_PRODUCT_INVENTORY = "/public_open/inventory/get_product_inventory";
     public static final String METHOD_GET_SHIPPING_METHOD = "/public_open/base_data/get_shipping_method";
     public static final String METHOD_GET_ORDER_LIST = "/public_open/order/get_order_list";
+    public static final String METHOD_GET_GRN_DETAIL = "/public_open/inbound_order/get_grn_detail";
 }

@@ -2,10 +2,13 @@ package com.erp.server.dmp.pull.schedule;
 
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformDataDTO;
+import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.sdk.wms.goodcang.dto.response.GoodCangOutboundResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
+import com.sdk.wms.goodcang.handle.GoodCangInboundHandler;
 import com.sdk.wms.goodcang.handle.GoodCangOutboundHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +31,9 @@ public class PullGoodCangJobTest {
     @Resource
     private GoodCangOutboundHandler goodCangOutboundHandler;
 
+    @Resource
+    private GoodCangInboundHandler goodCangInboundHandler;
+
     @Test
     public void execute() {
         pullGoodCangJob.execute();
@@ -44,7 +50,7 @@ public class PullGoodCangJobTest {
         data.setLastTime(LocalDateTime.of(2020,12,20, 0, 0, 0));
         data.setNextTime(LocalDateTime.of(2021,12,20, 0, 0, 0));
         data.setApiParam(authMap);
-        PlatformDataDTO<GoodCangOutboundResp, PlatformOutboundDTO> result = goodCangOutboundHandler.pullHandle(data);
+        PlatformDataDTO<GoodCangReceiptBatchResp, PlatformInboundDTO> result = goodCangInboundHandler.pullHandle(data);
         System.out.println(result);
     }
 

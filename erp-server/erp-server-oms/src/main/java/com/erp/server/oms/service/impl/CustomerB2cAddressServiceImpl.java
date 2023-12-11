@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -9,7 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.entity.CustomerB2cAddressEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerB2cAddressMapper;
@@ -188,6 +189,28 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         }
         CustomerAddressDTO.ViewDTO viewDTO = BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
         return viewDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+        CustomerB2cAddressEntity entity = this.getByMainId(mainEntity.getId());
+        if (null == entity){
+            CustomerB2cAddressEntity newEntity = new CustomerB2cAddressEntity();
+            newEntity.setMainId(mainEntity.getId());
+            if (!save(newEntity)){
+                throw new ServiceException("[CustomerB2cAddressEntity] 保存失败");
+            }
+        } else {
+            if (!updateById(entity)){
+                throw new ServiceException("[CustomerB2cAddressEntity] 更新失败");
+            }
+        }
+    }
+
+    @Override
+    public CustomerB2cAddressEntity getByMainId(String mainId) {
+        return lambdaQuery().eq(CustomerB2cAddressEntity::getMainId, mainId).last("LIMIT 1").one();
     }
 
     /**

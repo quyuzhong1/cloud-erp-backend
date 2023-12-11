@@ -7,6 +7,7 @@ import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -121,9 +122,6 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (CollectionUtils.isEmpty(allOrderItems)){
             return dto;
         }
-//        List<PlatformOrderDetailDTO> detailDtoList = allOrderItems.stream()
-//                .map(PlatformAmazonOrderDTO::intPlatformOrderDetailDTO)
-//                .collect(Collectors.toList());
         dto.setDetails(allOrderItems);
         return dto;
     }

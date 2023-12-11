@@ -65,11 +65,17 @@ public class GoodCangServiceTest {
         GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();
         System.out.println(response);
     }
+
     @Test
-    public void getReceiptBatchTest() {
-        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-230613-0002");
+    public void getInboundDetailTest() {
+        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail("RVG1149-231207-0010");
         System.out.println(response);
     }
+//    @Test
+//    public void getReceiptBatchTest() {
+//        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getReceiptBatch("RVG1149-230613-0002");
+//        System.out.println(response);
+//    }
 
     @Test
     public void getOutboundTest() {

@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderFinanceDTO;
-import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,7 +11,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cFinanceEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
 import com.erp.server.oms.service.CommonService;
@@ -26,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -97,9 +93,7 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         return lambdaQuery().in(SoB2cFinanceEntity::getMainId,mainIds).list();
     }
 
-    public List<SoB2cFinanceEntity> getListByMainId(String mainId) {
-        return  lambdaQuery().eq(SoB2cFinanceEntity::getMainId,mainId).list();
-    }
+
     @Override
     public Boolean deleteByMainIds(List<String> mainIds) {
         return lambdaUpdate().in(SoB2cFinanceEntity::getMainId,mainIds).remove();
@@ -110,12 +104,12 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
     @GlobalTransactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
-        List<PlatformOrderFinanceDTO> financesList = dto.getFinancesList();
+        PlatformOrderFinanceDTO financeDTO = dto.getFinances();
 
-        if (CollectionUtils.isEmpty(financesList)){
+        if (null == financeDTO){
             //获取主表下物流记录
-            List<SoB2cFinanceEntity> entityList = getListByMainId(mainEntity.getId());
-            if( CollectionUtils.isEmpty(entityList) ){
+            SoB2cFinanceEntity oldEntity = getByMainId(mainEntity.getId());
+            if( null != oldEntity ){
                 SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(null, mainEntity.getId());
                 // 无信息新增空表
                 if (!this.save(entity)){
@@ -125,19 +119,15 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
             return;
         }
         //获取主表下物流记录
-        List<SoB2cFinanceEntity>  listByMainId = getListByMainId(mainEntity.getId());
-        if (CollectionUtils.isEmpty(listByMainId)){
+        SoB2cFinanceEntity oldEntity = getByMainId(mainEntity.getId());
+        if (null == oldEntity){
             //新增
-            financesList.forEach(financeDTO -> {
                 SoB2cFinanceEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewFinance(financeDTO, mainEntity.getId());
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cFinanceEntity] 保存失败");
                 }
-            });
         }else {
             // 更新
-            SoB2cFinanceEntity oldEntity = listByMainId.get(0);
-            PlatformOrderFinanceDTO financeDTO = financesList.get(0);
             SoB2cFinanceEntity newEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateFinance(oldEntity, financeDTO);
             if (!this.updateById(newEntity)){
                 throw new ServiceException("[SoB2cFinanceEntity] 更新失败");

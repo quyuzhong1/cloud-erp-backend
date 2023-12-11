@@ -58,9 +58,9 @@
             </foreach>
         </if>
 
-        <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
+        <if test="params.platformFnSkuList !=null and params.platformFnSkuList.size>0">
             AND li.platform_fn_sku IN
-            <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
+            <foreach collection="params.platformFnSkuList" item="fnSkuItem" open="(" separator="," close=")">
                 #{fnSkuItem}
             </foreach>
         </if>
@@ -101,7 +101,7 @@
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no,
-        li.platform_sku_name,
+        li.platform_sku_name AS platformProductName,
         li.platform_sku_no AS sellerSkuNo,
         li.platform_sku_name AS sellerProductName,
         li.match_result,

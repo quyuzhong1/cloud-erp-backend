@@ -1,8 +1,9 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.entity.CustomerB2cAddressEntity;
+import com.erp.model.oms.entity.*;
 
 import java.util.List;
 
@@ -62,4 +63,8 @@ public interface CustomerB2cAddressService extends SuperService<CustomerB2cAddre
      * @return ViewDTO
      */
     CustomerAddressDTO.ViewDTO getCustomerAddressById(String customerAddressId);
+
+    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+
+    CustomerB2cAddressEntity getByMainId(String mainId);
 }

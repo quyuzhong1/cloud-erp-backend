@@ -3,13 +3,10 @@ package com.sdk.oms.walmart.dto;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.order.ItemBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderLineBean;
@@ -121,11 +118,11 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         orderDTO.setDetails(details);
 
         //B2C销售订单买家信息表
-        orderDTO.setReceiverList(parseReceiverList(orderBean));
+        orderDTO.setReceiver(parseReceiver(orderBean));
         //B2C销售订单物流信息表
-        orderDTO.setLogisticsList(parseLogisticsList(orderBean.getOrderLines().getOrderLine()));
+        orderDTO.setLogisticsList(parseLogistics(orderBean.getOrderLines().getOrderLine()));
         //B2C销售订单财务信息表
-        orderDTO.setFinancesList(parseFinancesList(orderBean));
+        orderDTO.setFinances(parseFinances(orderBean));
         return orderDTO;
     }
 
@@ -262,12 +259,12 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @param orderBean
      * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
      **/
-    private static List<PlatformOrderReceiverDTO> parseReceiverList(OrderBean orderBean) {
+    private static PlatformOrderReceiverDTO parseReceiver(OrderBean orderBean) {
         if (Objects.isNull(orderBean) || Objects.isNull(orderBean.getShippingInfo())) {
-            return Collections.emptyList();
+            return null;
         }
-        List<PlatformOrderReceiverDTO> receiverDTOS = new ArrayList<>();
-        receiverDTOS.add(PlatformOrderReceiverDTO.builder()
+
+        return PlatformOrderReceiverDTO.builder()
                 .loginId("")
                 .customerId("")
                 .name(orderBean.getShippingInfo().getPostalAddress().getName())
@@ -281,8 +278,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
                 .postCode(orderBean.getShippingInfo().getPostalAddress().getPostalCode())
                 .firstAddress(orderBean.getShippingInfo().getPostalAddress().getAddress1())
                 .fullAddress(orderBean.getShippingInfo().getPostalAddress().getAddress2())
-                .build());
-        return receiverDTOS;
+                .build();
     }
 
     /**
@@ -292,7 +288,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @param orderLineBeanList
      * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
      **/
-    private static List<PlatformOrderLogisticsDTO> parseLogisticsList(List<OrderLineBean> orderLineBeanList) {
+    private static List<PlatformOrderLogisticsDTO> parseLogistics(List<OrderLineBean> orderLineBeanList) {
         if (CollectionUtils.isEmpty(orderLineBeanList)) {
             return Collections.emptyList();
         }
@@ -344,14 +340,11 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
      * @param orderBean
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
      **/
-    private static List<PlatformOrderFinanceDTO> parseFinancesList(OrderBean orderBean) {
+    private static PlatformOrderFinanceDTO parseFinances(OrderBean orderBean) {
 
-        List<PlatformOrderFinanceDTO> financeDTOList = new ArrayList<>();
-        PlatformOrderFinanceDTO dto = PlatformOrderFinanceDTO.builder()
+        return PlatformOrderFinanceDTO.builder()
                 .currency("")
                 .build();
-        financeDTOList.add(dto);
-        return financeDTOList;
     }
 
 

@@ -2711,6 +2711,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 组合信息
             SoB2cEntity entity = new SoB2cEntity();
             BeanUtils.copyProperties(dto, entity);
+            handleData(entity);
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
