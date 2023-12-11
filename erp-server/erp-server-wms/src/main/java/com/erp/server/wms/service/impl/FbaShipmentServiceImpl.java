@@ -296,6 +296,11 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据主表id查询货件详情信息
         List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(ids);
 
+        List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+
+        //根据来源详情id查询发货详情
+        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
+
         //检查是否有差异数据
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntities) {
             List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailEntities.stream().filter(req -> req.getMainId().equals(fbaShipmentEntity.getId())).collect(Collectors.toList());
@@ -311,27 +316,34 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             //处理货件详情
             for (FbaShipmentDetailEntity detailEntity : detailEntityList) {
+                //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+                Integer deliveryQtySum = fbaDeliveryDetailEntities.stream()
+                        .filter(req -> req.getSourceDetailId().equals(detailEntity.getId())
+                                && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
+                        )
+                        .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
+                        .sum();
 
                 // 如果签收数大于发货数量，其他入库单报溢
-                if (detailEntity.getReceiveQty() > detailEntity.getDeliveryQty()) {
+                if (detailEntity.getReceiveQty() > deliveryQtySum) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getReceiveQty() - detailEntity.getDeliveryQty());
+                    addDTO.setActualQty(detailEntity.getReceiveQty() - deliveryQtySum);
                     addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
                     instockDetailList.add(addDTO);
 
                     //收发差异设置为0
                     detailEntity.setDiffQty(0);
                     fbaShipmentDetailService.updateById(detailEntity);
-                } else if (detailEntity.getReceiveQty() < detailEntity.getDeliveryQty()) {
+                } else if (detailEntity.getReceiveQty() < deliveryQtySum) {
                     // 如果签收数小于发货数量，其他出库单报损
                     OtherOutstockDetailDTO.AddDTO addDTO = new OtherOutstockDetailDTO.AddDTO();
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getDeliveryQty() - detailEntity.getReceiveQty());
+                    addDTO.setActualQty(deliveryQtySum - detailEntity.getReceiveQty());
                     addDTO.setRemark("FBA货件手动完结，自动生成其他出库报损");
                     outstockDetailList.add(addDTO);
 
@@ -1016,7 +1028,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 //如果收货数量等于发货数量，修改货件状态为自动完结
                 int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
-                int deliveryQtySum = fbaShipmentDetailEntities.stream().mapToInt(req -> req.getDeliveryQty()).sum();
+                List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+
+                //根据来源详情id查询发货详情
+                List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
+                //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+                Integer deliveryQtySum = fbaDeliveryDetailEntities.stream()
+                        .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                        .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
+                        .sum();
                 if (receiveQtySum == deliveryQtySum) {
                     this.updateDeliveryStatus(entity.getId(), FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
                 }
@@ -1296,7 +1316,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                             && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                     .mapToInt(req -> req.getDeliveryQty())
                     .sum();
-            FirstMileDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId())).findFirst().orElse(null);
+            FirstMileDeliveryDetailEntity detailEntity = deliveryDetailEntities.stream()
+                    .filter(req -> req.getSourceDetailId().equals(fbaShipmentDetailEntity.getId()))
+                    .findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(detailEntity)) {
                 //发货数量=总发货数量
                 fbaShipmentDetailEntity.setDeliveryQty(sumDeliveryQty);
