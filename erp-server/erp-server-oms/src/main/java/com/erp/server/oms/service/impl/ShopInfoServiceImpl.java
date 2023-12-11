@@ -683,7 +683,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             //主账号存在时，优先授权主装好记录
             ShopAuthEntity shopAuthEntity = shopAuthService.getShopeeShopById(String.valueOf(dto.getMainAccountId()));
             if (Objects.nonNull(shopAuthEntity) && StringUtils.isNotBlank(shopAuthEntity.getShopId())) {
-                mainShopInfo = this.getById(dto.getId());
+                mainShopInfo = this.getById(shopAuthEntity.getShopId());
             }
         } else {
             mainShopInfo = this.getById(dto.getId());
@@ -850,7 +850,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .build();
         try {
             ShopResponse shopeeShopInfo = shopeeShopService.getShopInfo(shopRequest);
-            if (Objects.nonNull(shopeeShopInfo) && StringUtils.isNotBlank(shopeeShopInfo.getError())) {
+            if (StringUtils.isBlank(shopeeShopInfo.getError())) {
                 shopInfo.setName(shopeeShopInfo.getShopName());
                 shopInfo.setDictCountryCode(shopeeShopInfo.getRegion());
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getRegion()));
@@ -862,6 +862,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             log.error("获取店铺名称异常：{}", e.getMessage());
         }
     }
+
     private void getMerchantName(CfgAppClientEntity cfgAppClient, String merchantId, String accessToken, ShopInfoEntity shopInfo) {
         //增加店铺名称获取
         MerchantRequest shopRequest = MerchantRequest.builder()
@@ -873,7 +874,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 .build();
         try {
             MerchantResponse shopeeShopInfo = shopeeMerchantService.getMerchantInfo(shopRequest);
-            if (Objects.nonNull(shopeeShopInfo) && StringUtils.isNotBlank(shopeeShopInfo.getError())) {
+            if (StringUtils.isBlank(shopeeShopInfo.getError())) {
                 shopInfo.setName(shopeeShopInfo.getMerchantName());
                 shopInfo.setDictCountryCode(shopeeShopInfo.getMerchantRegion());
                 List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getMerchantRegion()));
@@ -885,6 +886,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             log.error("获取店铺名称异常：{}", e.getMessage());
         }
     }
+
     /**
      * 新增 店铺和店主
      *
@@ -903,45 +905,46 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Long expireIn = shopeeResponse.getExpire_in();
         ShopAuthEntity shopAuth = shopAuthService.getShopeeShopById(shopeeId);
         String shopId = null;
+        //配置是否存在
         if (Objects.isNull(shopAuth)) {
             shopAuth = new ShopAuthEntity();
+            shopAuth.setType(type);
+            shopAuth.setRefreshToken(refreshToken);
+            shopAuth.setAccessToken(accessToken);
+            shopAuth.setShopeeId(shopeeId);
+            if (Objects.nonNull(expireIn)) {
+                shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+            }
+            shopAuth.setAppClientId(cfClientId);
+
         } else {
+            //配置存在时
             shopId = shopAuth.getShopId();
         }
-        //店铺不存在则创建店铺
+        //店铺是否存在时
+        ShopInfoEntity shopInfoEntity = new ShopInfoEntity();
         if (Objects.nonNull(shopId)) {
-            ShopInfoEntity shopInfoEntity = this.getById(shopId);
-            if (Objects.isNull(shopInfoEntity)) {
-                shopInfoEntity = shopInfo;
-                shopInfoEntity.setId(null);
-            } else {
-                if (Objects.nonNull(shopInfo) && StringUtils.isNotBlank(shopInfo.getName())) {
-                    shopInfoEntity.setName(shopInfo.getName());
-                    shopInfoEntity.setCountryName(shopInfo.getCountryName());
-                    shopInfoEntity.setDictCountryCode(shopInfo.getDictCountryCode());
-                } else {
-                    shopInfo.setName(shopeeId);
-                }
+            shopInfoEntity = this.getById(shopId);
+            if (Objects.isNull(shopInfoEntity)){
+                shopInfoEntity = new ShopInfoEntity();
             }
-            shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-            //店铺
-            this.saveOrUpdate(shopInfoEntity);
-            shopId = shopInfoEntity.getId();
+        }
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getName())) {
+            shopInfoEntity.setName(shopInfo.getName());
         } else {
-            //存在店铺时，更新店铺
-            shopInfo.setName(shopeeId);
-            shopInfo.setId(null);
-            this.saveOrUpdate(shopInfo);
-            shopId = shopInfo.getId();
+            shopInfoEntity.setName(shopeeId);
         }
-        shopAuth.setType(type);
-        shopAuth.setRefreshToken(refreshToken);
-        shopAuth.setAccessToken(accessToken);
-        shopAuth.setShopeeId(shopeeId);
-        if (Objects.nonNull(expireIn)) {
-            shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getDictCountryCode())) {
+            shopInfoEntity.setDictCountryCode(shopInfo.getDictCountryCode());
         }
-        shopAuth.setAppClientId(cfClientId);
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getCountryName())) {
+            shopInfoEntity.setCountryName(shopInfo.getCountryName());
+        }
+        shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
+        //店铺
+        this.saveOrUpdate(shopInfoEntity);
+        shopId = shopInfoEntity.getId();
         shopAuth.setShopId(shopId);
         shopAuthService.saveOrUpdate(shopAuth);
         return Boolean.TRUE;
@@ -961,7 +964,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, platformList).list();
         return list;
     }
-
 
     public List<ShopInfoEntity> listShopByAmazon() {
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
