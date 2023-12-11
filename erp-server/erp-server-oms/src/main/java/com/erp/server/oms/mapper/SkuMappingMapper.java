@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -84,4 +85,10 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      **/
     List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@Param("productSkuIdList") List<String> productSkuIdList);
 
+    /**
+     * 根据条件查询映射
+     * @param params
+     * @return
+     */
+    List<ListingInfoWithSkuMappingDTO> listByParams(@Param("params") ListingInfoParamDTO params);
 }

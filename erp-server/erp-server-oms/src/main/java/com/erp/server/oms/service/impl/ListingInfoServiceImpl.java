@@ -107,31 +107,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         return baseMapper.listByType(type);
     }
 
-    @Override
-    public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
-        List<ListingInfoEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dto.getPlatform()), ListingInfoEntity::getPlatform, dto.getPlatform())
-                .in(!CollectionUtils.isEmpty(dto.getPlatformSkuNoList()), ListingInfoEntity::getPlatformSkuNo, dto.getPlatformSkuNoList())
-                .eq(null != dto.getMatchResult(), ListingInfoEntity::getMatchResult, dto.getMatchResult())
-                .eq(StringUtils.isNotBlank(dto.getType()), ListingInfoEntity::getType, dto.getType())
-                .list();
-        if (CollectionUtils.isEmpty(list)){
-            return Collections.emptyList();
-        }
-        // 查询关联map
-        List<String> listingIds = list.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-
-        Map<String, List<SkuMappingEntity>> skuMappingEntityMap = skuMappingService.listByListingIds(listingIds)
-                .stream()
-                .collect(Collectors.groupingBy(SkuMappingEntity::getListingId));
-
-        // 组合
-        return list.stream()
-                .map(e -> OmsListingConverter.INSTANCE.listingAndSKuMappingToDTO(e,
-                        skuMappingEntityMap.getOrDefault(e.getId(), Collections.emptyList()).stream().findFirst().orElse(null))
-                )
-                .collect(Collectors.toList());
-    }
 
     @Override
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {

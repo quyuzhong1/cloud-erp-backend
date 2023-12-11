@@ -123,4 +123,14 @@ public enum PlatformDictEnum implements EnumMessage {
                 .collect(Collectors.toList());
 
     }
+
+    /**
+     * 平台列表名称
+     */
+    public static List<String> hasConnectionPlatformName(){
+        return Stream.of(AMAZON, ALI_EXPRESS, SHOPIFY, SHOPEE, WALMART)
+                .map(PlatformDictEnum::getDesc)
+                .collect(Collectors.toList());
+
+    }
 }

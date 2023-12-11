@@ -4,9 +4,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -182,4 +184,12 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     Boolean add(SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO);
+
+
+    /**
+     * 根据条件查询映射
+     * @param dto
+     * @return
+     */
+    List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto);
 }

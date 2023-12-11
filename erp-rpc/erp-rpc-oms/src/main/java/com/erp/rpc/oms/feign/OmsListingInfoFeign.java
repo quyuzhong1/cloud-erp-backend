@@ -16,15 +16,6 @@ public interface OmsListingInfoFeign {
 
 
     /**
-     * 通过条件查询ListingInfoEntity列表
-     *
-     * @author Jim
-     * @date 2023/11/2
-     */
-    @PostMapping("feign/listing/list")
-    List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList(@RequestBody ListingInfoParamDTO dto);
-
-    /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
      * @Date 2023/11/2 17:24
