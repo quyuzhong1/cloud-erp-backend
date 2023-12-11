@@ -42,6 +42,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
@@ -145,11 +146,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         listingInfoParamDTO.setPlatformSkuNoList(Arrays.asList(detailEntity.getMsku()));
         listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         List<SkuMappingDTO.MappingSkuViewDTO> skuDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream().filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())).collect(Collectors.toList());
+        List<SkuMappingDTO.MappingSkuViewDTO> collect = skuDTOS.stream()
+                .filter(req -> req.getPlatformSkuNo().equals(detailEntity.getMsku())
+                        && StringUtils.isNotBlank(req.getProductSkuNo()))
+                .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
-
 
         //映射sku
         dto.setShopId(entity.getShopId());
