@@ -9,11 +9,14 @@ import com.erp.model.wms.dto.third.request.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
+import com.sdk.wms.iml.enums.ImlEnums;
+import io.seata.common.util.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -136,7 +139,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "receivingType",  expression = "java(com.sdk.wms.iml.enums.ImlEnums.TransitTypeEnum.getCodeByErp(sourceData.getReceivingType()))"),
             @Mapping(target = "warehouseCode",  source = "warehouseCode"),
             @Mapping(target = "transitWarehouseCode",  source = "transitWarehouseCode"),
-            @Mapping(target = "smCode",  expression = "java(org.apache.commons.lang.StringUtils.isBlank(sourceData.getSmCode()) ? \"PHLY1\" : sourceData.getSmCode())"),
+            @Mapping(target = "smCode",  expression = "java(OverseasWarehouseInboundConverter.getImlSmCode(sourceData))"),
             @Mapping(target = "trackingNumber",  source = "trackingNumber"),
             @Mapping(target = "etaDate",  source = "etaDate",qualifiedByName = "toStrByDate"),
             @Mapping(target = "verify",  source = "verify"),
@@ -149,6 +152,13 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "items",  source = "items"),
     })
     ImlCreateInboundReq inboundDtoToIml(ThirdWarehouseCreateInboundReq sourceData);
+
+    static String getImlSmCode(ThirdWarehouseCreateInboundReq data){
+        if(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode().equals(data.getReceivingType())){
+            return StringUtils.isBlank(data.getSmCode()) ? "PHLY1" : data.getSmCode();
+        }
+        return null;
+    }
 
     @Mappings({
             @Mapping(target = "productSku",  source = "productSku"),

@@ -31,8 +31,8 @@ public enum ImlEnums {
      */
     @Getter
     public enum TransitTypeEnum {
-        DRAFT("D","自发头程", OverseasInstockTypeEnum.SELF_HEADWAY),
-        AVAILABLE("T","T中转代发",OverseasInstockTypeEnum.TRANSFER_AGENT)
+        SPONTANEOUS("D","自发头程", OverseasInstockTypeEnum.SELF_HEADWAY),
+        TRANSFER("T","中转代发",OverseasInstockTypeEnum.TRANSFER_AGENT)
         ;
         private final String code;
         private final String name;
