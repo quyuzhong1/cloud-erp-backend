@@ -87,6 +87,7 @@ public interface ImlConverter {
             @Mapping(target = "provider",  expression = "java(ImlConverter.getProvider())"),
             @Mapping(target = "providerErpId",  source = "authId"),
             @Mapping(target = "transferOnway",  source = "onway"),
+            @Mapping(target = "platformWarehouseCode",  source = "warehouseCode"),
             @Mapping(target = "onway",  ignore = true),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())")
     })
