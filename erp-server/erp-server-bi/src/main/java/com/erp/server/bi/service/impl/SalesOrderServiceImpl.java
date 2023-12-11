@@ -60,6 +60,8 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -3800,8 +3802,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
-        List<Object> dataList = new ArrayList<>();
-        for (String s : map.keySet()) {
+        List<Object> dataList = new ArrayList<>(map.size());
+        CountDownLatch countDownLatch = new CountDownLatch(map.size());
+        map.keySet().forEach(s -> new Thread(()->{
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
                 Map<String, Object> siteMap = new HashMap<>();
@@ -3816,6 +3819,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
                 dataList.add(siteMap);
             }
+            countDownLatch.countDown();
+        }).start());
+        try {
+            countDownLatch.await(15, TimeUnit.SECONDS);
+        }catch (Exception e){
+            throw new ServiceException(ApiError.Default);
         }
         series.setData(dataList);
         seriesList.add(series);
@@ -3848,8 +3857,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
-        List<Object> dataList = new ArrayList<>();
-        for (String s : map.keySet()) {
+        List<Object> dataList = new ArrayList<>(map.size());
+        CountDownLatch countDownLatch = new CountDownLatch(map.size());
+        map.keySet().forEach(s -> new Thread(() ->{
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
                 Map<String, Object> siteMap = new HashMap<>();
@@ -3864,6 +3874,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
                 dataList.add(siteMap);
             }
+            countDownLatch.countDown();
+        }).start());
+        try {
+            countDownLatch.await(15, TimeUnit.SECONDS);
+        }catch (Exception e){
+            throw new ServiceException(ApiError.Default);
         }
         series.setData(dataList);
         seriesList.add(series);
