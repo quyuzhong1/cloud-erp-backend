@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,5 +46,14 @@ public class OverseasWarehouseController extends BaseController {
             return Collections.emptyList();
         }
         return overseasProviderWarehouseService.listByPlatformWarehouseCode(warehouseCodeList,platform);
+    }
+
+    /**
+     * 根据erp仓库id 集合获取到海外仓
+     * @return
+     */
+    @PostMapping("/listByWarehouseId")
+    public List<OverseasProviderWarehouseEntity> listByWarehouseId(@RequestBody List<String> warehouseIdList){
+        return overseasProviderWarehouseService.listByWarehouseIds(warehouseIdList);
     }
 }
