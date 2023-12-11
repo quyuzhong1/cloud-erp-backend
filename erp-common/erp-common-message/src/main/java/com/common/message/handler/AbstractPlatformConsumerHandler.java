@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -43,6 +44,10 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
         }catch (Exception e) {
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
+            if (BusinessCommonConstants.hasProfile("test") || BusinessCommonConstants.hasProfile("dev")){
+                log.error("测试环境【test/dev】暂时跳过发送平台数据消费异常", e);
+                return;
+            }
             //异常预警
             sendWarnMsg(dmpSyncTaskId);
             throw e;
