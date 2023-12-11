@@ -170,6 +170,65 @@
         </where>
         order by ls.id desc , lc.id desc,st.id desc , str.id desc
     </select>
+    <!--所有的-->
+    <select id="listRefCost" resultType="com.erp.model.tms.dto.ShippingCalculationDTO$ListDTO">
+        select
+        lc.name as channelName,
+        lc.id as channelId,
+        lc.fee_rule as feeRule,
+        lc.is_api_sign as isApiSign,
+        lc.is_api_insurance as isApiInsurance,
+        st.id as templateId,
+        st.billing_method as billingMethod,
+        str.id as templateRuleId,
+        str.start_weight as startWeight,
+        str.end_weight as endWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.first_weight as firstWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.additional_unit_weight as additionalUnitWeight,
+        str.additional_price as additionalPrice,
+        str.shipping_price as shippingPrice,
+        str.registration_cost as registrationCost,
+        str.operating_cost as operatingCost,
+        str.min_cost as minCost,
+        str.to_country as toCountry,
+        str.to_warehouse_name as toWarehouseName,
+        str.region as region,
+        st.price_binary as priceBinary,
+        st.effective_date as  effectiveDate,
+        st.expire_date as  expireDate,
+        st.weight_unit as weightUnit,
+        st.volume_setting as volumeSetting,
+        st.currency
+        from logistics_channel lc
+        inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
+        inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
+        inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
+        <where>
+            lc.is_deleted = false and lc.disabled = false
+            and st.disabled = false
+            and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
+            DAY' or st.expire_date is null)
+            and case lc.fee_rule
+            when 'billingWeight' then
+            <include refid="billing_weight_sql"></include>
+            when 'netWeight' then
+            <include refid="net_weight_sql"></include>
+            when 'volumeWeight' then
+            <include refid="volume_weight_sql"></include>
+            end
+            <!--起始地-->
+            <if test="params.fromCountry != null and params.fromCountry!=''">
+                and str.from_country =#{params.fromCountry}
+            </if>
+            <!--目的地-->
+            <if test="params.toCountry != null and params.toCountry!=''">
+                and str.to_country =#{params.toCountry}
+            </if>
+        </where>
+        order  by lc.id desc,st.id desc , str.id desc
+    </select>
 
     <!-- 运费计算导出 -->
     <select id="listByExportExcel" resultMap="BaseResultMap">
@@ -251,6 +310,7 @@
         </where>
         order by ls.id desc , lc.id desc,st.id desc , str.id desc
     </select>
+
 
 
 </mapper>

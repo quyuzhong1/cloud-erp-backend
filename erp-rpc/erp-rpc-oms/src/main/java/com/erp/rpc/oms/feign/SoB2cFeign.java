@@ -1,6 +1,7 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -19,6 +20,14 @@ public interface SoB2cFeign {
     */
     @PostMapping("/feign/soB2c/listSoB2cLogisticsByMainIdList")
     List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList);
+
+    /**
+     * 根据订单id 获取到运费估算的参数值
+     * @param orderId
+     * @return
+     */
+    @PostMapping("/feign/soB2c/getShippingCalculationByOrderId")
+    SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(@RequestBody String orderId);
 
 
 }

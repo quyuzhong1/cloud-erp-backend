@@ -6,14 +6,18 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -24,10 +28,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cLogisticsMapper;
-import com.erp.server.oms.service.CommonService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cLogisticsService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -71,6 +72,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Resource
     private LogisticsFeign logisticsFeign;
 
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
+
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -79,8 +83,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         handleLogisticsData(entity);
         return this.save(entity);
     }
-
-
 
 
     @Override
@@ -110,8 +112,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
      * @date: 2023/11/10 15:59
      */
     private void handleLogisticsData(SoB2cLogisticsEntity entity) {
-        String accessoriesSkuId=entity.getAccessoriesSkuId();
-        if(StringUtils.isNotBlank(accessoriesSkuId)){
+        String accessoriesSkuId = entity.getAccessoriesSkuId();
+        if (StringUtils.isNotBlank(accessoriesSkuId)) {
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(entity.getAccessoriesSkuId()));
             if (CollectionUtils.isEmpty(skuList)) {
                 return;
@@ -201,7 +203,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
                 entity.setMainId(mainEntity.getId());
                 handleLogisticsData(entity);
-                if (!this.save(entity)){
+                if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
                 if (isShopee) {
@@ -211,7 +213,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
                 entity2.setId(entity.getId());
-                if (!this.updateById(entity2)){
+                if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
                 if (isShopee) {
@@ -227,6 +229,28 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             }
 
         }
+    }
+
+    @Override
+    public SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(String orderId) {
+        //买家信息
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(orderId);
+        if(Objects.isNull(receiverEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_NULL);
+        }
+        SoB2cLogisticsEntity entity = this.getByMainId(orderId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        SoB2cDTO.ShippingCalculationDTO shippingCalculationDTO = new SoB2cDTO.ShippingCalculationDTO();
+        shippingCalculationDTO.setWeight(entity.getWeight());
+        shippingCalculationDTO.setLength(entity.getLength());
+        shippingCalculationDTO.setWidth(entity.getWidth());
+        shippingCalculationDTO.setHeight(entity.getHeight());
+        shippingCalculationDTO.setToCountry(receiverEntity.getCountry());
+        shippingCalculationDTO.setFromCountry(CountrySiteEnum.CHINA.getSite());
+        shippingCalculationDTO.setWeightUnit(UnitEnum.G.getCode());
+        return shippingCalculationDTO;
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

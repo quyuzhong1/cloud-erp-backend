@@ -112,6 +112,11 @@ public class ShippingCalculationDTO {
         private String channelName;
 
         /**
+         * 物流渠道id
+         */
+        private String channelId;
+
+        /**
          * 计费规则
          */
         private String feeRule;
@@ -374,6 +379,30 @@ public class ShippingCalculationDTO {
          * 分区
          */
         private String region;
+    }
+
+    /**
+     * 渠道费用
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChannelCostDTO{
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 物流费
+         */
+        private BigDecimal shippingCost;
+
     }
 
 }

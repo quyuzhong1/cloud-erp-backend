@@ -120,4 +120,13 @@ public interface ShippingCalculationService {
      * @return List<String>
      */
     List<String> listRegionCity(ShippingCalculationDTO.ListRegionCityParamDTO dto);
+
+    /**
+     * orderId
+     * @author yl
+     * @date 2023-12-08 17:55
+     * @param orderId b2c 销售订单id
+     * @return 
+     */
+    List<ShippingCalculationDTO.ChannelCostDTO> listChannelCost(String orderId);
 }

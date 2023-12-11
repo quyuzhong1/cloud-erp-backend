@@ -568,6 +568,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -584,6 +585,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+        //存在的物流渠道
+        String existChannelId=soB2cLogisticsEntity.getLogisticsChannelId();
+        //存在的物流单 code
+        String code=soB2cLogisticsEntity.getCode();
         /**
          * 是否覆盖
          * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
@@ -592,9 +597,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isCover = dto.getIsCover();
         String logisticsChannelId = dto.getLogisticsChannelId();
         if (Boolean.TRUE.equals(isCover)) {
+            //如果有物流单号 就要去取消
+            if(StringUtils.isNotBlank(code)){
+                //取消物流单
+                LogisticsBillDTO.CancelBillDTO cancelBillDTO =LogisticsBillDTO.CancelBillDTO.builder().
+                        channelId(existChannelId).trackNo(code).build();
+                logisticsBillFeign.cancelBill(cancelBillDTO);
+            }
             soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
         } else {
-            if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+            //当为空就覆盖
+            if (StringUtils.isBlank(existChannelId)) {
                 soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
             }
         }

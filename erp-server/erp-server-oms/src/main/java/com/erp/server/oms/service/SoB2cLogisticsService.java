@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -78,4 +79,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @since 2023-11-10
      **/
     void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+
+    /**
+     * 获取物流费用参数
+     * @param orderId
+     * @return
+     */
+    SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(String orderId);
 }

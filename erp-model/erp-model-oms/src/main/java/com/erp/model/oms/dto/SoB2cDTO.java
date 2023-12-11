@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.SoB2cFinanceEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -893,6 +894,56 @@ public class SoB2cDTO implements Serializable {
          * 是否提交发货
          */
         private Boolean isDelivery;
+
+    }
+
+    /**
+     * 运费估算要的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShippingCalculationDTO {
+
+        /**
+         * 起始地
+         */
+        private String fromCountry;
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
+        /**
+         * 单位重量
+         */
+        private String weightUnit;
+
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 长
+         */
+        private BigDecimal length;
+
+        /**
+         * 宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 高
+         */
+        private BigDecimal height;
+
+        /**
+         * 体积
+         */
+        private BigDecimal volume;
+
 
     }
 
