@@ -82,7 +82,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
     @Override
     public void sendWarnMsg(String syncTaskId) {
-        dmpTaskFeign.sendWarnMsg(syncTaskId);
+//        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
 
     @Override

@@ -56,7 +56,7 @@ public class ImlHandlerServiceImplTest {
                 .etaDate(LocalDateTime.now())
                 .verify("0")
                 .transitWarehouseCode("SZW")
-                .smCode("USEAAIRFREIGHT6000D1")
+                .smCode("")
                 .deliveryCode("deliveryCode")
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName("mark")

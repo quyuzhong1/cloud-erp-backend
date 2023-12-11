@@ -58,9 +58,9 @@
             </foreach>
         </if>
 
-        <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
+        <if test="params.platformFnSkuList !=null and params.platformFnSkuList.size>0">
             AND li.platform_fn_sku IN
-            <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
+            <foreach collection="params.platformFnSkuList" item="fnSkuItem" open="(" separator="," close=")">
                 #{fnSkuItem}
             </foreach>
         </if>
