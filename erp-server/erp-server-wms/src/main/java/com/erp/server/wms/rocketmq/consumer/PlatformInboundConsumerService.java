@@ -155,34 +155,32 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
 
-            if(changeFlag){
+            if(changeFlag) {
                 mainEntity.setReceiveTime(dto.getDownloadTime());
                 //自动完结再签收完结状态变成已签收
-                if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
+                if (OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())) {
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
-                    transferInfoService.generateFromOverseasInbound(mainEntity,updateList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
-                }else if (OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
+                    transferInfoService.generateFromOverseasInbound(mainEntity, updateList, insertReceiveEntityList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
+                } else if (OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())) {
                     //设置差异数为本次签收数
-                    updateList.forEach(v->v.setDiffQty(thisSignQtyMap.get(v.getId())));
+                    updateList.forEach(v -> v.setDiffQty(thisSignQtyMap.get(v.getId())));
                     //手动完结再签收，不变更入库状态，生成其他入库单（报溢）目的仓，不生成调拨单
-                    otherInstockService.generateByOverseasInbound(mainEntity,updateList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()),false);
-                }else{
+                    otherInstockService.generateByOverseasInbound(mainEntity, updateList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()), false);
+                } else {
                     //差异数量为0时 自动完结
-                    boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
-                    mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
-                    transferInfoService.generateFromOverseasInbound(mainEntity,updateList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
+                    boolean isAllDiffZero = detailList.stream().allMatch(v -> v.getDiffQty().equals(0));
+                    mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(), isAllDiffZero));
+                    transferInfoService.generateFromOverseasInbound(mainEntity, updateList, insertReceiveEntityList, String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
                 }
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
-}
+            }
         }
         return ApiResult.success();
     }
 
     private String getFinishStatusByReceiveStatus(String receiveStatus,boolean isAllDiffZero){
-        if((receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) ||
-                receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())) &&
-                isAllDiffZero){
+        if(isAllDiffZero){
             return OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode();
         }
         return receiveStatus;
