@@ -681,10 +681,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
-                        log.error("推送第三方仓库【发货单审核通过】失败:msg={}", JSONUtil.toJsonStr(resultInfo));
-                        throw new ServiceException("推送第三方仓库【发货单审核通过】失败:" + resultInfo.getMsg());
+                        log.error("推送第三方仓库【发货单审核】失败:msg={}", JSONUtil.toJsonStr(resultInfo));
+                        throw new ServiceException("推送第三方仓库【发货单审核】失败:" + resultInfo.getMsg());
                     }
-                    log.info("推送第三方仓库【发货单审核通过】结果: ={}", JSONUtil.toJsonStr(resultInfo));
+                    log.info("推送第三方仓库【发货单审核】结果: ={}", JSONUtil.toJsonStr(resultInfo));
 
                     String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据推送第三方仓库发货审核操作 平台返回结果：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "发货单", JSONUtil.toJsonStr(resultInfo));
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "发货单审核");
