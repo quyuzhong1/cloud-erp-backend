@@ -4,40 +4,26 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.excel.ExportOverseasInventoryExcelDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.PackingStatusEnum;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
-import com.erp.server.wms.service.OverseasInventoryService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +56,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private OverseasProviderService overseasProviderService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -149,16 +137,20 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private void filList(List<OverseasInventoryDTO.ListDTO> list) {
         // 查询库存映射关系
         List<String> plaformSkuNoList = list.stream().map(OverseasInventoryDTO.ListDTO::getPlatformSku).distinct().collect(Collectors.toList());
+        //  查询仓库ID
+        List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderService.listAllMatch();
+
         //获取库存sku信息
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
         paramDTO.setMatchResult(true);
-        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
         // 属性赋值
         for(OverseasInventoryDTO.ListDTO data : list) {
             ListingInfoWithSkuMappingDTO view = listingedInfoWithSkuMappingList.stream()
-                    .filter(e -> e.getDictPlatform().equalsIgnoreCase(data.getDictPlatform()) && e.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku()))
+                    // 匹配关系
+                    .filter(e -> this.checkMatch(e, data, listWithWarehouseDTOS))
                     .findFirst()
                     .orElse(null);
             if (null != view){
@@ -184,6 +176,29 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                 }
             }
         }
+    }
+
+    private boolean checkMatch(ListingInfoWithSkuMappingDTO mappingDTO, OverseasInventoryDTO.ListDTO data, List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOList) {
+        // 不分仓库
+        if (mappingDTO.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku()) && mappingDTO.getHasMappingAll()){
+            return true;
+        }
+
+        if (CollectionUtils.isEmpty(warehouseDTOList)){
+            return false;
+        }
+        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOList.stream()
+                .filter(e -> e.getCode().equalsIgnoreCase(data.getDictPlatform()) && e.getPlatformWarehouseCode().equalsIgnoreCase(data.getWarehouseCode()))
+                .findFirst()
+                .orElse(null);
+        if (null == warehouseDTO){
+            return false;
+        }
+        String warehouseId = warehouseDTO.getWarehouseId();
+
+        return mappingDTO.getDictPlatform().equalsIgnoreCase(data.getDictPlatform())
+                && mappingDTO.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku())
+                && mappingDTO.getWarehouseId().equalsIgnoreCase(warehouseId);
     }
 
     @Override
@@ -235,6 +250,8 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         if (CollectionUtils.isEmpty(notMappingEntityList)) {
             return;
         }
+        //  查询仓库ID
+        List<OverseasProviderDTO.ListWithWarehouseDTO> overseasWarehouseList= overseasProviderService.listAllMatch();
 
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(platform);
@@ -243,14 +260,34 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         paramDTO.setMatchResult(true);
 
         // 查询ListingInfo和skuMapping的关系
-        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
-        Map<String, ListingInfoWithSkuMappingDTO> mappingRelationMap = listingedInfoWithSkuMappingList.stream()
-                .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> mappingRelationMap = listingedInfoWithSkuMappingList.stream()
+                .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
 
         List<OverseasInventoryEntity> updateList = notMappingEntityList.stream()
                 .filter(entity -> mappingRelationMap.containsKey(entity.getPlatformSku()))
                 .peek(entity -> {
-                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = mappingRelationMap.get(entity.getPlatformSku());
+                    List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOList = mappingRelationMap.get(entity.getPlatformSku());
+                    if (CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOList)){
+                        return;
+                    }
+                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOList.stream().filter(ListingInfoWithSkuMappingDTO::getHasMappingAll).findFirst().orElse(null);
+                    if (null == listingInfoWithSkuMappingDTO){
+                        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = overseasWarehouseList.stream()
+                                .filter(e ->  e.getCode().equalsIgnoreCase(entity.getDictPlatform()) && e.getPlatformWarehouseCode().equalsIgnoreCase(entity.getWarehouseCode()))
+                                .findFirst().orElse(null);
+                        if (null != warehouseDTO){
+                            listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
+                                    .filter(e-> e.getWarehouseId().equalsIgnoreCase(warehouseDTO.getWarehouseId()) &&
+                                            e.getDictPlatform().equalsIgnoreCase(entity.getDictPlatform()) &&
+                                            e.getPlatformSkuNo().equalsIgnoreCase(entity.getPlatformSku()))
+                                    .findFirst()
+                                    .orElse(null);
+                        }
+                    }
+                    if (null == listingInfoWithSkuMappingDTO){
+                        return;
+                    }
                     entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
                     entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
                     entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());

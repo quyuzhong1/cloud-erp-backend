@@ -31,6 +31,7 @@ import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
@@ -51,6 +52,7 @@ import com.erp.server.dmp.service.ReportScheduleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,7 +89,7 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private SkuMappingFeign skuMappingFeign;
     @Resource
     private BusinessServiceImpl businessService;
     @Resource
@@ -390,8 +392,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
         } else {
@@ -435,8 +439,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
         } else {
@@ -479,8 +485,9 @@ public class ReportHandleServiceImpl implements ReportHandleService {
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setShopIdList(Collections.singletonList(mongoDTO.getShopId()));
             paramDTO.setMatchResult(true);
-            listingInfoMap = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO)
+            listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()
                     .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuNo, Function.identity()));
         } else {

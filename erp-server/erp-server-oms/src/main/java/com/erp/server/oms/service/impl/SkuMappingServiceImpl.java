@@ -20,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -30,6 +31,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -452,12 +454,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
-
-        String dictPlatform = skuMappingEntity.getWarehouseName().contains("艾姆勒") ? OmsPlatformEnum.OMS_IML.getCode() : "";
-
-
-        skuMappingEntity.setDictPlatform(dictPlatform);
-        skuMappingEntity.setHasMappingAll(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform) && dto.checkAndGetHasMappingAll());
+        skuMappingEntity.setDictPlatform("");
+        skuMappingEntity.setHasMappingAll(dto.checkAndGetHasMappingAll());
         LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
@@ -865,6 +863,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         entity.setEffectiveTime(LocalDateTime.now());
         entity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         return this.save(entity);
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
+        return baseMapper.listByParams(dto);
     }
 
 }

@@ -99,7 +99,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
                 .distinct().collect(Collectors.toList());
-        Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform());
+        Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap = soB2cDetailService.mapListingByPlatformSkuNo(platformSkuList, dto.getDictPlatform(), dto.getShopId());
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
