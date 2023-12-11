@@ -236,14 +236,6 @@ public class SysLoggingAspect {
     }
 
     private String getIdempotentKey(ProceedingJoinPoint proceedingJoinPoint){
-        Method method = currentMethod(proceedingJoinPoint);
-        //获取到方法的注解对象
-        Idempotent idempotent = method.getAnnotation(Idempotent.class);
-        //单位 秒
-        long interval = 3;
-        if (idempotent.interval() > 0) {
-            interval = idempotent.timeUnit().toSeconds(idempotent.interval());
-        }
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = null;
         if (attributes != null) {

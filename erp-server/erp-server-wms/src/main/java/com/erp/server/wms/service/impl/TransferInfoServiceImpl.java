@@ -973,7 +973,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         //查询在途仓
-        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+        WarehouseEntity onWayWarehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：海外仓入库单
@@ -983,12 +983,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
-        addDTO.setInOrgId(warehouseEntity.getOrgId());
+        addDTO.setInOrgId(destWarehouse.getOrgId());
         //调出组织
-        WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        addDTO.setOutOrgId(deliveryWarehouse.getOrgId());
+        addDTO.setOutOrgId(onWayWarehouseEntity.getOrgId());
         //调拨类型
-        if (warehouseEntity.getOrgId().equals(deliveryWarehouse.getOrgId())) {
+        if (onWayWarehouseEntity.getOrgId().equals(destWarehouse.getOrgId())) {
             addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
@@ -1008,7 +1007,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             detailAddDto.setSkuId(detailEntity.getSkuId());
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(receivedEntity.getReceiveQty());
-            detailAddDto.setOutWarehouseId(warehouseEntity.getId());
+            detailAddDto.setOutWarehouseId(onWayWarehouseEntity.getId());
             detailAddDto.setOutWarehouseLocation("");
             detailAddDto.setInWarehouseId(destWarehouse.getId());
             detailAddDto.setInWarehouseLocation("");

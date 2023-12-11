@@ -65,8 +65,8 @@ public interface GoodCangConverter {
             @Mapping(target = "platform",  expression = "java(GoodCangConverter.getProvider())"),
             @Mapping(target = "providerErpId",  source = "authId"),
             @Mapping(target = "productSku",  source = "productSku"),
-            @Mapping(target = "warehouseCode",  source = "warehouseCode"),
-            @Mapping(target = "warehouseName",  source = "warehouseDesc"),
+            @Mapping(target = "platformWarehouseCode",  source = "warehouseCode"),
+            @Mapping(target = "platformWarehouseName",  source = "warehouseDesc"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
     })
     PlatformInventoryDTO inventoryConversion(GoodCangInventoryResp sourceData);
