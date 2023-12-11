@@ -87,29 +87,31 @@
             </if>
             <if test="params.metrics !=null and params.metrics == 'salesAmount'">
                 <if test="params.settleMethod !=null and params.settleMethod == 0">
-                    round(SUM (o.sales_amount_currency_rate),2) AS value,
+                    round(SUM (COALESCE(o.sales_amount_currency_rate,0)),2) AS value,
                 </if>
                 <if test="params.settleMethod !=null and params.settleMethod == 1">
-                    round(SUM (o.sales_amount_cny_settle_rate),2) AS value,
+                    round(SUM (COALESCE(o.sales_amount_cny_settle_rate,0)),2) AS value,
                 </if>
                 <if test="params.settleMethod ==null">
-                    round(SUM (o.sales_amount),2) AS value,
+                    round(SUM (COALESCE(o.sales_amount,0)),2) AS value,
                 </if>
             </if>
             <if test="params.metrics !=null and params.metrics == 'salesQty'">
-                sum(o.sales_qty) as value,
+                sum(COALESCE(o.sales_qty,0)) as value,
             </if>
-            to_char(o.date_time,'MM') as month
+            ddd.date_month as month
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
-        and o.date_time >= #{lastsMonth}
+        and ddd.date_time >= #{lastsMonth}
         group by month
             <if test="params.searchType != null and params.searchType == 0">
                 ,o.dept_id
