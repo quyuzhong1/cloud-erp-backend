@@ -13,7 +13,7 @@ public class ListingInfoWithSkuMappingDTO {
     /**
      * skuMapping的ID
      */
-    private String id;
+    private String tableId;
 
     /**
      * 店铺表id
