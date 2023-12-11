@@ -22,4 +22,11 @@ public interface WmsOverseasWarehouseFeign {
      **/
     @PostMapping("/feign/overseasWarehouse/getOverseasWarehouseListByPlatformCodes")
     List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCodes(@RequestParam(value = "warehouseCodeList") List<String> warehouseCodeList, @RequestParam(value = "platform")String platform);
+
+    /**
+     * 根据erp仓库id 集合获取到海外仓
+     * @return
+     */
+    @PostMapping("/feign/overseasWarehouse/listByWarehouseId")
+    List<OverseasProviderWarehouseEntity> listByWarehouseIdList(@RequestBody List<String> warehouseIdList);
 }

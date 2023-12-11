@@ -225,7 +225,9 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             if (matchResult) {
                 ruleMatch.setFlowStatus(item.getFlowStatus());
                 String categoryDetailId = item.getCategoryDetailId();
-                ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
+                if(StringUtils.isNotBlank(categoryDetailId)){
+                    ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
+                }
                 return ruleMatch;
             }
         }

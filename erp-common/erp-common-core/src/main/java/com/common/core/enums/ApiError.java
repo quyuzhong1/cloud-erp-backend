@@ -1007,6 +1007,9 @@ public enum ApiError implements Serializable {
     ERROR_SHOP_ALREADY_AUTH(92110,"店铺已授权"),
     ERROR_LISTING_NOT_EXIST(92111,"未找到listing 信息"),
     ERROR_SO_B2C_RECEIVER_NOT_NULL(92112,"买家信息不能为空"),
+    ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL(92113,"B2C销售订单【{}】物流渠道不能为空"),
+    ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL(92114,"B2C销售订单【{}】物流渠道和物流单号不能为空"),
+
 
 
 
