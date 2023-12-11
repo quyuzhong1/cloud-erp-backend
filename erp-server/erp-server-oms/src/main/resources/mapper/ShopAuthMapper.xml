@@ -48,7 +48,7 @@
             and info.auth_status = #{status}
         </if>
         <if test="type != null and type != ''">
-            and auth."type" = #{type}
+            and auth.'type' = #{type}
         </if>
 
     </select>
