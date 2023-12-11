@@ -1,6 +1,7 @@
 package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -38,4 +39,6 @@ public interface ShippingTemplateOtherCostMapper extends BaseMapper<ShippingTemp
      * @return List<ListDTO>
      */
     List<ShippingCalculationDTO.ListDTO> listByExportExcel( @Param("params")ShippingCalculationDTO.PagingParamDTO params);
+
+    List<ShippingCalculationDTO.ListDTO> listRefCost(@Param("params")SoB2cDTO.ShippingCalculationDTO params);
 }

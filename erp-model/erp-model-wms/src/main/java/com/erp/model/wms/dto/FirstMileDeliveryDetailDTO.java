@@ -43,12 +43,12 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
         /**
         * 平台sku
         */
-        private String asin;
+        private String platformSpuNo;
 
         /**
         * 卖家sku
         */
-        private String msku;
+        private String platformSkuNo;
 
         /**
         * FNSKU
@@ -172,12 +172,12 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
         /**
         * 平台sku
         */
-        private String asin;
+        private String platformSpuNo;
 
         /**
         * 卖家sku
         */
-        private String msku;
+        private String platformSkuNo;
 
         /**
         * FNSKU

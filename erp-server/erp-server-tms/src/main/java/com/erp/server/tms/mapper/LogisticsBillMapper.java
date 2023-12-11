@@ -57,4 +57,11 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@date 2023-11-16
      */
     List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.ExportDTO dto,@Param("statusList") List<String> statusList);
+
+    /**
+     * 获取物流单基础信息 根据跟踪号
+     * @param trackNo
+     * @return
+     */
+    LogisticsBillDTO.BaseDTO getBaseByTrackNo(@Param("trackNo") String trackNo);
 }

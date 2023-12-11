@@ -111,7 +111,7 @@ public class PlatformDataThread {
     /**
      * 更新或保存报表
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void checkAndSaveMongo(ReportList reportList, String marketplaceId) {
         if (CollectionUtil.isEmpty(reportList)) {
             XxlJobHelper.log("[拉取亚马逊报表任务] 无报告信息：marketplaceId={}", marketplaceId);

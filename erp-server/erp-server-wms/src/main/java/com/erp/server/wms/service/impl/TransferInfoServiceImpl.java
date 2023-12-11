@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
@@ -126,6 +127,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -198,8 +202,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
-            //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
+
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJDB);
+
             entity.setCode(code);
         }
         //新增主表数据

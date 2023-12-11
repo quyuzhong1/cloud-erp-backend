@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
@@ -50,8 +51,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Autowired
     private OperateLogService operateLogService;
 
-    @Autowired
-    private CommonService commonService;
+
 
     @Resource
     private DictBasicService dictBasicService;
@@ -131,6 +131,16 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
         BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
         return baseMapper.listByExportExcel(params);
+    }
+
+    /**
+     * 获取到所有相关费用的信息
+     * @param params
+     * @return
+     */
+    @Override
+    public List<ShippingCalculationDTO.ListDTO> listRefCost(SoB2cDTO.ShippingCalculationDTO params) {
+        return baseMapper.listRefCost(params);
     }
 
     @Override

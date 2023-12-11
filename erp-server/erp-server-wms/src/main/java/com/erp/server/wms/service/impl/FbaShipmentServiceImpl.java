@@ -43,6 +43,7 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
@@ -317,7 +318,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getDeliveryQty() - detailEntity.getReceiveQty());
+                    addDTO.setActualQty(detailEntity.getReceiveQty() - detailEntity.getDeliveryQty());
                     addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
                     instockDetailList.add(addDTO);
 
@@ -367,13 +368,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
 
-        //查询下推的要要货申请单
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(ids.getIds());
-
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getAsin());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSkuNo());
             }
         });
 
