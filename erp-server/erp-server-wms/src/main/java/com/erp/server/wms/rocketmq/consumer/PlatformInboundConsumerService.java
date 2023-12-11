@@ -8,6 +8,7 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -132,7 +133,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             overseasWarehouseInboundDetailService.updateBatchById(updateList);
             List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity :: getId).collect(Collectors.toList());
             List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
-            Map<String,OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v->v.getDetailId()+v.getReceiveQty()+LocalDateTimeUtil.formatNormal(v.getReceiveTime()),Function.identity()));
+            Map<String,OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v->v.getDetailId()+v.getReceiveQty()+LocalDateTimeUtil.formatNormal(v.getReceiveTime()),Function.identity(),(v1,v2)->v1));
             //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
             if(dto.getHasReceivedData()){
                 //判断是否存在，通过明细id+数量+时间
