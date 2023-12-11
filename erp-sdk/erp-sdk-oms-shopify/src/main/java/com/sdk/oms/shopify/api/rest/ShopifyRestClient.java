@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.api.rest;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
@@ -26,10 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +64,8 @@ public class ShopifyRestClient {
     static final String ORDERS = "orders";
     static final String FULFILLMENTS = "fulfillments";
     static final String FULFILLMENT_ORDERS = "fulfillment_orders";
+
+    static final String FULFILLMENT_SERVICES = "fulfillment_services";
     static final String ACTIVATE = "activate";
     static final String IMAGES = "images";
     static final String SHOP = "shop";
@@ -99,6 +99,10 @@ public class ShopifyRestClient {
     private static final String CLIENT_ID = "client_id";
     private static final String CLIENT_SECRET = "client_secret";
     private static final String AUTHORIZATION_CODE = "code";
+
+    private static final String SCOPE = "scope";
+
+    private static final String ALL = "all";
 
     private static final int DEFAULT_REQUEST_LIMIT = 50;
 
@@ -137,6 +141,7 @@ public class ShopifyRestClient {
 
     private static final String CUSTOMERS = "customers";
     private static final String SEARCH = "search";
+
 
     public static interface OptionalsStep {
 
@@ -1513,5 +1518,12 @@ public class ShopifyRestClient {
         return fulfillmentOrders;
     }
 
+    /**
+     * 获取物流渠道
+     */
+    public ShopifyFulfillmentServicesRoot getFulfillmentServices() {
+        Response response = get(getWebTarget().path(FULFILLMENT_SERVICES.concat(JSON)).queryParam(SCOPE, ALL));
+        return response.readEntity(ShopifyFulfillmentServicesRoot.class);
+    }
 
 }
