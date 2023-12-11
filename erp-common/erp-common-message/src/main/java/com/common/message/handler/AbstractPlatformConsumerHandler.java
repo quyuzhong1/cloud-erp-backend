@@ -13,8 +13,6 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
-
 /**
  * 销售订单处理器抽象类
  * @author Cloud
