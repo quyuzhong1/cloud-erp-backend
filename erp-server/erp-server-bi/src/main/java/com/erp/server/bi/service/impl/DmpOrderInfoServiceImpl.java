@@ -204,7 +204,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             countDownLatch.countDown();
         }).start());
         try {
-            countDownLatch.await();
+            countDownLatch.await(15, TimeUnit.SECONDS);
             //占比计算
             rangeVOS.forEach(salesPriceRangeVO -> {
                 BigDecimal saleRate = MathUtil.divide(salesPriceRangeVO.getSaleAmount(), salesTotal[0]).multiply(MathUtil.BigDecimal_100);
