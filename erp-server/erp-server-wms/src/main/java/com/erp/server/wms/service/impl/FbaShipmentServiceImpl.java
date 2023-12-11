@@ -19,6 +19,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.StateEnumValue;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -932,8 +933,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //查询用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
 
-
-
         // 设置绑定的SKU
         newReceiveEntityList.forEach(e -> {
             // 详情Key
@@ -964,12 +963,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
         });
 
+
         //其他入库单明细信息
         List<OtherInstockDetailDTO.AddDTO> detailAddList = new ArrayList<>();
 
         if (CollectionUtils.isNotEmpty(saveReceiveList)){
             if (!fbaShipmentReceiveService.saveBatch(saveReceiveList)) {
-                throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(newReceiveEntityList));
+                throw new ServiceException("[FbaShipmentDetailEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveReceiveList));
             }
             // 查询是否有发货单号
             FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.findBySourceId(entity.getId());
@@ -983,23 +983,23 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                     //查询原签收数量，比较新获取的签收数量，多的新增其他入库
                     for (FbaShipmentDetailEntity detailEntity : oldfbaShipmentDetailEntityList) {
-                        int receiveQtySum = newReceiveEntityList.stream().filter(req -> req.getDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getReceiveQty()).sum();
-                        if (detailEntity.getReceiveQty() < receiveQtySum) {
-                            OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
-                            addDTO.setSkuId(detailEntity.getSkuId());
-                            addDTO.setSkuNo(detailEntity.getSkuNo());
-                            addDTO.setWarehouseLocation("");
-                            addDTO.setActualQty(receiveQtySum - detailEntity.getReceiveQty());
-                            addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
-                            detailAddList.add(addDTO);
-                        }
+                        int receiveQtySum = saveReceiveList.stream().filter(req -> req.getDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getReceiveQty()).sum();
+                        OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
+                        addDTO.setSkuId(detailEntity.getSkuId());
+                        addDTO.setSkuNo(detailEntity.getSkuNo());
+                        addDTO.setWarehouseLocation("");
+                        addDTO.setActualQty(receiveQtySum);
+                        addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
+                        detailAddList.add(addDTO);
                     }
-                    this.generateOtherInstock(shopInfoEntity.getWarehouseId(), userDTO.getDepartmentId(), detailAddList);
+                    if (CollectionUtils.isNotEmpty(detailAddList)){
+                        this.generateOtherInstock(shopInfoEntity.getWarehouseId(), userDTO.getDepartmentId(), detailAddList);
+                    }
                     return;
                 }
 
                 //新增直接调拨单:在途仓-目的仓
-                String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  newReceiveEntityList);
+                String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
                 if (StringUtils.isNotBlank(transferOutId)) {
                     //提交
                     transferInfoService.submit(Arrays.asList(transferOutId));
@@ -1018,9 +1018,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
                 //如果收货数量等于发货数量，修改货件状态为自动完结
-                int receiveQtySum = newReceiveEntityList.stream().mapToInt(req -> req.getReceiveQty()).sum();
-                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getId()));
-                List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+                int receiveQtySum = saveReceiveList.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+                List<String> detailIds = fbaShipmentDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
                 //根据来源详情id查询发货详情
                 List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
@@ -1035,7 +1035,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             } else {
                 log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
-                for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : newReceiveEntityList) {
+                for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : saveReceiveList) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                     addDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
                     addDTO.setSkuNo(fbaShipmentReceiveEntity.getSkuNo());
