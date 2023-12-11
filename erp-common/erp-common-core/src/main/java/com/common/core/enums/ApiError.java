@@ -817,7 +817,7 @@ public enum ApiError implements Serializable {
     FBA_DELIVERY_INVENTORY_INSUFFICIENT(99104,"提示：SKU【{}】发货仓【{}】可用库存不足，无法审核发货单"),
     ERROR_GENERATE_TRANSFER_OUT(99105,"生成直接调拨单失败!"),
     FBA_SHIPMENT_RECEIVE_EXIST(99106,"已经有货件签收数量的发货单不允许反审核!"),
-    IS_DELIVERY_FINISH(99107,"只有【已发货】或【自动完结】的货件才能手动完结!"),
+    IS_DELIVERY_FINISH(99107,"只有【已发货】的货件才能手动完结!"),
     EXIST_SKU_MAPPING(99108,"此平台sku已存在sku映射关系!"),
     EXIST_FBA_DELIVERY_NOT_DELETE(99109,"已下推发货单，无法删除!"),
     SHIPMENT_STATUS_CHECK_NOT_DELETE(99110,"DELETED和CANCELLED状态的货件不允许下推发货单"),
