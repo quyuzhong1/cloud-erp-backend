@@ -47,7 +47,7 @@ public class PlatformInboundConsumerServiceTest {
 //        dto.setReceivingCode("RVG1149-231207-0001");
 //        dto.setProvider("goodcang");
 //        dto.setPlatform("goodcang");
-//        dto.setDownloadTime(LocalDateTime.now());
+        dto.setDownloadTime(LocalDateTime.now());
 //        dto.setReceivingStatus(OverseasInstockStatusEnum.SIGNED.getCode());
 //        List<PlatformInboundDTO.Item> itemList = new ArrayList<>();
 //        dto.setItems(itemList);
@@ -64,6 +64,6 @@ public class PlatformInboundConsumerServiceTest {
 //        receiving.setReceiveTime(localDateTime);
 //        receivings.add(receiving);
 //        dto.setReceivingDataList(receivings);
-        service.handle(JSONUtil.parse(dto));
+        service.onMessage(JSONUtil.parse(dto));
     }
 }
