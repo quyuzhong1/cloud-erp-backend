@@ -108,6 +108,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             SoB2cReceiverEntity oldEntity = getByMainId(mainEntity.getId());
             if( null != oldEntity){
                 SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
+                //处理买家信息
+                handleSoB2cReceiver(entity, mainEntity.getId());
                 // 无信息新增空表
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
@@ -125,7 +127,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
-                entity.setMainId(mainEntity.getId());
+                //处理买家信息
+                handleSoB2cReceiver(entity, mainEntity.getId());
                 if (StringUtils.isBlank(receiverDTO.getName())){
                     receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
                 }

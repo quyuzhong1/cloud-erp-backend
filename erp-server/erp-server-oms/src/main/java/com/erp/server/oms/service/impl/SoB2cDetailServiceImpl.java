@@ -202,6 +202,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         // 历史map
         Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+
         // 新增或更新列表
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
@@ -225,8 +226,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
             }
-            saveOrUpdateEntity.setWarehouseId(shopInfo.getWarehouseId());
-            saveOrUpdateEntity.setWarehouseName(shopInfo.getWarehouseName());
 
             //建议售价
             if (StringUtils.isNotBlank(skuId)){
