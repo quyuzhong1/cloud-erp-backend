@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -108,12 +109,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     private FirstMileCartonDetailService firstMileCartonDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
     @Resource
     private OtherOutstockService otherOutstockService;
-
     @Resource
     private OtherInstockService otherInstockService;
+    @Resource
+    private OverseasDeliveryPlanService overseasDeliveryPlanService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1012,6 +1013,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        //获取sku信息
+        List<String> skuIdList = list.stream().map(OverseasWarehouseInboundDTO.ListDTO::getSkuId).collect(Collectors.toList());
+
+        //获取库存sku信息
+        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIdViews = omsListingInfoFeign.listStockSkuNoByProductSkuIds(skuIdList);
+
         // 属性赋值
         for (OverseasWarehouseInboundDTO.ListDTO data : list) {
             // 入库类型名称
@@ -1022,6 +1029,21 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             data.setLogisticsMethodName(LogisticsMethodEnum.getName(data.getLogisticsMethod()));
             // 交货方式
             data.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(data.getDeliveryMode()));
+
+            // 无api对接平台查询映射关系
+            if (StringUtils.isBlank(data.getDictPlatform())){
+                //获取库存sku
+                SkuMappingDTO.ListStockSkuNoByProductSkuIdView listStockSkuNoByProductSkuIdView = listStockSkuNoByProductSkuIdViews.stream()
+                        .filter(req -> req.getProductSkuId().equals(data.getSkuId())
+                                && req.getWarehouseId().equals(data.getToWarehouseId())
+                        ).distinct()
+                        .findFirst().orElse(null);
+
+                if (null != listStockSkuNoByProductSkuIdView) {
+                    data.setPlatformSkuNo(listStockSkuNoByProductSkuIdView.getStockSku());
+                    data.setPlatformProductName(listStockSkuNoByProductSkuIdView.getStockSkuName());
+                }
+            }
         }
     }
 
