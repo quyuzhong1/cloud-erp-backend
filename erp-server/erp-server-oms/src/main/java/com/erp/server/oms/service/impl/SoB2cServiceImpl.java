@@ -46,6 +46,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -55,6 +56,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
@@ -175,6 +177,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Autowired
     private ShopAuthService shopAuthService;
+
+    @Autowired
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -586,9 +591,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
         //存在的物流渠道
-        String existChannelId=soB2cLogisticsEntity.getLogisticsChannelId();
+        String existChannelId = soB2cLogisticsEntity.getLogisticsChannelId();
         //存在的物流单 code
-        String code=soB2cLogisticsEntity.getCode();
+        String code = soB2cLogisticsEntity.getCode();
         /**
          * 是否覆盖
          * 是：按照新选择的物流渠道和仓库下推配货中；如果物流方式跟订单已有的物流不一致，清空物流单号信息，且更新明细仓库
@@ -598,9 +603,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String logisticsChannelId = dto.getLogisticsChannelId();
         if (Boolean.TRUE.equals(isCover)) {
             //如果有物流单号 就要去取消
-            if(StringUtils.isNotBlank(code)){
+            if (StringUtils.isNotBlank(code)) {
                 //取消物流单
-                LogisticsBillDTO.CancelBillDTO cancelBillDTO =LogisticsBillDTO.CancelBillDTO.builder().
+                LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                         channelId(existChannelId).trackNo(code).build();
                 logisticsBillFeign.cancelBill(cancelBillDTO);
             }
@@ -734,6 +739,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SUBMIT_DELIVERY, entity.getCode());
         }
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
+        if (Objects.isNull(logisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+        //物流渠道
+        String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
+        //物流单号
+        String code = logisticsEntity.getCode();
         /**
          * 未获取物流单号或获取物流单号失败的订单不允许提交发货
          * 缺货订单不允许提交发货
@@ -744,24 +757,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        //发货仓库
-        long count = list.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().count();
-        if (count > MathUtil.ONE) {
+        //发货仓库id 集合
+        List<String> deliveryWarehouseIdList = list.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        if (deliveryWarehouseIdList.size() > MathUtil.ONE) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX);
+        }
+        //检测是否是API 对接的仓库
+        List<OverseasProviderWarehouseEntity> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(deliveryWarehouseIdList);
+        Boolean isApi = CollectionUtils.isEmpty(overseasWarehouseList);
+        //必须要有物流渠道，没有物流单号可以提交发货
+        if (isApi) {
+            if (StringUtils.isBlank(logisticsChannelId)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL, entity.getCode());
+            }
+        } else {
+            //必须要有物流渠道和物流单号后才可以提交发货
+            if (StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(code)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL, entity.getCode());
+            }
         }
         //skuId集合
         List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //发货仓库Id集合
-        List<String> warehouseIdList = list.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
-
         //查询可用库存
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setWarehouseIdList(deliveryWarehouseIdList);
         skuInventoryDTO.setSkuIdList(skuIdList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         List<InventoryQtyDTO.SkuInventoryTotalDTO> inventoryList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
         if (CollectionUtils.isEmpty(inventoryList)) {
-            log.error("B2C销售订单【{}】未找到可用库存，skuIdList = {}，warehouseIdList = {}", entity.getCode(), skuIdList, warehouseIdList);
+            log.error("B2C销售订单【{}】未找到可用库存，skuIdList = {}，warehouseIdList = {}", entity.getCode(), skuIdList, deliveryWarehouseIdList);
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_INVENTORY, entity.getCode());
         }
         for (SoB2cDetailEntity detailEntity : list) {
@@ -2803,7 +2827,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String platformSpuNo = detailEntity.getPlatformSpuNo();
 
         SkuMappingDTO.AddSkuMappingDTO addSkuMappingDTO = new SkuMappingDTO.AddSkuMappingDTO();
-        String skuNo=skuEntity.getSkuNo();
+        String skuNo = skuEntity.getSkuNo();
         addSkuMappingDTO.setProductName(skuEntity.getName());
         addSkuMappingDTO.setProductSkuId(skuEntity.getId());
         addSkuMappingDTO.setProductSkuNo(skuNo);
