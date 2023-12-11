@@ -507,20 +507,21 @@
             <if test="params.searchType == 'sku'">
                 o.sku_no as typeName,
             </if>
-            to_char(o.date_time,'MM') as month,
+            to_char(ddd.date_time,'MM') as month,
             <if test="dataType != null and dataType == 'sales'">
-                round(sum(o.sales_amount_currency_rate),2) as value
+                round(sum(COALESCE(o.sales_amount_currency_rate,0)),2) as value
             </if>
             <if test="dataType != null and dataType == 'qty'">
-                SUM ( o.sales_qty ) as value
+                SUM (COALESCE(o.sales_qty,0)) as value
             </if>
-
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </when>
             <otherwise>
                 FROM dmp_order_create_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
