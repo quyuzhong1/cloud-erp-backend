@@ -278,12 +278,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FbaShipmentEntity> fbaShipmentEntities = super.listByIds(ids);
         List<FbaShipmentEntity> list = fbaShipmentEntities.stream()
                 .filter(req -> !FbaDeliveryStatusEnum.SHIPPED.getCode().equals(req.getDeliveryStatus())
-                        || AmazonFbaShipmentStatusEnum.WORKING.getCode().equals(req.getPlatformShipmentStatus())
-                        || AmazonFbaShipmentStatusEnum.READY_TO_SHIP.getCode().equals(req.getPlatformShipmentStatus())
-                        || AmazonFbaShipmentStatusEnum.IN_TRANSIT.getCode().equals(req.getPlatformShipmentStatus())
-                ).collect(Collectors.toList());
-
-        // 只有已发货的单据才能完结
+                        && !FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(req.getDeliveryStatus()))
+                .collect(Collectors.toList());
+        // 只有已发货或自动完结的单据才能完结
         if (list.size() > 0) {
             throw new ServiceException(ApiError.IS_DELIVERY_FINISH);
         }
