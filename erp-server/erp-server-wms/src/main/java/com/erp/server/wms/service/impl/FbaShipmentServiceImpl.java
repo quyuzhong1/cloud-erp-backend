@@ -371,13 +371,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //根据id获取货件信息
         List<FbaShipmentDTO.GenerateDeliverView> list = baseMapper.generateDeliverView(ids);
 
-        //查询下推的要要货申请单
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(ids.getIds());
-
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getAsin());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSkuNo());
             }
         });
 
