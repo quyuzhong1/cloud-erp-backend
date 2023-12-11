@@ -162,6 +162,7 @@ public class BusinessServiceImpl {
         String targetPlatform = handler.getTargetPlatform();
         String topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC;
         String tag = StrUtil.format("{}_{}", category, business) + "_tag";
+        BusinessTypeEnum businessType = BusinessTypeEnum.getByCodeAndThrow(business);
 
         Class<T> tClass = (Class<T>) sourceDto.getClass();
         String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
@@ -170,7 +171,7 @@ public class BusinessServiceImpl {
         MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(sourceDto), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
 
-        String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, dto));
+        String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), targetPlatform, topic, tag, dto));
         // 异步推送到MQ
         dto.setDmpSyncTaskId(modelTaskId);
         log.info("详情发送队列前：{}", JSONUtil.toJsonStr(dto));
