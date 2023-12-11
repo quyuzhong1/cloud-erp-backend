@@ -10,6 +10,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -19,11 +20,13 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.service.OverseasInventoryService;
+import com.erp.server.wms.service.OverseasProviderService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 下载平台库存消费服务
@@ -54,7 +59,10 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     private OverseasInventoryService overseasInventoryService;
 
     @Resource
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private OverseasProviderService overseasProviderService;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -75,6 +83,29 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformInventoryDTO dto = JSONUtil.toBean(ext.toString(), PlatformInventoryDTO.class);
+        // 查询仓库ID
+        List<OverseasProviderDTO.ListWithWarehouseDTO> overseasWareHouseList = overseasProviderService.listAllMatch();
+        if (overseasWareHouseList.isEmpty()){
+            throw new ServiceException("未找到对应仓库ID Map,dto=" + JSONUtil.toJsonStr(dto));
+        }
+        List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOS = overseasWareHouseList.stream()
+                .filter(e-> e.getCode().equalsIgnoreCase(dto.getPlatform()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(warehouseDTOS)){
+            if (overseasWareHouseList.isEmpty()){
+                throw new ServiceException("未找到对应仓库ID list,dto=" + JSONUtil.toJsonStr(dto));
+            }
+        }
+        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOS.stream()
+                .filter(e -> e.getPlatformWarehouseCode().equalsIgnoreCase(dto.getPlatformWarehouseCode()))
+                .findFirst().orElse(null);
+        if (null == warehouseDTO){
+            throw new ServiceException("未找到对应仓库ID,dto=" + JSONUtil.toJsonStr(dto));
+        }
+        dto.setWarehouseId(warehouseDTO.getWarehouseId());
+
+        List<String> warehouseIds = warehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId).collect(Collectors.toList());
+
         //海外仓
         if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
             //转换成数据库实体对象
@@ -82,16 +113,22 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             if (StringUtils.isNotBlank(entity.getPlatformSku())){
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(entity.getDictPlatform());
+                paramDTO.setWarehouseIdList(warehouseIds);
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
                 paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
                 // 查询ListingInfo和skuMapping的关系
-                List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+                List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
-                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.get(0);
-                    entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
-                    entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                    entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
-                    entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                    ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
+                            .filter(e-> (e.getHasMappingAll() && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
+                                    || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
+                            ).findFirst().orElse(null);
+                    if (null != listingInfoWithSkuMappingDTO){
+                        entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName());
+                        entity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
+                        entity.setSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
+                        entity.setSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
+                    }
                 }
             }
             overseasInventoryService.saveOrUpdateByPlatform(entity);

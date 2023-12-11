@@ -35,4 +35,14 @@ public class ListingInfoParamDTO {
      * 类型: warehouse,platform
      */
     private String type;
+
+    /**
+     * 店铺ID列表
+     */
+    private List<String> shopIdList;
+
+    /**
+     * 仓库ID列表
+     */
+    private List<String> warehouseIdList;
 }

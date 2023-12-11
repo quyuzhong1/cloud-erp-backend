@@ -8,6 +8,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -20,9 +22,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -118,23 +118,57 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        //平台名称
+        String platformName = skuMappingImportExcelDTO.getPlatformName();
+        DictBasicDTO.ViewDTO platform = dictBasicList.stream().filter(s -> s.getName().equals(platformName)).findFirst().orElse(null);
+        if (null == platform) {
+            errorMsgList.add("平台不存在");
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
+
+        //店铺名称
+        String shopName = skuMappingImportExcelDTO.getShopName();
+        ShopInfoEntity shop = shopList.stream()
+                .filter(s -> s.getName().equals(shopName))
+                .filter(s -> s.getDictPlatform().equalsIgnoreCase(platform.getValue()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(shop)) {
+            errorMsgList.add("店铺在该平台不存在");
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
+        // 查询该店铺所有平台sku
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(platform.getValue());
+        paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+
+        // 已接入平台不允许新增
+        boolean isApiPlatform = PlatformDictEnum.hasConnectionPlatform().contains(platform.getValue());
+        if (CollectionUtils.isEmpty(listDto) && isApiPlatform){
+            errorMsgList.add("亚马逊, 速卖通, Shopify, 虾皮, 沃尔玛不允许新增");
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        }
+
+        // 已存在
+        if (CollectionUtils.isEmpty(listDto) && isApiPlatform){
+            ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
+            if( currentSkuMapping.getMatchResult()){
+                errorMsgList.add("该店铺平台sku已存在匹配关系");
+                errorList.add(skuMappingImportExcelDTO);
+                return;
+            }
+        }
+
         String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
         SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
         if (Objects.isNull(sku)) {
             errorMsgList.add("产品sku不存在");
-        }
-        //店铺名称
-        String shopName = skuMappingImportExcelDTO.getShopName();
-        ShopInfoEntity shop = shopList.stream().filter(s -> s.getName().equals(shopName)).findFirst().orElse(null);
-        if (Objects.isNull(shop)) {
-            errorMsgList.add("店铺不存在");
-        }
-
-        //平台名称
-        String platformName = skuMappingImportExcelDTO.getPlatformName();
-        DictBasicDTO.ViewDTO platform = dictBasicList.stream().filter(s -> s.getName().equals(platformName)).findFirst().orElse(null);
-        if (Objects.isNull(platform)) {
-            errorMsgList.add("平台不存在");
         }
 
         //存在错误数据则直接返回
@@ -191,7 +225,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         } else {
             // 已接入平台不允许新增
             if (PlatformDictEnum.hasConnectionPlatform().contains(dictPlatform)){
-                errorMsgList.add("Amazon, aliexpress, shopify, shopee, Walmart不允许新增");
+                errorMsgList.add("亚马逊, 速卖通, Shopify, 虾皮, 沃尔玛不允许新增");
             }
         }
 

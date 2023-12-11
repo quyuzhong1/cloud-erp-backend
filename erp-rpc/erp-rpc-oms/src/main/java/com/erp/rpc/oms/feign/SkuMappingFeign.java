@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.validator.ValidList;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -42,4 +43,13 @@ public interface SkuMappingFeign {
      **/
     @PostMapping("feign/skuMapping/listByPlatformSkuNoAndPlatform")
     List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO);
+
+    /**
+     * 通过条件查询ListingInfoEntity列表
+     *
+     * @author Jim
+     * @date 2023/11/2
+     */
+    @PostMapping("feign/skuMapping/list")
+    List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList(@RequestBody ListingInfoParamDTO dto);
 }
