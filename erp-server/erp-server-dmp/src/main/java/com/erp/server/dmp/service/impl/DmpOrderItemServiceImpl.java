@@ -363,6 +363,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
+                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());
@@ -488,7 +490,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         if (isSplit) {
             newSplitSkuDTO.setSkuNo(skuNo);
             newSplitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
-            newSplitSkuDTO.setOriginalCostPrice(dmpSkuCostEntity.getCostPrice());
+            newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : dmpSkuCostEntity.getCostPrice());
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);
         }
         return newSplitSkuDTO;

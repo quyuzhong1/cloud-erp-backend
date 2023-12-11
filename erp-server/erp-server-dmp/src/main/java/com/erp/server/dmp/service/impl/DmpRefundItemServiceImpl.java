@@ -168,6 +168,8 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
+                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());

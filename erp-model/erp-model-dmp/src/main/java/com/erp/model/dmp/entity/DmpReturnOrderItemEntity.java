@@ -95,6 +95,18 @@ public class DmpReturnOrderItemEntity implements Serializable {
     private BigDecimal amountAfter;
 
     /**
+     * 清洗前成本价
+     */
+    @TableField(value = "original_cost_price")
+    private BigDecimal originalCostPrice;
+
+    /**
+     * 清洗前销售额
+     */
+    @TableField(value = "original_amount_after")
+    private BigDecimal originalAmountAfter;
+
+    /**
      * 原始sku
      */
     @TableField(value = "original_sku_no")
