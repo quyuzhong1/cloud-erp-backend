@@ -3301,9 +3301,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
             }
         }
-        //为空就是员工的
+        //为空就是店铺
         if (Objects.isNull(strategy)) {
-            strategy = context.getBean(StaffTargetValueStrategy.class);
+            strategy = context.getBean(ShopTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
                 yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
             }
