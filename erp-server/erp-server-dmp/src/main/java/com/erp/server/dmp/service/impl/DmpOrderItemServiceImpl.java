@@ -482,12 +482,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setMsg(String.format(ApiError.ERP_DMP_SKU_NOT_COST.msg,skuNo));
             errorList.add(errorLogEntity);
         }
+        //清洗成本数据
+        newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),splitSkuDTO.getQuantity()));
         //拆分订单
         if (isSplit) {
             newSplitSkuDTO.setSkuNo(skuNo);
             newSplitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
             newSplitSkuDTO.setOriginalCostPrice(dmpSkuCostEntity.getCostPrice());
-            newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),splitSkuDTO.getQuantity()));
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);
         }
         return newSplitSkuDTO;
