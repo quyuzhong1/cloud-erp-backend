@@ -931,7 +931,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
 
         //查询用户信息
-        FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getUpdateUserId());
+        FindUserDTO userDTO = sysUserFeign.getUserByUserId(oldEntity.getUpdateUserId());
 
         // 设置绑定的SKU
         newReceiveEntityList.forEach(e -> {
