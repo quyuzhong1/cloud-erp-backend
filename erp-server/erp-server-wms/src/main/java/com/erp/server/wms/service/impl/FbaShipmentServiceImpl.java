@@ -982,18 +982,18 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 // 校验是否手动完结，如果已经手动完结，多余的放到其他入库，入到目的仓然后return，不用调拨
                 if (FbaDeliveryStatusEnum.MANUAL_COMPLETION.getCode().equals(entity.getDeliveryStatus())) {
                     //查询原签收数量，比较新获取的签收数量，多的新增其他入库
-                    for (FbaShipmentDetailEntity detailEntity : oldfbaShipmentDetailEntityList) {
-                        int receiveQtySum = saveReceiveList.stream().filter(req -> req.getDetailId().equals(detailEntity.getId())).mapToInt(req -> req.getReceiveQty()).sum();
+                    for (FbaShipmentReceiveEntity detailEntity : saveReceiveList) {
                         OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                         addDTO.setSkuId(detailEntity.getSkuId());
                         addDTO.setSkuNo(detailEntity.getSkuNo());
                         addDTO.setWarehouseLocation("");
-                        addDTO.setActualQty(receiveQtySum);
+                        addDTO.setActualQty(detailEntity.getReceiveQty());
                         addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
                         detailAddList.add(addDTO);
                     }
                     if (CollectionUtils.isNotEmpty(detailAddList)){
-                        this.generateOtherInstock(shopInfoEntity.getWarehouseId(), userDTO.getDepartmentId(), detailAddList);
+                        String depId = StringUtils.isBlank(userDTO.getDepartmentId()) ? "1675799739955679233" : userDTO.getDepartmentId();
+                        this.generateOtherInstock(shopInfoEntity.getWarehouseId(), depId, detailAddList);
                     }
                     return;
                 }
