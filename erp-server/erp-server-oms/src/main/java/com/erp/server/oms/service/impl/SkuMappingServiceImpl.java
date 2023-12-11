@@ -547,16 +547,20 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
-        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException("仓库不存在");
-        }
         //更改原有的
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
-        this.updateById(skuMapping);
+        boolean updateResult = this.updateById(skuMapping);
+        if (!updateResult){
+            throw new ServiceException("更新失败");
+        }
+//        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException("仓库不存在");
+        }
+
         SkuMappingEntity addSkuMapping = new SkuMappingEntity();
         addSkuMapping.setWarehouseId(warehouseId);
         addSkuMapping.setWarehouseName(warehouseList.get(0).getName());
@@ -566,6 +570,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setListingId(listingId);
         addSkuMapping.setDictPlatform(skuMapping.getDictPlatform());
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
+        addSkuMapping.setHasMappingAll(dto.checkAndGetHasMappingAll());
         //生效时间
         addSkuMapping.setEffectiveTime(now);
         addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
