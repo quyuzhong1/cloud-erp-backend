@@ -41,6 +41,9 @@ public class PlatformInventoryDTO extends UniqueDto {
     //SKU
     private String productSku;
 
+    //仓库ID
+    private String warehouseId;
+
     //仓库代码
     private String warehouseCode;
 
