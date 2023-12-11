@@ -19,10 +19,7 @@ import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
 import com.erp.model.wms.enums.OverseasFinishStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
-import com.erp.server.wms.service.OverseasWarehouseInboundReceivedService;
-import com.erp.server.wms.service.OverseasWarehouseInboundService;
-import com.erp.server.wms.service.TransferInfoService;
+import com.erp.server.wms.service.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -31,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -66,6 +60,9 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private OtherInstockService otherInstockService;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -102,6 +99,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
             Map<String, PlatformInboundDTO.Item> itemMap = dto.getItems().stream().collect(Collectors.toMap(PlatformInboundDTO.Item::getProductSku, Function.identity()));
             List<OverseasWarehouseInboundReceivedEntity> insertReceiveEntityList = new ArrayList<>();
             List<OverseasWarehouseInboundDetailEntity> updateList = new ArrayList<>();
+            Map<String,Integer> thisSignQtyMap = new HashMap<>();
             //更新明细表
             for (OverseasWarehouseInboundDetailEntity detailEntity : detailList) {
                 PlatformInboundDTO.Item item = itemMap.get(detailEntity.getPlatformSkuNo());
@@ -114,6 +112,7 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
                 changeFlag = true;
                 Integer thisSignNumber = item.getReceivedQuantity() - detailEntity.getReceiveQty();
+                thisSignQtyMap.put(detailEntity.getId(),thisSignNumber);
                 detailEntity.setReceiveQty(item.getReceivedQuantity());
                 detailEntity.setDiffQty(detailEntity.getReceiveQty() - detailEntity.getPackQty());
                 detailEntity.setTransportQty(detailEntity.getPackQty() - detailEntity.getReceiveQty());
@@ -158,32 +157,35 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
             if(changeFlag){
                 mainEntity.setReceiveTime(dto.getDownloadTime());
-                mainEntity.setInstockStatus(dto.getReceivingStatus());
-                //自动完结再签收完结状态变成未完结
+                //自动完结再签收完结状态变成已签收
                 if(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
+                    transferInfoService.generateFromOverseasInbound(mainEntity,updateList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
+                }else if (OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
+                    //设置差异数为本次签收数
+                    updateList.forEach(v->v.setDiffQty(thisSignQtyMap.get(v.getId())));
+                    //手动完结再签收，不变更入库状态，生成其他入库单（报溢）目的仓，不生成调拨单
+                    otherInstockService.generateByOverseasInbound(mainEntity,updateList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()),false);
                 }else{
                     //差异数量为0时 自动完结
                     boolean isAllDiffZero = detailList.stream().allMatch(v->v.getDiffQty().equals(0));
                     mainEntity.setInstockStatus(this.getFinishStatusByReceiveStatus(dto.getReceivingStatus(),isAllDiffZero));
+                    transferInfoService.generateFromOverseasInbound(mainEntity,updateList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
                 }
                 //更新主表
                 overseasWarehouseInboundService.updateById(mainEntity);
-                //生成调拨单
-                transferInfoService.generateFromOverseasInbound(mainEntity,detailList,insertReceiveEntityList,String.format("海外仓入库单【%s】签收自动创建", mainEntity.getCode()));
-            }
+}
         }
         return ApiResult.success();
     }
 
     private String getFinishStatusByReceiveStatus(String receiveStatus,boolean isAllDiffZero){
         if((receiveStatus.equals(OverseasInstockStatusEnum.SIGNED.getCode()) ||
-                receiveStatus.equals(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode())||
                 receiveStatus.equals(OverseasInstockStatusEnum.CANCELED.getCode())) &&
                 isAllDiffZero){
             return OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode();
         }
-        return OverseasInstockStatusEnum.SIGNED.getCode();
+        return receiveStatus;
     }
 
     private void groupBySku(PlatformInboundDTO dto) {

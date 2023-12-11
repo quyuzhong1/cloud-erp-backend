@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -12,7 +11,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
@@ -102,21 +100,22 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
-        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
-        List<PlatformOrderReceiverDTO> receiverList = dto.getReceiverList();
+    public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+        PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
 
-        if (CollectionUtils.isEmpty(receiverList)){
+        if (null == receiverDTO){
             //获取主表下物流记录
-            List<SoB2cReceiverEntity> entityList = getListByMainId(mainEntity.getId());
-            if( CollectionUtils.isEmpty(entityList) ){
+            SoB2cReceiverEntity oldEntity = getByMainId(mainEntity.getId());
+            if( null != oldEntity){
                 SoB2cReceiverEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(null, mainEntity.getId());
+                //处理买家信息
+                handleSoB2cReceiver(entity, mainEntity.getId());
                 // 无信息新增空表
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
             }
-            return;
+            return oldEntity;
         }
 
         //获取主表下物流记录
@@ -125,24 +124,29 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         Map<String, SoB2cReceiverEntity> map = listByMainId.stream()
 //                .filter(e -> StrUtil.isNotBlank(e.getCustomerId()))
                 .collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
-        receiverList.forEach(receiverDTO -> {
             SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
-                entity.setMainId(mainEntity.getId());
+                //处理买家信息
+                handleSoB2cReceiver(entity, mainEntity.getId());
+                if (StringUtils.isBlank(receiverDTO.getName())){
+                    receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
+                }
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
                 }
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
                 BeanMapperUtils.copy(receiverDTO, entity2);
+                if (StringUtils.isBlank(receiverDTO.getName())){
+                    receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
+                }
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)){
                     throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
                 }
             }
-        });
-
+            return entity;
     }
 
     /**

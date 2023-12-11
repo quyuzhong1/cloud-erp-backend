@@ -14,6 +14,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -1425,6 +1426,32 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         }
 
         return viewReceiveDataDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+        CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
+        if (null == entity){
+            CustomerB2cEntity customerB2cEntity = new CustomerB2cEntity();
+            customerB2cEntity.setSourceId(mainEntity.getId());
+            customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+            customerB2cEntity.setName(receiverEntity.getName());
+            if (!save(customerB2cEntity)){
+                throw new ServiceException("[CustomerB2cEntity] 保存失败");
+            }
+            return customerB2cEntity;
+        } else {
+            if (!updateById(entity)){
+                throw new ServiceException("[CustomerB2cEntity] 更新失败");
+            }
+            return entity;
+        }
+    }
+
+    @Override
+    public CustomerB2cEntity getBySourceId(String sourceId) {
+        return  lambdaQuery().eq(CustomerB2cEntity::getSourceId, sourceId).one();
     }
 
     /**

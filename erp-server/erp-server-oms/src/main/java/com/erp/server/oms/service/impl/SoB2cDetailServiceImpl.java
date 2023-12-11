@@ -14,6 +14,7 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -182,7 +183,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap) {
+    public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo) {
         // 订单明细
         List<SoB2cDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
         // 来源为空
@@ -199,7 +200,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         // 来源不为空
         // 历史map
-        Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+        Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
+                .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, Function.identity()));
+
         // 新增或更新列表
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
             // 历史记录
@@ -223,6 +226,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl);
             }
+
             //建议售价
             if (StringUtils.isNotBlank(skuId)){
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
@@ -241,7 +245,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }).collect(Collectors.toList());
 
         // 批量保存和更新
-        if (!this.saveOrUpdateBatch(saveOrUpdateList)){
+         if (!this.saveOrUpdateBatch(saveOrUpdateList)){
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
         }
         return saveOrUpdateList;

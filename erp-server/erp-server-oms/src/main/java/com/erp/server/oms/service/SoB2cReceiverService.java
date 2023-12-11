@@ -68,5 +68,5 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @Author Jim
      * @since 2023-11-10
      **/
-    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 }

@@ -18,7 +18,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -174,9 +173,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
         if (CollectionUtils.isEmpty(logisticsList)) {
             //获取主表下物流记录
-            List<SoB2cLogisticsEntity> entityList = getListByMainId(mainEntity.getId());
-            if (CollectionUtils.isEmpty(entityList)) {
+            SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
+            if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId());
+                entity.setMainId(mainEntity.getId());
+                handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
@@ -184,6 +185,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             }
             return;
         }
+        // 暂时使用第一个
+        PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
 
         List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPayMethod());
@@ -193,10 +196,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         //转map 比较是否存在记录 不存在则删除 存在则更新
         Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
 
-        logisticsList.forEach(platformOrderLogisticsDTO -> {
             SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
+                entity.setMainId(mainEntity.getId());
+                handleLogisticsData(entity);
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
@@ -214,7 +218,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     addDTOList.add(buildLogisticsBill(entity, mainEntity));
                 }
             }
-        });
         //虾皮物流订单新增 TMS物流单号记录
         if (isShopee) {
             try {
