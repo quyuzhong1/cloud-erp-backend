@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
 
 /**
  * 销售订单处理器抽象类
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<Object> {
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void onMessage(Object obj) {
         String dmpSyncTaskId = "";
         try {
@@ -43,6 +47,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             log.error("平台数据消费异常", e);
             //异常预警
             sendWarnMsg(dmpSyncTaskId);
+            throw e;
         }
     }
 
