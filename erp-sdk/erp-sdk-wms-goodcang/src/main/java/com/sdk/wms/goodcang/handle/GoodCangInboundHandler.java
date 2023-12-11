@@ -54,8 +54,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
     public List<GoodCangReceiptBatchResp> download(JobTaskDTO data) {
         List<GoodCangReceiptBatchResp> respList = new ArrayList<>();
         //查询待签收、部分签收状态的入库单
-//        List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode(),OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()));
-        List<String> receiveCodeList = Arrays.asList("RVG1149-231207-0010");
+        List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode(),OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()));
         if(CollectionUtils.isEmpty(receiveCodeList)){
             return new ArrayList<>();
         }
