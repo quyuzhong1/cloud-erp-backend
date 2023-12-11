@@ -37,7 +37,12 @@
         update_time,
         version,
         is_deleted,
-        sales_platform, shop_id, shop_name, source_type, source_id, source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
+        sales_platform,
+        shop_id,
+        shop_name,
+        source_type,
+        source_id,
+        source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
     </sql>
 
     <select id="listLogisticsBillVoBySourceIds" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
@@ -301,5 +306,31 @@
             </foreach>
         </if>
         lb.create_time DESC
+    </select>
+
+    <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
+         SELECT
+             lbd.id AS detailId,
+             lb.id,
+             lb.sales_platform AS salesPlatform,
+             lb.shop_id AS shopId,
+             lb.shop_name AS shopName,
+             lb.source_type AS sourceType,
+             lb.order_type AS orderType,
+             lb.source_id AS sourceId,
+             lb.source_code AS sourceCode,
+             lb.outstock_id AS outstockId,
+             lb.outstock_code AS outstockCode,
+             lb.channel_id AS channelId,
+             lb.order_time AS orderTime,
+             lb.delivery_time AS deliveryTime,
+             lb.transport_no AS transportNo,
+             lb.to_country AS toCountry,
+             lbd.track_no AS trackNo,
+         FROM  logistics_bill_detail lbd
+         LEFT JOIN  logistics_bill lb
+         ON lbd.main_id=lb.id ANd lb.is_deleted=false
+         WHERE lbd.is_deleted=false AND lbd.track_no=#{trackNo}
+         LIMIT 1
     </select>
 </mapper>

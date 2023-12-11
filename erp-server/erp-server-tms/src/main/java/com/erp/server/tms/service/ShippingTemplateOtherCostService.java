@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.common.business.service.SuperService;
@@ -79,4 +80,11 @@ public interface ShippingTemplateOtherCostService extends SuperService<ShippingT
      * @return List<ListDTO>
      */
     List<ShippingCalculationDTO.ListDTO> listByExportExcel(ShippingCalculationDTO.PagingParamDTO params);
+
+    /**
+     * 根据条件获取到费用相关的信息
+     * @param params
+     * @return
+     */
+    List<ShippingCalculationDTO.ListDTO> listRefCost(SoB2cDTO.ShippingCalculationDTO params);
 }

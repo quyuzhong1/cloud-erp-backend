@@ -565,12 +565,12 @@ public class FbaShipmentDTO implements Serializable {
         /**
          * 平台产品id
          */
-        private String asin;
+        private String platformSpuNo;
 
         /**
          * 平台sku
          */
-        private String msku;
+        private String platformSkuNo;
         /**
          * fnSku
          */

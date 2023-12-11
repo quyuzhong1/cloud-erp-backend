@@ -325,6 +325,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String transportNo;
 
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
+
 
     }
 
@@ -465,6 +470,101 @@ public class LogisticsBillDTO implements Serializable {
     }
 
     /**
+     * 基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+
+        private String id;
+
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+
+        /**
+         * 来源id 销售订单
+         */
+        private String sourceId;
+
+        /**
+         * 来源code
+         */
+        private String sourceCode;
+
+        /**
+         * 出库id
+         */
+        private String outstockId;
+
+        /**
+         * 出库code
+         */
+        private String outstockCode;
+
+        /**
+         * 渠道id
+         */
+        private String channelId;
+
+
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
+        /**
+         * 下单时间
+         */
+        private LocalDateTime orderTime;
+
+        /**
+         * 发货时间
+         */
+        private LocalDate deliveryTime;
+
+        /**
+         * 运输单号
+         */
+        private String transportNo;
+
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 订单类型
+         */
+        private String orderType;
+
+        private String trackNo;
+
+        private String detailId;
+
+
+
+    }
+
+    /**
      * 查询物流信息
      */
     @Data
@@ -563,6 +663,24 @@ public class LogisticsBillDTO implements Serializable {
         @NotNull(message = "sku信息不能为空L")
         private List<SkuDTO> skuList;
 
+
+    }
+
+
+    /**
+     * 取消物流单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CancelBillDTO{
+
+        @NotBlank(message = "渠道不能为空")
+        private String channelId;
+
+        @NotBlank(message = "物流单")
+        private String trackNo;
 
     }
 

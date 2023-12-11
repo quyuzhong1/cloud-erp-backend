@@ -127,4 +127,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@date 2023-11-24
      */
     List<LogisticsBillEntity> listByOutstockIdList(List<String> outstockIdList);
+
+    /**
+     * 取消物流单
+     * @author yl
+     * @date 2023-12-08 11:55
+     * @param dto
+     * @return 
+     */
+    Boolean cancelBill(LogisticsBillDTO.CancelBillDTO dto);
 }

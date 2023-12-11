@@ -87,6 +87,19 @@ public class LogisticsBillFeignController {
     public List<String> generateBill(@RequestBody @Valid LogisticsBillDTO.GenerateBillDTO dto) {
         return logisticsBillService.generateBill(dto);
     }
+    
+    /**
+     * 取消物流单
+     * @author yl
+     * @date 2023-12-08 11:52
+     * @param dto
+     * @return 
+     */
+    @PostMapping("/cancelBill")
+    public Boolean cancelBill(@RequestBody @Valid LogisticsBillDTO.CancelBillDTO dto) {
+        return logisticsBillService.cancelBill(dto);
+    }
+
 
     /**
      * 获取物流单数据 用于查询轨迹

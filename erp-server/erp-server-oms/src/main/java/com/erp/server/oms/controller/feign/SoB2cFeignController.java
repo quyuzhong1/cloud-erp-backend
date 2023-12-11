@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.server.oms.service.ShopAuthService;
@@ -38,6 +39,17 @@ public class SoB2cFeignController extends BaseController {
     public List<SoB2cLogisticsEntity> listSoB2cLogisticsByMainIdList(@RequestBody List<String> mainIdList) {
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(mainIdList);
         return soB2cLogisticsList;
+    }
+
+    /**
+     * 根据订单id获取物流费用的参数
+     * @param orderId
+     * @return
+     */
+    @PostMapping("/getShippingCalculationByOrderId")
+    public SoB2cDTO.ShippingCalculationDTO getShippingCalculationByOrderId(@RequestBody String orderId){
+        SoB2cDTO.ShippingCalculationDTO  result=  soB2cLogisticsService.getShippingCalculationByOrderId(orderId);
+        return result;
     }
 
 }
