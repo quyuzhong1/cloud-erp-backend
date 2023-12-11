@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -16,6 +17,8 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
 
 /**
  * 下载平台订单消费服务
+ *
  * @author Cloud
  */
 @Service
@@ -84,6 +88,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public void sendWarnMsg(String syncTaskId) {
 //        dmpTaskFeign.sendWarnMsg(syncTaskId);
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
@@ -98,7 +103,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
-        if (null == shopInfo){
+        if (null == shopInfo) {
             throw new ServiceException("未找到订单的店铺" + dto.getShopId());
         }
 
@@ -120,20 +125,22 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity);
 
-        customerB2cSellerService.saveOrUpdateEntity(dto,  customerB2cEntity);
+        customerB2cSellerService.saveOrUpdateEntity(dto, customerB2cEntity);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
-        if (!soB2cReceiverService.updateById(receiverEntity)){
+        if (!soB2cReceiverService.updateById(receiverEntity)) {
             throw new ServiceException("记录客户ID失败");
         }
 
-        // TODO 校验
         //自动匹配订单规则
-//        Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList);
-//        if (isSuccess) {
-//            //自动匹配配货规则
-//            soB2cService.distributionRule(mainEntity.getId(), detailList);
-//        }
+        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
+//            JSONObject jsonObject = new JSONObject();
+//            Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList, jsonObject);
+//            if (isSuccess) {
+//                //自动匹配配货规则
+//                soB2cService.distributionRule(mainEntity.getId(), detailList, jsonObject);
+//            }
+        }
         return ApiResult.success();
     }
 }

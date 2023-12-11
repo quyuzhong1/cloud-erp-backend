@@ -176,6 +176,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             SoB2cLogisticsEntity oldEntity = getByMainId(mainEntity.getId());
             if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId());
+                entity.setMainId(mainEntity.getId());
+                handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
@@ -197,6 +199,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId());
+                entity.setMainId(mainEntity.getId());
+                handleLogisticsData(entity);
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
