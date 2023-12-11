@@ -120,7 +120,7 @@
         </if>
         <!--卖家sku-->
         <if test="params.platformSkuNo != null and params.platformSkuNo != ''">
-            AND fdd.platform_sku_no concat('%',#{params.platformSkuNo}::text,'%')
+            AND fdd.platform_sku_no ILIKE concat('%',#{params.platformSkuNo}::text,'%')
         </if>
         <!--审核时间-->
         <if test="params.approveTimeList !=null and params.approveTimeList.size>0">

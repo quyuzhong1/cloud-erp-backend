@@ -5,10 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -88,6 +85,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             // 添加到映射
             SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
+            if(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+            ||OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())){
+                skuMappingEntity.setHasMappingAll(true);
+            }
             if (!skuMappingService.save(skuMappingEntity)) {
                 throw new ServiceException("【listing消费】SkuMapping保存失败");
             }
