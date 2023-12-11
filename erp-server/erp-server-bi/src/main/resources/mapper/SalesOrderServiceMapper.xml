@@ -251,7 +251,7 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    AND o.platform_create_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
                     AND o.platform_create_time &lt; #{params.endTime}
@@ -463,10 +463,10 @@
         o.sku_no AS skuNo
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -626,10 +626,10 @@
         o.date_time AS flagDate
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -863,10 +863,10 @@
         o.source_platform AS platform
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1301,10 +1301,10 @@
         (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1328,10 +1328,10 @@
         o.shop_name
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1353,10 +1353,10 @@
         o.category_id AS flagNo
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1380,10 +1380,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1405,10 +1405,10 @@
         o.country_name_cn AS name
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1432,10 +1432,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1459,10 +1459,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1486,10 +1486,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1513,10 +1513,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1541,10 +1541,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1568,10 +1568,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1595,10 +1595,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1622,10 +1622,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1648,10 +1648,10 @@
         ( select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1673,10 +1673,10 @@
         o.shop_name AS shopName
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1833,10 +1833,10 @@
         COALESCE(o.charge_id,'无') AS flagNo
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1860,10 +1860,10 @@
         (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1889,10 +1889,10 @@
         (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1915,15 +1915,15 @@
         (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
         AND to_char(o.date_time,'yyyy')=#{year}
-        GROUP BY o.date_time
+        GROUP BY flag
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -1942,15 +1942,15 @@
         SUM ( o.sales_qty ) AS salesQuantity
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
         AND to_char(o.date_time,'yyyy')=#{year}
-        GROUP BY o.date_time
+        GROUP BY flag
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -1968,10 +1968,10 @@
         SUM ( o.sales_qty ) AS salesQuantity
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -1991,10 +1991,10 @@
         o.source_platform AS name
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -2004,54 +2004,56 @@
     <select id="getSalesByReport" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
         <if test="settleRate !=null and settleRate!='' and settleRate == 'currency_rate'">
-            round(SUM (o.sales_amount_currency_rate),2) AS sales,
+            round(SUM (COALESCE(o.sales_amount_currency_rate,0)),2) AS sales,
             <if test="searchType == 'salesPrice'">
-                round(SUM (o.sales_amount_currency_rate) / (
+                round(SUM (COALESCE(o.sales_amount_currency_rate,0)) / (
                 select count(1) from dmp_order_info o <include refid="sql_view_condition"/>
                 ),2) AS salesPrice,
             </if>
         </if>
         <if test="settleRate !=null and settleRate!='' and settleRate == 'cny_settle_rate'">
-            round(SUM (o.sales_amount_cny_settle_rate),2) AS sales,
+            round(SUM (COALESCE(o.sales_amount_cny_settle_rate,0)),2) AS sales,
             <if test="searchType == 'salesPrice'">
-                round(SUM (o.sales_amount_cny_settle_rate) / (
+                round(SUM (COALESCE(o.sales_amount_cny_settle_rate,0)) / (
                 select count(1) from dmp_order_info o <include refid="sql_view_condition"/>
                 ),2) AS salesPrice,
             </if>
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (o.sales_amount),2) AS sales,
+            round(SUM (COALESCE(o.sales_amount,0)),2) AS sales,
             <if test="searchType == 'salesPrice'">
-                round(SUM (o.sales_amount) / (
+                round(COALESCE(SUM (o.sales_amount),0) / (
                 select count(1) from dmp_order_info o <include refid="sql_view_condition"/>
                 ),2) AS salesPrice,
             </if>
         </if>
         <if test="params.dateType != null and params.dateType == 'DAY'">
-            o.date_day as name,
+            ddd.date_day as name,
         </if>
         <if test="params.dateType != null and params.dateType == 'WEEK'">
-            o.date_week as name,
+            ddd.date_week as name,
         </if>
         <if test="params.dateType != null and params.dateType == 'MONTH'">
-            o.date_month as name,
+            ddd.date_month as name,
         </if>
         <if test="params.dateType != null and params.dateType == 'QUARTER'">
-            o.date_quarter as name,
+            ddd.date_quarter as name,
         </if>
         <if test="params.dateType != null and params.dateType == 'YEAR'">
-            o.date_year as name,
+            ddd.date_year as name,
         </if>
         <if test="groupName != null and groupName != ''">
             o.${groupName} AS category,
         </if>
-        SUM (o.sales_qty) AS salesQuantity
+        SUM (COALESCE(o.sales_qty,0)) AS salesQuantity
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
+                right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -3303,10 +3305,10 @@
         (select count(1) from dmp_order_info o <include refid="sql_view_condition"/>) AS orderCount
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -3532,10 +3534,10 @@
         FROM
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"></include>
@@ -3557,10 +3559,10 @@
         FROM
         <choose>
             <when test="params.timeType == '1'">
-                dmp_order_delivery_report AS o
+                dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                dmp_order_create_report AS o
+                dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -3581,10 +3583,10 @@
          o.grade AS flag
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -3605,10 +3607,10 @@
         </if>
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
@@ -3832,16 +3834,16 @@
         </if>
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report AS o
+                FROM dmp_order_delivery_report_day AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report AS o
+                FROM dmp_order_create_report_day AS o
             </otherwise>
         </choose>
         <include refid="sql_report_condition"/>
     </select>
+
     <select id="getSkuItemName" resultType="com.erp.model.bi.vo.SkuItemVO">
         select sku_no,min(item_name) AS itemName from dmp_order_item  GROUP BY sku_no
     </select>
-
 </mapper>
