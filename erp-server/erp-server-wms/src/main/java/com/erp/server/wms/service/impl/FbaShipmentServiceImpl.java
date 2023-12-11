@@ -318,7 +318,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setSkuId(detailEntity.getSkuId());
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
-                    addDTO.setActualQty(detailEntity.getDeliveryQty() - detailEntity.getReceiveQty());
+                    addDTO.setActualQty(detailEntity.getReceiveQty() - detailEntity.getDeliveryQty());
                     addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
                     instockDetailList.add(addDTO);
 

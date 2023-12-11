@@ -45,7 +45,13 @@ import com.erp.server.oms.service.*;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
+import com.sdk.oms.shopee.dto.merchant.request.MerchantRequest;
+import com.sdk.oms.shopee.dto.merchant.response.MerchantResponse;
+import com.sdk.oms.shopee.dto.shop.request.ShopRequest;
+import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
+import com.sdk.oms.shopee.service.ShopeeMerchantService;
+import com.sdk.oms.shopee.service.ShopeeShopService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -101,7 +107,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private CustomerInfoService customerInfoService;
 
     @Resource
-    private RedisUtil redisUtil;
+    private ShopeeShopService shopeeShopService;
+
+    @Resource
+    private ShopeeMerchantService shopeeMerchantService;
 
     @Resource
     private CommonService commonService;
@@ -195,7 +204,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param shop
      */
     public void autoCreateShopCustomer(ShopInfoEntity shop) {
-        CustomerDTO.AddDTO customer =new CustomerDTO.AddDTO();
+        CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
         customer.setUseOrgId(shop.getSalesOrgId());
         customer.setInnerOrgId(shop.getSalesOrgId());
         //平台
@@ -337,9 +346,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-             if (!this.saveBatch(addList)){
+            if (!this.saveBatch(addList)) {
                 throw new ServiceException("批量保存失败");
-             }
+            }
         }
         return addList;
 
@@ -669,9 +678,21 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (StringUtils.isEmpty(dto.getId())) {
             throw new ServiceException("虾皮授权时,ERP店铺ID不能为空");
         }
-        ShopInfoEntity shopInfo = this.getById(dto.getId());
-        if (Objects.isNull(shopInfo)) {
+        ShopInfoEntity mainShopInfo = null;
+        if (Objects.nonNull(dto.getMainAccountId())) {
+            //主账号存在时，优先授权主装好记录
+            ShopAuthEntity shopAuthEntity = shopAuthService.getShopeeShopById(String.valueOf(dto.getMainAccountId()));
+            if (Objects.nonNull(shopAuthEntity) && StringUtils.isNotBlank(shopAuthEntity.getShopId())) {
+                mainShopInfo = this.getById(dto.getId());
+            }
+        } else {
+            mainShopInfo = this.getById(dto.getId());
+        }
+        if (Objects.isNull(mainShopInfo)) {
             throw new ServiceException("店铺记录id不存在:" + dto.getId());
+        } else {
+            //纠正店铺id
+            dto.setId(mainShopInfo.getId());
         }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -744,6 +765,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Long expireIn = shopeeAuth.getExpireIn();
         shopAuth.setType(type);
         if (AuthTypeEnum.MAIN.getCode().equals(type)) {
+            shopInfo.setName("虾皮主账号");
             //主账号授权
             if (Objects.nonNull(dto.getMainAccountId())) {
                 shopAuth.setShopeeId(String.valueOf(dto.getMainAccountId()));
@@ -753,6 +775,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.nonNull(dto.getShopId())) {
                 shopAuth.setShopeeId(String.valueOf(dto.getShopId()));
             }
+            //增加店铺名称获取
+            this.getShopName(cfgAppClient, shopeeId, accessToken, shopInfo);
         } else {
             throw new ServiceException("授权异常");
         }
@@ -762,6 +786,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
         shopAuthService.saveOrUpdate(shopAuth);
+        //增加店铺信息获取
+
         shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfo.setAuthTime(LocalDateTime.now());
         this.saveOrUpdate(shopInfo);
@@ -778,8 +804,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                             .merchantId(merchantId)
                             .build();
                     ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshMerchantToken(authRequest);
-                    //存在部分授权成功 部分失败可能
-                    flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo, cfgAppClient.getId());
+                    if (StringUtils.isEmpty(shopeeResponse.getError())) {
+                        ShopInfoEntity shopInfo1 = new ShopInfoEntity();
+                        //增加店铺名称获取
+                        this.getMerchantName(cfgAppClient, String.valueOf(merchantId), shopeeResponse.getAccess_token(), shopInfo1);
+                        //存在部分授权成功 部分失败可能
+                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo1, cfgAppClient.getId());
+
+                    }
                 }
             }
             List<Long> shopIds = shopeeAuth.getShopIdList();
@@ -793,14 +825,66 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                             .shopId(shopId)
                             .build();
                     ShopeeTokenAuth shopeeResponse = shopeeAuthService.refreshShopToken(authRequest);
-                    //存在部分授权成功 部分失败可能
-                    flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo, cfgAppClient.getId());
+                    if (StringUtils.isEmpty(shopeeResponse.getError())) {
+                        ShopInfoEntity shopInfo1 = new ShopInfoEntity();
+                        //增加店铺名称获取
+                        this.getShopName(cfgAppClient, String.valueOf(shopId), shopeeResponse.getAccess_token(), shopInfo1);
+                        //存在部分授权成功 部分失败可能
+                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo1, cfgAppClient.getId());
+
+                    }
                 }
             }
         }
         return flag;
     }
 
+    private void getShopName(CfgAppClientEntity cfgAppClient, String shopeeId, String accessToken, ShopInfoEntity shopInfo) {
+        //增加店铺名称获取
+        ShopRequest shopRequest = ShopRequest.builder()
+                .host(cfgAppClient.getUrl())
+                .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                .tmpPartnerKey(cfgAppClient.getClientSecret())
+                .shopId(Long.parseLong(shopeeId))
+                .token(accessToken)
+                .build();
+        try {
+            ShopResponse shopeeShopInfo = shopeeShopService.getShopInfo(shopRequest);
+            if (Objects.nonNull(shopeeShopInfo) && StringUtils.isNotBlank(shopeeShopInfo.getError())) {
+                shopInfo.setName(shopeeShopInfo.getShopName());
+                shopInfo.setDictCountryCode(shopeeShopInfo.getRegion());
+                List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getRegion()));
+                if (CollectionUtils.isNotEmpty(countryEntities)) {
+                    shopInfo.setCountryName(countryEntities.get(0).getNameCn());
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取店铺名称异常：{}", e.getMessage());
+        }
+    }
+    private void getMerchantName(CfgAppClientEntity cfgAppClient, String merchantId, String accessToken, ShopInfoEntity shopInfo) {
+        //增加店铺名称获取
+        MerchantRequest shopRequest = MerchantRequest.builder()
+                .host(cfgAppClient.getUrl())
+                .partnerId(Long.parseLong(cfgAppClient.getClientId()))
+                .tmpPartnerKey(cfgAppClient.getClientSecret())
+                .merchantId(Long.parseLong(merchantId))
+                .token(accessToken)
+                .build();
+        try {
+            MerchantResponse shopeeShopInfo = shopeeMerchantService.getMerchantInfo(shopRequest);
+            if (Objects.nonNull(shopeeShopInfo) && StringUtils.isNotBlank(shopeeShopInfo.getError())) {
+                shopInfo.setName(shopeeShopInfo.getMerchantName());
+                shopInfo.setDictCountryCode(shopeeShopInfo.getMerchantRegion());
+                List<DictCountryEntity> countryEntities = sysDictFeign.listCountryByIds(Collections.singletonList(shopeeShopInfo.getMerchantRegion()));
+                if (CollectionUtils.isNotEmpty(countryEntities)) {
+                    shopInfo.setCountryName(countryEntities.get(0).getNameCn());
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取店铺名称异常：{}", e.getMessage());
+        }
+    }
     /**
      * 新增 店铺和店主
      *
@@ -824,25 +908,28 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         } else {
             shopId = shopAuth.getShopId();
         }
+        //店铺不存在则创建店铺
         if (Objects.nonNull(shopId)) {
             ShopInfoEntity shopInfoEntity = this.getById(shopId);
             if (Objects.isNull(shopInfoEntity)) {
                 shopInfoEntity = shopInfo;
                 shopInfoEntity.setId(null);
-                shopInfoEntity.setName(shopeeId);
             } else {
-                if (StringUtils.isBlank(shopInfoEntity.getName())){
-                    String name = shopeeId;
-                    shopInfoEntity.setName(name);
+                if (Objects.nonNull(shopInfo) && StringUtils.isNotBlank(shopInfo.getName())) {
+                    shopInfoEntity.setName(shopInfo.getName());
+                    shopInfoEntity.setCountryName(shopInfo.getCountryName());
+                    shopInfoEntity.setDictCountryCode(shopInfo.getDictCountryCode());
+                } else {
+                    shopInfo.setName(shopeeId);
                 }
-
             }
             shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             //店铺
             this.saveOrUpdate(shopInfoEntity);
             shopId = shopInfoEntity.getId();
         } else {
-//            shopInfo.setName(shopeeId);
+            //存在店铺时，更新店铺
+            shopInfo.setName(shopeeId);
             shopInfo.setId(null);
             this.saveOrUpdate(shopInfo);
             shopId = shopInfo.getId();
@@ -909,11 +996,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Transactional(rollbackFor = Exception.class)
     public ShopDTO.RedirectDTO addAndAuth(ShopDTO.AddDTO dto) {
         List<ShopInfoEntity> list = this.add(dto);
-        if (CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException("添加店铺失败");
         }
         ShopInfoEntity infoEntity = list.stream().findFirst().orElse(null);
-        if (null == infoEntity){
+        if (null == infoEntity) {
             throw new ServiceException("店铺为空");
         }
         List<String> shopIds = list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
