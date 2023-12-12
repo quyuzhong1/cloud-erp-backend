@@ -4,17 +4,26 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import jodd.util.StringUtil;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class GoodCangUtils {
+
+    private static String BASE_URL;
+
+    @Value("${warehouse.goodcang.url}")
+    public void setCompany(String url){
+        GoodCangUtils.BASE_URL = url;
+    }
 
     public static String sendPost(String apiUrl, Map<String, Object> paramsMap){
         Map<String,String> headerMap = headerMap();
-        String url = GoodCangConstants.BASE_URL + apiUrl;
+        String url = BASE_URL + apiUrl;
         String response = OkHttpUtils.doPostJson(url, paramsMap, headerMap);
         ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(paramsMap));
         ThirdWarehouseContext.setResponseJson(response);
@@ -23,7 +32,7 @@ public class GoodCangUtils {
 
     public static String sendPost(String apiUrl, String paramsJson){
         Map<String,String> headerMap = headerMap();
-        String url = GoodCangConstants.BASE_URL + apiUrl;
+        String url = BASE_URL + apiUrl;
         String response = OkHttpUtils.doPostJson(url, paramsJson, headerMap);
         ThirdWarehouseContext.setRequestJson(paramsJson);
         ThirdWarehouseContext.setResponseJson(response);

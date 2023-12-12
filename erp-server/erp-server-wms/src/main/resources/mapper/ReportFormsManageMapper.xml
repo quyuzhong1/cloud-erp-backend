@@ -194,12 +194,12 @@
 
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
-		    t.purchase_org_name,
-            t.supplier_name,
-            t.images_url,
+		    t.purchase_org_name AS purchaseOrgName,
+            t.supplier_name AS supplierName,
+            t.images_url AS imagesUrl,
             t.productName,
-            t.spu_no,
-			t.sku_no,
+            t.spu_no AS spuNo,
+			t.sku_no AS skuNo,
 			sum(t.orderQty) AS orderQty,
 		    sum(t.orderAmount) AS orderAmount,
             round(CASE WHEN sum(t.orderAmount) = 0 THEN NULL ELSE sum(t.orderAmount) END / sum(t.purchaseQty)::numeric ,4) AS avgPrice,
@@ -480,6 +480,12 @@
             t.productName,
             t.spu_no,
 			t.sku_no
-        ORDER BY purchase_org_name, supplier_name, createTime DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            purchase_org_name, supplier_name, createTime DESC
     </select>
 </mapper>

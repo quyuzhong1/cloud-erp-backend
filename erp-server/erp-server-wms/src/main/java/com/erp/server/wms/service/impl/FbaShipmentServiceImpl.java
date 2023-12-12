@@ -333,7 +333,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
                     addDTO.setActualQty(detailEntity.getReceiveQty() - deliveryQtySum);
-                    addDTO.setRemark("FBA货件超收，自动生成其他入库报溢");
+                    addDTO.setRemark(StrUtil.format("[手动完结]FBA货件【{}】超收，自动生成其他入库报溢", fbaShipmentEntity.getCode()));
                     instockDetailList.add(addDTO);
                 } else if (detailEntity.getReceiveQty() < deliveryQtySum) {
                     // 如果签收数小于发货数量，其他出库单报损
@@ -342,7 +342,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     addDTO.setSkuNo(detailEntity.getSkuNo());
                     addDTO.setWarehouseLocation("");
                     addDTO.setActualQty(deliveryQtySum - detailEntity.getReceiveQty());
-                    addDTO.setRemark("FBA货件手动完结，自动生成其他出库报损");
+                    addDTO.setRemark(StrUtil.format("[手动完结]FBA货件【{}】手动完结，自动生成其他出库报损", fbaShipmentEntity.getCode()));
                     outstockDetailList.add(addDTO);
                 }
             }
@@ -887,6 +887,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             } else {
                 // 修改
                 e.setId(detailEntity.getId());
+                if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
+                    e.setDiffQty(e.getReceiveQty() - e.getDeliveryQty());
+                }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
                 }
