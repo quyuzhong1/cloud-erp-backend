@@ -28,28 +28,12 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      */
     PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO);
     /**
-     * @description: 批量新增结算汇率
-     * @author Will
-     * @date: 2022/12/19 10:23
-     * @param list
-     * @return Boolean
-     */
-    Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list);
-    /**
      * @description: 界面回显
      * @author Will
      * @date: 2022/12/20 18:49
      * @return List<Map<String>>
      */
     List<Map<String, Object>> listSettlementExchangeRate();
-    /**
-     * @description: 编辑
-     * @author Will
-     * @date: 2022/12/20 22:42
-     * @param list
-     * @return Boolean
-     */
-    Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list);
     /**
      * @description: 根据金蝶id查询
      * @author Will
