@@ -49,35 +49,6 @@ public class BiSettlementExchangeRateController extends BaseController {
     }
 
     /**
-     * 数据源管理-结算汇率新增
-     * @author Will
-     * @date: 2022/12/19 10:45
-     * @param list
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "批量新增结算汇率")
-    @PostMapping("/batchAdd")
-    public ApiResult batchAddSettlementExchangeRate(@RequestBody  List<Map<String, Object>> list) {
-        Boolean flag = this.biSettlementExchangeRateService.batchAddSettlementExchangeRate(list);
-        return flag == true ? success() : failure();
-    }
-
-
-    /**
-     * 数据源管理-结算汇率编辑
-     * @author Will
-     * @date: 2022/12/19 10:45
-     * @param list
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "批量更新结算汇率")
-    @PostMapping("/batchUpdate")
-    public ApiResult batchUpdate(@RequestBody  List<Map<String, Object>> list) {
-        Boolean flag = this.biSettlementExchangeRateService.batchUpdateSettlementExchangeRate(list);
-        return flag == true ? success() : failure();
-    }
-
-    /**
      * 数据源管理-结算汇率显示
      * @author Will
      * @date: 2022/12/20 18:48
