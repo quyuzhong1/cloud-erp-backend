@@ -105,14 +105,6 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
         return lambdaQuery().in(MachineRefSoEntity::getSoDetailId,refDetailIdList).list();
     }
 
-    @Override
-    public List<MachineRefSoEntity> listBySoIdList(List<String> soIds) {
-        if (CollectionUtils.isEmpty(soIds)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(MachineRefSoEntity::getSoId,soIds).list();
-    }
-
 
     /**
     * 新增修改处理数据

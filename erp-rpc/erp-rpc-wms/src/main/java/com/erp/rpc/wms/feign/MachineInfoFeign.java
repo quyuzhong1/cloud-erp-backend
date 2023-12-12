@@ -1,9 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.MachineInfoDTO;
-import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -27,13 +25,4 @@ public interface MachineInfoFeign {
     @PostMapping("feign/machineInfo/addMachineInfo")
     String addMachineInfo(@RequestBody MachineInfoDTO.AddDTO addDTO);
 
-    /**
-     * @description: 根据销售订单id集合查询关联订单数据
-     * @author Will
-     * @date: 2023/12/6 16:04
-     * @param soIds
-     * @return List<MachineRefSoEntity>
-     */
-    @PostMapping("feign/machineInfo/listBySoIdList")
-    List<MachineRefSoEntity> listBySoIdList(@RequestBody List<String> soIds);
 }

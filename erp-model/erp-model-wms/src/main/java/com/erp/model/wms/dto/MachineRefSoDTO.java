@@ -46,11 +46,6 @@ public class MachineRefSoDTO implements Serializable {
         private String soId;
 
         /**
-         * 销售订单编码
-         */
-        private String soCode;
-
-        /**
         * 加工单明细id
         */
         private String machineDetailId;
