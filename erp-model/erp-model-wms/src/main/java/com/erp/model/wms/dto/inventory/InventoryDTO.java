@@ -728,13 +728,6 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class InOutStockSummarySearchParamDTO extends SortDTO {
 
-        /**
-         * 日期类型 (approveDate审核日期，billDate单据日期)
-         * /api/wms/dict/list，字典inventoryDate
-         */
-        @NotBlank(message = "日期类型不能为空")
-        private String dateType;
-
 
         /**
          * sku编码
@@ -744,7 +737,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 日期范围
          */
-        @NotEmpty(message = "日期范围不能为空")
         private List<LocalDate> dateList;
 
 
@@ -787,13 +779,6 @@ public class InventoryDTO implements Serializable {
     public static class ExcelInOutStockSummarySearchParamDTO extends SortDTO {
 
         /**
-         * 日期类型 (approveDate审核日期，billDate单据日期)
-         * /api/wms/dict/list，字典inventoryDate
-         */
-        @NotBlank(message = "日期类型不能为空")
-        private String dateType;
-
-        /**
          * sku编码
          */
         private List<String> skuNoList;
@@ -801,7 +786,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 日期范围
          */
-        @NotEmpty(message = "日期范围不能为空")
         private List<LocalDate> dateList;
 
 
@@ -890,7 +874,6 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class InOutStockSummaryPagingViewDTO {
 
-
         /**
          * 仓库id
          */
@@ -930,11 +913,6 @@ public class InventoryDTO implements Serializable {
          * 期初库存
          */
         private Integer initQty;
-
-        /**
-         * 结余数量
-         */
-        private Integer balanceQty;
 
         /**
          * 入库汇总数量（入库）
