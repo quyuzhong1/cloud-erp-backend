@@ -84,70 +84,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     }
 
 
-    @Override
-    //@Transactional
-    public Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.Default);
-        }
-        Boolean overlap;
-        for (int i = 0; i < list.size();i++) {
-            Map<String, Object> map1 = list.get(i);
-            List<String> settlementDateList1 = (List<String>) map1.get("settlementDateList");
-            if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
-                throw new ServiceException(ApiError.ERROR_97015);
-            }
-            String settlementDateBegin1 = settlementDateList1.get(0);
-            String settlementDateEnd1 = settlementDateList1.get(1);
-            for (int j = i + 1; j < list.size();j++) {
-                Map<String, Object> map2 = list.get(j);
-                List<String> settlementDateList2 = (List<String>) map2.get("settlementDateList");
-                if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
-                    throw new ServiceException(ApiError.ERROR_97015);
-                }
-                String settlementDateBegin2 = settlementDateList2.get(0);
-                String settlementDateEnd2 = settlementDateList2.get(1);
-                 overlap = isOverlap(settlementDateBegin1, settlementDateEnd1, settlementDateBegin2, settlementDateEnd2);
-                 if (overlap) {
-                     throw new ServiceException(ApiError.ERROR_97010);
-                 }
-            }
-        }
-        List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
-        for (Map<String, Object> map:list) {
-            Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-            List<String> settlementDateList = (List<String>) map.get("settlementDateList");
-            String settlementDateBegin = settlementDateList.get(0);
-            String settlementDateEnd = settlementDateList.get(1);
-            LocalDate beginDate = LocalDate.parse(settlementDateBegin);
-            LocalDate endDate = LocalDate.parse(settlementDateEnd);;
-            if (ObjectUtils.isNotEmpty(iterator)) {
-                while (iterator.hasNext()) {
-                    BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
-                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
-                    String key = entry.getKey().toString();
-                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
-                    if ("settlementDateList".equals(key)) {
-                        continue;
-                    }
-                    String id= IdWorker.getIdStr();
-                    entity.setId(id);
-                    entity.setExchangeRate(MathUtil.valueOf(value));
-                    entity.setSourceCurrencyCode(key);
-                    entity.setTargetCurrencyCode("CNY");
-                    entity.setSettlementDateBegin(beginDate);
-                    entity.setSettlementDateEnd(endDate);
-                    entityList.add(entity);
-                }
-            }
-        }
-        boolean flag = this.saveBatch(entityList);
-        if (flag) {
-            //更新结算汇率
-            updateSettlementExchangeRate(entityList);
-        }
-        return  Boolean.TRUE;
-    }
     /**
      * @description:
      * @author Will
@@ -189,20 +125,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return mapList;
     }
 
-    @Override
-    @Transactional
-    public Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list) {
-        List<BiSettlementExchangeRateEntity> list1 = this.list();
-        if (CollectionUtils.isNotEmpty(list1)) {
-            List<String> ids = list1.stream().map(BiSettlementExchangeRateEntity::getId).collect(Collectors.toList());
-             this.removeByIds(ids);
-        }
-        if (CollectionUtils.isEmpty(list)) {
-            return true;
-        }
-        //重新新增数据
-        return this.batchAddSettlementExchangeRate(list);
-    }
 
     @Override
     public BiSettlementExchangeRateEntity getByKingdeeId(String kingdeeId) {
@@ -270,7 +192,8 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
-
+            //更新单据汇率
+            updateSettlementExchangeRate(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("汇率【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
