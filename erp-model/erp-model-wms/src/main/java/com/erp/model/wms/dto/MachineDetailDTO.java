@@ -61,21 +61,6 @@ public class MachineDetailDTO implements Serializable {
          * 序号
          */
         private Integer index;
-
-        /**
-         * 关联id，用于销售单下推
-         */
-        private String refId;
-
-        /**
-         * 关联编码，用于销售单下推
-         */
-        private String refCode;
-
-        /**
-         * 关联明细id，用于销售单下推
-         */
-        private String refDetailId;
     }
 
     @Data

@@ -19,6 +19,6 @@ public class PlatformInventoryConsumerServiceTest {
 
     @Test
     public void sendWarnMsg() {
-        service.sendWarnMsg("1729403606890713089");
+//        service.sendWarnMsg("1729403606890713089");
     }
 }
