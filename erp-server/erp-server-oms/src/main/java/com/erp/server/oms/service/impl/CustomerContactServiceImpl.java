@@ -57,6 +57,9 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
      */
     @Override
     public void checkIsDefault(List<CustomerContactDTO.AddDTO> contactList) {
+        if (CollectionUtils.isEmpty(contactList)){
+            return;
+        }
         long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_92005);
