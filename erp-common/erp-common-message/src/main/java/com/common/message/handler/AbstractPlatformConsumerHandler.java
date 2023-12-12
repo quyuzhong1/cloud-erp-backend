@@ -49,8 +49,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             log.error("平台数据消费异常", e);
             //异常预警
             sendWarnMsg(dmpSyncTaskId);
-
-            throw e;
         }
     }
 
