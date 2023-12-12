@@ -340,19 +340,19 @@ public class ReportsApiTest {
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
         List<String> processingStatuses = null;
-        List<String> marketplaceIds = null;
+        List<String> marketplaceIds = Arrays.asList(AmazonMarketplaceEnum.US.getMarketplaceId());
         Integer pageSize = 100;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
-        String shopId = "1730162240754708482";
+        String shopId = "1734464159526948866";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-//      AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
+      AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+//        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");
