@@ -188,7 +188,6 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     public List<ShopAuthEntity> getShopeeShopList(String type, String stauts) {
         //获取已授权店铺配置
         return baseMapper.getShopeeShopList(type, stauts);
-//        return this.lambdaQuery().eq(ShopAuthEntity::getType, type).eq(ShopAuthEntity::getIsDeleted, false).list();
     }
 
     @Override
@@ -306,6 +305,11 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public Boolean updateShopAuthById(ShopAuthEntity shopAuthEntity) {
         return this.updateById(shopAuthEntity);
+    }
+
+    @Override
+    public List<ShopAuthEntity> listByClientId(String clientId) {
+        return this.lambdaQuery().eq(ShopAuthEntity::getAppClientId,clientId).list();
     }
 
 

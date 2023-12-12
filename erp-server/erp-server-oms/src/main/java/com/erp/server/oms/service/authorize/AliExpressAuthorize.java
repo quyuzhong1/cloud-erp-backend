@@ -14,11 +14,13 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.request.RefreshTokenRequest;
 import com.erp.oms.aliexpress.service.AliExpressAuthService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.AuthSaveData;
@@ -222,6 +224,21 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
             shopInfoService.updateShopInfoById(shopInfo);
         }
         return result;
+    }
+
+
+    /**
+     * 刷新token
+     */
+    public void refreshToken(ShopDTO.RefreshTokenDTO dto ){
+        RefreshTokenRequest request=RefreshTokenRequest.builder().
+                baseUrl(dto.getBaseUrl()).
+                refreshToken(dto.getRefreshToken()).
+                clientId(dto.getClientId()).
+                clientSecret(dto.getClientSecret()).
+                build();
+
+
     }
 
 

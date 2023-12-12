@@ -175,18 +175,18 @@
         owi.create_user_name,
         owi.create_user_id,
         owi.dict_platform,
-        owi.source_code,
-        owi.source_id,
-        owi.source_type,
-        owi.instock_type,
-        owi.instock_status,
+        owi.source_code AS sourceCode,
+        owi.source_id AS sourceId,
+        owi.source_type AS sourceType,
+        owi.instock_type AS instockType,
+        owi.instock_status AS instockStatus,
         owi.delivery_warehouse_name,
         owi.delivery_warehouse_id,
         owi.transfer_warehouse_name,
         owi.transfer_warehouse_id,
         owi.to_warehouse_name,
         owi.to_warehouse_id,
-        owi.logistics_method,
+        owi.logistics_method AS logisticsMethod,
         owi.remark,
         owi.receive_time,
         owi.estimated_arrival_date,
@@ -205,8 +205,8 @@
         owid.pack_qty,
         owid.diff_qty,
         owid.receive_time AS detailReceiveTime,
-        owid.receive_status,
-        owid.receive_type
+        owid.receive_status AS receiveStatus,
+        owid.receive_type AS receiveType
         FROM overseas_warehouse_inbound owi
         INNER JOIN overseas_warehouse_inbound_detail owid ON owi.id = owid.main_id
         <where>
