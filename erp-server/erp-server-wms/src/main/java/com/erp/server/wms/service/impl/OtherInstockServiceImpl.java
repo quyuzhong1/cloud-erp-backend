@@ -720,7 +720,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse) {
         //目的仓
         WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
-        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse,isTransitWarehouse);
+        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse,isTransitWarehouse,entity.getCreateUserId());
         List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
             OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
@@ -738,7 +738,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      * 封装报损出库单主记录
      */
-    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse,boolean isTransitWarehouse){
+    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse,boolean isTransitWarehouse,String userId){
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (org.apache.commons.lang3.StringUtils.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
@@ -755,8 +755,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             addDTO.setWarehouseId(warehouse.getId());
         }
         //部门
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(loginUser.getUid());
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(userId);
         addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
         //出库类型：报损
         addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
