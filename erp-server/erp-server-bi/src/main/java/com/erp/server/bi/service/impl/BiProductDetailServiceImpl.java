@@ -46,9 +46,9 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
      */
     @Override
     public List<SkuCategoryVO> getSkuCategoryList(List<String> categoryIdList) {
-//        if (CollectionUtils.isEmpty(categoryIdList)) {
-//            return Collections.emptyList();
-//        }
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return Collections.emptyList();
+        }
         List<BiCategoryDTO.ProductCategoryDTO> productCategoryList = baseMapper.listByCategoryIds(categoryIdList);
         Map<String, List<BiCategoryDTO.ProductCategoryDTO>> productCategoryMap = productCategoryList.parallelStream().
                 collect(Collectors.groupingBy(BiCategoryDTO.ProductCategoryDTO::getCategoryId));
@@ -59,7 +59,6 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
             List<String> skuNoList = valueList.stream().map(BiCategoryDTO.ProductCategoryDTO::getSkuNo).collect(Collectors.toList());
             vo.setCategoryId(item.getKey());
             vo.setSkuList(skuNoList);
-            vo.setName(valueList.get(0).getProductName());
             resultList.add(vo);
         }
         return resultList;

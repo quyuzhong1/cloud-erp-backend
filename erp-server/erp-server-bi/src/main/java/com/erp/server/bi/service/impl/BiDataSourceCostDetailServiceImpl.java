@@ -117,8 +117,6 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         List<BiDataSourceCostDTO.DataValueDTO> resultList = new ArrayList<>(mainIncomeList.size());
         //毛利额
         String grossProfit = MetricsEnum.GROSS_PROFIT.getCode();
-        //毛利率
-        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
         for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利额
             BiDataSourceCostDTO.DataValueDTO profitResult = new BiDataSourceCostDTO.DataValueDTO();
@@ -128,18 +126,31 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             BigDecimal mainIncome = item.getValue();
             BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
                     findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
-            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
-            profitResult.setValue(grossProfitValue);
+            profitResult.setValue(MathUtil.subtract(mainIncome, cost));
             resultList.add(profitResult);
+        }
+
+        //毛利率
+        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
+        for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利率
             BiDataSourceCostDTO.DataValueDTO profitRateResult = new BiDataSourceCostDTO.DataValueDTO();
+            String dataStr = item.getDateStr();
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
+            // 主营业务收入
+            BigDecimal mainIncome = item.getValue();
+            // 成本合计
+            BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
+                    findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
+            //毛利额
+            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
             grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
+
         return resultList;
     }
 
@@ -164,8 +175,6 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         List<BiDataSourceCostDTO.DataValueDTO> resultList = new ArrayList<>(mainIncomeList.size());
         //毛利额
         String grossProfit = MetricsEnum.GROSS_PROFIT.getCode();
-        //毛利率
-        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
         for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利额
             BiDataSourceCostDTO.DataValueDTO profitResult = new BiDataSourceCostDTO.DataValueDTO();
@@ -175,19 +184,31 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             BigDecimal mainIncome = item.getValue();
             BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
                     findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
-            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
-            profitResult.setValue(grossProfitValue);
+            profitResult.setValue(MathUtil.subtract(mainIncome, cost));
             resultList.add(profitResult);
+        }
 
+        //毛利率
+        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
+        for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利率
             BiDataSourceCostDTO.DataValueDTO profitRateResult = new BiDataSourceCostDTO.DataValueDTO();
+            String dataStr = item.getDateStr();
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
+            // 主营业务收入
+            BigDecimal mainIncome = item.getValue();
+            // 成本合计
+            BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
+                    findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
+            //毛利额
+            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
             grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
+
         return resultList;
     }
 
@@ -210,8 +231,6 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         List<BiDataSourceCostDTO.DataValueDTO> resultList = new ArrayList<>(mainIncomeList.size());
         //毛利额
         String grossProfit = MetricsEnum.GROSS_PROFIT.getCode();
-        //毛利率
-        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
         for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利额
             BiDataSourceCostDTO.DataValueDTO profitResult = new BiDataSourceCostDTO.DataValueDTO();
@@ -221,14 +240,25 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             BigDecimal mainIncome = item.getValue();
             BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
                     findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
-            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
-            profitResult.setValue(grossProfitValue);
+            profitResult.setValue(MathUtil.subtract(mainIncome, cost));
             resultList.add(profitResult);
+        }
 
+        //毛利率
+        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
+        for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
             //毛利率
             BiDataSourceCostDTO.DataValueDTO profitRateResult = new BiDataSourceCostDTO.DataValueDTO();
+            String dataStr = item.getDateStr();
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
+            // 主营业务收入
+            BigDecimal mainIncome = item.getValue();
+            // 成本合计
+            BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
+                    findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
+            //毛利额
+            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
             grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);

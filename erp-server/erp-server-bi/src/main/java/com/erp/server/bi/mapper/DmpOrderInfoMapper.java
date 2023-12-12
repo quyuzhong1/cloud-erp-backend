@@ -55,10 +55,18 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * 根据不同维度统计销售额
      *
      * @param dto
-     * @param settleRate
+     * @param flag
      * @return
      */
-    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
+
+    /**
+     * 获取销售单价分布 获取列表
+     *
+     * @param dto
+     * @return
+     */
+    List<SalePriceDistributionVO> salePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     /**
      * 获取销售单价分布 汇总
@@ -75,17 +83,6 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return
      */
     Integer countSalesVolume(@Param("params") BiFilterDTO dto);
-
-    /**
-     * @description: 查询销售额
-     * @author Will
-     * @date: 2023/9/25 9:34
-     * @param dto
-     * @param dataType sales  qty
-     * @return List<ViewDTO>
-     */
-    List<TargetFinishDTO.ViewDTO>  listSalesBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto,@Param("dataType") String dataType);
-
     /**
      * @description: 查询销售额
      * @author Will
