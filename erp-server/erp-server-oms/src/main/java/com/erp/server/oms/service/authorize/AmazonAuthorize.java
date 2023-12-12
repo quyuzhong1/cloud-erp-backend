@@ -212,6 +212,14 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         // 查询授权信息
         Map<SettingEnum, String> configMap = dmpTaskFeign.getCfgSettingList("amazon_sp_api_config");
 
+        // 发起授权请求
+        AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.getShopAuthorizeInfo(
+                cfgAppClient.getUrl(),
+                cfgAppClient.getClientId(),
+                cfgAppClient.getClientSecret(),
+                cfgAppClient.getRedirectUrl(),
+                dto.getSpapi_oauth_code());
+
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
@@ -233,14 +241,6 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
 
             // 添加token信息到缓存并按失效时间消失
             AmazonShopInfoDTO redisShopInfoDTO = initShopInfoDTO(shopInfo, configMap, cfgAppClient);
-
-            // 发起授权请求
-            AmazonTokenDTO tokenDTO = AmazonAuthClientUtils.getShopAuthorizeInfo(
-                    cfgAppClient.getUrl(),
-                    cfgAppClient.getClientId(),
-                    cfgAppClient.getClientSecret(),
-                    cfgAppClient.getRedirectUrl(),
-                    dto.getSpapi_oauth_code());
 
             //根据店铺id 获取到授权信息
             ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
