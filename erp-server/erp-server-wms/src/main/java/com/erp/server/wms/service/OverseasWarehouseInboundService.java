@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -189,4 +190,5 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
             String verityCode);
 
+    ApiResult<?> handle(PlatformInboundDTO dto);
 }
