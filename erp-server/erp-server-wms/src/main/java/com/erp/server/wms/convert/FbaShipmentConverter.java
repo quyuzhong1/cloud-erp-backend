@@ -45,6 +45,8 @@ public interface FbaShipmentConverter {
 
 
     @Mappings({
+            @Mapping(target = "platformSpuNo", source = "asin"),
+            @Mapping(target = "platformSkuNo", source = "msku"),
             @Mapping(target = "declareQty", source = "declareQty"),
             @Mapping(target = "planQty", source = "deliveryQty"),
             @Mapping(target = "deliveryQty", source = "deliveryQty"),

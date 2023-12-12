@@ -377,7 +377,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //平台SKU没有映射关系，货件没有匹配到SKU的货件不允许下推发货单
         list.forEach(req -> {
             if (StringUtils.isBlank(req.getSkuNo())) {
-                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getPlatformSkuNo());
+                throw new ServiceException(ApiError.NOT_MAPPER_SKU, req.getMsku());
             }
         });
 
