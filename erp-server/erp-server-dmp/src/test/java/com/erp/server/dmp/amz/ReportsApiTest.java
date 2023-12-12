@@ -340,12 +340,13 @@ public class ReportsApiTest {
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
 //                .collect(Collectors.toList());
         List<String> processingStatuses = null;
-        List<String> marketplaceIds = Arrays.asList(AmazonMarketplaceEnum.US.getMarketplaceId());
+        List<String> marketplaceIds = null
+                ;
         Integer pageSize = 100;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
-        String shopId = "1734464159526948866";
+        String shopId = "1734478618727288833";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
