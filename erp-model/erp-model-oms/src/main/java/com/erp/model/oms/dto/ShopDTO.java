@@ -649,4 +649,42 @@ public class ShopDTO implements Serializable {
         private String url;
 
     }
+
+
+    /**
+     * 刷新token 的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RefreshTokenDTO{
+
+        /**
+         * 刷新token
+         *
+         */
+        private String refreshToken;
+
+        /**
+         * 客户端id
+         */
+        private String clientId;
+
+        /**
+         * 客户端密码
+         */
+        private String clientSecret;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺授权id
+         */
+        private String shopAuthId;
+
+        private String baseUrl;
+
+
+    }
 }
