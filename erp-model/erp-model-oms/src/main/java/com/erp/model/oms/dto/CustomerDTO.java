@@ -335,12 +335,6 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
-         * 通讯地址
-         */
-        @Size(max = 255, message = "通讯地址最大255字符")
-        private String mailAddress;
-
-        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -531,11 +525,6 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
-         * 通讯地址
-         */
-        private String mailAddress;
-
-        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -688,12 +677,6 @@ public class CustomerDTO implements Serializable {
          * 客户属性
          */
         private String customerProperty;
-
-        /**
-         * 通讯地址
-         */
-        @Size(max = 255, message = "通讯地址最大255字符")
-        private String mailAddress;
 
         /**
          * 附件名集合
