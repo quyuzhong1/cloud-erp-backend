@@ -190,5 +190,5 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
             String verityCode);
 
-    ApiResult<?> handle(PlatformInboundDTO dto);
+    ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
 }

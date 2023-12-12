@@ -72,7 +72,11 @@ public class PlatformInboundConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformInboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformInboundDTO.class);
-        return overseasWarehouseInboundService.handle(dto);
+        //海外仓
+        if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
+            return overseasWarehouseInboundService.handlePlatformMessage(dto);
+        }
+        return ApiResult.success();
 
     }
 
