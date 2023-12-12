@@ -5,10 +5,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpSyncTaskDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -375,73 +373,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlow.setId(null);
         boolean save = super.save(transactionFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("反审核库存流水数据保存失败"));
-    }
-
-    @Override
-    public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPaging(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO) {
-        InventoryReportDTO.DailyInventoryParamDTO params = pagingParamDTO.getParams();
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        if (ObjectUtils.isEmpty(params.getDate())) {
-            params.setDate(LocalDate.now());
-        }
-        IPage<InventoryReportDTO.ListDailyInventoryDTO> pageData = baseMapper.dailyInventoryPaging(query, pagingParamDTO.getParams());
-        handleDailyInventory(pageData.getRecords());
-        return new PagingVO(pageData);
-    }
-
-    @Override
-    public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response) {
-
-        List<InventoryReportDTO.ListDailyInventoryDTO> dataList = baseMapper.exportDailyInventory(dto);
-        // 填充
-        handleDailyInventory(dataList);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dailyInventory.xlsx";
-        String name = "每日库存导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
-    }
-
-    /**
-     * @description: 每日库存数据处理
-     * @author Will
-     * @date: 2023/12/6 19:32
-     * @param dataList
-     */
-    private void handleDailyInventory (List<InventoryReportDTO.ListDailyInventoryDTO> dataList) {
-        if (CollectionUtils.isEmpty(dataList)) {
-            return;
-        }
-        List<String> warehouseIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
-
-        List<String> orgIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
-        for (InventoryReportDTO.ListDailyInventoryDTO inventoryDTO : dataList) {
-            //销售状态
-            inventoryDTO.setSaleStateName(SaleStateEnum.getNameByCode(inventoryDTO.getSaleState()));
-            //仓库信息
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(inventoryDTO.getWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(updateDTO)) {
-                inventoryDTO.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
-                inventoryDTO.setWarehouseName(updateDTO.getName());
-                inventoryDTO.setDisabled(updateDTO.getDisabled());
-            }
-            //组织信息
-            BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(obj -> obj.getId().equals(inventoryDTO.getOrgId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(codeDTO)) {
-                inventoryDTO.setOrgName(codeDTO.getName());
-            }
-        }
-
     }
 
     /**

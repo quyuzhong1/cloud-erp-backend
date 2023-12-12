@@ -213,26 +213,4 @@ public class InventoryController extends BaseController {
         return success(list);
     }
 
-
-    /**
-     * 每日库存列表
-     * @param dto
-     * @return
-     */
-    @PostMapping("/dailyInventoryPaging")
-    public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
-        return success(transactionFlowService.dailyInventoryPaging(dto));
-    }
-
-    /**
-     * 每日库存导出
-     * @param dto
-     * @param response
-     * @return
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "每日库存导出")
-    @PostMapping(value = "/exportDailyInventory")
-    public void exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto, HttpServletResponse response) {
-        transactionFlowService.exportDailyInventory(dto, response);
-    }
 }
