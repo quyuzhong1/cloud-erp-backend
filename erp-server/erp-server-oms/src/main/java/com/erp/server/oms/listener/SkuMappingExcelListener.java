@@ -123,6 +123,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         DictBasicDTO.ViewDTO platform = dictBasicList.stream().filter(s -> s.getName().equals(platformName)).findFirst().orElse(null);
         if (null == platform) {
             errorMsgList.add("平台不存在");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
         }
@@ -136,6 +137,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 .orElse(null);
         if (Objects.isNull(shop)) {
             errorMsgList.add("店铺在该平台不存在");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
         }
@@ -151,6 +153,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         boolean isApiPlatform = PlatformDictEnum.hasConnectionPlatform().contains(platform.getValue());
         if (CollectionUtils.isEmpty(listDto) && isApiPlatform){
             errorMsgList.add("亚马逊, 速卖通, Shopify, 虾皮, 沃尔玛不允许新增");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
         }
@@ -160,6 +163,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
             if( currentSkuMapping.getMatchResult()){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");
+                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(skuMappingImportExcelDTO);
                 return;
             }
