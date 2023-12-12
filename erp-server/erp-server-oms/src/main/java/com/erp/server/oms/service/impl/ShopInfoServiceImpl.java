@@ -808,6 +808,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         ShopInfoEntity shopInfo1 = new ShopInfoEntity();
                         //增加店铺名称获取
                         this.getMerchantName(cfgAppClient, String.valueOf(merchantId), shopeeResponse.getAccess_token(), shopInfo1);
+                        shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
                         flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo1, cfgAppClient.getId());
 
@@ -829,6 +830,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         ShopInfoEntity shopInfo1 = new ShopInfoEntity();
                         //增加店铺名称获取
                         this.getShopName(cfgAppClient, String.valueOf(shopId), shopeeResponse.getAccess_token(), shopInfo1);
+                        shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
                         flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo1, cfgAppClient.getId());
 
@@ -939,6 +941,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getCountryName())) {
             shopInfoEntity.setCountryName(shopInfo.getCountryName());
+        }
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getAccount())){
+            shopInfoEntity.setAccount(shopInfo.getAccount());
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
