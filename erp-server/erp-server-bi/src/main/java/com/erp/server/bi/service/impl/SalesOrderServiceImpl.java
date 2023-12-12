@@ -287,7 +287,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setProductName(skuItemNameMap.get(item.getSkuNo()));
             }
 
-            LinkedList<Integer> salesTrend = new LinkedList<>();
+//            LinkedList<Integer> salesTrend = new LinkedList<>();
             //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
@@ -905,8 +905,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
 
         List<ShopSalesVO> list = baseMapper.byShopCategory(dto, settleRate);
-        Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
-                collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
+        Map<String, List<ShopSalesVO>> groupMap = list.parallelStream()
+                        .filter(e -> StringUtils.isNotEmpty(e.getShopName()))
+                        .collect(Collectors.groupingBy(ShopSalesVO::getShopName));
         int initSize = groupMap.size();
 
         List<Map<String, Object>> rowAxesList = new ArrayList<>(initSize);

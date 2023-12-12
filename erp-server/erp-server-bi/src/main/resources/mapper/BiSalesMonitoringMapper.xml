@@ -99,7 +99,7 @@
             <if test="params.metrics !=null and params.metrics == 'salesQty'">
                 sum(COALESCE(o.sales_qty,0)) as value,
             </if>
-            ddd.date_month as month
+            to_char(ddd.date_time,'MM') as month
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report_day AS o

@@ -472,10 +472,10 @@
         <include refid="sql_report_condition"/>
         <!-- 是否组合品 -->
         <if test="params.isCombo!=null and params.isCombo==true" >
-            AND o.is_combo=1
+            AND o.is_combo = 1
         </if>
         <if test="params.isCombo!=null and params.isCombo==false" >
-            AND o.is_combo=0
+            AND o.is_combo != 1
         </if>
         GROUP BY o.sku_no
         ORDER BY
