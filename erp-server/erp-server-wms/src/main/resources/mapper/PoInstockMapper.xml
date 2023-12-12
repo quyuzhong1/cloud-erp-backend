@@ -31,7 +31,6 @@
             COALESCE(pod.currency,'CNY') AS currency,
             COALESCE(pod.currency_symbol,'¥') AS currencySymbol,
             psi.subcontract_type as subcontractType,
-            psi.purchase_type as purchaseType,
             psid.warehouse_location AS warehouseLocation
         from po_instock psi
         inner join po_instock_detail psid
@@ -55,12 +54,6 @@
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and psid.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.purchaseTypeList != null and params.purchaseTypeList.size > 0">
-                and psi.purchase_type in
-                <foreach collection="params.purchaseTypeList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -163,7 +156,6 @@
             COALESCE(pod.currency,'CNY') AS currency,
             COALESCE(pod.currency_symbol,'¥') AS currencySymbol,
             psi.delivery_warehouse_name AS deliveryWarehouseName,
-            psi.purchase_type as purchaseType,
             psid.remark
         from po_instock psi
         inner join po_instock_detail psid
@@ -187,12 +179,6 @@
                 </if>
                 <if test="params.invalidStatus != null ">
                     and psi.invalid_status = #{params.invalidStatus}
-                </if>
-                <if test="params.purchaseTypeList != null and params.purchaseTypeList.size > 0">
-                    and psi.purchase_type in
-                    <foreach collection="params.purchaseTypeList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
                 </if>
                 <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
                     and psi.purchase_order_code ILIKE concat('%',#{params.purchaseOrderCode}::text,'%')

@@ -573,11 +573,6 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String code;
 
-        /**
-         * 类型
-         */
-        private String type;
-
     }
 
 
