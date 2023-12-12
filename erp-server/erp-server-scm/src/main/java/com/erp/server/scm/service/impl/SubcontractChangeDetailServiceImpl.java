@@ -283,8 +283,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             //委外原数据
             SubcontractOrderDetailEntity subEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(subEntity)) {
-                //委外变更不给改数量
-                detailEntity.setQty(subEntity.getQty());
                 detailEntity.setOldQty(subEntity.getQty());
                 detailEntity.setOldPrice(subEntity.getPrice());
                 detailEntity.setOldAmount(subEntity.getAmount());
@@ -319,8 +317,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 //委外原数据
                 SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(childEntity.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(childSubEntity)) {
-                    //委外变更不给改数量
-                    childEntity.setQty(childSubEntity.getQty());
                     childEntity.setOldQty(childSubEntity.getQty());
                     childEntity.setOldPrice(childSubEntity.getPrice());
                     childEntity.setOldAmount(childSubEntity.getAmount());
