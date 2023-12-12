@@ -205,12 +205,6 @@ public class PoInstockDTO implements Serializable {
         private String subcontractType;
 
         /**
-         * 采购订单类型(CGDD01_SYS标准采购订单，CGDD02_SYS委外采购订单，CGDD06-SYS补货采购订单)
-         * 地址：/scm/dict/list 字典类型：purchaseOrderType
-         */
-        private String purchaseType;
-
-        /**
          * 仓位
          */
         private String warehouseLocation;
@@ -279,12 +273,6 @@ public class PoInstockDTO implements Serializable {
          * 供应商id集合
          */
         private List<String> supplierIdList;
-
-        /**
-         * 采购订单类型(CGDD01_SYS标准采购订单，CGDD02_SYS委外采购订单，CGDD06-SYS补货采购订单)
-         * 字典类型：purchaseOrderType
-         */
-        private List<String> purchaseTypeList;
 
         /**
          * 采购单号

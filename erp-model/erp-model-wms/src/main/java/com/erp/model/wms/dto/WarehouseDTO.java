@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -386,12 +385,6 @@ public class WarehouseDTO implements Serializable {
          */
         private Boolean isVirtual;
 
-        /**
-         * 状态
-         * 是否禁用
-         * true 禁用
-         */
-        private Boolean disabled;
 
         /**
          * 联系人
@@ -402,11 +395,6 @@ public class WarehouseDTO implements Serializable {
          * 是否启用仓位
          */
         private Boolean isEnableLocation;
-
-        /**
-         * 金蝶仓库编号
-         */
-        private String kingdeeWarehouseCode;
 
 
         /**
@@ -424,11 +412,6 @@ public class WarehouseDTO implements Serializable {
          * 类型id 集合
          */
         private List<String> typeIdList;
-
-        /**
-         * 库存组织id 集合
-         */
-        private List<String> orgIdList;
 
     }
 

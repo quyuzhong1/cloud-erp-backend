@@ -1051,6 +1051,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             parentDTO.setOldPrice(parentEntity.getPrice());
             parentDTO.setOldAmount(parentEntity.getAmount());
             parentDTO.setOldDeliveryQty(parentEntity.getDeliveryQty());
+            parentDTO.setQty(null);
             parentDTO.setPrice(null);
             parentDTO.setDeliveryQty(null);
             parentDTO.setAmount(null);
@@ -1071,6 +1072,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childDTO.setOldPrice(childEntity.getPrice());
                 childDTO.setOldAmount(childEntity.getAmount());
                 childDTO.setOldDeliveryQty(childEntity.getDeliveryQty());
+                childDTO.setQty(null);
                 childDTO.setPrice(null);
                 childDTO.setDeliveryQty(null);
                 childDTO.setAmount(null);

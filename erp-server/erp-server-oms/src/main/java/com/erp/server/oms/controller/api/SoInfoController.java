@@ -5,7 +5,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -16,13 +15,9 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
-import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -34,9 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +41,6 @@ import java.util.stream.Collectors;
 @RestController
 @LogSystemModule("销售订单")
 @RequestMapping("/so")
-@Slf4j
 public class SoInfoController extends BaseController {
 
     @Resource
@@ -636,19 +628,4 @@ public class SoInfoController extends BaseController {
         Boolean result = soInfoService.importExcel(excelFile, response);
         return result?success():failure();
     }
-
-    /**
-     * 下推加工单保存
-     * @author Will
-     * @date: 2023/12/6 11:04
-     * @param dto
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.INSERT, desc = "下推加工单保存")
-    @PostMapping(value = "/generateMachineInfo")
-    public ApiResult generateMachineInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result =  soInfoService.generateMachineInfo(dto.getIds());
-        return result ? success():failure();
-    }
-
 }
