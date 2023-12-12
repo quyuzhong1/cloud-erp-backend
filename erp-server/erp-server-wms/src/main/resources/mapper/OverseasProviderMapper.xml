@@ -62,6 +62,14 @@
             and update_time >= #{params.updateTimeList[0]}
             and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > update_time
         </if>
+
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time DESC
     </select>
 
     <select id="selectListWithWarehouse" resultType="com.erp.model.wms.dto.OverseasProviderDTO$ListWithWarehouseDTO">
