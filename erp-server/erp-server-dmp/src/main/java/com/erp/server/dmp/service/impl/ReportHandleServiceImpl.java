@@ -11,15 +11,21 @@ import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
+import com.common.business.dto.UniqueDto;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.business.handler.IBusinessHandler;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
@@ -30,9 +36,12 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
+import com.erp.rpc.wms.feign.WmsShipmentFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
@@ -47,11 +56,14 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpFbaInventoryConverter;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.ReportHandleService;
 import com.erp.server.dmp.service.ReportScheduleService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -96,6 +108,10 @@ public class ReportHandleServiceImpl implements ReportHandleService {
     private ReportScheduleService reportScheduleService;
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
+    @Resource
+    private DmpPullTaskService dmpPullTaskService;
+    @Resource
+    private WmsShipmentFeign wmsShipmentFeign;
 
 
     @Override
@@ -161,7 +177,29 @@ public class ReportHandleServiceImpl implements ReportHandleService {
                 );
                 platformFbaShipmentDTO.setDetailList(detailListDTO);
 
-                businessService.pullDetailProcess(amazonShipmentDTO, platformFbaShipmentDTO, category, platform, business);
+//                businessService.pullDetailProcess(amazonShipmentDTO, platformFbaShipmentDTO, category, platform, business);
+
+                String topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC;
+                String tag = StrUtil.format("{}_{}", category, business) + "_tag";
+                BusinessTypeEnum businessType = BusinessTypeEnum.getByCodeAndThrow(business);
+
+                Class<? extends PlatformAmazonFbaShipmentDTO> tClass = amazonShipmentDTO.getClass();
+                String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
+                // 修改数据
+                UniqueDto updateDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
+                MapUtil mapUtil =JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
+                mongoService.updateMongoData(updateDto, mapUtil, tableName, tClass);
+
+                String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), platform, topic, tag, platformFbaShipmentDTO));
+                // 同步处理
+                dmpPullTaskService.updateSyncInfo(String.valueOf(modelTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
+
+                log.info("手动拉取货件推送：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
+                ApiResult<?> apiResult = wmsShipmentFeign.consumerPullShipment(platformFbaShipmentDTO);
+                if (200 != apiResult.getCode()){
+                    throw new ServiceException("拉取货件处理失败");
+                }
+                log.info("手动拉取货件结果：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
             }
         } catch (ServiceException e) {
             throw e;
