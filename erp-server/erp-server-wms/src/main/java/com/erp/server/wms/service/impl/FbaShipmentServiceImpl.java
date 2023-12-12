@@ -1023,14 +1023,15 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
                 //如果收货数量等于发货数量，修改货件状态为自动完结
-                int receiveQtySum = saveReceiveList.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+                List<FbaShipmentDetailEntity> allDetailList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+                int receiveQtySum = allDetailList.stream().mapToInt(FbaShipmentDetailEntity::getReceiveQty).sum();
                 List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getId()));
                 List<String> detailIds = fbaShipmentDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
                 //根据来源详情id查询发货详情
                 List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
                 //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                Integer deliveryQtySum = fbaDeliveryDetailEntities.stream()
+                int deliveryQtySum = fbaDeliveryDetailEntities.stream()
                         .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
                         .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
                         .sum();
