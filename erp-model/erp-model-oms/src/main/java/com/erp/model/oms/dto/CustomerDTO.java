@@ -65,11 +65,6 @@ public class CustomerDTO implements Serializable {
          */
         private String shortName;
 
-        /**
-         * 平台集合
-         */
-        private List<String> platformTypeList;
-
 
         /**
          * 审核列表集合
@@ -145,16 +140,6 @@ public class CustomerDTO implements Serializable {
          * 销售员
          */
         private String sellerName;
-
-        /**
-         * 平台类型
-         */
-        private String platformType;
-
-        /**
-         * 平台类型名称
-         */
-        private String platformTypeName;
 
         /**
          * 审核状态code
@@ -350,12 +335,6 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
-         * 通讯地址
-         */
-        @Size(max = 255, message = "通讯地址最大255字符")
-        private String mailAddress;
-
-        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -546,11 +525,6 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
-         * 通讯地址
-         */
-        private String mailAddress;
-
-        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -703,12 +677,6 @@ public class CustomerDTO implements Serializable {
          * 客户属性
          */
         private String customerProperty;
-
-        /**
-         * 通讯地址
-         */
-        @Size(max = 255, message = "通讯地址最大255字符")
-        private String mailAddress;
 
         /**
          * 附件名集合

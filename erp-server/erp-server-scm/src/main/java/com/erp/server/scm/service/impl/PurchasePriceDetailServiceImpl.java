@@ -25,7 +25,6 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -308,8 +307,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setCurrency(purchasePriceEntity.getCurrency());
         }
         this.saveBatch(addList);
-        //标记SKU
-        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
 
@@ -434,9 +431,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
-
-        //标记SKU
-        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
 

@@ -200,12 +200,6 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     private String subcontractType;
 
     /**
-     * 采购订单类型
-     */
-    @TableField("purchase_type")
-    private String purchaseType;
-
-    /**
      * 同步金蝶id
      */
     @TableField("sync_kingdee_id")

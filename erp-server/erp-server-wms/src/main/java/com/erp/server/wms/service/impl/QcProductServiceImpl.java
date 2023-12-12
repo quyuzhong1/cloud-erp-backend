@@ -10,13 +10,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.QcProductDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
 import com.erp.server.wms.service.QcProductService;
 import com.erp.server.wms.service.WmsAttachmentService;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -57,7 +55,6 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
         if(StringUtils.isBlank(skuId)){
             throw new ServiceException(ApiError.ERROR_95107);
@@ -88,9 +85,6 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         List<String> boxImageUrlList = qcProduct.getBoxImageUrlList();
         wmsAttachmentService.batchSave(boxImageUrlList, boxImageNameList, WmsConstant.QC_BOX, id);
         this.saveOrUpdate(qcProductEntity);
-
-        //标记SKU
-        plmTaskFeign.updateOccupyStatus(Arrays.asList(qcProductEntity.getSkuId()));
     }
 
 
