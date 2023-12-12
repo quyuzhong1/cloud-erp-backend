@@ -13,13 +13,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
-import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
 import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 加工单明细
@@ -51,7 +48,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void add(List<MachineDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -79,17 +75,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
                 List<MachineSubComponentsDTO.AddDTO> addList = BeanMapperUtils.copyList(MachineSubComponentsDTO.AddDTO.class, detailEntity.getSubComponentsList());
                 machineSubComponentsService.add(addList,detailEntity.getId(),mainId);
             }
-            //标记SKU
-            List<String> parentIdList = list.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-            List<String> childSkuIdList = list.stream().flatMap(obj -> Stream.of(obj.getSubComponentsList().stream().map(MachineSubComponentsDTO.AddDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
-            parentIdList.addAll(childSkuIdList);
-            plmTaskFeign.updateOccupyStatus(parentIdList);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void update(List<MachineDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();
@@ -116,11 +106,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         for (MachineDetailEntity detailEntity : newList) {
             machineSubComponentsService.update(detailEntity.getSubComponentsList(),detailEntity.getId(),mainId);
         }
-        //标记SKU
-        List<String> parentIdList = newList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<String> childSkuIdList = newList.stream().flatMap(obj -> Stream.of(obj.getSubComponentsList().stream().map(MachineSubComponentsDTO.AddDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
-        parentIdList.addAll(childSkuIdList);
-        plmTaskFeign.updateOccupyStatus(parentIdList);
     }
 
     @Override
