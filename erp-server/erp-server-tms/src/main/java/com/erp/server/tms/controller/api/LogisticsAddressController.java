@@ -53,7 +53,7 @@ public class LogisticsAddressController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:paging",
-            tableAlias = "ci"
+            tableAlias = "la"
     )
     public ApiResult<PagingVO<LogisticsAddressDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsAddressDTO.PagingViewDTO> pagingVO = logisticsAddressService.paging(dto);
@@ -71,7 +71,7 @@ public class LogisticsAddressController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:paging",
-            tableAlias = "ci"
+            tableAlias = "la"
     )
     public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = logisticsAddressService.exportExcel(dto, response);
@@ -143,7 +143,7 @@ public class LogisticsAddressController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:delete",
             serviceClass = LogisticsAddressService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@Validated @RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
