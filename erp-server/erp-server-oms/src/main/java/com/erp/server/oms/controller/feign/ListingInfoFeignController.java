@@ -32,16 +32,6 @@ public class ListingInfoFeignController extends BaseController {
     private SkuMappingService skuMappingService;
 
 
-    /**
-     * 通过条件查询ListingInfoEntity列表
-     *
-     * @author Jim
-     * @date 2023/11/2
-     */
-    @PostMapping("/list")
-    public List<ListingInfoWithSkuMappingDTO> listDTOByType(@RequestBody ListingInfoParamDTO dto) {
-        return listingInfoService.findListDto(dto);
-    }
 
     /**
      * 根据产品sku查询库存sku

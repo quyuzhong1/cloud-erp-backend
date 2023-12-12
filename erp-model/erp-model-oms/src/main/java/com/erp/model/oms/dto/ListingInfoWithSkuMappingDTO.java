@@ -11,6 +11,11 @@ import java.time.LocalDateTime;
 public class ListingInfoWithSkuMappingDTO {
 
     /**
+     * skuMapping的ID
+     */
+    private String tableId;
+
+    /**
      * 店铺表id
      */
     private String shopId;

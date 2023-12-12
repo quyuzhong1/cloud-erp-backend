@@ -99,5 +99,5 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @Author Jim
      * @since 2023-11-28
      **/
-    Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform);
+    Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId);
 }

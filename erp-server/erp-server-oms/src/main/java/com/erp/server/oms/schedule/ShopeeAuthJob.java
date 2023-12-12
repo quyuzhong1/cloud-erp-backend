@@ -91,7 +91,7 @@ public class ShopeeAuthJob {
                     log.error("授权异常：{}", shopeeResponse);
                     continue;
                 }
-                shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
+                shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), shopAuthEntity.getShopeeId(), shopInfo, cfgAppClient.getId());
             }
         }
         List<ShopAuthEntity> shopeeShopList1 = shopAuthService.getShopeeShopList(AuthTypeEnum.MERCHANT.getCode(), AuthStatusEnum.ALREADY.getCode());
@@ -119,7 +119,7 @@ public class ShopeeAuthJob {
                     log.error("授权异常：{}", shopeeResponse);
                     continue;
                 }
-                shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), shopAuthEntity.getShopeeId(), null, cfgAppClient.getId());
+                shopInfoService.saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), shopAuthEntity.getShopeeId(), shopInfo, cfgAppClient.getId());
             }
         }
     }

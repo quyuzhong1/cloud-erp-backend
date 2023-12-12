@@ -24,6 +24,7 @@ public enum ProductBatchFieldEnum implements EnumMessage  {
     PURCHASE_USER_ID("purchase_user_id","采购员", "product_purchase", "sku_id"),
     SALE_METHOD("sale_method","销售方式", "product_info", "id"),
     GROSS_WEIGHT("gross_weight","毛重", "product_pack", "sku_id"),
+    WAREHOUSE_LOCATION("warehouse_location","仓位", "product_detail", "id"),
     MAIN_SUPPLIER("main_supplier","一级供应商", "product_purchase", "sku_id"),
     SECOND_SUPPLIER("second_supplier","二级供应商", "product_purchase", "sku_id"),
 

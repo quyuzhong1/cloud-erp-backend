@@ -33,7 +33,7 @@
         update_time,
         version,
         is_deleted,
-        shop_id, token, access_token , expired_time , app_client_id 
+        shop_id, token, access_token , expired_time , app_client_id ,type,refresh_token,shopee_id
     </sql>
 
     <select id="getShopeeShopList" resultType="com.erp.model.oms.entity.ShopAuthEntity">
@@ -41,14 +41,14 @@
             auth.*
         FROM
             shop_auth auth
-                LEFT JOIN shop_info info ON auth.shop_id = info."id"
+                LEFT JOIN shop_info info ON auth.shop_id = info.id
         WHERE
             auth.is_deleted = FALSE
         <if test="status != null and status != ''">
             and info.auth_status = #{status}
         </if>
         <if test="type != null and type != ''">
-            and auth.'type' = #{type}
+            and auth.type = #{type}
         </if>
 
     </select>

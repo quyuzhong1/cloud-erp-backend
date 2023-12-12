@@ -17,6 +17,7 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -252,16 +253,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform) {
+    public Map<String, ListingInfoWithSkuMappingDTO> mapListingByPlatformSkuNo(List<String> platformSkuList, String dictPlatform, String shopId) {
         if (CollectionUtils.isEmpty(platformSkuList)) {
             return Collections.emptyMap();
         }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(dictPlatform);
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
         paramDTO.setMatchResult(true);
         // 查询ListingInfo和skuMapping的关系
-        List<ListingInfoWithSkuMappingDTO> listDto = listingInfoService.findListDto(paramDTO);
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         if (CollectionUtils.isEmpty(listDto)){
             return Collections.emptyMap();
         }

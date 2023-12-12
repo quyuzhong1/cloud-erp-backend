@@ -501,4 +501,69 @@
             </foreach>
         </if>
     </select>
+
+    <select id="listByParams" resultType="com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO">
+        SELECT
+        sm.id,
+        sm.shop_id,
+        sm.listing_id,
+        sm.dict_platform,
+        sm.platform_name,
+        sm.product_sku_id,
+        sm.product_sku_no,
+        sm.product_name,
+        sm.type,
+        sm.warehouse_id,
+        sm.warehouse_name,
+        sm.effective_time,
+        sm.expire_time,
+        sm.is_expire,
+        sm.has_mapping_all,
+        li.platform_sku_no,
+        li.platform_sku_name,
+        li.platform,
+        li.match_result,
+        li.product_image_url,
+        li.product_spec,
+        li.product_packing,
+        li.platform_update_time,
+        li.platform_spu_no,
+        li.platform_spu_name,
+        li.platform_fn_sku
+        FROM sku_mapping sm
+        INNER JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE AND sm.is_expire=FALSE
+        WHERE sm.is_deleted=FALSE
+        <!--平台sku no 列表-->
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo}
+            </foreach>
+        </if>
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        <!--平台-->
+        <if test="params.platform != null and params.platform != ''">
+            AND li.platform = #{params.platform}
+            AND sm.dict_platform = #{params.platform}
+        </if>
+        <!--匹配结果吧true 已匹配 false 未匹配-->
+        <if test="params.matchResult != null and params.matchResult != ''">
+            AND li.match_result = #{params.matchResult}
+        </if>
+        <if test="params.shopIdList !=null and params.shopIdList.size>0">
+            AND sm.shop_id IN
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND sm.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

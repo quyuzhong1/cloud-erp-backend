@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.server.oms.service.SkuMappingService;
@@ -54,5 +55,17 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/listByPlatformSkuNoAndPlatform")
     public List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO) {
         return skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+    }
+
+
+    /**
+     * 通过条件查询sku映射信息
+     *
+     * @author Jim
+     * @date 2023/11/2
+     */
+    @PostMapping("/list")
+    public List<ListingInfoWithSkuMappingDTO> listDTOByType(@RequestBody ListingInfoParamDTO dto) {
+        return skuMappingService.findListDto(dto);
     }
 }

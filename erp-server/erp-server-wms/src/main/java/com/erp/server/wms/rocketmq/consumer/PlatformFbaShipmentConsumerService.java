@@ -13,11 +13,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
@@ -35,10 +37,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,7 +67,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
-    private OmsListingInfoFeign omsListingInfoFeign;
+    private SkuMappingFeign skuMappingFeign;
     @Resource
     private SysUserFeign sysUserFeign;
     @Resource
@@ -115,9 +114,11 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
             paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
             paramDTO.setPlatformSkuNoList(sellerSkuList);
+            paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
             paramDTO.setMatchResult(true);
             // 查询ListingInfo和skuMapping的关系
-            List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = omsListingInfoFeign.listingInfoWithSkuMappingList(paramDTO);
+            List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
             // SKU相关信息
             listingInfoWithSkuMappingDTOMap = listingedInfoWithSkuMappingList

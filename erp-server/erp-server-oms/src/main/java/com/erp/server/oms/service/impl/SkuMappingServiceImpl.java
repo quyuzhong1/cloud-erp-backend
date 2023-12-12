@@ -20,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -30,6 +31,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -452,12 +454,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
-
-        String dictPlatform = skuMappingEntity.getWarehouseName().contains("艾姆勒") ? OmsPlatformEnum.OMS_IML.getCode() : "";
-
-
-        skuMappingEntity.setDictPlatform(dictPlatform);
-        skuMappingEntity.setHasMappingAll(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equalsIgnoreCase(dictPlatform) && dto.checkAndGetHasMappingAll());
+        skuMappingEntity.setDictPlatform("");
+        skuMappingEntity.setHasMappingAll(dto.checkAndGetHasMappingAll());
         LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
@@ -549,16 +547,20 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
-        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException("仓库不存在");
-        }
         //更改原有的
         LocalDateTime now = LocalDateTime.now();
         skuMapping.setExpireTime(now);
         skuMapping.setIsExpire(Boolean.TRUE);
-        this.updateById(skuMapping);
+        boolean updateResult = this.updateById(skuMapping);
+        if (!updateResult){
+            throw new ServiceException("更新失败");
+        }
+//        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException("仓库不存在");
+        }
+
         SkuMappingEntity addSkuMapping = new SkuMappingEntity();
         addSkuMapping.setWarehouseId(warehouseId);
         addSkuMapping.setWarehouseName(warehouseList.get(0).getName());
@@ -568,6 +570,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         addSkuMapping.setListingId(listingId);
         addSkuMapping.setDictPlatform(skuMapping.getDictPlatform());
         addSkuMapping.setPlatformName(skuMapping.getPlatformName());
+        addSkuMapping.setHasMappingAll(dto.checkAndGetHasMappingAll());
         //生效时间
         addSkuMapping.setEffectiveTime(now);
         addSkuMapping.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
@@ -865,6 +868,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         entity.setEffectiveTime(LocalDateTime.now());
         entity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         return this.save(entity);
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto) {
+        return baseMapper.listByParams(dto);
     }
 
 }

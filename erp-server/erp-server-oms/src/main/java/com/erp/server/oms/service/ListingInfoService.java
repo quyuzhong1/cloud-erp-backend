@@ -46,13 +46,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      */
     List<ListingInfoDTO.ListDTO> listByType(String type);
 
-    /**
-     * 通过条件查询ListingInfoEntity列表
-     *
-     * @author  Jim
-     * @date 2023/11/2
-     */
-    List<ListingInfoWithSkuMappingDTO> findListDto(ListingInfoParamDTO dto);
 
     /**
      * 新增映射skuNo
