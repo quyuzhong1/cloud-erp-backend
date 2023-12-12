@@ -39,10 +39,7 @@ import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.OutstockTypeEnum;
@@ -731,7 +728,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse) {
+    public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark, boolean isTransitWarehouse) {
         //目的仓
         WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
         OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse,isTransitWarehouse,entity.getCreateUserId());

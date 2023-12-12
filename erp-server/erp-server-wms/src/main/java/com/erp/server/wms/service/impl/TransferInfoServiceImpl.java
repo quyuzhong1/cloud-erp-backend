@@ -41,9 +41,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -966,7 +964,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional
-    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity,List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark) {
+    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
         //目的仓
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()

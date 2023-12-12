@@ -67,10 +67,6 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
-    CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
-    CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
-
-    SO_B2C("soB2c", "B2C销售订单","so_b2c"),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),

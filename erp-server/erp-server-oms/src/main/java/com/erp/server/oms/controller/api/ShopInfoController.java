@@ -152,18 +152,6 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
-     * 初始同步dmp 店铺信息
-     *
-     * @return
-     */
-    @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "初始同步dmp店铺信息")
-    @PostMapping("/initialSync")
-    public ApiResult initialSync() {
-        Boolean result = shopInfoService.initialSync();
-        return result ? success() : failure();
-    }
-
-    /**
      * 获取已授权店铺
      * @author Will
      * @date: 2023/10/18 10:00

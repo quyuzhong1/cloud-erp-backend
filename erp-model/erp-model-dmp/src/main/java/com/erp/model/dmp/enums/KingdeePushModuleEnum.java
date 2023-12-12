@@ -40,7 +40,6 @@ public enum KingdeePushModuleEnum {
     PUR_POXCHANGE("PUR_POXChange","采购变更"),
     PUR_RECEIVEBILL("PUR_ReceiveBill","收料通知单"),
 
-    PUR_POXCHANGE("PUR_POXChange","采购变更"),
     ;
     private String code;
 

@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

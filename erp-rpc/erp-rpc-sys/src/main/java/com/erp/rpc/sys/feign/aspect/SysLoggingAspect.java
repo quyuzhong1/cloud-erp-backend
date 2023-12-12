@@ -312,43 +312,6 @@ public class SysLoggingAspect {
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
                 || o instanceof BindingResult;
     }
-    /**
-     * 生成描述
-     *
-     * @return 空=logAction的desc
-     */
-    private String generateSingleDesc(Object originalObj, Object newObject, LogAction logAction, String classPath, ProceedingJoinPoint joinPoint) {
-        // 1:生成自定义描述(包含{任意字段})
-        if (Pattern.matches(CUSTOM_MATCH_REGEX, logAction.desc())) {
-            // 获取请求参数转Map
-            Object[] args = joinPoint.getArgs();
-            if (0 == args.length) {
-                return "";
-            }
-            Object paramsObj = args[0];
-            // 文件上传处理
-            if (paramsObj instanceof MultipartFile[]){
-                return "";
-            }
-            // 兼容接口product/plan/uploadImageUrl
-            if (paramsObj instanceof MultipartFile){
-                MultipartFile file = (MultipartFile) paramsObj;
-                return logAction.desc().replace("{name}", Objects.requireNonNull(file.getOriginalFilename()));
-            }
-            // 1:非数组请求参数处理
-            if (!(paramsObj instanceof Collection)) {
-                Map<String, Object> paramsMap = BeanUtil.beanToMap(paramsObj);
-                // 将请求参数填充  {paramName1} {paramName2}
-                return StrUtil.format(logAction.desc(), paramsMap);
-            }
-            return "";
-        }
-        // 3:生成对比描述
-        if (logAction.value().hasCompare()) {
-            return compareDataDesc(originalObj, newObject, logAction, classPath);
-        }
-        return "";
-    }
 
     /**
      * 生成描述

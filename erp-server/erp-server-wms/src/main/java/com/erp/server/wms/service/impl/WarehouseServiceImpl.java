@@ -87,9 +87,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
 
     @Resource
-    private WarehouseLocationService warehouseLocationService;
-
-    @Resource
     private ShopInfoFeign shopInfoFeign;
 
     @Resource
