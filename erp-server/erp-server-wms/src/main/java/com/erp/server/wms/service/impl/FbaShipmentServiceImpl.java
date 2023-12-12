@@ -887,6 +887,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             } else {
                 // 修改
                 e.setId(detailEntity.getId());
+                if (!oldEntity.getDeliveryStatus().equalsIgnoreCase(DeliveryStatusEnum.UN_SHIPPED.getCode())){
+                    e.setDiffQty(e.getReceiveQty() - e.getDeliveryQty());
+                }
                 if (!e.toString().equals(detailEntity.toString())) {
                     saveOrUpdateDetailList.add(e);
                 }

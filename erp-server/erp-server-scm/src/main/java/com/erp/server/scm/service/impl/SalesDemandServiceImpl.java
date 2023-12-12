@@ -112,6 +112,14 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<SalesDemandDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
+        //清空明细数据
+        List<SalesDemandDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            records.forEach(obj -> {
+                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            });
+        }
         return new PagingVO(pageData);
     }
 
