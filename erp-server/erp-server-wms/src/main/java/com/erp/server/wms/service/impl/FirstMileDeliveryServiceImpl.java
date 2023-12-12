@@ -424,7 +424,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         } else {
             addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
-        addDTO.setSourceId(entity.getSourceId());
+        addDTO.setSourceId(entity.getId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
 
@@ -508,17 +508,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //查找发货单下推的分步式调出单自动反审并删除
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
-        //分步式调出单已审核先反审核
+        //直接调拨单已审核先反审核
         List<String> approveTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveTransferOutIds)) {
             transferInfoService.disApprove(approveTransferOutIds, Boolean.TRUE);
         }
-        //分步式调出单审核中先撤销
+        //直接调拨单审核中先撤销
         List<String> approveIngTransferOutIds = transferInfoEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(approveIngTransferOutIds)) {
             transferInfoService.cancelProcess(approveIngTransferOutIds);
         }
-        //分步式调出单删除
+        //直接调拨单单删除
         List<String> deletedTransferOutIds = transferInfoEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deletedTransferOutIds)) {
             transferInfoService.delete(deletedTransferOutIds);
