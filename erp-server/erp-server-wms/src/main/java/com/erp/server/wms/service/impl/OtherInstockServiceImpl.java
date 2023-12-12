@@ -718,7 +718,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //提交
         this.submit(Arrays.asList(id));
         //审核
-        this.approve(id,ApproveTypeEnum.PASS.getStatus(),"");
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(id));
+        baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        baseApproveParamDTO.setComment("");
+        this.approve(baseApproveParamDTO);
         return id;
     }
 
