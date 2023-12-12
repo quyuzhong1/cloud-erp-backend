@@ -79,7 +79,7 @@ public interface GoodCangConverter {
             @Mapping(target = "receivingCode",  source = "receivingCode"),
             @Mapping(target = "receivingStatus",  expression = "java(com.sdk.wms.goodcang.enums.GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(sourceData.getReceivingStatus()))"),
             @Mapping(target = "downloadTime", expression = "java(java.time.LocalDateTime.now())"),
-            @Mapping(target = "hasReceivedData", constant = "true"),
+            @Mapping(target = "hasReceivedData", constant = "false"),
             @Mapping(target = "receivingDataList",  source = "gcReceivingDataList"),
     })
     PlatformInboundDTO inboundConversion(GoodCangReceiptBatchResp sourceData);
