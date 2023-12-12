@@ -3,6 +3,7 @@ package com.erp.rpc.workflow;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -242,4 +243,10 @@ public interface WorkflowFeign {
      */
     @PostMapping("/feign/process/listProcessByProcessId")
     List<ProcessTaskManagementEntity> listProcessByBusinessId(@RequestBody List<String> businessIds);
+
+    /**
+     * 根据业务类型查询流程信息
+     */
+    @PostMapping("/feign/process/getProcessBusiness")
+    ProcessBusinessEntity getProcessBusiness(@RequestBody String businessKey);
 }

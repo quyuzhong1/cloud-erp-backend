@@ -205,4 +205,64 @@
         SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
 
+    <select id="shopAuthPaging" resultType="com.erp.model.sys.dto.SysUserInfoDTO$ShopAuthPagingDTO">
+        select
+               sui.uid as userId,
+               sui.user_name as userName,
+               sui.real_name as realName,
+               sui.user_state as userState,
+               sui.update_user_name as updateUserName,
+               sui.update_time as updateTime
+        from sys_user_info sui
+        <where>
+            <if test="params.userName != null and params.userName != ''">
+                and sui.user_name  ilikeconcat('%',#{params.userName}::text,'%')
+            </if>
+            <if test="params.realName != null and params.realName != ''">
+                and  sui.real_name  ilikeconcat('%',#{params.realName}::text,'%')
+            </if>
+            <if test="params.userState != null ">
+                and sui.user_state = #{params.userState}
+            </if>
+            <if test="userIdList != null and userIdList.size > 0">
+                and sui.uid in
+                <foreach collection="userIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.roleIdList != null and params.roleIdList.size > 0">
+                and sui.uid in (
+                 select sru.user_id from sys_role_user sru
+                 <where>
+                     sru.role_id in
+                     <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                         #{item}
+                     </foreach>
+                 </where>
+                )
+            </if>
+            <if test="params.deptIdList != null and params.deptIdList.size > 0">
+                and sui.uid in (
+                select sdu.user_id from sys_department_user sdu
+                <where>
+                    sdu.department_id in
+                    <foreach collection="params.roleIdLIst" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </where>
+                )
+            </if>
+            <if test="params.updateUserIdList != null and params.updateUserIdList.size > 0">
+                and sui.update_user_id in
+                <foreach collection="params.updateUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
+                and sui.update_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sui.update_time
+            </if>
+        </where>
+    </select>
+
+
 </mapper>

@@ -25,6 +25,15 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
     List<BomVersionVO> getVersionList(String id);
 
     List<ProductBomHistoryEntity> listByBomId(String bomId);
+
+    /**
+     * 根据bomId查询bom记录
+     * @Author Luo_WG
+     * @Date 2023/11/2 9:25
+     * @param bomIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductBomHistoryEntity>
+     **/
+    List<ProductBomHistoryEntity> listByBomIds(List<String> bomIds);
     /**
      * @description: 根据sku查询历史版本
      * @author Will

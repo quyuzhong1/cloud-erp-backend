@@ -169,6 +169,54 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return List<ProductDetailEntity>
      */
     List<ProductDetailEntity> listByChargeId(@Param("chargeId") String chargeId);
+
+    /**
+     * 物流产品分页
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<LogisticsProductDTO.PagingVO> logisticsProductPaging(Page query,@Param("params") LogisticsProductDTO.PagingParamDTO params,@Param("approveStatus") Integer approveStatus);
+
+    /**
+     * 获取基础数据
+     * @author yl
+     * @date 2023-11-07 14:52
+     * @param skuId
+     * @return com.erp.model.plm.dto.LogisticsProductDTO.ProductBaseInfoDTO
+     */
+    LogisticsProductDTO.ProductBaseInfoDTO getProductBaseInfo(@Param("skuId") String skuId);
+
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-11-08 11:34
+     * @param dto
+     * @param approvalStatus
+     * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.PagingVO>
+     */
+    List<LogisticsProductDTO.ExportInfoDTO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
+
+    /**
+     * 更新分页
+     * @param query
+     * @param params
+     * @param approvalStatus
+     * @param fieldList
+     * @return
+     */
+    IPage<LogisticsProductDTO.UpdatePagingDTO> logisticsProductUpdatePaging(Page query,@Param("params") LogisticsProductDTO.UpdatePagingParamDTO params,@Param("approveStatus") Integer approvalStatus,@Param("fieldList") List<String> fieldList);
+
+    Integer logisticsProductUpdateCount(@Param("approveStatus")Integer approvalStatus,@Param("fieldList") List<String> fieldList,@Param("permissionSql")String permissionSql);
+
+    /**
+     * 根据sku IdList 获取物流产品信息
+     *@parms skuIdList
+     *@return
+     *@author yl
+     *@date 2023-11-27
+     */
+    List<LogisticsProductDTO.ProductDTO> listLogisticsProduct(@Param("skuIdList") List<String> skuIdList);
 }
 
 

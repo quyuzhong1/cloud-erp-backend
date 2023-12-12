@@ -124,18 +124,17 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         String sourceId = dto.getSourceId();
         if (isBom) {
             //检查能否变更 只有归档才可以
-            bomInfoService.checkIfChange(sourceId);
+            bomInfoService.checkIfChange(sourceId,dto.getDetailsJson());
+            //检查审核人为空不
+            checkBomChangeAuditor(sourceId);
         }
         BeanMapper.copy(dto, change);
         String id = IdWorker.getIdStr();
         change.setId(id);
         //如果是bom 检查审核人为空不
-        if (isBom) {
-            checkBomChangeAuditor(sourceId);
-        } else {
+        if (!isBom) {
             //sku数据验证
             checkSkuChange(dto.getDetailsJson());
-
             checkSkuChangeAuditor(sourceId);
         }
 

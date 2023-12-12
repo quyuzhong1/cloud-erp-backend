@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.wms.service.*;
@@ -44,6 +41,12 @@ public class WmsWorkOptionFeignController {
 
     @Resource
     private StocktakingTaskService stocktakingTaskService;
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+
+    @Resource
+    private OverseasDeliveryPlanService overseasDeliveryPlanService;
 
     /**
      * 根据入参查询单据数量
@@ -126,6 +129,40 @@ public class WmsWorkOptionFeignController {
         String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
         oneDto.setId(id);
         stocktakingTaskService.approve(id, oneDto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * FBA发货单
+     * @Author Luo_WG
+     * @Date 2023/11/15 18:01
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/fbaDeliveryApprove")
+    public Boolean fbaDeliveryApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        ApproveOneDTO oneDto = new ApproveOneDTO();
+        BeanMapper.copy(baseApproveParamDTO,oneDto);
+        String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
+        oneDto.setId(id);
+        firstMileDeliveryService.approve(oneDto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 海外发货计划
+     * @Author Luo_WG
+     * @Date 2023/11/17 16:16
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/overseasDeliveryPlanApprove")
+    public Boolean overseasDeliveryPlanApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        ApproveOneDTO oneDto = new ApproveOneDTO();
+        BeanMapper.copy(baseApproveParamDTO,oneDto);
+        String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
+        oneDto.setId(id);
+        overseasDeliveryPlanService.approve(oneDto);
         return Boolean.TRUE;
     }
 }

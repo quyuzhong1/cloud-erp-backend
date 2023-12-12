@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * 仓库签收明细单
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-06
  */
 @Getter

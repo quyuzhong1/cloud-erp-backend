@@ -66,6 +66,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnCode, returnOrderInfoEntity.getReturnCode());
         lambdaQueryWrapper.eq(StrUtil.isNotBlank(returnOrderInfoEntity.getPlatformOrderId()), DmpReturnOrderInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.last("limit 1");
         return this.getOne(lambdaQueryWrapper);
     }
 

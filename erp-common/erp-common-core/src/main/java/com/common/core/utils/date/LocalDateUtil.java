@@ -2,7 +2,9 @@ package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Cloud
  */
+@Slf4j
 public class LocalDateUtil {
 
     /**
@@ -374,13 +377,13 @@ public class LocalDateUtil {
     private static LocalDate getPlanWorkPeriodDate(Integer planWorkPeriod, List<LocalDate> dateList, LocalDate planStartDate, Integer diffDay, Integer type) {
         if (planWorkPeriod < 0) {
             planStartDate = planStartDate.plusDays(planWorkPeriod);
-            while (dateList.contains(planStartDate)) {
+            while (dateList.contains(planStartDate)){
                 planStartDate = planStartDate.minusDays(diffDay);
             }
         }
-        while (planWorkPeriod > type) {
+        while (planWorkPeriod > type){
             planStartDate = planStartDate.plusDays(diffDay);
-            if (!dateList.contains(planStartDate)) {
+            if(!dateList.contains(planStartDate)){
                 planWorkPeriod--;
             }
         }
@@ -391,8 +394,8 @@ public class LocalDateUtil {
         if (StrUtil.isBlank(timeStr)) {
             return null;
         }
-        if (timeStr.contains("T")) {
-            timeStr = timeStr.replace("T", " ");
+        if(timeStr.contains("T")){
+            timeStr = timeStr.replace("T"," ");
         }
         return LocalDateTime.parse(timeStr, DateTimeFormatter.ofPattern(DateUtil.fmt));
 
@@ -406,6 +409,22 @@ public class LocalDateUtil {
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
 
+    public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
+        if (StrUtil.isBlank(hourStr)){
+            return startTime;
+        }
+        BigDecimal hour = new BigDecimal(hourStr);
+        int intValue = hour.intValue();
+        LocalDateTime result = null;
+        if(intValue >= 0){
+            result = startTime.plusHours(intValue);
+        }
+        BigDecimal remainder = hour.remainder(BigDecimal.ONE);
+        if(remainder.compareTo(BigDecimal.ZERO) > 0){
+            result = result.plusMinutes(new BigDecimal(60).multiply(remainder).intValue());
+        }
+        return result;
+    }
 
     /**
      * 转化日期
@@ -432,22 +451,31 @@ public class LocalDateUtil {
         return null;
     }
 
-
-    public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
-        if (StrUtil.isBlank(hourStr)){
-            return startTime;
+    /**
+     * 转化日期
+     *
+     * @param dateStr
+     * @return java.time.LocalDate
+     * @author yl
+     * @date 2023-10-24 15:06
+     */
+    public static LocalDateTime parseStrToLocalTime(String dateStr) {
+        try {
+            if (StringUtils.isBlank(dateStr)) {
+                return null;
+            }
+            if (dateStr.contains("/")) {
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+                return LocalDateTime.parse(dateStr, dateTimeFormatter);
+            } else {
+                return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }
+        } catch (Exception e) {
+            log.error("parseStrToLocalTime 出错了>>>{}", e);
         }
-        BigDecimal hour = new BigDecimal(hourStr);
-        int intValue = hour.intValue();
-        LocalDateTime result = null;
-        if(intValue >= 0){
-            result = startTime.plusHours(intValue);
-        }
-        BigDecimal remainder = hour.remainder(BigDecimal.ONE);
-        if(remainder.compareTo(BigDecimal.ZERO) > 0){
-            result = result.plusMinutes(new BigDecimal(60).multiply(remainder).intValue());
-        }
-        return result;
+        return null;
     }
+
+
 }
 

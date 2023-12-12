@@ -15,10 +15,10 @@ public class SkuDateFilterDTO extends BiFilterDTO {
     @NotEmpty(message = "sku不能为空")
     private String skuNo;
 
-    /**
-     * 时间类型：日: DAY; 周: WEEK; 月: MONTH;
-     */
-    @NotEmpty(message = "时间类型不能为空")
-    private String dateType;
+//    /**
+//     * 时间类型：日: DAY; 周: WEEK; 月: MONTH;
+//     */
+//    @NotEmpty(message = "时间类型不能为空")
+//    private String dateType;
 
 }

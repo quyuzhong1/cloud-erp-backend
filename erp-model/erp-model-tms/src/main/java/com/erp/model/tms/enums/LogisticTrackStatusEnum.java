@@ -1,0 +1,88 @@
+package com.erp.model.tms.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * 物流运输状态
+ * @author Lambda
+ * @Classname LogisticTrackStatusEnum
+ * @Description TODO
+ * @Date 2023-11-15 17:38
+ * @Created by yl
+ */
+public enum LogisticTrackStatusEnum implements EnumMessage {
+    NOT_FIND("notFind","查询不到","notFind","查询不到"),
+    WAIT_COLLECT("waitCollect","等待揽收","trackIng","运输途中"),
+    TRACK_ING("trackIng","运输途中","trackIng","运输途中"),
+    ARRIVE_WAIT_TAKE("arriveWaitTake","到达待取","trackIng","运输途中"),
+    DELIVERY_ING("deliveryIng","派送途中","trackIng","运输途中"),
+    DELIVERY_FAIL("deliveryFail","投递失败","trackIng","运输途中"),
+    SIGN("sign","成功签收","received","已签收"),
+    MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
+    TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
+
+    ;
+
+
+    /**
+     * 类型
+     */
+    @EnumValue
+    @JsonValue
+    private String code;
+    /**
+     * 名称
+     */
+    private String name;
+
+    /**
+     * 组别
+     */
+    private String group;
+
+    /**
+     * 组别
+     */
+    private String groupName;
+
+
+    LogisticTrackStatusEnum(String code, String name,String group,String groupName){
+        this.code = code;
+        this.name = name;
+        this.group = group;
+        this.groupName = groupName;
+    }
+
+    @Override
+    public String getCode() {
+        return this.code;
+    }
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+
+    public String getGroup() {
+        return this.group;
+    }
+
+    public String getGroupName() {
+        return this.groupName;
+    }
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (LogisticTrackStatusEnum item : LogisticTrackStatusEnum.values()) {
+            if (code.equals(item.getCode())) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
+
+}

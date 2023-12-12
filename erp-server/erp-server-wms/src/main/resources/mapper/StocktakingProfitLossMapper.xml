@@ -19,6 +19,7 @@
         <result column="bill_type" property="billType"/>
     </resultMap>
 
+
     <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$TabDTO">
         SELECT
         bill_type AS tabFlag,

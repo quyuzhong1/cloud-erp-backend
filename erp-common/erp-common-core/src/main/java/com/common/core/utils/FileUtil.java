@@ -1,10 +1,13 @@
 package com.common.core.utils;
 
 
+import cn.hutool.core.codec.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -275,5 +278,101 @@ public class FileUtil {
         return file;
     }
 
+    public static void base64ToFile(String base64, String fileName, String filePath) {
+        File file = null;
+        //创建文件目录
+        File dir = new File(filePath);
+        if (!dir.exists() && !dir.isDirectory()) {
+            dir.mkdirs();
+        }
+        BufferedOutputStream bos = null;
+        FileOutputStream fos = null;
+        byte[] bytes = Base64.decode(base64);
+        file = new File(filePath + "\\" + fileName);
+        try {
+            fos = new FileOutputStream(file);
+            bos = new BufferedOutputStream(fos);
+            bos.write(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bos != null) {
+                try {
+                    bos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
+    }
+
+    public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
+        if(StringUtils.isBlank(pdfUrl)){
+            return null;
+        }
+        InputStream inStream = null;
+        String base64 = "";
+        String prefix = "data:application/pdf;base64,";
+        try {
+            URL url = new URL(pdfUrl);
+            //打开链接
+            HttpURLConnection conn = null;;
+            conn = (HttpURLConnection) url.openConnection();
+            //设置请求方式为"GET"
+            conn.setRequestMethod("GET");
+            //超时响应时间为5秒
+            conn.setConnectTimeout(5 * 1000);
+            //通过输入流获取图片数据
+            inStream = conn.getInputStream();
+            //对字节数组Base64编码
+            base64 = Base64.encode(inStream);
+            base64 = base64.replaceAll("\r\n","");
+            return prefix + base64;
+        } finally {
+            //关闭输入流
+            if (inStream != null) {
+                inStream.close();
+            }
+        }
+    }
+
+    public static String convertPdfUrlToBase64(String pdfUrl,String token) throws IOException {
+        if(StringUtils.isBlank(pdfUrl)){
+            return null;
+        }
+        InputStream inStream = null;
+        String base64 = "";
+        String prefix = "data:application/pdf;base64,";
+        try {
+            URL url = new URL(pdfUrl);
+            //打开链接
+            HttpURLConnection conn = null;;
+            conn = (HttpURLConnection) url.openConnection();
+            //设置请求方式为"GET"
+            conn.setRequestMethod("GET");
+            //顺丰接口调用授权
+            conn.setRequestProperty("X-Auth-token", token);
+            //超时响应时间为5秒
+            conn.setConnectTimeout(5 * 1000);
+            //通过输入流获取图片数据
+            inStream = conn.getInputStream();
+            //对字节数组Base64编码
+            base64 = Base64.encode(inStream);
+            base64 = base64.replaceAll("\r\n","");
+            return prefix + base64;
+        } finally {
+            //关闭输入流
+            if (inStream != null) {
+                inStream.close();
+            }
+        }
+    }
 }

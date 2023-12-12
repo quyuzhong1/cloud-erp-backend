@@ -215,4 +215,65 @@ public class BomSkuPageDTO {
          */
         private String paymentCondition;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class AllSkuParamDTO {
+
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+        /**
+         * sku编码集合
+         */
+        private List<String> skuNoList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListAllSkuDTO {
+
+        /**
+         * 父级SKU
+         */
+        private List<ListSkuLevelDTO> parentList;
+
+        /**
+         * 子级SKU
+         */
+        private List<ListSkuLevelDTO> childList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListSkuLevelDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 父级skuId
+         */
+        private String parentSkuId;
+
+        /**
+         * 父级sku编号
+         */
+        private String parentSkuNo;
+
+        /**
+         * 用量
+         */
+        private Integer quantity;
+    }
 }

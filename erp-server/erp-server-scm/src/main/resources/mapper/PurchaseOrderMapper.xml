@@ -647,30 +647,59 @@
         GROUP BY pod.sku_id
     </select>
 
+
     <select id="listPurchaseOrderByPurchaseDate" resultType="com.erp.model.scm.dto.SkuCostDTO">
         SELECT
-        T."sku_no" AS skuNo,
-        T."LatestPurchaseDate" AS costDate,
-        ROUND(AVG(D."tax_price"),4) AS costPrice,
-        CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
-        CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
-        FROM
-        (
-        SELECT
-        pod.sku_no,
-        MAX(po.purchase_date) AS "LatestPurchaseDate"
+            pod.sku_id,
+            pod.sku_no,
+            MAX(po.purchase_date) AS "latestPurchaseDate"
         FROM purchase_order po
         LEFT JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.is_deleted = FALSE
-        WHERE po.is_deleted = FALSE
+        WHERE po.is_deleted = FALSE and po.type = 'CGDD01_SYS' and po.invalid_status = false and po.approve_status = 'approve'
         AND purchase_date >= #{purchaseDateList[0]} and purchase_date &lt;= #{purchaseDateList[1]}
-        GROUP BY pod.sku_no
-        ) AS T
-        JOIN purchase_order S
-        LEFT JOIN purchase_order_detail D ON S.id = D.purchase_order_id AND D.is_deleted = FALSE
-        ON
-        T."sku_no" = D."sku_no"
-        AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+        GROUP BY pod.sku_no ,pod.sku_id
+    </select>
+
+    <select id="listPurchaseOrderCost" resultType="com.erp.model.scm.dto.SkuCostDTO">
+        SELECT
+            T.sku_id as skuId,
+            T."sku_no" AS skuNo,
+            T."LatestPurchaseDate" AS costDate,
+            ROUND(AVG(D."tax_price"),4) AS costPrice,
+            ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+            D.currency,
+            CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
+            CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
+        FROM
+            (
+                SELECT
+                    pod.sku_id,
+                    pod.sku_no,
+                    MAX(po.purchase_date) AS "LatestPurchaseDate"
+                FROM purchase_order po
+                         LEFT JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.is_deleted = FALSE
+                WHERE po.is_deleted = FALSE and po.type = 'CGDD01_SYS' and po.invalid_status = false and po.approve_status = 'approve'
+                    <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                        AND pod.sku_id in
+                        <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </if>
+                    <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                        AND pod.sku_no in
+                        <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </if>
+                GROUP BY pod.sku_no ,pod.sku_id
+            ) AS T
+                JOIN purchase_order S
+                LEFT JOIN purchase_order_detail D ON S.id = D.purchase_order_id AND D.is_deleted = FALSE
+                ON
+                T."sku_no" = D."sku_no"
+                AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+        WHERE S.is_deleted = false and S.type = 'CGDD01_SYS' and S.invalid_status = false and S.approve_status = 'approve'
         GROUP BY
-        T."sku_no", T."LatestPurchaseDate";
+            T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
     </select>
 </mapper>

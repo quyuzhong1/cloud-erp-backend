@@ -1,0 +1,291 @@
+package com.erp.model.oms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+
+/**
+ * <p>
+ * B2C销售订单表
+ * </p>
+ *
+ * @author Will
+ * @since 2023-08-18
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("so_b2c")
+public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
+
+    /**
+    * 单据编码
+    */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 订单日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
+
+    /**
+    * 审核状态
+    */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+    /**
+    * 平台订单号
+    */
+    @TableField("platform_code")
+    private String platformCode;
+    /**
+    * 销售平台
+    */
+    @TableField("dict_platform")
+    private String dictPlatform;
+    /**
+    * 店铺
+    */
+    @TableField("shop_id")
+    private String shopId;
+    /**
+    * 作废状态（false未作废，true已作废）
+    */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+    /**
+     * 作废类型（manual手动作废，automatic自动作废）
+     */
+    @TableField("invalid_type")
+    private String invalidType;
+    /**
+    * 作废原因
+    */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+    /**
+    * 订单状态
+    */
+    @TableField("bill_status")
+    private String billStatus;
+    /**
+    * 付款状态（待付款、已付款）
+    */
+    @TableField("pay_status")
+    private String payStatus;
+    /**
+    * 订单金额
+    */
+    @TableField("amount")
+    private BigDecimal amount;
+    /**
+    * 币别（原币）
+    */
+    @TableField("currency")
+    private String currency;
+    /**
+    * 汇率
+    */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
+    /**
+    * 运费收入
+    */
+    @TableField("shipping_fee")
+    private BigDecimal shippingFee;
+    /**
+    * 付款时间
+    */
+    @TableField("pay_time")
+    private LocalDateTime payTime;
+    /**
+    * 付款金额
+    */
+    @TableField("pay_amount")
+    private BigDecimal payAmount;
+    /**
+    * 付款方式
+    */
+    @TableField("dict_pay_method")
+    private String dictPayMethod;
+    /**
+    * 买家备注
+    */
+    @TableField("buyer_remark")
+    private String buyerRemark;
+    /**
+    * 订单备注
+    */
+    @TableField("remark")
+    private String remark;
+    /**
+    * 销售组织id
+    */
+    @TableField("org_id")
+    private String orgId;
+    /**
+    * 销售组织名称
+    */
+    @TableField("org_name")
+    private String orgName;
+    /**
+    * 是否拦截
+    */
+    @TableField("is_intercept")
+    private Boolean isIntercept;
+    /**
+    * 拦截备注
+    */
+    @TableField("intercept_remark")
+    private String interceptRemark;
+    /**
+    * 来源类型
+    */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+    * 来源id
+    */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+    * 来源编码
+    */
+    @TableField("source_code")
+    private String sourceCode;
+    /**
+    * 标签json
+    */
+    @TableField("label_json")
+    private String labelJson;
+    /**
+    * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
+    */
+    @TableField("abnormal_type")
+    private String abnormalType;
+
+    /**
+     * 是否不需要合并
+     */
+    @TableField("is_not_merge")
+    private Boolean isNotMerge;
+
+    /**
+    * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+    */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+    /**
+    * 同步时间
+    */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+    /**
+    * 金蝶数据id
+    */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+    /**
+    * 同步操作
+    */
+    @TableField("sync_operate")
+    private String syncOperate;
+
+    /**
+     * 店铺名称
+     */
+    @TableField(exist = false)
+    private String shopName;
+
+
+    public static final String CODE = "code";
+
+    public static final String APPROVE_STATUS = "approve_status";
+
+    public static final String PLATFORM_CODE = "platform_code";
+
+    public static final String DICT_PLATFORM = "dict_platform";
+
+    public static final String SHOP_ID = "shop_id";
+
+    public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String BILL_STATUS = "bill_status";
+
+    public static final String PAY_STATUS = "pay_status";
+
+    public static final String AMOUNT = "amount";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String EXCHANGE_RATE = "exchange_rate";
+
+    public static final String SHIPPING_FEE = "shipping_fee";
+
+    public static final String PAY_TIME = "pay_time";
+
+    public static final String PAY_AMOUNT = "pay_amount";
+
+    public static final String DICT_PAY_METHOD = "dict_pay_method";
+
+    public static final String BUYER_REMARK = "buyer_remark";
+
+    public static final String REMARK = "remark";
+
+    public static final String ORG_ID = "org_id";
+
+    public static final String ORG_NAME = "org_name";
+
+    public static final String IS_INTERCEPT = "is_intercept";
+
+    public static final String INTERCEPT_REMARK = "intercept_remark";
+
+    public static final String SOURCE_TYPE = "source_type";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
+
+    public static final String LABEL_JSON = "label_json";
+
+    public static final String ABNORMAL_TYPE = "abnormal_type";
+
+    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+
+    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+
+    public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
+
+    public static final String SYNC_OPERATE = "sync_operate";
+
+    @Override
+    public String toString() {
+        return "SoB2cEntity{" +
+                ", billDate=" + billDate +
+                ", billStatus='" + billStatus + '\'' +
+                ", payStatus='" + payStatus + '\'' +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", exchangeRate=" + exchangeRate +
+                ", shippingFee=" + shippingFee +
+                ", payTime=" + payTime +
+                ", payAmount=" + payAmount +
+                ", dictPayMethod='" + dictPayMethod + '\'' +
+                ", buyerRemark='" + buyerRemark + '\'' +
+                '}';
+    }
+}

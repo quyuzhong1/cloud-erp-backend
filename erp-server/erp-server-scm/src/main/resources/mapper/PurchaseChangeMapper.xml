@@ -31,6 +31,7 @@
         <result column="invalid_time" property="invalidTime" />
     </resultMap>
 
+
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseChangeDTO$ListDTO">
         select
             pc.id,

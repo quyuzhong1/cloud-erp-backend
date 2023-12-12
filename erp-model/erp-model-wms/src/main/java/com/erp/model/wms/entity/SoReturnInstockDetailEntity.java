@@ -14,7 +14,7 @@ import java.io.Serializable;
  * 销售退货入库单明细表
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Getter
@@ -90,7 +90,7 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String sourceDetailId;
 
     /**
-     * 来源明细id
+     * 退货单详情
      */
     @TableField("so_return_detail_id")
     private String soReturnDetailId;

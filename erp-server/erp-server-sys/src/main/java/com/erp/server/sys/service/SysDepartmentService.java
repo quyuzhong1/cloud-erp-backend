@@ -2,6 +2,10 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.sys.dto.DepartmentDTO;
+import com.erp.model.sys.dto.DeptUserDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -93,9 +97,6 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @param id
      * @param syncKingdeeId
      * @return Boolean
-     * @description: 更新金蝶id、状态
-     * @author Will
-     * @date: 2023/5/4 9:57
      */
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**

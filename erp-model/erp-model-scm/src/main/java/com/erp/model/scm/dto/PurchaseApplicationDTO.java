@@ -723,14 +723,14 @@ public class PurchaseApplicationDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         /**
-         * 明细备注
-         */
-        private String remark;
-
-        /**
          * 付款条件
          */
         private String paymentCondition;
+
+        /**
+         * 明细备注
+         */
+        private String remark;
 
         /**
          * 子集

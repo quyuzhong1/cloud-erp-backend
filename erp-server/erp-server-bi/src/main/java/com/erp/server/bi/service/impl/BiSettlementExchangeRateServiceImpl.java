@@ -1,22 +1,34 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -34,86 +48,42 @@ import java.util.stream.Collectors;
  * @date 2022/12/19 10:00
  */
 @Service
+@Slf4j
 public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlementExchangeRateMapper, BiSettlementExchangeRateEntity>
         implements BiSettlementExchangeRateService {
 
     @Resource
-    private DmpOrderInfoService  dmpOrderInfoService;
-
-    @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
-
-    @Resource
     private MQProducerService mQProducerService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
-    //@Transactional
-    public Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.Default);
-        }
-        Boolean overlap;
-        for (int i = 0; i < list.size();i++) {
-            Map<String, Object> map1 = list.get(i);
-            List<String> settlementDateList1 = (List<String>) map1.get("settlementDateList");
-            if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
-                throw new ServiceException(ApiError.ERROR_97015);
-            }
-            String settlementDateBegin1 = settlementDateList1.get(0);
-            String settlementDateEnd1 = settlementDateList1.get(1);
-            for (int j = i + 1; j < list.size();j++) {
-                Map<String, Object> map2 = list.get(j);
-                List<String> settlementDateList2 = (List<String>) map2.get("settlementDateList");
-                if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
-                    throw new ServiceException(ApiError.ERROR_97015);
+    public PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<BiSettlementExchangeRateDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
+        List<BiSettlementExchangeRateDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            //币别
+            List<String> currencyList = records.stream().flatMap(obj -> Stream.of(obj.getSourceCurrencyCode(), obj.getTargetCurrencyCode())).distinct().collect(Collectors.toList());
+            List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
+
+            for (BiSettlementExchangeRateDTO.ListDTO listDTO : records) {
+                if (CollectionUtils.isNotEmpty(viewList)) {
+                    //原币名称
+                    String sourceCurrencyName = viewList.stream().filter(obj -> obj.getId().equals(listDTO.getSourceCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    listDTO.setSourceCurrencyName(sourceCurrencyName);
+                    //目标币名称
+                    String targetCurrencyName = viewList.stream().filter(obj -> obj.getId().equals(listDTO.getTargetCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    listDTO.setTargetCurrencyName(targetCurrencyName);
                 }
-                String settlementDateBegin2 = settlementDateList2.get(0);
-                String settlementDateEnd2 = settlementDateList2.get(1);
-                 overlap = isOverlap(settlementDateBegin1, settlementDateEnd1, settlementDateBegin2, settlementDateEnd2);
-                 if (overlap) {
-                     throw new ServiceException(ApiError.ERROR_97010);
-                 }
+                listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
             }
         }
-        List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
-        for (Map<String, Object> map:list) {
-            Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-            List<String> settlementDateList = (List<String>) map.get("settlementDateList");
-            String settlementDateBegin = settlementDateList.get(0);
-            String settlementDateEnd = settlementDateList.get(1);
-            LocalDate beginDate = LocalDate.parse(settlementDateBegin);
-            LocalDate endDate = LocalDate.parse(settlementDateEnd);;
-            if (ObjectUtils.isNotEmpty(iterator)) {
-                while (iterator.hasNext()) {
-                    BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
-                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
-                    String key = entry.getKey().toString();
-                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
-                    if ("settlementDateList".equals(key)) {
-                        continue;
-                    }
-                    String id= IdWorker.getIdStr();
-                    entity.setId(id);
-                    entity.setExchangeRate(MathUtil.valueOf(value));
-                    entity.setSourceCurrencyCode(key);
-                    entity.setTargetCurrencyCode("CNY");
-                    entity.setSettlementDateBegin(beginDate);
-                    entity.setSettlementDateEnd(endDate);
-                    entityList.add(entity);
-                }
-            }
-        }
-        boolean flag = this.saveBatch(entityList);
-        if (flag) {
-            //更新结算汇率
-            updateSettlementExchangeRate(entityList);
-        }
-        return  Boolean.TRUE;
+        return new PagingVO(pageData);
     }
+
+
     /**
      * @description:
      * @author Will
@@ -155,19 +125,154 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return mapList;
     }
 
+
     @Override
-    @Transactional
-    public Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list) {
-        List<BiSettlementExchangeRateEntity> list1 = this.list();
-        if (CollectionUtils.isNotEmpty(list1)) {
-            List<String> ids = list1.stream().map(BiSettlementExchangeRateEntity::getId).collect(Collectors.toList());
-             this.removeByIds(ids);
+    public BiSettlementExchangeRateEntity getByKingdeeId(String kingdeeId) {
+        return lambdaQuery().eq(BiSettlementExchangeRateEntity::getKingdeeId,kingdeeId).one();
+    }
+
+    @Override
+    public String add(BiSettlementExchangeRateDTO.AddDTO addDTO) {
+        BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
+        BeanMapperUtils.copy(addDTO,entity);
+        boolean save = this.save(entity);
+        if (!save) {
+            throw new ServiceException(ApiError.ERROR_1019);
         }
+        return entity.getId();
+    }
+
+    @Override
+    public Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO) {
+        BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
+        BeanMapperUtils.copy(updateDTO,entity);
+        boolean update = this.updateById(entity);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return update;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submit(List<String> ids) {
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()))).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("汇率提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新审核状态
+        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+
+        String type = baseApproveParamDTO.getType();
+
+        log.info("汇率【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+        //审核通过
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            log.info("汇率【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+            //更新单据(后面有流程了调用监听可删)
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+            //更新单据汇率
+            updateSettlementExchangeRate(list);
+        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
+            log.info("汇率【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+            //更新单据状态
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+        }
+
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean disApprove(List<String> ids) {
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //已审核允许反审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        log.info("汇率反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新单据为待提交
+        updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public BigDecimal findByCurrencyAndDate(LocalDate parseDate, String sourceCurrencyCode) {
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(sourceCurrencyCode)) {
+            return BigDecimal.ONE;
+        }
+        if (ObjectUtils.isEmpty(parseDate)) {
+            parseDate = LocalDate.now();
+        }
+        List<BiSettlementExchangeRateEntity> biSettlementExchangeRateEntityList = this.baseMapper.findByCurrencyAndDate(parseDate, sourceCurrencyCode);
+        if(CollUtil.isEmpty(biSettlementExchangeRateEntityList)) {
+            return null;
+        }
+        biSettlementExchangeRateEntityList.sort(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()));
+        BiSettlementExchangeRateEntity biSettlementExchangeRateEntity = biSettlementExchangeRateEntityList.get(0);
+        return biSettlementExchangeRateEntity.getExchangeRate();
+    }
+
+    /**
+     * 根据ids查询数据
+     */
+    private List<BiSettlementExchangeRateEntity> getList(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<BiSettlementExchangeRateEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            return true;
+            throw new ServiceException(ApiError.ERROR_99052);
         }
-        //重新新增数据
-        return this.batchAddSettlementExchangeRate(list);
+        return list;
+    }
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids, String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(BiSettlementExchangeRateEntity::getId, ids)
+                .set(BiSettlementExchangeRateEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
+        this.lambdaUpdate().in(BiSettlementExchangeRateEntity::getId, ids)
+                .set(BiSettlementExchangeRateEntity::getApproveStatus, approveStatus)
+                .set(BiSettlementExchangeRateEntity::getApproveTime,ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus) ? LocalDateTime.now() : null)
+                .update();
     }
 
     /**

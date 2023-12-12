@@ -33,6 +33,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -55,6 +56,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -113,9 +115,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
-
-    @Resource
-    private SoInfoService soInfoService;
 
 
     @Resource
@@ -383,7 +382,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
 
@@ -414,13 +413,16 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(CustomerDTO.AddDTO dto) {
+    public String addAndSubmit(CustomerDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        if (result) {
+            return id;
+        }
+        return "";
 
     }
 
@@ -942,8 +944,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
-            queryWrapper.last(permissionSql +" ORDER BY create_time DESC");
-        }else{
+            queryWrapper.last(permissionSql + " ORDER BY create_time DESC");
+        } else {
             queryWrapper.last(" ORDER BY create_time DESC");
         }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
@@ -1049,6 +1051,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:oms:listCustomerByProperty",keyGenerator = "myKeyGenerator")
     public List<CustomerInfoVO> listCustomerByProperty() {
         return baseMapper.listCustomerByProperty();
     }
@@ -1390,14 +1393,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public CustomerInfoEntity getCustomerById(String id) {
-        if (StringUtils.isEmpty(id)) {
-            return null;
-        }
-        return this.getById(id);
-    }
-
-    @Override
     public CustomerInfoEntity getByName(String customerName) {
 
         return this.lambdaQuery().eq(CustomerInfoEntity::getName, customerName).
@@ -1411,6 +1406,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return this.lambdaQuery().eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).
                 in(CustomerInfoEntity::getName, customerNameList).list();
+    }
+
+    @Override
+    public CustomerInfoEntity getCustomerById(String id) {
+        if (StringUtils.isEmpty(id)) {
+            return null;
+        }
+        return this.getById(id);
     }
 
     /**

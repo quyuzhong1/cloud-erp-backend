@@ -103,9 +103,14 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_MACHINE_INFO = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_machine_info";
 
     /**
-     * 销售订单
+     * 销售订单(金蝶推送)
      */
     public static final String SYNC_KINGDEE_SO_INFO = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_info";
+
+    /**
+     * 销售订单
+     */
+    public static final String SYNC_KINGDEE_SO_INFO1 = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_info1";
 
     /**
      * 销售订单变更
@@ -113,9 +118,14 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_SO_CHANGE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_change";
 
     /**
-     * 销售出库
+     * 销售出库(金蝶推送)
      */
     public static final String SYNC_KINGDEE_SO_OUTSTOCK = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock";
+
+    /**
+     * 销售出库
+     */
+    public static final String SYNC_KINGDEE_SO_OUTSTOCK1 = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock1";
 
     /**
      * 销售退货单
@@ -124,7 +134,7 @@ public class RocketMqConsumerGroup {
     /**
      * 订单 oms推送到dmp
      */
-    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
+    public static final String SYNC_OMS_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
 
     /**
      * 委外订单

@@ -1,0 +1,295 @@
+package com.erp.server.tms.service.impl;
+
+
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.LogisticsAuthDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.mapper.LogisticsAuthMapper;
+import com.erp.server.tms.service.*;
+import io.seata.common.util.CollectionUtils;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.*;
+
+/**
+ * <p>
+ * 物流授权表 服务实现类
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-11-02
+ */
+@Slf4j
+@Service
+public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapper, LogisticsAuthEntity> implements LogisticsAuthService {
+    @Autowired
+    private OperateLogService operateLogService;
+    @Autowired
+    private CommonService commonService;
+    @Resource
+    private LogisticsRegistry logisticsRegistry;
+    @Autowired
+    private LogisticsSupplierService logisticsSupplierService;
+
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+
+    @Autowired
+    private LogisticsAuthFieldService logisticsAuthFieldService;
+
+    @Resource
+    private LogisticsSaleChannelService  logisticsSaleChannelService;
+
+
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(LogisticsAuthDTO.AddDTO addDTO) {
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(addDTO.getMainId());
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        LogisticsAuthEntity logisticsAuthEntity = new LogisticsAuthEntity();
+        BeanMapperUtils.copy(addDTO, logisticsAuthEntity);
+        // 数据处理
+        handleData(logisticsAuthEntity);
+        boolean save = super.save(logisticsAuthEntity);
+        if (!save) {
+            throw new ServiceException("物流授权单保存失败");
+        }
+        supplierEntity.setAuthTime(LocalDateTime.now());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.ALREADY.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
+        //保存或者修改授权字段
+        logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), addDTO.getFieldMap());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流授权单", logisticsAuthEntity.getId());
+        operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
+
+        return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
+    }
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.UpdateDTO update(LogisticsAuthDTO.UpdateDTO updateDTO) {
+        LogisticsAuthEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权单"));
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(updateDTO.getMainId());
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+
+        LogisticsAuthEntity logisticsAuthEntity = BeanMapperUtils.map(LogisticsAuthEntity.class, updateDTO);
+        // 数据处理
+        handleData(logisticsAuthEntity);
+        boolean save = super.updateById(logisticsAuthEntity);
+        if (!save) {
+            throw new ServiceException("物流授权单保存失败");
+        }
+        supplierEntity.setAuthTime(LocalDateTime.now());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.ALREADY.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
+        //保存或者修改授权字段
+        logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), updateDTO.getFieldMap());
+        return new BaseResultDTO.UpdateDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
+
+    }
+
+    @Override
+    public LogisticsAuthDTO.ViewDTO view(String mainId) {
+        LogisticsAuthEntity authEntity = this.getByMainId("", mainId);
+        if (Objects.isNull(authEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+        }
+        LogisticsAuthDTO.ViewDTO view = new LogisticsAuthDTO.ViewDTO();
+        BeanMapperUtils.copy(authEntity, view);
+        List<LogisticsAuthFieldEntity> authFieldList = logisticsAuthFieldService.listByLogisticsAuthId(authEntity.getId());
+        Map<String, String> map = new HashMap<>();
+        for (LogisticsAuthFieldEntity item : authFieldList) {
+            map.put(item.getFieldCode(), item.getFieldValue());
+        }
+        view.setFieldMap(map);
+        return view;
+    }
+
+    @Override
+    public LogisticsAuthEntity getByMainId(String id, String mainId) {
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+    }
+
+    @Override
+    public LogisticsSupplierDTO.AuthDTO getAuthByChannelId(String channelId) {
+        return baseMapper.getAuthByChannelId(channelId);
+    }
+
+    @Override
+    public ApiResult authLogistics(String id, String logisticsPlatform) {
+        LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+        if (Objects.isNull(service)){
+            return ApiResult.error(-1,"功能未开发");
+        }
+        Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
+        if (Objects.isNull(authConfig)){
+            return ApiResult.error(-1,"未找到配置信息");
+        }
+        ApiResult authorization = service.authorization(authConfig);
+        return authorization;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateLogisticsAuthStatus(String mainId, String authStatus) {
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        supplierEntity.setAuthStatus(authStatus);
+        logisticsSupplierService.updateById(supplierEntity);
+    }
+
+    public LogisticsAuthEntity getDbByMainId(String mainId){
+        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancel(String mainId) {
+        LogisticsAuthEntity entity = this.getDbByMainId(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流授权");
+        }
+        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(mainId);
+        if (Objects.isNull(supplierEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        String authStatus = supplierEntity.getAuthStatus();
+        if (!LogisticsAuthStatusEnum.ALREADY.getCode().equals(authStatus)) {
+            throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
+        }
+        this.removeById(entity.getId());
+        supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.NOT.getCode());
+        logisticsSupplierService.updateById(supplierEntity);
+        return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
+
+    }
+
+    @Override
+    public LogisticsAuthDTO.ViewDTO getViewByChannelId(String channelId) {
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(channelId);
+        if (Objects.nonNull(channelEntity)) {
+            return this.view(channelEntity.getMainId());
+
+        }
+
+        return new LogisticsAuthDTO.ViewDTO();
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(LogisticsAuthEntity logisticsAuthEntity) {
+        // TODO 验证数据 & 数据赋值
+        String mainId = logisticsAuthEntity.getMainId();
+        LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
+        LogisticsAuthEntity authEntity = this.getByMainId(logisticsAuthEntity.getId(), mainId);
+        if (Objects.nonNull(authEntity)) {
+            throw new ServiceException("物流商该平台授权信息已存在");
+        }
+        if (Objects.isNull(logisticsSupplier)) {
+            throw new ServiceException("物流商不存在");
+        }
+        logisticsAuthEntity.setName(logisticsSupplier.getSupplierName());
+
+    }
+
+    /**
+     * @param id
+     * @param mainId
+     * @param logisticsPlatform
+     * @return
+     */
+    private LogisticsAuthEntity getByMainIdAndPlatform(String id, String mainId, String logisticsPlatform) {
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).
+                eq(LogisticsAuthEntity::getMainId, mainId).
+                eq(LogisticsAuthEntity::getLogisticsPlatform, logisticsPlatform).
+                last("LIMIT 1").one();
+    }
+
+    @Override
+    public Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform) {
+        Map<String, String> map = new HashMap<>();
+        List<LogisticsAuthFieldEntity> fieldEntities = null;
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
+            return service.getLogisticsAuthConfig(authId);
+        }else {
+            if (StringUtils.isNoneBlank(authId)) {
+                map.put("id", authId);
+                LogisticsAuthEntity authEntity = this.getById(authId);
+                if (Objects.isNull(authEntity)) return null;
+                map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
+                fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+            }
+            if (CollectionUtils.isNotEmpty(fieldEntities)) {
+                fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+                });
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public List<Map<String, String>> getLogisticsAuthByPlatform(String platform) {
+        if (StringUtils.isBlank(platform)) return Collections.emptyList();
+        List<LogisticsAuthEntity> list = lambdaQuery().eq(LogisticsAuthEntity::getLogisticsPlatform, platform)
+                .eq(LogisticsAuthEntity::getIsDeleted, false).list();
+        if (CollectionUtils.isEmpty(list)) return Collections.emptyList();
+        List<Map<String, String>> mapList = new ArrayList<>(list.size());
+        list.forEach(logisticsAuthEntity -> {
+            Map<String, String> map = new HashMap<>();
+            map.put("id", logisticsAuthEntity.getId());
+            map.put("logisticsPlatform", platform);
+            List<LogisticsAuthFieldEntity> fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
+            if (CollectionUtils.isNotEmpty(fieldEntities)) {
+                fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                    map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
+                });
+                mapList.add(map);
+            }
+        });
+        return mapList;
+    }
+
+    @Override
+    public void syncUpdateSaleChannel(String authId,String logisticsPlatform) {
+        Map<String, String>  authConfig=  this.getLogisticsAuthConfig(authId,logisticsPlatform);
+        logisticsSaleChannelService.asyncUpdateSaleChannel(authConfig);
+    }
+}

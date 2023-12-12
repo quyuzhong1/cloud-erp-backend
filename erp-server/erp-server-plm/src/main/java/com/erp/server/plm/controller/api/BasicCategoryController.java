@@ -110,16 +110,7 @@ public class BasicCategoryController extends BaseController {
      */
     @GetMapping("/drop/down")
     public ApiResult<List<CategoryControllerDTO.CategoryDropDownDTO>> listCategoryDropDown(@RequestParam(name = "grade",defaultValue = "2", required = false) Integer grade){
-        List<BasicCategoryEntity> list = categoryService.lambdaQuery()
-                .ne(2 == grade, BasicCategoryEntity::getPid,"0")
-                .eq(1 == grade, BasicCategoryEntity::getPid,"0")
-                .list();
-        if(CollectionUtil.isEmpty(list)){
-            return success(new ArrayList<>());
-        }
-        List<CategoryControllerDTO.CategoryDropDownDTO> result = list.stream()
-                .map(CategoryControllerDTO.CategoryDropDownDTO::new)
-                .collect(Collectors.toList());
+        List<CategoryControllerDTO.CategoryDropDownDTO> result = categoryService.listCategoryDropDown(grade);
         return success(result);
     }
 

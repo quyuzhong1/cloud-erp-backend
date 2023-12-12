@@ -23,7 +23,49 @@
         <module>erp-sdk-third-guanyi</module>
         <module>erp-sdk-third-kingdee</module>
         <module>erp-sdk-oms-shopify</module>
+        <module>erp-sdk-tms-disifang</module>
+        <module>erp-sdk-tms-express</module>
+        <module>erp-sdk-tms-shopee</module>
+        <module>erp-sdk-tms-ubi</module>
+        <module>erp-sdk-tms-track123</module>
+        <module>erp-sdk-tms-yanwen</module>
+        <module>erp-sdk-tms-weishi</module>
+        <module>erp-sdk-tms-yuntu</module>
+        <module>erp-sdk-tms-tongyou</module>
+        <module>erp-sdk-tms-aliexpress</module>
+        <module>erp-sdk-oms-aliexpress</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-common-business</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>spring-cloud-context</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-cloud-commons</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-cloud-netflix-archaius</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-cloud-netflix-ribbon</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-cloud-starter</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
     <profiles>
         <profile>

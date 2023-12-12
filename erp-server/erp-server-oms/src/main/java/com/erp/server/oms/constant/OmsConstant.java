@@ -46,5 +46,15 @@ public interface OmsConstant {
      */
     String WAIT_SUBMIT = "waitSubmit";
 
+    /**
+     * 已匹配
+     */
+    String ALREADY = "already";
+
+    /**
+     * 未匹配
+     */
+    String NOT = "not";
+
 
 }

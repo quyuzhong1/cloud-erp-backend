@@ -1,10 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.BasicCategoryTreeDTO;
-import com.erp.model.plm.dto.SaveBasicCategoryDTO;
-import com.erp.model.plm.dto.UpdateBasicNameDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 
 import java.util.List;
@@ -90,4 +87,17 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * 通过子类id或名称获取到父级的分类
      */
     BasicCategoryDTO getParentCategoryByParam(Map<String, String> params);
+
+    /**
+     * 获取品类列表
+     * @return
+     */
+    List<BasicCategoryEntity> getCategoryList();
+
+    /**
+     * 品类列表
+     * @param grade
+     * @return
+     */
+    List<CategoryControllerDTO.CategoryDropDownDTO> listCategoryDropDown(Integer grade);
 }

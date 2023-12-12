@@ -66,8 +66,10 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             return;
         }
         List<PurchaseChangeDetailEntity> list = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //采购变更id赋值
+        list.forEach(obj -> obj.setPurchaseChangeId(purchaseChangeId));
         //验证数量、单价是否符合供应商报价
-        checkPurchasePrice(list,purchaseChangeId);
+        checkPurchasePrice(list,Arrays.asList(purchaseChangeId));
         //计算金额
         doOpCalculateAmount(list,purchaseChangeId,Boolean.TRUE);
         this.saveBatch(list);
@@ -91,8 +93,10 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             this.removeByIds(deleteIds);
         }
         List<PurchaseChangeDetailEntity> newList = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //采购变更id赋值
+        newList.forEach(obj -> obj.setPurchaseChangeId(purchaseChangeId));
         //验证数量、单价是否符合供应商报价
-        checkPurchasePrice(newList,purchaseChangeId);
+        checkPurchasePrice(newList,Arrays.asList(purchaseChangeId));
         //计算金额
         doOpCalculateAmount(newList,purchaseChangeId,Boolean.FALSE);
         this.saveOrUpdateBatch(newList);
@@ -154,12 +158,13 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
      * @author Will
      * @date: 2023/4/3 16:44
      */
-    private void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,String purchaseChangeId) {
+    @Override
+    public void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,List<String> purchaseChangeIdList) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        PurchaseChangeEntity purchaseChangeEntity = purchaseChangeService.getById(purchaseChangeId);
-        if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
+        List<PurchaseChangeEntity> purchaseChangeEntityList = purchaseChangeService.listByIds(purchaseChangeIdList);
+        if (CollectionUtils.isEmpty(purchaseChangeEntityList)) {
             throw new ServiceException(ApiError.ERROR_98042);
         }
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -195,7 +200,13 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                     throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于入库数量【%s】",purchaseChangeDetailEntity.getSkuNo(),stockInQty)));
                 }
             }
+            //采购变更单主表
+            PurchaseChangeEntity purchaseChangeEntity = purchaseChangeEntityList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseChangeId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
+                throw new ServiceException(ApiError.ERROR_98042);
+            }
 
+            //采购订单明细
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98026);
@@ -206,6 +217,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 purchaseChangeDetailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 purchaseChangeDetailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
                 purchaseChangeDetailEntity.setPrice(BigDecimal.ZERO);
+                purchaseChangeDetailEntity.setTaxRate(BigDecimal.ZERO);
                 continue;
             }
 
@@ -218,6 +230,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
+            purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(viewDTO.getTaxRate(),MathUtil.BigDecimal_100));
         }
     }
 }

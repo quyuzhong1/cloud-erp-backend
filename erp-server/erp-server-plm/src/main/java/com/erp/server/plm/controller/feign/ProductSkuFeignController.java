@@ -96,6 +96,7 @@ public class ProductSkuFeignController {
 
     /**
      * 通过子类id或名称获取到父级的分类
+     *
      * @author Jim
      */
     @PostMapping("/parentCategory")
@@ -375,5 +376,20 @@ public class ProductSkuFeignController {
             return Collections.emptyList();
         }
         return productSaleService.listBySkuIds(skuIds);
+    }
+
+    /**
+     * @description: 根据skuid查询产品信息
+     * @author Will
+     * @date: 2023/11/16 15:16
+     * @param skuIds
+     * @return List<ProductDTO>
+     */
+    @PostMapping("/listProductBySkuIds")
+    public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        return productInfoService.listProductBySkuIds(skuIds);
     }
 }

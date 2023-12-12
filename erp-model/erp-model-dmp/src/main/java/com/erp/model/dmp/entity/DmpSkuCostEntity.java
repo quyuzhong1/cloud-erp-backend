@@ -1,7 +1,10 @@
 package com.erp.model.dmp.entity;
 
 import java.math.BigDecimal;
+
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -9,6 +12,8 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import javax.json.JsonObject;
 
 
 /**
@@ -25,6 +30,11 @@ import lombok.experimental.Accessors;
 @TableName("dmp_sku_cost")
 public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
 
+    /**
+     * skuId
+     */
+    @TableField("sku_id")
+    private String skuId;
 
     /**
     * sku编号
@@ -51,10 +61,23 @@ public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
     private Boolean status;
 
     /**
-    * 成本价格
+    * 成本价格（含税）
     */
     @TableField("cost_price")
     private BigDecimal costPrice;
+
+    /**
+     * 成本价格（不含税）
+     */
+    @TableField("not_tax_cost_price")
+    private BigDecimal notTaxCostPrice;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
 
     /**
      * 最近的采购日期3个月前的日期
@@ -67,6 +90,12 @@ public class DmpSkuCostEntity extends BaseEntity<DmpSkuCostEntity> {
      */
     @TableField("latest_purchase_date")
     private LocalDate latestPurchaseDate;
+
+    /**
+     * bom子级SKU
+     */
+    @TableField(value = "bom_sku_json", typeHandler = JacksonTypeHandler.class)
+    private JSONObject bomSkuJson;
 
 
     public static final String SKU_NO = "sku_no";

@@ -62,5 +62,10 @@ public interface ProductConstant {
      */
     Integer PRODUCT_TASK_EXPORT = 1;
 
+    /**
+     * 带电标识
+     */
+    String IS_ELECTRIC="isElectric";
+
 
 }

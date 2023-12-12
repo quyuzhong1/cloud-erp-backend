@@ -156,11 +156,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
-    private SubcontractOrderService subcontractOrderService;
-
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Autowired
-    private WarehouseLocationFeign warehouseLocationFeign;
+    private SubcontractOrderService subcontractOrderService;
+
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -173,29 +173,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
-        //清空明细数据
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
         //数据赋值处理
         doOpHandlePurchaseOrder(records);
-        List<String> list = new ArrayList<>();
-        for (PurchaseOrderDTO.ListDTO obj : records) {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setTypeName(null);
-                obj.setSupplierName(null);
-                obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setCreateUserName(null);
-                continue;
-            }
-            list.add(obj.getId());
-        }
         return new PagingVO(pageData);
     }
 
@@ -1254,7 +1237,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
             }
         }
 
@@ -2200,6 +2183,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
         return list;
+    }
+
+    @Override
+    public List<SkuCostDTO> listPurchaseOrderCost(SkuCostDTO.ParamDTO paramDTO) {
+        return baseMapper.listPurchaseOrderCost(paramDTO);
     }
 
 }

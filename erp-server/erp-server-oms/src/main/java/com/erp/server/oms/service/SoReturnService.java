@@ -18,7 +18,7 @@ import java.util.List;
  *  服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 public interface SoReturnService extends SuperService<SoReturnEntity> {

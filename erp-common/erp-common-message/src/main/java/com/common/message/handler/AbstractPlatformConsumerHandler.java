@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 销售订单处理器抽象类
@@ -33,12 +35,20 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             if (!handle.isSuccess()) {
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
                 updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());
+                //异常预警
+                sendWarnMsg(dmpSyncTaskId);
                 return;
             }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
+            if (BusinessCommonConstants.hasProfile("test") || BusinessCommonConstants.hasProfile("dev")){
+                log.error("测试环境【test/dev】暂时跳过发送平台数据消费异常", e);
+                return;
+            }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
+            //异常预警
+            sendWarnMsg(dmpSyncTaskId);
         }
     }
 
@@ -48,6 +58,11 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * @param code
      */
     public abstract void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg);
+
+    /**
+     * 预警
+     */
+    public abstract void sendWarnMsg(String syncTaskId);
 
     /**
      * 处理平台数据

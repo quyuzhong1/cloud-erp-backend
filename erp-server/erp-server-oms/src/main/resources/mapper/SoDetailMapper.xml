@@ -142,7 +142,6 @@
         sd.is_close,
         sd.remark,
         sd.delivery_status,
-        si.approve_status,
         sd.kingdee_detail_id,
         sd.platform_sku_no,
         sd.purchase_price,

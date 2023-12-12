@@ -22,7 +22,7 @@ public class BiSalesMonitoringSearchDTO extends PermissionsDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ParamDTO extends PermissionsDTO{
+    public static class ParamDTO extends BiFilterDTO{
 
         /**
          * 考核维度（销售额 salesAmount、销量 salesQty）
@@ -35,6 +35,17 @@ public class BiSalesMonitoringSearchDTO extends PermissionsDTO {
          */
         @NotNull(message = "搜索类型不能为空")
         private Integer searchType;
+
+        /**
+         * 数据权限
+         * 1-自己,2-部门,3-全部
+         */
+        private Integer dataScope;
+
+        /**
+         * 拼接的sql
+         */
+        private String permissionSql;
     }
 
 }

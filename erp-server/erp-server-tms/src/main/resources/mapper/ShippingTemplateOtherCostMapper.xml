@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.dto.ShippingCalculationDTO$ListDTO">
+        <result column="logisticsName" property="logisticsName" />
+        <result column="channelName" property="channelName" />
+        <result column="feeRule" property="feeRule" />
+        <result column="isApiSign" property="isApiSign" />
+        <result column="isApiInsurance" property="isApiInsurance" />
+        <result column="toCountry" property="toCountry" />
+        <result column="toWarehouseName" property="toWarehouseName" />
+        <result column="region" property="region" />
+        <result column="effectiveDate" property="effectiveDate" />
+        <result column="expireDate" property="expireDate" />
+        <result column="weightUnit" property="weightUnit" />
+        <result column="volumeSetting" property="volumeSetting" />
+        <result column="currency" property="currency" />
+        <result column="templateId" property="templateId"  />
+        <result column="billingMethod" property="billingMethod" />
+        <result column="priceBinary" property="priceBinary" />
+        <result column="templateRuleId" property="templateRuleId"  />
+        <result column="startWeight" property="startWeight" />
+        <result column="endWeight" property="endWeight" />
+        <result column="firstWeight" property="firstWeight" />
+        <result column="firstWeightShippingCost" property="firstWeightShippingCost" />
+        <result column="additionalUnitWeight" property="additionalUnitWeight" />
+        <result column="additionalPrice" property="additionalPrice" />
+        <result column="shippingPrice" property="shippingPrice" />
+        <result column="registrationCost" property="registrationCost" />
+        <result column="operatingCost" property="operatingCost" />
+        <result column="minCost" property="minCost" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, dict_code, dict_name, calculation_method, calculation_unit, cost_setting_value, extend_json, remark
+    </sql>
+
+    <!-- 计费重 -->
+    <sql id="billing_weight_sql" >
+        <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
+            case when #{params.volume} / st.volume_setting > #{params.weight}   then
+            <include refid="volume_weight_sql"></include>
+            else
+            <include refid="net_weight_sql"></include>
+            end
+        </if>
+        <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
+            case when (#{params.volume} / st.volume_setting) * 1000 > #{params.weight}   then
+            <include refid="volume_weight_sql"></include>
+            else
+            <include refid="net_weight_sql"></include>
+            end
+        </if>
+    </sql>
+    
+    <!-- 体积重-->
+    <sql id="volume_weight_sql">
+        <if test="params.weightUnit != null " >
+            case st.weight_unit when 'kg' then
+            #{params.volume} / st.volume_setting > str.start_weight and str.end_weight >= #{params.volume} / st.volume_setting
+            else
+            (#{params.volume} / st.volume_setting) * 1000 > str.start_weight and str.end_weight >= (#{params.volume} / st.volume_setting) * 1000
+            end
+        </if>
+    </sql>
+
+    <!-- 实重-->
+    <sql id="net_weight_sql">
+        <if test="params.weightUnit != null and params.weightUnit == 'kg'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.weight} > str.start_weight and str.end_weight >= #{params.weight}
+            else
+            #{params.weight} * 1000 > str.start_weight and str.end_weight >= #{params.weight} * 1000
+            end
+        </if>
+        <if test="params.weightUnit != null and params.weightUnit == 'g'.toString()" >
+            case st.weight_unit when 'kg' then
+            #{params.weight} / 1000 > str.start_weight and str.end_weight >= #{params.weight} / 1000
+            else
+            #{params.weight}  > str.start_weight and str.end_weight >= #{params.weight}
+            end
+        </if>
+    </sql>
+
+    <!-- 运费计算列表 -->
+    <select id="paging" resultMap="BaseResultMap">
+        select
+            ls.supplier_name as logisticsName,
+            lc.name as channelName,
+            lc.fee_rule as feeRule,
+            lc.is_api_sign as isApiSign,
+            lc.is_api_insurance as isApiInsurance,
+            st.id as templateId,
+            st.billing_method as billingMethod,
+            str.id as templateRuleId,
+            str.start_weight as startWeight,
+            str.end_weight as endWeight,
+            str.first_weight_shipping_cost as firstWeightShippingCost,
+            str.first_weight as firstWeight,
+            str.first_weight_shipping_cost as firstWeightShippingCost,
+            str.additional_unit_weight as additionalUnitWeight,
+            str.additional_price as additionalPrice,
+            str.shipping_price as shippingPrice,
+            str.registration_cost as registrationCost,
+            str.operating_cost as operatingCost,
+            str.min_cost as minCost,
+            str.to_country as toCountry,
+            str.to_warehouse_name as toWarehouseName,
+            str.region as region,
+            st.price_binary as priceBinary,
+            st.effective_date as  effectiveDate,
+            st.expire_date as  expireDate,
+            st.weight_unit as weightUnit,
+            st.volume_setting as volumeSetting,
+            st.currency
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
+        inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
+        inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
+        <where>
+            ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
+            DAY' or st.expire_date is null)
+            and case lc.fee_rule
+                    when 'billingWeight' then
+                        <include refid="billing_weight_sql"></include>
+                     when 'netWeight' then
+                        <include refid="net_weight_sql"></include>
+                     when 'volumeWeight' then
+                        <include refid="volume_weight_sql"></include>
+                     end
+            <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
+                and str.from_country in
+                <foreach collection="params.fromCountryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.toCountryList != null and params.toCountryList.size > 0">
+                and str.to_country in
+                <foreach collection="params.toCountryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.toWarehouseList != null and params.toWarehouseList.size > 0">
+                and str.to_warehouse_name in
+                <foreach collection="params.toWarehouseList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.city != null and params.city != ''">
+                and str.id in (select shipping_template_rule_id from shipping_region_city where is_deleted = false and str.region = region and city = #{params.city})
+            </if>
+            <if test="params.channelIdList != null and params.channelIdList.size > 0">
+                and lc.id in
+                <foreach collection="params.channelIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by ls.id desc , lc.id desc,st.id desc , str.id desc
+    </select>
+    <!--所有的-->
+    <select id="listRefCost" resultType="com.erp.model.tms.dto.ShippingCalculationDTO$ListDTO">
+        select
+        lc.name as channelName,
+        lc.id as channelId,
+        lc.fee_rule as feeRule,
+        lc.is_api_sign as isApiSign,
+        lc.is_api_insurance as isApiInsurance,
+        st.id as templateId,
+        st.billing_method as billingMethod,
+        str.id as templateRuleId,
+        str.start_weight as startWeight,
+        str.end_weight as endWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.first_weight as firstWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.additional_unit_weight as additionalUnitWeight,
+        str.additional_price as additionalPrice,
+        str.shipping_price as shippingPrice,
+        str.registration_cost as registrationCost,
+        str.operating_cost as operatingCost,
+        str.min_cost as minCost,
+        str.to_country as toCountry,
+        str.to_warehouse_name as toWarehouseName,
+        str.region as region,
+        st.price_binary as priceBinary,
+        st.effective_date as  effectiveDate,
+        st.expire_date as  expireDate,
+        st.weight_unit as weightUnit,
+        st.volume_setting as volumeSetting,
+        st.currency
+        from logistics_channel lc
+        inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
+        inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
+        inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
+        <where>
+            lc.is_deleted = false and lc.disabled = false
+            and st.disabled = false
+            and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
+            DAY' or st.expire_date is null)
+            and case lc.fee_rule
+            when 'billingWeight' then
+            <include refid="billing_weight_sql"></include>
+            when 'netWeight' then
+            <include refid="net_weight_sql"></include>
+            when 'volumeWeight' then
+            <include refid="volume_weight_sql"></include>
+            end
+            <!--起始地-->
+            <if test="params.fromCountry != null and params.fromCountry!=''">
+                and str.from_country =#{params.fromCountry}
+            </if>
+            <!--目的地-->
+            <if test="params.toCountry != null and params.toCountry!=''">
+                and str.to_country =#{params.toCountry}
+            </if>
+        </where>
+        order  by lc.id desc,st.id desc , str.id desc
+    </select>
+
+    <!-- 运费计算导出 -->
+    <select id="listByExportExcel" resultMap="BaseResultMap">
+        select
+        ls.supplier_name as logisticsName,
+        lc.name as channelName,
+        lc.fee_rule as feeRule,
+        lc.is_api_sign as isApiSign,
+        lc.is_api_insurance as isApiInsurance,
+        st.id as templateId,
+        st.billing_method as billingMethod,
+        str.id as templateRuleId,
+        str.start_weight as startWeight,
+        str.end_weight as endWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.first_weight as firstWeight,
+        str.first_weight_shipping_cost as firstWeightShippingCost,
+        str.additional_unit_weight as additionalUnitWeight,
+        str.additional_price as additionalPrice,
+        str.shipping_price as shippingPrice,
+        str.registration_cost as registrationCost,
+        str.operating_cost as operatingCost,
+        str.min_cost as minCost,
+        str.to_country as toCountry,
+        str.to_warehouse_name as toWarehouseName,
+        str.region as region,
+        st.price_binary as priceBinary,
+        st.effective_date as  effectiveDate,
+        st.expire_date as  expireDate,
+        st.weight_unit as weightUnit,
+        st.volume_setting as volumeSetting,
+        st.currency
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        inner join shipping_template_ref_channel strc on strc.logistics_channel_id = lc.id and strc.is_deleted = false
+        inner join shipping_template st on strc.main_id = st.id and st.is_deleted = false
+        inner join shipping_template_rule str on str.main_id = st.id and str.is_deleted = false
+        <where>
+            ls.is_deleted = false and ls.disabled = false and st.disabled = false and  now() >st.effective_date and  (st.expire_date > now()::TIMESTAMP + INTERVAL '1
+            DAY' or st.expire_date is null)
+            and case lc.fee_rule when 'billingWeight' then
+            case when #{params.volume} / st.volume_setting > #{params.weight}   then
+            <include refid="volume_weight_sql"></include>
+            else
+            <include refid="net_weight_sql"></include>
+            end
+            when 'netWeight' then
+            <include refid="net_weight_sql"></include>
+            when 'volumeWeight' then
+            <include refid="volume_weight_sql"></include>
+            end
+            <if test="params.fromCountryList != null and params.fromCountryList.size > 0">
+                and str.from_country in
+                <foreach collection="params.fromCountryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.toCountryList != null and params.toCountryList.size > 0">
+                and str.to_country in
+                <foreach collection="params.toCountryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.toWarehouseList != null and params.toWarehouseList.size > 0">
+                and str.to_warehouse_name in
+                <foreach collection="params.toWarehouseList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.city != null and params.city != ''">
+                and str.id in (select shipping_template_rule_id from shipping_region_city where is_deleted = false and str.region = region and city = #{params.city})
+            </if>
+            <if test="params.channelIdList != null and params.channelIdList.size > 0">
+                and lc.id in
+                <foreach collection="params.channelIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by ls.id desc , lc.id desc,st.id desc , str.id desc
+    </select>
+
+
+
+</mapper>

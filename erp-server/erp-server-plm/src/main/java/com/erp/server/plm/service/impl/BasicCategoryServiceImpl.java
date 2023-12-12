@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -23,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -434,6 +436,28 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         BeanUtils.copyProperties(parentEntity, dto);
         return dto;
 
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:plm:getCategoryList",keyGenerator = "myKeyGenerator")
+    public List<BasicCategoryEntity> getCategoryList() {
+        return lambdaQuery().list();
+    }
+
+    @Override
+    @Cacheable(cacheNames = "cache:plm:listCategoryDropDown",keyGenerator = "myKeyGenerator")
+    public List<CategoryControllerDTO.CategoryDropDownDTO> listCategoryDropDown(Integer grade) {
+        List<BasicCategoryEntity> list = this.lambdaQuery()
+                .ne(2 == grade, BasicCategoryEntity::getPid,"0")
+                .eq(1 == grade, BasicCategoryEntity::getPid,"0")
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<CategoryControllerDTO.CategoryDropDownDTO> result = list.stream()
+                .map(CategoryControllerDTO.CategoryDropDownDTO::new)
+                .collect(Collectors.toList());
+        return result;
     }
 
     /**

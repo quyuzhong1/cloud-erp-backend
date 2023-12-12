@@ -121,13 +121,6 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     List<PurchaseOrderDTO.PdaPurchaseOrder> pdaList(PurchaseOrderDTO.PdaPurchaseOrderParam dto);
 
     /**
-     * 获取首批采购日期
-     * @param ids
-     * @return
-     */
-    List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
-
-    /**
      * 根据采购日期查询采购采购单
      * @Author Luo_WG
      * @Date 2023/9/13 18:46
@@ -135,4 +128,19 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
      **/
     List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
+
+    /**
+     * 获取首批采购日期
+     * @param ids
+     * @return
+     */
+    List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
+    /**
+     * @description: 根据skuId集合查询采购成本数据
+     * @author Will
+     * @date: 2023/11/23 16:26
+     * @param paramDTO
+     * @return List<SkuCostDTO>
+     */
+    List<SkuCostDTO> listPurchaseOrderCost(@Param("params") SkuCostDTO.ParamDTO paramDTO);
 }

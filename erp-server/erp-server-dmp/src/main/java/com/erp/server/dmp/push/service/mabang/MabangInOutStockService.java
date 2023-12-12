@@ -41,11 +41,11 @@ public interface MabangInOutStockService {
 
     /**
      * 手工出入库
-     * @param dmpSyncTaskEntity
+     * @param dmpPullTaskEntity
      * @param mabangInOutStock
      * @param inventoryInOutEnum
      */
-    void sendToMabangInOutStock(DmpPullTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum);
+    void sendToMabangInOutStock(DmpPullTaskEntity dmpPullTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum);
 
     /**
      * 未配置监控仓库通知

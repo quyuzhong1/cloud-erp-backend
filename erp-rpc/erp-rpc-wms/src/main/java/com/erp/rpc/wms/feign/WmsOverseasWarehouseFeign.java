@@ -1,0 +1,32 @@
+package com.erp.rpc.wms.feign;
+
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+@FeignClient(name = "erp-wms", contextId = "overseasWarehouseFeign")
+public interface WmsOverseasWarehouseFeign {
+
+    /**
+     * 根据入库状态查询入库单号
+     **/
+    @PostMapping("/feign/overseasWarehouse/getReceiptNumbersForStatus")
+    List<String> getReceiptNumbersForStatus(@RequestBody List<String> statusList);
+
+    /**
+     * 根据仓库code查询仓库信息
+     **/
+    @PostMapping("/feign/overseasWarehouse/getOverseasWarehouseListByPlatformCodes")
+    List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCodes(@RequestParam(value = "warehouseCodeList") List<String> warehouseCodeList, @RequestParam(value = "platform")String platform);
+
+    /**
+     * 根据erp仓库id 集合获取到海外仓
+     * @return
+     */
+    @PostMapping("/feign/overseasWarehouse/listByWarehouseId")
+    List<OverseasProviderWarehouseEntity> listByWarehouseIdList(@RequestBody List<String> warehouseIdList);
+}

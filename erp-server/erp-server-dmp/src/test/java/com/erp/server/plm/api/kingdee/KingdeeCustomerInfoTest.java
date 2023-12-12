@@ -2,7 +2,7 @@ package com.erp.server.plm.api.kingdee;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 
 import java.util.Arrays;

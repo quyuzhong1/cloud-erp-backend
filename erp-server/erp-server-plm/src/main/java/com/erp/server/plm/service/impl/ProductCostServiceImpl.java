@@ -1,12 +1,19 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.utils.RedisUtil;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.ProductCostDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
@@ -36,10 +43,9 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     private ProductCostMapper productCostMapper;
 
     @Resource
-    private ProductPurchaseService productPurchaseService;
+    private RedisUtil redisUtil;
 
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
+
 
     /**
      * @Description 产品成本信息查询列表
@@ -51,17 +57,20 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     @Override
     public List<ProductCostShowDTO> list(String productId) {
         List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.list(productId);
-        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
-        List<String> supplierIdList = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-        for (ProductCostShowDTO showDTO : productCostShowDTOList) {
-            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(showDTO.getMainSupplier()) && req.getSkuId().equals(showDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                //不含税价=含税价÷（1+税率）
-                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-                showDTO.setActualNoTaxCost(actualNotTaxCost);
-                //含税价
-                showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+        if (CollectionUtils.isNotEmpty(productCostShowDTOList)) {
+            for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
+                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
+                DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+                BigDecimal actualTaxCost = BigDecimal.ZERO;
+                BigDecimal actualNoTaxCost = BigDecimal.ZERO;
+                if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
+                    actualTaxCost = dmpSkuCostEntity.getCostPrice();
+                    actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
+                }
+                //含税单价
+                productCostShowDTO.setActualTaxCost(actualTaxCost);
+                //不含税单价
+                productCostShowDTO.setActualNoTaxCost(actualNoTaxCost);
             }
         }
         return productCostShowDTOList;
@@ -78,17 +87,20 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     @Override
     public List<ProductCostShowDTO> listBySkuId(String skuId) {
         List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.listBySkuId(skuId);
-        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.listBySkuId(skuId);
-        List<String> supplierIdList = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).collect(Collectors.toList());
-        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-        for (ProductCostShowDTO showDTO : productCostShowDTOList) {
-            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(showDTO.getMainSupplier()) && req.getSkuId().equals(showDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                //不含税价=含税价÷（1+税率）
-                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
-                showDTO.setActualNoTaxCost(actualNotTaxCost);
-                //含税价
-                showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+        if (CollectionUtils.isNotEmpty(productCostShowDTOList)) {
+            for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
+                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
+                DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+                BigDecimal actualTaxCost = BigDecimal.ZERO;
+                BigDecimal actualNoTaxCost = BigDecimal.ZERO;
+                if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
+                    actualTaxCost = dmpSkuCostEntity.getCostPrice();
+                    actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
+                }
+                //含税单价
+                productCostShowDTO.setActualTaxCost(actualTaxCost);
+                //不含税单价
+                productCostShowDTO.setActualNoTaxCost(actualNoTaxCost);
             }
         }
         return productCostShowDTOList;

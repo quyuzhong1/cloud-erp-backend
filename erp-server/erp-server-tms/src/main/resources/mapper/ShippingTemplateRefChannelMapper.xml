@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.ShippingTemplateRefChannelMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.ShippingTemplateRefChannelEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, logistics_channel_id
+    </sql>
+
+    <!-- 根据主表ids查询 -->
+    <select id="listByMainIds" resultType="com.erp.model.tms.dto.ShippingTemplateRefChannelDTO$ViewDTO">
+        select
+               strc.id,
+               strc.main_id as mainId,
+               strc.logistics_channel_id as logisticsChannelId,
+               lc.name as logisticsChannelName,
+               ls.id as logisticsSupplierId,
+               ls.supplier_name as logisticsSupplierName
+        from shipping_template_ref_channel strc
+        inner join logistics_channel lc on lc.id = strc.logistics_channel_id and lc.is_deleted = false
+        inner join logistics_supplier ls on lc.main_id = ls.id and ls.is_deleted = false
+        <where>
+            strc.is_deleted = false
+            <if test="mainIdList != null and mainIdList.size > 0">
+                and strc.main_id in
+                <foreach collection="mainIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="listChannelIdList" resultType="com.erp.model.tms.entity.ShippingTemplateRefChannelEntity">
+        select
+            strc.id,
+            strc.main_id as mainId,
+            strc.logistics_channel_id as logisticsChannelId,
+            st.name as shippingTemplateName
+        from shipping_template_ref_channel strc
+        inner join shipping_template st on st.id = strc.main_id
+        and st.is_deleted = false
+        where strc.is_deleted = false
+        <if test="channelIdList != null and channelIdList.size > 0">
+            and strc.logistics_channel_id in
+            <foreach collection="channelIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

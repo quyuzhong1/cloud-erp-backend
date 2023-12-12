@@ -12,6 +12,7 @@ public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
 
 
+
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单","purchase_application"),
@@ -46,14 +47,26 @@ public enum SourceTypeEnum {
     WAREHOUSE("warehouse", "仓库","warehouse"),
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
+    FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
+    FIRST_MILE_DELIVERY("firstMileDelivery", "发货单","first_mile_delivery"),
+    FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
+    OVERSEAS_DELIVERY_PLAN("overseasDeliveryPlan", "海外发货计划","overseas_delivery_plan"),
+    OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
+    REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
 
 
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
-    SO_INFO("soInfo", "销售订单","so_info"),
+    SO_INFO("soInfo", "B2B销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
+    SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
+    CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    SHOP( "shop", "店铺","shop_info"),
+    CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
+    CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
+    LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
 
@@ -63,10 +76,13 @@ public enum SourceTypeEnum {
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
     STK_TRANSFERDIRECT("STK_TransferDirect", "金蝶直接调拨单",""),
-    BD_RATE("BD_Rate", "金蝶汇率管理",""),
+    BD_RATE("BD_Rate", "汇率列表",""),
+
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    PRODUCT_COMBINATION("productCombination", "组合产品",""),
+
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
@@ -78,7 +94,34 @@ public enum SourceTypeEnum {
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
+    LOGISTICS_SUPPLIER("logisticsSupplier","物流商",""),
+    LOGISTICS_WAREHOUSE("logisticsWarehouse","物流仓库",""),
+    //物流系统操作方式
+    LOGISTICS_CREATE_ORDER("createOrder", "物流系统创建订单","dmp_push_task"),
+    LOGISTICS_CONFIRM_ORDER("confirmOrder", "物流系统确认订单","dmp_push_task"),
+    LOGISTICS_UPDATE_ORDER("updateOrder", "物流系统更新订单","dmp_push_task"),
+    LOGISTICS_INTERCEPT_ORDER("interceptOrder", "物流系统拦截订单","dmp_push_task"),
+    LOGISTICS_QUERY_ORDER("queryOrder", "物流系统查询订单","dmp_pull_task"),
+    LOGISTICS_GET_LABEL("getLabel", "物流系统获取标签","dmp_pull_task"),
+    LOGISTICS_GET_TRACK("getTrack", "物流系统轨迹查询","dmp_pull_task"),
+    LOGISTICS_REGISTER_TRACK("registerTrack", "物流系统注册物流单",""),
+    LOGISTICS_GET_LABEL_LIST("getLabelList", "物流系统批量获取标签","dmp_pull_task"),
+    LOGISTICS_GET_CHANEL_LIST("getChanelList", "物流系统批量渠道列表","dmp_pull_task"),
+    LOGISTICS_CANCEL_ORDER("cancelOrder", "物流系统取消订单","dmp_push_task"),
 
+    THIRD_WAREHOUSE("thirdWarehouse","第三方仓库",""),
+    THIRD_WAREHOUSE_GET_SKU("thirdWarehouseGetSku", "第三方仓产品数据拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_WAREHOUSE("thirdWarehouseGetWarehouse", "第三方仓仓库数据拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_BASE_ADDRESS("thirdWarehouseGetBaseAddress", "第三方仓地址基础信息拉取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_INBOUND_RECEIPT("thirdWarehouseGetInboundReceipt", "第三方仓签收数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT("thirdWarehouseGetOutboundReceipt", "第三方仓出库数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_INVENTORY("thirdWarehouseGetInventory", "第三方仓库存获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_GET_TRANSIT_WAREHOUSE_AND_LOGISTIC("thirdWarehouseGetTransitWarehouseAndLogistic", "第三方仓中转仓及支持的物流产品基础数据获取","dmp_pull_task"),
+    THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓入库单创建接口","dmp_push_task"),
+    THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓入库单编辑接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓入库单取消接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓订单发货对接海外仓出库创建接口","dmp_push_task"),
+    THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓出库取消接口","dmp_push_task"),
     ;
 
     /**
@@ -119,6 +162,15 @@ public enum SourceTypeEnum {
             }
         }
 
+        return "";
+    }
+
+    public static String getTableName(String type) {
+        for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
+            if (type.equals(sourceTypeEnum.getCode())) {
+                return sourceTypeEnum.getTableName();
+            }
+        }
         return "";
     }
 

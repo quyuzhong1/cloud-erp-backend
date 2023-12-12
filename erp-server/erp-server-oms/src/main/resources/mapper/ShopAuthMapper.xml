@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ShopAuthMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ShopAuthEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="shop_id" property="shopId" />
+       <result column="token" property="token" />
+       <result column="access_token " property="accessToken" />
+       <result column="expires_in " property="expiresIn" />
+       <result column="app_client_id " property="appClientId" />
+       <result column="type " property="type" />
+       <result column="refresh_token " property="refreshToken" />
+       <result column="shopee_id " property="shopeeId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        shop_id, token, access_token , expired_time , app_client_id ,type,refresh_token,shopee_id
+    </sql>
+
+    <select id="getShopeeShopList" resultType="com.erp.model.oms.entity.ShopAuthEntity">
+        SELECT
+            auth.*
+        FROM
+            shop_auth auth
+                LEFT JOIN shop_info info ON auth.shop_id = info.id
+        WHERE
+            auth.is_deleted = FALSE
+        <if test="status != null and status != ''">
+            and info.auth_status = #{status}
+        </if>
+        <if test="type != null and type != ''">
+            and auth.type = #{type}
+        </if>
+
+    </select>
+    <select id="getAuthShopByPlatformType" resultType="com.erp.model.oms.entity.ShopAuthEntity">
+        SELECT
+            auth.*
+        FROM
+            shop_auth auth
+                LEFT JOIN shop_info info ON auth.shop_id = info."id" and info.auth_status = 'already'
+        WHERE
+            auth.is_deleted = FALSE
+            and info.is_deleted = FALSE
+            and dict_platform = #{platformType}
+    </select>
+</mapper>

@@ -1,0 +1,236 @@
+package com.erp.server.tms.service.logistics;
+
+import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.LogisticsPlatformType;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.utils.ValidatorUtil;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.RequestStatusEnums;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
+import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.response.CancelResponseVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsOrderConverter;
+import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsOperateService;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
+import com.sdk.tms.yanwen.dto.request.YanWenCancelOrderRequest;
+import com.sdk.tms.yanwen.dto.request.YanWenCreateWayBillRequest;
+import com.sdk.tms.yanwen.dto.request.YanWenGetLabelRequest;
+import com.sdk.tms.yanwen.dto.request.YanWenQueryOrderRequest;
+import com.sdk.tms.yanwen.dto.response.*;
+import com.sdk.tms.yanwen.server.YanWenService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
+
+
+/**
+ * 燕文物流接口处理器
+ */
+@Slf4j
+@Component
+@LogisticsPlatformType(LogisticsPlatformEnum.YAN_WEN)
+public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
+    @Resource
+    private YanWenService yanWenService;
+
+    @Override
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
+        try {
+            YanWenResponse<List<YanWenChannel>> yanWenResponse =  yanWenService.getAllChannel(chanelQueryVO.getAuthMap());
+            if(!yanWenResponse.getSuccess()){
+                logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yanWenResponse));
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
+            }
+            List<LogisticsSaleChannelEntity> response = LogisticsChannelConverter.INSTANCE.channelConvertByYanWenList(yanWenResponse.getData());
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(yanWenResponse));
+            return success(response);
+        }catch (Exception e){
+            log.error("燕文渠道接口异常：{}",e.getMessage());
+            logisticsOperateService.pullOperateLog(chanelQueryVO.getAuthMap().get("id"),
+                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+
+    }
+
+    @Override
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        YanWenCreateWayBillRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYanWen(logisticsOrderVO);
+        ValidatorUtil.validateEntity(request);
+        try {
+            YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getAuthMap());
+            if(!yanWenResponse.getSuccess()){
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                        logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
+            }
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+            return success(LogisticsOrderResponseVO.builder()
+                    .transportNo(yanWenResponse.getData().getWaybillNumber())
+                    .deliveryNo(yanWenResponse.getData().getOrderNumber())
+                    .trackNo(yanWenResponse.getData().getWaybillNumber())
+                    .build());
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getAuthMap().get("id"),
+                    logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e));
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+
+    }
+
+
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> labelVO) {
+        List<LogisticsPrintLabelResponse> result = new ArrayList<>();
+        boolean isSuccess = true;
+        for(LogisticsGetLabelVO logisticsGetLabelVO : labelVO){
+            YanWenGetLabelRequest request = YanWenGetLabelRequest.builder()
+                    .waybillNumber(logisticsGetLabelVO.getTransportNo())
+                    .printRemark(logisticsGetLabelVO.getPrintRemark())
+                    .build();
+            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            try {
+                ValidatorUtil.validateEntity(request);
+                YanWenResponse<YanWenGetLabel> labelResponse = yanWenService.getLabel(request,logisticsGetLabelVO.getAuthMap());
+                if(!labelResponse.getSuccess()){
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                            logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
+                    response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),labelResponse.getMessage());
+                    isSuccess = false;
+                }else {
+                    response.setBase64(labelResponse.getData().getBase64String());
+                    response.setTransportNoList(Collections.singletonList(labelResponse.getData().getWaybillNumber()));
+                    response.setDeliveryNoList(Collections.singletonList(logisticsGetLabelVO.getDeliveryNo()));
+                    result.add(response);
+                    logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                            logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(labelResponse));
+                }
+            }catch (Exception e){
+                logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getAuthMap().get("id"),
+                        logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsGetLabelVO), JSONUtil.toJsonStr(e));
+                response.failure(getPlatForm().getName(),logisticsGetLabelVO.getDeliveryNo(),e.getMessage());
+                isSuccess = false;
+            }
+            result.add(response);
+        }
+        return isSuccess?success(result):failure(result);
+    }
+
+    @Override
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> cancelOrderVOList) {
+        List<CancelResponseVO> result = new ArrayList<>();
+        boolean isSuccess = true;
+        for(LogisticsCancelOrderVO cancelOrderVO : cancelOrderVOList){
+            YanWenCancelOrderRequest request = YanWenCancelOrderRequest.builder()
+                    .note(cancelOrderVO.getReason())
+                    .waybillNumber(cancelOrderVO.getTransportNo())
+                    .build();
+            CancelResponseVO cancelResponseVO = LogisticsOperationOrderConverter.INSTANCE.cancelOrderCovert(cancelOrderVO);
+            try {
+                ValidatorUtil.validateEntity(request);
+                YanWenResponse<String> yanWenResponse = yanWenService.cancelOrder(request,cancelOrderVO.getAuthMap());
+                if(!yanWenResponse.getSuccess()){
+                    isSuccess = false;
+                    cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),yanWenResponse.getMessage());
+                    logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                            cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                }else{
+                    cancelResponseVO.success();
+                    logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                            cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yanWenResponse));
+                }
+            }catch (Exception e){
+                isSuccess = false;
+                cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),e.getMessage());
+                logisticsOperateService.pushOperateLog(cancelOrderVO.getAuthMap().get("id"),
+                        cancelOrderVO.getDeliveryNo(), BusinessTypeEnum.CANCEL_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(e));
+            }
+
+            result.add(cancelResponseVO);
+        }
+        return isSuccess?success(result):failure(result);
+    }
+
+    @Override
+    public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList){
+        List<String> deliveryList = logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList());
+        YanWenQueryOrderRequest request = YanWenQueryOrderRequest.builder()
+                .listNumber(deliveryList)
+                .build();
+        ValidatorUtil.validateEntity(request);
+        try {
+            YanWenResponse<List<YanWenQueryOrder>> yanWenResponse = yanWenService.queryOrder(request,logisticsQueryVOList.get(0).getAuthMap());
+            if(!yanWenResponse.getSuccess()){
+                logisticsOperateService.pullOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+                        UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yanWenResponse));
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code,yanWenResponse.getMessage());
+            }
+            List<LogisticsOrderResponseVO> list = LogisticsOrderConverter.INSTANCE.orderQueryByYanWen(yanWenResponse.getData());
+            logisticsOperateService.pullOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+                    UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(yanWenResponse));
+            return success(list);
+        }catch (Exception e){
+            logisticsOperateService.pullOperateLog(logisticsQueryVOList.get(0).getAuthMap().get("id"),
+                    UUID.randomUUID().toString(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.YAN_WEN.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVOList), JSONUtil.toJsonStr(e));
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+
+    }
+    /**
+     * 授权判断
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult authorization(Map<String, String> authMap){
+        try {
+            YanWenResponse<List<YanWenChannel>> yanWenResponse = yanWenService.getAllChannel(authMap);
+            if (!yanWenResponse.getSuccess()) {
+                //授权失败
+                return failure("授权失败");
+            }else {
+                return success("授权成功");
+            }
+        } catch (Exception e) {
+            return failure(getPlatForm().getName() + ":" + e.getMessage());
+        }
+    }
+    @Override
+    public LogisticsPlatformEnum getPlatForm() {
+        return LogisticsPlatformEnum.YAN_WEN;
+    }
+}

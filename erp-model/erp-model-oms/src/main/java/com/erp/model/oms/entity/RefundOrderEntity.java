@@ -1,0 +1,132 @@
+package com.erp.model.oms.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+/**
+ * <p>
+ * 退款订单
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-08-25
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("refund_order")
+public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
+
+    /**
+     * 退款单号
+     */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * 店铺名称
+     */
+    @TableField("shop_name")
+    private String shopName;
+
+    /**
+     * 平台订单号
+     */
+    @TableField("platform_order_no")
+    private String platformOrderNo;
+
+    /**
+     * 平台退款单号
+     */
+    @TableField("platform_refund_no")
+    private String platformRefundNo;
+
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+
+    /**
+     * 退款金额
+     */
+    @TableField("refund_amount")
+    private BigDecimal refundAmount;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币别符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
+     * 退款原因
+     */
+    @TableField("reason")
+    private String reason;
+
+    /**
+     * 退款时间
+     */
+    @TableField("refund_time")
+    private Date refundTime;
+
+
+    public static final String CODE = "code";
+
+    public static final String DICT_PLATFORM = "dict_platform";
+
+    public static final String SHOP_ID = "shop_id";
+
+    public static final String SHOP_NAME = "shop_name";
+
+    public static final String PLATFORM_ORDER_NO = "platform_order_no";
+
+    public static final String PLATFORM_REFUND_NO = "platform_refund_no";
+
+    public static final String STATUS = "status";
+
+    public static final String REFUND_AMOUNT = "refund_amount";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String CURRENCY_SYMBOL = "currency_symbol";
+
+    public static final String REASON = "reason";
+
+    public static final String REFUND_TIME = "refund_time";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

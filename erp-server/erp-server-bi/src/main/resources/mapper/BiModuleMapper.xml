@@ -8,7 +8,7 @@
         bm1.state, bm1.view_code,bs.name AS sysModuleName
         FROM bi_module AS bm1
         INNER JOIN bi_sys_module bs ON  bs.id=bm1.sys_module_id
-        WHERE NOT EXISTS(SELECT 1 FROM bi_module AS bm2 WHERE code LIKE 'bi:indicator:%' AND bm1."id" = bm2."id")
+        WHERE NOT EXISTS(SELECT 1 FROM bi_module AS bm2 WHERE code ILIKE 'bi:indicator:%' AND bm1."id" = bm2."id")
             <if test="params.searchKeyword!=null and params.searchKeyword!=''">
                AND (bm1.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
                      OR bs.name ILIKE concat('%',#{params.searchKeyword}::text,'%')

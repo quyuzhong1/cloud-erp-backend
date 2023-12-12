@@ -220,6 +220,17 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "clean_cost_price")
     private BigDecimal cleanCostPrice;
 
+    /**
+     * 清洗前成本价
+     */
+    @TableField(value = "original_cost_price")
+    private BigDecimal originalCostPrice;
+
+    /**
+     * 清洗前销售额
+     */
+    @TableField(value = "original_amount_after")
+    private BigDecimal originalAmountAfter;
 
 
     /**

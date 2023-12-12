@@ -1,12 +1,12 @@
 package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.model.dmp.constant.TaskConstant;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.constant.TaskConstant;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.server.dmp.pull.service.IReportHistoryService;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportHistoryService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -40,13 +40,35 @@ public class PullGyyHistoryJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET.getTaskName());
             return ReturnT.SUCCESS;
         }
-        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
+        JobTaskDTO jobTaskDTO = getJobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
         // 执行拉取任务
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET);
         historyDeliveryService.pullHistoryOrderInfo(requestDTO);
         XxlJobHelper.log("GyyDeliveryHistory 任务执行结束！");
         return ReturnT.SUCCESS;
+    }
+
+    public static JobTaskDTO getJobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setId(entity.getId());
+        jobTaskDTO.setDictPlatform(entity.getDictPlatform());
+        jobTaskDTO.setIntervalTime(entity.getIntervalTime());
+        jobTaskDTO.setLastTime(entity.getLastTime());
+        jobTaskDTO.setNextTime(entity.getNextTime());
+        jobTaskDTO.setStatus(entity.getStatus());
+        jobTaskDTO.setCreateTime(entity.getCreateTime());
+        jobTaskDTO.setApiCode(entity.getApiCode());
+        jobTaskDTO.setApiName(entity.getApiName());
+        jobTaskDTO.setRetryTimes(entity.getRetryTimes());
+        jobTaskDTO.setShopName(entity.getShopName());
+        jobTaskDTO.setShopId(entity.getShopId());
+        jobTaskDTO.setBillType(entity.getBillType());
+        jobTaskDTO.setOperateType(entity.getOperateType());
+        jobTaskDTO.setApiParam(entity.getApiParam());
+        jobTaskDTO.setPlatformApiId(entity.getPlatformApiId());
+        jobTaskDTO.setPlatformCategory(entity.getPlatformCategory());
+        return jobTaskDTO;
     }
 
     @XxlJob("GyyOrderHistory")
@@ -58,7 +80,7 @@ public class PullGyyHistoryJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET.getTaskName());
             return ReturnT.SUCCESS;
         }
-        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
+        JobTaskDTO jobTaskDTO = getJobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
         // 执行拉取任务
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET);

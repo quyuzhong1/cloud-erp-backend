@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsChannelAddressMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsChannelAddressEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="address_id" property="addressId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        logistics_channel_id, shop_id, shop_name, address_id
+    </sql>
+    <select id="listByChannelId" resultType="com.erp.model.tms.dto.LogisticsChannelAddressDTO$ViewDTO">
+        SELECT
+            lca.id,lca.shop_id,
+            lca.shop_name,lca.address_id,
+            la.name AS logisticsAddressName,
+            la.type AS logisticsAddressType
+        FROM logistics_channel_address lca
+        INNER JOIN logistics_address la
+        ON la.id=lca.address_id
+        AND la.is_deleted=false
+        WHERE lca.is_deleted=false
+        AND lca.logistics_channel_id=#{channelId}
+
+    </select>
+
+
+</mapper>

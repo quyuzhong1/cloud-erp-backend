@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsBillCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsBillCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="reconciliation_status" property="reconciliationStatus" />
+       <result column="channel_id" property="channelId" />
+       <result column="logistics_bill_id" property="logisticsBillId" />
+       <result column="actual_weight" property="actualWeight" />
+       <result column="volume_weight" property="volumeWeight" />
+       <result column="billing_weight" property="billingWeight" />
+       <result column="estimated_shipping_cost " property="estimatedShippingCost" />
+       <result column="billing_weight_logistics" property="billingWeightLogistics" />
+       <result column="actual_shipping_cost" property="actualShippingCost" />
+       <result column="diff_shipping_cost" property="diffShippingCost" />
+       <result column="currency" property="currency" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, actual_shipping_cost, diff_shipping_cost, currency, remark
+    </sql>
+
+    <!-- tab列表 -->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TabListDTO">
+        select
+        reconciliation_status as tabFlag,
+        count(id) as count
+        from logistics_bill_cost lbc
+        where lbc.is_deleted = false and lbc.reconciliation_status in ('toBeConfirm','confirmed')
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        group by lbc.reconciliation_status
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+        select
+            lbc.id,
+            lb.source_type as sourceType,
+            lbc.reconciliation_status as reconciliationStatus,
+            lc.name as channelName,
+            lbc.transport_no as transportNo,
+            lbd.transportStatus,
+            lbc.actual_weight as actualWeight,
+            lbc.volume_weight as volumeWeight,
+            lbc.billing_weight as billingWeight,
+            lbc.estimated_shipping_cost as estimatedShippingCost,
+            lbc.billing_weight_logistics as billingWeightLogistics,
+            lbc.actual_shipping_cost as actualShippingCost,
+            lbc.diff_shipping_cost as diffShippingCost,
+            lb.sales_platform as salesPlatform,
+            lb.source_id as sourceId,
+            lb.source_code as sourceCode,
+            lb.outstock_code as outstockCode,
+            lb.to_country as toCountry,
+            lbc.customer_name as customerName,
+            lb.order_time as orderTime,
+            lb.delivery_time as deliveryTime,
+            lbc.remark,
+            lbc.weight_unit as weightUnit,
+            lbc.currency
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join (
+            select main_id,max(track_status) as transportStatus from logistics_bill_detail where is_deleted = false  group by main_id
+        ) lbd on lb.id = lbd.main_id
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            lbc.is_deleted = false
+            <if test="params.sourceType != null and params.sourceType != ''">
+                and lb.source_type = #{params.sourceType}
+            </if>
+            <if test="params.remark != null and params.remark != ''">
+                and lbc.remark iLIKE concat('%',#{params.remark}::text,'%')
+            </if>
+            <if test="params.codeList != null and params.codeList.size > 0">
+                and lbc.transport_no in
+                <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size > 0">
+                and lbc.reconciliation_status in
+                <foreach collection="params.reconciliationStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and lb.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.sourceCodeList != null and params.sourceCodeList.size > 0">
+                and lb.source_code in
+                <foreach collection="params.sourceCodeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.channelIdList != null and params.channelIdList.size > 0">
+                and lbc.channel_id in
+                <foreach collection="params.channelIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.transportStatusList != null and params.transportStatusList.size > 0">
+                and lbd.transportStatus in
+                <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.diffOptionList != null and params.diffOptionList.size > 0">
+                and
+                <foreach collection="params.diffOptionList" item="item" open="(" close=")" separator="or">
+                    <if test="item == 'greater'">
+                        lbc.diff_shipping_cost > 0
+                    </if>
+                    <if test="item == 'less'">
+                        0 > lbc.diff_shipping_cost
+                    </if>
+                    <if test="item == 'equal'">
+                        lbc.diff_shipping_cost = 0
+                    </if>
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.deliveryTimeList != null and params.deliveryTimeList.size != ''">
+                and lbc.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > lbc.delivery_time
+            </if>
+            <if test="params.orderTimeList != null and params.orderTimeList.size != ''">
+                and lbc.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+                DAY' ) > lbc.order_time
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        lbc.id desc
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listByExportExcel" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ListDTO">
+        select
+            lbc.id,
+            lb.source_type as sourceType,
+            lbc.reconciliation_status as reconciliationStatus,
+            lc.name as channelName,
+            lbc.transport_no as transportNo,
+            lbd.transportStatus,
+            lbc.actual_weight as actualWeight,
+            lbc.volume_weight as volumeWeight,
+            lbc.billing_weight as billingWeight,
+            lbc.estimated_shipping_cost as estimatedShippingCost,
+            lbc.billing_weight_logistics as billingWeightLogistics,
+            lbc.actual_shipping_cost as actualShippingCost,
+            lbc.diff_shipping_cost as diffShippingCost,
+            lb.sales_platform as salesPlatform,
+            lb.source_id as sourceId,
+            lb.source_code as sourceCode,
+            lb.outstock_code as outstockCode,
+            lb.to_country as toCountry,
+            lbc.customer_name as customerName,
+            lb.order_time as orderTime,
+            lb.delivery_time as deliveryTime,
+            lbc.remark,
+            lbc.weight_unit as weightUnit,
+            lbc.currency
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join (
+        select main_id,max(track_status) as transportStatus from logistics_bill_detail where is_deleted = false  group by main_id
+        ) lbd on lb.id = lbd.main_id
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            lbc.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and lbc.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.sourceType != null and params.sourceType != ''">
+                    and lb.source_type = #{params.sourceType}
+                </if>
+                <if test="params.remark != null and params.remark != ''">
+                    and lbc.remark iLIKE concat('%',#{params.remark}::text,'%')
+                </if>
+                <if test="params.codeList != null and params.codeList.size > 0">
+                    and lbc.transport_no in
+                    <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size > 0">
+                    and lbc.reconciliation_status in
+                    <foreach collection="params.reconciliationStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                    and lb.shop_id in
+                    <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.sourceCodeList != null and params.sourceCodeList.size > 0">
+                    and lb.source_code in
+                    <foreach collection="params.sourceCodeList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.channelIdList != null and params.channelIdList.size > 0">
+                    and lbc.channel_id in
+                    <foreach collection="params.channelIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.transportStatusList != null and params.transportStatusList.size > 0">
+                    and lbd.transportStatus in
+                    <foreach collection="params.transportStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.diffOptionList != null and params.diffOptionList.size > 0">
+                    and
+                    <foreach collection="params.diffOptionList" item="item" open="(" close=")" separator="or">
+                        <if test="item == 'greater'">
+                            lbc.diff_shipping_cost > 0
+                        </if>
+                        <if test="item == 'less'">
+                            0 > lbc.diff_shipping_cost
+                        </if>
+                        <if test="item == 'equal'">
+                            lbc.diff_shipping_cost = 0
+                        </if>
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.deliveryTimeList != null and params.deliveryTimeList.size != ''">
+                    and lbc.delivery_time >= #{params.deliveryTimeList[0]} and (#{params.deliveryTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lbc.delivery_time
+                </if>
+                <if test="params.orderTimeList != null and params.orderTimeList.size != ''">
+                    and lbc.order_time >= #{params.orderTimeList[0]} and (#{params.orderTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > lbc.order_time
+                </if>
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        lbc.id desc
+    </select>
+
+
+</mapper>

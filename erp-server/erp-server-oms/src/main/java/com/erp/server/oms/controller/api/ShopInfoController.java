@@ -1,20 +1,35 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 店铺管理
@@ -22,6 +37,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-06-28
  */
+@Slf4j
 @RestController
 @LogSystemModule("店铺管理")
 @RequestMapping("/shop")
@@ -29,6 +45,26 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private ShopInfoService shopInfoService;
+
+    @Resource
+    private ShopCostService shopCostService;
+
+
+    /**
+     * 店铺 分页
+     *
+     * @return
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:paging",
+            tableAlias = "si"
+    )
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
 
 
     /**
@@ -38,9 +74,36 @@ public class ShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加店铺")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
-        String id = shopInfoService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
+       List<ShopInfoEntity> list = shopInfoService.add(dto);
+        return CollectionUtils.isEmpty(list) ? success() : failure();
+    }
+
+    /**
+     * 添加并授权店铺
+     *
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "添加并授权店铺:name={name}")
+    @PostMapping("/addAndAuth")
+    public ApiResult<?> addAndAuth(@RequestBody @Validated ShopDTO.AddDTO dto) {
+        ShopDTO.RedirectDTO redirectDTO = shopInfoService.addAndAuth(dto);
+        return success(redirectDTO);
+    }
+
+
+    /**
+     * 修改并授权店铺
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改并授权店铺")
+    @PostMapping("/updateAndAuth")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:update",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateAndAuth(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
+        ShopDTO.RedirectDTO redirectDTO = shopInfoService.updateAndAuth(dto);
+        return success(redirectDTO);
     }
 
 
@@ -51,11 +114,31 @@ public class ShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改店铺")
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
-        String id = shopInfoService.updateShop(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:update",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
+        ShopInfoEntity shopInfoEntity = shopInfoService.updateShop(dto);
+        return null != shopInfoEntity ? success() : failure();
     }
 
+    /**
+     * 获取店铺详情
+     *
+     * @return
+     */
+    @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:view",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
+    public ApiResult<ShopDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewDTO view = shopInfoService.view(dto.getId());
+        return success(view);
+    }
 
     /**
      * 获取店铺列表
@@ -80,4 +163,180 @@ public class ShopInfoController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 获取已授权店铺
+     * @author Will
+     * @date: 2023/10/18 10:00
+     * @return ApiResult<List<ShopInfoEntity>>
+     */
+    @PostMapping("/listAuth")
+    public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
+        List<ShopInfoEntity> list = shopInfoService.listAuth(platformDTO);
+        return success(list);
+    }
+
+    /**
+     * 获取店铺列表(树状级联)
+     */
+    @GetMapping("/listTree")
+    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree() {
+        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree();
+        return success(list);
+    }
+
+    /**
+     * 店铺账号列表
+     *
+     * @return
+     */
+    @GetMapping("/accountList")
+    public ApiResult accountList() {
+        List<String> list = shopInfoService.accountList();
+        return success(list);
+    }
+
+    /**
+     * 启用或者禁用店铺
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-08-22 14:37
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        Boolean disabled = dto.getDisabled();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                ShopInfoEntity shop = shopInfoService.getById(id);
+                if (Objects.isNull(shop)) {
+                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
+                } else {
+                    flagCode = shop.getName();
+                    submit = shopInfoService.updateStatus(shop, disabled);
+
+                }
+            } catch (Exception e) {
+                log.error("店铺更改状态失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 店铺批量费用设置
+     *
+     * @return
+     */
+    @PostMapping("/batchSetCost")
+    public ApiResult batchSetCost(@RequestBody @Validated ShopDTO.BatchSetCostDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                ShopInfoEntity shop = shopInfoService.getById(id);
+                if (Objects.isNull(shop)) {
+                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
+                } else {
+                    submit = shopCostService.batchSetCost(shop, dto);
+                    flagCode = shop.getName();
+                }
+            } catch (Exception e) {
+                log.error("店铺设置费率失败>>>>{}", e);
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 单个店铺费用设置
+     *
+     * @return
+     */
+    @PostMapping("/setCost")
+    public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
+        Boolean result = shopCostService.setCost(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 单个店铺费用详情
+     *
+     * @return
+     */
+    @PostMapping("/viewCost")
+    public ApiResult<ShopDTO.ViewCostDTO> viewCost(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewCostDTO result = shopCostService.viewCost(dto.getId());
+        return success(result);
+    }
+
+
+    /**
+     * 获取店铺授权地址的url
+     *
+     * @return
+     */
+    @PostMapping("/getShopAuthorizeUrl")
+    public ApiResult getShopAuthorizeUrl(@RequestBody @Validated ShopAuthorizeUrlDTO dto) {
+        String resultUrl = shopInfoService.getShopAuthorizeUrl(dto);
+        return success(resultUrl);
+    }
+
+
+    /**
+     * 店铺授权
+     *
+     * @return
+     */
+    @PostMapping("/shopAuthorize")
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        Boolean result = shopInfoService.shopAuthorize(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 检查店铺是否授权
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("checkShopIsAuthorize")
+    public ApiResult checkShopIsAuthorize(@RequestParam(value = "id") String id) {
+        Boolean checkResult = shopInfoService.checkShopIsAuthorize(id);
+        return success(checkResult);
+    }
+
+    /**
+     * 取消授权
+     *
+     * @return
+     */
+    @PostMapping("/cancelAuthorize")
+    public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
+        Boolean result = shopInfoService.cancelAuthorize(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 查询亚马逊店铺信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 18:56
+     * @return java.util.List<com.erp.model.oms.entity.ShopInfoEntity>
+     **/
+    @GetMapping("/listShopByAmazon")
+    public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {
+        List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
+        return success(result);
+    }
 }

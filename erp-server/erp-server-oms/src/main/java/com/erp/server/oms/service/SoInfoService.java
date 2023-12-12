@@ -1,9 +1,6 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -387,7 +384,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 
-    
+    /**
+     * 推送订单数据到mq
+     * @param soInfoEntity
+     * @param syncOperate
+     */
+    void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate);
+
+
     /**
      * 导出国内的spi 数据
      * @author yl

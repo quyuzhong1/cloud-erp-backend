@@ -75,22 +75,22 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         }
 
         //新增发送任务
-        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
-        dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
-        dmpSyncTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
-        dmpSyncTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
-        dmpSyncTaskEntity.setSourceCode(fbaDeliveryEntity.getDeliveryNo());
-        dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-        dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-        dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
+        dmpPullTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
+        dmpPullTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
+        dmpPullTaskEntity.setSourceCode(fbaDeliveryEntity.getDeliveryNo());
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(fbaDeliveryEntity);
-        dmpSyncTaskEntity.setMqData(mqData);
-        dmpPullTaskService.save(dmpSyncTaskEntity);
+        dmpPullTaskEntity.setMqData(mqData);
+        dmpPullTaskService.save(dmpPullTaskEntity);
 
         if(PlatformEnum.MABANG.getDesc().equals(fbaDeliveryEntity.getPlatformSign())) {
             // 发送到ERP WMS系统，生成加工单
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
                     dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {

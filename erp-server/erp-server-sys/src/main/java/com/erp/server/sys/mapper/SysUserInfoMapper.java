@@ -4,7 +4,6 @@ package com.erp.server.sys.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.erp.model.sys.dto.*;
@@ -69,4 +68,15 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptName") String deptName);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/9/4 12:23
+     * @param query 
+     * @param params 
+     * @return IPage 
+     */
+    IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params,@Param("userIdList") List<String> userIdList);
+
+
 }

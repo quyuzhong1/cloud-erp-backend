@@ -350,4 +350,15 @@ public class PurchaseOrderFeignController {
         return purchaseOrderService.listPurchaseOrderByPurchaseDate(purchaseDateList);
     }
 
+    /**
+     * @description: 根据skuId集合查询成本数据
+     * @author Will
+     * @date: 2023/11/23 16:24
+     * @param paramDTO
+     * @return List<SkuCostDTO>
+     */
+    @PostMapping("/listPurchaseOrderCost")
+    public List<SkuCostDTO> listPurchaseOrderCost(@RequestBody SkuCostDTO.ParamDTO paramDTO) {
+        return purchaseOrderService.listPurchaseOrderCost(paramDTO);
+    }
 }

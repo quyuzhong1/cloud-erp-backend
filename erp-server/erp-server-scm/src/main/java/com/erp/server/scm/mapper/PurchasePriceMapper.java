@@ -41,6 +41,7 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      */
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@Param("ids") List<String> ids);
 
+
     /**
      * @description: 获取所有的供应商价格
      * @author Will
@@ -49,4 +50,6 @@ public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
      * @return List<SupplierSkuPrice>
      */
     List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@Param("ids") List<String> ids);
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -10,6 +11,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * 库存报表管理
@@ -195,6 +198,19 @@ public class InventoryController extends BaseController {
     @PostMapping(value = "/exportInventoryAge")
     public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto, HttpServletResponse response) {
         inventoryService.exportInventoryAge(dto, response);
+    }
+
+    /**
+     * 根据条件查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/11/1 19:27
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.entity.InventoryEntity>
+     **/
+    @PostMapping(value = "/listByParam")
+    public ApiResult<List<InventoryDTO.UsableInventoryViewDTO>> listByParam(@RequestBody ValidList<InventoryDTO.UsableInventoryParamDTO> dto) {
+        List<InventoryDTO.UsableInventoryViewDTO> list = inventoryService.listByParam(dto.getList());
+        return success(list);
     }
 
 }

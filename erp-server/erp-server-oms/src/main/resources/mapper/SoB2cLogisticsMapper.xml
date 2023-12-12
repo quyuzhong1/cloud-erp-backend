@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoB2cLogisticsMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoB2cLogisticsEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="estimated_shipping_cost" property="estimatedShippingCost" />
+       <result column="estimated_shipping_currency" property="estimatedShippingCurrency" />
+       <result column="actual_shipping_cost" property="actualShippingCost" />
+       <result column="actual_shipping_currency" property="actualShippingCurrency" />
+       <result column="weight" property="weight" />
+       <result column="accessories_sku_id" property="accessoriesSkuId" />
+       <result column="accessories_sku_no" property="accessoriesSkuNo" />
+       <result column="accessories_qty" property="accessoriesQty" />
+       <result column="accessories_nw" property="accessoriesNw" />
+       <result column="accessories_cost" property="accessoriesCost" />
+       <result column="accessories_cost_currency" property="accessoriesCostCurrency" />
+       <result column="length" property="length" />
+       <result column="width" property="width" />
+       <result column="height" property="height" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, code, name, logistics_channel_name, delivery_time, estimated_shipping_cost, estimated_shipping_currency, actual_shipping_cost, actual_shipping_currency, weight, accessories_sku_id, accessories_sku_no, accessories_qty, accessories_nw, accessories_cost, accessories_cost_currency, length, width, height
+    </sql>
+
+
+</mapper>

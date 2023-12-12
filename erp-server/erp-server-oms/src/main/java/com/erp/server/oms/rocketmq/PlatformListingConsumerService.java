@@ -1,12 +1,29 @@
 package com.erp.server.oms.rocketmq;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.dto.PlatformProductDTO;
+import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.common.message.handler.AbstractPlatformPullConsumerHandler;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.oms.convert.OmsListingConverter;
+import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
@@ -15,21 +32,27 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 
 /**
- * 下载Shopify商品消费服务
+ * 下载平台商品消费服务
+ *
  * @author Jim
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = "topic",
+@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "third_system_product_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_products_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformPullConsumerHandler<T> {
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-//    @Resource
-//    private ListingInfoService listingInfoService;
+    @Resource
+    private ListingInfoService listingInfoService;
+    @Resource
+    private SkuMappingService skuMappingService;
+
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
@@ -37,18 +60,70 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId,String msg) {
+        DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        mqProducerService.sendWarnMsg(msgInfoDTO);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
-//        PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
-//        // 组合信息
-//        ListingInfoEntity entity = new ListingInfoEntity();
-//        BeanUtils.copyProperties(dto, entity);
-//        entity.setSkuNo("");
-//        entity.setProductName("");
-//        entity.setMatchResult(false);
-//        if (!listingInfoService.save(entity)){
-//            throw new ServiceException("Listing 产品保存失败");
-//        }
+        PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
+        // Shopify来源卖家sku可能为空
+        if (StringUtils.isBlank(dto.getPlatformSkuNo())){
+            log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
+            return ApiResult.success();
+        }
+        // 组合信息
+        // 添加到sku_mapping
+        ListingInfoEntity oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+
+        // 转换
+        ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
+
+        if (null == oldEntity) {
+            if (!listingInfoService.save(entity)) {
+                throw new ServiceException("【listing消费】Listing 产品保存失败");
+            }
+            // 添加到映射
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
+            if(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+            ||OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())){
+                skuMappingEntity.setHasMappingAll(true);
+            }
+            if (!skuMappingService.save(skuMappingEntity)) {
+                throw new ServiceException("【listing消费】SkuMapping保存失败");
+            }
+        } else {
+            // 是否修改
+            if (!oldEntity.toString().equals(entity.toString())) {
+                oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+                oldEntity.setProductImageUrl(entity.getProductImageUrl());
+                oldEntity.setProductSpec(entity.getProductSpec());
+                oldEntity.setProductPacking(entity.getProductPacking());
+                oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
+                oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
+                oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
+                if (!listingInfoService.updateById(oldEntity)) {
+                    throw new ServiceException("Listing 产品更新失败");
+                }
+            }
+
+        }
         return ApiResult.success();
+    }
+
+
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity,String msg) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+        warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTableName(SourceTypeEnum.THIRD_WAREHOUSE_GET_SKU.getTableName());
+        warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
+        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        return warnMsgInfo;
     }
 }

@@ -837,6 +837,37 @@ public class InventoryDTO implements Serializable {
 
 
     /**
+     * 可用库存查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UsableInventoryViewDTO {
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 仓位编码（查询仓库下SKU的库存数量，不要传该字段；查询仓库仓位下的SKU库存数量，请传该字段）
+         */
+        private String warehouseLocation;
+
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+    }
+
+
+    /**
      * 出入库列表分页列表
      */
     @Data
@@ -1279,4 +1310,5 @@ public class InventoryDTO implements Serializable {
          */
         private Integer frozenQty;
     }
+
 }

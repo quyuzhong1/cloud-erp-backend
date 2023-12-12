@@ -10,11 +10,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.push.service.business.KingdeeProductDetailConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -48,7 +47,7 @@ public class KingdeeProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends Ab
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_MATERIAL.getCode());
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         // viewMap.put("id", "391315");
            viewMap.put("number", "DZ1601");
@@ -62,6 +61,11 @@ public class KingdeeProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends Ab
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override

@@ -4,13 +4,17 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SalesDataReportEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
+import com.erp.model.dmp.vo.SyncDataReportVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -20,14 +24,17 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -203,6 +210,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public void cleanOrder(Integer pageSize) {
+        System.setProperty("sun.net.client.defaultConnectTimeout", String
+                .valueOf(20000));// （单位：毫秒）
+        System.setProperty("sun.net.client.defaultReadTimeout", String
+                .valueOf(20000)); // （单位：毫秒）
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .and(wrapper ->
@@ -211,8 +222,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                                 .or().eq(DmpOrderInfoEntity::getDeptId, "")
                                 .or().eq(DmpOrderInfoEntity::getSite, "")
                 )
-                .orderByAsc(DmpOrderInfoEntity::getRetryCount)
-                .orderByAsc(DmpOrderInfoEntity::getId)
+                .orderByAsc(DmpOrderInfoEntity::getRetryCount, DmpOrderInfoEntity::getId)
                 .last("limit " + pageSize)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
@@ -312,6 +322,27 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public List<CleanAmountAfterVO> getCleanOrderList() {
         List<CleanAmountAfterVO> vo = baseMapper.getCleanList();
         return vo;
+    }
+
+    @Override
+    @Async("AsyncDataPhysicalThreadPool")
+    public CompletableFuture<SyncDataReportVO> salesDataToPhysical(SalesDataReportEnum reportEnum) {
+        String threadName = Thread.currentThread().getName();
+        log.info("线程:{} 开始调用，输出：{}",threadName,JSONObject.toJSONString(reportEnum));
+        SyncDataReportVO syncDataReportVO = new SyncDataReportVO();
+        syncDataReportVO.setName(reportEnum.getName());
+        syncDataReportVO.setCode(reportEnum.getCode());
+        try {
+            baseMapper.runSalesDataToPhysicalSql(reportEnum.getCode());
+            syncDataReportVO.setStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
+        } catch (Exception e) {
+            log.info("调用异常：{}", JSONObject.toJSONString(e));
+            syncDataReportVO.setStatus(SyncStatusEnum.FAILED_SYNC.getCode());
+            syncDataReportVO.setMsg(e.getMessage());
+        }
+
+        log.info("线程:{} 结束调用，输出：{}",threadName,JSONObject.toJSONString(reportEnum));
+        return CompletableFuture.completedFuture(syncDataReportVO);
     }
 
     public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber, String platformOrderId, String platformSign) {

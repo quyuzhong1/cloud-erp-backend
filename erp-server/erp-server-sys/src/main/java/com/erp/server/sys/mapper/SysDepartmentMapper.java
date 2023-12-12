@@ -34,6 +34,7 @@ public interface SysDepartmentMapper extends BaseMapper<SysDepartmentEntity> {
      */
     List<SysUserDeptDTO> getByDeptNames(@Param("deptNames") List<String> deptNames);
 
+
     /**
      * 根据部门获取下级全量子集
      *

@@ -264,7 +264,6 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
-
         return resultList;
     }
 

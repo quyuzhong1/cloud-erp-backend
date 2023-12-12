@@ -4,26 +4,24 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.common.business.constant.TaskConstant;
+import com.common.business.dto.RequestDTO;
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.TaskConstant;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
-import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -84,7 +82,7 @@ public class PullKindeeJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.STK_TRANSFERDIRECT.getTaskName());
             return ReturnT.SUCCESS;
         }
-        RequestDTO requestDTO = new RequestDTO(new JobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.STK_TRANSFERDIRECT);
+        RequestDTO requestDTO = new RequestDTO(PullGyyHistoryJob.getJobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.STK_TRANSFERDIRECT);
         try {
             // 处理直接调拨订单
             kingdeeTransferDirectService.pullDataSave(requestDTO);
@@ -119,7 +117,7 @@ public class PullKindeeJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.BD_RATE.getTaskName());
             return ReturnT.SUCCESS;
         }
-        RequestDTO requestDTO = new RequestDTO(new JobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.BD_RATE);
+        RequestDTO requestDTO = new RequestDTO(PullGyyHistoryJob.getJobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.BD_RATE);
         try {
             // 处理汇率
             kingdeeTransferDirectService.pullDataSave(requestDTO);

@@ -92,8 +92,8 @@ public class ApiResult<T>  implements Serializable {
         return apiResult;
     }
 
-    public static ApiResult error(Integer code, String msg) {
-        ApiResult apiResult = new ApiResult();
+    public static <T> ApiResult<T> error(Integer code, String msg) {
+        ApiResult<T> apiResult = new ApiResult<>();
         apiResult.setCode(code);
         apiResult.setMsg(msg);
         return apiResult;
@@ -102,9 +102,14 @@ public class ApiResult<T>  implements Serializable {
     /**
      * 成功时候的调用
      */
-    public static ApiResult<Void> success() {
-        return new ApiResult<Void>(200, "操作成功");
+    public static ApiResult success() {
+        return new ApiResult(200, "操作成功");
     }
 
-
+    /**
+     * 成功时候的调用
+     */
+    public ApiResult success(T data) {
+        return new ApiResult(200, "操作成功", data);
+    }
 }

@@ -54,10 +54,10 @@
             </foreach>
         </if>
         <if test="params.sourceCode != null and params.sourceCode != '' ">
-            and source_code ilike concat('%',#{params.sourceCode}::text,'%')
+            and source_code ilike concat('%',#{params.sourceCode},'%')
         </if>
         <if test="params.returnMsg != null and params.returnMsg != '' ">
-            and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
+            and return_msg ilike concat('%',#{params.returnMsg},'%')
         </if>
         <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
             and target_platform_name = #{params.targetPlatformName}
@@ -114,10 +114,10 @@
                 </foreach>
             </if>
             <if test="params.sourceCode != null and params.sourceCode != '' ">
-                and source_code ilike concat('%',#{params.sourceCode}::text,'%')
+                and source_code ilike concat('%',#{params.sourceCode},'%')
             </if>
             <if test="params.returnMsg != null and params.returnMsg != '' ">
-                and return_msg ilike concat('%',#{params.returnMsg}::text,'%')
+                and return_msg ilike concat('%',#{params.returnMsg},'%')
             </if>
             <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
                 and target_platform_name = #{params.targetPlatformName}
@@ -143,4 +143,29 @@
     </select>
 
 
+    <select id="getEntityByCondition" resultType="com.erp.model.dmp.entity.DmpPushTaskEntity">
+        select <include refid="Base_Column_List"/>
+            from  dmp_push_task
+        <where>
+            <if test="params.sourceType != null and params.sourceType != ''">
+                and source_type = #{params.sourceType}
+            </if>
+            <if test="params.sourceId != null and params.sourceId != ''">
+                and source_id = #{params.sourceId}
+            </if>
+            <if test="params.sourcePlatformName != null and params.sourcePlatformName != ''">
+                and source_platform_name = #{params.sourcePlatformName}
+            </if>
+            <if test="params.targetPlatformName != null and params.targetPlatformName != ''">
+                and target_platform_name = #{params.targetPlatformName}
+            </if>
+            <if test="params.mqTopic != null and params.mqTopic != ''">
+                and mq_topic = #{params.mqTopic}
+            </if>
+            <if test="params.mqTag != null and params.mqTag != ''">
+                and mq_tag = #{params.mqTag}
+            </if>
+        </where>
+        limit 1
+    </select>
 </mapper>

@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
  * 退货单服务实现类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Slf4j
@@ -133,21 +133,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> soDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setType(null);
-                    obj.setApproveStatusName(null);
-                    obj.setApproveStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setCustomerName(null);
-                    obj.setSalesOrgName(null);
-                    obj.setSellerName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setTypeName(BillTypeEnum.getName(obj.getType()));
@@ -164,7 +150,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 obj.setCurrency(soDetailEntity.getCurrency());
                 obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);
@@ -567,6 +552,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+
         //删除详情表
         soReturnDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);

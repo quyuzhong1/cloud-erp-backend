@@ -3,7 +3,7 @@
 <mapper namespace="com.cloud.erp.chrome.mapper.MabanIncomeExpensesMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.MabanIncomeExpensesEntity">
+    <resultMap id="BaseResultMap" type="com.sdk.oms.shopify.chrome.entity.MabanIncomeExpensesEntity">
         <id column="id" property="id" />
         <result column="order_no" property="orderNo" />
         <result column="trade_no" property="tradeNo" />

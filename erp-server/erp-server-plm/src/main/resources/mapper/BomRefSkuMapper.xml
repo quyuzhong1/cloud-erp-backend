@@ -5,6 +5,7 @@
     <select id="listAllBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbi.id as bomId,
+        pbi.serial_number,
         pbi.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
         pbs.sku_id as skuId,
@@ -26,7 +27,7 @@
 
     <select id="listBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
-            pbi.id as bomId,
+           pbi.id as bomId,
            pbi.bom_version as bomVersion,
            pbs.parent_sku_id as parentSkuId,
            pbs.parent_sku_no as parentSkuNo,
@@ -50,6 +51,7 @@
     <select id="listBomChildBySkuNos" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbi.id as bomId,
+        pbi.type,
         pbi.bom_version as bomVersion,
         pbs.parent_sku_id as parentSkuId,
         pbs.parent_sku_no as parentSkuNo,
@@ -163,5 +165,72 @@
                 #{item}
             </foreach>
         </where>
+    </select>
+
+    <select id="listAllParentSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListSkuLevelDTO">
+        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no,quantity ) AS (
+            SELECT sku_id,sku_no, parent_sku_id,parent_sku_no,quantity FROM product_bom_sku
+            WHERE is_deleted = false
+            <if test="params.skuIdList != null and params.skuNoList.size > 0">
+                and sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            UNION
+            SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
+            FROM product_bom_sku st JOIN T ON st.sku_id = T.parent_sku_id and st.is_deleted = false
+        )
+        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
+    </select>
+
+
+    <select id="listBySkuIds" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
+        select
+        pbs.parent_sku_id ,
+        pbs.parent_sku_no ,
+        pbi.serial_number,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pbs.quantity as qty
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            and pbs.parent_sku_id in
+            <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <select id="listAllChildSku" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListSkuLevelDTO">
+        WITH RECURSIVE T ( sku_id,sku_no,parent_sku_id, parent_sku_no ,quantity) AS (
+        SELECT sku_id,sku_no, parent_sku_id,parent_sku_no,quantity FROM product_bom_sku
+        WHERE is_deleted = false
+        <if test="params.skuIdList != null and params.skuIdList.size > 0">
+            and parent_sku_id in
+            <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            and parent_sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        UNION
+        SELECT st.sku_id,st.sku_no,st.parent_sku_id,st.parent_sku_no,st.quantity
+        FROM product_bom_sku st JOIN T ON st.parent_sku_id = T.sku_id and st.is_deleted = false
+        )
+        SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>
 </mapper>

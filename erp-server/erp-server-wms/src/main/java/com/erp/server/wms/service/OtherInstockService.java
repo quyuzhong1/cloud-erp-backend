@@ -1,14 +1,24 @@
 package com.erp.server.wms.service;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OtherInstockDTO;
+import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -161,4 +171,21 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.OtherInstockDTO.PdaListStatusCountDTO>
      **/
     List<OtherInstockDTO.PdaListStatusCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * 新增并审核
+     * @Author Luo_WG
+     * @Date 2023/12/8 9:15
+     * @param dto
+     * @return java.lang.String
+     **/
+    String addAndApprove(OtherInstockDTO.AddDTO dto);
+
+    /**
+     * 海外仓入库生成其他出库单
+     * @param entity
+     * @param detailEntityList
+     * @param remark
+     */
+    String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark,boolean isTransitWarehouse);
 }

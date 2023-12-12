@@ -1,0 +1,207 @@
+package com.erp.model.oms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+
+/**
+ * <p>
+ * B2C销售订单明细表
+ * </p>
+ *
+ * @author Will
+ * @since 2023-08-18
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("so_b2c_detail")
+public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
+
+    /**
+    * 主表id
+    */
+    @TableField("main_id")
+     private String mainId;
+    /**
+    * 图片URL
+    */
+    @TableField("image_url")
+    private String imageUrl;
+    /**
+    * skuId
+    */
+    @TableField("sku_id")
+     private String skuId;
+    /**
+    * 产品sku编号
+    */
+    @TableField("sku_no")
+    private String skuNo;
+    /**
+    * 平台sku编号
+    */
+    @TableField("platform_sku_no")
+     private String platformSkuNo;
+    /**
+    * 平台 产品id
+    */
+    @TableField("platform_spu_no")
+     private String platformSpuNo;
+    /**
+    * 库存sku编号
+    */
+    @TableField("warehouse_sku_no")
+    private String warehouseSkuNo;
+    /**
+    * 数量
+    */
+    @TableField("qty")
+     private Integer qty;
+    /**
+    * 仓库id
+    */
+    @TableField("warehouse_id")
+     private String warehouseId;
+    /**
+    * 仓库名称
+    */
+    @TableField("warehouse_name")
+     private String warehouseName;
+    /**
+    * 单价
+    */
+    @TableField("price")
+    private BigDecimal price;
+    /**
+    * 金额
+    */
+    @TableField("amount")
+    private BigDecimal amount;
+    /**
+    * 币别（原币）
+    */
+    @TableField("currency")
+     private String currency;
+    /**
+    * 汇率
+    */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
+    /**
+    * 建议售价（本位币）
+    */
+    @TableField("advice_price")
+    private BigDecimal advicePrice;
+    /**
+    * 含税成本（本位币）
+    */
+    @TableField("tax_cost")
+     private BigDecimal taxCost;
+    /**
+    * 来源明细id
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
+    * 标签json
+    */
+    private String labelJson;
+    /**
+    * 对应金蝶详情id
+    */
+    @TableField("kingdee_detail_id")
+     private String kingdeeDetailId;
+    /**
+    * 库存组织id
+    */
+    @TableField("warehouse_org_id")
+    private String warehouseOrgId;
+    /**
+    * 库存组织名称
+    */
+    @TableField("warehouse_org_name")
+    private String warehouseOrgName;
+
+    /**
+     * 库位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+
+    public static final String MAIN_ID = "main_id";
+
+    public static final String IMAGE_URL = "image_url";
+
+    public static final String SKU_ID = "sku_id";
+
+    public static final String SKU_NO = "sku_no";
+
+    public static final String SELLER_SKU_NO = "seller_sku_no";
+
+    public static final String PLATFORM_SKU_NO = "platform_sku_no";
+
+    public static final String STOCK_SKU_NO = "stock_sku_no";
+
+    public static final String QTY = "qty";
+
+    public static final String WAREHOUSE_ID = "warehouse_id";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
+
+    public static final String PRICE = "price";
+
+    public static final String AMOUNT = "amount";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String EXCHANGE_RATE = "exchange_rate";
+
+    public static final String ADVICE_PRICE = "advice_price";
+
+    public static final String COST = "cost";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
+    public static final String LABEL_JSON = "label_json";
+
+    public static final String KINGDEE_DETAIL_ID = "kingdee_detail_id";
+
+    public static final String WAREHOUSE_ORG_ID = "warehouse_org_id";
+
+    public static final String WAREHOUSE_ORG_NAME = "warehouse_org_name";
+
+    @Override
+    public String toString() {
+        return "SoB2cDetailEntity{" +
+                "imageUrl='" + imageUrl + '\'' +
+                ", skuId='" + skuId + '\'' +
+                ", skuNo='" + skuNo + '\'' +
+                ", platformSkuNo='" + platformSkuNo + '\'' +
+                ", platformSpuNo='" + platformSpuNo + '\'' +
+                ", warehouseSkuNo='" + warehouseSkuNo + '\'' +
+                ", qty=" + qty +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", price=" + price +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", exchangeRate=" + exchangeRate +
+                ", advicePrice=" + advicePrice +
+                ", taxCost=" + taxCost +
+                ", labelJson='" + labelJson + '\'' +
+                ", kingdeeDetailId='" + kingdeeDetailId + '\'' +
+                ", warehouseOrgId='" + warehouseOrgId + '\'' +
+                ", warehouseOrgName='" + warehouseOrgName + '\'' +
+                ", warehouseLocation='" + warehouseLocation + '\'' +
+                '}';
+    }
+}

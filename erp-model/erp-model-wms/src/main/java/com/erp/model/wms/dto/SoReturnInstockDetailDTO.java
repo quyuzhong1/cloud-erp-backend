@@ -45,7 +45,7 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 退货单明细表id
+         * 来源明细id
          */
         private String sourceDetailId;
         /**
@@ -104,7 +104,7 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 退货单明细表id
+         * 来源明细id
          */
         private String sourceDetailId;
         /**

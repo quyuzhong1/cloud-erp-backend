@@ -15,7 +15,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Mapper
@@ -59,4 +59,5 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoReturnInstockDTO.PdaPagingView>
      **/
     IPage<SoReturnInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") SoReturnInstockDTO.PdaPagingParam params);
+
 }

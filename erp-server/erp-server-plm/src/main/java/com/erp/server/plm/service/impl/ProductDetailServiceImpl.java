@@ -22,6 +22,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -3662,6 +3663,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (entityListt.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+        entityListt.forEach(req -> {
+            //更新金蝶
+            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
+        });
         //1.删除证书信息
         productCertificateService.removeCertificate(ids);
         //2.删除包装信息
@@ -3703,7 +3708,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
-        detailEntityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), detailEntityList, IdUtil.simpleUUID());
         //同步到WMS
@@ -3788,11 +3792,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
-                throw new ServiceException(ApiError.ERROR_9046);
+                throw new ServiceException(ApiError.ERROR_9046, dto.getUpdateFiledCode());
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        if (flag == Boolean.FALSE) {
+        if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
@@ -3816,9 +3820,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
-       /* Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        dto.setStatus(state);*/
+        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
+        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).distinct().collect(Collectors.toList());
+        mainSupplierIds.addAll(secondSupplierIds);
+        List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        skuVOS.forEach(req -> {
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
+            }
+
+            // 二级供应商名称
+            if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
+            }
+        });
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
@@ -3855,6 +3875,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuNo("");
             view.setSpuName("");
         }
+
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
+        // 一级供应商名称
+        if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
+            view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
+        }
+
+        // 二级供应商名称
+        if (StrUtils.isNotEmpty(view.getSecondSupplier()) && supplierMap.containsKey(view.getSecondSupplier())) {
+            view.setSecondSupplierName(supplierMap.get(view.getSecondSupplier()).getName());
+        }
+
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {

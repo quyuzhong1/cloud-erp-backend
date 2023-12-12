@@ -9,22 +9,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
@@ -32,14 +29,13 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +55,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -89,6 +86,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     private WarehouseLocationService warehouseLocationService;
 
 
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private OverseasProviderService overseasProviderService;
+
+
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
@@ -104,25 +111,62 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        List<ApproveStatusEnum> statusList = new ArrayList<>(2);
-        statusList.add(ApproveStatusEnum.APPROVE);
         List<WarehouseEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+
+        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+    }
+
+    /**
+     * 填充列表信息
+     */
+    private void fillListData(List<WarehouseDTO.ListDTO> resultList, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<ApproveStatusEnum> statusList = Collections.singletonList(ApproveStatusEnum.APPROVE);
+
+        List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+
         for (WarehouseDTO.ListDTO listDTO : resultList) {
+            // 组织信息
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
             if (!statusList.contains(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
+            //平台信息
+            OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
+            listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
+            listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
         }
-        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
+    @Override
+    public List<WarehouseDTO.ListTreeDTO> listTree() {
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse();
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListTreeDTO> resultList = handleWarehouseTree(list);
+        return resultList;
+    }
+
+    @Override
+    public List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto) {
+        List<WarehouseDTO.ListDTO> list = listWarehouseByParams(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListTreeDTO> resultList = handleWarehouseTree(list);
+        return resultList;
+    }
 
     @Override
     public void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList) {
@@ -170,6 +214,48 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
     }
 
+    @Override
+    public List<WarehouseDTO.ListDTO> listOverseasWarehouse() {
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+        if (warehouseBindMap.isEmpty()){
+            return Collections.emptyList();
+        }
+        // 查询对应仓库
+        Set<String> ids = warehouseBindMap.keySet();
+        List<WarehouseEntity> list = lambdaQuery()
+                .in(WarehouseEntity::getId, ids)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        // 填充其他信息
+        this.fillListData(resultList, warehouseBindMap);
+
+        return resultList.stream()
+                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
+                .collect(Collectors.toList());
+
+
+    }
+
+    /**
+     * 检查绑定海外仓库服务商信息
+     */
+    private OmsPlatformEnum checkAndGetPlatformInfo(WarehouseDTO.ListDTO listDTO, Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap) {
+        List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = warehouseBindMap.get(listDTO.getId());
+        if (CollectionUtils.isNotEmpty(listWithWarehouseDTOS)) {
+            // 取指定服务商，否则取第一个
+            OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = listWithWarehouseDTOS.stream().findFirst().orElse(null);
+            // 设置平台信息
+            if (null != warehouseDTO) {
+                return OmsPlatformEnum.getByCode(warehouseDTO.getCode());
+            }
+        }
+        return null;
+    }
+
 
     /**
      * 添加仓库
@@ -189,6 +275,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode("", dto.getKingdeeWarehouseCode());
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(dto, warehouse);
+
+        //如果设置了在途仓，获取匹配在途仓名称
+        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+            WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+            }
+            warehouse.setOnwayWarehouseName(entity.getName());
+        }
+
+
         Boolean result = this.save(warehouse);
         if (result) {
             return warehouse.getId();
@@ -221,6 +318,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
         BeanMapper.copy(dto, warehouse);
+
+        //如果设置了在途仓，获取匹配在途仓名称
+        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+            WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
+            }
+            warehouse.setOnwayWarehouseName(entity.getName());
+        }
+
         Boolean result = this.updateById(warehouse);
         if (result) {
             return warehouseId;
@@ -313,6 +420,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //发送金蝶
         if (dto.getState()) {
+            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
+                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
+            }
             syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_DISABLE.getCode());
         } else {
             syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_ENABLE.getCode());
@@ -323,7 +434,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     /**
      * 审核仓库
      *
-     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-22 11:45
@@ -394,6 +504,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99003);
         }
+
+        //仓库已绑定店铺不允许反审核
+        List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(warehouseIds);
+        for (WarehouseEntity warehouseEntity : list) {
+            ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(warehouseEntity.getId())).distinct().findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE, shopInfoEntity.getName());
+            }
+        }
+
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
         //反审核后发送金蝶
@@ -711,22 +831,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<WarehouseEntity> list = lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getWarehouseName()),WarehouseEntity::getName,dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
+                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()),WarehouseEntity::getId,dto.getWarehouseIdList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-        for (WarehouseDTO.ListDTO listDTO : resultList) {
-            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-            listDTO.setOrgName(orgName);
-            if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
-                listDTO.setDisabled(true);
-            }
-        }
-        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+        // 查询仓库关联服务商
+        Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
+
+        // 填充信息
+        this.fillListData(resultList, warehouseBindMap);
+
+        return resultList.stream()
+                .filter(e-> StringUtils.isBlank(dto.getDictPlatform()) ||
+                            (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                )
+                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -782,6 +906,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
          }).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
+
 
     /**
      * 更改状态
@@ -853,5 +978,33 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         });
 
         redisService.deleteObject(redisKeys);
+    }
+
+    /**
+     * @description: 处理下拉数据
+     * @author Will
+     * @date: 2023/9/6 15:59
+     * @param list
+     * @return List<ListTreeDTO>
+     */
+    private List<WarehouseDTO.ListTreeDTO> handleWarehouseTree (List<WarehouseDTO.ListDTO> list) {
+
+        //获取到仓库类型
+        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+
+        List<WarehouseDTO.ListTreeDTO> resultList = new ArrayList<>();
+        Map<String, List<WarehouseDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getTypeId));
+        for (Map.Entry<String, List<WarehouseDTO.ListDTO>> entry : map.entrySet()) {
+            WarehouseDTO.ListTreeDTO listTreeDTO = new WarehouseDTO.ListTreeDTO();
+            String key = entry.getKey();
+            listTreeDTO.setId(key);
+            //类型id
+            String typeName = dictBasicList.stream().filter(d -> d.getId().equals(key)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listTreeDTO.setName(typeName);
+            listTreeDTO.setListDTO(entry.getValue());
+            resultList.add(listTreeDTO);
+        }
+        return resultList;
     }
 }

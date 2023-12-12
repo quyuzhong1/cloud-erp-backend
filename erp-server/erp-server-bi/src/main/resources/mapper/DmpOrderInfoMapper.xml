@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.bi.mapper.DmpOrderInfoMapper">
-        
+
     <resultMap id="DmpOrderInfoMap" type="com.erp.model.dmp.entity.DmpOrderInfoEntity">
         <id column="id" property="id"/>
         <result column="platform_order_id" property="platformOrderId" />
@@ -36,8 +36,8 @@
         </collection>
 
     </resultMap>
-    
-    
+
+
     <sql id="Base_Column_List">
         id,platform_order_id,order_state,
         buyer_user_id,buyer_name,shop_no,
@@ -257,7 +257,6 @@
         </if>
         GROUP BY doi.${groupName}
     </select>
-
     <sql id="conditionSql">
         <if test = "params.timeType != null and params.timeType == 0">
             <if test="params.startTime != null">

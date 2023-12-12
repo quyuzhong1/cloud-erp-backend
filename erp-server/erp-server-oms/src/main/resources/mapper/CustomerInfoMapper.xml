@@ -172,4 +172,5 @@
         where ci.is_deleted = FALSE and customer_property != ''
     </select>
 
+
 </mapper>

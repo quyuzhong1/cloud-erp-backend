@@ -67,6 +67,32 @@ public class SysUserInfoEntity implements Serializable {
 	 */
 	@TableField(fill= FieldFill.INSERT_UPDATE)
 	private Date updateTime;
+
+
+	/**
+	 * 创建人id
+	 */
+	@TableField(value = "create_user_id",fill= FieldFill.INSERT)
+	private String createUserId;
+
+	/**
+	 * 创建人名称
+	 */
+	@TableField(value = "create_user_name",fill= FieldFill.INSERT)
+	private String createUserName;
+
+	/**
+	 * 最后修改人id
+	 */
+	@TableField(value = "update_user_id",fill= FieldFill.INSERT_UPDATE)
+	private String updateUserId;
+
+	/**
+	 * 最后修改人名称
+	 */
+	@TableField(value = "update_user_name",fill= FieldFill.INSERT_UPDATE)
+	private String updateUserName;
+
 	/**
 	 * 账号
 	 */

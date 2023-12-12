@@ -1,0 +1,46 @@
+package com.sdk.oms.shopify.chrome.service;
+
+import com.sdk.oms.shopify.chrome.dto.FindTaskDTO;
+import com.sdk.oms.shopify.chrome.entity.ScheduleTaskEntity;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
+
+/**
+ * <p>
+ *  服务类
+ * </p>
+ *
+ * @author yl
+ * @since 2022-08-25
+ */
+public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
+
+    /**
+     * 创建订单下载任务
+     * @param platform  系统平台
+     */
+    void createOrderTask(String platform);
+    /**
+     * 查询任务列表
+     * @param dto   查询参数
+     * @return  任务列表
+     */
+    List<ScheduleTaskEntity> getChromeTaskList(FindTaskDTO dto);
+
+    /**
+     * 更新任务状态
+     * @param taskId 任务Id
+     * @param status 状态
+     */
+    void updateTaskState(Integer taskId, Integer status);
+    /**
+     * 更新任务状态
+     * @param taskId 任务Id
+     * @param status 状态
+     * @param remark 备注
+     */
+    void updateTaskState(Integer taskId, Integer status,String remark);
+
+
+}

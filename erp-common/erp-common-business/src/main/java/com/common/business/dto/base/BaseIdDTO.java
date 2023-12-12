@@ -13,7 +13,7 @@ import javax.validation.constraints.NotBlank;
  */
 @Data
 @NoArgsConstructor
-public class BaseIdDTO   extends  PermissionsDTO  {
+public class BaseIdDTO extends PermissionsDTO  {
 
     @NotBlank(message = "id不能为空")
     private String id;
@@ -32,6 +32,8 @@ public class BaseIdDTO   extends  PermissionsDTO  {
         private String name;
 
         private String flagId;
+
+        private Boolean disabled;
 
     }
 }

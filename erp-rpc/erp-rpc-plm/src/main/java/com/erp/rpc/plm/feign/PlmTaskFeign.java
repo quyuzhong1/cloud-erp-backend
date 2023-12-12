@@ -330,7 +330,15 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/category/tree")
     List<BasicCategoryDTO> listCategoryTree();
-
+    /**
+     * 获取分类列表
+     * @author yl
+     * @date 2023-09-26 16:51
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     */
+    @GetMapping("feign/category/getCategoryList")
+    List<BasicCategoryEntity> getCategoryList();
     /**
      * 获取到父级的分类
      *
@@ -378,6 +386,12 @@ public interface PlmTaskFeign {
     Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list);
 
     /**
+     * 回填产品包装信息
+     */
+    @PostMapping("/feign/productPack/backFillPackaging")
+    void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
+
+    /**
      * 批量修改产品采购信息首批下单日期
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
@@ -410,12 +424,6 @@ public interface PlmTaskFeign {
     List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds);
 
     /**
-     * 回填产品包装信息
-     */
-    @PostMapping("/feign/productPack/backFillPackaging")
-    void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
-
-    /**
      * @description: 更新任务列表负责人名称
      * @author Will
      * @date: 2023/10/19 11:06
@@ -432,4 +440,34 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/plmSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    @PostMapping("feign/bom/listBomVersionBySkuNos")
+    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
+     * @description: 根据skuId集合信息查询（只查了spu、sku表）
+     * @author Will
+     * @date: 2023/11/16 15:14
+     * @param skuIdList
+     * @return List<ProductDTO>
+     */
+    @PostMapping("feign/product/listProductBySkuIds")
+    List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@RequestBody List<String> skuIdList);
+
+    /**
+     * @description: 查询所有父级
+     * @author Will
+     * @date: 2023/11/23 18:13
+     * @param params
+     * @return ListAllSkuDTO
+     */
+    @PostMapping("/feign/bom/listAllLevelSku")
+    BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params);
 }

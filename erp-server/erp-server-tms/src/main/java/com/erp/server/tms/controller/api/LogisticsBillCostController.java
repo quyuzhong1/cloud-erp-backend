@@ -1,0 +1,184 @@
+package com.erp.server.tms.controller.api;
+
+
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ShippingTemplateDTO;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.server.tms.service.ShippingTemplateService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
+import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.common.core.controller.BaseController;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 自发货费用
+ *
+ * @author Will
+ * @since 2023-11-06
+ */
+@Slf4j
+@RestController
+@LogSystemModule("自发货费用")
+@RequestMapping("/logisticsBillCost")
+public class LogisticsBillCostController extends BaseController {
+
+    @Autowired
+    private LogisticsBillCostService logisticsBillCostService;
+
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2023/11/13 15:12
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto);
+        return success(tabList);
+    }
+
+    /**
+     * 分页查询
+     * @author Will
+     * @date: 2023/11/13 15:12
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
+    public ApiResult<PagingVO<LogisticsBillCostDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+        PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsBillCostService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+    * 修改
+    * @author Will
+    * @date:  2023-11-06
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "自发货费用修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "tms:logisticsBillCost:update",
+        serviceClass = LogisticsBillCostService.class,
+        keyIdName = "id")
+    public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
+        logisticsBillCostService.update(dto);
+        return success();
+    }
+
+    /**
+     * 状态变更
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/updateReconciliationStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBillCost:updateReconciliationStatus",
+            serviceClass = LogisticsBillCostService.class,
+            keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> updateReconciliationStatus(@RequestBody @Validated LogisticsBillCostDTO.UpdateStatusDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
+            }catch (Exception e){
+                log.error("自发货费用 状态变更",e);
+                LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 下载模板
+     * @author Will
+     * @date: 2023/11/13 15:14
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        logisticsBillCostService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入
+     * @author Will
+     * @date: 2023/11/13 15:14
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
+    @PostMapping("/import")
+    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = logisticsBillCostService.importFile(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     *  导出
+     * @author Will
+     * @date: 2023/11/13 16:19
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
+    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.ExportExcelParamDTO dto, HttpServletResponse response) {
+        Boolean flag = logisticsBillCostService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+}

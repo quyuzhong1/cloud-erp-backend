@@ -4,7 +4,7 @@ import com.common.business.enums.SyncKingdeeOmsStatusEnum;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
 import com.common.business.service.SuperService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 
 import java.util.Optional;
 

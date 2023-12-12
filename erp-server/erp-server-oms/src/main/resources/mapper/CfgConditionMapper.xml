@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgConditionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgConditionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="condition_field" property="conditionField" />
+       <result column="logic" property="logic" />
+       <result column="controls" property="controls" />
+       <result column="api_url" property="apiUrl" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        condition_field, logic, controls, api_url
+    </sql>
+    <select id="listByConditionCode" resultType="com.erp.model.oms.dto.CfgConditionDTO$CommonDTO">
+        SELECT
+            condition_field,
+            unnest(string_to_array(cc.logic,',')) as logic,
+            controls,
+            api_url,
+            condition_field_name,
+            request_method,
+            param,
+            label,
+            value
+        FROM
+            cfg_condition cc
+        WHERE
+            condition_field = #{conditionCode}
+    </select>
+
+
+    <select id="listAllCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
+        SELECT
+            condition_field ,
+            condition_field_name,
+            request_method,
+            controls,
+            api_url,
+            param,
+            label,
+            value,
+            search_key,
+            remote_label
+        FROM cfg_condition
+        WHERE is_deleted=FALSE
+        ORDER BY index ASC
+    </select>
+
+
+</mapper>

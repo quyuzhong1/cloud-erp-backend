@@ -65,7 +65,7 @@ public class DmpRefundInfoController extends BaseController {
     * @return ApiResult<PagingVO<DmpRefundInfoDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpRefundInfoSearchDTO> dto) {
         PagingVO<DmpRefundInfoDTO> pagingVO = dmpRefundInfoService.paging(dto);
         return success(pagingVO);

@@ -1,0 +1,32 @@
+package com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
+
+/**
+ * AWSAuthenticationCredentials
+ */
+@Data
+@Builder
+@AllArgsConstructor
+public class AWSAuthenticationCredentials {
+    /**
+     * AWS IAM User Access Key Id
+     */
+    @NonNull
+    private String accessKeyId;
+
+    /**
+     * AWS IAM User Secret Key
+     */
+    @NonNull
+    private String secretKey;
+
+    /**
+     * AWS Region
+     */
+    @NonNull
+    private String region;
+}

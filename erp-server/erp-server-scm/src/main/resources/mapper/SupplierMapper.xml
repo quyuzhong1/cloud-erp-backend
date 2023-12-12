@@ -70,11 +70,11 @@
         </if>
         <if test="params.contactPerson!=null and params.contactPerson !=''">
             AND id IN
-            (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  person LIKE '%${params.contactPerson}%' )
+            (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  person ILIKE '%${params.contactPerson}%' )
         </if>
         <if test="params.contactTelNumber!=null and params.contactTelNumber !=''">
             AND id IN
-            (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  tel_number LIKE '%${params.contactTelNumber}%' )
+            (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  tel_number ILIKE '%${params.contactTelNumber}%' )
         </if>
 
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
@@ -167,11 +167,11 @@
                 </if>
                 <if test="params.contactPerson!=null and params.contactPerson !=''">
                     AND id IN
-                    (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  person LIKE '%${params.contactPerson}%' )
+                    (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  person ILIKE '%${params.contactPerson}%' )
                 </if>
                 <if test="params.contactTelNumber!=null and params.contactTelNumber !=''">
                     AND id IN
-                    (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  tel_number LIKE '%${params.contactTelNumber}%' )
+                    (SELECT supplier_id  FROM  supplier_contact  WHERE  is_deleted=FALSE   AND  tel_number ILIKE '%${params.contactTelNumber}%' )
                 </if>
                 <if test="params.createTimeList != null and params.createTimeList.size > 0">
                     and create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > create_time
@@ -201,4 +201,6 @@
         AND category_id IN
         (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
     </select>
+
+
 </mapper>

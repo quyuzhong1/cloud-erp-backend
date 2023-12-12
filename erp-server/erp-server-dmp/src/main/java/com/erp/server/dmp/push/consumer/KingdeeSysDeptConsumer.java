@@ -14,7 +14,7 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.push.service.business.KingdeeSysDeptConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -67,6 +67,11 @@ public class KingdeeSysDeptConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override

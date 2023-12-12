@@ -60,6 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,6 +84,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private WorkflowFeign workflowFeign;
 
+
     @Resource
     private ProductDetailService productDetailService;
 
@@ -91,6 +93,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
 
 
     @Resource
@@ -119,14 +122,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional
-    public Boolean insert(AddBomDTO dto) {
+    public String insert(AddBomDTO dto) {
         //sku信息
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (CollectionUtils.isEmpty(bomSkuList)) {
             throw new ServiceException(ApiError.ERROR_95094);
         }
         //数据验证
-        checkRepeatBomSku(BeanMapperUtils.map(UpdateBomDTO.class, dto));
+        checkRepeatBomSku(BeanMapperUtils.map(UpdateBomDTO.class,dto));
         //获取到 编号
         String serialNumber = sysCodeService.getBusinessNo(BusinessNoConstant.BOM, BusinessNoTypeEnum.Bom_NO);
         BomInfoEntity bom = new BomInfoEntity();
@@ -135,6 +138,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setBomVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
+        bom.setSourceType(dto.getSourceType());
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
@@ -157,7 +161,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.ADD, serialNumber);
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
         }
-        return saveResult;
+        return bomId;
     }
 
 
@@ -188,10 +192,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         try {
             EasyExcel.read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error("导入错误！", e);
+            log.error("导入错误！",e);
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
+            log.error("导入格式错误！",e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<BomInfoExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
@@ -202,7 +206,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         List<BomInfoExcelDTO> successList = excelListenerUtil.getSuccessList();
         //处理验证成功数据
-        handleImportSuccessList(successList, errorList);
+        handleImportSuccessList(successList,errorList);
 
         if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
@@ -224,9 +228,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Override
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(BomInfoEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeId),BomInfoEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .eq(BomInfoEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), BomInfoEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -266,7 +270,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //子件
             List<BomSkuPageDTO.ChildDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(childDTOList)) {
-                for (BomSkuPageDTO.ChildDTO childDTO : childDTOList) {
+                for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
                     //付款条件
                     if (CollectionUtils.isNotEmpty(supplierList)) {
                         String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(childDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
@@ -538,7 +542,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     @Override
-    public String getExcelUpdateContent(List<BomSkuEntity> newBomList, List<BomSkuEntity> oldBomList) {
+    public String getExcelUpdateContent( List<BomSkuEntity> newBomList,  List<BomSkuEntity> oldBomList) {
         List<String> contentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(oldBomList) && CollectionUtils.isNotEmpty(newBomList)) {
             String oldSkuNo = oldBomList.get(0).getParentSkuNo();
@@ -624,7 +628,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<String> skuNoList = newChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             List<String> dbSkuNoList = OldChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             String removeSkuNo = dbSkuNoList.stream().filter(d -> !skuNoList.contains(d)).collect(Collectors.joining(","));
-            if(StringUtils.isNotBlank(removeSkuNo)){
+            if (StringUtils.isNotBlank(removeSkuNo)) {
                 String removeContent = "删除了" + removeSkuNo + " 子物料";
                 contentList.add(removeContent);
             }
@@ -941,7 +945,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 17:04
      */
     @Override
-    public void checkIfChange(String sourceId) {
+    public void checkIfChange(String sourceId, String detailsJson) {
         BomInfoEntity infoEntity = this.getById(sourceId);
         if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95095);
@@ -955,6 +959,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
             throw new ServiceException(ApiError.ERROR_95113);
         }
+        BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
+        UpdateBomDTO updateBom = new UpdateBomDTO();
+        updateBom.setId(bom.getId());
+        updateBom.setSkuList(bom.getSkuList());
+        checkRepeatBomSku(updateBom);
+
 
     }
 
@@ -1155,7 +1165,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity bomEntity = this.getById(bomId);
         if (bomEntity != null) {
             String bomVersion = bomEntity.getBomVersion();
-            bomEntity.setBomVersion(MathUtil.add(MathUtil.valueOf(bomVersion),BigDecimal.ONE).toString());
+            bomEntity.setBomVersion(MathUtil.add(MathUtil.valueOf(bomVersion), BigDecimal.ONE).toString());
             bomEntity.setType(bom.getType());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
@@ -1337,47 +1347,89 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     /**
-     * @param dto
      * @description: bom数据验证
      * @author Will
      * @date: 2023/8/16 18:14
+     * @param dto
      */
     private void checkRepeatBomSku(UpdateBomDTO dto) {
         List<BomSkuDTO> skuList = dto.getSkuList();
+        List<String> parentSkuNoList = skuList.stream().map(BomSkuDTO::getSkuNo).collect(Collectors.toList());
+        List<String> childrenSkuIdList = new ArrayList<>(10);
+        for (BomSkuDTO item : skuList) {
+            List<String> childrenSkuIds = item.getChildren().stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            childrenSkuIdList.addAll(childrenSkuIds);
+        }
+        checkChildrenIsParent(parentSkuNoList, childrenSkuIdList);
         List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
         for (BomSkuDTO bomSkuDTO : skuList) {
-            long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(bomSkuDTO.getSkuId())).count();
+            //这个是父级的sku id
+            String parentSkuId = bomSkuDTO.getSkuId();
+            long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(parentSkuId)).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_BOM_PARENT_SKU_REPEAT, bomSkuDTO.getSkuNo());
             }
+
         }
     }
 
     /**
-     * @param successList
-     * @param errorList
+     * @return
+     * @parms 检查子集是否有父级的sku
+     * @author yl
+     * @date 2023-11-24
+     */
+    private void checkChildrenIsParent(List<String> parentSkuNoList, List<String> skuIdList) {
+        List<BomDTO.BomSku> bomSkuList = bomSkuService.listBySkuIds(skuIdList);
+        for (String skuNo : parentSkuNoList) {
+            String bomCode = bomSkuList.stream().filter(b -> skuNo.equals(b.getSkuNo())).
+                    map(BomDTO.BomSku::getSerialNumber).
+                    collect(Collectors.joining(","));
+            /**
+             * 这个表示 bomSkuDTO 的子的sku  为bomm 的父级sku 而该Bom 的子sku 有为bomSkuDTO 的父级
+             * 这样就会有问题
+             */
+            if (StringUtils.isNotEmpty(bomCode)) {
+                throw new ServiceException(ApiError.ERROR_BOM_CONTAIN, bomCode, skuNo);
+            }
+        }
+        List<String> skuNoList = bomSkuList.stream().map(BomDTO.BomSku::getParentSkuNo).collect(Collectors.toList());
+        List<String> newSkuNOList=new ArrayList<>(10);
+        newSkuNOList.addAll(parentSkuNoList);
+        newSkuNOList.addAll(skuNoList);
+        for (BomDTO.BomSku item : bomSkuList) {
+            String childrenSkuId = item.getSkuId();
+            checkChildrenIsParent(newSkuNOList, Arrays.asList(childrenSkuId));
+        }
+
+    }
+
+
+    /**
      * @description: 处理导入数据
      * @author Will
      * @date: 2023/8/30 15:10
+     * @param successList
+     * @param errorList
      */
-    private void handleImportSuccessList(List<BomInfoExcelDTO> successList, List<BomInfoExcelDTO> errorList) {
+    private void handleImportSuccessList (List<BomInfoExcelDTO> successList, List<BomInfoExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        List<String> skuNos = successList.stream().flatMap(obj -> Stream.of(obj.getChildSku(), obj.getParentSku())).distinct().collect(Collectors.toList());
+        List<String> skuNos = successList.stream().flatMap(obj -> Stream.of(obj.getChildSku(),obj.getParentSku())).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNos);
 
         List<String> parentSkuNos = successList.stream().map(BomInfoExcelDTO::getParentSku).distinct().collect(Collectors.toList());
         List<BomInfoEntity> bomInfoList = bomSkuService.listAllBomByParentSkuNos(parentSkuNos);
         Map<String, List<BomInfoExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(BomInfoExcelDTO::getParentSku));
-        for (Map.Entry<String, List<BomInfoExcelDTO>> entry : map.entrySet()) {
+        for (Map.Entry<String, List<BomInfoExcelDTO>> entry :  map.entrySet()) {
             List<BomInfoExcelDTO> value = entry.getValue();
             Boolean isError = Boolean.FALSE;
             for (BomInfoExcelDTO addDTO : value) {
                 List<String> errorMsgList = new ArrayList<>();
 
-                if (StringUtils.equals(addDTO.getParentSku(), addDTO.getChildSku())) {
+                if (StringUtils.equals(addDTO.getParentSku(),addDTO.getChildSku())) {
                     errorMsgList.add("父级sku和子级sku不能重复");
                 }
                 //父级sku是否审核
@@ -1427,7 +1479,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 addBomDTO.setVersion(StringPool.ONE);
                 addBomDTO.setSubmitType(BomTypeEnum.CREATE.getType());
                 //获取sku信息
-                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO, value, skuList);
+                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO,value,skuList);
                 addBomDTO.setSkuList(parentSkuList);
                 this.insert(addBomDTO);
             } else {
@@ -1435,7 +1487,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 UpdateBomDTO updateBomDTO = new UpdateBomDTO();
                 updateBomDTO.setId(bomInfoEntity.getId());
                 //获取sku信息
-                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO, value, skuList);
+                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO,value,skuList);
                 updateBomDTO.setSkuList(parentSkuList);
                 this.edit(updateBomDTO);
             }
@@ -1443,15 +1495,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     /**
+     * @description: 格式化sku信息
+     * @author Will
+     * @date: 2023/8/30 15:10
      * @param parentSkuVO
      * @param value
      * @param skuList
      * @return List<BomSkuDTO>
-     * @description: 格式化sku信息
-     * @author Will
-     * @date: 2023/8/30 15:10
      */
-    private List<BomSkuDTO> getBomSkuList(SkuVO parentSkuVO, List<BomInfoExcelDTO> value, List<SkuVO> skuList) {
+    private List<BomSkuDTO> getBomSkuList (SkuVO parentSkuVO,List<BomInfoExcelDTO> value,List<SkuVO> skuList) {
         List<BomSkuDTO> parentSkuList = new ArrayList<>();
         BomSkuDTO parentDTO = new BomSkuDTO();
         parentDTO.setSkuId(parentSkuVO.getSkuId());

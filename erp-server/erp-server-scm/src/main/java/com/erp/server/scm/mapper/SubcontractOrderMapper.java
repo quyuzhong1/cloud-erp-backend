@@ -68,4 +68,5 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
      * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
      */
     List<SubcontractOrderDTO.ListDTO> listByBomSku(@Param("bomSkuId") String bomSkuId);
+
 }

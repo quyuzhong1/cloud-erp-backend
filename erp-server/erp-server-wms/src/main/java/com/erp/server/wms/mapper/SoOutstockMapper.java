@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -64,7 +63,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @param soOutstockList
      */
     void updateBatch(@Param("params") List<SoOutstockEntity> soOutstockList);
-
     /**
      * @description: 查询合计数据
      * @author Will

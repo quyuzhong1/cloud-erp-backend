@@ -1,11 +1,11 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.json.JSONUtil;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
+import com.common.business.service.IReportHistoryService;
+import com.common.business.service.IReportSaveService;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
-import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;

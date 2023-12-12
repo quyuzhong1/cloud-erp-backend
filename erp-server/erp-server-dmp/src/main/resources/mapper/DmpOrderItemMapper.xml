@@ -29,4 +29,29 @@
         group by poit.sku_no
     </select>
 
+    <select id="listDmpSkuCostEntity" resultType="com.erp.model.dmp.entity.DmpSkuCostEntity">
+        SELECT
+            T."sku_no" AS skuNo,
+            T."LatestPurchaseDate" AS costDate,
+            ROUND(AVG(S."tax_price"),4) AS costPrice,
+            CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
+            CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
+        FROM
+            (
+                SELECT
+                    "sku_no",
+                    MAX("purchase_date") AS "LatestPurchaseDate"
+                FROM
+                    "Sheet1"
+                GROUP BY
+                    "sku_no"
+            ) AS T
+        JOIN
+            "Sheet1" S
+        ON
+            T."sku_no" = S."sku_no"
+            AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+        GROUP BY
+            T."sku_no", T."LatestPurchaseDate";
+    </select>
 </mapper>

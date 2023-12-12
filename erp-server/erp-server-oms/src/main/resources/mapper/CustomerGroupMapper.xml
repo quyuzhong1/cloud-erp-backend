@@ -3,5 +3,4 @@
 <mapper namespace="com.erp.server.oms.mapper.CustomerGroupMapper">
 
 
-
 </mapper>
