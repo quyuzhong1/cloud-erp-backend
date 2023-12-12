@@ -698,7 +698,6 @@ public class SkuMappingDTO implements Serializable {
         /**
          * SKU编号
          */
-        @NotBlank(message = "SKU不能为空")
         private String skuNo;
 
         /**

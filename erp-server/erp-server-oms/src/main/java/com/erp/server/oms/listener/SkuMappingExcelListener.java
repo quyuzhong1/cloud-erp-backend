@@ -120,7 +120,9 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
         //平台名称
         String platformName = skuMappingImportExcelDTO.getPlatformName();
-        DictBasicDTO.ViewDTO platform = dictBasicList.stream().filter(s -> s.getName().equals(platformName)).findFirst().orElse(null);
+        DictBasicDTO.ViewDTO platform = dictBasicList.stream()
+                .filter(s -> s.getName().equalsIgnoreCase(platformName) || s.getValue().equalsIgnoreCase(platformName))
+                .findFirst().orElse(null);
         if (null == platform) {
             errorMsgList.add("平台不存在");
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

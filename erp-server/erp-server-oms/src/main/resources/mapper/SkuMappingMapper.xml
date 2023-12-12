@@ -130,7 +130,7 @@
             </when>
             <otherwise>
                 <if test="matchResult!=null">
-                    AND sm.match_result=#{matchResult}
+                    AND li.match_result=#{matchResult}
                 </if>
                 <if test="params.type !=null and params.type!=''">
                     AND sm.type =#{params.type}
