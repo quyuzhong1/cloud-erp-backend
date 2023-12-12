@@ -15,14 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 销售订单处理器抽象类
+ * 平台拉取数据消费处理器
  * @author Cloud
  */
 @Slf4j
 @Service
-public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<Object> {
+public abstract class AbstractPlatformPullConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<Object> {
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void onMessage(Object obj) {
         String dmpSyncTaskId = "";
         try {
@@ -36,7 +37,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
                 updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());
                 //异常预警
-                sendWarnMsg(dmpSyncTaskId);
+                sendWarnMsg(dmpSyncTaskId,handle.getMsg());
                 return;
             }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
@@ -48,8 +49,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
             //异常预警
-            sendWarnMsg(dmpSyncTaskId);
-
+            sendWarnMsg(dmpSyncTaskId,e.getMessage());
             throw e;
         }
     }
@@ -64,7 +64,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
     /**
      * 预警
      */
-    public abstract void sendWarnMsg(String syncTaskId);
+    public abstract void sendWarnMsg(String syncTaskId,String msg);
 
     /**
      * 处理平台数据

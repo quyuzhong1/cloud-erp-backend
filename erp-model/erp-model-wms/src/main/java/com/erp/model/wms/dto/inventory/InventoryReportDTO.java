@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -446,113 +445,6 @@ public class InventoryReportDTO implements Serializable {
 
     }
 
-    /**
-     * 每日库存 查询条件
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DailyInventoryParamDTO extends SortDTO {
-
-        /**
-         * 日期类型 (approveDate审核日期，billDate单据日期)
-         * /api/wms/dict/list，字典inventoryDate
-         */
-        @NotBlank(message = "日期类型不能为空")
-        private String dateType;
-
-        /**
-         * 日期
-         */
-        private LocalDate date;
-
-        /**
-         * sku编号集合
-         *
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 组织,/api/sys/company/list
-         */
-        private List<String> orgIdList;
-
-        /**
-         * 仓库,/api/wms/warehouse/list
-         */
-        private List<String> warehouseIdList;
-
-    }
-
-    /**
-     * 每日库存 列表数据
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListDailyInventoryDTO {
-
-        /**
-         * skuId
-         */
-        private String skuId;
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 图片
-         */
-        private String imagesUrl;
-
-        /**
-         * 组织id
-         */
-        private String orgId;
-
-        /**
-         * 组织名称
-         */
-        private String orgName;
-
-        /**
-         * 销售状态
-         */
-        private Integer saleState;
-
-        /**
-         * 销售状态名称
-         */
-        private String saleStateName;
-
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
-
-        /**
-         * 仓库编码
-         */
-        private String warehouseCode;
-
-        /**
-         * 仓库名称
-         */
-        private String warehouseName;
-
-        /**
-         * 仓库禁用
-         */
-        private Boolean disabled;
 
 
-        /**
-         * 结余数量
-         */
-        private Integer balanceQty;
-    }
 }

@@ -421,12 +421,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
-    /**
-     * @description: 下推加工单保存
-     * @author Will
-     * @date: 2023/12/6 11:04
-     * @param ids
-     * @return BatchResultDTO
-     */
-    Boolean generateMachineInfo(List<String> ids);
+
 }

@@ -152,7 +152,6 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
     }
 

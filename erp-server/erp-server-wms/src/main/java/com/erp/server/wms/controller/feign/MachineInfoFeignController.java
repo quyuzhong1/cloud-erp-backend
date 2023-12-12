@@ -11,11 +11,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.MachineInfoDTO;
-import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.server.wms.service.MachineInfoService;
-import com.erp.server.wms.service.MachineRefSoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,36 +35,11 @@ public class MachineInfoFeignController extends BaseController {
     @Resource
     private MachineInfoService machineInfoService;
 
-    @Resource
-    private MachineRefSoService machineRefSoService;
 
     @PostMapping("/listBySku")
     public List<MachineInfoDTO.ListDTO> listBySku(@RequestBody MachineInfoDTO.FindInfoBySkuDTO dto) {
         return machineInfoService.listBySku(dto);
     }
 
-    /**
-     * 新增加工单
-     * @author Will
-     * @date: 2023/12/6 14:16
-     * @param dto
-     * @return String
-     */
-    @PostMapping("/addMachineInfo")
-    public String addMachineInfo(@RequestBody MachineInfoDTO.AddDTO dto) {
-        String id = machineInfoService.add(dto);
-        return id;
-    }
 
-    /**
-     * 根据销售订单id集合查询关联订单数据
-     * @author Will
-     * @date: 2023/12/6 16:06
-     * @param soIds
-     * @return List<MachineRefSoEntity>
-     */
-    @PostMapping("/listBySoIdList")
-    public List<MachineRefSoEntity> listBySoIdList(@RequestBody List<String> soIds) {
-        return machineRefSoService.listBySoIdList(soIds);
-    }
 }
