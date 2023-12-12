@@ -193,7 +193,7 @@
         owi.finish_reason,
         owi.finish_status,
         owi.overseas_warehouse_inbound_id,
-        owi.delivery_mode,
+        owi.delivery_mode AS deliveryMode,
         owid.platform_product_name,
         owid.platform_sku_no,
         owid.product_name,
