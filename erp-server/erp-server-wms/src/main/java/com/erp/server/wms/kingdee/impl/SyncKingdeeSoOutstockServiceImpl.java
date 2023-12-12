@@ -322,7 +322,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
-        dmpSyncTaskDTO.setParentId(entity.getSoId());
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
     }
 

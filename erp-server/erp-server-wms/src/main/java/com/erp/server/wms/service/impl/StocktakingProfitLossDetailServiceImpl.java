@@ -6,15 +6,16 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.WarehouseService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,10 +50,6 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
     @Resource
     private WarehouseService warehouseService;
 
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-
     /**
      * 根据主表id 获取到对应详情信息
      *
@@ -83,7 +80,6 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         return viewList;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateInfo(String mainId, List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList) {
@@ -124,9 +120,6 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         }
 
         this.saveOrUpdateBatch(updateList);
-        //标记SKU
-        List<String> skuIds = updateList.stream().map(StocktakingProfitLossDetailEntity::getSkuId).collect(Collectors.toList());
-        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override

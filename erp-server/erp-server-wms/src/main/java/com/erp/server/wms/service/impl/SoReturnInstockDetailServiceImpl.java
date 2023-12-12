@@ -15,7 +15,6 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -61,7 +60,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
         if (StringUtils.isNotBlank(dto.getSoReturnId())) {
             //获取退货单详情表id
@@ -169,15 +167,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         }
         //更新委外标识
         updateSubContract(list);
-        this.saveBatch(list);
-        //标记SKU
-        plmTaskFeign.updateOccupyStatus(skuIds);
-        return Boolean.TRUE;
+        return this.saveBatch(list);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
         if (StringUtils.isNotBlank(dto.getSoReturnId())) {
@@ -316,10 +310,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<Pair<String, String>> addPairList = returnInstockDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), addPairList, "编辑操作");
         }
-        this.saveOrUpdateBatch(list);
-        //标记SKU
-        plmTaskFeign.updateOccupyStatus(skuIds);
-        return Boolean.TRUE;
+        return this.saveOrUpdateBatch(list);
     }
 
     private List<String> getDeleteIds(List<SoReturnInstockDetailDTO.Update> newList, List<SoReturnInstockDetailEntity> oldList) {

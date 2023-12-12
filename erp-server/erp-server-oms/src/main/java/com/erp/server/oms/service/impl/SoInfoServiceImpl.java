@@ -1483,11 +1483,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
         String customerName = "";
         String countryId = "";
-        String mailAddress = "";
         if (customerInfo != null) {
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
-            mailAddress = customerInfo.getMailAddress();
         }
 
 
@@ -1509,7 +1507,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         customer.setReceiveAddress(receiverAddressName);
         customer.setCustomerName(customerName);
-        customer.setMailAddress(mailAddress);
         String deliveryMode = customer.getDeliveryMode();
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
         customer.setDeliveryModeName(deliveryModeName);
@@ -1571,7 +1568,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTaxpayerId(customer.getTaxRegisterCode());
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
-        result.setContactAddress(customer.getMailAddress());
+        result.setContactAddress(customer.getReceiveAddress());
 
         result.setCurrency(customer.getCurrency());
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
@@ -2318,7 +2315,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTaxpayerId(customer.getTaxRegisterCode());
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
-        result.setContactAddress(customer.getMailAddress());
+        result.setContactAddress(customer.getReceiveAddress());
 
         result.setCurrency(customer.getCurrency());
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());

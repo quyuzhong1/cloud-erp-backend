@@ -97,12 +97,6 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
-    /**
-     * 来源上级单据id
-     */
-    @TableField("parent_id")
-    private String parentId;
-
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -141,7 +135,6 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
         this.sourceId = dto.getSourceId();
         this.sourceCode = dto.getSourceCode();
         this.syncOperate = dto.getSyncOperate();
-        this.parentId = dto.getParentId();
         this.retryTimes = 0;
     }
 

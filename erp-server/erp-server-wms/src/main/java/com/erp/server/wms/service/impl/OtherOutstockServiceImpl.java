@@ -575,12 +575,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         List<String> ids = records.stream().map(OtherOutstockDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
 
         for (OtherOutstockDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+            if (StringUtils.isBlank(productName)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
             obj.setProductName(productName);
-
             obj.setTypeName(OutstockTypeEnum.getByCode(obj.getType()));
             //库存方向名称
             obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));

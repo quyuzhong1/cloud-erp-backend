@@ -9,8 +9,6 @@ import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
-import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.StocktakingPlanDetailMapper;
 import com.erp.server.wms.service.CommonService;
@@ -18,7 +16,6 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingPlanDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.WarehouseService;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +47,9 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private PlmTaskFeign plmTaskFeign;
-
+    private CommonService commonService;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void saveList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
         if (CollUtil.isEmpty(detailList)) {
             throw new RuntimeException("盘点计划明细不能为空");
@@ -72,14 +67,10 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }).filter(Objects::nonNull).collect(Collectors.toList());
         // 批量插入
         this.saveBatch(insertList);
-        //标记SKU
-        List<String> skuIds = insertList.stream().map(StocktakingPlanDetailEntity::getSkuId).collect(Collectors.toList());
-        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
         if (CollUtil.isEmpty(detailList)) {
             throw new RuntimeException("盘点计划明细不能为空");
@@ -127,9 +118,6 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
                     obj.getWarehouseName(), obj.getWarehouseArea(), obj.getWarehouseLocation(), obj.getSkuNo()))).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加明细数据【%s】", ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), addPairList, "编辑操作");
         }
-        //标记SKU
-        List<String> skuIds = detailList.stream().map(StocktakingPlanDTO.DetailDTO::getSkuId).collect(Collectors.toList());
-        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override

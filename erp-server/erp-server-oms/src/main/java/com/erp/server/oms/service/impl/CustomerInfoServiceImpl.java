@@ -385,9 +385,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
-        //平台信息
-        String type = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -401,9 +398,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(curApprove);
             }
-            //平台类型名称
-            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setPlatformTypeName(platformTypeName);
         }
 
         return new PagingVO<>(pageData);
@@ -812,19 +806,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
-
-        //平台信息
-        String type = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         for (CustomerDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
-            //平台类型名称
-            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setPlatformTypeName(platformTypeName);
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/CustomerExport.xlsx";
