@@ -224,4 +224,19 @@ public class ErpServerOmsShopifyApplicationTests {
         List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderTransactions(orderId);
         System.out.println("订单支付信息结果：\n" + JSONUtil.toJsonStr(transactionList));
     }
+
+    @Test
+    public void getFulfillmentList() {
+        String accessToken = "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";
+        String shopifyShopDomain = "jim-shop-test.myshopify.com";
+        // 订单单号ID
+//        String orderId = "5484776030507";
+
+
+        ShopifyFulfillmentServicesRoot fulfillmentServices = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
+                .getFulfillmentServices();
+
+        System.out.println("订单fulfillmentServices结果：\n" + JSONUtil.toJsonStr(fulfillmentServices));
+        // {"fulfillmentServices":[{"id":"66455634219","name":"Snow City Warehouse","serviceName":"Snow City Warehouse","handle":"snow-city-warehouse","fulfillmentOrdersOptIn":true,"includePendingStock":false,"locationId":"92033057067","callbackUrl":"https://mock.shop/","trackingSupport":false,"inventoryManagement":false,"adminGraphqlApiId":"gid://shopify/ApiFulfillmentService/66455634219","permitsSkuSharing":true}]}
+    }
 }

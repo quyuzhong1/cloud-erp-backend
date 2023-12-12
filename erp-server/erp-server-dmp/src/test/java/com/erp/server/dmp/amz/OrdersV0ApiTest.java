@@ -14,6 +14,8 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
@@ -22,6 +24,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -30,6 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,8 @@ import java.util.stream.Collectors;
 @Profile("dev")
 public class OrdersV0ApiTest {
 
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     @Test
     public void getOrderListTest() throws ApiException {
@@ -195,10 +201,18 @@ public class OrdersV0ApiTest {
      */
     @Test
     public void getOrderBuyerInfoTest() throws ApiException {
-        String orderId = null;
-        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), null, true);
+        String orderId = "404-1751306-8011540";
+        String shopId = "1730162240754708482";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
         GetOrderBuyerInfoResponse response = api.getOrderBuyerInfo(orderId);
-
+        System.out.println("查询订单收件人信息");
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
 

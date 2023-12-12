@@ -185,19 +185,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     }
 
-    public static void main(String[] args) {
-        String ss = "http%3A%2F%2F172.16.100.12%3A8060%2Fstore-permission-result%3Fspapi_oauth_code%3DANLbKHVKmmWYqPkwZWpX%26\n" +
-                "state%3DGSA_WYJksOSGbQBhDpi9dbK7yh5fM9lWctivmxcrpnOKZcYfQuTUtkYd4IgbROvuzmrsm8cBX2%252FlZLGrFgqINlYyoAbpuAJW%252FuHOnffDv6HqUBGMyXkmsGPhvFX66kpHwMCItch796kr5u86dbANEyvodd%2520L%2520h%2520cCmB3epYW%2520vLKbHxvK2iGgXpDmocLDVleFJjzgGAWjqXQXkFPwGlQDc5snzDFZN3HlnRP0nsbXplpMJ4Uak6xPOue5%25207B4V4dthSqCGw81FFid8qEUsjaKi%252Fx3pKxOPos3sDMgIe%252Fd08B7FHx3t4CcbdZnwhbn9ZGKwaFgsuQ3PGN3W8Sw6qYaQ%26selling_partner_id%3DA14CMR6OBEUS8X%26spapi_oauth_code%3DANLbKHVKmmWYqPkwZWpX%26state%3DGSA_WYJksOSGbQBhDpi9dbK7yh5fM9lWctivmxcrpnOKZcYfQuTUtkYd4IgbROvuzmrsm8cBX2%252FlZLGrFgqINlYyoAbpuAJW%252FuHOnffDv6HqUBGMyXkmsGPhvFX66kpHwMCItch796kr5u86dbANEyvodd%2520L%2520h%2520cCmB3epYW%2520vLKbHxvK2iGgXpDmocLDVleFJjzgGAWjqXQXkFPwGlQDc5snzDFZN3HlnRP0nsbXplpMJ4Uak6xPOue5%25207B4V4dthSqCGw81FFid8qEUsjaKi%252Fx3pKxOPos3sDMgIe%252Fd08B7FHx3t4CcbdZnwhbn9ZGKwaFgsuQ3PGN3W8Sw6qYaQ%26selling_partner_id%3DA14CMR6OBEUS8X&type=1&isDemo=false\n";
-        try {
-            String decode = URLDecoder.decode(ss, CommonConstants.UTF8);
-            System.out.println(decode);
-            String s = decode.replaceAll("%2F", "/");
-            System.out.println(s);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * 店铺保存成功后 自动创建客户
      *
@@ -808,6 +795,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         ShopInfoEntity shopInfo1 = new ShopInfoEntity();
                         //增加店铺名称获取
                         this.getMerchantName(cfgAppClient, String.valueOf(merchantId), shopeeResponse.getAccess_token(), shopInfo1);
+                        shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
                         flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo1, cfgAppClient.getId());
 
@@ -829,6 +817,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         ShopInfoEntity shopInfo1 = new ShopInfoEntity();
                         //增加店铺名称获取
                         this.getShopName(cfgAppClient, String.valueOf(shopId), shopeeResponse.getAccess_token(), shopInfo1);
+                        shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
                         flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo1, cfgAppClient.getId());
 
@@ -939,6 +928,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getCountryName())) {
             shopInfoEntity.setCountryName(shopInfo.getCountryName());
+        }
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getAccount())){
+            shopInfoEntity.setAccount(shopInfo.getAccount());
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
