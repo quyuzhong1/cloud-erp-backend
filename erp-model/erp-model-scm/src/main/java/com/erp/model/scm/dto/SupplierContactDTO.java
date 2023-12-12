@@ -45,7 +45,6 @@ public class SupplierContactDTO implements Serializable {
          */
        // @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
         @Size(max =20 ,message = "联系人电话最大20字符")
-        @NotBlank(message = "联系电话必填")
         private String telNumber;
 
         /**
