@@ -785,7 +785,7 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (o.sales_amount),2) AS saleAmount,
         </if>
-        to_char(o.date_time, 'YYYY-MM-dd') AS name
+        o.date_name AS name
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o
@@ -795,8 +795,8 @@
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
-        GROUP BY name
-        ORDER BY name
+        GROUP BY o.date_name
+        ORDER BY o.date_name
     </select>
 
     <select id="dateYearSaleAmountBySku" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
@@ -1048,7 +1048,6 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (o.sales_amount),2) AS sales,
         </if>
-        sum (o.sales_qty) AS salesQuantity,
         o.date_name as date
         <choose>
             <when test="params.timeType == '1'">
