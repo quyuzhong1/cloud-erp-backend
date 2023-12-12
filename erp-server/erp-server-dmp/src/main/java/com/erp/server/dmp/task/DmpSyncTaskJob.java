@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -125,8 +124,6 @@ public class DmpSyncTaskJob {
             return ReturnT.SUCCESS;
         }
         recordEntityList.sort(Comparator.comparing(DmpPushTaskEntity::getUpdateTime));
-        //需要修改备注信息
-        List<DmpPushTaskEntity> updateList = new ArrayList<>();
         for (DmpPushTaskEntity recordEntity : recordEntityList) {
             try {
                 // 发送推送同步任务消息
@@ -134,13 +131,6 @@ public class DmpSyncTaskJob {
                 String mqData = dmpSyncMqDTO.getMqData();
                 JSONObject jsonObject = JSONUtil.parseObj(mqData);
                 jsonObject.set("dmpSyncTaskId",recordEntity.getId());
-                //查询来源上级单据
-                Boolean isSend = dmpPushTaskService.isSendParentBillTask(recordEntity);
-                //判断是否存在上级单据，并且推送成功
-                if (!isSend) {
-                    updateList.add(recordEntity);
-                    continue;
-                }
                 SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
                         JSONUtil.toJsonStr(jsonObject), recordEntity.getSourceId());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
@@ -151,10 +141,6 @@ public class DmpSyncTaskJob {
                 log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
                 XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
             }
-        }
-        //更新信息
-        if (CollectionUtil.isNotEmpty(updateList)) {
-            dmpPushTaskService.updateBatchById(updateList);
         }
         XxlJobHelper.log("DmpPushTaskJob end");
         return ReturnT.SUCCESS;
