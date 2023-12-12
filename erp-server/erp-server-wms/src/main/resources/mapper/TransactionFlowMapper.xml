@@ -649,7 +649,7 @@
             max(tf.sku_no) as skuNo ,
             max(ps.sale_state) as saleState,
             max(pd.name) as productName,
-            max(pd.images_url) as imagesUrl
+            max(pd.images_url) as imagesUrl,
         from transaction_flow tf
         left join product_detail pd on pd.id = tf.sku_id and pd.is_deleted = false
         left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
@@ -696,7 +696,7 @@
         max(tf.sku_no) as skuNo ,
         max(ps.sale_state) as saleState,
         max(pd.name) as productName,
-        max(pd.images_url) as imagesUrl
+        max(pd.images_url) as imagesUrl,
         from transaction_flow tf
         left join product_detail pd on pd.id = tf.sku_id and pd.is_deleted = false
         left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false

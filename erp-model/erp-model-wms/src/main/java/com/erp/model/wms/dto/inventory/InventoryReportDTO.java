@@ -455,7 +455,6 @@ public class InventoryReportDTO implements Serializable {
 
         /**
          * 日期类型 (approveDate审核日期，billDate单据日期)
-         * /api/wms/dict/list，字典inventoryDate
          */
         @NotBlank(message = "日期类型不能为空")
         private String dateType;
@@ -467,17 +466,16 @@ public class InventoryReportDTO implements Serializable {
 
         /**
          * sku编号集合
-         *
          */
         private List<String> skuNoList;
 
         /**
-         * 组织,/api/sys/company/list
+         * 组织
          */
         private List<String> orgIdList;
 
         /**
-         * 仓库,/api/wms/warehouse/list
+         * 仓库
          */
         private List<String> warehouseIdList;
 
