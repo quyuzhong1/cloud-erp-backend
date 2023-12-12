@@ -168,13 +168,13 @@ public class SysLoggingAspect {
     @Around("logPointcut()")
     public Object doAround(ProceedingJoinPoint joinPoint) {
         //接口重复提交校验
-        String idempotentKey = getIdempotentKey(joinPoint);
-        if (redisUtil.hasKey(idempotentKey)) {
-            throw new ServiceException(ApiError.ERROR_1014);
-        }else {
-            //如果没有表示不是重复提交并设置key存活的缓存时间
-            redisUtil.set(idempotentKey, "", 3);
-        }
+//        String idempotentKey = getIdempotentKey(joinPoint);
+//        if (redisUtil.hasKey(idempotentKey)) {
+//            throw new ServiceException(ApiError.ERROR_1014);
+//        }else {
+//            //如果没有表示不是重复提交并设置key存活的缓存时间
+//            redisUtil.set(idempotentKey, "", 3);
+//        }
         // 处理请求
         Object obj = null;
         try {
@@ -230,8 +230,8 @@ public class SysLoggingAspect {
                 // 清除当前缓存
                 LOG_INFO_THREAD_LOCAL.remove();
             }
-            //接口处理完成，清理已添加缓存key
-            redisUtil.del(idempotentKey);
+//            //接口处理完成，清理已添加缓存key
+//            redisUtil.del(idempotentKey);
         }
     }
 

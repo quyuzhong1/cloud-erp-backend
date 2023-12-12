@@ -74,8 +74,18 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/site/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listSiteDropDown() {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listSiteDropDown();
-        return success(list);
+        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+                .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getSite()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
     }
 
     /**
@@ -283,8 +293,18 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
-        List<ShopDropDownVO.ShopDropDownNameVO> list = dmpShopInfoService.listShopDropDown(status);
-        return success(list);
+        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
+                .eq(null != status, DmpShopInfoEntity::getStatus, status)
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+                .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getName()))
+                .distinct()
+                .collect(Collectors.toList());
+        return success(result);
     }
 
     /**
