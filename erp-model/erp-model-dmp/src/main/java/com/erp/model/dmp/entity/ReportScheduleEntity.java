@@ -102,7 +102,12 @@ public class ReportScheduleEntity extends BaseEntity<ReportScheduleEntity> {
         this.marketplaceIds = marketplaceId;
         this.shopId = shopId;
         // CreateReportScheduleSpecification.PeriodEnum
-        this.period = "PT15M";
+        if ("GET_FBA_INVENTORY_PLANNING_DATA".equalsIgnoreCase(reportType)){
+            // AmazonReportRecordTypeEnum
+            this.period = "PT15M";
+        } else {
+            this.period = "P1D";
+        }
         this.firstNextReportCreationTime = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
         this.reportType = reportType;
         this.subscribedStatus = ReportScheduleSubscribedStatusEnum.WAIT.getCode();
