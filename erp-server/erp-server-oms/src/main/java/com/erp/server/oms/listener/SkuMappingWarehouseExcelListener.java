@@ -4,8 +4,11 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -15,11 +18,10 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +69,16 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     private List<BaseIdDTO> skuWarehouseList = new ArrayList<>(10);
 
     /**
+     * 更新的信息
+     */
+    private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
+
+    /**
+     * 更新的listing
+     */
+    private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
+
+    /**
      * 导入错误数据
      */
     private List<SkuMappingWarehouseImportExcelDTO> errorList = new ArrayList<>(10);
@@ -102,30 +114,77 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        String skuNo = importExcelDTO.getSkuNo();
-        SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-        if (Objects.isNull(sku)) {
-            errorMsgList.add("产品sku不存在");
-        }
+
         //仓库名称
         String warehouseName = importExcelDTO.getWarehouseName();
         WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().orElse(null);
-        if (Objects.isNull(warehouse)) {
+        if (null == warehouse) {
             errorMsgList.add("仓库不存在");
         }
+        // 服务商校验
+        OmsPlatformEnum platformEnum;
+        if (StringUtils.isNotBlank(importExcelDTO.getPlatformName())){
+            platformEnum = Arrays.stream(OmsPlatformEnum.values())
+                    .filter(e -> e.getCode().equalsIgnoreCase(importExcelDTO.getPlatformName()) || e.getName().equalsIgnoreCase(importExcelDTO.getPlatformName()))
+                    .findFirst().orElse(null);
+            if (null == platformEnum){
+                errorMsgList.add("服务商不存在");
+            }
+        } else {
+            platformEnum = null;
+        }
+
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
             return;
         }
+
+        // 查询该仓库所有平台sku
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(null == platformEnum ? "" : platformEnum.getCode());
+        paramDTO.setWarehouseIdList(Collections.singletonList(warehouse.getId()));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(Collections.singletonList(importExcelDTO.getWarehouseSkuNo()));
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+        if (null != platformEnum && CollectionUtils.isEmpty(listDto)){
+            errorMsgList.add("服务商不允许新增");
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+
+
+        // 已存在
+        if (CollectionUtils.isNotEmpty(listDto) ){
+            ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
+            if( currentSkuMapping.getMatchResult()){
+                errorMsgList.add("该仓库服务商sku已存在匹配关系");
+                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(importExcelDTO);
+                return;
+            }
+        }
+
+        String skuNo = importExcelDTO.getSkuNo();
+        SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+        if (Objects.isNull(sku)) {
+            errorMsgList.add("产品sku不存在");
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+
         //仓库id
         String warehouseId = warehouse.getId();
         //库存sku
         String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getPlatformSkuNo().
-                equals(warehouseSkuNo)).findFirst().orElse(null);
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
+                .filter(l -> l.getPlatformSkuNo().equals(warehouseSkuNo)
+                        && l.getPlatform().equalsIgnoreCase(null == platformEnum ? "" : platformEnum.getCode())
+                ).findFirst().orElse(null);
         String listingId = "";
         if (Objects.nonNull(listingInfoEntity)) {
             listingId = listingInfoEntity.getId();
@@ -139,10 +198,25 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                         && warehouseId.equals(s.getWarehouseId())
                         && (!s.getIsExpire())
                         && warehouseType.equals(s.getType())
+                        && s.getDictPlatform().equalsIgnoreCase(null == platformEnum ? "" : platformEnum.getCode())
         ).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(existList)) {
-            errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
+//            errorMsgList.add("相同平台sku只能对应一个平台sku");
+            // 修改对应关系
+            SkuMappingEntity skuMappingEntity = existList.stream().findFirst().orElse(null);
+            if (null != skuMappingEntity){
+                skuMappingEntity.setProductSkuId(sku.getSkuId());
+                skuMappingEntity.setProductSkuNo(sku.getSkuNo());
+                updateSkuMappingList.add(skuMappingEntity);
+                listingInfoEntity.setMatchResult(true);
+                updateListingInfoList.add(listingInfoEntity);
+            } else {
+                errorMsgList.add("未找到存在的映射记录");
+                importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(importExcelDTO);
+            }
+            return;
         }
 
         long count = skuMappingList.stream().filter(

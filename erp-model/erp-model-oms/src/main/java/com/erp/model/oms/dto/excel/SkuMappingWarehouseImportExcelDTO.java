@@ -42,6 +42,14 @@ public class SkuMappingWarehouseImportExcelDTO {
     @FieldValid(fieldName = "仓库名称", isNotBlank = true,maxLength =200)
     private String warehouseName;
 
+    /**
+     * 服务商
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "服务商", index = 2)
+    @FieldValid(fieldName = "服务商", isNotBlank = true,maxLength =200)
+    private String platformName;
+
 
     /**
      * sku

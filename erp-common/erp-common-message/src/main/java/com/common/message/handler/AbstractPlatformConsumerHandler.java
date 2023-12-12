@@ -41,10 +41,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
-            if (BusinessCommonConstants.hasProfile("test") || BusinessCommonConstants.hasProfile("dev")){
-                log.error("测试环境【test/dev】暂时跳过发送平台数据消费异常", e);
-                return;
-            }
             updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
             //异常预警
