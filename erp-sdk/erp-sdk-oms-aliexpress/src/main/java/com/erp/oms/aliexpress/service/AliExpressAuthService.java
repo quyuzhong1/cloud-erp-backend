@@ -11,6 +11,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,5 +39,26 @@ public class AliExpressAuthService {
 
     }
 
+    public JSONObject RefreshToken() throws ApiException {
+        return null;
+    }
 
+
+    public static void main(String[] args) {
+        Map<String, String> map = new HashMap<>();
+        map.put("clientId", "503630");
+        map.put("clientSecret", "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ");
+        map.put("code", "3_503630_q96LGrFAaP3qexDAZwkt37th3201");
+        map.put("baseUrl", "https://api-sg.aliexpress.com");
+        AliExpressAuthService service = new AliExpressAuthService();
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = service.generateToken(map);
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
+        System.out.println(jsonObject);
+    }
 }
+
+
