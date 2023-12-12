@@ -1038,7 +1038,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
 
             } else {
+
                 log.warn("【FBA货件更新】无找到有发货单, 不下推直接调拨单");
+/*
                 for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : saveReceiveList) {
                     OtherInstockDetailDTO.AddDTO addDTO = new OtherInstockDetailDTO.AddDTO();
                     addDTO.setSkuId(fbaShipmentReceiveEntity.getSkuId());
@@ -1052,7 +1054,20 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 String dept = StringUtils.isBlank(findUserDTO.getDepartmentId()) ? userByUserId.getDepartmentId() : findUserDTO.getDepartmentId();
                 // 找不到发货单 直接生成其他入库到目的仓的可用
                 this.generateOtherInstock(shopInfoEntity.getWarehouseId(), dept, detailAddList);
-
+*/
+                //新增直接调拨单:在途仓-目的仓
+                String transferOutId = this.generateTransferOut(shopInfoEntity, entity,  saveReceiveList);
+                if (StringUtils.isNotBlank(transferOutId)) {
+                    //提交
+                    transferInfoService.submit(Arrays.asList(transferOutId));
+                    //审核
+                    BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                    baseApproveParamDTO.setIds(Arrays.asList(transferOutId));
+                    baseApproveParamDTO.setType(ApproveType.PASS);
+                    transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
+                } else {
+                    throw new ServiceException("[FBA货件签收]新增直接调拨单失败");
+                }
             }
         }
     }
