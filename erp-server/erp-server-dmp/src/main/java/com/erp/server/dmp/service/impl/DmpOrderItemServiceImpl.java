@@ -389,10 +389,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         skuNo = StrUtil.isNotBlank(skuNo) ? skuNo : "";
         if (PlatformEnum.MABANG.getDesc().equals(splitSkuDTO.getPlatformSign())) {
             String finalMabangSkuNo = skuNo;
-            DmpBomEntity dmpBomEntity = machining.stream().filter(req -> req.getParentSku().equals(finalMabangSkuNo)).limit(1).findFirst().orElse(null);
+            DmpBomEntity dmpBomEntity = machining.stream().filter(req -> req.getParentSku().equals(finalMabangSkuNo)).limit(1).findFirst().orElse(new DmpBomEntity());
             //如果财务编码不存在记录错误日志
-            if (ObjectUtil.isEmpty(dmpBomEntity)) {
-                itemListAll.add(splitSkuDTO);
+            if (StringUtils.isBlank(dmpBomEntity.getId())) {
                 DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();
                 errorLogEntity.setBomId("");
                 errorLogEntity.setItemId(splitSkuDTO.getId());
@@ -400,12 +399,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 errorLogEntity.setSkuNo(skuNo);
                 errorLogEntity.setMsg(String.format(ApiError.MABANG_BOM_EXIST.msg, skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
-                return itemListAll;
             }
 
             //如果财务编码不存在记录错误日志
             if (StringUtils.isBlank(dmpBomEntity.getFinancialCode())) {
-                itemListAll.add(splitSkuDTO);
                 DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();
                 errorLogEntity.setBomId(dmpBomEntity.getId());
                 errorLogEntity.setItemId(splitSkuDTO.getId());
@@ -413,11 +410,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 errorLogEntity.setSkuNo(skuNo);
                 errorLogEntity.setMsg(String.format(ApiError.CLEAN_SPLIT_FINANCIAL_EXIST.msg, skuNo));
                 dmpSplitErrorLogService.save(errorLogEntity);
-                return itemListAll;
             }
             //3、获取到马帮的财务编码，匹配ERP的bom
             DmpBomEntity finalDmpBomEntity = dmpBomEntity;
             bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(finalDmpBomEntity.getFinancialCode())).collect(Collectors.toList());
+            splitSkuDTO.setMabangSkuNo(dmpBomEntity.getFinancialCode());
         } else {
             //不是马帮的直接SKU匹配ERP的bom
             String finalOtherSkuNo = skuNo;
@@ -490,7 +487,14 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         if (isSplit) {
             newSplitSkuDTO.setSkuNo(skuNo);
             newSplitSkuDTO.setOriginalSkuNo(splitSkuDTO.getSkuNo() == null ? "" : splitSkuDTO.getSkuNo());
-            newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : dmpSkuCostEntity.getCostPrice());
+            //拆分前成本信息
+            String bomSkuNo = splitSkuDTO.getSkuNo();
+            if (PlatformEnum.MABANG.getDesc().equals(splitSkuDTO.getPlatformSign())) {
+                bomSkuNo = splitSkuDTO.getMabangSkuNo();
+            }
+            String bomKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, bomSkuNo);
+            DmpSkuCostEntity bomCostEntity = (DmpSkuCostEntity) redisUtil.get(bomKey);
+            newSplitSkuDTO.setOriginalCostPrice(ObjectUtil.isEmpty(bomCostEntity) ? BigDecimal.ZERO : bomCostEntity.getCostPrice());
             newSplitSkuDTO.setIsSplitSku(MathUtil.ONE);
         }
         return newSplitSkuDTO;
@@ -520,7 +524,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                     itemList.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
                 } else {
                     //四位以后进行舍弃
-                    BigDecimal newAmountAfter = MathUtil.divide(MathUtil.multiply(itemList.get(i).getCleanCostPrice(), itemList.get(i).getCleanCostPrice(), 6)
+                    BigDecimal newAmountAfter = MathUtil.divide(MathUtil.multiply(itemList.get(i).getCleanCostPrice(), itemList.get(i).getAmountAfter(), 6)
                             , sumCostPrice, 4, BigDecimal.ROUND_DOWN);
                     itemList.get(i).setAmountAfter(newAmountAfter);
                     //除最后一条数据成本合计

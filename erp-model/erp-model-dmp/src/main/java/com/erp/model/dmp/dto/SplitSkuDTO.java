@@ -26,6 +26,11 @@ public class SplitSkuDTO implements Serializable {
     private String skuNo;
 
     /**
+     * 马帮SKU
+     */
+    private String mabangSkuNo;
+
+    /**
      * 原始sku
      */
     private String originalSkuNo;
