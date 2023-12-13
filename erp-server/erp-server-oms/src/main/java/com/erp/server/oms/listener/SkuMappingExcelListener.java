@@ -150,6 +150,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+        String listingId = "";
 
         // 已接入平台不允许新增
         boolean isApiPlatform = PlatformDictEnum.hasConnectionPlatform().contains(platform.getValue());
@@ -169,6 +170,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 errorList.add(skuMappingImportExcelDTO);
                 return;
             }
+        }
+
+        // 设置当前listingId
+        if (CollectionUtils.isNotEmpty(listDto)){
+            listingId = listDto.get(0).getListingId();
         }
 
         String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
@@ -191,21 +197,22 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
 
         String platformProductName = skuMappingImportExcelDTO.getPlatformProductName();
+        String finalListingId1 = listingId;
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
-                .filter(l -> l.getPlatformSkuNo().equals(platformSkuNo) && l.getPlatform().equalsIgnoreCase(dictPlatform))
+                .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
                 .findFirst().orElse(null);
 
-        String listingId = "";
-        if (Objects.nonNull(listingInfoEntity)) {
-            listingId = listingInfoEntity.getId();
-            if (listingInfoEntity.getMatchResult()){
-                //存在错误数据则直接返回
-                errorMsgList.add("平台sku已存在匹配关系");
-                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(skuMappingImportExcelDTO);
-                return;
-            }
-        }
+
+//        if (Objects.nonNull(listingInfoEntity)) {
+//            listingId = listingInfoEntity.getId();
+//            if (listingInfoEntity.getMatchResult()){
+//                //存在错误数据则直接返回
+//                errorMsgList.add("平台sku已存在匹配关系");
+//                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+//                errorList.add(skuMappingImportExcelDTO);
+//                return;
+//            }
+//        }
 
 
         //已对应的平台sku
