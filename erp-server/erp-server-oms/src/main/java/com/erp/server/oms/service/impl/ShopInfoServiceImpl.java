@@ -675,7 +675,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.nonNull(shopAuthEntity) && StringUtils.isNotBlank(shopAuthEntity.getShopId())) {
                 mainShopInfo = this.getById(shopAuthEntity.getShopId());
             }
-        } else {
+        }
+        if(Objects.isNull(mainShopInfo)){
             mainShopInfo = this.getById(dto.getId());
         }
         if (Objects.isNull(mainShopInfo)) {
