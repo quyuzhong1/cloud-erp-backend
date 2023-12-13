@@ -665,8 +665,9 @@
             T.sku_id as skuId,
             T."sku_no" AS skuNo,
             T."LatestPurchaseDate" AS costDate,
-            ROUND(AVG(D."tax_price"),4) AS costPrice,
-            ROUND(AVG(D."tax_price"/( 1 + D.tax_rate)),4) AS notTaxCostPrice,
+            D.tax_price as costPrice,
+            D.tax_price/( 1 + D.tax_rate) as notTaxCostPrice,
+            D.purchase_qty as qty,
             D.currency,
             CAST(T."LatestPurchaseDate" - INTERVAL '3 months' AS DATE) AS threeMonthsAgoDate,
             CAST(T."LatestPurchaseDate" AS DATE) AS latestPurchaseDate
@@ -699,7 +700,5 @@
                 T."sku_no" = D."sku_no"
                 AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
         WHERE S.is_deleted = false and S.type = 'CGDD01_SYS' and S.invalid_status = false and S.approve_status = 'approve'
-        GROUP BY
-            T.sku_id,T."sku_no",D.currency, T."LatestPurchaseDate";
     </select>
 </mapper>

@@ -1237,12 +1237,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
         }*/
 
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, item.getSkuNo());
-        DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(Arrays.asList(item.getSkuNo()));
         BigDecimal purchasePrice = BigDecimal.ZERO;
         String currency = CurrencyEnum.CNY.getCurrencyCode();
-        if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
-            purchasePrice = dmpSkuCostEntity.getNotTaxCostPrice();
+        if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+            purchasePrice = dmpSkuCostList.get(0).getNotTaxCostPrice();
         }
 
         // 销售金额转换
