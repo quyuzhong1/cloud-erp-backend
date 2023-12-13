@@ -60,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -179,7 +180,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         boolean result = this.save(shop);
         if (result) {
             //店铺客户信息
-            autoCreateShopCustomer(shop);
+            autoCreateShopCustomer(shop.getId());
         }
         return Collections.singletonList(shop);
 
@@ -188,9 +189,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     /**
      * 店铺保存成功后 自动创建客户
      *
-     * @param shop
+     * @param shopId
      */
-    public void autoCreateShopCustomer(ShopInfoEntity shop) {
+    @Transactional(rollbackFor = Exception.class)
+    public void autoCreateShopCustomer(String shopId) {
+        ShopInfoEntity shop = this.getById(shopId);
+        if (Objects.isNull(shop)) {
+            return;
+        }
         CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
         customer.setUseOrgId(shop.getSalesOrgId());
         customer.setInnerOrgId(shop.getSalesOrgId());
@@ -217,7 +223,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
-        String id = customerInfoService.addAndSubmit(customer);
+        String id = customerInfoService.add(customer);
         if (StringUtils.isNotBlank(id)) {
             CustomerInfoEntity customerB2b = customerInfoService.getById(id);
             if (Objects.nonNull(customerB2b)) {
@@ -226,10 +232,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 this.updateById(shop);
             }
         }
-        BaseApproveParamDTO approveParamDTO = new BaseApproveParamDTO();
-        approveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        approveParamDTO.setIds(Arrays.asList(id));
-        customerInfoService.approve(approveParamDTO);
+
 
     }
 
@@ -914,7 +917,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopInfoEntity shopInfoEntity = new ShopInfoEntity();
         if (Objects.nonNull(shopId)) {
             shopInfoEntity = this.getById(shopId);
-            if (Objects.isNull(shopInfoEntity)){
+            if (Objects.isNull(shopInfoEntity)) {
                 shopInfoEntity = new ShopInfoEntity();
             }
         }
@@ -929,7 +932,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getCountryName())) {
             shopInfoEntity.setCountryName(shopInfo.getCountryName());
         }
-        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getAccount())){
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getAccount())) {
             shopInfoEntity.setAccount(shopInfo.getAccount());
         }
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
