@@ -79,8 +79,6 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         * 来源详情id
         */
         private String sourceDetailId;
-
-
     }
 
     /**

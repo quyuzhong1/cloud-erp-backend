@@ -3,6 +3,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -96,6 +100,40 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<SoB2cDeliveryDTO.ListDTO> paging(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public SoB2cDeliveryDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO manualDelivery(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO falseDelivery(String id) {
+        return null;
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> printLogisticsWaybill(List<String> ids) {
+        return null;
+    }
 
     /**
     * 新增修改处理数据
