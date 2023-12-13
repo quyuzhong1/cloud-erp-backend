@@ -22,7 +22,7 @@
     </resultMap>
     <sql id="query_list_sql">
         <if test="null != params and params.processName != null and params.processName != ''">
-            and pd.process_name ilike  concat('%',#{params.processName},'%')
+            and pd.process_name ilike concat('%',#{params.processName}::text,'%')
         </if>
         <if test="null != params and params.createUserIds != null and params.createUserIds.size() > 0">
             and pd.create_user_id in
@@ -60,7 +60,7 @@
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         where pd.is_deleted = false
         <if test="null != params and params.id != null and params.id != ''">
-            and pd.id ilike  concat('%',#{params.id},'%')
+            and pd.id ilike concat('%',#{params.id}::text,'%')
         </if>
        <include refid="query_list_sql"/>
     </select>

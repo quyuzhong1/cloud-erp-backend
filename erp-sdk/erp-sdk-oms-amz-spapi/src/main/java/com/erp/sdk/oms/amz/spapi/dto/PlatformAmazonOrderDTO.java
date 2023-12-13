@@ -155,19 +155,20 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // TODO 订单物流信息
 
         // 订单买家信息
-        List<PlatformOrderReceiverDTO> receiverList = new LinkedList<>();
         BuyerInfo buyerInfo = dto.getOrder().getBuyerInfo();
         if (null != dto.getOrder().getBuyerInfo()){
             PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
-            receiverDTO.setName(StringUtils.isBlank(buyerInfo.getBuyerName()) ? "" : buyerInfo.getBuyerName());
             receiverDTO.setEmail(StringUtils.isBlank(buyerInfo.getBuyerEmail()) ? "" : buyerInfo.getBuyerEmail());
             Address shippingAddress = dto.getOrder().getShippingAddress();
             if (null != shippingAddress){
+                receiverDTO.setName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());
                 receiverDTO.setFirstAddress(StringUtils.isBlank(shippingAddress.getAddressLine1()) ? "" : shippingAddress.getAddressLine1());
                 receiverDTO.setSecondAddress(StringUtils.isBlank(shippingAddress.getAddressLine2()) ? "" : shippingAddress.getAddressLine2());
                 if (StringUtils.isBlank(shippingAddress.getAddressLine3())){
                     receiverDTO.setSecondAddress(receiverDTO.getSecondAddress() + shippingAddress.getAddressLine3());
                 }
+                receiverDTO.setReceiverTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
+                receiverDTO.setTelNumber(StringUtils.isBlank(shippingAddress.getPhone()) ? "" : shippingAddress.getPhone());
                 receiverDTO.setCityName(StringUtils.isBlank(shippingAddress.getCity()) ? "" : shippingAddress.getCity());
                 receiverDTO.setCountryName(StringUtils.isBlank(shippingAddress.getCounty()) ? "" : shippingAddress.getCounty());
                 receiverDTO.setReceiverName(StringUtils.isBlank(shippingAddress.getName()) ? "" : shippingAddress.getName());

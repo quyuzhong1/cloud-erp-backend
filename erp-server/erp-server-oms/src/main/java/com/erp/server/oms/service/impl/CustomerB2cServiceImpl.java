@@ -58,6 +58,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -1437,11 +1438,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             customerB2cEntity.setSourceId(mainEntity.getId());
             customerB2cEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
             customerB2cEntity.setName(receiverEntity.getName());
+            customerB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            customerB2cEntity.setDisabled(false);
             if (!save(customerB2cEntity)){
                 throw new ServiceException("[CustomerB2cEntity] 保存失败");
             }
             return customerB2cEntity;
         } else {
+            entity.setName(receiverEntity.getName());
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            entity.setDisabled(false);
             if (!updateById(entity)){
                 throw new ServiceException("[CustomerB2cEntity] 更新失败");
             }

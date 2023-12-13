@@ -824,6 +824,16 @@ public class SkuMappingDTO implements Serializable {
          * 库存sku名称
          */
         private String platformProductName;
+
+        /**
+         * 平台产品id
+         */
+        private String platformSpuNo;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSpuName;
     }
 
 

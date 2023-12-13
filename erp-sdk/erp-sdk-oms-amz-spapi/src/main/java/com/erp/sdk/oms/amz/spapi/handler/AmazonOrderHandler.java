@@ -129,7 +129,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         OrderItemList allOrderItems = null;
         try {
             allOrderItems = ordersVoApi.getAllOrderItems(dto.getUniqueId(), null);
-        } catch (ApiException e) {
+        } catch (Exception e) {
             throw new ServiceException("查询亚马逊订单详情失败："+JSONUtil.toJsonStr(e));
         }
         if (CollectionUtils.isEmpty(allOrderItems)){
@@ -154,7 +154,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
                 rdtToken = response.getRestrictedDataToken();
                 // 缓存到redis
                 redisUtil.set(tokenKey, rdtToken, response.getExpiresIn());
-            } catch (ApiException e) {
+            } catch (Exception e) {
                 throw new ServiceException("获取亚马逊订单RDT token失败："+JSONUtil.toJsonStr(e));
             }
         }
@@ -169,7 +169,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             Address shippingAddress = response.getPayload().getShippingAddress();
             Order order = dto.getOrder();
             order.setShippingAddress(shippingAddress);
-        } catch (ApiException e) {
+        } catch (Exception e) {
             throw new ServiceException("查询亚马逊订单地址失败："+JSONUtil.toJsonStr(e));
         }
         return dto;

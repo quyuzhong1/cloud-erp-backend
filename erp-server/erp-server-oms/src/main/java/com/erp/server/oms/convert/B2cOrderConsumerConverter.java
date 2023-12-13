@@ -1,6 +1,5 @@
 package com.erp.server.oms.convert;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.*;
 import com.erp.model.oms.entity.*;
 import org.mapstruct.Mapper;

@@ -376,7 +376,7 @@ public class PullAmazonJob {
      */
     @XxlJob("amazonReportScheduleJob")
     public ReturnT<String> amazonReportScheduleJob() {
-        Integer size = 1;
+        Integer size = 20;
         String jobParamStr = XxlJobHelper.getJobParam();
         if (StrUtil.isNotBlank(jobParamStr)) {
             JSONObject jobParam = JSON.parseObject(jobParamStr);

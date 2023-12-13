@@ -127,6 +127,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewReceiver(receiverDTO, mainEntity.getId());
+                entity.setTelNumber(receiverDTO.getTelNumber());
+                entity.setReceiverTelNumber(receiverDTO.getReceiverTelNumber());
                 //处理买家信息
                 handleSoB2cReceiver(entity, mainEntity.getId());
                 if (StringUtils.isBlank(receiverDTO.getName())){
@@ -135,18 +137,20 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 if (!this.save(entity)){
                     throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
                 }
+                return entity;
             }else {
                 SoB2cReceiverEntity entity2 = new SoB2cReceiverEntity();
                 BeanMapperUtils.copy(receiverDTO, entity2);
-                if (StringUtils.isBlank(receiverDTO.getName())){
-                    receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
-                }
+//                if (StringUtils.isBlank(receiverDTO.getName())){
+//                    receiverDTO.setEmail(StringUtils.isBlank(receiverDTO.getEmail()) ? "" : receiverDTO.getEmail());
+//                }
                 entity2.setId(entity.getId());
                 if (!this.updateById(entity2)){
                     throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
                 }
+                return entity2;
             }
-            return entity;
+
     }
 
     /**
