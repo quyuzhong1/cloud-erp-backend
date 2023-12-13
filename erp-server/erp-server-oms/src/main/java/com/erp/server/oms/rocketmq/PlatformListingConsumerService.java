@@ -14,13 +14,17 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -28,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 下载平台商品消费服务
@@ -74,9 +80,23 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
-        // 组合信息
-        // 添加到sku_mapping
-        ListingInfoEntity oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+        ListingInfoEntity oldEntity = null;
+        if(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+                ||OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())){
+            oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+        } else {
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setPlatform(dto.getPlatform());
+            paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
+            List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+
+            if (!CollectionUtils.isEmpty(listDto)){
+                oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
+            }
+        }
+
 
         // 转换
         ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
