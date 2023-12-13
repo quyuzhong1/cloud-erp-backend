@@ -169,6 +169,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuId(skuVO.getSkuId());
+            detailEntity.setAsin(collect.get(0).getPlatformSpuNo());
             //根据sku查询拥有的子sku
             List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
 
@@ -1206,6 +1207,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (ObjectUtil.isNotEmpty(skuDTO)) {
                 detailEntity.setSkuNo(skuDTO.getProductSkuNo());
                 detailEntity.setSkuId(skuDTO.getProductSkuId());
+                detailEntity.setAsin(skuDTO.getPlatformSpuNo());
 
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
