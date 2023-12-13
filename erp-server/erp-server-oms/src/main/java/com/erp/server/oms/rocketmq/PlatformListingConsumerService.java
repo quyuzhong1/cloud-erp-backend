@@ -66,23 +66,23 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Override
     public void sendWarnMsg(String syncTaskId, String msg) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity, msg);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
+        log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(ext));
         PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
-        log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(dto));
         // Shopify来源卖家sku可能为空
-        if (StringUtils.isBlank(dto.getPlatformSkuNo())){
+        if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
             log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
             return ApiResult.success();
         }
         ListingInfoEntity oldEntity = null;
-        if(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                ||OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())){
+        if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+                || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
             oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
         } else {
             ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
@@ -92,7 +92,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
             List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
-            if (!CollectionUtils.isEmpty(listDto)){
+            if (!CollectionUtils.isEmpty(listDto)) {
                 oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
             }
         }
@@ -107,8 +107,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             // 添加到映射
             SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-            if(OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-            ||OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())){
+            if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
+                    || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
                 skuMappingEntity.setHasMappingAll(true);
             }
             if (!skuMappingService.save(skuMappingEntity)) {
@@ -117,13 +117,25 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         } else {
             // 是否修改
             if (!oldEntity.toString().equals(entity.toString())) {
-                oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
-                oldEntity.setProductImageUrl(entity.getProductImageUrl());
-                oldEntity.setProductSpec(entity.getProductSpec());
-                oldEntity.setProductPacking(entity.getProductPacking());
+                if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
+                    oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+                }
+                if (StringUtils.isNotBlank(entity.getProductImageUrl())) {
+                    oldEntity.setProductImageUrl(entity.getProductImageUrl());
+                }
+                if (StringUtils.isNotBlank(entity.getProductSpec())) {
+                    oldEntity.setProductSpec(entity.getProductSpec());
+                }
+                if (StringUtils.isNotBlank(entity.getProductPacking())) {
+                    oldEntity.setProductPacking(entity.getProductPacking());
+                }
+                if (StringUtils.isNotBlank(entity.getPlatformFnSku())) {
+                    oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
+                }
+                if (StringUtils.isNotBlank(entity.getPlatformSkuName())) {
+                    oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
+                }
                 oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
-                oldEntity.setPlatformFnSku(entity.getPlatformFnSku());
-                oldEntity.setPlatformSkuName(entity.getPlatformSkuName());
                 if (!listingInfoService.updateById(oldEntity)) {
                     throw new ServiceException("Listing 产品更新失败");
                 }
@@ -138,10 +150,10 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.THIRD_WAREHOUSE_GET_SKU.getTableName());
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }
