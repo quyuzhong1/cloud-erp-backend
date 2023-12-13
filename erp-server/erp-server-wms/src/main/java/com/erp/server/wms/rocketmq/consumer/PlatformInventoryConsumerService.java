@@ -85,21 +85,21 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
         // 查询仓库ID
         List<OverseasProviderDTO.ListWithWarehouseDTO> overseasWareHouseList = overseasProviderService.listAllMatch();
         if (overseasWareHouseList.isEmpty()){
-            throw new ServiceException("未找到对应仓库ID Map,dto=" + JSONUtil.toJsonStr(dto));
+            return ApiResult.success();
         }
         List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOS = overseasWareHouseList.stream()
                 .filter(e-> e.getCode().equalsIgnoreCase(dto.getPlatform()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(warehouseDTOS)){
             if (overseasWareHouseList.isEmpty()){
-                throw new ServiceException("未找到对应仓库ID list,dto=" + JSONUtil.toJsonStr(dto));
+                return ApiResult.success();
             }
         }
         OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOS.stream()
                 .filter(e -> e.getPlatformWarehouseCode().equalsIgnoreCase(dto.getPlatformWarehouseCode()))
                 .findFirst().orElse(null);
         if (null == warehouseDTO){
-            throw new ServiceException("未找到对应仓库ID,dto=" + JSONUtil.toJsonStr(dto));
+            return ApiResult.success();
         }
         dto.setWarehouseId(warehouseDTO.getWarehouseId());
 
