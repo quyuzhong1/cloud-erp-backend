@@ -31,5 +31,25 @@
         type, source_id, target_id
     </sql>
 
+    <select id="listSourceByTargetIds" resultType="com.erp.model.oms.entity.SoB2cRefEntity">
+        select
+            <include refid="Base_Column_List" />
+        from so_b2c_ref
+        where is_deleted = false and  source_id in (
+            select source_id from so_b2c_ref where is_deleted = false
+            <where>
+                <if test="targetIdList != null and targetIdList.size > 0">
+                    and target_id in
+                    <foreach collection="targetIdList" item="item" separator="," open="(" close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="code != null and code != ''">
+                    and code = #{code}
+                </if>
+            </where>
+            )
+    </select>
+
 
 </mapper>

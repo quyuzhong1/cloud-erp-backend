@@ -54,6 +54,17 @@ public interface SoB2cRefService extends SuperService<SoB2cRefEntity> {
      * @return List<SoB2cRefEntity>
      */
     List<SoB2cRefEntity> listByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum);
+
+    /**
+     * @description: 根据目标单据ids和操作类型查询来源下说有的关联关系
+     * @author Will
+     * @date: 2023/8/24 11:35
+     * @param targetIdList
+     * @param typeEnum
+     * @return List<SoB2cRefEntity>
+     */
+    List<SoB2cRefEntity> listSourceByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum);
+
     /**
      * @description: 根据主表id删除
      * @author Will
