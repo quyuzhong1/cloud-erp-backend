@@ -1093,9 +1093,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
-        boolean updateResult = overseasWarehouseInboundDetailService.updateBatchById(updateList);
-        if (!updateResult) {
-            throw new ServiceException("[OverseasWarehouseInboundReceivedEntity]批量更新失败");
+        if(CollectionUtils.isNotEmpty(updateList)){
+            boolean updateResult = overseasWarehouseInboundDetailService.updateBatchById(updateList);
+            if (!updateResult) {
+                throw new ServiceException("[OverseasWarehouseInboundReceivedEntity]批量更新失败");
+            }
         }
         List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
@@ -1120,7 +1122,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
-        if (io.seata.common.util.CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
+        if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
             boolean saveResult = overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
             if (!saveResult) {
                 throw new ServiceException("[OverseasWarehouseInboundReceivedEntity]批量插入失败");
