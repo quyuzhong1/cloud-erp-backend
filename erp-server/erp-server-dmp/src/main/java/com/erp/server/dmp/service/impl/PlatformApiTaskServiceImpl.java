@@ -131,11 +131,6 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setSyncOperate(task.getSyncOperate());
         entity.setBillType(task.getBillType());
         entity.setOperateType(task.getOperateType());
-        // 暂时关闭订单类型
-        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
-                && "order".equalsIgnoreCase(task.getBillType())){
-            entity.setDisabled(true);
-        }
         return entity;
     }
 
