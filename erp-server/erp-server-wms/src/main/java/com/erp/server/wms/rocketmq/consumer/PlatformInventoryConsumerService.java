@@ -13,7 +13,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.common.message.handler.AbstractPlatformPullConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -39,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +49,7 @@ import java.util.stream.Collectors;
         selectorExpression = "third_system_inventory_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_inventory_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformPullConsumerHandler<T> {
+public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -74,9 +72,9 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId,String msg) {
+    public void sendWarnMsg(String syncTaskId) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
@@ -140,14 +138,14 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
     }
 
 
-    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity,String msg) {
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfo.setTitle(StrUtil.format("库存消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo("");
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

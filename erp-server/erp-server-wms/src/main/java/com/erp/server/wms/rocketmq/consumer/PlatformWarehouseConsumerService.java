@@ -10,23 +10,19 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.common.message.handler.AbstractPlatformPullConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
@@ -45,7 +41,7 @@ import java.util.Optional;
         selectorExpression = "third_system_warehouse_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_warehouse_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformPullConsumerHandler<T> {
+public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -65,9 +61,9 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId,String msg) {
+    public void sendWarnMsg(String syncTaskId) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
@@ -113,14 +109,14 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
                 .ifPresent(dictCountryEntity -> mqEntity.setCountryName(dictCountryEntity.getNameCn()));
     }
 
-    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity,String msg) {
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfo.setTitle(StrUtil.format("仓库消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo("");
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

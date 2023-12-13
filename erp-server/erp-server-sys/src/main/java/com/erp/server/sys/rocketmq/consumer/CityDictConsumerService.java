@@ -12,7 +12,6 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.common.message.handler.AbstractPlatformPullConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -23,7 +22,6 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.sys.convert.CityDictConvert;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.ImlDictCityService;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -42,7 +40,7 @@ import java.util.Objects;
         selectorExpression = "third_system_city_dict_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_dict_consumer",
         consumeMode = ConsumeMode.ORDERLY)
-public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformPullConsumerHandler<T> {
+public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -62,9 +60,9 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId,String msg) {
+    public void sendWarnMsg(String syncTaskId) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
@@ -91,14 +89,14 @@ public class CityDictConsumerService<T extends DmpSyncTaskIdDTO> extends Abstrac
     }
 
 
-    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity,String msg) {
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_SYS);
         warnMsgInfo.setTitle(StrUtil.format("区域基础消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo("");
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }
