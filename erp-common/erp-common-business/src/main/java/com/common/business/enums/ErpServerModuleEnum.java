@@ -22,7 +22,9 @@ public enum ErpServerModuleEnum {
     ERP_SERVER_PLM("erp-server-plm","产品计划系统"),
     ERP_SERVER_SCM("erp-server-scm","供应链系统"),
     ERP_SERVER_WMS("erp-server-wms","仓储管理系统"),
+    ERP_SERVER_TMS("erp-server-tms","物流系统"),
     ERP_SERVER_WORKFLOW("erp-server-workflow","工作流系统"),
+    ERP_THIRD_SDK("erp-third-sdk","第三方sdk服务")
     ;
     public String code;
     public String name;

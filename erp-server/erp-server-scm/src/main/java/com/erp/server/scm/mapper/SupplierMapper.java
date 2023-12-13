@@ -27,4 +27,5 @@ public interface SupplierMapper extends BaseMapper<SupplierEntity> {
 
     List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("value")String categoryType,
                                                @Param("approveStatus")String approveStatus);
+
 }

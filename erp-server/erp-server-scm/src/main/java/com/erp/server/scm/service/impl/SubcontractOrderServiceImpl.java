@@ -12,10 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -1054,7 +1051,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             parentDTO.setOldPrice(parentEntity.getPrice());
             parentDTO.setOldAmount(parentEntity.getAmount());
             parentDTO.setOldDeliveryQty(parentEntity.getDeliveryQty());
-            parentDTO.setQty(null);
             parentDTO.setPrice(null);
             parentDTO.setDeliveryQty(null);
             parentDTO.setAmount(null);
@@ -1075,7 +1071,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childDTO.setOldPrice(childEntity.getPrice());
                 childDTO.setOldAmount(childEntity.getAmount());
                 childDTO.setOldDeliveryQty(childEntity.getDeliveryQty());
-                childDTO.setQty(null);
                 childDTO.setPrice(null);
                 childDTO.setDeliveryQty(null);
                 childDTO.setAmount(null);
@@ -1114,7 +1109,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
-
 
     /**
      * 根据bom skuId 获取数据
@@ -1349,7 +1343,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
             }
         }
         // 属性赋值

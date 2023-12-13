@@ -13,7 +13,7 @@ import java.util.List;
  * 销售退货签收单明细表 服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 public interface SoReturnReceiveDetailService extends SuperService<SoReturnReceiveDetailEntity> {

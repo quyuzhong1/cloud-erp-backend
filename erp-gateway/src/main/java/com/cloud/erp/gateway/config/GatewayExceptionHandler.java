@@ -1,7 +1,5 @@
 package com.cloud.erp.gateway.config;
 
-import java.util.*;
-
 import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.StrUtils;
@@ -13,11 +11,11 @@ import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.reactive.function.server.RequestPredicates;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.function.server.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * gateway api异常处理
@@ -44,10 +42,18 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
 		log.error(StrUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
+		// 1023服务暂时不可用
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
 			ApiError apiError503 = ApiError.ERROR_1023;
 			code = StrUtils.null2EmptyWithTrim(apiError503.code);
 			errorMessage = apiError503.msg;
+		}
+		// 404接口路径不存在
+		if (error instanceof org.springframework.web.server.ResponseStatusException
+				&& HttpStatus.NOT_FOUND.equals(((ResponseStatusException) error).getStatus())){
+			ApiError apiError404 = ApiError.ERROR_404_NOT_FIND;
+			code = apiError404.code.toString();
+			errorMessage = apiError404.msg;
 		}
 		map.put("code", code);
 		map.put("msg", errorMessage);

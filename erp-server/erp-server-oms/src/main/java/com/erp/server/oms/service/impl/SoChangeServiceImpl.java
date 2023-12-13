@@ -59,7 +59,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -542,7 +541,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_500);
+            throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
         }
 
         //客户id
@@ -552,9 +551,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         // 国家列表
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
-        List<String> flagList = new ArrayList<>();
         for (SoChangeDTO.PagingViewDTO item : list) {
-            boolean contains = flagList.contains(item.getId());
             BillTypeEnum orderType = item.getOrderType();
             item.setOrderTypeName(orderType.getName());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -590,18 +587,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
             }
-            if (contains) {
-                item.setCode("");
-                item.setSoCode("");
-                item.setOrderType(null);
-                item.setOrderTypeName("");
-                item.setApproveStatusName("");
-                item.setCustomerName("");
-                item.setInvalidStatusName("");
-                item.setCreateUserName("");
-                item.setCreateTime(null);
-            }
-            flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
     }

@@ -7,6 +7,12 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.SaveData;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
@@ -15,21 +21,18 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.GyyRefundDTO;
-import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -71,14 +74,14 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(11);
+        jobTaskDTO.setPlatformApiId("11");
         jobTaskDTO.setApiName("管易云退款列表");
-        jobTaskDTO.setId(35L);
+        jobTaskDTO.setId("35");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -179,7 +182,6 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
-
     /**
      * 请求管易云退款信息接口
      * @param dto

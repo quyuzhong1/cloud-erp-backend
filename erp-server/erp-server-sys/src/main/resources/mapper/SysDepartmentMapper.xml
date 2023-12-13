@@ -14,7 +14,7 @@
         SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
     <select id="getDeptList" resultType="com.erp.model.sys.dto.SysDepartmentDTO">
-         SELECT id,name,type FROM sys_department
+         SELECT id,name,type,parent_id FROM sys_department
     </select>
 
     <select id="getByDeptNames" resultType="com.erp.model.sys.dto.SysUserDeptDTO">
@@ -34,6 +34,8 @@
             </foreach>
         </if>
     </select>
+
+
     <select id="getDeptByParentId" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
         WITH RECURSIVE T ( ID, NAME, parent_id ) AS (
             SELECT ID,NAME,PARENT_ID FROM sys_department

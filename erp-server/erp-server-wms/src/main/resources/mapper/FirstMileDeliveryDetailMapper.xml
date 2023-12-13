@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper">
+
+    <!--根据来源详情id查询发货详情-->
+    <select id="listBySourceDetailIds" resultType="com.erp.model.wms.entity.FirstMileDeliveryDetailEntity">
+        SELECT
+            fdd.id,
+            fdd.create_time,
+            fdd.update_time,
+            fdd.create_user_name,
+            fdd.create_user_id,
+            fdd.update_user_name,
+            fdd.update_user_id,
+            fdd.version,
+            fdd.is_deleted,
+            fdd.main_id,
+            fdd.platform_spu_no,
+            fdd.platform_sku_no,
+            fdd.fn_sku,
+            fdd.sku_id,
+            fdd.sku_no,
+            fdd.product_name,
+            fdd.stock_sku,
+            fdd.declare_qty,
+            fdd.plan_qty,
+            fdd.delivery_qty,
+            fdd.is_combination,
+            fdd.net_weight,
+            fdd.product_size_length,
+            fdd.product_size_width,
+            fdd.product_size_height,
+            fdd.source_detail_id,
+            fdd.warehouse_location,
+            fdd.receive_date,
+            fd.approve_status
+        FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+            AND fdd.source_detail_id IN
+            <foreach collection="sourceDetailIds" item="sourceDetailId" open="(" separator="," close=")">
+                #{sourceDetailId}
+            </foreach>
+        </if>
+    </select>
+
+    <!--根据主表id分组sku查询发货及待装箱数-->
+    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+        SELECT
+            fd.id,
+            fdd.sku_id,
+            fdd.sku_no,
+            SUM(fdd.delivery_qty) AS deliveryQty
+        FROM first_mile_delivery fd
+        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        WHERE fd.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND fdd.main_id = #{mainId}
+        </if>
+        GROUP BY fd.id,
+        fdd.sku_id,
+        fdd.sku_no
+    </select>
+
+    <!--根据主表id分组查询发货单已包装发货及待装箱数-->
+    <select id="listCartonGroupSkuByMainId" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">
+        SELECT
+            fmcd.main_id AS id,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmdd.delivery_qty) AS deliveryQty
+        FROM first_mile_carton fmc
+        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.main_id AND fmdd.sku_id = fmcd.sku_id AND fmdd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND fmcd.main_id = #{mainId}
+        </if>
+        <if test="boxSpecNo != null and boxSpecNo != ''">
+            AND fmc.box_spec_no = #{boxSpecNo}
+        </if>
+        GROUP BY fmcd.main_id,
+        fmcd.sku_id,
+        fmcd.sku_no
+    </select>
+
+    <!--查询包装信息-->
+    <select id="listPackDate" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$PackDateDTO">
+        SELECT
+            fmcd.main_id AS id,
+            fmcd.carton_id,
+            fmcd.sku_id,
+            fmcd.sku_no,
+            SUM(fmdd.delivery_qty) AS deliveryQty,
+            SUM(fmcd.pack_qty) AS packQty,
+            SUM(fmc.box_qty) AS boxQty,
+            fmc.box_spec_no
+        FROM first_mile_carton fmc
+        INNER JOIN first_mile_carton_detail fmcd ON fmc.id = fmcd.carton_id AND fmcd.is_deleted = FALSE
+        LEFT JOIN first_mile_delivery_detail fmdd ON fmdd.main_id = fmcd.main_id AND fmdd.sku_id = fmcd.sku_id AND
+        fmdd.is_deleted = FALSE
+        WHERE fmc.is_deleted = FALSE
+        <if test="mainId != null and mainId != ''">
+            AND fmcd.main_id = #{mainId}
+        </if>
+        GROUP BY fmcd.main_id,
+        fmcd.carton_id,
+        fmcd.sku_id,
+        fmcd.sku_no,
+        fmc.box_spec_no
+    </select>
+</mapper>

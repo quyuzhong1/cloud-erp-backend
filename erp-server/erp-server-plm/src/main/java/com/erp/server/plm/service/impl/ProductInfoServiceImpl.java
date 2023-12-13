@@ -2626,5 +2626,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.listByChargeId(chargeId);
     }
 
+    @Override
+    public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds) {
+        return baseMapper.listProductBySkuIds(skuIds);
+    }
+
 
 }

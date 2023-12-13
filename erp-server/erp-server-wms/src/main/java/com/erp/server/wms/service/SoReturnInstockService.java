@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * 采购退货入库单
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 public interface SoReturnInstockService extends SuperService<SoReturnInstockEntity> {

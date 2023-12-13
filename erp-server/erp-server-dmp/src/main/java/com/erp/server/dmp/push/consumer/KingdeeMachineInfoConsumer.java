@@ -12,7 +12,7 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeMachineInfoConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -63,11 +63,24 @@ public class KingdeeMachineInfoConsumer<T extends DmpSyncTaskIdDTO> extends Abst
     }
 
     @Override
+    public void sendWarnMsg(String syncTaskId, String msg) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
+    }
+
+    @Override
     public ApiResult<?> handle(Object ext) {
         Map<String, Object> map = JSONUtil.parseObj(ext);
         kingdeeMachineInfoConsumerService.executeConsumer(map);
         return ApiResult.success();
     }
+
+
+
+
+
+
+
+
 
 
 }

@@ -44,6 +44,9 @@ public class CustomerInvoiceServiceImpl extends SuperServiceImpl<CustomerInvoice
      */
     @Override
     public void checkIsDefault(List<InvoiceDTO.AddDTO> invoiceList) {
+        if (CollectionUtils.isEmpty(invoiceList)){
+            return;
+        }
         long count = invoiceList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_92007);

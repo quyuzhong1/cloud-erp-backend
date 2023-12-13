@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoB2cMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="dictPlatform" property="dictPlatform"/>
+        <result column="platformCode" property="platformCode"/>
+        <result column="shopId" property="shopId"/>
+        <result column="approveStatus" property="approveStatus"/>
+        <result column="payStatus" property="payStatus"/>
+        <result column="billStatus" property="billStatus"/>
+        <result column="invalidStatus" property="invalidStatus"/>
+        <result column="amount" property="amount"/>
+        <result column="currency" property="currency"/>
+        <result column="payTime" property="payTime"/>
+        <result column="buyerRemark" property="buyerRemark"/>
+        <result column="remark" property="remark"/>
+        <result column="isIntercept" property="isIntercept"/>
+        <result column="abnormalType" property="abnormalType"/>
+        <result column="sourceId" property="sourceId"/>
+        <result column="sourceType" property="sourceType"/>
+        <result column="sourceCode" property="sourceCode"/>
+        <result column="logisticsChannelId" property="logisticsChannelId"/>
+        <result column="shippingCost" property="shippingCost"/>
+        <result column="shippingCostCurrency" property="shippingCostCurrency"/>
+        <result column="logisticsCode" property="logisticsCode"/>
+        <result column="buyerId" property="buyerId"/>
+        <result column="buyerName" property="buyerName"/>
+        <result column="countryName" property="countryName"/>
+        <result column="label" property="label"/>
+    </resultMap>
+
+
+    <!-- 合并显示查询映射结果 -->
+    <resultMap id="MergeResultMap" type="com.erp.model.oms.dto.SoB2cDTO$MergeMainDTO">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="platform_code" property="platformCode"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="first_address" property="firstAddress"/>
+        <result column="second_address" property="secondAddress"/>
+        <result column="full_address" property="fullAddress"/>
+        <result column="detailId" property="detailId"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="platform_spu_no" property="platformSpuNo"/>
+        <result column="platform_sku_no" property="platformSkuNo"/>
+        <result column="weight" property="weight"/>
+        <result column="tax_cost" property="taxCost"/>
+        <result column="sourceAmount" property="sourceAmount"/>
+        <result column="sourceCurrency" property="sourceCurrency"/>
+        <result column="qty" property="qty"/>
+        <result column="exchange_rate" property="exchangeRate"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="warehouse_name" property="warehouseName"/>
+        <result column="warehouse_location" property="warehouseLocation"/>
+        <result column="dict_platform" property="dictPlatform"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="buyerName" property="buyerName"/>
+        <result column="logistics_channel_name" property="logisticsChannelName"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        distinct
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        sb2c.platform_code as platformCode,
+        sb2c.shop_id as shopId,
+        sb2c.approve_status as approveStatus,
+        sb2c.pay_status as payStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.exchange_rate as exchangeRate,
+        sb2c.pay_time as payTime,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.abnormal_type as abnormalType,
+        sb2c.label_json as label,
+        sb2c.is_intercept as isIntercept,
+         sb2c.source_id as sourceId,
+         sb2c.source_type as sourceType,
+         sb2c.source_code as sourceCode,
+        sb2cl.logistics_channel_name as logisticsChannelName,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
+             else sb2cl.actual_shipping_cost
+        end
+        as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
+             else sb2cl.actual_shipping_currency
+        end
+        as shippingCostCurrency,
+        sb2cl.code as logisticsCode,
+        sb2cr.customer_id as buyerId,
+        sb2cr.name as buyerName,
+        sb2cr.country_name as countryName,
+        sb2c.create_time
+    </sql>
+
+    <!-- 列表分页查询 -->
+    <select id="paging" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"></include>
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
+            </if>
+            <if test="params.platformCode != null and params.platformCode != '' ">
+                and sb2c.platform_code iLIKE concat('%',#{params.platformCode}::text,'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <!-- 平台sku -->
+            <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
+                and sb2cd.platform_sku_no iLIKE concat('%',#{params.platformSkuNo}::text,'%')
+            </if>
+            <!-- 平台产品id -->
+            <if test="params.platformSpuNo != null and params.platformSpuNo != '' ">
+                and sb2cd.platform_spu_no iLIKE concat('%',#{params.platformSpuNo}::text,'%')
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.categoryList != null and params.categoryList.size > 0">
+                and sb2c.id in (
+                    select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id in
+                    <foreach collection="params.categoryList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                )
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryList != null and params.countryList.size > 0">
+                and si.dict_country_code in
+                <foreach collection="params.countryList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
+                and sb2c.abnormal_type in
+                <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.labelList != null and params.labelList.size > 0">
+                <foreach collection="params.labelList" item="item">
+                    <if test="item == 'frozen'">
+                        and (sb2c.label_json ~ 'RISK_CONTROL' or sb2c.label_json ~ 'IN_FROZEN' or sb2c.label_json ~
+                        'Unfulfillable')
+                    </if>
+                    <if test="item == 'fba'">
+                        and sb2c.label_json ~ 'AFN'
+                    </if>
+                    <if test="item == 'manual'">
+                        and sb2c.source_type = 'selfAdd'
+                    </if>
+                    <if test="item == 'intercept'">
+                        and sb2c.is_intercept = true
+                    </if>
+                    <if test="item == 'split'">
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id)
+                    </if>
+                    <if test="item == 'merge'">
+                        and exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id )
+                    </if>
+                    <if test="item== 'aliexpressTaxed'">
+                        and (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED')
+                    </if>
+                    <if test="item == 'cainiaoWarehouse'">
+                        and sb2c.label_json ~ 'cainiaoInternationalWarehouse'
+                    </if>
+                    <if test="item == 'aliexpressAePlus'">
+                        and sb2c.label_json ~ 'AE_PLUS'
+                    </if>
+                    <if test="item == 'aliexpressUpExpress'">
+                        and sb2c.label_json ~ 'HBA_UP_EXPRESS'
+                    </if>
+                    <if test="item == 'leadTenTime'">
+                        and sb2c.label_json ~ 'leadTimeTag#10'
+                    </if>
+                </foreach>
+            </if>
+
+        </where>
+        order by sb2c.id desc
+    </select>
+
+    <!-- 列表数量查询 -->
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct sb2c.id)
+        from so_b2c sb2c
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!-- 合并列表查询 -->
+    <select id="mergePaging" resultType="com.erp.model.oms.dto.SoB2cDTO$MergeListDTO">
+        select
+        sb2c.dict_platform as dictPlatform,
+        sb2c.shop_id as shopId,
+        sb2cr.name as buyerName,
+        sb2c.currency as sourceCurrency,
+        sb2cr.receiver_name as receiverName,
+        sb2cr.first_address as firstAddress,
+        sb2cr.second_address as secondAddress,
+        sb2cr.full_address as fullAddress,
+        sb2cd.warehouse_id as warehouseId,
+        sb2cl.logistics_channel_id as logisticsChannelId
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        <where>
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
+            </if>
+            <if test="params.buyerName != null and params.buyerName != '' ">
+                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
+            </if>
+            <if test="params.receiverName != null and params.receiverName != '' ">
+                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
+            </if>
+            <if test="params.address != null and params.address != '' ">
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
+                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and si.dict_country_code in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by
+        sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
+        HAVING count(DISTINCT sb2c.id) > 1
+        order by sb2c.dict_platform,sb2cr.name,sb2c.shop_id
+    </select>
+
+    <!-- 合并列表数量查询 -->
+    <select id="mergePagingCount" resultType="java.lang.Integer">
+        select
+        count(distinct sb2c.id)
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
+            </if>
+            <if test="params.buyerName != null and params.buyerName != '' ">
+                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
+            </if>
+            <if test="params.receiverName != null and params.receiverName != '' ">
+                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
+            </if>
+            <if test="params.address != null and params.address != '' ">
+                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike
+                concat('%',#{params.address},'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and sb2c.country_id in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
+        having count(distinct sb2c.id) > 1
+    </select>
+
+    <!-- 合并列表合并数据查询 -->
+    <select id="listMerge" resultMap="MergeResultMap">
+        select
+        sb2c.id,
+        sb2c.code,
+        sb2c.platform_code,
+        sb2cr.receiver_name,
+        sb2cr.first_address,
+        sb2cr.second_address,
+        sb2cr.full_address,
+        sb2cd.id as detailId,
+        sb2cd.image_url,
+        sb2cd.sku_id,
+        sb2cd.sku_no,
+        sb2cd.platform_spu_no,
+        sb2cd.platform_sku_no,
+        sb2cl.weight,
+        sb2cd.tax_cost,
+        sb2cd.amount as sourceAmount,
+        sb2c.currency as sourceCurrency,
+        sb2cd.exchange_rate,
+        sb2cd.qty,
+        sb2cd.warehouse_id,
+        sb2cd.warehouse_name,
+        sb2cd.warehouse_location,
+        sb2c.dict_platform,
+        sb2c.shop_id ,
+        sb2cr.name as buyerName,
+        sb2cl.logistics_channel_name,
+        sb2cl.logistics_channel_id
+        from so_b2c sb2c
+        left outer join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        left outer join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.currencyList != null and params.currencyList.size > 0">
+                and sb2c.currency in
+                <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.buyerNameList != null and params.buyerNameList.size > 0">
+                and sb2cr.name in
+                <foreach collection="params.buyerNameList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.receiverNameList != null and params.receiverNameList.size > 0">
+                and sb2cr.receiver_name in
+                <foreach collection="params.receiverNameList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.firstAddressList != null and params.firstAddressList.size > 0">
+                and sb2cr.first_address in
+                <foreach collection="params.firstAddressList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.secondAddressList != null and params.secondAddressList.size > 0">
+                and sb2cr.second_address in
+                <foreach collection="params.secondAddressList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.fullAddressList != null and params.fullAddressList.size > 0">
+                and sb2cr.full_address in
+                <foreach collection="params.fullAddressList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                and sb2cd.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
+                and sb2cl.logistics_channel_id in
+                <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by sb2c.id desc
+    </select>
+
+    <select id="productSalesPaging" resultType="com.erp.model.oms.dto.ReportDTO$ProductSalesPagingViewDTO">
+        SELECT
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_spu_no,
+        COUNT ( sb.ID ) AS orderCount,
+        SUM ( sbd.qty ) AS qty,
+        ROUND( SUM ( sb.amount * sb.exchange_rate ), 2 ) AS amount
+        FROM
+        so_b2c sb
+        LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
+        AND sbd.is_deleted = FALSE
+        WHERE
+        sb.is_deleted = FALSE
+        <if test="params.skuNo!=null and params.skuNo!=''">
+            AND ((
+            sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ) OR (
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            )
+            OR (
+            sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ))
+        </if>
+        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
+            AND sb.dict_platform IN
+            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
+                #{dictPlatform}
+            </foreach>
+        </if>
+        <if test="skuIdList !=null and skuIdList.size>0">
+            AND sbd.sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.shopIdList!=null and params.shopIdList.size>0">
+            AND sb.shop_id IN
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="params.orderCreateTimeList!=null and params.orderCreateTimeList.size>0">
+            AND sb.platform_order_create_time >= #{params.orderCreateTimeList[0]}
+            AND sb. platform_order_create_time &lt;= #{params.orderCreateTimeList[1]}
+        </if>
+        GROUP BY
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_spu_no
+    </select>
+
+    <select id="listProductSalesExport" resultType="com.erp.model.oms.dto.ReportDTO$ProductSalesPagingViewDTO">
+        SELECT
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_spu_no,
+        COUNT ( sb.ID ) AS orderCount,
+        SUM ( sbd.qty ) AS qty,
+        ROUND( SUM ( sb.amount * sb.exchange_rate ), 2 ) AS amount
+        FROM
+        so_b2c sb
+        LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
+        AND sbd.is_deleted = FALSE
+        WHERE
+        sb.is_deleted = FALSE
+        <if test="params.skuNo!=null and params.skuNo!=''">
+            AND ((
+            sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ) OR (
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            )
+            OR (
+            sbd.platform_spu_no ILIKE concat('%',#{params.skuNo}::text,'%')
+            ))
+        </if>
+        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
+            AND sb.dict_platform IN
+            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
+                #{dictPlatform}
+            </foreach>
+        </if>
+        <if test="skuIdList !=null and skuIdList.size>0">
+            AND sbd.sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.shopIdList!=null and params.shopIdList.size>0">
+            AND sb.shop_id IN
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="params.orderCreateTimeList!=null and params.orderCreateTimeList.size>0">
+            AND sb.platform_order_create_time >= #{params.orderCreateTimeList[0]}
+            AND sb. platform_order_create_time &lt;= #{params.orderCreateTimeList[1]}
+        </if>
+        GROUP BY
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_spu_no
+    </select>
+
+
+</mapper>

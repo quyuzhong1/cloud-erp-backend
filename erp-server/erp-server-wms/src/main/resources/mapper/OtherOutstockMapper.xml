@@ -31,7 +31,7 @@
         <result column="approve_user_name" property="approveUserName" />
         <result column="approve_user_id" property="approveUserId" />
     </resultMap>
-    
+
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,

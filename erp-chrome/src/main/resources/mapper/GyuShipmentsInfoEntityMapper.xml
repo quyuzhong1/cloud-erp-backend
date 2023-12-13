@@ -3,7 +3,7 @@
 <mapper namespace="com.cloud.erp.chrome.mapper.GyuShipmentsInfoMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.GyuShipmentsInfoEntity">
+    <resultMap id="BaseResultMap" type="com.sdk.oms.shopify.chrome.entity.GyuShipmentsInfoEntity">
         <id column="id" property="id" />
         <result column="shops_name" property="shopsName" />
         <result column="invoice_no" property="invoiceNo" />

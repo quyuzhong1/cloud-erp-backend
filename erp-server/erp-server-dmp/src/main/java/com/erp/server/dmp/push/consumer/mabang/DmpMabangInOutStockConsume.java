@@ -44,26 +44,26 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
             log.warn("监听到DMP出入库，erp单号【{}】，同步内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
 
             String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
-            DmpPullTaskEntity dmpSyncTaskEntity = dmpPullTaskService.getById(syncTaskId);
-            if(Objects.isNull(dmpSyncTaskEntity)) {
+            DmpPullTaskEntity dmpPullTaskEntity = dmpPullTaskService.getById(syncTaskId);
+            if(Objects.isNull(dmpPullTaskEntity)) {
                 log.warn("未查询到同步到马帮数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
                 mabangInOutStockService.sendNoTaskNotice(syncTaskId, erpSourceCode);
                 return;
             }
-            String sourceType = dmpSyncTaskEntity.getSourceType();
+            String sourceType = dmpPullTaskEntity.getSourceType();
             String sourceTypeName = SourceTypeEnum.getName(sourceType);
-            String syncStatusName = SyncStatusEnum.getNameByCode(dmpSyncTaskEntity.getStatus());
-            log.warn("ERP【{}】原单据id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), syncStatusName);
+            String syncStatusName = SyncStatusEnum.getNameByCode(dmpPullTaskEntity.getStatus());
+            log.warn("ERP【{}】原单据id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpPullTaskEntity.getSourceId(), syncStatusName);
 
             // 同步成功的不处理
-            if(Objects.equals(dmpSyncTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
+            if(Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
                 log.warn("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
                 return;
             }
 
             // 推送马帮手工出入库
             InventoryInOutEnum inventoryInOutEnum = InventoryInOutEnum.getByCode(mabangInOutStockDTO.getType());
-            mabangInOutStockService.sendToMabangInOutStock(dmpSyncTaskEntity, mabangInOutStockDTO, inventoryInOutEnum);
+            mabangInOutStockService.sendToMabangInOutStock(dmpPullTaskEntity, mabangInOutStockDTO, inventoryInOutEnum);
         }catch (Exception e) {
             log.error("DMP接收同步任务推送马帮出入库异常", e);
         }

@@ -75,9 +75,4 @@ public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
 
     public static final String SORT = "sort";
 
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
-
 }

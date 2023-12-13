@@ -5,9 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
-import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
-import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -19,7 +16,7 @@ import java.util.List;
  * 采购退货单 Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-07
  */
 @Mapper
@@ -41,6 +38,7 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
      * @return
      */
     List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@Param("params") PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
+
 
     /**
      * PDA:分页查询

@@ -1,12 +1,17 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.erp.model.dmp.constant.TaskConstant;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.constant.TaskConstant;
+import com.common.business.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.server.dmp.mapper.PlatformApiMapper;
-import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.server.dmp.service.PlatformApiService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
+import com.xxl.job.core.context.XxlJobHelper;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,23 +19,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class TbTaskTypeService {
     @Resource
-    private PlatformApiMapper platformApiMapper;
-
+    private PlatformApiService platformApiService;
     @Resource
-    private PlatformApiTaskMapper platformApiTaskMapper;
+    private PlatformApiTaskService platformApiTaskService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     private Long timeoutSeconds;
 
     private Long timeoutMabangHours;
 
-    @Value("${openApi.mabang.timeoutHour:26}")
+    @Value("${openApi.mabang.timeoutHour:24}")
     public void setTimeoutMabangHours(Long timeoutMabangHours) {
         this.timeoutMabangHours = timeoutMabangHours;
     }
@@ -39,10 +46,6 @@ public class TbTaskTypeService {
     public void setTimeoutSeconds(Long timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
     }
-
-    private final Integer PAGE_SIZE = 100;
-
-    private static  Integer PAGE_NUMBER = 1;
 
     /**
      * 定时查询需要拉取数据的任务
@@ -53,42 +56,35 @@ public class TbTaskTypeService {
     public List<JobTaskDTO> getTask() {
         LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
-        List<JobTaskDTO> jobTaskDTOList = platformApiTaskMapper.selectApiTask((PAGE_NUMBER - 1), PAGE_SIZE, localTime);
-        PAGE_NUMBER++;
+        List<JobTaskDTO> jobTaskDTOList = platformApiTaskService.listApiTask(localTime, "pull");
         // 任务量等于0，任务重新开始,分页设置成0
         if (CollectionUtil.isEmpty(jobTaskDTOList)) {
-            PAGE_NUMBER = 1;
             return jobTaskDTOList;
         }
         // 设置超时恢复状态
-        List<JobTaskDTO> timeoutList = new ArrayList<>();
-        List<JobTaskDTO> inProgressList = new ArrayList<>();
-        for (JobTaskDTO jobTaskDTO : jobTaskDTOList) {
-            if (1 == jobTaskDTO.getState()) {
-                inProgressList.add(jobTaskDTO);
-            }else if(2 == jobTaskDTO.getState()){
-                // 马帮历史数据超时
-                LocalDateTime nextTime = jobTaskDTO.getNextTime();
-                LocalDateTime updateTime = jobTaskDTO.getUpdateTime();
-                if (TaskConstant.MABANG_PULL_DATA_TASK.equals(jobTaskDTO.getTaskName())) {
-                    if (localTime.isAfter(nextTime.plusHours(timeoutMabangHours)) && localTime.isAfter(updateTime.plusHours(timeoutMabangHours))) {
-                        timeoutList.add(jobTaskDTO);
-                    }
-                }else {
-                    if (localTime.isAfter(nextTime.plusSeconds(timeoutSeconds)) && localTime.isAfter(updateTime.plusSeconds(timeoutSeconds))) {
-                        timeoutList.add(jobTaskDTO);
-                    }
+        List<JobTaskDTO> inProgressList = jobTaskDTOList.stream()
+            .filter(task -> 1 == task.getStatus())
+            .collect(Collectors.toList());
+        List<JobTaskDTO> timeoutList = jobTaskDTOList.stream()
+            .filter(task -> 2 == task.getStatus())
+            .filter(task -> {
+                LocalDateTime nextTime = task.getNextTime();
+                LocalDateTime updateTime = task.getUpdateTime();
+                if (task.getApiName().contains(TaskConstant.MABANG)) {
+                    return localTime.isAfter(nextTime.plusHours(timeoutMabangHours))
+                            && localTime.isAfter(updateTime.plusHours(timeoutMabangHours));
+                } else {
+                    return localTime.isAfter(nextTime.plusSeconds(timeoutSeconds))
+                            && localTime.isAfter(updateTime.plusSeconds(timeoutSeconds));
                 }
-            }
-        }
+            }).collect(Collectors.toList());
         // 需要设置超时恢复的任务
         if (CollectionUtil.isNotEmpty(timeoutList)){
-            platformApiTaskMapper.updateTaskTypeState(timeoutList, 1);
+            platformApiTaskService.updateTaskTypeState(timeoutList, 1);
         }
-
         // 设置任务正在执行中
         if (CollectionUtil.isNotEmpty(inProgressList)){
-            platformApiTaskMapper.updateTaskTypeState(inProgressList, 2);
+            platformApiTaskService.updateTaskTypeState(inProgressList, 2);
         }
         return inProgressList;
     }
@@ -99,32 +95,13 @@ public class TbTaskTypeService {
      * @Date 2022/11/9 14:49
      * @return void
      **/
-    @Transactional
-    public void addTask() {
-        try {
-            List<PlatformApiEntity> platformApiEntities = platformApiMapper.selectPlatformApiNoTask();
-            if (platformApiEntities != null && platformApiEntities.size() > 0) {
-                List<PlatformApiTaskEntity> taskEntityList = new ArrayList<>();
-                platformApiEntities.forEach(req -> {
-                    PlatformApiTaskEntity taskType = new PlatformApiTaskEntity();
-                    taskType.setIntervalTime(60 * 30);
-                    taskType.setState(1);
-                    taskType.setApiId(req.getId());
-                    taskType.setLastTime(null);
-                    taskType.setNextTime(null);
-                    taskType.setCreateTime(LocalDateTime.now());
-                    taskType.setPlatformId(req.getPlatformId());
-                    taskType.setApiCode(req.getApiCode());
-                    taskType.setApiName(req.getApiName());
-                    taskEntityList.add(taskType);
-                });
-                platformApiTaskMapper.batchInsert(taskEntityList);
-                platformApiMapper.updatePlatformApiState(taskEntityList);
-            }
-
-        } catch (Exception e) {
-            log.error(" === 增加任务失败， 错误信息 = {}", e.getMessage());
-        }
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public void addTask(ShopInfoEntity shopInfo) {
+        // 查询需要当前平台需要增加的任务
+        platformApiTaskService.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
+        // 添加完成后，修改店铺生成任务状态
+        Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(shopInfo.getId(), Boolean.TRUE));
     }
 
 

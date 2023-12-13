@@ -134,4 +134,12 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return List<ProductInfoEntity>
      */
     List<ProductInfoEntity> listByChargeId(@Param("chargeId")String chargeId);
+    /**
+     * @description: 根据skuid查询产品信息
+     * @author Will
+     * @date: 2023/11/16 15:17
+     * @param skuIds
+     * @return List<ProductDTO>
+     */
+    List<ProductDetailDTO.ProductDTO> listProductBySkuIds(@Param("skuIds") List<String> skuIds);
 }

@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
  * 工作台选项表服务实现类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-11
  */
 @Service
@@ -664,8 +664,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case TRANSFER_APPLICATION:
                 wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
+                break;
             case STOCKTAKING_TASK:
                 wmsTaskFeign.stocktakingTaskApprove(baseApproveParamDTO);
+                break;
+            case FIRST_MILE_DELIVERY:
+                wmsTaskFeign.fbaDeliveryApprove(baseApproveParamDTO);
+                break;
+            case OVERSEAS_DELIVERY_PLAN:
+                wmsTaskFeign.overseasDeliveryPlanApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

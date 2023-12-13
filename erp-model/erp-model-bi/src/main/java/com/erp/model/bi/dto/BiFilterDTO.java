@@ -56,6 +56,10 @@ public class BiFilterDTO extends SortDTO {
      */
     private Integer dataType;
     /**
+     * 汇总日期维度 dateTypeEnum
+     */
+    private String dateType;
+    /**
      * 1 新品
      * 0 老品
      */
@@ -133,7 +137,7 @@ public class BiFilterDTO extends SortDTO {
      * 默认当月开始时间
      */
     public LocalDateTime getStartTime() {
-        if (null == this.startTime) {
+        if (null == this.startTime){
             return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
         }
         return startTime;

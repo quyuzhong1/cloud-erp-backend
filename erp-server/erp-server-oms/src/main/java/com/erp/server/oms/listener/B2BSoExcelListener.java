@@ -4,7 +4,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -13,15 +12,12 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
-import com.erp.model.oms.dto.excel.SkuMapingImportExcelDTO;
-import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -54,6 +50,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
      * 错误的map
      */
     Map<String, String> errorMap = new HashMap<>();
+
 
     /**
      * 仓库

@@ -26,6 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -212,9 +213,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
+                .orderByAsc(SysDepartmentEntity::getName)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -251,6 +254,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentDTO> getDeptList() {
 
         return baseMapper.getDeptList();

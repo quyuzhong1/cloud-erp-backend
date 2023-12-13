@@ -11,10 +11,12 @@ import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
 import com.erp.server.plm.service.ProductLogisticsService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,17 +26,17 @@ import java.util.List;
  **/
 @Service
 public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMapper, ProductLogisticsEntity>
-    implements ProductLogisticsService {
+        implements ProductLogisticsService {
 
     @Resource
     private ProductLogisticsMapper productLogisticsMapper;
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      * @Description 产品物流信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      **/
     @Override
     public List<ProductLogisticsShowDTO> list(String productId) {
@@ -42,11 +44,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     }
 
     /**
+     * @param skuId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      * @Description 产品物流信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param skuId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      **/
     @Override
     public List<ProductLogisticsShowDTO> listBySkuId(String skuId) {
@@ -54,11 +56,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     }
 
     /**
+     * @param productLogisticsDTO 产品物流信息表
+     * @return java.lang.Boolean
      * @Description 保存/修改产品物流信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productLogisticsDTO 产品物流信息表
-     * @return java.lang.Boolean
      **/
     @Override
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
@@ -68,11 +70,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     }
 
     /**
+     * @param productLogisticsList 产品物流信息表
+     * @return java.lang.Boolean
      * @Description 保存/修改产品物流信息-批量操作
      * @Author Luo_WG
      * @Date 2022/9/26 18:15
-     * @param productLogisticsList 产品物流信息表
-     * @return java.lang.Boolean
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList) {
@@ -81,11 +83,11 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     }
 
     /**
+     * @param skuIds 产品sku明细表id
+     * @return java.lang.Boolean
      * @Description 删除产品物流信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuIds 产品sku明细表id
-     * @return java.lang.Boolean
      **/
     @Override
     public Boolean removeLogistics(List<String> skuIds) {
@@ -100,6 +102,14 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<ProductLogisticsEntity> listBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProductLogisticsEntity::getSkuId,skuIdList).list();
     }
 }
 

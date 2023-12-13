@@ -1,8 +1,15 @@
 package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.ImlDictCityEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -24,4 +31,46 @@ public interface SysDictFeign {
     @GetMapping("/feign/dictBasic/getByType")
     List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type);
 
+
+    /**
+     * 根据国家id 集合 获取到国家列表
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/dictCountry/listCountryByIds")
+    List<DictCountryEntity> listCountryByIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据国家名 集合 获取到国家列表
+     * @param names
+     * @return
+     */
+    @PostMapping("feign/dictCountry/listCountryByNames")
+    List<DictCountryEntity> listCountryByNames(@RequestBody List<String> names);
+
+
+    /**
+     * 根据地区id 集合 获取到地区列表
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/globalArea/listGlobalAreaByIds")
+    List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
+
+
+    /**
+     * 获取城市
+     * @param idList
+     * @return
+     */
+    @PostMapping("/feign/city/listByIdList")
+    List<DictCityEntity> listCityByIdList(List<String> idList);
+
+    /**
+     * 获取艾姆勒城市
+     * @param dictIds
+     * @return
+     */
+    @PostMapping("/feign/city/listImlCityByDictIdList")
+    List<ImlDictCityEntity> listImlCityByDictIdList(List<String> dictIds);
 }

@@ -48,6 +48,7 @@ public class CommonController extends BaseController {
     public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         return success(enumMaps.get(type));
+
     }
 
 

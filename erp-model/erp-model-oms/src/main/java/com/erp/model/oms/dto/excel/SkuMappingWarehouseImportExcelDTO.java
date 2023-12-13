@@ -1,0 +1,73 @@
+package com.erp.model.oms.dto.excel;
+
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.anno.FieldValid;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @author Lambda
+ * @Classname SkuMapingImportExcelDTO
+ * @Date 2023-06-28 18:09
+ * @Created by yl
+ */
+@Data
+@NoArgsConstructor
+public class SkuMappingWarehouseImportExcelDTO {
+
+
+    /**
+     * 库存sku
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "库存SKU", index = 0)
+    @FieldValid(fieldName = "库存SKU", isNotBlank = true ,maxLength =100 )
+    private String warehouseSkuNo;
+
+    /**
+     * 库存产品名称
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "库存产品名称", index = 1)
+    @FieldValid(fieldName = "库存产品名称", isNotBlank = true,maxLength =200)
+    private String warehouseProductName;
+
+
+    /**
+     * 仓库名称
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "仓库名称", index = 2)
+    @FieldValid(fieldName = "仓库名称", isNotBlank = true,maxLength =200)
+    private String warehouseName;
+
+    /**
+     * 服务商
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "服务商", index = 3)
+    @FieldValid(fieldName = "服务商", maxLength =200)
+    private String platformName;
+
+
+    /**
+     * sku
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "SKU", index = 4)
+    @FieldValid(fieldName = "sku",isNotBlank = true,maxLength =200)
+    private String skuNo ;
+
+    /**
+
+
+    /**
+     * 错误信息
+     */
+    @ColumnWidth(100)
+    @ExcelProperty(value = "错误数据", index = 5)
+    private String errorMsg;
+
+
+}

@@ -1,6 +1,9 @@
 package com.erp.model.dmp.dto;
 
 import lombok.Data;
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -23,9 +26,19 @@ public class SplitSkuDTO implements Serializable {
     private String skuNo;
 
     /**
+     * 马帮SKU
+     */
+    private String mabangSkuNo;
+
+    /**
      * 原始sku
      */
     private String originalSkuNo;
+
+    /**
+     * 清洗前成本价
+     */
+    private BigDecimal originalCostPrice;
 
     /**
      * 清洗后成本价
@@ -46,6 +59,11 @@ public class SplitSkuDTO implements Serializable {
      * 商品数量
      */
     private Integer quantity;
+
+    /**
+     * 清洗前商品售价
+     */
+    private BigDecimal originalAmountAfter;
 
     /**
      * 商品售价

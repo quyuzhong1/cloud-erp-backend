@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
@@ -9,13 +10,17 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -115,7 +120,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Autowired
     private ScmTaskFeign scmTaskFeign;
 
-
+    @Autowired
+    private RedisUtil redisUtil;
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -1198,7 +1204,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // sku对应的一级供应商
         String supplierId = skuList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId)).findFirst().map(SkuVO::getSupplierId).orElse(null);
         log.warn("SKU编号【{}】对应的一级供应商id：【{}】", item.getSkuNo(), supplierId);
-        // 一级供应商+SKU对应的采购价目信息
+        /*// 一级供应商+SKU对应的采购价目信息
         PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = null;
         if (StrUtil.isNotEmpty(skuId) && StrUtil.isNotEmpty(supplierId)) {
             supplierSkuPrice = purchasePriceList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId) && Objects.equals(r.getSupplierId(), supplierId)).findFirst().orElse(null);
@@ -1229,6 +1235,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(purchasePrice).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
+        }*/
+
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(Arrays.asList(item.getSkuNo()));
+        BigDecimal purchasePrice = BigDecimal.ZERO;
+        String currency = CurrencyEnum.CNY.getCurrencyCode();
+        if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+            purchasePrice = dmpSkuCostList.get(0).getNotTaxCostPrice();
         }
 
         // 销售金额转换
@@ -1255,7 +1268,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 item.setExchangeRate(BigDecimal.ZERO);
                 saleAmount = BigDecimal.ZERO;
-                log.warn("汇率日期【{}】，币制【{}】", currentDate, supplierSkuPrice.getCurrency());
+                log.warn("汇率日期【{}】，币制【{}】", currentDate, currency);
                 throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // 转换成人民币销售金额

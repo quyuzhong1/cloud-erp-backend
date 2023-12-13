@@ -15,7 +15,9 @@ public enum PlatformEnum {
     ERP(5, "erp", "自研ERP"),
     ERP_OMS(6, "erp-oms", "自研ERP订单系统"),
     ERP_DMP(7, "erp-dmp", "自研ERP数据中台系统"),
-    ERP_WMS(8, "erp-wms", "自研ERP仓储系统");
+    ERP_TMS(7, "erp-tms", "自研ERP数据物流系统"),
+    ERP_SYS(8, "erp-sys", "自研ERP基础数据系统"),
+    ERP_WMS(9, "erp-wms", "自研ERP仓储系统");
 
     private Integer code;
 

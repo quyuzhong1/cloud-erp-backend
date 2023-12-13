@@ -298,4 +298,12 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return List<ProductInfoEntity>
      */
     List<ProductInfoEntity> listByChargeId(String chargeId);
+    /**
+     * @description: 根据skuid查询产品信息
+     * @author Will
+     * @date: 2023/11/16 15:16
+     * @param skuIds
+     * @return List<ProductDTO>
+     */
+    List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds);
 }

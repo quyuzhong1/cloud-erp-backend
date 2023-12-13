@@ -96,7 +96,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
         //1、根据sku查询马帮bom检查是否有bom，有就需要拆单
         List<String> skuList = itemEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据财务编码查询ERP的bom
-        List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(new ArrayList<>());
+        List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(skuList);
         //根据sku查询加工件
         List<DmpBomEntity> machining = dmpBomService.listFindBomBySkuList(skuList, PlatformEnum.MABANG.getDesc(), "machining");
         //获取财务编码
@@ -104,8 +104,6 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
         if (PlatformEnum.MABANG.getDesc().equals(platformSign)) {
             allBomList = plmTaskFeign.listBomChildBySkuNos(financialCodeList);
         }
-        //获取所有成本
-        List<DmpSkuCostEntity> allSkuCostList = dmpSkuCostService.list();
         //遍历订单详情
         for (DmpDeliveryDetailItemEntity dmpDeliveryDetailItemEntity : itemEntityList) {
             //设置通用参数
@@ -124,7 +122,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             }
             splitSkuDTO.setAmountAfter(dmpDeliveryDetailItemEntity.getAmount());
             //拆单
-            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
+            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList);
             if (CollectionUtil.isEmpty(splitSkuDTOS)){
                 continue;
             }
@@ -135,6 +133,8 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
                 entity.setAmount(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
                 entity.setSkuNo(skuDTO.getSkuNo());
+                entity.setOriginalCostPrice(skuDTO.getOriginalCostPrice());
+                entity.setOriginalAmountAfter(skuDTO.getOriginalAmountAfter());
                 entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
                 entity.setIsGift(skuDTO.getIsGift());
                 entity.setQuantity(skuDTO.getQuantity());

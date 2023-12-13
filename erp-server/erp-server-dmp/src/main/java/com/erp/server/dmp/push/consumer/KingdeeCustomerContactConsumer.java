@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -11,7 +10,6 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -93,6 +91,11 @@ public class KingdeeCustomerContactConsumer<T extends DmpSyncTaskIdDTO> extends 
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId, String msg) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override

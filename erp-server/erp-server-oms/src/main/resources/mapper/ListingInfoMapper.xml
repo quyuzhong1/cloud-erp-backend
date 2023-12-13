@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ListingInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ListingInfoEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="platform_sku_no" property="platformSkuNo" />
+        <result column="platform_sku_name" property="platformSkuName" />
+        <result column="platform_spu_no" property="platformSpuNo" />
+        <result column="platform_spu_name" property="platformSpuName" />
+        <result column="platform_fn_sku" property="platformFnSku" />
+        <result column="type" property="type" />
+        <result column="match_result" property="matchResult" />
+        <result column="product_image_url" property="productImageUrl" />
+        <result column="product_spec" property="productSpec" />
+        <result column="product_packing" property="productPacking" />
+    </resultMap>
+
+    <select id="listByType" resultType="com.erp.model.oms.dto.ListingInfoDTO$ListDTO">
+            SELECT
+                id,
+                platform_sku_no,
+                platform_product_name,
+                sku_no AS warehouseSkuNo,
+                product_name AS warehouseProductName
+            FROM listing_info WHERE is_deleted=FALSE
+            AND type=#{type}
+    </select>
+
+</mapper>

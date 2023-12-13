@@ -45,6 +45,14 @@
                     <groupId>io.seata</groupId>
                     <artifactId>seata-all</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-webflux</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-jersey</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>

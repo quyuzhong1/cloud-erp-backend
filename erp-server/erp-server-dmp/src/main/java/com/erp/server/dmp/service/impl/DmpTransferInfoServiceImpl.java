@@ -39,21 +39,21 @@ public class DmpTransferInfoServiceImpl implements DmpTransferInfoService {
     @Transactional(rollbackFor = Exception.class)
     public void sendSyncTask(DmpTransferInfoDTO ext) {
         //新增发送任务
-        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
-        dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
-        dmpSyncTaskEntity.setSourceId(ext.getSourceId());
-        dmpSyncTaskEntity.setSourceCode(ext.getCode());
-        dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-        dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-        dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName());
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpPullTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
+        dmpPullTaskEntity.setSourceId(ext.getSourceId());
+        dmpPullTaskEntity.setSourceCode(ext.getCode());
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(ext);
-        dmpSyncTaskEntity.setMqData(mqData);
-        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        dmpPullTaskEntity.setMqData(mqData);
+        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
 
         //直接调拨单消息推送
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName(),
                 dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {

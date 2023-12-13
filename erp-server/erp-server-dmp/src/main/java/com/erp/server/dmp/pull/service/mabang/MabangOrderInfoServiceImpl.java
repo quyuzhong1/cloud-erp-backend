@@ -7,27 +7,30 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.SaveData;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
+import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.enums.*;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
@@ -35,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,14 +71,14 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.ORDER_GET_ORDER_LIST.getTaskName());
-        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(2));
         jobTaskDTO.setNextTime(LocalDateTime.now());
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -164,6 +166,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
+            log.warn("马帮需要清洗订单为空 tableName ={} size = {}",tableName,size);
             return;
         }
         for (OrderEntity mongoDatum : mongoData) {
@@ -193,6 +196,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
     }
 
+
     /**
      * 请求马帮订单接口
      *
@@ -209,6 +213,19 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      * 解析订单数据
      **/
     public static DmpOrderInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
+        if (orderEntity.getOrderFee().compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+        if (null != orderEntity.getIsResend() && ObjectUtil.equals(orderEntity.getIsResend(),1)) {
+            orderEntity.setOrderFee(BigDecimal.ZERO);
+        }
+        if (ObjectUtil.equals(orderEntity.getOrderStatus(),2) && ObjectUtil.equals(orderEntity.getCanSend(),2) && ObjectUtil.equals(orderEntity.getPlatform(), "Amazon")) {
+            return null;
+        }
+        if (ObjectUtil.equals(orderEntity.getOrderStatus(),5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
+            return null;
+        }
+
         if (orderEntity.getOrderFee().compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }

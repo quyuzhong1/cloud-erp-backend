@@ -20,7 +20,7 @@ import java.util.List;
  *  采购收货服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-06
  */
 public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEntity> {
@@ -303,15 +303,11 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      **/
     Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
 
-
     /**
-     * 更改金蝶同步状态
-     *
+     *更改金蝶同步状态
      * @param id
      * @param syncKingdeeId
-     * @return void
-     * @author yl
-     * @date 2023-08-14 17:47
-     */
+     * @return java.lang.Boolean
+     **/
     Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 }

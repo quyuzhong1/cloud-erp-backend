@@ -1,8 +1,13 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -15,13 +20,13 @@ import java.util.Map;
  */
 public interface BiSettlementExchangeRateService  extends IService<BiSettlementExchangeRateEntity> {
     /**
-     * @description: 批量新增结算汇率
+     * @description: 分页查询
      * @author Will
-     * @date: 2022/12/19 10:23
-     * @param list
-     * @return Boolean
+     * @date: 2023/8/15 10:25
+     * @param pagingDTO
+     * @return PagingVO<ListDTO>
      */
-    Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list);
+    PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO);
     /**
      * @description: 界面回显
      * @author Will
@@ -30,11 +35,62 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      */
     List<Map<String, Object>> listSettlementExchangeRate();
     /**
-     * @description: 编辑
+     * @description: 根据金蝶id查询
      * @author Will
-     * @date: 2022/12/20 22:42
-     * @param list
+     * @date: 2023/8/14 18:11
+     * @param kingdeeId
+     * @return BiSettlementExchangeRateEntity
+     */
+    BiSettlementExchangeRateEntity getByKingdeeId(String kingdeeId);
+    /**
+     * @description: 金蝶拉取代码新增
+     * @author Will
+     * @date: 2023/8/14 18:36
+     * @param addDTO
+     * @return String
+     */
+    String add(BiSettlementExchangeRateDTO.AddDTO addDTO);
+    /**
+     * @description: 金蝶拉取代码修改
+     * @author Will
+     * @date: 2023/8/14 18:36
+     * @param updateDTO
      * @return Boolean
      */
-    Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list);
+    Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/8/14 18:40
+     * @param ids
+     * @return Boolean
+     */
+    Boolean submit(List<String> ids);
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/8/14 18:40
+     * @param baseApproveParamDTO
+     * @return Boolean
+     */
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/8/14 18:48
+     * @param ids
+     * @return Boolean
+     */
+    Boolean disApprove(List<String> ids);
+    /**
+     * @description: 根据币制和日期查询汇率信息
+     * @author Will
+     * @date: 2023/8/24 17:45
+     * @param date
+     * @param sourceCurrencyCode
+     * @return BigDecimal
+     */
+    BigDecimal findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
 }

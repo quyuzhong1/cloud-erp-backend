@@ -212,7 +212,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
@@ -3238,9 +3237,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
             }
         }
-        //为空就是员工的
+        //为空就是店铺
         if (Objects.isNull(strategy)) {
-            strategy = context.getBean(StaffTargetValueStrategy.class);
+            strategy = context.getBean(ShopTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
                 yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
             }

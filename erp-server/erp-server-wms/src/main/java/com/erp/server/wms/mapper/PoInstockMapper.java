@@ -83,6 +83,7 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds,
                                                                           @Param("dateList") List<LocalDate> dateList);
 
+
     /**
      * PDA:分页查询
      * @Author Luo_WG

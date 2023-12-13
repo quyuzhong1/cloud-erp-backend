@@ -12,14 +12,17 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.server.sys.mapper.DictCountryMapper;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
+import com.erp.server.sys.service.DictGlobalAreaService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,10 +39,27 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Resource
     private DictCityService dictCityService;
 
+    @Resource
+    private DictGlobalAreaService dictGlobalAreaService;
+
     @Override
     public List<DictCountryDTO.ListDTO> listCountry() {
         List<DictCountryDTO.ListDTO> list = baseMapper.listCountry();
         return list;
+    }
+
+    @Override
+    public List<DictCountryDTO.ListDTO> listCountryByParam(DictCountryDTO.ListParamDTO dto) {
+        List<DictCountryDTO.ListDTO> list = baseMapper.listCountryByParam(dto);
+        if (CollectionUtils.isEmpty(dto.getNameCnList())) {
+            return list;
+        }
+        List<DictCountryDTO.ListDTO> resultList = new ArrayList<>();
+        for (String nameCn : dto.getNameCnList()) {
+            DictCountryDTO.ListDTO listDTO = list.stream().filter(obj -> obj.getNameCn().equals(nameCn)).findFirst().orElse(new DictCountryDTO.ListDTO());
+            resultList.add(listDTO);
+        }
+        return resultList;
     }
 
     public static void main(String[] args) {
@@ -51,14 +71,14 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         JSON json = JSONUtil.parseFromXml(xmlContent);
         // 2. 解析文件
         JSONObject jsonObject = JSONUtil.parseObj(json.toString());
-//        System.out.println(jsonObject);
+        System.out.println(JSONUtil.toJsonStr(jsonObject));
         JSONArray jsonArray = jsonObject.getJSONObject("Location").getJSONArray("CountryRegion");
-        List<Object> name = jsonArray.stream().map(o -> new JSONObject(o).get("Name")).collect(Collectors.toList());
-        List<Object> code = jsonArray.stream().map(o -> new JSONObject(o).get("Code")).collect(Collectors.toList());
-        System.out.println(name);
-        System.out.println(name.size());
-        System.out.println(code);
-        System.out.println(code.size());
+        LinkedHashMap<Object, Object> collect = jsonArray.stream().collect(Collectors.toMap(item -> new JSONObject(item).get("Name"),
+                item -> new JSONObject(item).get("Code"),
+                (oldValue, newValue) -> oldValue,
+                LinkedHashMap::new
+        ));
+        System.out.println(JSONUtil.toJsonStr(collect));
     }
 
     @Override
@@ -89,12 +109,107 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             }else if(StrUtil.isNotBlank(country) && !country.equals(countryName)){
                 return;
             }
+//            if(StrUtil.isBlank(code) && 1 == provinceTemp.size()){
+//                JSONArray city = ((JSONObject) province).getJSONArray("City");
+//                addCity(provinceTemp, countryCode, levelCode + 1, parentId);
+//            }
             // 3.2 生成省份sql
-            addCity(temp,countryCode, 1, "0");
+            addCity(temp,countryCode, 1, "0" ,0);
         });
     }
 
-    private boolean addCity(JSONObject temp, String countryCode,Integer levelCode,String parentId) {
+
+    /**
+     * 根据国家ids 获取信息
+     *
+     * @param ids
+     * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     * @author yl
+     * @date 2023-08-21 15:31
+     */
+    @Override
+    public List<DictCountryEntity> listCountryByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DictCountryEntity::getId, ids).list();
+    }
+
+    /**
+     * 查询区域国家列表
+     *
+     * @param type
+     * @return java.util.List<com.erp.model.sys.dto.DictCountryDTO.CascadeDTO>
+     * @author yl
+     * @date 2023-08-31 10:45
+     */
+    @Override
+    public List<DictCountryDTO.CascadeDTO> areaCountryListByType(String type) {
+        List<DictCountryEntity> dictCountryList = listByDataFlag(type);
+        Map<String, List<DictCountryEntity>> map = dictCountryList.stream().collect(Collectors.groupingBy(DictCountryEntity::getAmazonArea));
+        List<DictCountryDTO.CascadeDTO> resultList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<DictCountryEntity>> item : map.entrySet()) {
+            DictCountryDTO.CascadeDTO cascade = new DictCountryDTO.CascadeDTO();
+            cascade.setDictAreaCode(item.getKey());
+            List<DictCountryEntity> list = item.getValue();
+            List<DictCountryDTO.ChildrenDTO> childrenList = new ArrayList<>(list.size());
+            for (DictCountryEntity countryEntity : list) {
+                DictCountryDTO.ChildrenDTO childrenDTO = new DictCountryDTO.ChildrenDTO();
+                childrenDTO.setDictCountryCode(countryEntity.getId());
+                childrenDTO.setDictCountryName(countryEntity.getNameCn());
+                childrenList.add(childrenDTO);
+            }
+            cascade.setChildren(childrenList);
+            resultList.add(cascade);
+        }
+
+        return resultList;
+    }
+
+
+
+    @Override
+    public List<DictCountryDTO.ListRegionDTO> listAreaCountry(DictCountryDTO.ListParamDTO dto) {
+        //区域数据
+        List<DictGlobalAreaEntity> list = dictGlobalAreaService.lambdaQuery()
+                .eq(StrUtil.isNotBlank(dto.getRegionCode()),DictGlobalAreaEntity::getRegionCode, dto.getRegionCode()).list();
+        //国家数据
+        List<DictCountryDTO.ListDTO> countryList = this.listCountryByParam(dto);
+        List<DictCountryDTO.ListRegionDTO> resultList = new ArrayList<>();
+        DictCountryDTO.ListRegionDTO allList = new DictCountryDTO.ListRegionDTO();
+        allList.setRegionCode("");
+        allList.setRegionName("全部");
+        allList.setList(countryList);
+        resultList.add(allList);
+        List<DictCountryDTO.ListRegionDTO> regionList = list.stream().map(obj -> new DictCountryDTO.ListRegionDTO(obj.getRegionCode(), obj.getRegionName())).distinct().collect(Collectors.toList());
+        for (DictCountryDTO.ListRegionDTO listRegionDTO : regionList) {
+            List<DictCountryDTO.ListDTO> detailList = countryList.stream().filter(obj -> obj.getRegionCode().equals(listRegionDTO.getRegionCode())).collect(Collectors.toList());
+            listRegionDTO.setList(detailList);
+            resultList.add(listRegionDTO);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<DictCountryEntity> listCountryByNames(List<String> names) {
+        if(CollectionUtils.isEmpty(names)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DictCountryEntity::getNameCn,names).list();
+    }
+
+
+    /**
+     * 根据data flag获取国家
+     *
+     * @param dataFlag
+     * @return
+     */
+    public List<DictCountryEntity> listByDataFlag(String dataFlag) {
+        return this.lambdaQuery().eq(DictCountryEntity::getDataFlag, dataFlag).list();
+    }
+
+    private boolean addCity(JSONObject temp, String countryCode,Integer levelCode,String parentId, Integer skipLevel) {
         int level = 1;
         String type = "province";
         String key = "State";
@@ -119,15 +234,21 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         if(CollectionUtil.isEmpty(stateList)){
             return true;
         }
-        Integer finalLevel = level;
+        Integer finalLevel = level - skipLevel;
         String finalType = type;
         stateList.stream().forEach(province -> {
             JSONObject provinceTemp = (JSONObject) province;
             String provinceName = provinceTemp.getStr("Name");
             String code = provinceTemp.getStr("Code");
+            if(StrUtil.isBlank(code)){
+                Integer curSkipLevel = skipLevel + 1;
+                addCity(provinceTemp, countryCode, levelCode + 1, parentId, curSkipLevel);
+                return;
+            }
             DictCityEntity provinceCity = dictCityService.lambdaQuery()
                     .eq(DictCityEntity::getCode, code)
                     .eq(DictCityEntity::getLevel, finalLevel)
+                    .eq(DictCityEntity::getName, provinceName)
                     .one();
             if(ObjectUtil.isEmpty(provinceCity)){
                 boolean isNum = code.chars().allMatch(Character::isDigit);
@@ -135,7 +256,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
                 dictCityService.save(provinceCity);
             }
 
-            addCity(provinceTemp, countryCode, levelCode + 1, provinceCity.getId());
+            addCity(provinceTemp, countryCode, levelCode + 1, provinceCity.getId(), skipLevel);
         });
         return false;
     }

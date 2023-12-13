@@ -5,6 +5,7 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +39,6 @@ public class OkHttpUtils {
 
     /**
      * 获取post 请求 以json
-     *
      * @param
      * @return java.lang.String
      * @author yl
@@ -46,6 +46,58 @@ public class OkHttpUtils {
      */
     public static String doPostJson(String url, Map<String, Object> params, Map<String, String> headers) {
         Call call = createPostJsonCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post 请求 以json
+     */
+    public static String doPostJson(String url, String paramsJson, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, paramsJson, headers);
+        return execute(call);
+    }
+    /**
+     * 获取post 请求 以json
+     *
+     * @param
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-07-13 18:09
+     */
+    public static String doPostJsonObject(String url, Object object, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, object, headers);
+        return execute(call);
+    }
+    /**
+     * 获取post 请求 以json(List)
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doPostJson(String url, List<Map<String, Object>> params, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doPostList(String url, List<String> params, Map<String, String> headers) {
+        Call call = createPostListCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post
+     * @param url
+     * @param params
+     * @param headers
+     */
+    public static String doDelete(String url, Map<String, Object> params, Map<String, String> headers) {
+        Call call = createDeleteCall(url, params, headers);
         return execute(call);
     }
 
@@ -113,7 +165,14 @@ public class OkHttpUtils {
         HttpUrl.Builder urlBuilder = request.url().newBuilder();
         if (params != null && params.size() > 0) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
-                urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(entry.getValue()));
+                Object value = entry.getValue();
+                if (value instanceof List){
+                    for (Object o : (List) value) {
+                        urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(o));
+                    }
+                }else {
+                    urlBuilder.addQueryParameter(entry.getKey(), String.valueOf(entry.getValue()));
+                }
             }
         }
 
@@ -139,6 +198,17 @@ public class OkHttpUtils {
         return client.newCall(request);
     }
 
+    public static Call createPostJsonCall(String url, Object object, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(object));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+
     public static Call createPostJsonCall(String url, Map<String, Object> params, Map<String, String> headers) {
         MediaType json = MediaType.parse("application/json; charset=utf-8");
         RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
@@ -150,7 +220,48 @@ public class OkHttpUtils {
         return client.newCall(request);
     }
 
+    public static Call createPostJsonCall(String url, String params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, params);
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
 
+    public static Call createPostJsonCall(String url, List<Map<String, Object>> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+
+    public static Call createPostListCall(String url, List<String> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+    public static Call createDeleteCall(String url, Map<String, Object> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .delete(requestBody)
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
     private static FormBody createFormBody(Map<String, Object> params) {
         FormBody.Builder builder = new FormBody.Builder();
         if (params != null && params.size() > 0) {

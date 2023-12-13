@@ -11,10 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -40,9 +37,11 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -122,6 +121,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private LogisticsFeign logisticsFeign;
 
     /**
      * 保存供应商信息
@@ -408,7 +410,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
 
@@ -640,7 +642,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        supplier.setDisabled(dto.getState());
+        Boolean state = dto.getState();
+        //表示禁用
+        if (state) {
+            List<BaseIdDTO.CodeDTO> logisticsChannelList = logisticsFeign.listBySupplierId(supplierId);
+            long count = logisticsChannelList.stream().filter(c -> !c.getDisabled()).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_DISABLED_EXIST);
+            }
+
+        }
+        supplier.setDisabled(state);
 
         //添加日志
         String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
@@ -652,6 +664,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         } else {
             syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
         }
+
+        LogisticsSupplierDTO.UpdateDisabledDTO updateDisabledDTO = new LogisticsSupplierDTO.UpdateDisabledDTO();
+        updateDisabledDTO.setSupplierId(supplierId);
+        updateDisabledDTO.setDisabled(state);
+        logisticsFeign.updateDisabledBySupplierId(updateDisabledDTO);
+
+
         return this.updateById(supplier);
     }
 
@@ -1129,7 +1148,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isEmpty(supplierNames)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SupplierEntity::getName,supplierNames).list();
+        return this.lambdaQuery().in(SupplierEntity::getName, supplierNames).list();
     }
 
     /**

@@ -16,6 +16,11 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -35,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -72,6 +78,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private WorkflowFeign workflowFeign;
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
+    @Resource
+    private InventoryService inventoryService;
     @Resource
     private WarehouseService warehouseService;
     @Resource

@@ -20,11 +20,16 @@ public enum OperationTypeEnum {
     APPROVE_REJECT("approve_reject", "单据审核不通过操作"),
     DISAPPROVE("disapprove", "反审核"),
     CANCEL_PROCESS("cancel_process", "撤回流程操作"),
+    DISABLED("disabled", "启用停用操作"),
 
     INVALID("invalid", "作废操作"),
+    UN_INVALID("unInvalid", "反作废操作"),
+
 
     DELETE("delete", "删除操作"),
     PERMISSION("permission", "设置权限操作"),
+    UPDATE_STATUS("update_status", "状态变更操作"),
+
     ;
     @JsonValue
     @EnumValue

@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -128,6 +127,11 @@ public class KingdeeStockInConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
     @Override
     public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
         dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public void sendWarnMsg(String syncTaskId, String msg) {
+        dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
     @Override

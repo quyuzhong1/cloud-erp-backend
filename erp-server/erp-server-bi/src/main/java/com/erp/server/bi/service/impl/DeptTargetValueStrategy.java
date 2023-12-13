@@ -32,7 +32,7 @@ public class DeptTargetValueStrategy implements ListYearMonthValueStrategy {
 
 
     /**
-     * 获取到所有的目标值
+     * 获取到人员的部门目标值
      *
      * @return
      */

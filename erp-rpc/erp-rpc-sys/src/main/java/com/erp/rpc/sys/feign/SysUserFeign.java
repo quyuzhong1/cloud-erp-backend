@@ -22,6 +22,7 @@ import java.util.Map;
 
 /**
  * @Classname 系统管理 服务
+
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
@@ -531,5 +532,4 @@ public interface SysUserFeign {
      */
     @PostMapping("/feign/sysSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
-
 }

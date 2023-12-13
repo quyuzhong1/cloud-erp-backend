@@ -29,6 +29,7 @@ import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
@@ -350,6 +351,28 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             // 重算库存流水
             overrideFlowByInventoryId(flowList, hisEntity);
         });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addUnApproveFlow(InventoryDetailEntity detail, TransactionFlowEntity txnFlow, Integer afterQty) {
+        // 记录交易流水
+        LoginUser loginUser = commonService.getUserInfo();
+        // 复制所有参数
+        TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
+        BeanMapper.copy(txnFlow,transactionFlow);
+        // 更改指定的参数
+        transactionFlow.setCurInventoryQty(afterQty);
+        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "0");
+        transactionFlow.setQty(detail.getQty());
+        transactionFlow.setInstockBatchDate(detail.getInstockBatchDate());
+        transactionFlow.setIsUnapproved(Boolean.TRUE);
+        transactionFlow.setInventoryDetailId(detail.getId());
+
+        // 个别参数设置空值
+        transactionFlow.setId(null);
+        boolean save = super.save(transactionFlow);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("反审核库存流水数据保存失败"));
     }
 
     /**

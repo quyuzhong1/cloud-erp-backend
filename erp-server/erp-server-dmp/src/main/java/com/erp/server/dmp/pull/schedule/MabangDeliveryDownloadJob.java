@@ -5,7 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;

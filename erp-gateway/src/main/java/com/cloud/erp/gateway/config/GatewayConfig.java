@@ -1,17 +1,55 @@
 package com.cloud.erp.gateway.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import com.cloud.erp.gateway.context.GatewayContextExtraData;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 /**
- * 网关配置
- * @CreateTime: 2023-06-16  14:52
- * @Author: zhangchunlin
- */
-@Configuration
-@Import(value = {GatewayExceptionConfig.class})
+ * @Author Luo_WG
+ * @Date 2023/12/6 12:30
+ **/
+@Getter
+@Setter
+@ToString
 public class GatewayConfig {
 
-    // 后续可以增加限流器、拦截黑名单、调用时长统计等等
+    public static final String CACHE_GATEWAY_CONTEXT = "cacheGatewayContext";
+    /**
+     * whether read request data
+     */
+    protected Boolean readRequestData = false;
+    /**
+     * whether read response data
+     */
+    protected Boolean readResponseData = false;
+    /**
+     * cache json body
+     */
+    protected String requestBody;
+    /**
+     * cache Response Body
+     */
+    protected Object responseBody;
+    /**
+     * request headers
+     */
+    protected HttpHeaders requestHeaders;
+    /**
+     * cache form data
+     */
+    protected MultiValueMap<String, String> formData;
+    /**
+     * cache all request data include:form data and query param
+     */
+    protected MultiValueMap<String, String> allRequestData = new LinkedMultiValueMap<>(0);
+
+    /**
+     * Gateway Extra Data
+     */
+    protected GatewayContextExtraData gatewayContextExtraData;
 
 }

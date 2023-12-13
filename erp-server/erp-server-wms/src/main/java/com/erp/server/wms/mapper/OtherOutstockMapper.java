@@ -55,4 +55,5 @@ public interface OtherOutstockMapper extends BaseMapper<OtherOutstockEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.OtherOutstockDTO.PdaListDTO>
      **/
     IPage<OtherOutstockDTO.PdaListDTO> pdaPaging(Page query, @Param("params") OtherOutstockDTO.PdaSearchParamDTO params);
+
 }

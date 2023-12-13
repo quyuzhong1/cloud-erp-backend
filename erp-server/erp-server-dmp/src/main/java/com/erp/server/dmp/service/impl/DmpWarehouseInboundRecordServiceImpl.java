@@ -17,7 +17,7 @@ import com.erp.server.dmp.mapper.DmpWarehouseInboundRecordMapper;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.DmpWarehouseInboundItemService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

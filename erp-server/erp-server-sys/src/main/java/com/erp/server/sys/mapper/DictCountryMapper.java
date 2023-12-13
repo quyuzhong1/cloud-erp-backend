@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -27,4 +28,12 @@ public interface DictCountryMapper extends BaseMapper<DictCountryEntity> {
      * @return java.util.List<com.erp.model.sys.dto.DictCountryDTO.ListDTO>
      */
     List<DictCountryDTO.ListDTO> listCountry();
+    /**
+     * @description: 根据参数查询国家
+     * @author Will
+     * @date: 2023/11/9 9:54
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<DictCountryDTO.ListDTO> listCountryByParam(@Param("params") DictCountryDTO.ListParamDTO params);
 }

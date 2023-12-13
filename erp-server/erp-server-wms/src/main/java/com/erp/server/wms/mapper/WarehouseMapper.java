@@ -34,4 +34,5 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @return
      */
     IPage<WarehouseDTO.PagingProductViewDTO> pagingProduct(Page query, @Param("params") WarehouseDTO.PagingProductDTO params);
+
 }

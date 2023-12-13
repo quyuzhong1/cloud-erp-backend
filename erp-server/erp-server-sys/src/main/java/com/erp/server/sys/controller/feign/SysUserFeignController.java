@@ -146,6 +146,16 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 更新用户更新时间
+     * @author Will
+     * @date: 2023/9/13 16:59
+     */
+    @PostMapping("/updateSysUserTime")
+    public void updateSysUserTime(@RequestBody List<String> userIdList) {
+      sysUserInfoService.updateSysUserTime(userIdList);
+    }
+
+    /**
      * 查询左菜单栏
      *
      * @param roleIds

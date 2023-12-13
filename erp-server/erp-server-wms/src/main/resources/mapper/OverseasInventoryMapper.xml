@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.OverseasInventoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.OverseasInventoryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="name" property="name" />
+       <result column="platform_sku" property="platformSku" />
+       <result column="platform_sku_name" property="platformSkuName" />
+       <result column="product_name" property="productName" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="deliver_onway_qty" property="deliverOnwayQty" />
+       <result column="pending_qty" property="pendingQty" />
+       <result column="sellable_qty" property="sellableQty" />
+       <result column="unsellable_qty" property="unsellableQty" />
+       <result column="reserved_qty" property="reservedQty" />
+       <result column="onway_qty" property="onwayQty" />
+       <result column="lack_qty" property="lackQty" />
+       <result column="frozen_qty" property="frozenQty" />
+       <result column="shipped_qty" property="shippedQty" />
+       <result column="download_time" property="downloadTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_code, dict_platform, name, platform_sku, platform_sku_name, product_name, sku_no, sku_id, deliver_onway_qty, pending_qty, sellable_qty, unsellable_qty, reserved_qty, onway_qty, lack_qty, frozen_qty, shipped_qty, download_time
+    </sql>
+
+    <sql id="conditionSql">
+        oi.is_deleted = false
+        <if test="params.skuNoList!=null and params.skuNoList.size > 0">
+            AND oi.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+        <if test="params.platformSkuNoList!=null and params.platformSkuNoList.size>0">
+            AND oi.platform_sku IN
+            <foreach collection="params.platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+        <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
+            and oi.download_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.download_time
+        </if>
+        <if test="params.name !=null and params.name!=''">
+            AND oi.name ILIKE concat('%', #{params.name}::text ,'%')
+        </if>
+        <!--不显示0库存-->
+        <if test="params.hasNotZero !=null and params.hasNotZero ">
+            AND (oi.deliver_onway_qty > 0
+            OR oi.pending_qty > 0
+            OR oi.sellable_qty > 0
+            OR oi.unsellable_qty > 0
+            OR oi.reserved_qty > 0
+            OR oi.onway_qty > 0
+            OR oi.lack_qty > 0
+            OR oi.frozen_qty > 0
+            OR oi.shipped_qty > 0)
+        </if>
+
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </sql>
+
+    <sql id="page_where_sql">
+        opw.is_deleted = false AND opw.disabled = false AND
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
+        SELECT
+        oi.id,
+        oi.create_time,
+        oi.update_time as updateTime,
+        oi.create_user_name,
+        oi.create_user_id,
+        oi.update_user_name,
+        oi.update_user_id,
+        oi.version,
+        oi.is_deleted,
+        oi.warehouse_code,
+        oi.dict_platform,
+        oi.platform_sku,
+        oi.platform_sku_name,
+        oi.product_name,
+        oi.sku_no,
+        oi.sku_id,
+        oi.deliver_onway_qty as deliverOnwayQty,
+        oi.pending_qty as pendingQty,
+        oi.sellable_qty as sellableQty,
+        oi.unsellable_qty as unsellableQty,
+        oi.reserved_qty as reservedQty,
+        oi.onway_qty as onwayQty,
+        oi.lack_qty as lackQty,
+        oi.frozen_qty as frozenQty,
+        oi.shipped_qty as shippedQty,
+        oi.download_time as downloadTime,
+        opw.warehouse_name as name
+        FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse as opw
+        on opw.platform_warehouse_code = oi.warehouse_code
+        <where>
+            <include refid="page_where_sql"/>
+            <include refid="conditionSql"/>
+        </where>
+    </select>
+
+    <select id="queryParamsTotal" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListTotalDTO">
+        SELECT
+        COALESCE(SUM(oi.deliver_onway_qty),0) as deliverOnwayQty,
+        COALESCE(SUM(oi.pending_qty),0) as pendingQty,
+        COALESCE(SUM(oi.sellable_qty),0) as sellableQty,
+        COALESCE(SUM(oi.unsellable_qty),0) as unsellableQty,
+        COALESCE(SUM(oi.reserved_qty),0) as reservedQty,
+        COALESCE(SUM(oi.onway_qty),0) as onwayQty,
+        COALESCE(SUM(oi.lack_qty),0) as lackQty,
+        COALESCE(SUM(oi.frozen_qty),0) as frozenQty,
+        COALESCE(SUM(oi.shipped_qty),0) as shippedQty
+        FROM overseas_inventory as oi
+        <where>
+            <include refid="conditionSql"/>
+        </where>
+    </select>
+
+    <select id="listByParams" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
+        SELECT
+        oi.*
+        FROM overseas_inventory as oi
+        <where>
+            <if test="params.ids!=null and params.ids.size>0 ">
+                AND oi.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="params.ids == null">
+                <include refid="conditionSql"/>
+            </if>
+
+        </where>
+    </select>
+
+
+</mapper>

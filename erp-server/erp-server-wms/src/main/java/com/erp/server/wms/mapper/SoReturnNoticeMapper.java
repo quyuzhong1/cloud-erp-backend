@@ -16,7 +16,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Mapper

@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
  * 采购退货单 服务实现类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-07
  */
 @Slf4j
@@ -180,20 +180,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
             List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
 
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setPurchaseOrderCode(null);
-                    obj.setSupplierName(null);
-                    obj.setApproveStatus(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setReturnOrderSource(null);
-                    obj.setReturnOrderSourceName(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -201,7 +188,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getReturnWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
                 obj.setWarehouseLocationName(warehouseLocationEntity.getName());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);
@@ -460,9 +446,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setHasStockInQty(stockInQty);
             BigDecimal deductAmountAmount;
             if (ReturnModeEnum.DEDUCTION.getCode().equals(purchaseReturnOrderEntity.getReturnMode())) {
-                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
+                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
             } else {
-                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
+                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
             }
             detailView.setTotalPrice(deductAmountAmount);
             //获取sku信息

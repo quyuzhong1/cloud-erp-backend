@@ -47,7 +47,7 @@ public class MachineDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
-         * 参照版本
+         * 参照版本 http://172.16.100.11:3002/project/47/interface/api/21859
          */
         private String referenceVersion;
 

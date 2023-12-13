@@ -135,20 +135,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         //数据处理
         doOpHandlePurchaseApplication(records);
-        if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
-            for (PurchaseApplicationDTO.ListDTO obj : records) {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setApproveStatusName(null);
-                    obj.setIsFirstMassProduct(null);
-                    obj.setCreateUserName(null);
-                    continue;
-                }
-                list.add(obj.getId());
-            }
-        }
         return new PagingVO(pageData);
     }
 
@@ -338,7 +324,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
         searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
-        List<String> strList = new ArrayList<>();
 
         List<String> skuIds = list.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         BaseIdsDTO.IdsDTO skuDTO = new BaseIdsDTO.IdsDTO();
@@ -390,14 +375,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 dto.setCurrency(value.get(0).getCurrency());
                 dto.setCurrencySymbol(value.get(0).getCurrencySymbol());
                 dto.setTaxAmount(MathUtil.multiply(value.get(0).getTaxPrice(),searchDTO.getPurchaseQty()));
-            }
-
-            //清空第一条明细后其他明细中的单号
-            boolean contains = strList.contains(entity.getPurchaseApplicationId());
-            if (contains) {
-                dto.setCode(null);
-            } else {
-                strList.add(entity.getPurchaseApplicationId());
             }
             resultList.add(dto);
         }

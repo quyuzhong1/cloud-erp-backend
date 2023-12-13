@@ -1,11 +1,11 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -58,4 +58,5 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * @return java.util.List<com.erp.model.wms.dto.inventory.InOutStockDTO>
      */
     List<InOutStockDTO> listInventoryInOut(@Param("idList") List<String> idList);
+
 }

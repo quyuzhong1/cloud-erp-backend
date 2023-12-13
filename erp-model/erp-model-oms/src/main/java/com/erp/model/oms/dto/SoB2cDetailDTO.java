@@ -1,0 +1,275 @@
+package com.erp.model.oms.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.*;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * B2C销售订单明细表请求响应实体
+ *
+ * @author Will
+ * @since 2023-08-18
+*/
+@Data
+@NoArgsConstructor
+public class SoB2cDetailDTO implements Serializable {
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 主键id
+         */
+       private String id;
+        /**
+         * 图片
+         */
+       private String imageUrl;
+        /**
+         * 平台sku
+         */
+       private String platformSkuNo;
+        /**
+         * 平台产品id
+         */
+       private String platformSpuNo;
+        /**
+         * 产品skuId
+         */
+       private String skuId;
+        /**
+         * 产品sku
+         */
+       private String skuNo;
+        /**
+         * 产品名称
+         */
+       private String productName;
+        /**
+         * 规格属性
+         */
+       private String variantProperty;
+        /**
+         * 含税成本
+         */
+       private BigDecimal taxCost;
+        /**
+         * 订单原币金额
+         */
+       private BigDecimal sourceAmount;
+        /**
+         * 原币别
+         */
+       private String sourceCurrency;
+        /**
+         * 数量
+         */
+       private Integer qty;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 订单本位币金额
+         */
+       private BigDecimal amount;
+        /**
+         * 本位币别（默认人民币）
+         */
+       private String currency;
+        /**
+         * 出货仓库
+         */
+       private String warehouseId;
+        /**
+         * 出货仓库
+         */
+       private String  warehouseName;
+        /**
+         * 仓位
+         */
+       private String warehouseLocation;
+        /**
+         * 可用库存
+         */
+       private Integer useableQty;
+        /**
+         * 冻结库存
+         */
+       private Integer freezeQty;
+       /**
+        * 明细标签
+        */
+       private String label;
+       /**
+        * 明细标签对象
+        */
+       private DetailLabelDTO detailLabelDTO;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LabelJsonDTO {
+        /**
+         * 速卖通已税
+         */
+        private String alreadyTaxed;
+        /**
+         * 菜鸟官方仓
+         */
+        private String logisticsWarehouseType;
+        /**
+         * 速卖通打标
+         */
+        private List<String> tagList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailLabelDTO {
+
+        /**
+         * 速卖通已税(速卖通子订单already_taxed=U_TAXED或者I_TAXED打标)
+         */
+       private String alreadyTaxed;
+
+        /**
+         * 菜鸟官方仓(速卖通子订单logistics_warehouse_type=cainiaoInternationalWarehouse打标)
+         */
+       private String logisticsWarehouseType;
+
+       /**
+        * 1、AE_PLUS（速卖通子订单tags=AE_PLUS打标）
+        * 2、AE_合单（速卖通子订单tags=HBA_UP_EXPRESS打标）
+        * 3、十日达 （速卖通子订单tags=leadTimeTag#10打标）
+        */
+       private List<String> tagList;
+
+        /**
+         * 缺货订单(待审核、配货中订单，仓库可用库存为0)
+         */
+       private Boolean isOutStock;
+    }
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends CommonDTO{
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 图片URL
+        */
+        private String imageUrl;
+
+        /**
+        * 产品sku编号
+        */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+        * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609
+        */
+        private String warehouseSkuNo;
+
+        /**
+        * 仓库名称
+        */
+        private String warehouseName;
+
+        /**
+        * 建议售价（本位币）
+        */
+        private BigDecimal advicePrice;
+
+        /**
+        * 成本（本位币）
+        */
+        private BigDecimal taxCost;
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * skuId
+        */
+        @NotBlank(message = "skuId不能为空")
+        @Size(max = 19,message = "skuId最大长度不能超过19位")
+        private String skuId;
+
+        /**
+        * 数量
+        */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 0,message = "数量最小值为0")
+        @Max(value = 999999999,message = "数量最大值为999999999")
+        private Integer qty;
+
+        /**
+        * 仓库id
+        */
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        /**
+        * 单价
+        */
+        @NotNull(message = "单价不能为空")
+        @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
+        @DecimalMin(value = "0", message = "单价最小值必须大于0")
+        private BigDecimal price;
+    }
+
+
+}

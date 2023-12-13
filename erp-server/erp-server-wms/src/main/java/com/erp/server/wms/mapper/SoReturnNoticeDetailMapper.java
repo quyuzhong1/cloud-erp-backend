@@ -12,7 +12,7 @@ import java.util.List;
  * 销售退货通知单明细表 Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Mapper

@@ -1,0 +1,386 @@
+package com.erp.server.oms.controller.api;
+
+
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.CustomerAddressDTO;
+import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.server.oms.service.CustomerB2cAddressService;
+import com.erp.server.oms.service.CustomerB2cService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * B2C销售管理-B2C客户管理
+ *
+ * @author lambda
+ * @since 2023-05-10
+ */
+@RestController
+@RequestMapping("/customerB2c")
+public class CustomerB2cController extends BaseController {
+
+    @Resource
+    private CustomerB2cService customerB2cService;
+
+    @Resource
+    private CustomerB2cAddressService customerB2cAddressService;
+
+    /**
+     * 获取 tab列表
+     *
+     * @return
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:paging",
+            tableAlias = "ci"
+    )
+    public ApiResult<List<CustomerDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<CustomerDTO.TabListDTO> list = customerB2cService.tabList(dto);
+        return success(list);
+    }
+
+    /**
+     * 分页列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:paging",
+            tableAlias = "ci"
+    )
+    public ApiResult<PagingVO<CustomerDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerDTO.PagingParamDTO> dto) {
+        PagingVO<CustomerDTO.PagingViewDTO> pagingVO = customerB2cService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 新增
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
+        String id = customerB2cService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
+     * 提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:submit",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = customerB2cService.submit(dto.getIds());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 新增并提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
+        String id = customerB2cService.addAndSubmit(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
+     * 详情
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:view",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<CustomerDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        CustomerDTO.ViewDTO view = customerB2cService.view(dto.getId());
+        return success(view);
+    }
+
+    /**
+     * 修改
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:update",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "id"
+    )
+    public ApiResult update(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+        String id = customerB2cService.updateCustomer(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
+     * 修改并提交
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:update",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "id"
+    )
+    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+        Boolean result = customerB2cService.updateAndSubmit(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:approve",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+        Boolean result = customerB2cService.approve(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 反审核
+     */
+    @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:disApprove",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = customerB2cService.disApprove(dto.getIds());
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:cancelProcess",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = customerB2cService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 删除客户
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:delete",
+            serviceClass = CustomerB2cService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = customerB2cService.deleteByIds(dto.getIds());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 导出数据
+     */
+    @PostMapping("/export")
+    public ApiResult exportCustomerB2c(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = customerB2cService.exportExcel(dto, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 客户列表
+     */
+    @GetMapping("/list")
+    public ApiResult<List<CustomerDTO.InfoDTO>> list() {
+        List<CustomerDTO.InfoDTO> list = customerB2cService.listCustomer();
+        return success(list);
+    }
+
+    /**
+     * 所有客户列表 没有任何限制
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<CustomerDTO.InfoDTO>> listAll() {
+        List<CustomerB2cEntity> list = customerB2cService.list();
+        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        return success(resultList);
+    }
+
+    /**
+     * 启用的客户列表
+     */
+    @PostMapping("/listEnable")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customerB2c:paging",
+            tableAlias = "customerB2c_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable(PermissionsDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerB2cService.listEnable(dto.getPermissionSql());
+        return success(list);
+    }
+
+    /**
+     * 启用或者停用客户
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+        Boolean result = customerB2cService.updateStatus(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 获取客户的基础信息
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/getBase")
+    public ApiResult<CustomerDTO.BaseDTO> getBase(@RequestParam("customerId") String customerId) {
+        CustomerDTO.BaseDTO result = customerB2cService.getBase(customerId);
+        return success(result);
+    }
+
+    /**
+     * 根据客户id 获取地址信息
+     *
+     * @param customerId customerId
+     * @return java.util.List<com.erp.model.oms.dto.CustomerB2cAddressDTO.ViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/5/18 14:28
+     **/
+    @GetMapping("/listCustomerAddress")
+    public ApiResult<List<CustomerAddressDTO.ViewDTO>> listCustomerAddress(@RequestParam("customerId") String customerId) {
+        List<CustomerAddressDTO.ViewDTO> viewDTOS = customerB2cAddressService.listByMainId(customerId);
+        return success(viewDTOS);
+    }
+
+    /**
+     * 根据id查询客户地址
+     *
+     * @param customerAddressId
+     * @return ApiResult<ViewDTO>
+     * @author Will
+     * @date: 2023/7/13 12:08
+     */
+    @GetMapping("/getCustomerAddressById")
+    public ApiResult<CustomerAddressDTO.ViewDTO> getCustomerAddressById(@RequestParam("customerAddressId") String customerAddressId) {
+        CustomerAddressDTO.ViewDTO viewDTO = customerB2cAddressService.getCustomerAddressById(customerAddressId);
+        return success(viewDTO);
+    }
+
+    /**
+     * 处理平台的历史数据
+     *
+     * @return
+     */
+    @GetMapping("/processData")
+    public ApiResult processData() {
+        Boolean result = customerB2cService.processData();
+        return result ? success() : failure();
+    }
+
+    /**
+     * 导入客户
+     *
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "importCustomer")
+    public ApiResult<Void> importCustomer(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        customerB2cService.importCustomer(file);
+        return success();
+    }
+
+    /**
+     * 导入客户关联金蝶信息
+     *
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "importCustomerKingdee")
+    public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        customerB2cService.importCustomerKingdee(file);
+        return success();
+    }
+
+    /**
+     * 根据客户id查询买家信息
+     * @author Will
+     * @date: 2023/9/5 19:12
+     * @param dto
+     * @return ApiResult<ViewReceiveDataDTO>
+     */
+    @PostMapping("/viewReceiveData")
+    public ApiResult<SoB2cDTO.ViewReceiveDataDTO> viewReceiveData(@RequestBody @Validated BaseIdDTO dto) {
+        return success(customerB2cService.viewReceiveData(dto.getId()));
+    }
+
+}

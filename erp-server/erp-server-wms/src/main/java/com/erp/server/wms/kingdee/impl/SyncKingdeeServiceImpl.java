@@ -59,6 +59,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码

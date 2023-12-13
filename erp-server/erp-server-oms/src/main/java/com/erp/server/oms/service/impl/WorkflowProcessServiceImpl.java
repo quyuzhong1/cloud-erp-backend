@@ -1,15 +1,14 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.SoChangeService;
-import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.service.WorkflowProcessService;
+import com.erp.server.oms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,6 +33,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private CustomerInfoService customerInfoService;
 
+    @Resource
+    private SoB2cService soB2cService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -49,6 +51,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case CUSTOMER_INFO:
                 //客户信息
                 customerInfoApproveEnd(dto);
+                break;
+            case SO_B2C:
+                //b2c销售订单
+                SoB2cApproveEnd(dto);
                 break;
             default:
                 break;
@@ -104,5 +110,20 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         return soInfoService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: b2c销售订单
+     * @author Will
+     * @date: 2023/12/13 14:19
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean SoB2cApproveEnd(EndProcessDTO dto) {
+        SoB2cEntity entity = soB2cService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setId(dto.getBusinessId());
+        return soB2cService.approveEnd(approveOneDTO,entity);
     }
 }

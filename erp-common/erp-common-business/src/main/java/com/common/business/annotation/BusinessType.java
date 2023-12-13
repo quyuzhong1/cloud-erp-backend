@@ -1,0 +1,20 @@
+package com.common.business.annotation;
+
+import com.common.business.enums.BusinessTypeEnum;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 平台类型注解
+ *
+ * @Author Cloud
+ * @Date 2023/8/28 10:44
+ **/
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface BusinessType {
+    BusinessTypeEnum value();
+}

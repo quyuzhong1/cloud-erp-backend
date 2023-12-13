@@ -142,6 +142,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_REFUND_ORDER_TO_TASK_TAG(26,RocketMqTagEnum.SYNC_WMS,"kingdee_refund_order_to_task_tag"),
 
+    /**
+     * 汇率管理tag
+     */
+    KINGDEE_EXCHANGE_RATE_TAG(27,RocketMqTagEnum.SYNC_DMP,"kingdee_exchange_rate_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**

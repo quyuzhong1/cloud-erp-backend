@@ -12,7 +12,7 @@ import java.util.List;
  *  采购收货明细服务类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-06
  */
 public interface WarehouseReceiveDetailService extends SuperService<WarehouseReceiveDetailEntity> {

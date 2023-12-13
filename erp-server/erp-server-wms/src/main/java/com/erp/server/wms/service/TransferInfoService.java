@@ -5,9 +5,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -182,4 +183,14 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.TransferInfoDTO.PdaListStatusCountDTO>
      **/
     List<TransferInfoDTO.PdaListStatusCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * 海外入库单生成直接调拨
+     * @param mainEntity 主记录
+     * @param receivedEntityList 签收记录
+     * @param remark 备注
+     * @return 调拨单主表id
+     */
+    String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark);
+
 }

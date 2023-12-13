@@ -1,5 +1,6 @@
 package com.common.business.utils;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
@@ -12,6 +13,8 @@ import org.apache.commons.math3.util.Pair;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -121,6 +124,10 @@ public class OperationLogUtil {
                     Date date = (Date) obj;
                     String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
                     stringList.add(newValue);
+                } else if (obj instanceof LocalDateTime) {
+                    //判断是否是日期
+                    String newValue =  LocalDateTimeUtil.format((LocalDateTime) obj, "yyyy-MM-dd HH:mm:ss");
+                    stringList.add(newValue);
                 } else {
                     String newValue = String.valueOf(obj);
                     stringList.add(newValue);
@@ -152,6 +159,10 @@ public class OperationLogUtil {
             //判断是否是日期
             Date date = (Date) value;
             String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
+            resultMap.put(newKey,new Pair<>(type,newValue));
+        }  else if (value instanceof LocalDateTime) {
+            //判断是否是日期
+            String newValue =  LocalDateTimeUtil.format((LocalDateTime) value, "yyyy-MM-dd HH:mm:ss");
             resultMap.put(newKey,new Pair<>(type,newValue));
         }  else if (value instanceof BigDecimal) {
             //判断是否是BigDecimal类型

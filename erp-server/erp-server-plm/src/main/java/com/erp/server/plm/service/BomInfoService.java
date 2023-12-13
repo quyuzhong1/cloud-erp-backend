@@ -25,7 +25,7 @@ import java.util.List;
 public interface BomInfoService  extends IService<BomInfoEntity> {
 
 
-    Boolean insert(AddBomDTO dto);
+    String insert(AddBomDTO dto);
 
     PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 
@@ -55,7 +55,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean removeArchive(String id);
 
-    void checkIfChange(String sourceId);
+    void checkIfChange(String sourceId,String detailsJson);
 
     void updateState(String sourceId, Integer state);
 
@@ -102,4 +102,5 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @return PagingVO<List<ListDTO>>
      */
     PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
+
 }

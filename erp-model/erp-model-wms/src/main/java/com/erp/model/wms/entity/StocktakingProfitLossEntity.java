@@ -100,6 +100,8 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     @TableField("inventory_org_name")
     private String inventoryOrgName;
 
+
+
     /**
      * 备注
      */

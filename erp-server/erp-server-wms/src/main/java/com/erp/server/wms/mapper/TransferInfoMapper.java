@@ -53,4 +53,5 @@ public interface TransferInfoMapper extends BaseMapper<TransferInfoEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.TransferInfoDTO.PdaListDTO>
      **/
     IPage<TransferInfoDTO.PdaListDTO> pdaPaging(Page query, @Param("params") TransferInfoDTO.PdaSearchParamDTO params);
+
 }

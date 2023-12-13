@@ -1,10 +1,10 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
@@ -41,6 +41,8 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
+            //错误预警
+            dmpTaskFeign.sendWarnMsg(dmpSyncMqDTO.getDmpSyncTaskId());
             return;
         }
         //同步成功

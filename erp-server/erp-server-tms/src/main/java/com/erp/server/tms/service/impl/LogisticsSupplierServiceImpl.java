@@ -1,0 +1,451 @@
+package com.erp.server.tms.service.impl;
+
+
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
+import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsSupplierConverter;
+import com.erp.server.tms.mapper.LogisticsSupplierMapper;
+import com.erp.server.tms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * 物理商表 服务实现类
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-11-02
+ */
+@Slf4j
+@Service
+public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupplierMapper, LogisticsSupplierEntity> implements LogisticsSupplierService {
+    @Autowired
+    private OperateLogService operateLogService;
+
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
+
+    @Autowired
+    private LogisticsWarehouseService logisticsWarehouseService;
+
+    @Autowired
+    private LogisticsChannelService logisticsChannelService;
+
+    @Autowired
+    @Lazy
+    private LogisticsSaleChannelService logisticsSaleChannelService;
+
+
+    @Autowired
+    private WmsFbaOverseasFeign wmsFbaOverseasFeign;
+
+
+    @Autowired
+    private LogisticsAuthService logisticsAuthService;
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(LogisticsSupplierDTO.AddDTO addDTO) {
+        LogisticsSupplierEntity logisticsSupplierEntity = new LogisticsSupplierEntity();
+        BeanMapperUtils.copy(addDTO, logisticsSupplierEntity);
+
+        // 数据处理
+        handleData(logisticsSupplierEntity);
+
+        boolean save = super.save(logisticsSupplierEntity);
+        if (!save) {
+            throw new ServiceException("物流商保存失败");
+        }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
+    }
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(LogisticsSupplierDTO.UpdateDTO updateDTO) {
+        LogisticsSupplierEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商单"));
+        LogisticsSupplierEntity logisticsSupplierEntity = BeanMapperUtils.map(LogisticsSupplierEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(logisticsSupplierEntity);
+        log.info("编辑 开始修改物流商单数据，id：【{}】", old.getId());
+        boolean save = super.updateById(logisticsSupplierEntity);
+        if (!save) {
+            throw new ServiceException("物流商单保存失败");
+        }
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<LogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
+        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_SUPPLIER.getType());
+        List<LogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
+        for (DictBasicDTO.ViewDTO item : typeList) {
+            LogisticsSupplierDTO.TabListDTO tab = new LogisticsSupplierDTO.TabListDTO();
+            String type = item.getCode();
+            tab.setTabFlag(type);
+            tab.setTabName(item.getName());
+            Integer count = list.stream().filter(l -> l.getTabFlag().equals(type)).
+                    map(LogisticsSupplierDTO.TabListDTO::getCount).findFirst().orElse(0);
+            tab.setCount(count);
+            resultList.add(tab);
+
+        }
+        return resultList;
+    }
+
+    @Override
+    public PagingVO<LogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<LogisticsSupplierDTO.PagingParamDTO> dto) {
+        LogisticsSupplierDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<LogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
+        fillPagingData(list);
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.ChannelViewDTO> listChannelView(String id, String name) {
+        LogisticsSupplierEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(Arrays.asList(id), name);
+        List<LogisticsSupplierDTO.ChannelViewDTO> viewList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
+            for (LogisticsWarehouseEntity item : logisticsWarehouseList) {
+                LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+                channelView.setWarehouseId(item.getOverseasWarehouseId());
+                channelView.setWarehouseName(item.getOverseasWarehouseName());
+                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> c.getSourceId().equals(item.getId())).collect(Collectors.toList());
+                channelView.setChannelList(channelList);
+                viewList.add(channelView);
+            }
+        } else {
+            LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+            channelView.setWarehouseId("");
+            channelView.setWarehouseName("");
+            channelView.setChannelList(allChannelList);
+            viewList.add(channelView);
+        }
+        return viewList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        LogisticsSupplierEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        //TODO 检查订单是否引用
+        this.removeById(id);
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<String> mainIdList = new ArrayList<>(10);
+        mainIdList.add(id);
+        if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
+            List<String> LogisticsWarehouseIdList = logisticsWarehouseList.stream().map(LogisticsWarehouseEntity::getId).collect(Collectors.toList());
+            logisticsWarehouseService.removeByIds(LogisticsWarehouseIdList);
+        }
+        //删除渠道根据来源id
+        logisticsChannelService.removeByMainIdList(mainIdList);
+        return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
+
+    }
+
+    /**
+     * 物流商物流渠道同步
+     *
+     * @return
+     * @parms id
+     * @author yl
+     * @date 2023-11-15
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO sync(String id) {
+        LogisticsSupplierEntity logisticsSupplier = this.getById(id);
+        if (Objects.isNull(logisticsSupplier)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
+        String authStatus = logisticsSupplier.getAuthStatus();
+        String alreadyCode = LogisticsAuthStatusEnum.ALREADY.getCode();
+        if (!alreadyCode.equals(authStatus)) {
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+        LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", id);
+        if (Objects.isNull(authEntity)) {
+            throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
+        }
+        String logisticsPlatform = authEntity.getLogisticsPlatform();
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform);
+        List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        //这个是删除的同步来源ids
+        List<String> deleteSyncSourceIdList = saleChannelList.stream().filter(l -> l.getIsDeleted()).map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listBySyncSourceIds(syncSourceIdList, id);
+        //这个是对应删除的渠道id集合
+        List<String> deleteChannelIdList = channelList.stream().filter(c -> deleteSyncSourceIdList.contains(c.getSyncSourceId())).map(LogisticsChannelEntity::getId).collect(Collectors.toList());
+
+        //这个是海外仓物流
+        List<LogisticsSaleChannelEntity> warehouseLogisticsList = saleChannelList.stream().filter(s -> StringUtils.isNotBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
+        Integer totalSize = warehouseLogisticsList.size();
+        if (CollectionUtils.isNotEmpty(warehouseLogisticsList)) {
+            syncWarehouseLogistics(id, warehouseLogisticsList, channelList);
+        }
+        Boolean trueFlag = Boolean.TRUE;
+        Integer zeroFlag = MathUtil.ZERO;
+
+        //这个不是海外仓物流
+        List<LogisticsSaleChannelEntity> logisticsList = saleChannelList.stream().filter(s -> StringUtils.isBlank(s.getOverseasWarehouseId()) && !s.getIsDeleted()).collect(Collectors.toList());
+        totalSize = totalSize + logisticsList.size();
+        if (CollectionUtils.isNotEmpty(logisticsList)) {
+            List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(logisticsList.size());
+            for (LogisticsSaleChannelEntity saleChannel : logisticsList) {
+                String syncSourceId = saleChannel.getId();
+                LogisticsChannelEntity channelEntity = channelList.stream().filter(c -> c.getSyncSourceId().equals(syncSourceId)).
+                        findFirst().orElse(new LogisticsChannelEntity());
+                channelEntity.setSyncSourceId(syncSourceId);
+                channelEntity.setCode(saleChannel.getCode());
+                channelEntity.setMainId(id);
+                channelEntity.setName(saleChannel.getCnName());
+                channelEntity.setEffectiveTime(saleChannel.getAging());
+                String channelId = channelEntity.getId();
+                //表示新增
+                if (StringUtils.isBlank(channelId)) {
+                    channelEntity.setDisabled(trueFlag);
+                } else {
+                    //表示修改
+                    if (!zeroFlag.equals(saleChannel.getChannelStatus())) {
+                        channelEntity.setDisabled(trueFlag);
+                    }
+                }
+                saveOrUpdateList.add(channelEntity);
+            }
+            logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
+        }
+        if (CollectionUtils.isNotEmpty(deleteChannelIdList)) {
+            logisticsChannelService.removeByIdList(deleteChannelIdList);
+        }
+
+
+        return BatchResultDTO.success(logisticsSupplier.getId(), logisticsSupplier.getSupplierName(), "同步成功" + totalSize + "个渠道");
+
+    }
+
+    /**
+     * 同步海外仓物流商
+     * logisticsSupplierId
+     *
+     * @param warehouseLogisticsList
+     */
+    public void syncWarehouseLogistics(String logisticsSupplierId, List<LogisticsSaleChannelEntity> warehouseLogisticsList, List<LogisticsChannelEntity> channelList) {
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(logisticsSupplierId);
+        //海外仓库id
+        List<String> overseasWarehouseIdList = warehouseLogisticsList.stream().
+                map(LogisticsSaleChannelEntity::getOverseasWarehouseId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseEntity> overseasWarehouseList = wmsFbaOverseasFeign.listWarehouseByIds(overseasWarehouseIdList);
+        String sourceType = SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode();
+        Map<String, List<LogisticsSaleChannelEntity>> map = warehouseLogisticsList.stream().collect(Collectors.groupingBy(LogisticsSaleChannelEntity::getOverseasWarehouseId));
+        Boolean trueFlag = Boolean.TRUE;
+        Integer zeroFlag = MathUtil.ZERO;
+        for (Map.Entry<String, List<LogisticsSaleChannelEntity>> item : map.entrySet()) {
+            String overseasWarehouseId = item.getKey();
+            OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasWarehouseList.stream().
+                    filter(o -> o.getId().equals(overseasWarehouseId)).findFirst().orElse(null);
+            LogisticsWarehouseEntity logisticsWarehouse = logisticsWarehouseList.stream().
+                    filter(l -> l.getOverseasWarehouseId().equals(overseasWarehouseId)).findFirst().orElse(null);
+            String id;
+            Boolean nonNull = Objects.nonNull(logisticsWarehouse);
+            if (nonNull) {
+                id = logisticsWarehouse.getId();
+            } else {
+                logisticsWarehouse=new LogisticsWarehouseEntity();
+                id = IdWorker.getIdStr();
+                logisticsWarehouse.setOverseasWarehouseId(overseasWarehouseId);
+                logisticsWarehouse.setMainId(logisticsSupplierId);
+                logisticsWarehouse.setId(id);
+                if (Objects.nonNull(overseasProviderWarehouse)) {
+                    logisticsWarehouse.setOverseasWarehouseName(overseasProviderWarehouse.getPlatformWarehouseName());
+                    logisticsWarehouse.setOverseasWarehouseCode(overseasProviderWarehouse.getPlatformWarehouseCode());
+                }
+                logisticsWarehouseService.save(logisticsWarehouse);
+            }
+            List<LogisticsSaleChannelEntity> saleChannelList = item.getValue();
+            if (CollectionUtils.isNotEmpty(saleChannelList)) {
+                List<LogisticsChannelEntity> saveOrUpdateList = new ArrayList<>(saleChannelList.size());
+                for (LogisticsSaleChannelEntity saleChannel : saleChannelList) {
+                    String syncSourceId = saleChannel.getId();
+                    LogisticsChannelEntity channelEntity = channelList.stream().filter(c -> c.getSyncSourceId().equals(syncSourceId)).
+                            findFirst().orElse(new LogisticsChannelEntity());
+                    channelEntity.setSyncSourceId(syncSourceId);
+                    channelEntity.setCode(saleChannel.getCode());
+                    channelEntity.setMainId(logisticsSupplierId);
+                    channelEntity.setSourceType(sourceType);
+                    channelEntity.setSourceId(id);
+                    channelEntity.setName(saleChannel.getCnName());
+                    channelEntity.setEffectiveTime(saleChannel.getAging());
+                    String channelId = channelEntity.getId();
+                    //表示新增
+                    if (StringUtils.isBlank(channelId)) {
+                        channelEntity.setDisabled(trueFlag);
+                    } else {
+                        //表示修改
+                        if (!zeroFlag.equals(saleChannel.getChannelStatus())) {
+                            channelEntity.setDisabled(trueFlag);
+                        }
+                    }
+                    saveOrUpdateList.add(channelEntity);
+                }
+                logisticsChannelService.saveOrUpdateBatch(saveOrUpdateList);
+            }
+
+
+        }
+
+
+    }
+
+    @Override
+    public Boolean export(LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
+        List<LogisticsSupplierDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        fillPagingData(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/logisticsSupplier.xlsx";
+        String name = "物流商列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("物流商导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAll() {
+        List<LogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        return resultList;
+    }
+
+    @Override
+    public Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto) {
+        return this.lambdaUpdate().eq(LogisticsSupplierEntity::getSupplierId, dto.getSupplierId()).
+                set(LogisticsSupplierEntity::getDisabled, dto.getDisabled()).update();
+    }
+
+    @Override
+    public List<BaseChildDTO.ListChildTreeDTO> tree() {
+        List<LogisticsSupplierEntity> dbList = this.list();
+        List<BaseChildDTO.ListChildTreeDTO> list = LogisticsSupplierConverter.INSTANCE.convertTree(dbList);
+        List<LogisticsChannelEntity> allChannelList = logisticsChannelService.list();
+        for (BaseChildDTO.ListChildTreeDTO item : list) {
+            String id = item.getId();
+            List<LogisticsChannelEntity> channelList = allChannelList.stream().
+                    filter(c -> c.getMainId().equals(id)).collect(Collectors.toList());
+            List<BaseChildDTO.ListChildTreeDTO> childrenList = LogisticsChannelConverter.INSTANCE.convertTree(channelList);
+            item.setChildren(childrenList);
+        }
+
+        return list;
+    }
+
+
+    /**
+     * 填充分页数据
+     *
+     * @param list
+     */
+    private void fillPagingData(List<LogisticsSupplierDTO.PagingViewDTO> list) {
+        for (LogisticsSupplierDTO.PagingViewDTO item : list) {
+            LogisticsSupplierTypeEnum type = item.getType();
+            item.setTypeName(type.getName());
+            Boolean disabled = item.getDisabled();
+            String disabledName = Objects.nonNull(disabled) && !disabled ? "启用" : "禁用";
+            item.setDisabledName(disabledName);
+            String authStatus = item.getAuthStatus();
+            String authStatusName = LogisticsAuthStatusEnum.getName(authStatus);
+            item.setAuthStatusName(authStatusName);
+
+        }
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(LogisticsSupplierEntity logisticsSupplierEntity) {
+        String logisticsSupplier = "物流供应商";
+        String supplierId = logisticsSupplierEntity.getSupplierId();
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException("供应商不存在");
+        }
+        //供应商分类名
+        String supplierCategoryName = supplier.getCategoryName();
+        if (!logisticsSupplier.equals(supplierCategoryName)) {
+            throw new ServiceException("供应商分类不为物流供应商");
+        }
+        logisticsSupplierEntity.setSupplierName(supplier.getName());
+
+    }
+}

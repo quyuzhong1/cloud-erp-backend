@@ -56,9 +56,7 @@ import java.util.*;
 @RestController
 @LogSystemModule("产品管理")
 @RequestMapping("product/detail")
-public class
-
-ProductDetailController extends BaseController {
+public class ProductDetailController extends BaseController {
 
 
     @Resource

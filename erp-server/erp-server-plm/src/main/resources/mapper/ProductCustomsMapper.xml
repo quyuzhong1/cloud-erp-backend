@@ -42,6 +42,7 @@
         pd.images_url,
         pd.sku_no,
         pc.country,
+        pc.country_name,
         pc.customs_code,
         pc.tax_rate,
         pc.type

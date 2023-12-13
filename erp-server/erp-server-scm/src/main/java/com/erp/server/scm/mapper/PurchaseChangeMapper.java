@@ -55,4 +55,5 @@ public interface PurchaseChangeMapper extends BaseMapper<PurchaseChangeEntity> {
      * @return List<ListDTO>
      */
     List<PurchaseChangeDTO.ListDTO> list(@Param("params") BaseIdDTO params);
+
 }

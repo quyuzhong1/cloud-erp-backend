@@ -223,9 +223,32 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     PagingVO<WarehouseDTO.PagingProductViewDTO> pagingProduct(PagingDTO<WarehouseDTO.PagingProductDTO> dto);
     /**
+     * 树状列表
+     */
+    List<WarehouseDTO.ListTreeDTO> listTree();
+    /**
+     * @description: 树状列表(有参)
+     * @author Will
+     * @date: 2023/9/6 15:56
+     * @param dto
+     * @return List<ListTreeDTO>
+     */
+    List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto);
+
+    /**
      * 仓库，库区，库位判断是否禁用
      * @param assertList
      * @return
      */
     void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList);
+
+
+    /**
+     * 仓库列表(所有关联海外服务商)
+     *
+     * @Author Jim
+     * @date 2023-11-29
+     */
+    List<WarehouseDTO.ListDTO> listOverseasWarehouse();
+
 }

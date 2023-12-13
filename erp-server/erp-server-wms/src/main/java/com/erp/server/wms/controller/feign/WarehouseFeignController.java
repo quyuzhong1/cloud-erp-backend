@@ -48,4 +48,17 @@ public class WarehouseFeignController {
     public List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList) {
         return warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
     }
+
+    /**
+     * 根据IDS返回仓库信息，空返回所有已启用的仓库
+     *
+     * @author Jim
+     * @date 2023/11/29
+     */
+    @PostMapping("/listByIds")
+    public List<WarehouseDTO.ListDTO> listByIds(@RequestBody List<String> ids){
+        WarehouseDTO.ListParamDTO dto = new WarehouseDTO.ListParamDTO();
+        dto.setWarehouseIdList(ids);
+        return warehouseService.listWarehouseByParams(dto);
+    }
 }

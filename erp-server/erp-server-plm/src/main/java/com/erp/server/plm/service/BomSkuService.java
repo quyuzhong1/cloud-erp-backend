@@ -2,10 +2,14 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,6 +36,15 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return List<BomSkuEntity>
      */
     List<BomSkuEntity> getByParentSkuId(String parentSkuId);
+
+    /**
+     * @description: 根据父级skuNo查询
+     * @author Will
+     * @date: 2023/8/17 14:50
+     * @param parentSkuNos
+     * @return List<BomSkuEntity>
+     */
+    List<BomSkuEntity> listByParentSkuNos(List<String> parentSkuNos);
     /**
      * @description: 查询所有状态子集SKU
      * @author Will
@@ -103,4 +116,31 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return java.util.List<com.erp.model.plm.entity.BomSkuEntity>
      */
     List<BomSkuEntity> listBomSkuByBomId(String bomId);
+
+    /**
+     * 根据sku id 集合获取对应数据
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-11-24
+     */
+    List<BomDTO.BomSku> listBySkuIds(List<String> skuIdList);
+
+
+    /**
+     * @description: 查询所有父级SKU
+     * @author Will
+     * @date: 2023/11/23 17:28
+     * @param params
+     * @return BomSkuPageDTO.ListAllSkuDTO
+     */
+    BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(BomSkuPageDTO.AllSkuParamDTO params);
+    /**
+     * 查询sku版本信息
+     * @Author Luo_WG
+     * @Date 2023/11/2 8:57
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
+     **/
+    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos);
 }

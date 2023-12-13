@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.dmp.constant.TaskConstant;
+import com.common.business.constant.TaskConstant;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

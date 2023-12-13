@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -116,6 +115,16 @@ public class WarehouseDTO implements Serializable {
          */
         private Boolean isEnableLocation;
 
+        /**
+         * 在途仓库id
+         */
+        private String onwayWarehouseId;
+
+        /**
+         * 在途仓库名
+         */
+        private String onwayWarehouseName;
+
     }
 
 
@@ -131,6 +140,29 @@ public class WarehouseDTO implements Serializable {
     }
 
     /**
+     * 仓库列表(树状)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListTreeDTO {
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String id;
+
+        /**
+         * 仓库类型名称
+         */
+        private String name;
+
+        /**
+         * 仓库信息
+         */
+        private List<ListDTO> listDTO;
+    }
+
+        /**
      * 仓库列表
      */
     @Data
@@ -152,6 +184,10 @@ public class WarehouseDTO implements Serializable {
          */
         private String name;
 
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
 
         /**
          * 组织id
@@ -171,6 +207,16 @@ public class WarehouseDTO implements Serializable {
         private Boolean disabled;
 
         private ApproveStatusEnum approveStatus;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
     }
 
     @Data
@@ -178,9 +224,24 @@ public class WarehouseDTO implements Serializable {
     public static class ListParamDTO {
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * 组织id集合
          */
         private List<String> orgIdList;
+
+        /**
+         * 平台类型
+         */
+        private String dictPlatform;
+
+        /**
+         * 库存ids集合
+         */
+        private List<String> warehouseIdList;
 
     }
 

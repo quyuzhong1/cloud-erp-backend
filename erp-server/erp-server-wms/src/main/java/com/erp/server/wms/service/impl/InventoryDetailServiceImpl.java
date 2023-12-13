@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -16,9 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -112,6 +111,35 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 
         }
         return inventoryDetails;
+    }
+
+    @Override
+    public List<InventoryDetailEntity> listByFIFO(String infoId, Integer curQty, List<String> filterDetailIdList) {
+        if(curQty >= 0){
+            log.warn("需要扣减为[{}]，无需扣减，跳过查询操作！", curQty);
+            return Collections.emptyList();
+        }
+        // 查询所有大于 0 的明细
+        List<InventoryDetailEntity> listGreatZero = findListQtyGreatZero(infoId);
+        if(CollectionUtil.isEmpty(listGreatZero)){
+            return Collections.emptyList();
+        }
+        if(CollectionUtil.isNotEmpty(filterDetailIdList)){
+            listGreatZero = listGreatZero.stream().filter(item -> filterDetailIdList.contains(item.getId())).collect(Collectors.toList());
+        }
+        // 循环扣减
+        List<InventoryDetailEntity> waitOutList = new ArrayList<>();
+        for (InventoryDetailEntity detail : listGreatZero) {
+            if (curQty >= 0) {
+                break;
+            }
+            Integer qty = detail.getQty();
+            Integer tradeQty = (qty + curQty) < 0 ? -qty : curQty;
+            curQty = qty + curQty;
+            waitOutList.add(new InventoryDetailEntity(detail.getId(), tradeQty));
+        }
+        // 如果分摊了所有库存依旧无法完成足量扣减则直接返回空
+        return waitOutList;
     }
 
 }

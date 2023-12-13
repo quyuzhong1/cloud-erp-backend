@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -131,24 +128,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //数据处理
         doOpHandleData(records);
-        List<String> list = new ArrayList<>();
-        //清空明细数据
-        records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setWorkType(null);
-                obj.setWorkTypeName(null);
-                obj.setApproveUserName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
-            list.add(obj.getId());
-        });
         return new PagingVO(pageData);
     }
 

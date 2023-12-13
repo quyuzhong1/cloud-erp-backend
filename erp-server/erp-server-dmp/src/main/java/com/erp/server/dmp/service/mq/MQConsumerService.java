@@ -7,12 +7,12 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.dmp.dto.DmpExchangeRateDTO;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
@@ -82,6 +82,9 @@ public class MQConsumerService {
     @Autowired
     private DmpTransferInfoService dmpTransferInfoService;
 
+    @Autowired
+    private DmpExchangeRateService dmpExchangeRateService;
+
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -148,7 +151,7 @@ public class MQConsumerService {
                 updateParam.setCleanToDelivery(CleanStatusEnum.CLEANED.getCode());
                 updateParam.setLastPushDeliveryTime(LocalDateTime.now());
                 mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
-                OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
+                OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(ext.getPlatformOrderId(), ext.getBillNo());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
             }
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
@@ -356,6 +359,25 @@ public class MQConsumerService {
 
             log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
             dmpTransferInfoService.sendSyncTask(ext);
+
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
+            }
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_exchange_rate_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_exchange_rate_consumer")
+    public class ConsumerErpExchangeRateInfo implements RocketMQListener<DmpExchangeRateDTO> {
+        @Override
+        public void onMessage(DmpExchangeRateDTO ext) {
+
+            log.info("监听汇率信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            dmpExchangeRateService.sendSyncTask(ext);
 
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){

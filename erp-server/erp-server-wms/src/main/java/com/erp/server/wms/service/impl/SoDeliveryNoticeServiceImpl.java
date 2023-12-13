@@ -33,7 +33,6 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -81,7 +80,7 @@ import java.util.stream.Collectors;
  * 发货通知单主表明细表 服务实现类
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-05-10
  */
 @Slf4j
@@ -159,21 +158,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> list = new ArrayList<>();
             records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSourceCode(null);
-                    obj.setCustomerName(null);
-                    obj.setWarehouseOrgName(null);
-                    obj.setApproveStatusName(null);
-                    obj.setApproveStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setDeliveryStatusName(null);
-                    obj.setDeliveryStatus(null);
-                }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
@@ -189,7 +174,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);
@@ -980,16 +964,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return soDeliveryNoticeList;
     }
 
-
-    @Override
-    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId) {
-        if (StringUtils.isEmpty(sourceId)){
-            return null;
-        }
-        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, sourceId).eq(SoDeliveryNoticeEntity::getIsDeleted, false)
-                .last("limit 1").one();
-    }
-
     /**
      * 根据来源ids 获取数据
      *
@@ -1061,5 +1035,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeDetailDTO.View> soDeliveryNoticeDetailDTOS = BeanMapper.copyList(generateSoOutstockViewDTOS, SoDeliveryNoticeDetailDTO.View.class);
         view.setDetailList(soDeliveryNoticeDetailDTOS);
         return view;
+    }
+
+
+    @Override
+    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId) {
+        if (StringUtils.isEmpty(sourceId)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, sourceId).eq(SoDeliveryNoticeEntity::getIsDeleted, false)
+                .last("limit 1").one();
     }
 }

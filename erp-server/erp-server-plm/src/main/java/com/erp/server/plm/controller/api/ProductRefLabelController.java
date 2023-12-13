@@ -3,19 +3,26 @@ package com.erp.server.plm.controller.api;
 
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.plm.dto.ProductRefLabelDTO;
-import com.erp.server.plm.service.ProductRefLabelService;
+import com.erp.model.plm.dto.BasicLabelDTO;
+import com.erp.server.plm.service.BasicLabelService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.common.core.controller.BaseController;
+import com.erp.server.plm.service.ProductRefLabelService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.plm.dto.ProductRefLabelDTO;
+
+import java.util.List;
 
 /**
  * 产品便签关系表

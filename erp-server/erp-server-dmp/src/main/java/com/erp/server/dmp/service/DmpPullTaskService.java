@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service;
 
 import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -36,9 +37,9 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @description: 新增或修改任务数据
      * @author Will
      * @date: 2023/6/30 15:40
-     * @param dmpSyncTaskEntity
+     * @param dmpPullTaskEntity
      */
-    void saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpSyncTaskEntity);
+    String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity);
 
     /**
      * 新增同步金蝶退货单到wms退货入库单的任务
@@ -57,6 +58,12 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @return 返回Mq_data中的金蝶列表
      */
     List<String> listKingdeeCode(Map<String, Object> conditon);
+
+    /**
+     * 统一发送MQ消息并保存任务
+     * @param dto
+     */
+    void sendMqAndSaveTask(DmpSyncTaskDTO.AddDTO dto);
     /**
      * @description: 列表tab
      * @author Will
@@ -90,7 +97,23 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @return Boolean
      */
     Boolean batchSync(List<String> ids);
-
+     /* 处理oms推送订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncOmsOrderToDmp(Map<String, Object> resultMap);
+    /**
+     * 处理oms推送出库订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncWmsOutStockToDmp(Map<String, Object> resultMap);
+    /**
+     * 处理oms推送入库订单审核消息
+     *
+     * @param resultMap
+     */
+    void syncOmsReturnToDmp(Map<String, Object> resultMap);
     /**
      * 发送mq并保存任务
      * @param dto
@@ -102,4 +125,12 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @param dto
      */
     String savePullTask(DmpPullTaskFeignDTO dto);
+
+    /**
+     * @description: 预警
+     * @author Will
+     * @date: 2023/11/17 11:53
+     * @param syncTaskId
+     */
+    void sendWarnMsg(String syncTaskId);
 }

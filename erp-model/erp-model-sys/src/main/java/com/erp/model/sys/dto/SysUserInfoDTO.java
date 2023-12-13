@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -53,5 +55,94 @@ public class SysUserInfoDTO implements Serializable {
     //角色id 集合
     private List<String> roleIdList;
 
+    /**
+     * 店铺权限设置分页查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthPagingSearchDTO {
 
+        /**
+         * 用户名称
+         */
+        private String userName;
+
+        /**
+         * 真实名称
+         */
+        private String realName;
+
+        /**
+         * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/22975
+         */
+        private List<String> shopIdList;
+
+        /**
+         * 状态
+         */
+        private Integer userState;
+
+        /**
+         * 角色id集合
+         */
+        private List<String> roleIdList;
+
+        /**
+         * 部门id
+         */
+        private List<String> deptIdList;
+
+        /**
+         * 更新人id集合
+         */
+        private List<String> updateUserIdList;
+
+        /**
+         * 更新时间
+         */
+        private List<LocalDate> updateTimeList;
+
+    }
+
+    /**
+     * 店铺权限设置分页查询显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthPagingDTO {
+        /**
+         * 用户id
+         */
+        private String userId;
+
+        /**
+         * 用户名称
+         */
+        private String userName;
+
+        /**
+         * 真实姓名
+         */
+        private String realName;
+
+        /**
+         * o 禁用 1 启用
+         */
+        private Integer userState;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 店铺
+         */
+        private String shopNames;
+    }
 }

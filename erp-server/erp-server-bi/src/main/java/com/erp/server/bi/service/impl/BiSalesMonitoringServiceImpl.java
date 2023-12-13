@@ -178,7 +178,6 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-
                 this.listCountryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
@@ -557,6 +556,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             if (MathUtil.compareTo(entity.getRelativeRatio(), BigDecimal.ZERO) > 0) {
                 //大于等于
                 if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) >= 0)) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
@@ -568,57 +570,57 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 }
                 //小于等于
                 if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) <= 0)) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) <= 0)) {
-                        return null;
-                    }
                 }
                 //大于
                 if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) > 0)) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) > 0)) {
-                        return null;
-                    }
                 }
                 //小于
                 if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) < 0)) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
-                    }
-                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) < 0)) {
-                        return null;
                     }
                 }
                 //连续两个月大于等于
                 if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) >= 0) ) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
-                    }
-                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) >= 0) ) {
-                        return null;
                     }
                 }
                 //连续两个月小于等于
                 if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) <= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) <= 0) ) {
+                        return null;
+                    }
                     if (StringUtils.isNotBlank(name)) {
                         name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
-                    }
-                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) <= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) <= 0) ) {
-                        return null;
                     }
                 }
             }

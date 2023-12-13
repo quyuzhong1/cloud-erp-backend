@@ -12,6 +12,7 @@ package ${package.Controller};
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -69,7 +70,7 @@ public class ${table.controllerName} extends ${superControllerClass} {
 public class ${table.controllerName} {
 </#if>
 
-    @Autowired
+    @Resource
     private ${table.serviceName} ${serviceBean};
 
     /**
@@ -93,6 +94,7 @@ public class ${table.controllerName} {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "${table.comment!}修改")
     <#if dataPermission>
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
@@ -100,7 +102,7 @@ public class ${table.controllerName} {
         serviceClass = ${table.serviceName}.class,
         keyIdName = "id")
     </#if>
-    public ApiResult update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
         ${serviceBean}.update(dto);
         return success();
     }
@@ -208,7 +210,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -246,7 +248,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(approveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -283,7 +285,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(disApproveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -321,7 +323,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
     <#if fieldMap["invalidStatus"]?? && fieldMap["invalidRemark"]??>
     /**
@@ -358,7 +360,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(invalidResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
     </#if>
 
@@ -396,7 +398,7 @@ public class ${table.controllerName} {
             }
             resultDTOS.add(cancelResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -8,12 +8,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -27,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -41,10 +41,9 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -74,6 +73,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -130,6 +130,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -145,32 +148,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         //数据处理
         doOpHandleData(records);
-        List<String> list = new ArrayList<>();
         List<String> inWarehouseIds = records.stream().map(req -> req.getInWarehouseId()).distinct().collect(Collectors.toList());
         List<String> outWarehouseIds = records.stream().map(req -> req.getOutWarehouseId()).distinct().collect(Collectors.toList());
         inWarehouseIds.addAll(outWarehouseIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(inWarehouseIds);
 
-        //清空明细数据
         records.forEach(obj -> {
             WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
             WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getOutWarehouseId()) && req.getCode().equals(obj.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setTransferDirection(null);
-                obj.setTransferDirectionName(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setApproveUserName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
-            list.add(obj.getId());
         });
         return new PagingVO(pageData);
     }
@@ -218,8 +205,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
-            //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
+
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJDB);
+
             entity.setCode(code);
         }
         //新增主表数据
@@ -244,6 +233,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         //提交
         this.submit(Arrays.asList(id));
+        return id;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndApprove(TransferInfoDTO.AddDTO dto) {
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Collections.singletonList(id));
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        this.approve(baseApproveParamDTO,true);
         return id;
     }
 
@@ -954,4 +961,65 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         return list;
     }
+
+    @Override
+    @Transactional
+    public String generateFromOverseasInbound(OverseasWarehouseInboundEntity mainEntity, List<OverseasWarehouseInboundDetailEntity> detailList, List<OverseasWarehouseInboundReceivedEntity> receivedEntityList, String remark) {
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(mainEntity.getToWarehouseId(), mainEntity.getDeliveryWarehouseId()));
+        //目的仓
+        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream()
+                .filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+
+        //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
+        if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+            throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
+        }
+
+        //查询在途仓
+        WarehouseEntity onWayWarehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
+
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //默认来源类型：海外仓入库单
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
+        //默认调出日期：当前日期
+        addDTO.setBillDate(mainEntity.getReceiveTime().toLocalDate());
+        //默认调拨方向：普通
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调入组织
+        addDTO.setInOrgId(destWarehouse.getOrgId());
+        //调出组织
+        addDTO.setOutOrgId(onWayWarehouseEntity.getOrgId());
+        //调拨类型
+        if (onWayWarehouseEntity.getOrgId().equals(destWarehouse.getOrgId())) {
+            addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+        } else {
+            addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        addDTO.setSourceId(mainEntity.getId());
+        addDTO.setSourceCode(mainEntity.getCode());
+        addDTO.setRemark(remark);
+
+        //详情信息
+        List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
+        Map<String,OverseasWarehouseInboundDetailEntity> detailEntityMap = detailList.stream().collect(Collectors.toMap(OverseasWarehouseInboundDetailEntity::getId, Function.identity()));
+        //根据签收记录封装明细
+        for(OverseasWarehouseInboundReceivedEntity receivedEntity : receivedEntityList){
+            TransferInfoDetailDTO.AddDTO detailAddDto = new TransferInfoDetailDTO.AddDTO();
+            OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receivedEntity.getDetailId());
+            //映射产品信息
+            detailAddDto.setSkuId(detailEntity.getSkuId());
+            detailAddDto.setSkuNo(detailEntity.getSkuNo());
+            detailAddDto.setQty(receivedEntity.getReceiveQty());
+            detailAddDto.setOutWarehouseId(onWayWarehouseEntity.getId());
+            detailAddDto.setOutWarehouseLocation("");
+            detailAddDto.setInWarehouseId(destWarehouse.getId());
+            detailAddDto.setInWarehouseLocation("");
+            detailAddDto.setSourceDetailId(receivedEntity.getId());
+            detailAddDtoList.add(detailAddDto);
+        }
+
+        addDTO.setDetailList(detailAddDtoList);
+        return this.addAndApprove(addDTO);
+    }
+
 }

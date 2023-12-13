@@ -45,4 +45,5 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
     List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.PagingParamDTO dto,@Param("approveList") List<String> approveList);
 
     List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(@Param("soId") String soId);
+
 }

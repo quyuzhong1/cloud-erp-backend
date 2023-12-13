@@ -43,7 +43,22 @@ public enum ModuleTypeEnum {
     STOCKTAKING_PLAN("40", "盘点计划单"),
     SO_B2C("41", "B2C销售订单"),
     WAREHOUSE_LOCATION_MOVE_INFO("42", "仓位移动单"),
-
+    CUSTOMER_B2C("43", "B2C客户"),
+    RULE_ORDER_APPROVAL("44", "订单审核规则"),
+    RULE_DELIVERY_WAREHOUSE("45", "发货仓库规则"),
+    RULE_LOGISTICS("46", "物流规则"),
+    FIRST_MILE_DELIVERY("47", "发货单"),
+    FBA_SHIPMENT("48", "FBA货件单"),
+    LOGISTICS_SUPPLIER("49", "物流商"),
+    LOGISTICS_BILL("50", "物流单"),
+    LOGISTICS_CHANNEL("51", "物流渠道"),
+    SHIPPING_TEMPLATE("53", "运费模板"),
+    LOGISTICS_BILL_COST("52", "自发货费用"),
+    THIRD_WAREHOUSE("53", "第三方仓"),
+    OVERSEAS_DELIVERY_PLAN("54", "海外发货计划"),
+    REQUISITION_APPLICATION("55", "要货申请"),
+    OVERSEAS_PROVIDER("56", "仓库设置"),
+    OVERSEAS_WAREHOUSE_INBOUND("57", "海外仓入库单"),
     ;
 
 

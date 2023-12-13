@@ -16,7 +16,7 @@ import java.util.List;
  *  工作台选项表Mapper 接口
  * </p>
  *
- * @author LUO_WG
+ * @author Luo_WG
  * @since 2023-04-11
  */
 @Mapper

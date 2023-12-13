@@ -18,6 +18,8 @@ public class SysDepartmentDTO {
 
 
     private String id;
+
+    private String parentId;
     /**
      * $column.comments
      */

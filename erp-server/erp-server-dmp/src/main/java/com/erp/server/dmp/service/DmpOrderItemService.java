@@ -120,9 +120,8 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @param splitSkuDTO
      * @param machining
      * @param allBomList
-     * @param allSkuCostList
      * @return
      */
-    List<SplitSkuDTO> splitSku(SplitSkuDTO splitSkuDTO, List<DmpBomEntity> machining, List<BomChildrenSkuDTO> allBomList, List<DmpSkuCostEntity> allSkuCostList);
+    List<SplitSkuDTO> splitSku(SplitSkuDTO splitSkuDTO, List<DmpBomEntity> machining, List<BomChildrenSkuDTO> allBomList);
 
 }

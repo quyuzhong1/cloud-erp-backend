@@ -18,6 +18,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BatchResultDTO implements Serializable {
+    
 
     /**
      * 单据id

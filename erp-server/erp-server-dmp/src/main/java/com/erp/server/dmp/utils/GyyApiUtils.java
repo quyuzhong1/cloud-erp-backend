@@ -1,17 +1,14 @@
 package com.erp.server.dmp.utils;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.UrlContant;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.Md5Util;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.gyy.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 管易API 处理类

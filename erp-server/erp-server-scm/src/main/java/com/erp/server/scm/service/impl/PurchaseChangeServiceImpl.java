@@ -123,7 +123,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
-        //清空明细数据
         List<PurchaseChangeDTO.ListDTO> records = pageData.getRecords();
         //格式化变更数据
         formatPurchaseChange(records);
@@ -266,8 +265,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             //更新单据状态(后面有流程了可删)
             updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
 
-            //更新采购订单原有数据
-            updatePurchaseOrderData(ids);
+            //验证并更新采购订单原有数据
+            updatePurchaseOrderData(list,ids);
 
             //更新采购申请单生成PO类型
             updatePurchaseOrderCreatePoType(list);
@@ -551,12 +550,18 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      * @date: 2023/3/31 16:33
      * @param ids
      */
-    private void updatePurchaseOrderData (List<String> ids) {
+    private void updatePurchaseOrderData (List<PurchaseChangeEntity> list,List<String> ids) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
 
         List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
         if (CollectionUtils.isEmpty(purchaseChangeDetailList)) {
             throw new ServiceException(ApiError.ERROR_98043);
         }
+        //审核时明细数量验证
+        purchaseChangeDetailService.checkPurchasePrice(purchaseChangeDetailList,ids);
+
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = new ArrayList<>();
         for (PurchaseChangeDetailEntity detailEntity : purchaseChangeDetailList) {
             PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity();
@@ -564,6 +569,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             entity.setPurchaseQty(detailEntity.getQty());
             entity.setTaxPrice(detailEntity.getPrice());
             entity.setPurchaseAmount(detailEntity.getAmount());
+            entity.setTaxRate(detailEntity.getTaxRate());
             purchaseOrderDetailList.add(entity);
         }
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
@@ -609,26 +615,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
-        List<String> ids = records.stream().map(PurchaseChangeDTO.ListDTO::getId).collect(Collectors.toList());
-        //查询流程id判断是否存在流程 TODO
-
-        List<String> list = new ArrayList<>();
+        //查询流程id判断是否存在流程
         records.forEach(obj -> {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setSupplierName(null);
-                obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatus(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setCreateUserName(null);
-                return;
-            }
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-            list.add(obj.getId());
         });
     }
 

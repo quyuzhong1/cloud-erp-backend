@@ -5,13 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.RedisUtil;
-import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.server.dmp.config.SaveHandler;
-import com.erp.server.dmp.pull.service.ModelService;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.handler.SaveHandler;
+import com.common.business.service.ModelService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -55,14 +55,14 @@ public class PullErpDateThread {
         dto.setPlatformApiEnum(enumByType);
         dto.setJobTaskDTO(jobTaskDTO);
         try {
-            log.info("发起异步{}调用任务{}", dto.getJobTaskDTO().getPlatformName(),dto.getJobTaskDTO().getApiName());
+            log.info("发起异步{}调用任务{}", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getApiName());
             modelService.pullDataSave(dto);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
                 throw new RuntimeException("修改任务下次执行时间失败！");
             }
         } catch (Exception e) {
-            log.error(" {}拉取数据错误dto={}", jobTaskDTO.getPlatformName(), JSONUtil.toJsonStr(dto), e);
+            log.error(" {}拉取数据错误dto={}", jobTaskDTO.getDictPlatform(), JSONUtil.toJsonStr(dto), e);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 1);
             String message = e.getMessage();
             if (!aBoolean) {

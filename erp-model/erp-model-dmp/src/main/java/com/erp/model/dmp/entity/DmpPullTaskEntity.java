@@ -154,17 +154,18 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
         this.sourceCode = dto.getSourceCode();
     }
 
-    public DmpPullTaskEntity(String targetPlatformName, String mqTopic, String mqTag, String mqData, String code, String sourcePlatformName, String sourceType, String sourceId, String sourceCode, int i) {
+    public DmpPullTaskEntity(String targetPlatformName, String mqTopic, String mqTag, String mqData, String code,
+                             String sourcePlatformName, String sourceType, String sourceId, String sourceCode, int i) {
         this.targetPlatformName = targetPlatformName;
         this.mqTopic = mqTopic;
         this.mqTag = mqTag;
         this.mqData = mqData;
+        this.status = code;
         this.sourcePlatformName = sourcePlatformName;
         this.sourceType = sourceType;
         this.sourceId = sourceId;
         this.sourceCode = sourceCode;
-        this.status = code;
-        this.retryTimes = 0;
+        this.retryTimes = i;
     }
 
     @Override
