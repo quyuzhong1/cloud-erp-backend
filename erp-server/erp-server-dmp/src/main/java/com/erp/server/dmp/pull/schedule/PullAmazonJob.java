@@ -179,8 +179,8 @@ public class PullAmazonJob {
         }
         XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
         // 根据状态查询未下载数据
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
-        List<PlatformAmazonListingDTO> list = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
+        PlatformAmazonListingDTO mongoDTO = PlatformAmazonListingDTO.getByDownloadStatus();
+        List<PlatformAmazonListingDTO> list = mongoService.findMongoData(mongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformAmazonListingDTO.class);
         if (CollectionUtil.isEmpty(list)) {
             XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,无需要更新的信息");
             return ReturnT.SUCCESS;

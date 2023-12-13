@@ -4,7 +4,6 @@ import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.common.business.service.SuperService;
@@ -128,7 +127,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      */
     Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
 
-    List<String> getReceiptNumbersForStatus(List<String> statusList);
+    List<String> getReceiptNumbersForStatus(List<String> statusList, String platform);
 
     /**
      * 根据来源id查询入库单

@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,8 +55,7 @@ public class ImlInboundHandler extends AbstractPullThirdWarehouseHandler<ImlRece
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode()
-                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()));
-
+                ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_IML.getCode());
         if(CollectionUtils.isEmpty(receiveCodeList)){
             return new ArrayList<>();
         }

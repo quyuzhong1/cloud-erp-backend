@@ -15,7 +15,7 @@ public interface WmsOverseasWarehouseFeign {
      * 根据入库状态查询入库单号
      **/
     @PostMapping("/feign/overseasWarehouse/getReceiptNumbersForStatus")
-    List<String> getReceiptNumbersForStatus(@RequestBody List<String> statusList);
+    List<String> getReceiptNumbersForStatus(@RequestParam(value = "statusList") List<String> statusList,@RequestParam(value = "platform") String platform);
 
     /**
      * 根据仓库code查询仓库信息
