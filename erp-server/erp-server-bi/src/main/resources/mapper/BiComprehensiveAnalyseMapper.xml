@@ -788,10 +788,10 @@
         to_char(o.date_time, 'YYYY-MM-dd') AS name
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
@@ -827,10 +827,10 @@
         </if>
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
@@ -851,10 +851,10 @@
         </if>
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
@@ -1080,10 +1080,10 @@
         sum (o.sales_qty) AS salesQuantity
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
@@ -1650,10 +1650,10 @@
         o.country_name_cn AS countryNameCn
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
             </otherwise>
         </choose>
         <include refid="com.erp.server.bi.mapper.SalesOrderServiceMapper.sql_report_condition"/>
