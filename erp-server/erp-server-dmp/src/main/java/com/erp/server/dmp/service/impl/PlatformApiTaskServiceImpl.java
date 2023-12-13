@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseTaskDTO;
@@ -130,6 +131,11 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         entity.setSyncOperate(task.getSyncOperate());
         entity.setBillType(task.getBillType());
         entity.setOperateType(task.getOperateType());
+        // 暂时关闭订单类型
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
+                && "order".equalsIgnoreCase(task.getBillType())){
+            entity.setDisabled(true);
+        }
         return entity;
     }
 
