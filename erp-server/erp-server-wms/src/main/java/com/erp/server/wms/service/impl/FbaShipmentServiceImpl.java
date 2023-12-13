@@ -157,6 +157,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException(ApiError.EXIST_SKU_MAPPING);
         }
+        if (ObjectUtil.isEmpty(skuDTOS)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
 
         //映射sku
         dto.setShopId(entity.getShopId());
