@@ -413,7 +413,8 @@ public class SpElServerImpl implements SpElServer {
     public static void main(String[] args) {
         SpElServerImpl spElServer=new SpElServerImpl();
         ExpressionParser parser = new SpelExpressionParser();
-        String conditionExpression = "( ['packageWeightList'].contains(2) )";
+        BigDecimal ss=new BigDecimal("2");
+        String conditionExpression = "( ['packageWeightList'].contains(ss) )";
 
         List<ConditionElement> conditionList=new ArrayList<>();
         ConditionElement conditionElement=new ConditionElement();
