@@ -13,10 +13,12 @@
 
 package com.erp.sdk.oms.amz.spapi.model.tokens;
 
+import cn.hutool.core.util.StrUtil;
 import com.google.gson.annotations.SerializedName;
 
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,7 +31,23 @@ public class CreateRestrictedDataTokenRequest {
   @SerializedName("restrictedResources")
   private List<RestrictedResource> restrictedResources = new ArrayList<RestrictedResource>();
 
-  public CreateRestrictedDataTokenRequest restrictedResources(List<RestrictedResource> restrictedResources) {
+  public static CreateRestrictedDataTokenRequest builderByOrderId(String orderId) {
+    CreateRestrictedDataTokenRequest body = new CreateRestrictedDataTokenRequest();
+    List<RestrictedResource> restrictedResourceList = new LinkedList<>();
+    RestrictedResource item  = new RestrictedResource();
+    item.setMethod(RestrictedResource.MethodEnum.GET);
+    item.setPath(StrUtil.format("/orders/v0/orders/{orderId}/address", orderId));
+    restrictedResourceList.add(item);
+    RestrictedResource item1  = new RestrictedResource();
+    item1.setMethod(RestrictedResource.MethodEnum.GET);
+    item1.setPath(StrUtil.format("/orders/v0/orders/{orderId}/buyerInfo", orderId));
+    restrictedResourceList.add(item1);
+    // "path": "/mfn/v0/shipments/{shipmentId}"
+    body.setRestrictedResources(restrictedResourceList);
+    return body;
+  }
+
+    public CreateRestrictedDataTokenRequest restrictedResources(List<RestrictedResource> restrictedResources) {
     this.restrictedResources = restrictedResources;
     return this;
   }

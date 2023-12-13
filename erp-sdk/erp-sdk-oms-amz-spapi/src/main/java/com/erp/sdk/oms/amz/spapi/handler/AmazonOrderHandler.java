@@ -1,10 +1,12 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
@@ -12,16 +14,22 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
+import com.erp.sdk.oms.amz.spapi.api.TokensApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
+import com.erp.sdk.oms.amz.spapi.model.orders.*;
+import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenRequest;
+import com.erp.sdk.oms.amz.spapi.model.tokens.CreateRestrictedDataTokenResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -36,14 +44,19 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/8/31 15:48
  **/
+@Slf4j
 @Component
 @PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.AMAZON)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrderDTO, PlatformOrderDTO> {
 
+    private static final String SIGNED_ACCESS_TOKEN_HEADER_NAME = "x-amz-access-token";
+
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
+    @Resource
+    private RedisUtil redisUtil;
 
     @Override
     public List<PlatformAmazonOrderDTO> download(JobTaskDTO data) {
@@ -123,6 +136,42 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             return dto;
         }
         dto.setDetails(allOrderItems);
+        log.info("查询亚马逊订单详情成功, UniqueId={}", dto.getUniqueId());
+        // 生成RDT权限获取地址信息
+        // amazon-rdt-token:店铺ID:订单ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.AMAZON_RDT_TOKEN, dto.getShopId(), dto.getUniqueId());
+        Object obj = redisUtil.get(tokenKey);
+        // 当前RDT
+        String rdtToken = "";
+        if (null != obj){
+            rdtToken = (String) obj;
+        } else {
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            TokensApi api = TokensApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            CreateRestrictedDataTokenRequest body = CreateRestrictedDataTokenRequest.builderByOrderId(dto.getUniqueId());
+            try {
+                CreateRestrictedDataTokenResponse response = api.createRestrictedDataToken(body);
+                rdtToken = response.getRestrictedDataToken();
+                // 缓存到redis
+                redisUtil.set(tokenKey, rdtToken, response.getExpiresIn());
+            } catch (ApiException e) {
+                throw new ServiceException("获取亚马逊订单RDT token失败："+JSONUtil.toJsonStr(e));
+            }
+        }
+        if (StringUtils.isBlank(rdtToken)){
+            throw new ServiceException("亚马逊RDT token异常：空："+JSONUtil.toJsonStr(dto));
+        }
+
+        // 修改x-amz-access-token的token
+        ordersVoApi.getApiClient().addDefaultHeader(SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
+        try {
+            GetOrderAddressResponse response = ordersVoApi.getOrderAddress(dto.getUniqueId());
+            Address shippingAddress = response.getPayload().getShippingAddress();
+            Order order = dto.getOrder();
+            order.setShippingAddress(shippingAddress);
+        } catch (ApiException e) {
+            throw new ServiceException("查询亚马逊订单地址失败："+JSONUtil.toJsonStr(e));
+        }
         return dto;
     }
 
