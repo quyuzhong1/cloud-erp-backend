@@ -901,15 +901,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //配置是否存在
         if (Objects.isNull(shopAuth)) {
             shopAuth = new ShopAuthEntity();
-            shopAuth.setType(type);
-            shopAuth.setRefreshToken(refreshToken);
-            shopAuth.setAccessToken(accessToken);
-            shopAuth.setShopeeId(shopeeId);
-            if (Objects.nonNull(expireIn)) {
-                shopAuth.setExpiresIn(Math.toIntExact(expireIn));
-            }
-            shopAuth.setAppClientId(cfClientId);
-
         } else {
             //配置存在时
             shopId = shopAuth.getShopId();
