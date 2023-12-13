@@ -161,7 +161,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         //映射sku
         dto.setShopId(entity.getShopId());
         dto.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        dto.setId(collect.get(0).getId());
+        dto.setId(skuDTOS.get(0).getId());
         Boolean flag = omsListingInfoFeign.skuMapping(dto);
         if (flag) {
 
