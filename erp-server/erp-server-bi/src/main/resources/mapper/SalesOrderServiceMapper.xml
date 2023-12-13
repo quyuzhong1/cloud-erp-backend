@@ -137,14 +137,14 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                o.category_id IN
+                AND o.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                o.brand_id IN
+                AND o.brand_id IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>

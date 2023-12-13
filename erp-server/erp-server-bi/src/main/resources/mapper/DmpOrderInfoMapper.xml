@@ -468,7 +468,6 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (o.sales_amount),2) AS sales
         </if>
-        FROM
         <choose>
             <when test="params.timeType == '1'">
                 FROM dmp_order_delivery_report AS o

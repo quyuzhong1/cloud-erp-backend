@@ -191,7 +191,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             String settleRate = getSettleRate(dto.getSettleMethod());
             if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue())) {
                 SalePriceDistributionVO vo = baseMapper.countSalePriceDistribution(dto, settleRate, salesPriceRangeVO.getStartValue(), salesPriceRangeVO.getEndValue());
-                if (Objects.isNull(vo) || Objects.isNull(vo.getSalesQuantity())) {
+                if (Objects.isNull(vo) || Objects.isNull(vo.getSalesQuantity()) || Objects.isNull(vo.getSaleAmount())) {
                     salesPriceRangeVO.setSalesQuantity(0);
                     salesPriceRangeVO.setSaleAmount(BigDecimal.ZERO);
                 } else {
