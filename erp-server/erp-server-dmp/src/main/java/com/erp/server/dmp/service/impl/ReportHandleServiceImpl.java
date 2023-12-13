@@ -12,10 +12,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.handler.IBusinessHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -28,6 +25,7 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.ReportScheduleEntity;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
+import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -229,6 +227,16 @@ public class ReportHandleServiceImpl implements ReportHandleService {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        // 手动订单修改
+        if (ReportScheduleSubscribedTypeEnum.MANUAL.getCode().equalsIgnoreCase(reportSchedule.getSubscribedType())){
+            // 更新到记录
+            reportSchedule.setFirstNextReportCreationTime(roundedOffsetDateTime.toLocalDateTime());
+            reportSchedule.setSubscribedStatus(ReportScheduleSubscribedStatusEnum.ALREADY.getCode());
+            if (!reportScheduleService.updateById(reportSchedule)) {
+                throw new ServiceException("[ReportScheduleEntity] 更新亚马逊报价计划失败");
+            }
+            return;
         }
 
         // 请求参数
