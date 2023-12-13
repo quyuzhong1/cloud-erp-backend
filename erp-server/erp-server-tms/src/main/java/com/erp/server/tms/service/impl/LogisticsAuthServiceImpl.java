@@ -58,6 +58,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Autowired
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
+    @Lazy
     @Resource
     private LogisticsSaleChannelService  logisticsSaleChannelService;
 
