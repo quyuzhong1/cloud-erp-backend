@@ -174,7 +174,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuId(skuVO.getSkuId());
-            detailEntity.setAsin(collect.get(0).getPlatformSpuNo());
+            detailEntity.setAsin(skuDTOS.get(0).getPlatformSpuNo());
             //根据sku查询拥有的子sku
             List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
 
