@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -1423,5 +1424,103 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    /**
+     * 生成销售出库单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDTO{
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单code
+         */
+        private String soCode;
+
+        /**
+         * 订单类型
+         */
+        private String orderType;
+
+        /**
+         * 库存组织
+         */
+        private String warehouseOrgId;
+
+
+
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源code
+         */
+        private String sourceCode;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户code
+         */
+        private String customerOrderNo;
+
+        /**
+         *
+         * 运输单号
+         */
+        private String trackNo;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 销售部门
+         */
+        private String salesDeptId;
+
+
+
+        /**
+         * 明细
+         */
+        private List<SoOutstockDetailDTO.AddDTO> detailList;
+
     }
 }

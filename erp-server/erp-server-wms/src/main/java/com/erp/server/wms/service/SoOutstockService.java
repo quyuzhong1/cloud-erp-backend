@@ -354,4 +354,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
+
+    /**
+     * 生成销售出库单
+     * @author yl
+     * @date 2023-12-11 16:16
+     * @param dto
+     * @return 
+     */
+    Boolean generateSoOutstock(SoOutstockDTO.GenerateDTO dto);
 }

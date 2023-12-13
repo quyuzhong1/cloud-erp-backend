@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -21,6 +23,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
@@ -55,6 +58,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
 
     @Resource
@@ -91,7 +97,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 10:18
      */
     @Override
-    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList) {
+    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -131,12 +137,21 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
         }
-        //处理明细数据
-        handleDetailData( addList);
+        String b2b = OrderTypeEnum.B2B.getCode();
+        if(b2b.equals(orderType)){
+            //处理明细数据
+            handleDetailData(addList);
+        }else{
+            //处理明细数据
+            handleB2cDetailData(addList);
+        }
+
 
         this.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
     }
+
+
 
     /**
      * 根据 main id  获取对应数据
@@ -237,7 +252,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
@@ -268,7 +283,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         s.getSoDetailId().equals(soDetailId)
                 ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
 
-                if(ignoreInventorySkuIds.contains(item.getSkuId())) {
+                if (ignoreInventorySkuIds.contains(item.getSkuId())) {
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
                     if (outStockQty + planQty > deliveryQty) {
@@ -294,7 +309,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 Integer actualQty = item.getActualQty();
                 //应发数量
                 Integer planQty = item.getPlanQty();
-                if(ignoreInventorySkuIds.contains(item.getSkuId())) {
+                if (ignoreInventorySkuIds.contains(item.getSkuId())) {
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
                     if (actualQty > planQty) {
@@ -516,6 +531,92 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return resultList;
     }
 
+    /**
+     * 检测b2c 销售订单的数量
+     *
+     * @param
+     * @return
+     * @author yl
+     * @date 2023-12-11 17:21
+     */
+    @Override
+    public void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList) {
+        // 忽略库存计算SKU
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = checkList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> warehouseLocationList = checkList.stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
+
+        //销售订单详情id
+        List<String> soDetailIdList = checkList.stream().map(SoOutstockDetailDTO.UpdateDTO::getSoDetailId).distinct().collect(Collectors.toList());
+        //已经出库的数据
+        List<SoOutstockDetailEntity> soOutstockDetailList = this.listBySoDetailIds(soDetailIdList);
+        //todo 这里要判断一下发货单的数据
+
+        //b2c发货单
+        String soB2cDelivery = SourceTypeEnum.SO_B2C_DELIVERY.getCode();
+        if (soB2cDelivery.equals(sourceType)) {
+            //发货单的数量
+            Integer deliveryQty = 0;
+            for (SoOutstockDetailDTO.UpdateDTO item : checkList) {
+                String soDetailId = item.getSoDetailId();
+                Integer planQty = item.getPlanQty();
+                //这个是已出的数量
+                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
+                        s.getSoDetailId().equals(soDetailId)
+                ).mapToInt(SoOutstockDetailEntity::getActualQty).sum();
+                if (ignoreInventorySkuIds.contains(item.getSkuId())) {
+                    log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
+                } else {
+                    if (outStockQty + planQty > deliveryQty) {
+                        throw new ServiceException(ApiError.ERROR_92028);
+                    }
+                }
+            }
+        } else {
+            InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
+            skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            //获取B2C销售订单详情集合
+            List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByIds(soDetailIdList);
+            //可用数量
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+            for (SoOutstockDetailDTO.UpdateDTO item : checkList) {
+                String soDetailId = item.getSoDetailId();
+                String skuId = item.getSkuId();
+                //库位
+                String warehouseLocation = item.getWarehouseLocation();
+                //实发数量
+                Integer actualQty = item.getActualQty();
+                //应发数量
+                Integer planQty = item.getPlanQty();
+                if (ignoreInventorySkuIds.contains(item.getSkuId())) {
+                    log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
+                } else {
+                    //这个是销售数量
+                    Integer soQty = soB2cDetailList.stream().filter(s -> s.getId().equals(soDetailId)).findFirst().
+                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
+                    //这个是已出的数量 这个对应的就是销售订单的详情id
+                    Integer outStockQty = soOutstockDetailList.stream().filter(s ->
+                            s.getSoDetailId().equals(soDetailId)
+                    ).mapToInt(SoOutstockDetailEntity::getActualQty).sum();
+                    if (outStockQty + planQty > soQty) {
+                        throw new ServiceException(ApiError.ERROR_92028);
+                    }
+                    //即时库存
+                    Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                            equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                    if (planQty > inventory) {
+                        throw new ServiceException(ApiError.ERROR_92030);
+                    }
+
+                }
+            }
+        }
+    }
+
 
     /**
      * 获取到已生成销售订单的占的数量
@@ -596,10 +697,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     }
 
     /**
+     * @param detailList
      * @description: 处理明细数据
      * @author Will
      * @date: 2023/11/1 15:27
-     * @param detailList
      */
     private void handleDetailData(List<SoOutstockDetailEntity> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
@@ -621,7 +722,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setPrice(soDetailEntity.getPrice());
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
-            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(),detailEntity.getActualQty()));
+            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //销售订单明细已下推的销售出库单
@@ -630,26 +731,54 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
              *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
              */
             List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
-            BigDecimal allAmountLocalCurrency =  MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(),MathUtil.divide(new BigDecimal(detailEntity.getActualQty()) ,new BigDecimal(soDetailEntity.getQty())));
+            BigDecimal allAmountLocalCurrency = MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
             if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
                 Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(),soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO ) {
+                if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(), soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO) {
                     BigDecimal totalAllAmount = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    allAmountLocalCurrency = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(),totalAllAmount);
+                    allAmountLocalCurrency = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(), totalAllAmount);
                 }
             }
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
         }
     }
 
+
     /**
+     * 处理b2c 销售订单明细信息
+     * @param detailList
+     */
+    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByIds(soDetailIdList);
+
+        for (SoOutstockDetailEntity detailEntity : detailList) {
+            //销售订单明细
+            SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_92015);
+            }
+            //单价信息
+            detailEntity.setPrice(soDetailEntity.getPrice());
+            detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
+            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
+            detailEntity.setCurrency(soDetailEntity.getCurrency());
+            //detailEntity.setCurrencySymbol(soDetailEntity.get());
+            detailEntity.setAllAmountLocalCurrency(soDetailEntity.getAmount());
+        }
+    }
+
+    /**
+     * @param soDetailIdList
+     * @return List<SoOutstockDetailEntity>
      * @description: 根据销售订单明细ids查询
      * @author Will
      * @date: 2023/11/1 15:45
-     * @param soDetailIdList
-     * @return List<SoOutstockDetailEntity>
      */
-    private List<SoOutstockDetailEntity> listBySoDetailIds (List<String> soDetailIdList) {
+    private List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
             return Collections.EMPTY_LIST;
         }
