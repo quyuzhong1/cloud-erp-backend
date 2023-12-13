@@ -102,11 +102,11 @@
             to_char(ddd.date_time,'MM') as month
         <choose>
             <when test="params.timeType == '1'">
-                FROM dmp_order_delivery_report_day AS o
+                FROM dmp_order_delivery_report AS o
                 right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </when>
             <otherwise>
-                FROM dmp_order_create_report_day AS o
+                FROM dmp_order_create_report AS o
                 right join dmp_date_dimension ddd on o.date_day = ddd.date_day and ddd.is_deleted = false
             </otherwise>
         </choose>

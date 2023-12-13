@@ -2798,17 +2798,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String groupName = "";
         //类别查询
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
-            groupName = "category";
+            groupName = "category_id";
         }
 
         //部门查询
         if (CollectionUtils.isNotEmpty(dto.getDepartment())) {
-            groupName = "dept_name";
+            groupName = "dept_id";
         }
 
         //用户查询
         if (CollectionUtils.isNotEmpty(dto.getUserId())) {
-            groupName = "charge_name";
+            groupName = "charge_id";
         }
 
         //店铺查询
@@ -2909,13 +2909,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, dateType);
 
         //如果是季度
-        if (dateType.equals("QUARTER")) {
-            for (SalesFlagVO item : salesList) {
-                String name = item.getName();
-                String quarterName = conversionQuarterName(name);
-                item.setName(quarterName);
-            }
-        }
+//        if (dateType.equals("QUARTER")) {
+//            for (SalesFlagVO item : salesList) {
+//                String name = item.getName();
+//                String quarterName = conversionQuarterName(name);
+//                item.setName(quarterName);
+//            }
+//        }
 
         ChartVO chartVO = new ChartVO();
         List<String> siteNameList = salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
@@ -2975,9 +2975,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
             }
             if ("QUARTER".equals(dateType)) {
-                Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.fmt_month);
-                parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 3);
-                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
+                parse = salesList.get(i).getName();
+                prevYearDate = salesList.get(i).getName();
+//                Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.fmt_month);
+//                parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 3);
+//                prevYearDate = DateUtil.getPrevYearDate(date, DateUtil.fmt_month, 1);
             }
             if ("YEAR".equals(dateType)) {
                 Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.FMT_YEAR4);
@@ -3864,8 +3866,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)) {
                 Map<String, Object> siteMap = new HashMap<>();
-                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
-                params.setCustomerCodes(new ArrayList<>(customerCodes));
+                Set<String> names = customerInfoVOS1.stream().map(CustomerInfoVO::getName).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+                params.setShopName(new ArrayList<>(names));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
                 if (Objects.isNull(bigDecimal)) {
