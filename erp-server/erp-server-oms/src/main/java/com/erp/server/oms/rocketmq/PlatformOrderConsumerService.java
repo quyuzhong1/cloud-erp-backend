@@ -82,8 +82,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
+        log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(dto));
         // 查询关联关系
         List<String> platformSkuList = dto.getDetails()
                 .stream()
