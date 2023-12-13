@@ -800,6 +800,8 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MappingSkuViewDTO {
+
+        private String id;
        /**
         * 产品skuId
         */
