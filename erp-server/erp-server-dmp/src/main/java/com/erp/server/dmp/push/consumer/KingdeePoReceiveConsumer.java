@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -10,13 +9,10 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.server.dmp.push.service.business.KingdeePoReceiveConsumerService;
-import com.erp.server.dmp.push.service.business.KingdeeProductDetailConsumerService;
-import com.erp.server.dmp.push.service.business.KingdeeReturnOrderConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -45,7 +41,7 @@ public class KingdeePoReceiveConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
