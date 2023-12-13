@@ -33,7 +33,7 @@ public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandl
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
 
     }
 

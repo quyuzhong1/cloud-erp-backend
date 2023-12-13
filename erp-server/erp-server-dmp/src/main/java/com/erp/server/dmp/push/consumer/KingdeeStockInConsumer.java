@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -16,8 +15,6 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeStockInConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
@@ -133,7 +130,7 @@ public class KingdeeStockInConsumer<T extends DmpSyncTaskIdDTO> extends Abstract
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 

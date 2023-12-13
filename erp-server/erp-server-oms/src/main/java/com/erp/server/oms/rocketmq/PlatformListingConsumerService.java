@@ -58,9 +58,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         DmpPullTaskEntity dmpPullTaskEntity = dmpTaskFeign.getPullTaskById(syncTaskId);
-        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity);
+        WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(dmpPullTaskEntity,msg);
         mqProducerService.sendWarnMsg(msgInfoDTO);
     }
 
@@ -113,14 +113,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     }
 
 
-    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity) {
+    private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
         warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.THIRD_WAREHOUSE_GET_SKU.getTableName());
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

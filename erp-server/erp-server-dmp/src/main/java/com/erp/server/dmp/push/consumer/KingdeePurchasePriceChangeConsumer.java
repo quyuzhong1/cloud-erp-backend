@@ -62,7 +62,7 @@ public class KingdeePurchasePriceChangeConsumer<T extends DmpSyncTaskIdDTO> exte
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
