@@ -942,6 +942,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         this.saveOrUpdate(shopInfoEntity);
         shopId = shopInfoEntity.getId();
         shopAuth.setShopId(shopId);
+        shopAuth.setType(type);
+        shopAuth.setRefreshToken(refreshToken);
+        shopAuth.setAccessToken(accessToken);
+        shopAuth.setShopeeId(shopeeId);
+        if (Objects.nonNull(expireIn)) {
+            shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        }
+        shopAuth.setAppClientId(cfClientId);
         shopAuthService.saveOrUpdate(shopAuth);
         return Boolean.TRUE;
     }
