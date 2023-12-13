@@ -222,8 +222,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = CollectionUtils.isNotEmpty(noticeDetailIdList) ? soDeliveryNoticeDetailService.listByIds(noticeDetailIdList) : Collections.emptyList();
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
-            //sku id
-            String skuId = item.getSkuId();
+
             //实发数量
             Integer actualQty = item.getActualQty();
             String sourceDetailId = item.getSourceDetailId();

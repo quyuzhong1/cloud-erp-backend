@@ -590,8 +590,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 String warehouseLocation = item.getWarehouseLocation();
                 //实发数量
                 Integer actualQty = item.getActualQty();
-                //应发数量
-                Integer planQty = item.getPlanQty();
+
                 if (ignoreInventorySkuIds.contains(item.getSkuId())) {
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
@@ -602,13 +601,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                             s.getSoDetailId().equals(soDetailId)
                     ).mapToInt(SoOutstockDetailEntity::getActualQty).sum();
-                    if (outStockQty + planQty > soQty) {
+                    if (outStockQty + actualQty > soQty) {
                         throw new ServiceException(ApiError.ERROR_92028);
                     }
                     //即时库存
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                    if (planQty > inventory) {
+                    if (actualQty > inventory) {
                         throw new ServiceException(ApiError.ERROR_92030);
                     }
 
