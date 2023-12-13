@@ -33,6 +33,6 @@
         SELECT id FROM product_bom_info WHERE  serial_number ILIKE concat('%',#{searchKeyword}::text,'%') AND product_bom_info.is_deleted = FALSE
             UNION ALL
         SELECT id FROM product_detail WHERE
-         sku_no!='' AND product_detail.is_deleted = FALSE AND  (sku_no ILIKE concat('%',#{searchKeyword}::text,'%') OR  name ILIKE   concat('%',#{searchKeyword}::text,'%'))
+         sku_no!='' AND product_detail.is_deleted = FALSE AND  (sku_no ILIKE concat('%',#{searchKeyword}::text,'%') OR  name ILIKE concat('%',#{searchKeyword}::text,'%'))
     </select>
 </mapper>

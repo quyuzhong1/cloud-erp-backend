@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -120,15 +121,16 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
             throw new ServiceException("记录客户ID失败");
         }
 
+
         //自动匹配订单规则
-        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
+//        if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(mainEntity.getBillStatus())) {
 //            JSONObject jsonObject = new JSONObject();
 //            Boolean isSuccess = soB2cService.approveRule(mainEntity.getId(), detailList, jsonObject);
 //            if (isSuccess) {
 //                //自动匹配配货规则
 //                soB2cService.distributionRule(mainEntity.getId(), detailList, jsonObject);
 //            }
-        }
+//        }
         return ApiResult.success();
     }
 }
