@@ -199,6 +199,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
             return oldDetailEntityList;
         }
+
         // 来源不为空
         // 历史map
         Map<String, SoB2cDetailEntity> oldDetailMap = oldDetailEntityList.stream()
@@ -229,21 +230,24 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
 
             //建议售价
-            if (StringUtils.isNotBlank(skuId)){
-                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
-                if (CollectionUtils.isNotEmpty(skuList)){
-                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-                }
-            }else if (StringUtils.isNotBlank(skuNO)){
-                List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNO));
-                if (CollectionUtils.isNotEmpty(skuList)){
-                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
-                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
-                }
-            }
+//            if (StringUtils.isNotBlank(skuId)){
+//                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Collections.singletonList(skuId));
+//                if (CollectionUtils.isNotEmpty(skuList)){
+//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
+//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
+//                }
+//            }else if (StringUtils.isNotBlank(skuNO)){
+//                List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNO));
+//                if (CollectionUtils.isNotEmpty(skuList)){
+//                    BigDecimal advicePrice = MathUtil.multiply(skuList.get(0).getRetailPrice(), detailDTO.getQty());
+//                    saveOrUpdateEntity.setAdvicePrice(advicePrice);
+//                }
+//            }
             return saveOrUpdateEntity;
         }).collect(Collectors.toList());
+
+        // 其他处理
+        handleDetailList(saveOrUpdateList, mainEntity.getId(), saveOrUpdateList.stream().allMatch(e-> StringUtils.isBlank(e.getId())));
 
         // 批量保存和更新
          if (!this.saveOrUpdateBatch(saveOrUpdateList)){

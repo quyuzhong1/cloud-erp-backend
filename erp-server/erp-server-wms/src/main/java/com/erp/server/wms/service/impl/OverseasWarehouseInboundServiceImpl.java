@@ -3,13 +3,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformInboundDTO;
@@ -383,7 +381,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         // 数据处理
-        handleData(old, updateDTO, deliveryEntity, dictPlatform);
+        handleData(mainEntity, updateDTO, deliveryEntity, dictPlatform);
         log.info("编辑 开始修改海外仓入库单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(mainEntity);
         if (!save) {
