@@ -679,6 +679,11 @@ public class ShopDTO implements Serializable {
         private String shopId;
 
         /**
+         * 店铺名
+         */
+        private String shopName;
+
+        /**
          * 店铺授权id
          */
         private String shopAuthId;

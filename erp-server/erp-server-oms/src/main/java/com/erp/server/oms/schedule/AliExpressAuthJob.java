@@ -1,13 +1,24 @@
 package com.erp.server.oms.schedule;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.request.RefreshTokenRequest;
+import com.erp.oms.aliexpress.service.AliExpressAuthService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.ShopAuthService;
+import com.erp.server.oms.service.authorize.AliExpressAuthorize;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +46,18 @@ public class AliExpressAuthJob {
     @Resource
     private ShopAuthService shopAuthService;
 
+    @Resource
+    private AliExpressAuthService aliExpressAuthService;
+
+    @Resource
+    private RedisUtil redisUtil;
+
+
+
     /**
      * 刷新速卖通的token
      */
-    //@XxlJob("refreshTokenAliExpress")
+    @XxlJob("refreshTokenAliExpress")
     public void refreshTokenAliExpress() {
         //先获取授权店铺 然后根据授权店铺进行
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -50,12 +69,45 @@ public class AliExpressAuthJob {
         if (Objects.isNull(cfgAppClient)) {
             return;
         }
-        String clientId = cfgAppClient.getId();
-        List<ShopAuthEntity> shopList = shopAuthService.listByClientId(clientId);
+        String appClientId= cfgAppClient.getId();
+        String clientId = cfgAppClient.getClientId();
+        String baseUrl= cfgAppClient.getUrl();
+        String clientSecret=cfgAppClient.getClientSecret();
+
+        List<ShopAuthEntity> shopList = shopAuthService.listByClientId(appClientId);
         if (CollectionUtils.isEmpty(shopList)) {
             return;
         }
-
+        for (ShopAuthEntity item : shopList) {
+            RefreshTokenRequest request=RefreshTokenRequest.builder().
+                    baseUrl(baseUrl).
+                    refreshToken(item.getRefreshToken()).
+                    clientId(clientId).
+                    clientSecret(clientSecret).
+                    build();
+            try {
+                JSONObject jsonObject= aliExpressAuthService.RefreshToken(request);
+                String code=jsonObject.getOrDefault("code","").toString();
+                //表示成功
+                if("0".equals(code)){
+                    String accessToken=jsonObject.getOrDefault("access_token","").toString();
+                    String refreshToken=jsonObject.getOrDefault("refresh_token","").toString();
+                    Integer expiresIn=jsonObject.getInteger("expires_in");
+                    shopAuthService.refreshToken(item.getId(),accessToken, refreshToken, expiresIn);
+                    AliExpressShopInfoDTO shopInfoDTO=new AliExpressShopInfoDTO();
+                    shopInfoDTO.setId(item.getShopId());
+                    shopInfoDTO.setClientId(clientId);
+                    shopInfoDTO.setClientSecret(clientSecret);
+                    shopInfoDTO.setBaseUrl(baseUrl);
+                    shopInfoDTO.setName("");
+                    shopInfoDTO.setToken(accessToken);
+                    String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), item.getShopId());
+                    redisUtil.set(tokenKey, shopInfoDTO,expiresIn);
+                }
+            } catch (ApiException e) {
+                log.error("刷新店铺id 为>>>{} token失败 {}",item.getShopId(),e.getMessage());
+            }
+        }
 
 
     }
