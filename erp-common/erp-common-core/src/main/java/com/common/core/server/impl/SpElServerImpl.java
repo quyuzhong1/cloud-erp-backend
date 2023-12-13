@@ -411,33 +411,40 @@ public class SpElServerImpl implements SpElServer {
 
 
     public static void main(String[] args) {
+        SpElServerImpl spElServer=new SpElServerImpl();
         ExpressionParser parser = new SpelExpressionParser();
-        String conditionExpression = "( ['skuNo'].contains('3306') )";
+        String conditionExpression = "( ['packageWeightList'].contains(2) )";
+
         List<ConditionElement> conditionList=new ArrayList<>();
         ConditionElement conditionElement=new ConditionElement();
-        conditionElement.setCompare("notContains");
-        conditionElement.setField("skuNo");
+        conditionElement.setCompare("contains");
+        conditionElement.setField("packageWeight");
         conditionElement.setLeftBracket("(");
         conditionElement.setLogic("");
         conditionElement.setRightBracket(")");
-        conditionElement.setValue("2.3100");
+        conditionElement.setValue("2.00");
         conditionElement.setValueType("BigDecimal");
         conditionList.add(conditionElement);
         Map<String, Object> map = new HashMap<>();
-        map.put("skuNo", "3305");
+
         List<Map<String,Object>> list=new ArrayList<>();
         Map<String,Object> m1=new HashMap<>();
-        m1.put("skuNo",2.32);
+        m1.put("packageWeight",2.0);
 
         Map<String,Object> m2=new HashMap<>();
-        m2.put("skuNo",1.56);
+        m2.put("packageWeight",2.0);
         list.add(m1);
         list.add(m2);
-        map.put("detailList",list);
+        List<Double> list1=new ArrayList<>();
+        list1.add(2.000000);
+       // list1.add(new BigDecimal("2.100000"));
+        map.put("packageWeightList",list1);
+        Boolean result1=spElServer. matchExpression(conditionExpression, map);
+        System.out.println(result1);
 
-        SpElServerImpl spElServer=new SpElServerImpl();
-        Boolean result= spElServer.matchExpressionByConditionList(conditionList,map);
-        System.out.println(result);
+
+//        Boolean result= spElServer.matchExpressionByConditionList(conditionList,map);
+//        System.out.println(result);
     }
 
 

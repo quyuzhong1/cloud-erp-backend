@@ -76,7 +76,7 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/add")
     public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
        List<ShopInfoEntity> list = shopInfoService.add(dto);
-        return CollectionUtils.isEmpty(list) ? success() : failure();
+        return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
 
     /**

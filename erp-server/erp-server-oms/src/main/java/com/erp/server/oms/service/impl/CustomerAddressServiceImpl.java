@@ -61,6 +61,9 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      */
     @Override
     public void checkIsDefault(List<CustomerAddressDTO.AddDTO> addressList) {
+        if (CollectionUtils.isEmpty(addressList)){
+            return;
+        }
         long count = addressList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_92006);

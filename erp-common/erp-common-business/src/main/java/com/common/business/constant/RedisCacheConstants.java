@@ -86,5 +86,8 @@ public interface RedisCacheConstants {
      */
     String AUTH_SHOPEE_ID = "third-party-auth:id:{}";
 
-
+    /**
+     * 亚马逊RDT token:店铺ID:订单ID
+     */
+    String AMAZON_RDT_TOKEN = "amazon-rdt-token:{}:{}";
 }

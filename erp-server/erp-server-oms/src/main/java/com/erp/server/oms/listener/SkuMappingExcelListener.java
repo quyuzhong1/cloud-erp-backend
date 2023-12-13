@@ -161,7 +161,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
 
         // 已存在
-        if (CollectionUtils.isEmpty(listDto) && isApiPlatform){
+        if (CollectionUtils.isNotEmpty(listDto) && isApiPlatform){
             ListingInfoWithSkuMappingDTO currentSkuMapping = listDto.get(0);
             if( currentSkuMapping.getMatchResult()){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");

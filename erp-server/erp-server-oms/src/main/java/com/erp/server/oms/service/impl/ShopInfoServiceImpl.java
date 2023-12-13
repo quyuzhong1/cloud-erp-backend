@@ -217,7 +217,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
-        String id = customerInfoService.addAndSubmit(customer);
+        String id = customerInfoService.add(customer);
         if (StringUtils.isNotBlank(id)) {
             CustomerInfoEntity customerB2b = customerInfoService.getById(id);
             if (Objects.nonNull(customerB2b)) {
@@ -226,10 +226,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 this.updateById(shop);
             }
         }
-        BaseApproveParamDTO approveParamDTO = new BaseApproveParamDTO();
-        approveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        approveParamDTO.setIds(Arrays.asList(id));
-        customerInfoService.approve(approveParamDTO);
+
 
     }
 
