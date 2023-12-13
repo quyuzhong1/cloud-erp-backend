@@ -67,6 +67,10 @@ public class DmpFeignController extends BaseController {
     private CfgAppClientService cfgAppClientService;
 
 
+    @Resource
+    private DmpSkuCostService dmpSkuCostService;
+
+
     @PostMapping("/getShopById")
     public DmpShopInfoDTO getShopById(@RequestBody String shopId) {
         return dmpShopInfoService.getShopById(shopId);
@@ -261,4 +265,17 @@ public class DmpFeignController extends BaseController {
         dmpPullTaskService.sendWarnMsg(syncTaskId);
         return Boolean.TRUE;
     }
+
+    /**
+     * 查询sku成本
+     * @author Will
+     * @date: 2023/12/13 18:02
+     * @param skuNoList
+     * @return List<DmpSkuCostEntity>
+     */
+    @PostMapping("/listRedisBySkuNoList")
+    public List<DmpSkuCostEntity> listRedisBySkuNoList(@RequestBody List<String> skuNoList){
+        return dmpSkuCostService.listRedisBySkuNoList(skuNoList);
+    }
+
 }

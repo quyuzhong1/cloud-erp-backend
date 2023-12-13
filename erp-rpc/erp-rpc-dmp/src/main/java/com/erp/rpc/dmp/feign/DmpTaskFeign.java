@@ -220,4 +220,14 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/dmp/cfgSetting/list")
     Map<SettingEnum, String> getCfgSettingList(@RequestBody String type);
+
+   /**
+    * 查询sku成本数据
+    * @author Will
+    * @date: 2023/12/13 18:04
+    * @param skuNoList
+    * @return List<DmpSkuCostEntity>
+    */
+    @PostMapping("feign/listRedisBySkuNoList")
+    List<DmpSkuCostEntity> listRedisBySkuNoList(@RequestBody @Valid List<String> skuNoList);
 }

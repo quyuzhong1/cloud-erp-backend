@@ -19,6 +19,7 @@ import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.mapper.ProductCostMapper;
 import com.erp.server.plm.service.ProductCostService;
@@ -43,7 +44,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     private ProductCostMapper productCostMapper;
 
     @Resource
-    private RedisUtil redisUtil;
+    private DmpTaskFeign dmpTaskFeign;
 
 
 
@@ -58,9 +59,11 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public List<ProductCostShowDTO> list(String productId) {
         List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.list(productId);
         if (CollectionUtils.isNotEmpty(productCostShowDTOList)) {
+            List<String> skuNoList = productCostShowDTOList.stream().map(ProductCostShowDTO::getSkuNo).collect(Collectors.toList());
+            List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
             for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
-                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
-                DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+                //成本信息
+                DmpSkuCostEntity dmpSkuCostEntity = dmpSkuCostList.stream().filter(obj -> obj.getSkuNo().equals(productCostShowDTO.getSkuNo())).findFirst().orElse(null);
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
                 BigDecimal actualNoTaxCost = BigDecimal.ZERO;
                 if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
@@ -88,12 +91,14 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public List<ProductCostShowDTO> listBySkuId(String skuId) {
         List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.listBySkuId(skuId);
         if (CollectionUtils.isNotEmpty(productCostShowDTOList)) {
+            List<String> skuNoList = productCostShowDTOList.stream().map(ProductCostShowDTO::getSkuNo).collect(Collectors.toList());
+            List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
             for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
-                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, productCostShowDTO.getSkuNo());
-                DmpSkuCostEntity dmpSkuCostEntity = (DmpSkuCostEntity) redisUtil.get(existKey);
+                //成本信息
+                DmpSkuCostEntity dmpSkuCostEntity = dmpSkuCostList.stream().filter(obj -> obj.getSkuNo().equals(productCostShowDTO.getSkuNo())).findFirst().orElse(null);
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
                 BigDecimal actualNoTaxCost = BigDecimal.ZERO;
-                if (ObjectUtil.isEmpty(dmpSkuCostEntity)) {
+                if (ObjectUtil.isNotEmpty(dmpSkuCostEntity)) {
                     actualTaxCost = dmpSkuCostEntity.getCostPrice();
                     actualNoTaxCost = dmpSkuCostEntity.getNotTaxCostPrice();
                 }
