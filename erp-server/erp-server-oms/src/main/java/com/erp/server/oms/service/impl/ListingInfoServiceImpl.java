@@ -109,12 +109,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean skuMapping(FbaShipmentDTO.skuMappingParamDTO dto) {
-        ListingInfoEntity listingInfoEntity = lambdaQuery()
-                .eq(ListingInfoEntity::getPlatformSkuNo, dto.getMsku())
-                .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
-                .last("LIMIT 1")
-                .one();
+        SkuMappingEntity skuMapping = skuMappingService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(skuMapping)) {
+            throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
+        }
+        ListingInfoEntity listingInfoEntity = this.getById(skuMapping.getListingId());
         if (ObjectUtil.isEmpty(listingInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_M_SKU_NOT_EXIST);
         }
@@ -122,6 +123,12 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(dto.getSkuNo())).distinct().findFirst().orElse(new SkuVO());
         if (ObjectUtil.isEmpty(skuVO)) {
             throw new ServiceException("sku不存在");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        skuMapping.setExpireTime(now);
+        skuMapping.setIsExpire(Boolean.TRUE);
+        if (!skuMappingService.updateById(skuMapping)) {
+            throw new ServiceException("[SkuMapping] 历史映射修改失败");
         }
 
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
@@ -135,7 +142,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setListingId(listingInfoEntity.getId());
         skuMappingEntity.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         skuMappingEntity.setPlatformName(PlatformDictEnum.AMAZON.getName());
-        LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(now);
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
