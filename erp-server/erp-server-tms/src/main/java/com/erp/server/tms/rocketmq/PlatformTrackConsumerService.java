@@ -1,7 +1,6 @@
 package com.erp.server.tms.rocketmq;
 
 import cn.hutool.json.JSONUtil;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
@@ -10,13 +9,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
-import com.sdk.tms.track123.dto.PlatformTrackDetail;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -54,7 +49,7 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
 
     }
 

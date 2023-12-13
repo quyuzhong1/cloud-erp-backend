@@ -64,7 +64,7 @@ public class KingdeeSubcontractChangeConsumer<T extends DmpSyncTaskIdDTO> extend
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 

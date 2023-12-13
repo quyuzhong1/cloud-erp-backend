@@ -29,6 +29,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -256,7 +257,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     private void handleData(RuleLogisticsEntity ruleLogisticsEntity) {
         // TODO 验证数据 & 数据赋值
         String logisticsChannelId = ruleLogisticsEntity.getLogisticsChannelId();
-        if (Objects.nonNull(ruleLogisticsEntity)) {
+        if (StringUtils.isNotBlank(logisticsChannelId)) {
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             ruleLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
             ruleLogisticsEntity.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());

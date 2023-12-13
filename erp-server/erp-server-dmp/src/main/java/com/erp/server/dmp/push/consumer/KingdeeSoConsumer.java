@@ -63,7 +63,7 @@ public class KingdeeSoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
     }
 
     @Override
-    public void sendWarnMsg(String syncTaskId) {
+    public void sendWarnMsg(String syncTaskId, String msg) {
         dmpPushTaskService.sendWarnMsg(syncTaskId);
     }
 
