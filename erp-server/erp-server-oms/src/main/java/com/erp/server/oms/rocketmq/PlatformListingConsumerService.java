@@ -68,6 +68,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformProductDTO dto = JSONUtil.toBean(ext.toString(), PlatformProductDTO.class);
+        log.info("[Listing] 消费: dto={}", JSONUtil.toJsonStr(dto));
         // Shopify来源卖家sku可能为空
         if (StringUtils.isBlank(dto.getPlatformSkuNo())){
             log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));

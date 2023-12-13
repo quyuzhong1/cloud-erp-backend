@@ -132,12 +132,4 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         return dto;
     }
 
-    /**
-     * 是否发送MQ
-     * true=发送
-     * false=不发送（有其他详情需要额外拉取）
-     */
-    public Boolean getIsSendMq() {
-        return Boolean.FALSE;
-    }
 }

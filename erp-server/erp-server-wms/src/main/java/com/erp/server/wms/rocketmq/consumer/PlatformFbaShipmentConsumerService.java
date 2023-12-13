@@ -87,6 +87,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> handle(Object ext) {
         PlatformFbaShipmentDTO dto = JSONUtil.toBean(ext.toString(), PlatformFbaShipmentDTO.class);
+        log.info("[Fba货件] 消费:dto={}", JSONUtil.toJsonStr(dto));
         // 组合信息
         FbaShipmentEntity entity = FbaShipmentConsumerConverter.INSTANCE.fbaShipmentToEntity(dto);
 
