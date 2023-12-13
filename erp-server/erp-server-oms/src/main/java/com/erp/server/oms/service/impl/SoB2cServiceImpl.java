@@ -901,9 +901,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         addDTO.setSourceId(StrUtil.join(",", ids));
-        List<String> codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
-        addDTO.setSourceCode(StrUtil.join(",", codes));
+        String codes = list.stream().map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        addDTO.setSourceCode(codes);
 
+        //平台订单号
+        String platformCode = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getPlatformCode())).map(SoB2cEntity::getPlatformCode).collect(Collectors.joining("*"));
+        addDTO.setPlatformCode(platformCode);
         //物流信息
         SoB2cLogisticsDTO.AddDTO logisticsAddDTO = new SoB2cLogisticsDTO.AddDTO();
         BeanMapperUtils.copy(soB2cLogisticsList.get(0), logisticsAddDTO);
@@ -963,6 +966,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BeanMapperUtils.copy(detailEntity, detailAddDTO);
             detailList.add(detailAddDTO);
         }
+        addDTO.setRemark(StrUtil.format("订单【{}】合并新订单",codes));
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
