@@ -173,12 +173,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 req.setSign(0);
             }
         }
-        for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
-            if (req.getModuleClassify().equals("质检单")) {
-                waitDoMenus.remove(req);
-            }
-        }
-        return waitDoMenus;
+
+        List<WorkOptionDTO.WaitDoMenu> waitDoMenuList = waitDoMenus.stream().filter(req -> !req.getModuleClassify().equals("质检单")).collect(Collectors.toList());
+        return waitDoMenuList;
     }
 
     /**
